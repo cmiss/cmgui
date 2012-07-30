@@ -940,8 +940,9 @@ ELSE( CMGUI_BUILD_EXECUTABLE )
 		${CMAKE_CURRENT_SOURCE_DIR}/source/api/cmiss_field_alias.h
 		${CMAKE_CURRENT_SOURCE_DIR}/source/api/cmiss_field_arithmetic_operators.h
 		${CMAKE_CURRENT_SOURCE_DIR}/source/api/cmiss_field_composite.h
-		${CMAKE_CURRENT_SOURCE_DIR}/source/api/cmiss_field_conditional.h
-		${CMAKE_CURRENT_SOURCE_DIR}/source/api/cmiss_field_finite_element.h
+                ${CMAKE_CURRENT_SOURCE_DIR}/source/api/cmiss_field_conditional.h
+                ${CMAKE_CURRENT_SOURCE_DIR}/source/api/cmiss_field_constant.h
+                ${CMAKE_CURRENT_SOURCE_DIR}/source/api/cmiss_field_finite_element.h
 		${CMAKE_CURRENT_SOURCE_DIR}/source/api/cmiss_field_group.h
 		${CMAKE_CURRENT_SOURCE_DIR}/source/api/cmiss_field_image.h
 		${CMAKE_CURRENT_SOURCE_DIR}/source/api/cmiss_field_image_processing.h

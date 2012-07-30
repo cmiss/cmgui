@@ -1,11 +1,3 @@
-/*******************************************************************************
-FILE : cmiss_field_composite.h
-
-LAST MODIFIED : 13 May 2008
-
-DESCRIPTION :
-The public interface to the Cmiss_fields that perform arithmetic operations.
-==============================================================================*/
 /* ***** BEGIN LICENSE BLOCK *****
  * Version: MPL 1.1/GPL 2.0/LGPL 2.1
  *
@@ -42,49 +34,33 @@ The public interface to the Cmiss_fields that perform arithmetic operations.
  * the terms of any one of the MPL, the GPL or the LGPL.
  *
  * ***** END LICENSE BLOCK ***** */
-#ifndef __CMISS_FIELD_COMPOSITE_H__
-#define __CMISS_FIELD_COMPOSITE_H__
+#ifndef CMISS_FIELD_CONSTANT_H
+#define CMISS_FIELD_CONSTANT_H
 
 #include "types/cmiss_field_id.h"
 #include "types/cmiss_field_module_id.h"
 
 /*****************************************************************************//**
- * Creates a field with the single source field.  This field is useful
- * as a placeholder candidate for replacement with more complicated operations
- * later on.
+ * Creates a field with the components specified in the array values.
  * Internally this a composite field.
- * 
- * @param field_module  Region field module which will own new field.
- * @param source_field The field the values are copied from.
- * @return Newly created field
- */
-Cmiss_field_id Cmiss_field_module_create_identity(Cmiss_field_module_id field_module,
-	Cmiss_field_id source_field);
-
-/*****************************************************************************//**
- * Creates a field with the single source field and extracts a single component
- * specified by the component_number.
- * Internally this a composite field.
- * 
- * @param field_module  Region field module which will own new field.
- * @param source_field The field the component value is copied from.
- * @param component_index  The index for the component.  The first values index
- * is 0 and the last is (number_of_field_components - 1).
- * @return Newly created field
- */
-Cmiss_field_id Cmiss_field_module_create_component(Cmiss_field_module_id field_module,
-	Cmiss_field_id source_field, int component_index);
-
-/*****************************************************************************//**
- * Creates a field which concatenates the components of all source fields, in
- * order, into a single vector.
  *
  * @param field_module  Region field module which will own new field.
- * @param number_of_source_fields  The number of source fields in the array.
- * @param source_fields  The array of fields to be concatenating together.
+ * @param number_of_values  The number of values in the array.
+ * @param values The array of constant values
  * @return Newly created field
  */
-Cmiss_field_id Cmiss_field_module_create_concatenate(Cmiss_field_module_id field_module,
-	int number_of_source_fields, Cmiss_field_id *source_fields);
+Cmiss_field_id Cmiss_field_module_create_constant(Cmiss_field_module_id field_module,
+	int number_of_values, const double *values);
 
-#endif /* __CMISS_FIELD_COMPOSITE_H__ */
+/*****************************************************************************//**
+ * Creates a string constant field with the supplied
+ * string value in <string_constant>.
+ *
+ * @param field_module  Region field module which will own new field.
+ * @param string_constant The constant char string.
+ * @return Newly created field.
+ */
+Cmiss_field_id Cmiss_field_module_create_string_constant(Cmiss_field_module_id field_module,
+	const char *string_constant);
+
+#endif // CMISS_FIELD_CONSTANT_H
