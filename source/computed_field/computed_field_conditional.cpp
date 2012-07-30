@@ -102,6 +102,7 @@ private:
 int Computed_field_if::evaluate(Cmiss_field_cache& cache, FieldValueCache& inValueCache)
 {
 	RealFieldValueCache &valueCache = RealFieldValueCache::cast(inValueCache);
+	Computed_field *switch_field = getSourceField(0);
 	RealFieldValueCache *source1Cache = RealFieldValueCache::cast(getSourceField(0)->evaluate(cache));
 	if (source1Cache)
 	{
@@ -109,7 +110,7 @@ int Computed_field_if::evaluate(Cmiss_field_cache& cache, FieldValueCache& inVal
 			or source_field_three or both. */
 		int calculate_field_two = 0;
 		int calculate_field_three = 0;
-		for (int i = 0 ; i < field->number_of_components ; i++)
+		for (int i = 0 ; i < switch_field->number_of_components ; i++)
 		{
 			if (source1Cache->values[i])
 			{
@@ -138,7 +139,10 @@ int Computed_field_if::evaluate(Cmiss_field_cache& cache, FieldValueCache& inVal
 			for (int i = 0 ; i < field->number_of_components ; i++)
 			{
 				RealFieldValueCache *useSourceCache;
-				if (source1Cache->values[i])
+				int switch_field_i = i;
+				if (switch_field->number_of_components == 1)
+					switch_field_i = 0;
+				if (source1Cache->values[switch_field_i])
 				{
 					useSourceCache = source2Cache;
 				}
@@ -271,9 +275,10 @@ although its cache may be lost.
 	if (source_field_one && source_field_one->isNumerical() &&
 		source_field_two && source_field_two->isNumerical() &&
 		source_field_three && source_field_three->isNumerical() &&
-		(source_field_one->number_of_components ==
-			source_field_two->number_of_components)&&
-		(source_field_one->number_of_components ==
+		((source_field_one->number_of_components == 1) ||
+		 (source_field_one->number_of_components ==
+			source_field_two->number_of_components)) &&
+		(source_field_two->number_of_components ==
 			source_field_three->number_of_components))
 	{
 		Computed_field *source_fields[3];
@@ -282,7 +287,7 @@ although its cache may be lost.
 		source_fields[2] = source_field_three;
 		field = Computed_field_create_generic(field_module,
 			/*check_source_field_regions*/true,
-			source_field_one->number_of_components,
+			source_field_two->number_of_components,
 			/*number_of_source_fields*/3, source_fields,
 			/*number_of_source_values*/0, NULL,
 			new Computed_field_if());
