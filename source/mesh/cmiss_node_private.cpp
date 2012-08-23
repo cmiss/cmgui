@@ -167,6 +167,12 @@ public:
 	{
 	}
 
+	Cmiss_node_template_id access()
+	{
+		++access_count;
+		return this;
+	}
+
 	static int deaccess(Cmiss_node_template_id &node_template)
 	{
 		if (!node_template)
@@ -1030,6 +1036,14 @@ Cmiss_nodeset_group_id Cmiss_field_module_create_nodeset_group_from_name_interna
 	}
 	return nodeset_group;
 }
+
+Cmiss_node_template_id Cmiss_node_template_access(Cmiss_node_template_id node_template)
+{
+	if (node_template)
+		return node_template->access();
+	return 0;
+}
+
 
 int Cmiss_node_template_destroy(Cmiss_node_template_id *node_template_address)
 {

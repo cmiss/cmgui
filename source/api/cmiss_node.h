@@ -315,6 +315,16 @@ int Cmiss_nodeset_group_remove_node(Cmiss_nodeset_group_id nodeset_group,
 int Cmiss_nodeset_group_remove_nodes_conditional(
 	Cmiss_nodeset_group_id nodeset_group, Cmiss_field_id conditional_field);
 
+/*******************************************************************************
+ * Returns a new handle to the node iterator with reference count incremented.
+ * Caller is responsible for destroying the new handle.
+ *
+ * @param mesh  The node iterator to obtain a new reference to.
+ * @return  New node iterator handle with incremented reference count.
+ */
+Cmiss_node_iterator_id Cmiss_node_iterator_access(
+	Cmiss_node_iterator_id node_iterator);
+
 /***************************************************************************//**
  * Destroys this handle to the node_iterator and sets it to NULL.
  *
@@ -332,6 +342,16 @@ int Cmiss_node_iterator_destroy(Cmiss_node_iterator_id *node_iterator_address);
  * @return  Handle to the next node, or NULL if none remaining.
  */
 Cmiss_node_id Cmiss_node_iterator_next(Cmiss_node_iterator_id node_iterator);
+
+/*******************************************************************************
+ * Returns a new handle to the node template with reference count incremented.
+ * Caller is responsible for destroying the new handle.
+ *
+ * @param mesh  The node template to obtain a new reference to.
+ * @return  New node template handle with incremented reference count.
+ */
+Cmiss_node_template_id Cmiss_node_template_access(
+	Cmiss_node_template_id node_template);
 
 /***************************************************************************//**
  * Destroys this handle to the node_template and sets it to NULL.

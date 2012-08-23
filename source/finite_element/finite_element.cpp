@@ -382,9 +382,28 @@ typedef Cmiss_set<Cmiss_node *,FE_node_compare_number> Cmiss_set_Cmiss_node;
 
 struct Cmiss_node_iterator : public Cmiss_set_Cmiss_node::ext_iterator
 {
+	int access_count;
 	Cmiss_node_iterator(Cmiss_set_Cmiss_node *container) :
-		Cmiss_set_Cmiss_node::ext_iterator(container)
+		Cmiss_set_Cmiss_node::ext_iterator(container),
+		access_count(1)
 	{
+	}
+
+	Cmiss_node_iterator access()
+	{
+		++access_count;
+		return this;
+	}
+
+	static int deaccess(Cmiss_node_iterator_id &iterator)
+	{
+		if (!iterator)
+			return 0;
+		--(iterator->access_count);
+		if (iterator->access_count <= 0)
+			delete iterator;
+		iterator = 0;
+		return 1;
 	}
 };
 #endif // NODE_STL_CONTAINER
@@ -396,9 +415,28 @@ typedef Cmiss_btree<Cmiss_node,int,CMISS_NODE_BTREE_ORDER> Cmiss_set_Cmiss_node;
 
 struct Cmiss_node_iterator : public Cmiss_set_Cmiss_node::ext_iterator
 {
+	int access_count;
 	Cmiss_node_iterator(Cmiss_set_Cmiss_node *container) :
-		Cmiss_set_Cmiss_node::ext_iterator(container)
+		Cmiss_set_Cmiss_node::ext_iterator(container),
+		access_count(1)
 	{
+	}
+
+	Cmiss_node_iterator_id access()
+	{
+		++access_count;
+		return this;
+	}
+
+	static int deaccess(Cmiss_node_iterator_id &iterator)
+	{
+		if (!iterator)
+			return 0;
+		--(iterator->access_count);
+		if (iterator->access_count <= 0)
+			delete iterator;
+		iterator = 0;
+		return 1;
 	}
 };
 
@@ -939,9 +977,29 @@ typedef Cmiss_set<FE_element *,FE_element_compare_identifier> Cmiss_set_Cmiss_el
 
 struct Cmiss_element_iterator : public Cmiss_set_Cmiss_element::ext_iterator
 {
+	int access_count;
+
 	Cmiss_element_iterator(Cmiss_set_Cmiss_element *container) :
-		Cmiss_set_Cmiss_element::ext_iterator(container)
+		Cmiss_set_Cmiss_element::ext_iterator(container),
+		access_count(1)
 	{
+	}
+
+	Cmiss_element_iterator_id access()
+	{
+		++access_count;
+		return this;
+	}
+
+	static int deaccess(Cmiss_element_iterator_id &iterator)
+	{
+		if (!iterator)
+			return 0;
+		--(iterator->access_count);
+		if (iterator->access_count <= 0)
+			delete iterator;
+		iterator = 0;
+		return 1;
 	}
 };
 #endif
@@ -964,9 +1022,29 @@ typedef Cmiss_btree<Cmiss_element,const CM_element_information *,CMISS_ELEMENT_B
 
 struct Cmiss_element_iterator : public Cmiss_set_Cmiss_element::ext_iterator
 {
+	int access_count;
+
 	Cmiss_element_iterator(Cmiss_set_Cmiss_element *container) :
-		Cmiss_set_Cmiss_element::ext_iterator(container)
+		Cmiss_set_Cmiss_element::ext_iterator(container),
+		access_count(1)
 	{
+	}
+
+	Cmiss_element_iterator_id access()
+	{
+		++access_count;
+		return this;
+	}
+
+	static int deaccess(Cmiss_element_iterator_id &iterator)
+	{
+		if (!iterator)
+			return 0;
+		--(iterator->access_count);
+		if (iterator->access_count <= 0)
+			delete iterator;
+		iterator = 0;
+		return 1;
 	}
 };
 
@@ -15655,13 +15733,16 @@ DECLARE_FIND_BY_IDENTIFIER_IN_INDEXED_LIST_BTREE_FUNCTION(FE_node,cm_node_identi
 DECLARE_INDEXED_LIST_BTREE_IDENTIFIER_CHANGE_FUNCTIONS(FE_node,cm_node_identifier)
 DECLARE_CREATE_INDEXED_LIST_BTREE_ITERATOR_FUNCTION(FE_node,Cmiss_node_iterator)
 
+Cmiss_node_iterator_id Cmiss_node_iterator_access(Cmiss_node_iterator_id node_iterator)
+{
+	return node_iterator->access();
+}
+
 int Cmiss_node_iterator_destroy(Cmiss_node_iterator_id *node_iterator_address)
 {
-	if (!node_iterator_address)
-		return 0;
-	delete *node_iterator_address;
-	*node_iterator_address = 0;
-	return 1;
+	if (node_iterator_address)
+		return Cmiss_node_iterator::deaccess(*node_iterator_address);
+	return 0;
 }
 
 Cmiss_node_id Cmiss_node_iterator_next(Cmiss_node_iterator_id node_iterator)
@@ -23480,13 +23561,16 @@ DECLARE_FIND_BY_IDENTIFIER_IN_INDEXED_LIST_BTREE_FUNCTION(FE_element,identifier,
 DECLARE_INDEXED_LIST_BTREE_IDENTIFIER_CHANGE_FUNCTIONS(FE_element,identifier)
 DECLARE_CREATE_INDEXED_LIST_BTREE_ITERATOR_FUNCTION(FE_element,Cmiss_element_iterator)
 
+Cmiss_element_iterator_id Cmiss_element_iterator_access(Cmiss_element_iterator_id element_iterator)
+{
+	return element_iterator->access();
+}
+
 int Cmiss_element_iterator_destroy(Cmiss_element_iterator_id *element_iterator_address)
 {
-	if (!element_iterator_address)
-		return 0;
-	delete *element_iterator_address;
-	*element_iterator_address = 0;
-	return 1;
+	if (element_iterator_address)
+		return Cmiss_element_iterator::deaccess(*element_iterator_address);
+	return 0;
 }
 
 Cmiss_element_id Cmiss_element_iterator_next(Cmiss_element_iterator_id element_iterator)
