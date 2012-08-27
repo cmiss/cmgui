@@ -1454,7 +1454,8 @@ void OnTimeEditorButtonPressed(wxCommandEvent& event)
 	{
 		if (last_button != button)
 		{
-			char *test_string = duplicate_string(button->GetLabel().c_str());
+			wxString wx_test_string = button->GetLabel();
+			const char *test_string = wx_test_string.c_str();
 			if (strcmp("Transform tool", test_string) == 0)
 			{
 				wxBitmap interactive_clicked_bmp(Transform_tool_clicked_xpm);
@@ -1487,7 +1488,6 @@ void OnTimeEditorButtonPressed(wxCommandEvent& event)
 				wxBitmap interactive_clicked_bmp(Element_point_tool_clicked_xpm);
 				button->SetBitmapLabel(interactive_clicked_bmp);
 			}
-			DEALLOCATE(test_string);
 		}
 	}
 
@@ -1505,7 +1505,8 @@ void GraphicsWindowSetInteractiveButtonSelected(wxBitmapButton *button, Interact
 		}
 		if (last_button)
 		{
-			char *test_string = duplicate_string(last_button->GetLabel().c_str());
+			wxString wx_test_string = last_button->GetLabel();
+			const char *test_string = wx_test_string.c_str();
 			if (strcmp("Transform tool", test_string) == 0)
 			{
 				wxBitmap interactive_unclicked_bmp(Transform_tool_unclicked_xpm);
@@ -1538,7 +1539,6 @@ void GraphicsWindowSetInteractiveButtonSelected(wxBitmapButton *button, Interact
 				wxBitmap interactive_unclicked_bmp(Element_point_tool_unclicked_xpm);
 				last_button->SetBitmapLabel(interactive_unclicked_bmp);
 			}
-			DEALLOCATE(test_string);
 		}
 		last_button = button;
 		Interactive_tool_bring_up_dialog(tool,graphics_window);
@@ -1577,203 +1577,154 @@ void OnTimeSliderChanged( wxScrollEvent& event)
 
 void OnTimeTextEntered(wxCommandEvent& event)
 {
-	 
-	 char *text_entry;
-	 float time;
-	 ENTER(OnTimeTextEntered);
-
 	USE_PARAMETER(event);
-	 text_entry = const_cast<char *>(graphics_window->time_text_ctrl->GetValue().c_str());
-	 if (text_entry)
-	 {
-			sscanf(text_entry, "%g", &time);
-			Time_keeper_request_new_time(graphics_window->time_keeper,
-				 time);	
-	 }
-	 Graphics_window_time_keeper_callback(graphics_window->time_keeper,
-			TIME_KEEPER_NEW_TIME,(void *)graphics_window);
-
-	 LEAVE;
+	wxString wx_text_entry = graphics_window->time_text_ctrl->GetValue();
+	const char *text_entry = wx_text_entry.c_str();
+	if (text_entry)
+	{
+		double time;
+		sscanf(text_entry, "%lg", &time);
+		Time_keeper_request_new_time(graphics_window->time_keeper, time);	
+	}
+	Graphics_window_time_keeper_callback(graphics_window->time_keeper,
+		TIME_KEEPER_NEW_TIME,(void *)graphics_window);
 }
 
 void OnTimeForwardPressed(wxCommandEvent& event)
 {
-	 ENTER(OnTimeForwardPressed);
-
 	USE_PARAMETER(event);
-	 Time_keeper_play(graphics_window->time_keeper,TIME_KEEPER_PLAY_FORWARD);
-	 
-	 LEAVE;
+	Time_keeper_play(graphics_window->time_keeper,TIME_KEEPER_PLAY_FORWARD);
 }
 
 void OnTimeStopPressed(wxCommandEvent& event)
 {
-	 ENTER(OnTimeStopPressed);
-
 	USE_PARAMETER(event);
-	 Time_keeper_stop(graphics_window->time_keeper);
-	 
-	 LEAVE;
+	Time_keeper_stop(graphics_window->time_keeper);
 }
 
 void OnTimeBackwardPressed(wxCommandEvent& event)
 {
-	 ENTER(OnTimeBackwardPressed);
-
 	USE_PARAMETER(event);
-	 Time_keeper_play(graphics_window->time_keeper, TIME_KEEPER_PLAY_BACKWARD);
-	 
-	 LEAVE;
+	Time_keeper_play(graphics_window->time_keeper, TIME_KEEPER_PLAY_BACKWARD);
 }
 
 void OnTimeForwardByStepPressed(wxCommandEvent& event)
 {
-	 float time;
-	 ENTER(OnTimeForwardByStepPressed);
-
 	USE_PARAMETER(event);
-	 time = Time_keeper_get_time(graphics_window->time_keeper);
-	 if ((time + graphics_window->time_step) < graphics_window->maximum_time)
-	 {
-			Time_keeper_request_new_time(graphics_window->time_keeper,
-				 time + graphics_window->time_step);
-	 }
-	 else
-	 {
-			Time_keeper_request_new_time(graphics_window->time_keeper,
-				 graphics_window->maximum_time);
-	 }
-	 
-	 LEAVE;
+	double time = Time_keeper_get_time(graphics_window->time_keeper);
+	if ((time + graphics_window->time_step) < graphics_window->maximum_time)
+	{
+		Time_keeper_request_new_time(graphics_window->time_keeper,
+			time + graphics_window->time_step);
+	}
+	else
+	{
+		Time_keeper_request_new_time(graphics_window->time_keeper,
+			graphics_window->maximum_time);
+	}
 }
 
 void OnTimeBackwardByStepPressed(wxCommandEvent& event)
 {
-	 float time;
-	 ENTER(OnTimeBackwardByStepPressed);
-
 	USE_PARAMETER(event);
-	 time = Time_keeper_get_time(graphics_window->time_keeper);
-	 if ((time - graphics_window->time_step) > graphics_window->minimum_time)
-	 {
-			Time_keeper_request_new_time(graphics_window->time_keeper,
-				 time - graphics_window->time_step);
-	 }
-	 else
-	 {
-			Time_keeper_request_new_time(graphics_window->time_keeper,
-				 graphics_window->minimum_time);
-	 }
-
-	 LEAVE;
+	double time = Time_keeper_get_time(graphics_window->time_keeper);
+	if ((time - graphics_window->time_step) > graphics_window->minimum_time)
+	{
+		Time_keeper_request_new_time(graphics_window->time_keeper,
+			time - graphics_window->time_step);
+	}
+	else
+	{
+		Time_keeper_request_new_time(graphics_window->time_keeper,
+			 graphics_window->minimum_time);
+	}
 }
 
 void OnTimeFastForwardPressed(wxCommandEvent& event)
 {
-	 float time;
-
-	 ENTER(OnTimeFastForwardPressed);
 	USE_PARAMETER(event);
-	 time = Time_keeper_get_time(graphics_window->time_keeper);
-	 if ((time + 2.0*graphics_window->time_step) < graphics_window->maximum_time)
-	 {
-			Time_keeper_request_new_time(graphics_window->time_keeper,
-				 time + 2.0*graphics_window->time_step);
-	 }
-	 else
-	 {
-			Time_keeper_request_new_time(graphics_window->time_keeper,
-				 graphics_window->maximum_time);
-	 }
-	 
-	 LEAVE;
+	double time = Time_keeper_get_time(graphics_window->time_keeper);
+	if ((time + 2.0*graphics_window->time_step) < graphics_window->maximum_time)
+	{
+		Time_keeper_request_new_time(graphics_window->time_keeper,
+			time + 2.0*graphics_window->time_step);
+	}
+	else
+	{
+		Time_keeper_request_new_time(graphics_window->time_keeper,
+			graphics_window->maximum_time);
+	}
 }
 
 void OnTimeFastBackwardPressed(wxCommandEvent& event)
 {
-	 float time;
-
-	 ENTER(OnTimeFastBackwardPressed);
 	USE_PARAMETER(event);
-	 time = Time_keeper_get_time(graphics_window->time_keeper);
-	 if ((time - 2.0*graphics_window->time_step) > graphics_window->minimum_time)
-	 {
-			Time_keeper_request_new_time(graphics_window->time_keeper,
-				 time - 2.0*graphics_window->time_step);
-	 }
-	 else
-	 {
-			Time_keeper_request_new_time(graphics_window->time_keeper,
-				 graphics_window->minimum_time);
-	 }
- 
-	 LEAVE;
+	double time = Time_keeper_get_time(graphics_window->time_keeper);
+	if ((time - 2.0*graphics_window->time_step) > graphics_window->minimum_time)
+	{
+		Time_keeper_request_new_time(graphics_window->time_keeper,
+			time - 2.0*graphics_window->time_step);
+	}
+	else
+	{
+		Time_keeper_request_new_time(graphics_window->time_keeper,
+			graphics_window->minimum_time);
+	}
 }
 
 void OnTimeHidePressed(wxCommandEvent& event)
 {
-	 ENTER(OnTimeHidePressed);
 	USE_PARAMETER(event);
-	 graphics_window->time_editor_togglebutton->SetValue(0);
-	 graphics_window->time_editor_panel->Show(false);
-	 if (graphics_window->GraphicsWindowTitle)
-	 {
-			graphics_window->GraphicsWindowTitle->SetSize(graphics_window->GraphicsWindowTitle->GetSize()+wxSize(0,1));
-			graphics_window->GraphicsWindowTitle->SetSize(graphics_window->GraphicsWindowTitle->GetSize()-wxSize(0,1));
-			graphics_window->GraphicsWindowTitle->Layout();
-	 }
-
-	 LEAVE;
+	graphics_window->time_editor_togglebutton->SetValue(0);
+	graphics_window->time_editor_panel->Show(false);
+	if (graphics_window->GraphicsWindowTitle)
+	{
+		graphics_window->GraphicsWindowTitle->SetSize(graphics_window->GraphicsWindowTitle->GetSize()+wxSize(0,1));
+		graphics_window->GraphicsWindowTitle->SetSize(graphics_window->GraphicsWindowTitle->GetSize()-wxSize(0,1));
+		graphics_window->GraphicsWindowTitle->Layout();
+	}
 }
 
 void OnTimeFramerateTextEntered(wxCommandEvent& event)
 {
-	 char *text_entry;
-	 float time;
-
-	 ENTER(OnTimeFramerateTextEntered);
 	USE_PARAMETER(event);
-	 text_entry = const_cast<char *>(graphics_window->time_framerate_text_ctrl->GetValue().c_str());
-	 if (text_entry)
-	 {
-			sscanf(text_entry, "%g", &time);
-			Time_keeper_set_speed(graphics_window->time_keeper,
-				 time);	
-	 }
-	 Graphics_window_update_time_settings_wx(graphics_window, (void *)NULL);
+	wxString wx_text_entry = graphics_window->time_framerate_text_ctrl->GetValue();
+	const char *text_entry = wx_text_entry.c_str();
+	if (text_entry)
+	{
+		double framerate;
+		sscanf(text_entry, "%lg", &framerate);
+		Time_keeper_set_speed(graphics_window->time_keeper, framerate);	
+	}
+	Graphics_window_update_time_settings_wx(graphics_window, (void *)NULL);
 }
 
 void OnTimeStepSizeTextEntered(wxCommandEvent& event)
 {
-	 char *text_entry;
-	 float time;
-
-	 ENTER(OnTimeStepSizeTextEntered);
 	USE_PARAMETER(event);
-	 text_entry = const_cast<char *>(graphics_window->time_step_size_text_ctrl->GetValue().c_str());
-	 if (text_entry)
-	 {
-			sscanf(text_entry, "%g", &time);
-			graphics_window->time_step = time;
-	 }
-	 Graphics_window_update_time_settings_wx(graphics_window, (void *)NULL);
-	 LEAVE;
+	wxString wx_text_entry = graphics_window->time_step_size_text_ctrl->GetValue();
+	const char *text_entry = wx_text_entry.c_str();
+	if (text_entry)
+	{
+		double timestep;
+		sscanf(text_entry, "%lg", &timestep);
+		graphics_window->time_step = timestep;
+	}
+	Graphics_window_update_time_settings_wx(graphics_window, (void *)NULL);
 }
 
 void OnEveryFrameChecked(wxCommandEvent& event)
 {
-	 ENTER(OnEveryFrameChecked);
 	USE_PARAMETER(event);
-	 if (graphics_window->time_play_every_frame_checkbox->GetValue())
-	 {
-			Time_keeper_set_play_every_frame(graphics_window->time_keeper);	
-	 }
-	 else
-	 {
-			Time_keeper_set_play_skip_frames(graphics_window->time_keeper);
-	 }
-	 Graphics_window_update_time_settings_wx(graphics_window, (void *)NULL);
-	 LEAVE;
+	if (graphics_window->time_play_every_frame_checkbox->GetValue())
+	{
+		Time_keeper_set_play_every_frame(graphics_window->time_keeper);	
+	}
+	else
+	{
+		Time_keeper_set_play_skip_frames(graphics_window->time_keeper);
+	}
+	Graphics_window_update_time_settings_wx(graphics_window, (void *)NULL);
 }
 
  DECLARE_EVENT_TABLE();
