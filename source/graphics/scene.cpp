@@ -3135,6 +3135,8 @@ manager, ensures it is in the list.
 	struct Cmiss_graphic *graphic = NULL;
 	struct Scene_picked_object_region_element_map_data *picked_elements_data;
 	struct CM_element_information cm;
+	cm.type = CM_ELEMENT_TYPE_INVALID;
+	cm.number = -1;
 
 	ENTER(Scene_picked_object_get_picked_elements);
 	if (scene_picked_object&&(picked_elements_data=

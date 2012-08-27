@@ -210,48 +210,49 @@ writes the discretization in use, otherwise N/A.
 	ENTER(Element_point_viewer_refresh_discretization_text);
 	if (element_point_viewer)
 	{
-		 return_code=1;
-		 value_string = const_cast<char *>(element_point_viewer->discretizationtextctrl->GetValue().c_str());
-		 if (value_string)
-		 {
-				if ((element=element_point_viewer->element_point_identifier.element)&&
-					 (dimension=get_FE_element_dimension(element))&&
-					 (number_in_xi=
-							element_point_viewer->element_point_identifier.number_in_xi))
+		return_code=1;
+		wxString discretizationtextctrl_string = element_point_viewer->discretizationtextctrl->GetValue();
+		const char *value_string = discretizationtextctrl_string.c_str();
+		if (value_string)
+		{
+			if ((element=element_point_viewer->element_point_identifier.element)&&
+				(dimension=get_FE_element_dimension(element))&&
+				(number_in_xi=
+					element_point_viewer->element_point_identifier.number_in_xi))
+			{
+				switch (dimension)
 				{
-					 switch (dimension)
-					 {
-							case 1:
-							{
-								 sprintf(temp_string,"%d",number_in_xi[0]);
-							} break;
-							case 2:
-							{
-								 sprintf(temp_string,"%d*%d",number_in_xi[0],number_in_xi[1]);
-							} break;
-							default:
-							{
-								 sprintf(temp_string,"%d*%d*%d",number_in_xi[0],number_in_xi[1],
-										number_in_xi[2]);
-							} break;
-					 }
-					 is_sensitive=is_editable=
-							(XI_DISCRETIZATION_EXACT_XI != element_point_viewer->
-								 element_point_identifier.xi_discretization_mode);
+					case 1:
+					{
+						sprintf(temp_string,"%d",number_in_xi[0]);
+					} break;
+					case 2:
+					{
+						sprintf(temp_string,"%d*%d",number_in_xi[0],number_in_xi[1]);
+					} break;
+					default:
+					{
+						sprintf(temp_string,"%d*%d*%d",number_in_xi[0],number_in_xi[1],
+							number_in_xi[2]);
+					} break;
+				}
+				is_sensitive=is_editable=
+					(XI_DISCRETIZATION_EXACT_XI != element_point_viewer->
+						element_point_identifier.xi_discretization_mode);
 				}
 				else
 				{
-					 sprintf(temp_string,"N/A");
-					 is_editable=0;
-					 is_sensitive=0;
+					sprintf(temp_string,"N/A");
+					is_editable=0;
+					is_sensitive=0;
 				}
 				/* only set string if different from that shown */
 				if (strcmp(temp_string,value_string))
 				{
-					 element_point_viewer->discretizationtextctrl->SetValue(temp_string);
+					element_point_viewer->discretizationtextctrl->SetValue(temp_string);
 				}
 				element_point_viewer->discretizationtextctrl->Enable(is_sensitive);
-		 }
+		}
 	}
 	else
 	{
@@ -274,14 +275,16 @@ Updates the point_number text field. If there is a current element point,
 writes its number, otherwise N/A.
 ==============================================================================*/
 {
-	char temp_string[20],*value_string;
+	char temp_string[20];
+	const char *value_string;
 	int return_code,is_editable,is_sensitive;
  
 	ENTER(Element_point_viewer_refresh_point_number_text);
 	if (element_point_viewer)
 	{
 		return_code=1;
-		value_string=const_cast<char *>(element_point_viewer->pointtextctrl->GetValue().c_str());
+		wxString point_string = element_point_viewer->pointtextctrl->GetValue();
+		value_string = point_string.c_str();
 		if (value_string)
 		{
 			if (element_point_viewer->element_point_identifier.element)
@@ -326,7 +329,8 @@ Updates the xi text field. If there is a current element point, writes its xi
 value otherwise N/A.
 ==============================================================================*/
 {
-	char temp_string[120],*value_string;
+	char temp_string[120];
+	const char *value_string;
 	FE_value *xi;
 	int dimension,is_editable,is_sensitive,return_code;
 	struct FE_element *element;
@@ -335,7 +339,8 @@ value otherwise N/A.
 	if (element_point_viewer)
 	{
 		return_code=1;
-		value_string =	const_cast<char *>(element_point_viewer->xitextctrl->GetValue().c_str());
+		wxString xi_string = element_point_viewer->xitextctrl->GetValue();
+		value_string = xi_string.c_str();
 		if (value_string)
 		{
 			 if (NULL != (element=element_point_viewer->element_point_identifier.element)&&
@@ -1479,44 +1484,44 @@ DESCRIPTION :
 Called when entry is made into the point_number_text field.
 ==============================================================================*/
 {
-	 char *value_string;
-	 int element_point_number;
-	 
+	const char *value_string;
+	int element_point_number;
+	
 	USE_PARAMETER(event);
-	 if (element_point_viewer)
-	 {
-			/* Get the text string */
-		 value_string=const_cast<char *>(element_point_viewer->pointtextctrl->GetValue().c_str());
-			if (value_string)
+	if (element_point_viewer)
+	{
+		/* Get the text string */
+		wxString point_string = element_point_viewer->pointtextctrl->GetValue();
+		value_string = point_string.c_str();
+		if (value_string)
+		{
+			if ((1==sscanf(value_string,"%d",&element_point_number))&&
+				Element_point_ranges_identifier_element_point_number_is_valid(
+					&(element_point_viewer->element_point_identifier),
+					element_point_number))
 			{
-				 if ((1==sscanf(value_string,"%d",&element_point_number))&&
-						Element_point_ranges_identifier_element_point_number_is_valid(
-							 &(element_point_viewer->element_point_identifier),
-							 element_point_number))
-				 {
-						element_point_viewer->element_point_number=element_point_number;
-						Element_point_viewer_select_current_point(element_point_viewer);
-				 }
-				 else
-				 {
-						display_message(ERROR_MESSAGE,
-							 "Element_point_viewer_point_number_text_CB.  Invalid point number");
-				 }
-				 
+				element_point_viewer->element_point_number=element_point_number;
+				Element_point_viewer_select_current_point(element_point_viewer);
 			}
 			else
 			{
-				 display_message(ERROR_MESSAGE,
-						"Element_point_viewer_point_number_text_CB.  Missing text");
+				display_message(ERROR_MESSAGE,
+					"Element_point_viewer_point_number_text_CB.  Invalid point number");
 			}
-			/* always restore point_number_text to actual value stored */
-			Element_point_viewer_refresh_point_number_text(element_point_viewer);
-	 }
-	 else
-	 {
+		}
+		else
+		{
 			display_message(ERROR_MESSAGE,
-				 "Element_point_viewer_point_number_text_CB.  Invalid argument(s)");
-	 }
+				"Element_point_viewer_point_number_text_CB.  Missing text");
+		}
+		/* always restore point_number_text to actual value stored */
+		Element_point_viewer_refresh_point_number_text(element_point_viewer);
+	}
+	else
+	{
+		display_message(ERROR_MESSAGE,
+			"Element_point_viewer_point_number_text_CB.  Invalid argument(s)");
+	}
 } /* Element_point_viewer_point_number_text_CB */
 
 void OnDiscretizationValueEntered(wxCommandEvent &event)
@@ -1527,71 +1532,72 @@ DESCRIPTION :
 Called when entry is made into the discretization_text field.
 ==============================================================================*/
 {
-	char *value_string;
+	const char *value_string;
 	struct Element_discretization discretization,temp_discretization;
 	struct Parse_state *temp_state;
 
 	USE_PARAMETER(event);
 	if (element_point_viewer)
 	{
-		 /* Get the text string */
-		value_string=const_cast<char *>(element_point_viewer->discretizationtextctrl->GetValue().c_str());
-		 if (value_string)
-		 {
-			 temp_state=create_Parse_state(value_string);
-				if (temp_state)
+		/* Get the text string */
+		wxString discretization_string = element_point_viewer->discretizationtextctrl->GetValue();
+		value_string = discretization_string.c_str();
+		if (value_string)
+		{
+			temp_state=create_Parse_state(value_string);
+			if (temp_state)
+			{
+				temp_discretization.number_in_xi1=
+					element_point_viewer->element_point_identifier.number_in_xi[0];
+				temp_discretization.number_in_xi2=
+					element_point_viewer->element_point_identifier.number_in_xi[1];
+				temp_discretization.number_in_xi3=
+					element_point_viewer->element_point_identifier.number_in_xi[2];
+				if (set_Element_discretization(temp_state,(void *)&discretization,
+							(void *)element_point_viewer->user_interface))
 				{
-					 temp_discretization.number_in_xi1=
-							element_point_viewer->element_point_identifier.number_in_xi[0];
-					 temp_discretization.number_in_xi2=
-							element_point_viewer->element_point_identifier.number_in_xi[1];
-					 temp_discretization.number_in_xi3=
-							element_point_viewer->element_point_identifier.number_in_xi[2];
-					 if (set_Element_discretization(temp_state,(void *)&discretization,
-								 (void *)element_point_viewer->user_interface))
-					 {
-							element_point_viewer->element_point_identifier.number_in_xi[0]=
-								 discretization.number_in_xi1;
-							element_point_viewer->element_point_identifier.number_in_xi[1]=
-								 discretization.number_in_xi2;
-							element_point_viewer->element_point_identifier.number_in_xi[2]=
-								 discretization.number_in_xi3;
-							if (Element_point_ranges_identifier_is_valid(
-										 &(element_point_viewer->element_point_identifier)))
-							{
-								 element_point_viewer->element_point_number=0;
-								 Element_point_viewer_select_current_point(element_point_viewer);
-							}
-							else
-							{
-								 display_message(ERROR_MESSAGE,
-										"Element_point_viewer_discretization_text_CB.  "
-										"Invalid element point");
-								 element_point_viewer->element_point_identifier.number_in_xi[0]=
-										temp_discretization.number_in_xi1;
-								 element_point_viewer->element_point_identifier.number_in_xi[1]=
-										temp_discretization.number_in_xi2;
-								 element_point_viewer->element_point_identifier.number_in_xi[2]=
-										temp_discretization.number_in_xi3;
-							}
-					 }
-					 destroy_Parse_state(&temp_state);
-				}
-				else
-				{
-					 display_message(ERROR_MESSAGE,
+					element_point_viewer->element_point_identifier.number_in_xi[0]=
+						discretization.number_in_xi1;
+					element_point_viewer->element_point_identifier.number_in_xi[1]=
+						discretization.number_in_xi2;
+					element_point_viewer->element_point_identifier.number_in_xi[2]=
+						discretization.number_in_xi3;
+					if (Element_point_ranges_identifier_is_valid(
+						&(element_point_viewer->element_point_identifier)))
+					{
+						element_point_viewer->element_point_number=0;
+						Element_point_viewer_select_current_point(element_point_viewer);
+					}
+					else
+					{
+						display_message(ERROR_MESSAGE,
 							"Element_point_viewer_discretization_text_CB.  "
-							"Could not create parse state");
+							"Invalid element point");
+						element_point_viewer->element_point_identifier.number_in_xi[0]=
+							temp_discretization.number_in_xi1;
+						element_point_viewer->element_point_identifier.number_in_xi[1]=
+							temp_discretization.number_in_xi2;
+						element_point_viewer->element_point_identifier.number_in_xi[2]=
+							temp_discretization.number_in_xi3;
+					}
 				}
-		 }
-		 else
-		 {
+				destroy_Parse_state(&temp_state);
+			}
+			else
+			{
 				display_message(ERROR_MESSAGE,
-					 "Element_point_viewer_discretization_text_CB.  Missing text");
-		 }
+					"Element_point_viewer_discretization_text_CB.  "
+					"Could not create parse state");
+			}
+		}
+		else
+		{
+			display_message(ERROR_MESSAGE,
+				"Element_point_viewer_discretization_text_CB.  Missing text");
+		}
 		 
-		 /* always restore discretization_text to actual value stored */
-		 Element_point_viewer_refresh_discretization_text(element_point_viewer);
+		/* always restore discretization_text to actual value stored */
+		Element_point_viewer_refresh_discretization_text(element_point_viewer);
 	}
 	else
 	{
@@ -1608,7 +1614,7 @@ DESCRIPTION :
 Called when entry is made into the xi_text field.
 ==============================================================================*/
 {
-	char *value_string;
+	const char *value_string;
 	float xi[MAXIMUM_ELEMENT_XI_DIMENSIONS];
 	int dimension,i;
 	struct FE_element *element;
@@ -1617,37 +1623,37 @@ Called when entry is made into the xi_text field.
 	USE_PARAMETER(event);
 	if (element_point_viewer)
 	{
-		 if ((NULL!= (element = element_point_viewer->element_point_identifier.element)) &&
-				(0 != (dimension = get_FE_element_dimension(element))))
-		 {
-				/* Get the text string */
-			 value_string=const_cast<char *>(element_point_viewer->xitextctrl->GetValue().c_str());
-				if (value_string)
-				{
-					 /* clean up spaces? */
-					temp_state=create_Parse_state(value_string);
-					 if (temp_state)
-					 {
-							if (set_float_vector(temp_state,xi,(void *)&dimension))
+		if ((NULL!= (element = element_point_viewer->element_point_identifier.element)) &&
+			(0 != (dimension = get_FE_element_dimension(element))))
+		{
+			/* Get the text string */
+			wxString xi_string = element_point_viewer->xitextctrl->GetValue();
+			value_string = xi_string.c_str();
+			if (value_string)
+			{
+				/* clean up spaces? */
+				temp_state=create_Parse_state(value_string);
+					if (temp_state)
+					{
+						if (set_float_vector(temp_state,xi,(void *)&dimension))
+						{
+							for (i=0;i<dimension;i++)
 							{
-								 for (i=0;i<dimension;i++)
-								 {
-										element_point_viewer->element_point_identifier.exact_xi[i] =
-											 xi[i];
-								 }
-								 Element_point_viewer_select_current_point(element_point_viewer);
+								element_point_viewer->element_point_identifier.exact_xi[i] = xi[i];
 							}
-							destroy_Parse_state(&temp_state);
-					 }
+							Element_point_viewer_select_current_point(element_point_viewer);
+					}
+					destroy_Parse_state(&temp_state);
 				}
-				else
-				{
-					 display_message(ERROR_MESSAGE,
-							"Element_point_viewer_xi_text_CB.  Missing text");
-				}
-		 }
-		 /* always restore xi_text to actual value stored */
-		 Element_point_viewer_refresh_xi_text(element_point_viewer);
+			}
+			else
+			{
+				display_message(ERROR_MESSAGE,
+					"Element_point_viewer_xi_text_CB.  Missing text");
+			}
+		}
+		/* always restore xi_text to actual value stored */
+		Element_point_viewer_refresh_xi_text(element_point_viewer);
 	}
 	else
 	{
@@ -1658,71 +1664,72 @@ Called when entry is made into the xi_text field.
 
 void OnGridValueEntered(wxCommandEvent &event)
 {
-	 char *value_string;
-	 int grid_value;
-	 struct Computed_field *grid_field;
-	 struct FE_element_grid_to_Element_point_ranges_list_data grid_to_list_data;
+	const char *value_string;
+	int grid_value;
+	struct Computed_field *grid_field;
+	struct FE_element_grid_to_Element_point_ranges_list_data grid_to_list_data;
 	struct FE_field *grid_fe_field;
 	USE_PARAMETER(event);
-	 if (element_point_viewer)
-	 {
-			/* Get the text string */
-		 value_string= const_cast<char *>(element_point_viewer->gridvaluetextctrl->GetValue().c_str());
-			if (value_string)
-			{
-				grid_field=get_grid_field();
-				 if (grid_field &&	Computed_field_get_type_finite_element(grid_field,&grid_fe_field))
-				 {
-						if (1==sscanf(value_string,"%d",&grid_value))
-						{
-							grid_to_list_data.grid_value_ranges=CREATE(Multi_range)();
-							 if (grid_to_list_data.grid_value_ranges &&
-									Multi_range_add_range(grid_to_list_data.grid_value_ranges,
-										 grid_value,grid_value))
-							 {
-								 grid_to_list_data.element_point_ranges_list=CREATE(LIST(Element_point_ranges))();
-									if (grid_to_list_data.element_point_ranges_list)
+	if (element_point_viewer)
+	{
+		/* Get the text string */
+		wxString grid_value_string = element_point_viewer->gridvaluetextctrl->GetValue();
+		value_string= grid_value_string.c_str();
+		if (value_string)
+		{
+			grid_field=get_grid_field();
+				if (grid_field && Computed_field_get_type_finite_element(grid_field,&grid_fe_field))
+				{
+					if (1==sscanf(value_string,"%d",&grid_value))
+					{
+						grid_to_list_data.grid_value_ranges=CREATE(Multi_range)();
+							if (grid_to_list_data.grid_value_ranges &&
+								Multi_range_add_range(grid_to_list_data.grid_value_ranges,
+									grid_value,grid_value))
+							{
+								grid_to_list_data.element_point_ranges_list=CREATE(LIST(Element_point_ranges))();
+								if (grid_to_list_data.element_point_ranges_list)
+								{
+									grid_to_list_data.grid_fe_field=grid_fe_field;
+									/* inefficient: go through every element in FE_region */
+									FE_region_for_each_FE_element(element_point_viewer->fe_region,
+										FE_element_grid_to_Element_point_ranges_list,
+										(void *)&grid_to_list_data);
+									if (0<NUMBER_IN_LIST(Element_point_ranges)(
+										grid_to_list_data.element_point_ranges_list))
 									{
-										 grid_to_list_data.grid_fe_field=grid_fe_field;
-										 /* inefficient: go through every element in FE_region */
-										 FE_region_for_each_FE_element(element_point_viewer->fe_region,
-												FE_element_grid_to_Element_point_ranges_list,
-												(void *)&grid_to_list_data);
-										 if (0<NUMBER_IN_LIST(Element_point_ranges)(
-														grid_to_list_data.element_point_ranges_list))
-										 {
-												Element_point_ranges_selection_begin_cache(
-													 element_point_viewer->element_point_ranges_selection);
-												Element_point_ranges_selection_clear(
-													 element_point_viewer->element_point_ranges_selection);
-												FOR_EACH_OBJECT_IN_LIST(Element_point_ranges)(
-													 Element_point_ranges_select,
-													 (void *)element_point_viewer->element_point_ranges_selection,
-													 grid_to_list_data.element_point_ranges_list);
-												Element_point_ranges_selection_end_cache(
-													 element_point_viewer->element_point_ranges_selection);
-										 }
-										 DESTROY(LIST(Element_point_ranges))(
-												&(grid_to_list_data.element_point_ranges_list));
+										Element_point_ranges_selection_begin_cache(
+											element_point_viewer->element_point_ranges_selection);
+										Element_point_ranges_selection_clear(
+											element_point_viewer->element_point_ranges_selection);
+										FOR_EACH_OBJECT_IN_LIST(Element_point_ranges)(
+											Element_point_ranges_select,
+											(void *)element_point_viewer->element_point_ranges_selection,
+											grid_to_list_data.element_point_ranges_list);
+										Element_point_ranges_selection_end_cache(
+											element_point_viewer->element_point_ranges_selection);
 									}
-									DESTROY(Multi_range)(&(grid_to_list_data.grid_value_ranges));
-							 }
+									DESTROY(LIST(Element_point_ranges))(
+										&(grid_to_list_data.element_point_ranges_list));
+							}
+							DESTROY(Multi_range)(&(grid_to_list_data.grid_value_ranges));
 						}
-				 }
+				}
 			}
-			else
-			{
-				 display_message(ERROR_MESSAGE,
-						"Element_point_viewer_grid_value_text_CB.  Missing text");
-			}
-			/* always restore grid_value_text to actual value stored */
-			Element_point_viewer_refresh_grid_value_text(element_point_viewer);
-	 }
-	 else
-	 {
+		}
+		else
+		{
 			display_message(ERROR_MESSAGE,
-				 "Element_point_viewer_grid_value_text_CB.  Invalid argument(s)");
-	 }
+				"Element_point_viewer_grid_value_text_CB.  Missing text");
+		}
+		/* always restore grid_value_text to actual value stored */
+		Element_point_viewer_refresh_grid_value_text(element_point_viewer);
+	}
+	else
+	{
+		display_message(ERROR_MESSAGE,
+			"Element_point_viewer_grid_value_text_CB.  Invalid argument(s)");
+	}
 }
 
 void OnApplypressed(wxCommandEvent &event)
@@ -2848,7 +2855,8 @@ Updates the grid_value text field. If there is a current element point, writes
 the field value, otherwise N/A.
 ==============================================================================*/
 {
-	char *field_value_string,*value_string;
+	char *field_value_string;
+	const char *value_string;
 	int is_sensitive,return_code;
 	struct Computed_field *grid_field;
 	struct FE_element *element,*top_level_element;
@@ -2858,7 +2866,8 @@ the field value, otherwise N/A.
 	{
 		return_code=1;
 		/* Get the text string */
-		value_string = const_cast<char *>(element_point_viewer->gridvaluetextctrl->GetValue().c_str());
+		wxString grid_value_string = element_point_viewer->gridvaluetextctrl->GetValue();
+		value_string = grid_value_string.c_str();
 		if (value_string)
 		{
 			element = element_point_viewer->element_point_identifier.element;

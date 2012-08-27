@@ -658,30 +658,31 @@ LAST MODIFIED : 28 November 2007
 DESCRIPTION :
 Callback for the alpha text widgets.
 ==============================================================================*/
- {
-		char *text;
-		float alpha;
+{
+	const char *text;
+	float alpha;
 		
-		ENTER(OnMaterialEditorAlphaTextEntered);
+	ENTER(OnMaterialEditorAlphaTextEntered);
 	USE_PARAMETER(event);
-		if (material_editor->material_editor_alpha_text_ctrl)
+	if (material_editor->material_editor_alpha_text_ctrl)
+	{
+		wxString alpha_string = material_editor->material_editor_alpha_text_ctrl->GetValue();
+		text = alpha_string.mb_str(wxConvUTF8);
+		if (text)
 		{
-			 text = (char*)material_editor->material_editor_alpha_text_ctrl->GetValue().mb_str(wxConvUTF8);
-			 if (text)
-			 {
-					sscanf(text,"%f",&alpha);
-			 }
-			 else
-			 {
-					display_message(ERROR_MESSAGE,
-						 "OnMaterialEditorAlphaTextEnteredValueEntered.  Missing alpha text");
-			 }
-			 material_editor_wx_update_alpha(material_editor, alpha);
+			sscanf(text,"%f",&alpha);
 		}
+		else
+		{
+			display_message(ERROR_MESSAGE,
+				"OnMaterialEditorAlphaTextEnteredValueEntered.  Missing alpha text");
+		}
+		material_editor_wx_update_alpha(material_editor, alpha);
+	}
 
-		LEAVE;
- }
-	 
+	LEAVE;
+}
+
 void OnMaterialEditorShininessTextEntered(wxCommandEvent &event)
 /*******************************************************************************
 LAST MODIFIED : 28 November 2007
@@ -689,29 +690,30 @@ LAST MODIFIED : 28 November 2007
 DESCRIPTION :
 Callback for the shininess text widgets.
 ==============================================================================*/
-	 {
-			char *text;
-			float shininess;
+{
+	const char *text;
+	float shininess;
 
-			ENTER(OnMaterialEditorShininessTextEntered);
+	ENTER(OnMaterialEditorShininessTextEntered);
 	USE_PARAMETER(event);
-			if (material_editor->material_editor_alpha_text_ctrl)
-			{
-				 text = (char*)material_editor->material_editor_shininess_text_ctrl->GetValue().mb_str(wxConvUTF8);
-				 if (text)
-				 {
-						sscanf(text,"%f",&shininess);
-				 }
-				 else
-				 {
-						display_message(ERROR_MESSAGE,
-							 "OnMaterialEditorShininessTextEnteredValueEntered.  Missing shininess text");
-				 }
-				 material_editor_wx_update_shininess(material_editor, shininess);
-			}
+	if (material_editor->material_editor_alpha_text_ctrl)
+	{
+		wxString shininess_string = material_editor->material_editor_shininess_text_ctrl->GetValue();
+		text = shininess_string.mb_str(wxConvUTF8);
+		if (text)
+		{
+			sscanf(text,"%f",&shininess);
+		}
+		else
+		{
+			display_message(ERROR_MESSAGE,
+				"OnMaterialEditorShininessTextEnteredValueEntered.  Missing shininess text");
+		}
+		material_editor_wx_update_shininess(material_editor, shininess);
+	}
 
-			LEAVE;
-	 }
+	LEAVE;
+}
 
 void OnMaterialEditorAlphaSliderChanged(wxScrollEvent& event)	 
 /*******************************************************************************
@@ -814,77 +816,74 @@ void OnMaterialEditorRevertButtonPressed(wxCommandEvent& event)
 }
 void OnMaterialEditorCancelButtonPressed(wxCommandEvent& event)
 {
-	 ENTER(OnMateruialEditorCancelButtonPressed)
+	ENTER(OnMateruialEditorCancelButtonPressed)
 	USE_PARAMETER(event);
-	 material_editor_wx_set_material(material_editor, material_editor->current_material);
-	 Material_editor_remove_widgets(material_editor);;
-	 LEAVE;
+	material_editor_wx_set_material(material_editor, material_editor->current_material);
+	Material_editor_remove_widgets(material_editor);;
+	LEAVE;
 }
 
 void OnMaterialEditorCreateNewMaterial(wxCommandEvent& event)
 {
-	 ENTER(OnMaterialEditorCreateNewMaterial);
-	 Graphical_material *material;
-	 char *text;
+	ENTER(OnMaterialEditorCreateNewMaterial);
+	Graphical_material *material;
 	USE_PARAMETER(event);
-	 wxTextEntryDialog *NewMaterialDialog = new wxTextEntryDialog(this, "Enter name", 
-			"Please Enter Name", "TEMP", wxOK|wxCANCEL|wxCENTRE, wxDefaultPosition);
-	 if (NewMaterialDialog->ShowModal() == wxID_OK)
-	 {
-			text = (char*)NewMaterialDialog->GetValue().mb_str(wxConvUTF8);
+	wxTextEntryDialog *NewMaterialDialog = new wxTextEntryDialog(this, "Enter name", 
+		"Please Enter Name", "TEMP", wxOK|wxCANCEL|wxCENTRE, wxDefaultPosition);
+	if (NewMaterialDialog->ShowModal() == wxID_OK)
+	{
+		wxString material_string = NewMaterialDialog->GetValue();
 
-			material = CREATE(Graphical_material)(text);
-			if (material != NULL)
+		material = CREATE(Graphical_material)(material_string.mb_str(wxConvUTF8));
+		if (material != NULL)
+		{
+			if(MANAGER_COPY_WITHOUT_IDENTIFIER(Graphical_material,name)
+				(material,material_editor->edit_material))
 			{
-				 if(MANAGER_COPY_WITHOUT_IDENTIFIER(Graphical_material,name)
-						(material,material_editor->edit_material))
-				 {
-						material_copy_bump_mapping_and_per_pixel_lighting_flag(material_editor->edit_material,
-							 material);
-						Cmiss_graphics_material_set_attribute_integer(material, CMISS_GRAPHICS_MATERIAL_ATTRIBUTE_IS_MANAGED, 1);
-						ADD_OBJECT_TO_MANAGER(Graphical_material)(
-							 material, material_editor->graphical_material_manager);
-						make_current_material(material_editor, material);
-						material_editor_wx_set_material(material_editor,material);
-				 }
+				material_copy_bump_mapping_and_per_pixel_lighting_flag(material_editor->edit_material,
+					material);
+				Cmiss_graphics_material_set_attribute_integer(material, CMISS_GRAPHICS_MATERIAL_ATTRIBUTE_IS_MANAGED, 1);
+				ADD_OBJECT_TO_MANAGER(Graphical_material)(
+					material, material_editor->graphical_material_manager);
+				make_current_material(material_editor, material);
+				material_editor_wx_set_material(material_editor,material);
 			}
-	 }
-	 delete NewMaterialDialog;
-	 LEAVE;
+		}
+	}
+	delete NewMaterialDialog;
+	LEAVE;
 }
 
 void OnMaterialEditorDeleteMaterial(wxCommandEvent& event)
 {
-	 ENTER(OnMaterialEditorDeleteMaterial);
+	ENTER(OnMaterialEditorDeleteMaterial);
 
 	USE_PARAMETER(event);
-	 REMOVE_OBJECT_FROM_MANAGER(Graphical_material)(
-			material_editor->current_material,material_editor->graphical_material_manager);
-	 material_editor->current_material = NULL;
-	 make_current_material(material_editor, NULL);
-	 material_editor_wx_set_material(material_editor,material_editor->current_material);
-	 LEAVE;
+	REMOVE_OBJECT_FROM_MANAGER(Graphical_material)(
+		material_editor->current_material,material_editor->graphical_material_manager);
+	material_editor->current_material = NULL;
+	make_current_material(material_editor, NULL);
+	material_editor_wx_set_material(material_editor,material_editor->current_material);
+	LEAVE;
 }
 
 void OnMaterialEditorRenameMaterial(wxCommandEvent& event)
 {
-	 ENTER(OnMaterialEditorRenameMaterial);
-	 //int selection;
-	 char *text;
+	ENTER(OnMaterialEditorRenameMaterial);
 	USE_PARAMETER(event);
-	 wxTextEntryDialog *NewMaterialDialog = new wxTextEntryDialog(this, "Enter name", 
-			"Please Enter Name", graphical_material_object_listbox->get_string_selection(),
-			wxOK|wxCANCEL|wxCENTRE, wxDefaultPosition);
-	 if (NewMaterialDialog->ShowModal() == wxID_OK)
-	 {
-			text = (char*)NewMaterialDialog->GetValue().mb_str(wxConvUTF8);
-			MANAGER_MODIFY_IDENTIFIER(Graphical_material, name)
-				 (material_editor->current_material, text,
-				 material_editor->graphical_material_manager);
-	 }
-	 delete NewMaterialDialog;
+	wxTextEntryDialog *NewMaterialDialog = new wxTextEntryDialog(this, "Enter name", 
+		"Please Enter Name", graphical_material_object_listbox->get_string_selection(),
+		wxOK|wxCANCEL|wxCENTRE, wxDefaultPosition);
+	if (NewMaterialDialog->ShowModal() == wxID_OK)
+	{
+		wxString material_string = NewMaterialDialog->GetValue();
+		MANAGER_MODIFY_IDENTIFIER(Graphical_material, name)
+			(material_editor->current_material, material_string.mb_str(wxConvUTF8),
+			material_editor->graphical_material_manager);
+	}
+	delete NewMaterialDialog;
 
-	 LEAVE;
+	LEAVE;
 }
 
 void OnMaterialEditorAdvancedSettingsChanged(wxCommandEvent& event)

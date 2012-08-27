@@ -697,7 +697,8 @@ transformation encoded in 4x4 <transformation_matrix>.
 	Transformation_editor_wx_position_text_ctrl_y->GetValue().ToDouble(&position.data[1]);
 	Transformation_editor_wx_position_text_ctrl_z->GetValue().ToDouble(&position.data[2]);
 
-	text_entry = duplicate_string(Transformation_editor_wx_position_text_ctrl_scale_factor->GetValue().c_str());
+	wxString scale_factor_string = Transformation_editor_wx_position_text_ctrl_scale_factor->GetValue();
+	text_entry = scale_factor_string.c_str();
 	if (text_entry)
 	{
 		temp_state = create_Parse_state(text_entry);

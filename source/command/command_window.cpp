@@ -1313,9 +1313,8 @@ void wxCommandLineTextCtrl::OnKeyDown(wxKeyEvent& event)
 void wxCommandLineTextCtrl::OnCommandEntered(wxCommandEvent& event)
 {
 	USE_PARAMETER(event);
-	char *command = duplicate_string(this->GetValue().c_str());
-	Execute_command_execute_string(command_window->execute_command, command);
-	DEALLOCATE(command);
+	wxString command_string = this->GetValue();
+	Execute_command_execute_string(command_window->execute_command, command_string.c_str());
 }
 
 BEGIN_EVENT_TABLE(wxCommandLineTextCtrl, wxTextCtrl)

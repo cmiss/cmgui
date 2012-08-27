@@ -275,47 +275,51 @@ DESCRIPTION :
 Get the colour struct from the text control of the interface.
 ==============================================================================*/
 {
-	 ENTER(Colour_editor::colour_editor_wx_get_colour_from_interface);
+	ENTER(Colour_editor::colour_editor_wx_get_colour_from_interface);
 
-	 char *text;
-	 float temp;
-	 text = (char*)colour_editor_text_ctrl_1->GetValue().mb_str(wxConvUTF8);
-	 if (text)
-	 {
-			sscanf(text,"%f",&temp);
-			colour->red = temp;
-	 }
-	 else
-	 {
-			display_message(ERROR_MESSAGE,
-				 "Colour_editor::colour_editor_wx_get_colour_from_interface. Missing colour editor text ");
-	 }
-	 text = NULL;
-	 text = (char*)colour_editor_text_ctrl_2->GetValue().mb_str(wxConvUTF8);
-	 if (text)
-	 {
-			sscanf(text,"%f",&temp);
-			colour->green = temp;
-	 }
-	 else
-	 {
-			display_message(ERROR_MESSAGE,
-				 "Colour_editor::colour_editor_wx_get_colour_from_interface. Missing colour editor text ");
-	 }
-	 text = NULL;
-	 text = (char*)colour_editor_text_ctrl_3->GetValue().mb_str(wxConvUTF8);
-	 if (text)
-	 {
-			sscanf(text,"%f",&temp);
-			colour->blue = temp;
-	 }
-	 else
-	 {
-			display_message(ERROR_MESSAGE,
-				 "Colour_editor::colour_editor_wx_get_colour_from_interface. Missing colour editor text ");
-	 }
+	const char *text = 0;
+	wxString text_string;
+	float temp;
+	text_string = colour_editor_text_ctrl_1->GetValue();
+	text = text_string.mb_str(wxConvUTF8);
+	if (text)
+	{
+		sscanf(text,"%f",&temp);
+		colour->red = temp;
+	}
+	else
+	{
+		display_message(ERROR_MESSAGE,
+			"Colour_editor::colour_editor_wx_get_colour_from_interface. Missing colour editor text ");
+	}
+	text = 0;
+	text_string = colour_editor_text_ctrl_2->GetValue();
+	text = text_string.mb_str(wxConvUTF8);
+	if (text)
+	{
+		sscanf(text,"%f",&temp);
+		colour->green = temp;
+	}
+	else
+	{
+		display_message(ERROR_MESSAGE,
+			"Colour_editor::colour_editor_wx_get_colour_from_interface. Missing colour editor text ");
+	}
+	text = 0;
+	text_string = colour_editor_text_ctrl_3->GetValue();
+	text = text_string.mb_str(wxConvUTF8);
+	if (text)
+	{
+		sscanf(text,"%f",&temp);
+		colour->blue = temp;
+	}
+	else
+	{
+		display_message(ERROR_MESSAGE,
+			"Colour_editor::colour_editor_wx_get_colour_from_interface. Missing colour editor text ");
+	}
 
-	 LEAVE;
+	LEAVE;
 }
 
 void Colour_editor::OnColourEditorTextEntered(wxCommandEvent& event)

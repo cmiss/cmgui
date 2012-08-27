@@ -49,6 +49,7 @@ Management routines for the main command window.
 
 #if defined (WIN32_SYSTEM)
 #  include <direct.h>
+#  include <io.h>
 #else /* !defined (WIN32_SYSTEM) */
 #  include <unistd.h>
 #endif /* !defined (WIN32_SYSTEM) */

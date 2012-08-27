@@ -2850,9 +2850,9 @@ void EnterCircleDiscretization(wxCommandEvent &event)
 	USE_PARAMETER(event);
 	
 	if (region_tree_viewer->current_graphic)
-	{		
-		circle_discretization = atoi(const_cast<char *>(
-			circlediscretizationtextctrl->GetValue().c_str()));
+	{
+		wxString circle_discretization_string = circlediscretizationtextctrl->GetValue();
+		circle_discretization = atoi(circle_discretization_string.c_str());
 		/* Get the text string */
 		Cmiss_graphic_set_circle_discretization(
 			region_tree_viewer->current_graphic,circle_discretization);

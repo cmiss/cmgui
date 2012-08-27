@@ -1060,7 +1060,7 @@ DESCRIPTION :
 Callback for the range text widgets.
 ==============================================================================*/
 {
-	char *text;
+	const char *text;
 	float new_parameter;
 	int selection;
 	struct Spectrum_settings *settings;
@@ -1074,7 +1074,8 @@ Callback for the range text widgets.
 	{
 		if (spectrum_editor->spectrum_range_min_text)
 		{
-			text = (char*)spectrum_editor->spectrum_range_min_text->GetValue().mb_str(wxConvUTF8);
+			wxString min_string = spectrum_editor->spectrum_range_min_text->GetValue();
+			text = min_string.mb_str(wxConvUTF8);
 			if (text)
 			{
 				sscanf(text,"%f",&new_parameter);
@@ -1092,7 +1093,8 @@ Callback for the range text widgets.
 		}
 		if (spectrum_editor->spectrum_range_max_text)
 		{
-			text = (char*)spectrum_editor->spectrum_range_max_text->GetValue().mb_str(wxConvUTF8);
+			wxString max_string = spectrum_editor->spectrum_range_max_text->GetValue();
+			text = max_string.mb_str(wxConvUTF8);
 			if (text)
 			{
 				sscanf(text,"%f",&new_parameter);
@@ -1312,47 +1314,49 @@ DESCRIPTION :
 Callback for the colour_value text widgets.
 ==============================================================================*/
 {
-	 char *text;
-	 float new_parameter;
-	 struct Spectrum_settings *settings;
-	 int selection;
+	const char *text;
+	float new_parameter;
+	struct Spectrum_settings *settings;
+	int selection;
 
-	 ENTER(OnSpectrumColourMappingChoice);
+	ENTER(OnSpectrumColourMappingChoice);
 	USE_PARAMETER(event);
-	 selection = spectrum_editor->spectrum_settings_checklist->GetSelection();
-	 if (spectrum_editor && 
-			(settings = get_settings_at_position_in_Spectrum(spectrum_editor->edit_spectrum,selection+1)))
-	 {
-			text = (char*)spectrum_editor->spectrum_normalised_colour_range_min_text->GetValue().mb_str(wxConvUTF8);
-			if (text)
+	selection = spectrum_editor->spectrum_settings_checklist->GetSelection();
+	if (spectrum_editor && 
+		(settings = get_settings_at_position_in_Spectrum(spectrum_editor->edit_spectrum,selection+1)))
+	{
+		wxString min_string = spectrum_editor->spectrum_normalised_colour_range_min_text->GetValue();
+		text = min_string.mb_str(wxConvUTF8);
+		if (text)
+		{
+			sscanf(text,"%f",&new_parameter);
+			if(new_parameter !=
+				Spectrum_settings_get_colour_value_minimum(settings))
 			{
-				 sscanf(text,"%f",&new_parameter);
-				 if(new_parameter !=
-						Spectrum_settings_get_colour_value_minimum(settings))
-				 {
-						Spectrum_settings_set_colour_value_minimum(settings,new_parameter);
-				 }
-				 text = NULL;
+				Spectrum_settings_set_colour_value_minimum(settings,new_parameter);
 			}
-			text = (char*)spectrum_editor->spectrum_normalised_colour_range_max_text->GetValue().mb_str(wxConvUTF8);
-			if (text)
+			text = NULL;
+		}
+		wxString max_string = spectrum_editor->spectrum_normalised_colour_range_max_text->GetValue();
+		text = max_string.mb_str(wxConvUTF8);
+		if (text)
+		{
+			sscanf(text,"%f",&new_parameter);
+			if(new_parameter !=
+				Spectrum_settings_get_colour_value_maximum(settings))
 			{
-				 sscanf(text,"%f",&new_parameter);
-				 if(new_parameter !=
-						Spectrum_settings_get_colour_value_maximum(settings))
-				 {
-						Spectrum_settings_set_colour_value_maximum(settings,new_parameter);
-				 }
+				Spectrum_settings_set_colour_value_maximum(settings,new_parameter);
 			}
-			spectrum_editor_wx_update_settings(spectrum_editor, settings);
-			spectrum_editor_wx_set_settings(spectrum_editor);
-	 }
-	 else
-	 {
-			display_message(ERROR_MESSAGE,
-				 "OnSpectrumNormalisedColourRangeValueEntered.  Invalid argument(s)");
-	 }
-	 LEAVE;
+		}
+		spectrum_editor_wx_update_settings(spectrum_editor, settings);
+		spectrum_editor_wx_set_settings(spectrum_editor);
+	}
+	else
+	{
+		display_message(ERROR_MESSAGE,
+			"OnSpectrumNormalisedColourRangeValueEntered.  Invalid argument(s)");
+	}
+	LEAVE;
 }
 
 void OnSpectrumSettingsReverseChecked(wxCommandEvent &event)
@@ -1449,45 +1453,46 @@ DESCRIPTION :
 Callback for the exaggeration widgets.
 ==============================================================================*/
 {
-	 char *text;
-	 float new_parameter;
-	 struct Spectrum_settings *settings;
-	 int selection;
+	const char *text;
+	float new_parameter;
+	struct Spectrum_settings *settings;
+	int selection;
 	 
-	 ENTER(OnSpectrumExaggerationSettingsChanged);
+	ENTER(OnSpectrumExaggerationSettingsChanged);
 	USE_PARAMETER(event);
-	 selection = spectrum_editor->spectrum_settings_checklist->GetSelection();
-	 if (spectrum_editor && 
-			(settings = get_settings_at_position_in_Spectrum(spectrum_editor->edit_spectrum,selection+1)))
-	 {	 
-			text = (char*)spectrum_editor->spectrum_exaggeration_text->GetValue().mb_str(wxConvUTF8);
-			if (text)
-			{
-				 sscanf(text,"%f",&new_parameter);
-			}
-			else
-			{
-				display_message(ERROR_MESSAGE,
-					"OnSpectrumExaggerationSettingsChanged.  Missing widget text");
-			}
-			if (spectrum_editor->spectrum_left_right_radio_box->GetSelection() == 1)
-			{
-				 new_parameter *= -1.0;
-			}	
-			if(new_parameter !=
-				 Spectrum_settings_get_exaggeration(settings))
-			{
-				 Spectrum_settings_set_exaggeration(settings,new_parameter);
-				 spectrum_editor_wx_update_settings(spectrum_editor, settings);
-			}
-			spectrum_editor_wx_set_settings(spectrum_editor);
-	 }
-	 else
-	 {
+	selection = spectrum_editor->spectrum_settings_checklist->GetSelection();
+	if (spectrum_editor && 
+		(settings = get_settings_at_position_in_Spectrum(spectrum_editor->edit_spectrum,selection+1)))
+	{
+		wxString exaggeration_string = spectrum_editor->spectrum_exaggeration_text->GetValue();
+		text = exaggeration_string.mb_str(wxConvUTF8);
+		if (text)
+		{
+			sscanf(text,"%f",&new_parameter);
+		}
+		else
+		{
 			display_message(ERROR_MESSAGE,
-				 "OnSpectrumExaggerationSettingsChanged.  Invalid argument(s)");
-	 }
-	 LEAVE;
+				"OnSpectrumExaggerationSettingsChanged.  Missing widget text");
+		}
+		if (spectrum_editor->spectrum_left_right_radio_box->GetSelection() == 1)
+		{
+			new_parameter *= -1.0;
+		}
+		if(new_parameter !=
+			Spectrum_settings_get_exaggeration(settings))
+		{
+			Spectrum_settings_set_exaggeration(settings,new_parameter);
+			spectrum_editor_wx_update_settings(spectrum_editor, settings);
+		}
+		spectrum_editor_wx_set_settings(spectrum_editor);
+	}
+	else
+	{
+		display_message(ERROR_MESSAGE,
+			"OnSpectrumExaggerationSettingsChanged.  Invalid argument(s)");
+	}
+	LEAVE;
 }
 
 void OnSpectrumDataValueEntered(wxCommandEvent &event)
@@ -1498,41 +1503,42 @@ DESCRIPTION :
 Callback for the component widgets.
 ==============================================================================*/
 {
-	 char *text;
-	 int new_component, selection;
-	 struct Spectrum_settings *settings;
-	 
-	 ENTER(OnSpectrumDataValueEntered);
+	const char *text;
+	int new_component, selection;
+	struct Spectrum_settings *settings;
+	
+	ENTER(OnSpectrumDataValueEntered);
 	USE_PARAMETER(event);
-	 selection = spectrum_editor->spectrum_settings_checklist->GetSelection();
-	 if (spectrum_editor && 
-			(settings = get_settings_at_position_in_Spectrum(spectrum_editor->edit_spectrum,selection+1)))
-	 {	 
-			new_component = 1;
-			text = (char*)spectrum_editor->spectrum_data_component_text->GetValue().mb_str(wxConvUTF8);
-			if (text)
-			{
-				 sscanf(text,"%d",&new_component);
-			}
-			else
-			{
-				display_message(ERROR_MESSAGE,
-					"OnSpectrumDataValueEntered.  Missing widget text");
-			}
-			if(new_component !=
-				 Spectrum_settings_get_component_number(settings))
-			{
-				 Spectrum_settings_set_component_number(settings,new_component);
-				 spectrum_editor_wx_update_settings(spectrum_editor, settings);
-			}
-			spectrum_editor_wx_set_settings(spectrum_editor);
-	 }
-	 else
-	 {
+	selection = spectrum_editor->spectrum_settings_checklist->GetSelection();
+	if (spectrum_editor && 
+		(settings = get_settings_at_position_in_Spectrum(spectrum_editor->edit_spectrum,selection+1)))
+	{
+		new_component = 1;
+		wxString component_string = spectrum_editor->spectrum_data_component_text->GetValue();
+		text = component_string.mb_str(wxConvUTF8);
+		if (text)
+		{
+			sscanf(text,"%d",&new_component);
+		}
+		else
+		{
 			display_message(ERROR_MESSAGE,
-				 "spectrum_editor_settings_component_CB.  Invalid argument(s)");
-	 } 
-	 LEAVE;
+			"OnSpectrumDataValueEntered.  Missing widget text");
+		}
+		if(new_component !=
+			Spectrum_settings_get_component_number(settings))
+		{
+			Spectrum_settings_set_component_number(settings,new_component);
+			spectrum_editor_wx_update_settings(spectrum_editor, settings);
+		}
+		spectrum_editor_wx_set_settings(spectrum_editor);
+	}
+	else
+	{
+		display_message(ERROR_MESSAGE,
+			"spectrum_editor_settings_component_CB.  Invalid argument(s)");
+	} 
+	LEAVE;
 }
 
 void OnSpectrumBandsValuesEntered(wxCommandEvent &event)
@@ -1543,97 +1549,100 @@ DESCRIPTION :
 Callback for the band  widgets.
 ==============================================================================*/
 {
-	 char *text;
-	 int new_parameter, selection;
-	 float new_ratio;
-	 struct Spectrum_settings *settings;
+	const char *text;
+	int new_parameter, selection;
+	float new_ratio;
+	struct Spectrum_settings *settings;
 	 
-	 ENTER(OnSpectrumBandsValuesEntered);
+	ENTER(OnSpectrumBandsValuesEntered);
 	USE_PARAMETER(event);
-	 selection = spectrum_editor->spectrum_settings_checklist->GetSelection();
-	 if (spectrum_editor && 
-			(settings = get_settings_at_position_in_Spectrum(spectrum_editor->edit_spectrum,selection+1)))
-	 {
-			text = (char*)spectrum_editor->spectrum_number_of_bands_text->GetValue().mb_str(wxConvUTF8);
-			if (text)
-			{
-				 sscanf(text,"%d",&new_parameter);
-				 text = NULL;
-			}
-			else
-			{
-				 display_message(ERROR_MESSAGE,
-						"OnSpectrumBandsValuesEntered.  Missing widget text");
-			}
-			if(new_parameter !=
-				 Spectrum_settings_get_number_of_bands(settings))
-			{
-				 Spectrum_settings_set_number_of_bands(settings,new_parameter);
-				 spectrum_editor_wx_update_settings(spectrum_editor, settings);
-			}
-			text = (char*)spectrum_editor->spectrum_ratio_of_black_bands_text->GetValue().mb_str(wxConvUTF8);
-			if (text)
-			{
-				 sscanf(text,"%f",&new_ratio);
-			}
-			else
-			{
-				 display_message(ERROR_MESSAGE,
-						"OnSpectrumBandsValuesEntered.  Missing widget text");
-			}
-			new_parameter = (int)(new_ratio * 1000.0 + 0.5);
-			if(new_parameter !=
-				 Spectrum_settings_get_black_band_proportion(settings))
-			{
-				 Spectrum_settings_set_black_band_proportion(settings,new_parameter);
-				 spectrum_editor_wx_update_settings(spectrum_editor, settings);
-			}
-			spectrum_editor_wx_set_settings(spectrum_editor);
-	 }
-	 else
-	 {
+	selection = spectrum_editor->spectrum_settings_checklist->GetSelection();
+	if (spectrum_editor && 
+		(settings = get_settings_at_position_in_Spectrum(spectrum_editor->edit_spectrum,selection+1)))
+	{
+		wxString num_bands_string = spectrum_editor->spectrum_number_of_bands_text->GetValue();
+		text = num_bands_string.mb_str(wxConvUTF8);
+		if (text)
+		{
+			sscanf(text,"%d",&new_parameter);
+			text = NULL;
+		}
+		else
+		{
 			display_message(ERROR_MESSAGE,
-				 "spectrum_editor_settings_bands_CB.  Invalid argument(s)");
-	 }
-	 LEAVE;
+				"OnSpectrumBandsValuesEntered.  Missing widget text");
+		}
+		if(new_parameter !=
+			Spectrum_settings_get_number_of_bands(settings))
+		{
+			Spectrum_settings_set_number_of_bands(settings,new_parameter);
+			spectrum_editor_wx_update_settings(spectrum_editor, settings);
+		}
+		wxString sprectrum_ratio_string = spectrum_editor->spectrum_ratio_of_black_bands_text->GetValue();
+		text = sprectrum_ratio_string.mb_str(wxConvUTF8);
+		if (text)
+		{
+			sscanf(text,"%f",&new_ratio);
+		}
+		else
+		{
+			display_message(ERROR_MESSAGE,
+				"OnSpectrumBandsValuesEntered.  Missing widget text");
+		}
+		new_parameter = (int)(new_ratio * 1000.0 + 0.5);
+		if(new_parameter !=
+			Spectrum_settings_get_black_band_proportion(settings))
+		{
+			Spectrum_settings_set_black_band_proportion(settings,new_parameter);
+			spectrum_editor_wx_update_settings(spectrum_editor, settings);
+		}
+		spectrum_editor_wx_set_settings(spectrum_editor);
+	}
+	else
+	{
+		display_message(ERROR_MESSAGE,
+			"spectrum_editor_settings_bands_CB.  Invalid argument(s)");
+	}
+	LEAVE;
 }
 
 void OnSpectrumStepValueEntered(wxCommandEvent &event)
 {
-	 char *text;
-	 float new_parameter;
-	 int selection;
-	 struct Spectrum_settings *settings;
+	const char *text;
+	float new_parameter;
+	int selection;
+	struct Spectrum_settings *settings;
 
-	 ENTER(OnSpectrumStepValueEntered);
-	USE_PARAMETER(event);
-	 selection = spectrum_editor->spectrum_settings_checklist->GetSelection();
-	 if (spectrum_editor && 
-			(settings = get_settings_at_position_in_Spectrum(spectrum_editor->edit_spectrum,selection+1)))
-	 {
-			text = (char*)spectrum_editor->spectrum_editor_step_value_text->GetValue().mb_str(wxConvUTF8);
-			if (text)
-			{
-				 sscanf(text,"%f",&new_parameter);
-			}
-			else
-			{
-				 display_message(ERROR_MESSAGE,
-						"OnSpectrumStepValueEntered.  Missing widget text");
-			}
-			if(new_parameter !=
-				Spectrum_settings_get_step_value(settings))
-			{
-				 Spectrum_settings_set_step_value(settings,new_parameter);
-				 spectrum_editor_wx_update_settings(spectrum_editor, settings);
-			}
-			spectrum_editor_wx_set_settings(spectrum_editor);
-	 }
-	 else
-	 {
+	ENTER(OnSpectrumStepValueEntered);
+USE_PARAMETER(event);
+	selection = spectrum_editor->spectrum_settings_checklist->GetSelection();
+	if (spectrum_editor && 
+		(settings = get_settings_at_position_in_Spectrum(spectrum_editor->edit_spectrum,selection+1)))
+	{
+		wxString step_value = spectrum_editor->spectrum_editor_step_value_text->GetValue();
+		text = step_value.mb_str(wxConvUTF8);
+		if (text)
+		{
+			sscanf(text,"%f",&new_parameter);
+		}
+		else
+		{
 			display_message(ERROR_MESSAGE,
-				 "OnSpectrumStepValueEntered.  Invalid argument(s)");
-	 }
+				"OnSpectrumStepValueEntered.  Missing widget text");
+		}
+		if(new_parameter !=
+			Spectrum_settings_get_step_value(settings))
+		{
+			Spectrum_settings_set_step_value(settings,new_parameter);
+			spectrum_editor_wx_update_settings(spectrum_editor, settings);
+		}
+		spectrum_editor_wx_set_settings(spectrum_editor);
+	}
+	else
+	{
+		display_message(ERROR_MESSAGE,
+			"OnSpectrumStepValueEntered.  Invalid argument(s)");
+	}
 	LEAVE;
 }
 
@@ -1670,61 +1679,59 @@ void OnSpectrumAutorangePressed(wxCommandEvent &event)
 
 void OnSpectrumEditorCreateNewSpectrum(wxCommandEvent& event)
 {
-	 ENTER(OnMaterialEditorCreateNewMaterial);
-	 Spectrum *spectrum;
-	 char *text;
+	ENTER(OnMaterialEditorCreateNewMaterial);
+	Spectrum *spectrum;
 	USE_PARAMETER(event);
-	 wxTextEntryDialog *NewSpectrumDialog = new wxTextEntryDialog(this, "Enter name", 
-			"Please Enter Name", "TEMP", wxOK|wxCANCEL|wxCENTRE, wxDefaultPosition);
-	 if (NewSpectrumDialog->ShowModal() == wxID_OK)
-	 {
-			text = (char*)NewSpectrumDialog->GetValue().mb_str(wxConvUTF8);
-			spectrum = CREATE(Spectrum)(text);
-			if (spectrum)
+	wxTextEntryDialog *NewSpectrumDialog = new wxTextEntryDialog(this, "Enter name", 
+		"Please Enter Name", "TEMP", wxOK|wxCANCEL|wxCENTRE, wxDefaultPosition);
+	if (NewSpectrumDialog->ShowModal() == wxID_OK)
+	{
+		wxString text = NewSpectrumDialog->GetValue();
+		spectrum = CREATE(Spectrum)(text.mb_str(wxConvUTF8));
+		if (spectrum)
+		{
+			if(MANAGER_COPY_WITHOUT_IDENTIFIER(Spectrum,name)
+				(spectrum,spectrum_editor->edit_spectrum))
 			{
-				 if(MANAGER_COPY_WITHOUT_IDENTIFIER(Spectrum,name)
-						(spectrum,spectrum_editor->edit_spectrum))
-				 {
-						ADD_OBJECT_TO_MANAGER(Spectrum)(
-							 spectrum, spectrum_editor->spectrum_manager);
-						make_current_spectrum(spectrum_editor, spectrum);
-				 }
+				ADD_OBJECT_TO_MANAGER(Spectrum)(
+					spectrum, spectrum_editor->spectrum_manager);
+				make_current_spectrum(spectrum_editor, spectrum);
 			}
-	 }
-	 delete NewSpectrumDialog;
-	 LEAVE;
+		}
+	}
+	delete NewSpectrumDialog;
+	LEAVE;
 }
 
 void OnSpectrumEditorDeleteSpectrum(wxCommandEvent& event)
 {
-	 ENTER(OnSpectrumEditorDeleteSpectrum);
+	ENTER(OnSpectrumEditorDeleteSpectrum);
 
 	USE_PARAMETER(event);
-	 REMOVE_OBJECT_FROM_MANAGER(Spectrum)(
-			spectrum_editor->current_spectrum,spectrum_editor->spectrum_manager);
-	 make_current_spectrum(spectrum_editor, NULL);
+	REMOVE_OBJECT_FROM_MANAGER(Spectrum)(
+		spectrum_editor->current_spectrum,spectrum_editor->spectrum_manager);
+	make_current_spectrum(spectrum_editor, NULL);
 
-	 LEAVE;
+	LEAVE;
 }
 
 void OnSpectrumEditorRenameSpectrum(wxCommandEvent& event)
 {
-	 ENTER(OnSpectrumEditorRenameSpectrum);
-	 char *text;
+	ENTER(OnSpectrumEditorRenameSpectrum);
 	USE_PARAMETER(event);
-	 wxTextEntryDialog *NewSpectrumDialog = new wxTextEntryDialog(this, "Enter name", 
-			"Please Enter Name", spectrum_object_listbox->get_string_selection(),
-			wxOK|wxCANCEL|wxCENTRE, wxDefaultPosition);
-	 if (NewSpectrumDialog->ShowModal() == wxID_OK)
-	 {
-			text = (char*)NewSpectrumDialog->GetValue().mb_str(wxConvUTF8);
-			MANAGER_MODIFY_IDENTIFIER(Spectrum, name)
-				 (spectrum_editor->current_spectrum, text,
-				 spectrum_editor->spectrum_manager);
-	 }
-	 delete NewSpectrumDialog;
+	wxTextEntryDialog *NewSpectrumDialog = new wxTextEntryDialog(this, "Enter name", 
+		"Please Enter Name", spectrum_object_listbox->get_string_selection(),
+		wxOK|wxCANCEL|wxCENTRE, wxDefaultPosition);
+	if (NewSpectrumDialog->ShowModal() == wxID_OK)
+	{
+		wxString text = NewSpectrumDialog->GetValue();
+		MANAGER_MODIFY_IDENTIFIER(Spectrum, name)
+			(spectrum_editor->current_spectrum, text.mb_str(wxConvUTF8),
+			spectrum_editor->spectrum_manager);
+	}
+	delete NewSpectrumDialog;
 
-	 LEAVE;
+	LEAVE;
 }
 
 void CloseSpectrumEditor(wxCloseEvent &event)

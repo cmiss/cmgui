@@ -126,7 +126,7 @@ bool Computed_field_nodeset_operator::is_defined_at_location(Cmiss_field_cache& 
 		}
 	}
 	Cmiss_node_iterator_destroy(&iterator);
-	return return_code;
+	return return_code == 1;
 }
 
 /** Lists a description of the nodeset_operator arguments */
