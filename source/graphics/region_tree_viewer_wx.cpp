@@ -3163,11 +3163,6 @@ void SetGraphic(Cmiss_graphic *graphic)
 			temp_coordinate_field=
 				Cmiss_graphic_get_coordinate_field(region_tree_viewer->current_graphic);
 		}
-		if (!temp_coordinate_field)
-		{
-			temp_coordinate_field = Cmiss_rendition_guess_coordinate_field(
-				region_tree_viewer->edit_rendition, region_tree_viewer->current_graphic_type);
-		}
 		if (coordinate_field_chooser ==NULL)
 		{
 			coordinate_field_chooser = 
