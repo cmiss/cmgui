@@ -79,6 +79,7 @@ extern "C" {
 #include "wx/xrc/xmlres.h"
 #include "choose/choose_manager_class.hpp"
 #include "graphics/graphics_window_private.hpp"
+#include "mesh/cmiss_element_private.hpp"
 #include "node/node_tool.xrch"
 #include "region/cmiss_region_chooser_wx.hpp"
 #endif /* defined (WX_USER_INTERFACE)*/
@@ -2856,12 +2857,71 @@ Adds the just created element to the fe_region, adding faces as necessary.
 	ENTER(node_tool_add_element);
 	if (node_tool && node_tool->fe_region && node_tool->element)
 	{
-		FE_region_begin_change(node_tool->fe_region);
+		Cmiss_field_module_id field_module = Cmiss_region_get_field_module(node_tool->region);
+		Cmiss_field_module_begin_change(field_module);
+
 		FE_region_begin_define_faces(node_tool->fe_region, /*all dimensions*/-1);
 		return_code = FE_region_merge_FE_element_and_faces_and_nodes(
 			node_tool->fe_region, node_tool->element);
 		FE_region_end_define_faces(node_tool->fe_region);
-		FE_region_end_change(node_tool->fe_region);
+		if (return_code && node_tool->group_field)
+		{
+			// add element to group
+			const int dimension = Cmiss_element_get_dimension(node_tool->element);
+			Cmiss_mesh_id master_mesh = Cmiss_field_module_find_mesh_by_dimension(field_module, dimension);
+			Cmiss_field_element_group_id modify_element_group =
+				Cmiss_field_group_get_element_group(node_tool->group_field, master_mesh);
+			if (!modify_element_group)
+			{
+				modify_element_group = Cmiss_field_group_create_element_group(node_tool->group_field, master_mesh);
+			}
+			Cmiss_mesh_group_id modify_mesh_group = Cmiss_field_element_group_get_mesh(modify_element_group);
+			Cmiss_mesh_group_add_element(modify_mesh_group, node_tool->element);
+			Cmiss_mesh_group_destroy(&modify_mesh_group);
+			Cmiss_field_element_group_destroy(&modify_element_group);
+			Cmiss_mesh_destroy(&master_mesh);
+
+			if (1 < dimension)
+			{
+				// add faces to group
+				Cmiss_mesh_id master_face_mesh = Cmiss_field_module_find_mesh_by_dimension(field_module, dimension - 1);
+				Cmiss_field_element_group_id face_element_group = Cmiss_field_group_get_element_group(node_tool->group_field, master_face_mesh);
+				if (!face_element_group)
+				{
+					face_element_group = Cmiss_field_group_create_element_group(node_tool->group_field, master_face_mesh);
+				}
+				Cmiss_mesh_group_id face_mesh_group = Cmiss_field_element_group_get_mesh(face_element_group);
+				Cmiss_mesh_group_add_element_faces(face_mesh_group, node_tool->element);
+				Cmiss_mesh_group_destroy(&face_mesh_group);
+				Cmiss_field_element_group_destroy(&face_element_group);
+				Cmiss_mesh_destroy(&master_face_mesh);
+
+				if (2 < dimension)
+				{
+					// add lines to group
+					Cmiss_mesh_id master_line_mesh = Cmiss_field_module_find_mesh_by_dimension(field_module, dimension - 2);
+					Cmiss_field_element_group_id line_element_group = Cmiss_field_group_get_element_group(node_tool->group_field, master_line_mesh);
+					if (!line_element_group)
+					{
+						line_element_group = Cmiss_field_group_create_element_group(node_tool->group_field, master_line_mesh);
+					}
+					Cmiss_mesh_group_id line_mesh_group = Cmiss_field_element_group_get_mesh(line_element_group);
+					int number_of_faces = 0;
+					get_FE_element_number_of_faces(node_tool->element, &number_of_faces);
+					FE_element *face_element = 0;
+					for (int i = 0; i < number_of_faces; ++i)
+					{
+						get_FE_element_face(node_tool->element, i, &face_element);
+						Cmiss_mesh_group_add_element_faces(line_mesh_group, face_element);
+					}
+					Cmiss_mesh_group_destroy(&line_mesh_group);
+					Cmiss_field_element_group_destroy(&line_element_group);
+					Cmiss_mesh_destroy(&master_line_mesh);
+				}
+			}
+		}
+		Cmiss_field_module_end_change(field_module);
+		Cmiss_field_module_destroy(&field_module);
 		Node_tool_end_element_creation(node_tool);
 	}
 	else
@@ -4188,37 +4248,6 @@ Call this function whether element is successfully created or not.
 			{
 				display_message(WARNING_MESSAGE,
 					"node_tool: destroying incomplete element");
-			}
-			else
-			{
-				if (node_tool->group_field)
-				{
-					Cmiss_field_module_id field_module = Cmiss_region_get_field_module(node_tool->region);
-					Cmiss_mesh_id master_mesh = Cmiss_field_module_find_mesh_by_dimension(field_module,
-						Cmiss_element_get_dimension(node_tool->element));
-					Cmiss_field_module_begin_change(field_module);
-					Cmiss_field_element_group_id modify_element_group =
-						Cmiss_field_group_get_element_group(node_tool->group_field, master_mesh);
-					if (!modify_element_group)
-					{
-						modify_element_group = Cmiss_field_group_create_element_group(node_tool->group_field, master_mesh);
-					}
-					Cmiss_mesh_group_id modify_mesh_group = Cmiss_field_element_group_get_mesh(modify_element_group);
-					if (!Cmiss_mesh_contains_element(Cmiss_mesh_group_base_cast(modify_mesh_group), node_tool->element))
-					{
-						if (!Cmiss_mesh_group_add_element(modify_mesh_group, node_tool->element))
-						{
-							display_message(ERROR_MESSAGE,
-								"Node_tool_end_element_creation:  Could not add element %d",
-								Cmiss_element_get_identifier(node_tool->element));
-						}
-					}
-					Cmiss_field_module_end_change(field_module);
-					Cmiss_mesh_group_destroy(&modify_mesh_group);
-					Cmiss_field_element_group_destroy(&modify_element_group);
-					Cmiss_mesh_destroy(&master_mesh);
-					Cmiss_field_module_destroy(&field_module);
-				}
 			}
 
 			DEACCESS(FE_element)(&(node_tool->element));
