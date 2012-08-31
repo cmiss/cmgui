@@ -99,6 +99,13 @@ Cmiss_optimisation_id Cmiss_field_module_create_optimisation(Cmiss_field_module_
 	return 0;
 }
 
+Cmiss_optimisation_id Cmiss_optimisation_access(Cmiss_optimisation_id optimisation)
+{
+	if (optimisation)
+		return optimisation->access();
+	return 0;
+}
+
 int Cmiss_optimisation_destroy(Cmiss_optimisation_id *optimisation_address)
 {
 	if (optimisation_address)

@@ -755,6 +755,17 @@ int Cmiss_interactive_tool_execute_command(Cmiss_interactive_tool_id interactive
 	return return_code;
 }
 
+Cmiss_interactive_tool_id Cmiss_interactive_tool_access(Cmiss_interactive_tool_id interactive_tool)
+{
+	Cmiss_interactive_tool_id return_interactive_tool = 0;
+	if (interactive_tool)
+	{
+		return_interactive_tool = ACCESS(Interactive_tool)(return_interactive_tool);
+	}
+
+	return return_interactive_tool;
+}
+
 int Cmiss_interactive_tool_destroy(Cmiss_interactive_tool_id *interactive_tool)
 {
 	int return_code = 0;

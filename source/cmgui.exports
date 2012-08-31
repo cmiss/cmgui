@@ -472,6 +472,7 @@ runge_kutta_
 #endif /* defined (CELL) */
 
 /* Cmiss_time */
+Cmiss_time_notifier_access
 Cmiss_time_notifier_destroy
 Cmiss_time_notifier_add_callback
 Cmiss_time_notifier_remove_callback
@@ -675,6 +676,7 @@ Cmiss_tessellation_attribute_enum_to_string
 
 /* cmiss_interactive_tool.h */
 Cmiss_interactive_tool_execute_command
+Cmiss_interactive_tool_access
 Cmiss_interactive_tool_destroy
 
 Cmiss_stream_information_access
@@ -717,6 +719,7 @@ Cmiss_stream_resource_memory_get_buffer_copy
 
 /* api/cmiss_optimisation.h */
 Cmiss_field_module_create_optimisation
+Cmiss_optimisation_access
 Cmiss_optimisation_destroy
 Cmiss_optimisation_set_method
 Cmiss_optimisation_get_method
