@@ -268,6 +268,7 @@ Main program for the CMISS Graphical User Interface
 			return_code = 1;
 		}
 		Cmiss_context_destroy(&context);
+		Context_internal_cleanup();
 #if defined (WX_USER_INTERFACE)
 		if (wx_entry_started)
 			wxEntryCleanup();

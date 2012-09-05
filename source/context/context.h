@@ -119,4 +119,10 @@ struct User_interface_module *Cmiss_context_create_user_interface(
 	HINSTANCE current_instance, HINSTANCE previous_instance,
 	LPSTR command_line,int initial_main_window_state, void *user_interface_instance);
 #endif
+
+/***************************************************************************//**
+ * Clean up any internally accessed context pointers
+ */
+void Context_internal_cleanup();
+
 #endif /* !defined (CONTEXT_H) */
