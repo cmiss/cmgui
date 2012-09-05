@@ -79,12 +79,12 @@ extern "C" {
 #include "wx/xrc/xmlres.h"
 #include "choose/choose_manager_class.hpp"
 #include "graphics/graphics_window_private.hpp"
-#include "mesh/cmiss_element_private.hpp"
 #include "node/node_tool.xrch"
 #include "region/cmiss_region_chooser_wx.hpp"
 #endif /* defined (WX_USER_INTERFACE)*/
 #include <map>
 typedef std::multimap<Cmiss_region *, Cmiss_node_id> Region_node_map;
+#include "mesh/cmiss_element_private.hpp"
 
 /*
 Module variables
