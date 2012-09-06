@@ -154,7 +154,6 @@ int Cmiss_context_destroy(struct Context **context_address)
 {
 	int return_code = 0;
 	struct Context *context = NULL;
-	struct Context *tempContext = *context_address;
 
 	if (context_address && NULL != (context = *context_address))
 	{
