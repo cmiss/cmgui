@@ -61,49 +61,10 @@ extern "C" {
 class Context_holder
 {
 private:
-
-	static int instanceFlag;
-	static std::set<Cmiss_context_id> contextsList;
-	static Context_holder *contextHolder;
-
-public:
+	std::set<Cmiss_context_id> contextsList;
 
 	Context_holder()
 	{
-		printf("here\n");
-		contextsList.clear();
-	}
-
-
-	static Context_holder *getInstance()
-	{
-		if (!instanceFlag)
-		{
-			contextHolder = new Context_holder();
-			instanceFlag = 1;
-			return contextHolder;
-		}
-		else
-		{
-			return contextHolder;
-		}
-	}
-
-	static void destroy()
-	{
-		printf("context holder delete here\n");
-		if (instanceFlag)
-		{
-			instanceFlag = 0;
-			std::set<Cmiss_context_id>::iterator pos = contextHolder->contextsList.begin();
-			while (pos != contextHolder->contextsList.end())
-			{
-				Cmiss_context_id temp_pointer = *pos;
-				Cmiss_context_destroy(&temp_pointer);
-				++pos;
-			}
-			delete contextHolder;
-		}
 	}
 
 	~Context_holder()
@@ -111,15 +72,37 @@ public:
 		destroy();
 	}
 
-	static void insert(Cmiss_context_id context_in)
+public:
+
+	static Context_holder *getInstance()
 	{
-		if (Cmiss_context_access(context_in))
-			getInstance()->contextsList.insert(context_in);
+		static Context_holder contextHolder;
+		return &contextHolder;
 	}
 
-	static int hasEntry(Cmiss_context_id context_in)
+	void destroy()
 	{
-		if (instanceFlag && (contextsList.find(context_in) != contextsList.end()))
+		std::set<Cmiss_context_id>::iterator pos = contextsList.begin();
+		while (pos != contextsList.end())
+		{
+			Cmiss_context_id temp_pointer = *pos;
+			Cmiss_context_destroy(&temp_pointer);
+			++pos;
+		}
+		contextsList.clear();
+	}
+
+	void insert(Cmiss_context_id context_in)
+	{
+		if (Cmiss_context_access(context_in))
+		{
+			contextsList.insert(context_in);
+		}
+	}
+
+	int hasEntry(Cmiss_context_id context_in)
+	{
+		if (contextsList.find(context_in) != contextsList.end())
 		{
 			return true;
 		}
@@ -127,12 +110,6 @@ public:
 	}
 
 };
-
-/* static members in a static class need to be initialised */
-int Context_holder::instanceFlag;
-Context_holder *Context_holder::contextHolder = NULL;
-std::set<Cmiss_context_id> Context_holder::contextsList;
-Context_holder cleanUpHolder = *(Context_holder::getInstance());
 
 struct Context
 {
@@ -167,7 +144,7 @@ struct Context *Cmiss_context_create(const char *id)
 		context->io_stream_package = NULL;
 		context->curve_manager = NULL;
 		context->access_count = 1;
-		cleanUpHolder.insert(context);
+		Context_holder::getInstance()->insert(context);
 	}
 
 	return context;
@@ -182,10 +159,8 @@ int Cmiss_context_destroy(struct Context **context_address)
 	if (context_address && NULL != (context = *context_address))
 	{
 		context->access_count--;
-		printf("context deaccess here\n");
 		if (0 == context->access_count)
 		{
-			printf("context deaccess here2\n");
 			if (context->id)
 				DEALLOCATE(context->id);
 			if (context->default_command_data)
@@ -234,15 +209,6 @@ int Cmiss_context_destroy(struct Context **context_address)
 		return_code = 0;
 	}
 
-	/* Write out any memory blocks still ALLOCATED when MEMORY_CHECKING is
-		on.  When MEMORY_CHECKING is off this function does nothing but only list
-		when context holder does not have an entry of this context */
-	if (!Context_holder::hasEntry(tempContext))
-	{
-		list_memory(/*count_number*/0, /*show_pointers*/0, /*increment_counter*/0,
-			/*show_structures*/1);
-	}
-
 	return return_code;
 }
 
@@ -250,7 +216,7 @@ struct Context *Cmiss_context_access(struct Context *context)
 {
 	if (context)
 	{
-	  context->access_count++;
+		context->access_count++;
 	}
 	else
 	{
@@ -640,5 +606,11 @@ int Cmiss_context_process_idle_event(Cmiss_context_id context)
 
 void Context_internal_cleanup()
 {
-	cleanUpHolder.destroy();
+	Context_holder::getInstance()->destroy();
+
+	/* Write out any memory blocks still ALLOCATED when MEMORY_CHECKING is
+		on.  When MEMORY_CHECKING is off this function does nothing but only list
+		when context holder does not have an entry of this context */
+	list_memory(/*count_number*/0, /*show_pointers*/0, /*increment_counter*/0,
+		/*show_structures*/1);
 }
