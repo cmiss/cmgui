@@ -1,5 +1,5 @@
 /***************************************************************************//**
- * FILE : CmissGraphicsModule.hpp
+ * FILE : scene.hpp
  */
 /* ***** BEGIN LICENSE BLOCK *****
  * Version: MPL 1.1/GPL 2.0/LGPL 2.1
@@ -14,11 +14,11 @@
  * for the specific language governing rights and limitations under the
  * License.
  *
- * The Original Code is cmgui.
+ * The Original Code is libZinc.
  *
  * The Initial Developer of the Original Code is
  * Auckland Uniservices Ltd, Auckland, New Zealand.
- * Portions created by the Initial Developer are Copyright (C) 2010
+ * Portions created by the Initial Developer are Copyright (C) 2012
  * the Initial Developer. All Rights Reserved.
  *
  * Contributor(s):
@@ -36,68 +36,106 @@
  * the terms of any one of the MPL, the GPL or the LGPL.
  *
  * ***** END LICENSE BLOCK ***** */
-#ifndef __CMISS_GRAPHICS_MODULE_HPP__
-#define __CMISS_GRAPHICS_MODULE_HPP__
+#ifndef __SCENE_HPP__
+#define __SCENE_HPP__
 
 extern "C" {
-#include "api/cmiss_graphics_module.h"
+#include "api/cmiss_scene.h"
 }
-#include "api++/CmissMaterial.hpp"
+#include "api++/graphicsfilter.hpp"
+#include "api++/region.hpp"
 
-namespace Cmiss
+namespace Zn
 {
 
-class GraphicsMaterial;
-
-class GraphicsModule
+class Scene
 {
 protected:
-	Cmiss_graphics_module_id id;
+	Cmiss_scene_id id;
 
 public:
-	GraphicsModule() : id(NULL)
-	{ }
 
-	// takes ownership of C-style graphics_module reference
-	GraphicsModule(Cmiss_graphics_module_id graphics_module_id) : 
-		id(graphics_module_id)
-	{ }
+	Scene() : id(NULL)
+	{  }
 
-	GraphicsModule(const GraphicsModule& graphicsModule) :
-		id(Cmiss_graphics_module_access(graphicsModule.id))
-	{ }
+	// takes ownership of C-style region reference
+	Scene(Cmiss_scene_id in_scene_id) :
+		id(in_scene_id)
+	{  }
 
-	GraphicsModule& operator=(const GraphicsModule& graphicsModule)
+	Scene(const Scene& scene) :
+		id(Cmiss_scene_access(scene.id))
+	{  }
+
+	Scene& operator=(const Scene& scene)
 	{
-		Cmiss_graphics_module_id temp_id = graphicsModule.id;
+		Cmiss_scene_id temp_id = Cmiss_scene_access(scene.id);
 		if (NULL != id)
 		{
-			Cmiss_graphics_module_destroy(&id);
+			Cmiss_scene_destroy(&id);
 		}
 		id = temp_id;
 		return *this;
 	}
-	
-	~GraphicsModule()
+
+	~Scene()
 	{
 		if (NULL != id)
 		{
-			Cmiss_graphics_module_destroy(&id);
+			Cmiss_scene_destroy(&id);
 		}
 	}
 
-	GraphicsMaterial createMaterial() const
+	Cmiss_scene_id getId()
 	{
-		return GraphicsMaterial(Cmiss_graphics_module_create_material(id));
+		return id;
 	}
 
-	GraphicsMaterial findMaterialByName(const char *material_name) const
+	enum Attribute
 	{
-		return GraphicsMaterial(Cmiss_graphics_module_find_material_by_name(id, material_name));
+		ATTRIBUTE_INVALID = CMISS_SCENE_ATTRIBUTE_INVALID,
+		ATTRIBUTE_IS_MANAGED = CMISS_SCENE_ATTRIBUTE_IS_MANAGED,
+	};
+
+	int getAttributeInteger(Attribute attribute)
+	{
+		return Cmiss_scene_get_attribute_integer(id,
+			static_cast<Cmiss_scene_attribute>(attribute));
 	}
-	
+
+	int setAttributeInteger(Attribute attribute, int value)
+	{
+		return Cmiss_scene_set_attribute_integer(id,
+			static_cast<Cmiss_scene_attribute>(attribute), value);
+	}
+
+	int setRegion(Region& rootRegion)
+	{
+		return Cmiss_scene_set_region(id, rootRegion.getId());
+	}
+
+	char *getName()
+	{
+		return Cmiss_scene_get_name(id);
+	}
+
+	int setName(const char *name)
+	{
+		return Cmiss_scene_set_name(id, name);
+	}
+
+	GraphicsFilter getFilter()
+	{
+		return GraphicsFilter(Cmiss_scene_get_filter(id));
+	}
+
+	int setFilter(GraphicsFilter& filter)
+	{
+		return Cmiss_scene_set_filter(id, filter.getId());
+	}
+
 };
 
-} // namespace Cmiss
+}  // namespace Zn
 
-#endif /* __CMISS_GRAPHICS_MODULE_HPP__ */
+#endif /* __SCENE_HPP__ */

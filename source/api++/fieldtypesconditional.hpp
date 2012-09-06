@@ -1,5 +1,5 @@
 /***************************************************************************//**
- * FILE : CmissField.hpp
+ * FILE : fieldtypeconditional.hpp
  */
 /* ***** BEGIN LICENSE BLOCK *****
  * Version: MPL 1.1/GPL 2.0/LGPL 2.1
@@ -14,11 +14,11 @@
  * for the specific language governing rights and limitations under the
  * License.
  *
- * The Original Code is cmgui.
+ * The Original Code is libZinc.
  *
  * The Initial Developer of the Original Code is
  * Auckland Uniservices Ltd, Auckland, New Zealand.
- * Portions created by the Initial Developer are Copyright (C) 2010
+ * Portions created by the Initial Developer are Copyright (C) 2012
  * the Initial Developer. All Rights Reserved.
  *
  * Contributor(s):
@@ -36,94 +36,36 @@
  * the terms of any one of the MPL, the GPL or the LGPL.
  *
  * ***** END LICENSE BLOCK ***** */
-#ifndef __CMISS_FIELD_HPP__
-#define __CMISS_FIELD_HPP__
+#ifndef __FIELD_TYPES_CONDITIONAL_HPP__
+#define __FIELD_TYPES_CONDITIONAL_HPP__
 
 extern "C" {
-#include "api/cmiss_field.h"
+#include "api/cmiss_field_conditional.h"
 }
+#include "api++/field.hpp"
+#include "api++/fieldmodule.hpp"
 
-namespace Cmiss
+namespace Zn
 {
 
-class FieldModule;
-class FieldImage;
-
-class Field
+class FieldIf : public Field
 {
-friend class FieldModule;
-
-protected:
-	Cmiss_field_id id;
-
 public:
-	Field() : id(NULL)
+
+	FieldIf() : Field(NULL)
+	{	}
+
+	FieldIf(Cmiss_field_id field_id) : Field(field_id)
 	{ }
 
-	// takes ownership of C-style region reference
-	Field(Cmiss_field_id field_id) : id(field_id)
-	{ }
-
-	Field(const Field& field) :
-		id(Cmiss_field_access(field.id))
-	{ }
-
-	Field& operator=(const Field& field)
-	{
-		Cmiss_field_id temp_id = Cmiss_field_access(field.id);
-		if (NULL != id)
-		{
-			Cmiss_field_destroy(&id);
-		}
-		id = temp_id;
-		return *this;
-	}
-	
-	~Field()
-	{
-		if (NULL != id)
-		{
-			Cmiss_field_destroy(&id);
-		}
-	}
-	
-	bool isValid() const
-	{
-		return (NULL != id);
-	}
-
-	char *getName()
-	{
-		return Cmiss_field_get_name(id);
-	}
-
-	int setName(const char *name)
-	{
-		return Cmiss_field_set_name(id, name);
-	}
-
-	int getAttributeInteger(Cmiss_field_attribute attribute)
-	{
-		return Cmiss_field_get_attribute_integer(id, attribute);
-	}
-
-	int setAttributeInteger(Cmiss_field_attribute attribute, int value)
-	{
-		return Cmiss_field_set_attribute_integer(id, attribute, value);
-	}
-
-	template<class FieldType> FieldType cast()
-	{
-		return FieldType(*this);
-	}
-
-	// needed for casting constructors: see FieldImage(Field&)
-	Cmiss_field_id getId()
-	{
-		return id;
-	}
 };
 
-} // namespace Cmiss
+inline FieldIf FieldModule::createIf(Field& sourceField1, Field& sourceField2, Field& sourceField3)
+{
+	return FieldIf(Cmiss_field_module_create_if(id,
+		sourceField1.getId(), sourceField2.getId(), sourceField3.getId()));
+}
 
-#endif /* __CMISS_FIELD_HPP__ */
+}  // namespace Zn
+
+#endif /* __FIELD_TYPES_CONDITIONAL_HPP__ */

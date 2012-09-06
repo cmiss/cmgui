@@ -1,5 +1,5 @@
 /***************************************************************************//**
- * FILE : CmissFieldTypesGroup.hpp
+ * FILE : fieldtypecomposite.hpp
  */
 /* ***** BEGIN LICENSE BLOCK *****
  * Version: MPL 1.1/GPL 2.0/LGPL 2.1
@@ -14,11 +14,11 @@
  * for the specific language governing rights and limitations under the
  * License.
  *
- * The Original Code is cmgui.
+ * The Original Code is libZinc.
  *
  * The Initial Developer of the Original Code is
  * Auckland Uniservices Ltd, Auckland, New Zealand.
- * Portions created by the Initial Developer are Copyright (C) 2011
+ * Portions created by the Initial Developer are Copyright (C) 2012
  * the Initial Developer. All Rights Reserved.
  *
  * Contributor(s):
@@ -36,45 +36,81 @@
  * the terms of any one of the MPL, the GPL or the LGPL.
  *
  * ***** END LICENSE BLOCK ***** */
-#ifndef __CMISS_FIELD_TYPES_GROUP_HPP__
-#define __CMISS_FIELD_TYPES_GROUP_HPP__
+#ifndef __FIELD_TYPES_COMPOSITE_HPP__
+#define __FIELD_TYPES_COMPOSITE_HPP__
 
 extern "C" {
-#include "api/cmiss_field_group.h"
+#include "api/cmiss_field_composite.h"
 }
-#include "api++/CmissField.hpp"
-#include "api++/CmissRegion.hpp"
+#include "api++/field.hpp"
+#include "api++/fieldmodule.hpp"
 
-namespace Cmiss
+namespace Zn
 {
 
-class FieldGroup : public Field
+class FieldIdentity : public Field
 {
 public:
-	// takes ownership of C-style field reference
-	FieldGroup(Cmiss_field_group_id field_group_id) :
-		Field(reinterpret_cast<Cmiss_field_id>(field_group_id))
-	{ }
 
-	// casting constructor: must check isValid()
-	FieldGroup(Field& field) :
-		Field(reinterpret_cast<Cmiss_field_id>(Cmiss_field_cast_group(field.getId())))
+	FieldIdentity() : Field(NULL)
 	{	}
 
-	FieldGroup createSubregionGroup(Region region)
-	{
-		return FieldGroup(Cmiss_field_group_create_subregion_group(
-			reinterpret_cast<Cmiss_field_group_id>(id), region.getId()));
-	}
-
-	FieldGroup getSubregionGroup(Region region)
-	{
-		return FieldGroup(Cmiss_field_group_get_subregion_group(
-			reinterpret_cast<Cmiss_field_group_id>(id), region.getId()));
-	}
+	FieldIdentity(Cmiss_field_id field_id) : Field(field_id)
+	{	}
 
 };
 
-} // namespace Cmiss
+class FieldComponent : public Field
+{
+public:
 
-#endif /* __CMISS_FIELD_TYPES_GROUP_HPP__ */
+	FieldComponent() : Field(NULL)
+	{	}
+
+	FieldComponent(Cmiss_field_id field_id) : Field(field_id)
+	{	}
+
+};
+
+class FieldConcatenate : public Field
+{
+public:
+
+	FieldConcatenate() : Field(NULL)
+	{	}
+
+	FieldConcatenate(Cmiss_field_id field_id) : Field(field_id)
+	{	}
+
+};
+
+inline FieldIdentity FieldModule::createIdentity(Field& sourceField)
+{
+	return FieldIdentity(Cmiss_field_module_create_identity(id, sourceField.getId()));
+}
+
+inline FieldComponent FieldModule::createComponent(Field& sourceField, int componentIndex)
+{
+	return FieldComponent(Cmiss_field_module_create_component(id,
+		sourceField.getId(), componentIndex));
+}
+
+inline FieldConcatenate FieldModule::createConcatenate(int numberOfSourceFields, Field **sourceFields)
+{
+	Cmiss_field_id concatenateField = NULL;
+	if (numberOfSourceFields > 0)
+	{
+		Cmiss_field_id *source_fields = new Cmiss_field_id[numberOfSourceFields];
+		for (int i = 0; i < numberOfSourceFields; i++)
+		{
+			source_fields[i] = sourceFields[i]->getId();
+		}
+		concatenateField = Cmiss_field_module_create_concatenate(id, numberOfSourceFields, source_fields);
+		delete[] source_fields;
+	}
+	return FieldConcatenate(concatenateField);
+}
+
+}  // namespace Zn
+
+#endif /* __FIELD_TYPES_COMPOSITE_HPP__ */

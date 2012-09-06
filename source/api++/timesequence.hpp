@@ -1,5 +1,5 @@
 /***************************************************************************//**
- * FILE : CmissFieldTypesImage.hpp
+ * FILE : timesequence.hpp
  */
 /* ***** BEGIN LICENSE BLOCK *****
  * Version: MPL 1.1/GPL 2.0/LGPL 2.1
@@ -14,11 +14,11 @@
  * for the specific language governing rights and limitations under the
  * License.
  *
- * The Original Code is cmgui.
+ * The Original Code is libZinc.
  *
  * The Initial Developer of the Original Code is
  * Auckland Uniservices Ltd, Auckland, New Zealand.
- * Portions created by the Initial Developer are Copyright (C) 2010
+ * Portions created by the Initial Developer are Copyright (C) 2012
  * the Initial Developer. All Rights Reserved.
  *
  * Contributor(s):
@@ -36,44 +36,67 @@
  * the terms of any one of the MPL, the GPL or the LGPL.
  *
  * ***** END LICENSE BLOCK ***** */
-#ifndef __CMISS_FIELD_TYPES_IMAGE_HPP__
-#define __CMISS_FIELD_TYPES_IMAGE_HPP__
+#ifndef __TIME_SEQUENCE_HPP__
+#define __TIME_SEQUENCE_HPP__
 
 extern "C" {
-#include "api/cmiss_field_image.h"
+#include "api/cmiss_time_sequence.h"
 }
-#include "api++/CmissField.hpp"
 
-namespace Cmiss
+namespace Zn
 {
 
-class FieldImage : public Field
+class TimeSequence
 {
+protected:
+	Cmiss_time_sequence_id id;
+
 public:
-	// takes ownership of C-style field reference
-	FieldImage(Cmiss_field_image_id field_image_id) :
-		Field(reinterpret_cast<Cmiss_field_id>(field_image_id))
-	{ }
 
-	// casting constructor: must check isValid()
-	FieldImage(Field& field) :
-		Field(reinterpret_cast<Cmiss_field_id>(Cmiss_field_cast_image(field.getId())))
-	{	}
+	TimeSequence() : id(NULL)
+	{  }
 
-	int readFile(const char *fileName)
+	// takes ownership of C-style region reference
+	TimeSequence(Cmiss_time_sequence_id in_time_sequence_id) :
+		id(in_time_sequence_id)
+	{  }
+
+	TimeSequence(const TimeSequence& timeSequence) :
+		id(Cmiss_time_sequence_access(timeSequence.id))
+	{  }
+
+	TimeSequence& operator=(const TimeSequence& timeSequence)
 	{
-		return Cmiss_field_image_read_file(
-			reinterpret_cast<Cmiss_field_image_id>(id), fileName);
+		Cmiss_time_sequence_id temp_id = Cmiss_time_sequence_access(timeSequence.id);
+		if (NULL != id)
+		{
+			Cmiss_time_sequence_destroy(&id);
+		}
+		id = temp_id;
+		return *this;
 	}
 
-	int writeFile(const char *fileName) const
+	~TimeSequence()
 	{
-		return Cmiss_field_image_write_file(
-			reinterpret_cast<Cmiss_field_image_id>(id), fileName);
+		if (NULL != id)
+		{
+			Cmiss_time_sequence_destroy(&id);
+		}
+	}
+
+	Cmiss_time_sequence_id getId()
+	{
+		return id;
+	}
+
+	int setValue(int timeIndex, double time)
+	{
+		return Cmiss_time_sequence_set_value(id, timeIndex, time);
+
 	}
 
 };
 
-} // namespace Cmiss
+}  // namespace Zn
 
-#endif /* __CMISS_FIELD_TYPES_IMAGE_HPP__ */
+#endif /* __TIME_KEEPER_HPP__ */

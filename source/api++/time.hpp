@@ -1,5 +1,5 @@
 /***************************************************************************//**
- * FILE : CmissFieldTypesTrigonometry.hpp
+ * FILE : time.hpp
  */
 /* ***** BEGIN LICENSE BLOCK *****
  * Version: MPL 1.1/GPL 2.0/LGPL 2.1
@@ -14,11 +14,11 @@
  * for the specific language governing rights and limitations under the
  * License.
  *
- * The Original Code is cmgui.
+ * The Original Code is libZinc.
  *
  * The Initial Developer of the Original Code is
  * Auckland Uniservices Ltd, Auckland, New Zealand.
- * Portions created by the Initial Developer are Copyright (C) 2010
+ * Portions created by the Initial Developer are Copyright (C) 2012
  * the Initial Developer. All Rights Reserved.
  *
  * Contributor(s):
@@ -36,30 +36,85 @@
  * the terms of any one of the MPL, the GPL or the LGPL.
  *
  * ***** END LICENSE BLOCK ***** */
-#ifndef __CMISS_FIELD_TYPES_TRIGONOMETRY_HPP__
-#define __CMISS_FIELD_TYPES_TRIGONOMETRY_HPP__
+#ifndef __TIME_HPP__
+#define __TIME_HPP__
 
 extern "C" {
-#include "api/cmiss_field_trigonometry.h"
+#include "api/cmiss_time.h"
 }
-#include "api++/CmissField.hpp"
 
-// following should be defined in api/cmiss_field_trigonometry.h:
-struct Cmiss_field_sin;
-typedef struct Cmiss_field_sin *Cmiss_field_sin_id;
-
-namespace Cmiss
+namespace Zn
 {
-
-class FieldSin : public Field
+class TimeNotifier;
+/*
+typedef int (*Time_notifier_callback)(Cmiss_time_notifier_id time_notifier,
+	double current_time, void *user_data);
+*/
+class TimeNotifier
 {
+protected:
+	Cmiss_time_notifier_id id;
+
 public:
-	// takes ownership of C-style field reference
-	FieldSin(Cmiss_field_sin_id field_sin_id) :
-		Field(reinterpret_cast<Cmiss_field_id>(field_sin_id))
-	{ }
+
+	TimeNotifier() : id(NULL)
+	{  }
+
+	// takes ownership of C-style region reference
+	TimeNotifier(Cmiss_time_notifier_id in_time_notifier_id) :
+		id(in_time_notifier_id)
+	{  }
+
+	TimeNotifier(const TimeNotifier& time_notifier) :
+		id(Cmiss_time_notifier_access(time_notifier.id))
+	{  }
+
+	TimeNotifier& operator=(const TimeNotifier& time_notifierNotifier)
+	{
+		Cmiss_time_notifier_id temp_id = Cmiss_time_notifier_access(time_notifierNotifier.id);
+		if (NULL != id)
+		{
+			Cmiss_time_notifier_destroy(&id);
+		}
+		id = temp_id;
+		return *this;
+	}
+
+	~TimeNotifier()
+	{
+		if (NULL != id)
+		{
+			Cmiss_time_notifier_destroy(&id);
+		}
+	}
+
+	Cmiss_time_notifier_id getId()
+	{
+		return id;
+	}
+/*
+	int addCallback(Time_notifier_callback callback, void *user_data)
+	{
+		return Cmiss_time_notifier_add_callback(id, callback, user_data);
+	}
+
+	int removeCallback(Time_notifier_callback callback, void *user_data)
+	{
+		return Cmiss_time_notifier_remove_callback(id, callback, user_data);
+	}
+*/
+	int setFrequency(double frequency)
+	{
+		return Cmiss_time_notifier_regular_set_frequency(id, frequency);
+	}
+
+	int setOffset(double timeOffset)
+	{
+		return Cmiss_time_notifier_regular_set_offset(id, timeOffset);
+	}
+
 };
 
-} // namespace Cmiss
+}  // namespace Zn
 
-#endif /* __CMISS_FIELD_TYPES_TRIGONOMETRY_HPP__ */
+#endif /* __TIME_HPP__ */

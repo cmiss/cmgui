@@ -1,5 +1,5 @@
 /***************************************************************************//**
- * FILE : CmissContext.hpp
+ * FILE : context.hpp
  */
 /* ***** BEGIN LICENSE BLOCK *****
  * Version: MPL 1.1/GPL 2.0/LGPL 2.1
@@ -14,7 +14,7 @@
  * for the specific language governing rights and limitations under the
  * License.
  *
- * The Original Code is cmgui.
+ * The Original Code is libZinc.
  *
  * The Initial Developer of the Original Code is
  * Auckland Uniservices Ltd, Auckland, New Zealand.
@@ -37,31 +37,32 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-#ifndef __CMISS_CONTEXT_HPP__
-#define __CMISS_CONTEXT_HPP__
+#ifndef __CONTEXT_HPP__
+#define __CONTEXT_HPP__
 
 extern "C" {
 #include "api/cmiss_context.h"
 }
+#include "api++/region.hpp"
+#include "api++/graphicsmodule.hpp"
+#include "api++/timekeeper.hpp"
 
-namespace Cmiss
+namespace Zn
 {
-
-class Region;
-class GraphicsModule;
 
 class Context
 {
 private:
+
+	Context() : id(NULL)
+	{ }
+
 	Cmiss_context_id id;
 
 public:
 	// Creates a new Cmiss Context instance
 	Context(const char *contextName) :
 		id(Cmiss_context_create(contextName))
-	{ }
-
-	Context() : id(NULL)
 	{ }
 
 	// takes ownership of C-style context reference
@@ -73,6 +74,14 @@ public:
 		id(Cmiss_context_access(context.id))
 	{ }
 
+	~Context()
+	{
+		if (NULL != id)
+		{
+			Cmiss_context_destroy(&id);
+		}
+	}
+
 	Context& operator=(const Context& context)
 	{
 		Cmiss_context_id temp_id = Cmiss_context_access(context.id);
@@ -83,52 +92,49 @@ public:
 		id = temp_id;
 		return *this;
 	}
-	
-	~Context()
+
+	Cmiss_context_id getId()
 	{
-		if (NULL != id)
-		{
-			Cmiss_context_destroy(&id);
-		}
+		return id;
 	}
 
-	bool isValid() const
+	int enableUserInterface()
 	{
-		return (NULL != id);
+		return Cmiss_context_enable_user_interface(id, NULL);
 	}
 
-	int enableUserInterface() const
-	{
-		const char *name = "cmgui";
-		return Cmiss_context_enable_user_interface(id, 1, &name);
-	}
-
-	int executeCommand(const char *command) const
+	int executeCommand(const char *command)
 	{
 		return Cmiss_context_execute_command(id, command);
 	}
 
-	template<class RegionType> RegionType getDefaultRegion() const
+	Region getDefaultRegion()
 	{
 		return Region(Cmiss_context_get_default_region(id));
 	}
 
-	template<class RegionType> RegionType createRegion() const
+	Region createRegion()
 	{
 		return Region(Cmiss_context_create_region(id));
 	}
 
-	template<class GraphicsModuleType> GraphicsModuleType getDefaultGraphicsModule() const
+	GraphicsModule getDefaultGraphicsModule()
 	{
 		return GraphicsModule(Cmiss_context_get_default_graphics_module(id));
 	}
 
-	int runMainLoop() const
+	TimeKeeper getDefaultTimeKeeper()
+	{
+		return TimeKeeper(Cmiss_context_get_default_time_keeper(id));
+	}
+
+	int runMainLoop()
 	{
 		return Cmiss_context_run_main_loop(id);
 	}
 };
 
-} // namespace Cmiss
+}  // namespace Zn
 
-#endif /* __CMISS_CONTEXT_HPP__ */
+
+#endif /* __CONTEXT_HPP__ */

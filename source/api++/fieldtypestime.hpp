@@ -1,5 +1,5 @@
 /***************************************************************************//**
- * FILE : CmissFieldTypesComposite.hpp
+ * FILE : fieldtypestime.hpp
  */
 /* ***** BEGIN LICENSE BLOCK *****
  * Version: MPL 1.1/GPL 2.0/LGPL 2.1
@@ -14,12 +14,12 @@
  * for the specific language governing rights and limitations under the
  * License.
  *
- * The Original Code is cmgui.
+ * The Original Code is libZinc.
  *
  * The Initial Developer of the Original Code is
  * Auckland Uniservices Ltd, Auckland, New Zealand.
- * Portions created by the Initial Developer are Copyright (C) 2010
- * the Initial Developer. All Rights Reserved.
+ * Portions created by the Initial Developer are Copyright (C) 2012
+ * the Initial Developer. All Rights Reserved.cmgui
  *
  * Contributor(s):
  *
@@ -36,17 +36,53 @@
  * the terms of any one of the MPL, the GPL or the LGPL.
  *
  * ***** END LICENSE BLOCK ***** */
-#ifndef __CMISS_FIELD_TYPES_COMPOSITE_HPP__
-#define __CMISS_FIELD_TYPES_COMPOSITE_HPP__
+#ifndef __FIELD_TYPES_TIME_HPP__
+#define __FIELD_TYPES_TIME_HPP__
 
 extern "C" {
-#include "api/cmiss_field_composite.h"
+#include "api/cmiss_field_time.h"
 }
-#include "api++/CmissField.hpp"
+#include "api++/field.hpp"
+#include "api++/timekeeper.hpp"
 
-namespace Cmiss
+namespace Zn
 {
 
-} // namespace Cmiss
+class FieldTimeLookup : public Field
+{
+public:
 
-#endif /* __CMISS_FIELD_TYPES_COMPOSITE_HPP__ */
+	FieldTimeLookup() : Field(NULL)
+	{	}
+
+	FieldTimeLookup(Cmiss_field_id field_id) : Field(field_id)
+	{	}
+
+};
+
+class FieldTimeValue : public Field
+{
+public:
+
+	FieldTimeValue() : Field(NULL)
+	{	}
+
+	FieldTimeValue(Cmiss_field_id field_id) : Field(field_id)
+	{	}
+
+};
+
+inline FieldTimeLookup FieldModule::createTimeLookup(Field& sourceField, Field& timeField)
+{
+	return FieldTimeLookup(Cmiss_field_module_create_time_lookup(id,
+		sourceField.getId(), timeField.getId()));
+}
+
+inline FieldTimeValue FieldModule::createTimeValue(TimeKeeper& timeKeeper)
+{
+	return FieldTimeValue(Cmiss_field_module_create_time_value(id, timeKeeper.getId()));
+}
+
+}  // namespace Zn
+
+#endif /* __FIELD_TYPES_TIME_HPP__ */

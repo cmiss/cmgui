@@ -1,5 +1,5 @@
 /***************************************************************************//**
- * FILE : CmissFieldTypesFiniteElement.hpp
+ * FILE : fieldtypescoordinatetransformation.hpp
  */
 /* ***** BEGIN LICENSE BLOCK *****
  * Version: MPL 1.1/GPL 2.0/LGPL 2.1
@@ -14,11 +14,11 @@
  * for the specific language governing rights and limitations under the
  * License.
  *
- * The Original Code is cmgui.
+ * The Original Code is libZinc.
  *
  * The Initial Developer of the Original Code is
  * Auckland Uniservices Ltd, Auckland, New Zealand.
- * Portions created by the Initial Developer are Copyright (C) 2011
+ * Portions created by the Initial Developer are Copyright (C) 2012
  * the Initial Developer. All Rights Reserved.
  *
  * Contributor(s):
@@ -36,29 +36,56 @@
  * the terms of any one of the MPL, the GPL or the LGPL.
  *
  * ***** END LICENSE BLOCK ***** */
-#ifndef __CMISS_FIELD_TYPES_FINITE_ELEMENT_HPP__
-#define __CMISS_FIELD_TYPES_FINITE_ELEMENT_HPP__
+#ifndef __FIELD_TYPES_COORDINATE_TRANSFORMATION_HPP__
+#define __FIELD_TYPES_COORDINATE_TRANSFORMATION_HPP__
 
 extern "C" {
-#include "api/cmiss_field_finite_element.h"
+#include "api/cmiss_field_coordinate_transformation.h"
 }
-#include "api++/CmissField.hpp"
+#include "api++/field.hpp"
+#include "api++/fieldmodule.hpp"
 
-namespace Cmiss
+namespace Zn
 {
-class FieldFiniteElement : public Field
+
+class FieldCoordinateTransformation: public Field
 {
 public:
-	// takes ownership of C-style field reference
-	FieldFiniteElement(Cmiss_field_finite_element_id field_finite_element_id) :
-		Field(reinterpret_cast<Cmiss_field_id>(field_finite_element_id))
+
+	FieldCoordinateTransformation() : Field(NULL)
 	{ }
 
-	FieldFiniteElement(Field& field) :
-		Field(reinterpret_cast<Cmiss_field_id>(Cmiss_field_cast_finite_element(field.getId())))
-	{	}
+	FieldCoordinateTransformation(Cmiss_field_id field_id) : Field(field_id)
+	{ }
+
 };
 
-} // namespace Cmiss
+class FieldVectorCoordinateTransformation: public Field
+{
+public:
 
-#endif /* __CMISS_FIELD_TYPES_FINITE_ELEMENT_HPP__ */
+	FieldVectorCoordinateTransformation() : Field(NULL)
+	{ }
+
+	FieldVectorCoordinateTransformation(Cmiss_field_id field_id) : Field(field_id)
+	{ }
+
+};
+
+inline FieldCoordinateTransformation FieldModule::createCoordinateTransformation(
+	Field& sourceField)
+{
+	return FieldCoordinateTransformation(Cmiss_field_module_create_coordinate_transformation(
+		id, sourceField.getId()));
+}
+
+inline FieldVectorCoordinateTransformation FieldModule::createVectorCoordinateTransformation(
+	Field& vectorField, Field& coordinateField)
+{
+	return FieldVectorCoordinateTransformation(Cmiss_field_module_create_vector_coordinate_transformation(id,
+		vectorField.getId(), coordinateField.getId()));
+}
+
+}  // namespace Zn
+
+#endif /* __FIELD_TYPES_COORDINATE_TRANSFORMATION_HPP__ */
