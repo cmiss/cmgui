@@ -1,7 +1,6 @@
 /*******************************************************************************
- * CmissContext.i
+ * ZnTimeSequence.i
  * 
- * Swig interface file for cmgui context.
  */
 /* ***** BEGIN LICENSE BLOCK *****
  * Version: MPL 1.1/GPL 2.0/LGPL 2.1
@@ -16,11 +15,11 @@
  * for the specific language governing rights and limitations under the
  * License.
  *
- * The Original Code is cmgui.
+ * The Original Code is libZinc.
  *
  * The Initial Developer of the Original Code is
  * Auckland Uniservices Ltd, Auckland, New Zealand.
- * Portions created by the Initial Developer are Copyright (C) 2010
+ * Portions created by the Initial Developer are Copyright (C) 2012
  * the Initial Developer. All Rights Reserved.
  *
  * Contributor(s):
@@ -39,24 +38,10 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-%module Context
+%module TimeSequence
 
 %{
-#include "api++/CmissContext.hpp"
-#include "api++/CmissRegion.hpp"
-#include "api++/CmissGraphicsModule.hpp"
+#include "api++/timesequence.hpp"
 %}
 
-%include "api++/CmissContext.hpp"
-
-%extend Cmiss::Context {
-	%template(getDefaultRegion) getDefaultRegion<Cmiss::Region>;
-};
-
-%extend Cmiss::Context {
-	%template(createRegion) createRegion<Cmiss::Region>;
-};
-
-%extend Cmiss::Context {
-	%template(getDefaultGraphicsModule) getDefaultGraphicsModule<Cmiss::GraphicsModule>;
-};
+%include "api++/timesequence.hpp"

@@ -1,10 +1,9 @@
 /*******************************************************************************
- * CmissGraphicsModule.i
- * 
- * Swig interface file for cmiss graphics module.
+ * ZnGraphicsFilter.i
+ *
  */
 /* ***** BEGIN LICENSE BLOCK *****
- * Version: MPL 1.1/GPL 2.0/LGPL 2.1
+ * Version: MPL 1.1/GPL 2.0/LGPL 2.1mesh_name
  *
  * The contents of this file are subject to the Mozilla Public License Version
  * 1.1 (the "License"); you may not use this file except in compliance with
@@ -16,11 +15,11 @@
  * for the specific language governing rights and limitations under the
  * License.
  *
- * The Original Code is cmgui.
+ * The Original Code is libZinc.
  *
  * The Initial Developer of the Original Code is
  * Auckland Uniservices Ltd, Auckland, New Zealand.
- * Portions created by the Initial Developer are Copyright (C) 2010
+ * Portions created by the Initial Developer are Copyright (C) 2012
  * the Initial Developer. All Rights Reserved.
  *
  * Contributor(s):
@@ -39,11 +38,13 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-%module GraphicsModule
+%module GraphicsFilter
+
+%ignore Graphic;
 
 %{
-#include "api++/CmissGraphicsModule.hpp"
-#include "api++/CmissMaterial.hpp"
+#include "api++/graphicsfilter.hpp"
 %}
 
-%include "api++/CmissGraphicsModule.hpp"
+%include "api++/graphic.hpp"
+%include "api++/graphicsfilter.hpp"

@@ -1,7 +1,6 @@
 /*******************************************************************************
- * CmissMaterial.i
+ * ZnStream.i
  * 
- * Swig interface file for cmiss material.
  */
 /* ***** BEGIN LICENSE BLOCK *****
  * Version: MPL 1.1/GPL 2.0/LGPL 2.1
@@ -16,11 +15,11 @@
  * for the specific language governing rights and limitations under the
  * License.
  *
- * The Original Code is cmgui.
+ * The Original Code is libZinc.
  *
  * The Initial Developer of the Original Code is
  * Auckland Uniservices Ltd, Auckland, New Zealand.
- * Portions created by the Initial Developer are Copyright (C) 2010
+ * Portions created by the Initial Developer are Copyright (C) 2012
  * the Initial Developer. All Rights Reserved.
  *
  * Contributor(s):
@@ -39,10 +38,10 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-%module Material
+%module Stream
 
 %{
-#include "api++/CmissMaterial.hpp"
+#include "api++/stream.hpp"
 %}
 
-%include "api++/CmissMaterial.hpp"
+%include "api++/stream.hpp"

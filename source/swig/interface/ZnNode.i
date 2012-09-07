@@ -1,10 +1,9 @@
 /*******************************************************************************
- * CmissRegion.i
+ * ZnNode.i
  * 
- * Swig interface file for cmgui region API.
  */
 /* ***** BEGIN LICENSE BLOCK *****
- * Version: MPL 1.1/GPL 2.0/LGPL 2.1
+ * Version: MPL 1.1/GPL 2.0/LGPL 2.1mesh_name
  *
  * The contents of this file are subject to the Mozilla Public License Version
  * 1.1 (the "License"); you may not use this file except in compliance with
@@ -16,11 +15,11 @@
  * for the specific language governing rights and limitations under the
  * License.
  *
- * The Original Code is cmgui.
+ * The Original Code is libZinc.
  *
  * The Initial Developer of the Original Code is
  * Auckland Uniservices Ltd, Auckland, New Zealand.
- * Portions created by the Initial Developer are Copyright (C) 2010
+ * Portions created by the Initial Developer are Copyright (C) 2012
  * the Initial Developer. All Rights Reserved.
  *
  * Contributor(s):
@@ -39,15 +38,14 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-%module Region
+%module Node
+
+%ignore Field;
 
 %{
-#include "api++/CmissRegion.hpp"
-#include "api++/CmissFieldModule.hpp"
+#include "api++/node.hpp"
+#include "api++/field.hpp"
 %}
 
-%include "api++/CmissRegion.hpp"
-
-%extend Cmiss::Region {
-	%template(getFieldModule) getFieldModule<Cmiss::FieldModule>;
-};
+%include "api++/field.hpp"
+%include "api++/node.hpp"

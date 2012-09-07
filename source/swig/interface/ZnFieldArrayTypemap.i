@@ -1,7 +1,7 @@
 /*******************************************************************************
- * CmissFieldModule.i
+ * ZnFieldArrayTypemap.i
  * 
- * Swig interface file for wrapping api functions in api/CmissFieldModule.hpp
+ * Swig interface file for void to field array.
  */
 /* ***** BEGIN LICENSE BLOCK *****
  * Version: MPL 1.1/GPL 2.0/LGPL 2.1
@@ -16,11 +16,11 @@
  * for the specific language governing rights and limitations under the
  * License.
  *
- * The Original Code is cmgui.
+ * The Original Code is libZinc.
  *
  * The Initial Developer of the Original Code is
  * Auckland Uniservices Ltd, Auckland, New Zealand.
- * Portions created by the Initial Developer are Copyright (C) 2010
+ * Portions created by the Initial Developer are Copyright (C) 2012
  * the Initial Developer. All Rights Reserved.
  *
  * Contributor(s):
@@ -39,19 +39,40 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-%module FieldModule
+%typemap(in) (int numberOfSourceFields, void **sourceFieldsVoid)
+{
+	printf("called here\n");
+	/* Check if is a list */
+	if (PyList_Check($input)) 
+	{
+		$1 = PyList_Size($input);
+		$2 = (void **) malloc(($1)*sizeof(void *));
+		for (int i = 0; i < $1; i++) 
+		{
+			void *temp_pointer;
+			PyObject *o = PyList_GetItem($input,i);
+			if (SWIG_ConvertPtr(o, (void **) &temp_pointer, $descriptor(Zn::Field *), SWIG_POINTER_EXCEPTION) == 0)
+				$2[i] = temp_pointer;
+			else
+			{
+				PyErr_SetString(PyExc_TypeError,"Failed to convert type");
+				return NULL;
+			}
+		}
+	}
+	else
+	{
+		PyErr_SetString(PyExc_TypeError,"not a list");
+		return NULL;
+	}
+}
 
-%{
-#include "api++/CmissFieldModule.hpp"
-%}
+%typemap(freearg) (int numberOfSourceFields, void **sourceFieldsVoid)
+{
+	free($2);
+}
 
-%include "api++/CmissField.hpp"
-%include "api++/CmissFieldTypesArithmeticOperators.hpp"
-%include "api++/CmissFieldTypesComposite.hpp"
-%include "api++/CmissFieldTypesImage.hpp"
-%include "api++/CmissFieldTypesTrigonometry.hpp"
-%include "api++/CmissFieldModule.hpp"
-
-%extend Cmiss::Field {
-	%template(castImage) cast<Cmiss::FieldImage>;
-};
+%typemap(typecheck) (int numberOfSourceFields, void **sourceFieldsVoid)
+{
+	$1 = PyList_Check($input) ? 1 : 0;
+}
