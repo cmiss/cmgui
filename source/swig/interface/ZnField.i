@@ -42,27 +42,7 @@
 %module Field
 %include "ZnFieldArrayTypemap.i"
 %include "ZnDoubleValuesArrayTypemap.i"
-
-
-%extend Zn::Field
-{
-	Zn::FieldAdd operator+(Zn::Field& operand)
-	{
-    	Zn::FieldModule fieldModule(*($self));
-    	return Zn::FieldAdd(Cmiss_field_module_create_add(fieldModule.getId(),
- 			$self->getId(), operand.getId()));
-	}
-};
-
-%extend Zn::Field
-{
-	Zn::FieldSubtract operator-(Zn::Field& operand)
-	{
-    	Zn::FieldModule fieldModule(*($self));
-    	return Zn::FieldSubtract(Cmiss_field_module_create_subtract(fieldModule.getId(),
- 			$self->getId(), operand.getId()));
-	}
-};
+%include "ZnFieldOperators.i"
 
 %ignore FieldCache;
 %ignore ElementBasis;
