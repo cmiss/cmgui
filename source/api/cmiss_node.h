@@ -377,6 +377,20 @@ int Cmiss_node_template_define_field(Cmiss_node_template_id node_template,
 	Cmiss_field_id field);
 
 /***************************************************************************//**
+ * Defines the field on the node_template based on its definition in the
+ * supplied node.
+ *
+ * @param node_template  Node template to modify.
+ * @param field  The field to define. May be finite_element, stored_string or
+ * stored_mesh_location type only.
+ * @param node  The node to obtain the field definition from.
+ * @return  Status CMISS_OK on success, any other value on failure.
+ */
+int Cmiss_node_template_define_field_from_node(
+	Cmiss_node_template_id node_template, Cmiss_field_id field,
+	Cmiss_node_id node);
+
+/***************************************************************************//**
  * Adds storage for the supplied derivative type for the component/s of the
  * field in the node template.
  * Must have first called Cmiss_node_template_define_field for field.
@@ -415,6 +429,8 @@ int Cmiss_node_template_define_time_sequence(
 /***************************************************************************//**
  * Adds storage for multiple versions of nodal values and derivatives for the
  * component/s of the field in the node template.
+ * Note: currently limited to having the same number of versions for all values
+ * and derivatives in a given component.
  * Must have first called Cmiss_node_template_define_field for field.
  *
  * @param node_template  Node template to modify.
@@ -428,6 +444,51 @@ int Cmiss_node_template_define_time_sequence(
  */
 int Cmiss_node_template_define_versions(Cmiss_node_template_id node_template,
 	Cmiss_field_id field, int component_number, int number_of_versions);
+
+/***************************************************************************//**
+ * Returns the number of versions defined for a given component of the field in
+ * the node template.
+ *
+ * @param node_template  Node template to query.
+ * @param field  The field to get number of versions for. May be finite_element
+ * type only.
+ * @param component_number  The component from 1 to the number of field
+ * components, or -1 to get maximum number of versions in any component.
+ * @return  Number of versions for component of field, or maximum in any
+ * component if component_number is -1). Returns 0 if field not defined or
+ * invalid arguments are supplied.
+ */
+int Cmiss_node_template_get_number_of_versions(Cmiss_node_template_id node_template,
+	Cmiss_field_id field, int component_number);
+
+/***************************************************************************//**
+ * Returns the time sequence defined for field in node_template, if any.
+ *
+ * @param node_template  Node template to query.
+ * @param field  The field to get time sequence for. May be finite_element
+ * type only.
+ * @return  Handle to time sequence object if defined for field, or NULL if none
+ * or error. Up to caller to destroy returned handle.
+ */
+Cmiss_time_sequence_id Cmiss_node_template_get_time_sequence(
+	Cmiss_node_template_id node_template, Cmiss_field_id field);
+
+/***************************************************************************//**
+ * Returns whether a nodal derivative is defined for a component of the field
+ * in the node template.
+ *
+ * @param node_template  Node template to query.
+ * @param field  The field to check derivatives for. May be finite_element
+ * type only.
+ * @param component_number  The component from 1 to the number of field
+ * components, or -1 to check if *any* component has the nodal derivative.
+ * @param derivative_type  The type of nodal derivative to check.
+ * @return  1 if derivative_type is defined for component_number of field (or
+ * for any component if component_number is -1), 0 if not.
+ */
+int Cmiss_node_template_has_derivative(Cmiss_node_template_id node_template,
+	Cmiss_field_id field, int component_number,
+	enum Cmiss_nodal_value_type derivative_type);
 
 /***************************************************************************//**
  * Sets field to be undefined when next merged into an existing node. Has no

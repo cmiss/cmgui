@@ -53,7 +53,6 @@ extern "C" {
 extern "C" {
 #include "general/cmiss_set.hpp"
 #include "general/debug.h"
-#include "general/mystring.h"
 #include "region/cmiss_region.h"
 #include "user_interface/message.h"
 }

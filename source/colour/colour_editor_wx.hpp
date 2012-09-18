@@ -50,7 +50,6 @@ extern "C" {
 #include <math.h>
 #include "graphics/colour.h"
 #include "general/debug.h"
-#include "general/mystring.h"
 #include "user_interface/message.h"
 }
 #include "wx/wx.h"

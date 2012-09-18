@@ -54,6 +54,7 @@ extern "C"
 #include "context/context.h"
 #include "context/user_interface_module.h"
 #include "general/debug.h"
+#include "general/mystring.h"
 #include "user_interface/message.h"
 }
 

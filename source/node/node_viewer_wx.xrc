@@ -44,26 +44,8 @@
 	 		  <object class = "wxBoxSizer">
 		  		  <orient>wxHORIZONTAL</orient>
 				  <object class ="sizeritem">
-					  <object class = "wxButton"  name = "OKButton">
-					     <label>OK</label>
-							 <size>-1,26</size>
-					  </object>
-				  </object>
-				  <object class ="sizeritem">
-					  <object class = "wxButton"  name = "ApplyButton">
-					     <label>Apply</label>
-							 <size>-1,26</size>
-					  </object>
-				  </object>
-				  <object class ="sizeritem">
-					  <object class = "wxButton"  name = "RevertButton">
-					     <label>Revert</label>
-							 <size>-1,26</size>
-					  </object>
-				  </object>
-				  <object class ="sizeritem">
-					  <object class = "wxButton"  name = "CancelButton">
-					     <label>Cancel</label>
+					  <object class = "wxButton"  name = "CloseButton">
+					     <label>Close</label>
 							 <size>-1,26</size>
 					  </object>
 				  </object>

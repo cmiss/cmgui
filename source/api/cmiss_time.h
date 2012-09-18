@@ -103,6 +103,14 @@ int Cmiss_time_notifier_remove_callback(Cmiss_time_notifier_id time_notifier,
   Cmiss_time_notifier_callback callback, void *user_data);
 
 /***************************************************************************//**
+ * Gets the current time from the time notifier.
+ *
+ * @param time_notifier  Handle to time notifier.
+ * @return  Current time.
+ */
+double Cmiss_time_notifier_get_current_time(Cmiss_time_notifier_id time_notifier);
+
+/***************************************************************************//**
  * This controls the rate which the time depedent object is called back.
  * The default value is 10 which means time notifier will receive 10 callbacks
  * per unit of time in the time keeper. 

@@ -275,7 +275,7 @@ public:
 		}
 		else
 		{
-			for (int i = valueCaches.size(); i <= cacheIndex; ++i)
+			for (int i = static_cast<int>(valueCaches.size()); i <= cacheIndex; ++i)
 				valueCaches.push_back(0);
 		}
 		valueCaches[cacheIndex] = valueCache;

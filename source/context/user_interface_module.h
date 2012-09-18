@@ -46,7 +46,6 @@ DESCRIPTION :
 
 #include "comfile/comfile.h"
 #include "general/debug.h"
-#include "general/mystring.h"
 #include "graphics/colour.h"
 #include "graphics/graphics_window.h"
 #include "user_interface/event_dispatcher.h"

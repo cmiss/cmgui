@@ -2181,7 +2181,6 @@ Executes a GFX CREATE NODE_VIEWER command.
 	const char *current_token;
 	int return_code;
 	struct Cmiss_command_data *command_data;
-	struct Time_object *time_object;
 
 	ENTER(gfx_create_node_viewer);
 	USE_PARAMETER(dummy_to_be_modified);
@@ -2212,33 +2211,19 @@ Executes a GFX CREATE NODE_VIEWER command.
 				}
 				else
 				{
-					if ((time_object = Time_object_create_regular(
-								 /*update_frequency*/10.0, /*time_offset*/0.0))
-						&&(Time_keeper_add_time_object(command_data->default_time_keeper,
-								time_object)))
+					if (NULL != (command_data->node_viewer = Node_viewer_create(
+						&(command_data->node_viewer),
+						"Node Viewer",
+						command_data->root_region, /*use_data*/0,
+						command_data->graphics_module,
+						command_data->default_time_keeper)))
 					{
-						Time_object_set_name(time_object, "node_viewer_time");
-						if (NULL != (command_data->node_viewer = CREATE(Node_viewer)(
-							&(command_data->node_viewer),
-							"Node Viewer",
-							(struct FE_node *)NULL,
-							command_data->root_region, /*use_data*/0,
-							time_object)))
-						{
-							return_code=1;
-						}
-						else
-						{
-							return_code=0;
-						}
-						DEACCESS(Time_object)(&time_object);
+						return_code=1;
 					}
 					else
 					{
-						display_message(ERROR_MESSAGE,
-							"gfx_create_node_viewer.  Unable to make time object.");
 						return_code=0;
-					}						
+					}
 				}
 			}
 			else
@@ -2273,7 +2258,6 @@ Executes a GFX CREATE DATA_VIEWER command.
 	const char *current_token;
 	int return_code;
 	struct Cmiss_command_data *command_data;
-	struct Time_object *time_object;
 
 	ENTER(gfx_create_data_viewer);
 	USE_PARAMETER(dummy_to_be_modified);
@@ -2304,33 +2288,19 @@ Executes a GFX CREATE DATA_VIEWER command.
 				}
 				else
 				{
-					if ((time_object = Time_object_create_regular(
-								 /*update_frequency*/10.0, /*time_offset*/0.0))
-						&&(Time_keeper_add_time_object(command_data->default_time_keeper,
-									time_object)))
+					if (NULL != (command_data->node_viewer = Node_viewer_create(
+						&(command_data->node_viewer),
+						"Data Viewer",
+						command_data->root_region, /*use_data*/1,
+						command_data->graphics_module,
+						command_data->default_time_keeper)))
 					{
-						Time_object_set_name(time_object, "data_viewer_time");
-						if (NULL != (command_data->data_viewer = CREATE(Node_viewer)(
-							&(command_data->data_viewer),
-							"Data Viewer",
-							(struct FE_node *)NULL,
-							command_data->root_region, /*use_data*/1,
-							time_object)))
-						{
-							return_code=1;
-						}
-						else
-						{
-							return_code=0;
-						}
-						DEACCESS(Time_object)(&time_object);
+						return_code=1;
 					}
 					else
 					{
-						display_message(ERROR_MESSAGE,
-							"gfx_create_node_viewer.  Missing command_data");
 						return_code=0;
-					}						
+					}
 				}
 			}
 			else
@@ -18659,11 +18629,11 @@ NOTE: Do not call this directly: call Cmiss_command_data_destroy() to deaccess.
 		/* viewers */
 		if (command_data->data_viewer)
 		{
-			DESTROY(Node_viewer)(&(command_data->data_viewer));
+			Node_viewer_destroy(&(command_data->data_viewer));
 		}
 		if (command_data->node_viewer)
 		{
-			DESTROY(Node_viewer)(&(command_data->node_viewer));
+			Node_viewer_destroy(&(command_data->node_viewer));
 		}
 		if (command_data->element_point_viewer)
 		{
