@@ -41,12 +41,11 @@ Management routines for the comfile window.
  * the terms of any one of the MPL, the GPL or the LGPL.
  *
  * ***** END LICENSE BLOCK ***** */
-extern "C" {
 #include <stdio.h>
 #include <string.h>
-#if defined (BUILD_WITH_CMAKE)
+#if 1
 #include "configure/cmgui_configure.h"
-#endif /* defined (BUILD_WITH_CMAKE) */
+#endif /* defined (1) */
 #include "general/debug.h"
 #include "command/command.h"
 #include "general/indexed_list_private.h"
@@ -54,17 +53,14 @@ extern "C" {
 #include "general/mystring.h"
 #include "general/object.h"
 #include "user_interface/filedir.h"
-#include "user_interface/message.h"
+#include "general/message.h"
 #include "user_interface/user_interface.h"
-}
 #if defined (WX_USER_INTERFACE)
 #include "wx/wx.h"
 #include "wx/xrc/xmlres.h"
 #include <wx/fontdlg.h>
 #include "icon/cmiss_icon.xpm"
-extern "C" {
 #include "comfile/comfile_window_wx.h"
-}
 #include "comfile/comfile_window_wx.xrch"
 #endif /*defined (WX_USER_INTERFACE)*/
 
@@ -135,19 +131,19 @@ DECLARE_LOCAL_MANAGER_FUNCTIONS(Comfile_window)
 
 #if defined (WX_USER_INTERFACE)
 class wxComfileWindow : public wxFrame
-{	
+{
 	Comfile_window *comfile_window;
 	wxListBox *comfile_listbox;
 	wxButton *all_button, *selectedbutton, *close_button;
 	wxFrame *this_frame;
-	wxString blank;	 
+	wxString blank;
 	int number;
 	wxString selectedcommand;
 	wxFont comfile_font;
 	wxColour comfile_colour;
 public:
 
-	wxComfileWindow(Comfile_window *comfile_window): 
+	wxComfileWindow(Comfile_window *comfile_window):
 		comfile_window(comfile_window)
 	{
 		wxXmlInit_comfile_window_wx();
@@ -160,7 +156,7 @@ public:
 		char **command,*line, *temp_string, *command_string;
 		struct IO_stream *comfile;
 		int i,number_of_commands;
-		wxString blank = "";	 
+		wxString blank = wxT("");
 		if ((comfile_window->file_name)&&
 			(comfile=CREATE(IO_stream)(comfile_window->io_stream_package))&&
 			IO_stream_open_for_read(comfile, comfile_window->file_name))
@@ -205,7 +201,7 @@ public:
 						strcpy(temp_string, "comfile: ");
 						strcat(temp_string, comfile_window->name);
 						temp_string[(strlen(comfile_window->name) + 9)]='\0';
-						this_frame->SetTitle(temp_string);
+						this_frame->SetTitle(wxString::FromAscii(temp_string));
 						if (temp_string)
 						{
 							DEALLOCATE(temp_string);
@@ -226,7 +222,7 @@ public:
 			 display_message(ERROR_MESSAGE,
 					"identify_command_list.  Could not open file");
 		}
-		this_frame->SetSize(wxSize(800,600));		
+		this_frame->SetSize(wxSize(800,600));
 		this_frame->SetMinSize(wxSize(20,20));
 		Show();
 	};
@@ -258,7 +254,7 @@ public:
 			 fdata = FontDlg->GetFontData();
 			 font = fdata.GetChosenFont();
 			 comfile_listbox->SetFont(font);
-			 comfile_listbox->SetForegroundColour(fdata.GetColour()); 
+			 comfile_listbox->SetForegroundColour(fdata.GetColour());
 		}
 		this_frame = XRCCTRL(*this, "CmguiComfileWindow", wxFrame);
 	}
@@ -274,7 +270,7 @@ public:
 		{
 			/* retrieve the command string */
 			selectedcommand = comfile_listbox->GetString(selected_commands[0]);
-			char *command = duplicate_string(selectedcommand.c_str());
+			char *command = duplicate_string(selectedcommand.mb_str(wxConvUTF8));
 			Execute_command_execute_string(comfile_window->set_command, command);
 			DEALLOCATE(command);
 		}
@@ -291,7 +287,7 @@ public:
 		{
 			/* retrieve the command string */
 			selectedcommand = comfile_listbox->GetString(selected_commands[i]);
-			char *command = duplicate_string(selectedcommand.c_str());
+			char *command = duplicate_string(selectedcommand.mb_str(wxConvUTF8));
 			Execute_command_execute_string(comfile_window->execute_command, command);
 			DEALLOCATE(command);
 		}
@@ -308,7 +304,7 @@ public:
 		{
 			/* retrieve the command string */
 			selectedcommand = comfile_listbox->GetString(i);
-			char *command = duplicate_string(selectedcommand.c_str());
+			char *command = duplicate_string(selectedcommand.mb_str(wxConvUTF8));
 			Execute_command_execute_string(comfile_window->execute_command, command);
 			DEALLOCATE(command);
 		}
@@ -326,7 +322,7 @@ public:
 		{
 			/* retrieve the command string */
 			selectedcommand = comfile_listbox->GetString(selected_commands[i]);
-			char *command = duplicate_string(selectedcommand.c_str());
+			char *command = duplicate_string(selectedcommand.mb_str(wxConvUTF8));
 			Execute_command_execute_string(comfile_window->execute_command, command);
 			DEALLOCATE(command);
 		}
@@ -398,7 +394,7 @@ Creates the structures and retrieves a comfile window widget.
 #if defined (WX_USER_INTERFACE)
 			 comfile_window->wx_comfile_window = (wxComfileWindow *)NULL;
 			 wxLogNull logNo;
-			 comfile_window->wx_comfile_window = new 
+			 comfile_window->wx_comfile_window = new
 					wxComfileWindow(comfile_window);
 #endif /* defined (WX_USER_INTERFACE) */
 		}

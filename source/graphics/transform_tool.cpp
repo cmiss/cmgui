@@ -43,18 +43,18 @@ Eventually use to store parameters for the transform function.
  *
  * ***** END LICENSE BLOCK ***** */
 
-#if defined (BUILD_WITH_CMAKE)
+#if 1
 #include "configure/cmgui_configure.h"
-#endif /* defined (BUILD_WITH_CMAKE) */
-extern "C"{
+#endif /* defined (1) */
+
 #include "general/debug.h"
 #include "interaction/interaction_volume.h"
 #include "interaction/interactive_event.h"
 #include "interaction/interactive_tool.h"
 #include "interaction/interactive_tool_private.h"
 #include "graphics/transform_tool.h"
-#include "user_interface/message.h"
-}
+#include "general/message.h"
+#include "command/parser.h"
 
 #if defined (WX_USER_INTERFACE)
 #include "wx/wx.h"
@@ -104,7 +104,7 @@ int Transform_tool_transform_set_free_spin(struct Transform_tool *transform_tool
 LAST MODIFIED : 30 January 2007
 
 DESCRIPTION :
-If the interactive tool is of type Transform this function controls whether 
+If the interactive tool is of type Transform this function controls whether
 the window will spin freely when tumbling.
 ==============================================================================*/
 {
@@ -121,7 +121,7 @@ the window will spin freely when tumbling.
 		else
 		{
 			transform_tool->free_spin_flag = 0;
-    }
+	}
 	}
 	else
 	{
@@ -136,19 +136,19 @@ the window will spin freely when tumbling.
 
 #if defined (WX_USER_INTERFACE)
 class wxTransformTool : public wxPanel
-{																								
+{
 	Transform_tool *transform_tool;
- 	wxCheckBox *button_free_spin;
+	wxCheckBox *button_free_spin;
 
 public:
 
-  wxTransformTool(Transform_tool *transform_tool, wxPanel *parent): 
-    transform_tool(transform_tool)
-  {	 
+  wxTransformTool(Transform_tool *transform_tool, wxPanel *parent):
+	transform_tool(transform_tool)
+  {
 		{
 			wxXmlInit_transform_tool();
 		}
- 		wxXmlResource::Get()->LoadPanel(this,parent,_T("CmguiTransformTool"));	
+		wxXmlResource::Get()->LoadPanel(this,parent,_T("CmguiTransformTool"));
 		button_free_spin = XRCCTRL(*this, "ButtonFreeSpin", wxCheckBox);
 		Transform_tool_transform_set_free_spin(transform_tool,button_free_spin->IsChecked());
   };
@@ -157,12 +157,12 @@ public:
   {
   };
 
- 	void OnButtonFreeSpin(wxCommandEvent& event)
- 	{    
+	void OnButtonFreeSpin(wxCommandEvent& event)
+	{
 		USE_PARAMETER(event);
 		button_free_spin = XRCCTRL(*this, "ButtonFreeSpin", wxCheckBox);
-    Transform_tool_transform_set_free_spin(transform_tool,button_free_spin->IsChecked());
- 	}
+	Transform_tool_transform_set_free_spin(transform_tool,button_free_spin->IsChecked());
+	}
 
 	void TransformToolInterafaceRenew(Transform_tool *destination_transform_tool)
 	{
@@ -178,7 +178,7 @@ public:
 IMPLEMENT_DYNAMIC_CLASS(wxTransformTool, wxPanel)
 
 BEGIN_EVENT_TABLE(wxTransformTool, wxPanel)
- 	EVT_CHECKBOX(XRCID("ButtonFreeSpin"),wxTransformTool::OnButtonFreeSpin)
+	EVT_CHECKBOX(XRCID("ButtonFreeSpin"),wxTransformTool::OnButtonFreeSpin)
 END_EVENT_TABLE()
 
 #endif /* defined (WX_USER_INTERFACE) */
@@ -213,7 +213,7 @@ Pops up a dialog for editing settings of the Transform_tool.
 			 pane->SetPosition(transform_tool->tool_position);
 			 transform_tool->wx_transform_tool->Show();
 		}
-		
+
 #else /* (WX_USER_INTERFACE) */
 		USE_PARAMETER(graphics_window);
 		display_message(ERROR_MESSAGE, "Transform_tool_pop_up_dialog.  "
@@ -244,13 +244,13 @@ format for passing to an Interactive_toolbar.
 ==============================================================================*/
 {
 	int return_code;
-	
+
 
 	ENTER(Transform_tool_bring_up_interactive_tool_dialog);
 	return_code = Transform_tool_pop_up_dialog((struct Transform_tool *)transform_tool_void, graphics_window);
 	LEAVE;
 
- 	return (return_code);
+	return (return_code);
 } /* Transform_tool_bring_up_interactive_tool_dialog */
 
 static int destroy_Interactive_tool_transform_tool_data(
@@ -282,7 +282,7 @@ Destroys the tool_data associated with a transform tool.
 
 static int Transform_tool_copy_function(
 	void *destination_tool_void, void *source_tool_void,
-	struct MANAGER(Interactive_tool) *destination_tool_manager) 
+	struct MANAGER(Interactive_tool) *destination_tool_manager)
 /*******************************************************************************
 LAST MODIFIED : 29 March 2007
 
@@ -303,7 +303,7 @@ Copies the state of one transform tool to another.
 		}
 		else
 		{
-			Interactive_tool *new_transform_tool = 
+			Interactive_tool *new_transform_tool =
 				create_Interactive_tool_transform(source_transform_tool->user_interface);
 			ADD_OBJECT_TO_MANAGER(Interactive_tool)(
 				new_transform_tool, destination_tool_manager);
@@ -315,7 +315,7 @@ Copies the state of one transform tool to another.
 			destination_transform_tool->free_spin_flag = source_transform_tool->free_spin_flag;
 #if defined (WX_USER_INTERFACE)
 			if (destination_transform_tool->wx_transform_tool != (wxTransformTool *) NULL)
-			{	
+			{
 				destination_transform_tool->wx_transform_tool->TransformToolInterafaceRenew(destination_transform_tool);
 			}
 #endif /*defined (WX_USER_INTERFACE)*/
@@ -356,9 +356,9 @@ Identifies whether an Interactive_tool is a Transform_tool.
 	ENTER(Interative_tool_is_Transform_tool);
 	if (interactive_tool)
 	{
-		return_code = (Interactive_tool_transform_type_string == 
+		return_code = (Interactive_tool_transform_type_string ==
 			Interactive_tool_get_tool_type_name(interactive_tool));
-	}	
+	}
 	else
 	{
 		display_message(ERROR_MESSAGE,
@@ -377,7 +377,7 @@ int Interactive_tool_transform_get_free_spin(
 LAST MODIFIED : 9 October 2000
 
 DESCRIPTION :
-If the interactive tool is of type Transform this function specifies whether 
+If the interactive tool is of type Transform this function specifies whether
 the window should spin freely when tumbling.
 ==============================================================================*/
 {
@@ -408,7 +408,7 @@ int Interactive_tool_transform_set_free_spin(struct Interactive_tool *interactiv
 LAST MODIFIED : 9 October 2000
 
 DESCRIPTION :
-If the interactive tool is of type Transform this function controls whether 
+If the interactive tool is of type Transform this function controls whether
 the window will spin freely when tumbling.
 ==============================================================================*/
 {
@@ -431,11 +431,11 @@ the window will spin freely when tumbling.
 	}
 	LEAVE;
 
- 	return (return_code);
+	return (return_code);
 } /* Interactive_tool_transform_set_free_spin */
 
 
-struct Interactive_tool *create_Interactive_tool_transform(	
+struct Interactive_tool *create_Interactive_tool_transform(
   struct User_interface *user_interface)
 /*******************************************************************************
 LAST MODIFIED : 9 October 2000
@@ -452,10 +452,10 @@ scene_viewers.
 	if (user_interface)
 	{
 		if (ALLOCATE(transform_tool,struct Transform_tool,1))
-		{			
+		{
 			transform_tool->user_interface = user_interface;
 #if defined (WX_USER_INTERFACE) /* (WX_USER_INTERFACE) */
-			transform_tool->wx_transform_tool = (wxTransformTool *)NULL; 
+			transform_tool->wx_transform_tool = (wxTransformTool *)NULL;
 #else /* switch (USER_INTERFACE) */
 			transform_tool->free_spin_flag = 0;
 #endif /* switch (USER_INTERFACE) */

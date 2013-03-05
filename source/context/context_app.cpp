@@ -1,6 +1,6 @@
 /***************************************************************************//**
  * context.cpp
- * 
+ *
  * The main root structure of cmgui.
  */
 /* ***** BEGIN LICENSE BLOCK *****
@@ -39,12 +39,12 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-extern "C" {
 #include "time/time_keeper.h"
 #include "api/cmiss_field_group.h"
 #include "api/cmiss_graphics_module.h"
 #include "command/cmiss.h"
 #include "context/context.h"
+#include "context/context_app.h"
 #include "curve/curve.h"
 #include "general/debug.h"
 #include "general/mystring.h"
@@ -55,13 +55,29 @@ extern "C" {
 #include "region/cmiss_region.h"
 /* following is temporary until circular references are removed for Cmiss_region  */
 #include "region/cmiss_region_private.h"
-}
 #include <set>
+
+struct Cmiss_context_app *Cmiss_context_app_access(Cmiss_context_app *context);
+int Cmiss_context_app_destroy(struct Cmiss_context_app **context_address);
+
+struct Cmiss_context_app
+{
+	int access_count;
+	struct Context *context;
+	struct Cmiss_command_data  *default_command_data;
+	struct User_interface_module *UI_module;
+	struct Event_dispatcher *event_dispatcher;
+};
+
+struct Context *Cmiss_context_app_get_core_context(struct Cmiss_context_app *context)
+{
+	return context->context;
+}
 
 class Context_holder
 {
 private:
-	std::set<Cmiss_context_id> contextsList;
+	std::set<Cmiss_context_app *> contextsList;
 
 	Context_holder()
 	{
@@ -82,25 +98,25 @@ public:
 
 	void destroy()
 	{
-		std::set<Cmiss_context_id>::iterator pos = contextsList.begin();
+		std::set<Cmiss_context_app *>::iterator pos = contextsList.begin();
 		while (pos != contextsList.end())
 		{
-			Cmiss_context_id temp_pointer = *pos;
-			Cmiss_context_destroy(&temp_pointer);
+			Cmiss_context_app * temp_pointer = *pos;
+			Cmiss_context_app_destroy(&temp_pointer);
 			++pos;
 		}
 		contextsList.clear();
 	}
 
-	void insert(Cmiss_context_id context_in)
+	void insert(Cmiss_context_app * context_in)
 	{
-		if (Cmiss_context_access(context_in))
+		if (Cmiss_context_app_access(context_in))
 		{
 			contextsList.insert(context_in);
 		}
 	}
 
-	int hasEntry(Cmiss_context_id context_in)
+	int hasEntry(Cmiss_context_app * context_in)
 	{
 		if (contextsList.find(context_in) != contextsList.end())
 		{
@@ -111,87 +127,38 @@ public:
 
 };
 
-struct Context
+struct Cmiss_context_app *Cmiss_context_app_create(const char *id)
 {
-	int access_count;
-	const char *id;
-	struct Cmiss_region *root_region;
-	/* Always want the entry for graphics_buffer_package even if it will
-		not be available on this implementation */
-	struct Cmiss_graphics_module *graphics_module;
-	struct Cmiss_command_data  *default_command_data;
- 	struct User_interface_module *UI_module;
-	struct Any_object_selection *any_object_selection;
-	struct Element_point_ranges_selection *element_point_ranges_selection;
-	struct Event_dispatcher *event_dispatcher;
-	struct IO_stream_package *io_stream_package;
-	struct MANAGER(Curve) *curve_manager;
-};
-
-struct Context *Cmiss_context_create(const char *id)
-{
-	struct Context *context = NULL;
-	if (ALLOCATE(context, struct Context, 1))
+	struct Cmiss_context_app *context = NULL;
+	if (ALLOCATE(context, struct Cmiss_context_app, 1))
 	{
-		context->graphics_module = NULL;
-		context->root_region = NULL;
-		context->id = duplicate_string(id);
+		context->access_count = 1;
+		context->context = Cmiss_context_create(id);
 		context->default_command_data = NULL;
 		context->UI_module = NULL;
-		context->any_object_selection = NULL;
-		context->element_point_ranges_selection = NULL;
 		context->event_dispatcher = NULL;
-		context->io_stream_package = NULL;
-		context->curve_manager = NULL;
-		context->access_count = 1;
 		Context_holder::getInstance()->insert(context);
 	}
 
 	return context;
 }
 
-int Cmiss_context_destroy(struct Context **context_address)
+int Cmiss_context_app_destroy(struct Cmiss_context_app **context_address)
 {
 	int return_code = 0;
-	struct Context *context = NULL;
+	struct Cmiss_context_app *context = NULL;
 
 	if (context_address && NULL != (context = *context_address))
 	{
 		context->access_count--;
 		if (0 == context->access_count)
 		{
-			if (context->id)
-				DEALLOCATE(context->id);
+			if (context->context)
+				Cmiss_context_destroy(&context->context);
 			if (context->default_command_data)
 				Cmiss_command_data_destroy(&context->default_command_data);
 			if (context->UI_module)
 				User_interface_module_destroy(&context->UI_module);
-			if (context->graphics_module)
-				Cmiss_graphics_module_destroy(&context->graphics_module);
-			if (context->root_region)
-			{
-				/* need the following due to circular references where field owned by region references region itself;
-				 * when following removed also remove #include "region/cmiss_region_private.h". Also rendition
-				 * has a computed_field manager callback so it must be deleted before detaching fields hierarchical */
-				Cmiss_region_detach_fields_hierarchical(context->root_region);
-				DEACCESS(Cmiss_region)(&context->root_region);
-			}
-			if (context->any_object_selection)
-			{
-				DESTROY(Any_object_selection)(&context->any_object_selection);
-			}
-			if (context->element_point_ranges_selection)
-			{
-				DESTROY(Element_point_ranges_selection)(&context->element_point_ranges_selection);
-			}
-			if (context->curve_manager)
-			{
-				DESTROY(MANAGER(Curve))(&context->curve_manager);
-			}
-			if (context->io_stream_package)
-			{
-				DESTROY(IO_stream_package)(&context->io_stream_package);
-			}
 			if (context->event_dispatcher)
 			{
 				DESTROY(Event_dispatcher)(&context->event_dispatcher);
@@ -211,7 +178,7 @@ int Cmiss_context_destroy(struct Context **context_address)
 	return return_code;
 }
 
-struct Context *Cmiss_context_access(struct Context *context)
+struct Cmiss_context_app *Cmiss_context_app_access(struct Cmiss_context_app *context)
 {
 	if (context)
 	{
@@ -224,17 +191,17 @@ struct Context *Cmiss_context_access(struct Context *context)
 	}
 	return context;
 }
-struct Cmiss_graphics_module *Cmiss_context_create_graphics_module(struct Context *context)
+struct Cmiss_graphics_module *Cmiss_context_app_create_graphics_module(struct Cmiss_context_app *context)
 {
 	struct Cmiss_graphics_module *graphics_module = NULL;
 
 	if (context)
 	{
-		graphics_module = Cmiss_graphics_module_create(context);
+		graphics_module = Cmiss_graphics_module_create(context->context);
 		if (graphics_module && context->UI_module &&
 			context->UI_module->default_time_keeper)
 		{
-			Cmiss_graphics_module_set_time_keeper_internal(context->graphics_module,
+			Cmiss_graphics_module_set_time_keeper_internal(graphics_module,
 				context->UI_module->default_time_keeper );
 		}
 	}
@@ -247,75 +214,11 @@ struct Cmiss_graphics_module *Cmiss_context_create_graphics_module(struct Contex
 	return graphics_module;
 }
 
-struct Cmiss_graphics_module *Cmiss_context_get_default_graphics_module(struct Context *context)
-{
-	struct Cmiss_graphics_module *graphics_module = 0;
-
-	if (context)
-	{
-		if (!context->graphics_module)
-		{
-			context->graphics_module = Cmiss_context_create_graphics_module(context);
-		}
-		graphics_module = Cmiss_graphics_module_access(context->graphics_module);
-	}
-	else
-	{
-		display_message(ERROR_MESSAGE,
-			"Cmiss_context_get_default_graphics_module.  Missing context");
-	}
-
-	return graphics_module;
-}
-
-struct Cmiss_region *Cmiss_context_get_default_region(struct Context *context)
-{
-	struct Cmiss_region *root_region = 0;
-
-	if (context)
-	{
-		if (!context->root_region)
-		{
-			context->root_region = Cmiss_region_create_internal();
-		}
-		root_region = ACCESS(Cmiss_region)(context->root_region);
-	}
-	else
-	{
-		display_message(ERROR_MESSAGE,
-			"Cmiss_context_get_default_region.  Missing context");
-	}
-	
-	return root_region;
-}
-
-struct Cmiss_region *Cmiss_context_create_region(struct Context *context)
-{
-	Cmiss_region *region = NULL;
-
-	if (context)
-	{
-		// all regions share the element shapes and bases from the default_region
-		if (!context->root_region)
-		{
-			Cmiss_region *default_region = Cmiss_context_get_default_region(context);
-			Cmiss_region_destroy(&default_region);
-		}
-		region = Cmiss_region_create_region(context->root_region);
-	}
-	else
-	{
-		display_message(ERROR_MESSAGE,
-			"Cmiss_context_create_region.  Missing context");
-	}
-	return region;
-}
-
-struct Cmiss_command_data *Cmiss_context_get_default_command_interpreter(struct Context *context)
+struct Cmiss_command_data *Cmiss_context_get_default_command_interpreter(struct Cmiss_context_app *context)
 {
 	struct Cmiss_command_data *command_data = NULL;
 
-	if (context && context->UI_module) 
+	if (context && context->UI_module)
 	{
 		if (!context->default_command_data)
 		{
@@ -337,7 +240,7 @@ struct Cmiss_command_data *Cmiss_context_get_default_command_interpreter(struct 
 }
 #if defined (WX_USER_INTERFACE) || (!defined (WIN32_USER_INTERFACE) && !defined (_MSC_VER))
 struct User_interface_module *Cmiss_context_create_user_interface(
-	struct Context *context, int in_argc, const char *in_argv[],
+	struct Cmiss_context_app *context, int in_argc, const char *in_argv[],
 	void *user_interface_instance)
 #else
 struct User_interface_module *Cmiss_context_create_user_interface(
@@ -356,7 +259,7 @@ struct User_interface_module *Cmiss_context_create_user_interface(
 		{
 #if defined (WX_USER_INTERFACE)
 			if (user_interface_instance)
-				Event_dispatcher_set_wx_instance(Cmiss_context_get_default_event_dispatcher(context), user_interface_instance);
+				Event_dispatcher_set_wx_instance(Cmiss_context_app_get_default_event_dispatcher(context), user_interface_instance);
 #endif
 #if defined (WX_USER_INTERFACE) || (!defined (WIN32_USER_INTERFACE) && !defined (_MSC_VER))
 			context->UI_module = User_interface_module_create(
@@ -366,10 +269,11 @@ struct User_interface_module *Cmiss_context_create_user_interface(
 				context, in_argc, in_argv, current_instance,
 				previous_instance, command_line, initial_main_window_state);
 #endif
+			struct Cmiss_graphics_module *graphics_module = Cmiss_context_get_default_graphics_module(context->context);
 			if (context->UI_module && context->UI_module->default_time_keeper &&
-				context->graphics_module)
+				graphics_module)
 			{
-				Cmiss_graphics_module_set_time_keeper_internal(context->graphics_module,
+				Cmiss_graphics_module_set_time_keeper_internal(graphics_module,
 					context->UI_module->default_time_keeper );
 			}
 		}
@@ -387,69 +291,7 @@ struct User_interface_module *Cmiss_context_create_user_interface(
 	return UI_module;
 }
 
-struct Any_object_selection *Cmiss_context_get_any_object_selection(
-	struct Context *context)
-{
-	struct Any_object_selection *any_object_selection = NULL;
-	if (context)
-	{
-		if (!context->any_object_selection)
-		{
-			context->any_object_selection = CREATE(Any_object_selection)();
-		}
-		any_object_selection = context->any_object_selection;
-	}
-	else
-	{
-		display_message(ERROR_MESSAGE,
-			"Cmiss_context_get_any_object_selection.  Missing context.");
-	}
-	return any_object_selection;
-}
-
-struct Element_point_ranges_selection *Cmiss_context_get_element_point_ranges_selection(
-	struct Context *context)
-{
-	struct Element_point_ranges_selection *element_point_ranges_selection = NULL;
-	if (context)
-	{
-		if (!context->element_point_ranges_selection)
-		{
-			context->element_point_ranges_selection = CREATE(Element_point_ranges_selection)();
-		}
-		element_point_ranges_selection = context->element_point_ranges_selection;
-	}
-	else
-	{
-		display_message(ERROR_MESSAGE,
-			"Cmiss_context_get_element_point_ranges_selection.  Missing context.");
-	}
-	return element_point_ranges_selection;
-}
-
-struct IO_stream_package *Cmiss_context_get_default_IO_stream_package(
-	struct Context *context)
-{
-	struct IO_stream_package *io_stream_package = NULL;
-	if (context)
-	{
-		if (!context->io_stream_package)
-		{
-			context->io_stream_package = CREATE(IO_stream_package)();
-		}
-		io_stream_package = context->io_stream_package;
-	}
-	else
-	{
-		display_message(ERROR_MESSAGE,
-			"Cmiss_context_get_default_IO_stream_package.  Missing context.");
-	}
-
-	return io_stream_package;
-}
-
-
-struct Event_dispatcher *Cmiss_context_get_default_event_dispatcher(struct Context *context)
+struct Event_dispatcher *Cmiss_context_app_get_default_event_dispatcher(struct Cmiss_context_app *context)
 {
 	struct Event_dispatcher *event_dispatcher = NULL;
 	if (context)
@@ -463,18 +305,18 @@ struct Event_dispatcher *Cmiss_context_get_default_event_dispatcher(struct Conte
 	else
 	{
 		display_message(ERROR_MESSAGE,
-			"Cmiss_context_get_default_event_dispatcher.  Missing context.");
+			"Cmiss_context_app_get_default_event_dispatcher.  Missing context.");
 	}
 	return event_dispatcher;
 }
 
-int Cmiss_context_execute_command(Cmiss_context_id context, 
+int Cmiss_context_app_execute_command(Cmiss_context_app *context,
 	const char *command)
 {
 	int return_code = 0;
 	if (context && context->UI_module && command)
 	{
-		struct Cmiss_command_data *command_data = 
+		struct Cmiss_command_data *command_data =
 			Cmiss_context_get_default_command_interpreter(context);
 		return_code = cmiss_execute_command(command, (void *)command_data);
 		Cmiss_command_data_destroy(&command_data);
@@ -489,12 +331,12 @@ int Cmiss_context_execute_command(Cmiss_context_id context,
 	return return_code;
 }
 
-int Cmiss_context_run_main_loop(Cmiss_context_id context)
+int Cmiss_context_run_main_loop(Cmiss_context_app *context)
 {
 	int return_code = 0;
 	if (context && context->UI_module)
 	{
-		struct Cmiss_command_data *command_data = 
+		struct Cmiss_command_data *command_data =
 			Cmiss_context_get_default_command_interpreter(context);
 		return_code = Cmiss_command_data_main_loop(command_data);
 		Cmiss_command_data_destroy(&command_data);
@@ -508,8 +350,8 @@ int Cmiss_context_run_main_loop(Cmiss_context_id context)
 	return return_code;
 }
 
-Cmiss_time_keeper_id Cmiss_context_get_default_time_keeper(
-	Cmiss_context_id context)
+Cmiss_time_keeper_id Cmiss_context_app_get_default_time_keeper(
+	Cmiss_context_app *context)
 {
 	Cmiss_time_keeper *time_keeper = NULL;
 	if (context && context->UI_module && context->UI_module->default_time_keeper)
@@ -524,46 +366,25 @@ Cmiss_time_keeper_id Cmiss_context_get_default_time_keeper(
 	return time_keeper;
 }
 
-Cmiss_scene_viewer_package_id Cmiss_context_get_default_scene_viewer_package(
-	Cmiss_context_id context)
-{
-	Cmiss_scene_viewer_package *scene_viewer_package = NULL;
-	if (context && context->UI_module && context->UI_module->scene_viewer_package)
-	{
-		scene_viewer_package = context->UI_module->scene_viewer_package;
-	}
-	else
-	{
-		display_message(ERROR_MESSAGE,
-			"Cmiss_context_get_default_scene_viewer_package.  "
-			"Missing context or user interface");
-	}
-	return scene_viewer_package;
-}
-
-struct MANAGER(Curve) *Cmiss_context_get_default_curve_manager(
-	Cmiss_context_id context)
-{
-	MANAGER(Curve) *curve_manager = NULL;
-	if (context)
-	{
-		if (!context->curve_manager)
-		{
-			context->curve_manager = CREATE(MANAGER(Curve))();
-		}
-		curve_manager = context->curve_manager;
-	}
-	else
-	{
-		display_message(ERROR_MESSAGE,
-			"Cmiss_context_get_default_curve_manager.  "
-			"Missing context");
-	}
-	return curve_manager;
-}
+//-- Cmiss_scene_viewer_package_id Cmiss_context_app_get_default_scene_viewer_package(
+//-- 	Cmiss_context_app *context)
+//-- {
+//-- 	Cmiss_scene_viewer_package *scene_viewer_package = NULL;
+//-- 	if (context && context->UI_module && context->UI_module->scene_viewer_package)
+//-- 	{
+//-- 		scene_viewer_package = context->UI_module->scene_viewer_package;
+//-- 	}
+//-- 	else
+//-- 	{
+//-- 		display_message(ERROR_MESSAGE,
+//-- 			"Cmiss_context_get_default_scene_viewer_package.  "
+//-- 			"Missing context or user interface");
+//-- 	}
+//-- 	return scene_viewer_package;
+//-- }
 
 #if defined (WX_USER_INTERFACE) || (!defined (WIN32_USER_INTERFACE) && !defined (_MSC_VER))
-int Cmiss_context_enable_user_interface(Cmiss_context_id context, void *user_interface_instance)
+int Cmiss_context_app_enable_user_interface(Cmiss_context_app *context, void *user_interface_instance)
 #else
 int Cmiss_context_enable_user_interface(
 	Cmiss_context_id context, HINSTANCE current_instance, HINSTANCE previous_instance,
@@ -589,7 +410,7 @@ int Cmiss_context_enable_user_interface(
 	return return_code;
 }
 
-int Cmiss_context_process_idle_event(Cmiss_context_id context)
+int Cmiss_context_app_process_idle_event(Cmiss_context_app *context)
 {
 	if (context && context->event_dispatcher)
 	{
@@ -599,8 +420,9 @@ int Cmiss_context_process_idle_event(Cmiss_context_id context)
 	{
 		display_message(ERROR_MESSAGE,
 			"Cmiss_context_do_idle_event.  Missing context or event dispatcher.");
-		return 0;
 	}
+
+	return 0;
 }
 
 void Context_internal_cleanup()

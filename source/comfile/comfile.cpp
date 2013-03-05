@@ -41,11 +41,10 @@ Commands for comfiles.
  * the terms of any one of the MPL, the GPL or the LGPL.
  *
  * ***** END LICENSE BLOCK ***** */
-#if defined (BUILD_WITH_CMAKE)
+#if 1
 #include "configure/cmgui_configure.h"
-#endif /* defined (BUILD_WITH_CMAKE) */
+#endif /* defined (1) */
 
-extern "C" {
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -63,8 +62,7 @@ extern "C" {
 #include "general/object.h"
 #include "user_interface/confirmation.h"
 #include "user_interface/filedir.h"
-#include "user_interface/message.h"
-}
+#include "general/message.h"
 
 int open_comfile(struct Parse_state *state,void *dummy_to_be_modified,
 	void *open_comfile_data_void)
@@ -139,7 +137,7 @@ specified on the command line, a file selection box is presented to the user.
 #endif /*defined (WX_USER_INTERFACE)*/
 									 )))
 					{
-						/* Cancelling dialog and returning an empty filename 
+						/* Cancelling dialog and returning an empty filename
 						 * is not an error but we don't want to do any more work */
 						return 1;
 					}
@@ -177,8 +175,8 @@ specified on the command line, a file selection box is presented to the user.
 #if defined (WX_USER_INTERFACE)
 #if defined (WIN32_SYSTEM)
 					char *drive_name = NULL;
-					char *first = NULL;	
-					char *last = NULL;	
+					char *first = NULL;
+					char *last = NULL;
 					char *temp_directory_name,*directory_name;
 					int lastlength;
 					first = strchr(filename, '\\');
@@ -188,7 +186,7 @@ specified on the command line, a file selection box is presented to the user.
 					if ((length>0))
 					{
 						if (ALLOCATE(drive_name,char,length))
-						{		 
+						{
 							strncpy(drive_name,filename,length);
 							drive_name[length-1]='\0';
 							if (ALLOCATE(temp_string,char,length+9))
@@ -228,7 +226,7 @@ specified on the command line, a file selection box is presented to the user.
 #else /* defined (WIN32_SYSTEM)*/
 					/* Save the current working directory */
 					old_directory = (char *)malloc(4096);
-					if ((NULL != getcwd(old_directory, 4096)) && 
+					if ((NULL != getcwd(old_directory, 4096)) &&
 						(NULL != old_directory))
 					{
 						length = strlen(old_directory);
@@ -239,7 +237,7 @@ specified on the command line, a file selection box is presented to the user.
 							old_directory_name[length+1]='\0';
 						}
 					}
-				 
+
 					/* Set the current directory to that of filename */
 					if (!(0 < open_comfile_data->execute_count))
 					{
@@ -276,8 +274,8 @@ specified on the command line, a file selection box is presented to the user.
 #if defined (WX_USER_INTERFACE)  && defined (WIN32_SYSTEM)
 				int lastlength;
 				char *temp_name;
-				char *first = NULL;	
-				char *last = NULL;	
+				char *first = NULL;
+				char *last = NULL;
 				first = strchr(filename, '\\');
 				last = strrchr(filename, '\\');
 				lastlength = last - filename +1;
@@ -302,7 +300,7 @@ specified on the command line, a file selection box is presented to the user.
 						{
 							 execute_comfile(filename, open_comfile_data->io_stream_package,
 								open_comfile_data->execute_command);
-						 
+
 						}
 #if defined (WX_USER_INTERFACE)
 						/* Change back to original dir */
@@ -407,6 +405,6 @@ specified on the command line, a file selection box is presented to the user.
 	}
 
 	LEAVE;
-	
+
 	return (return_code);
 } /* open_comfile */

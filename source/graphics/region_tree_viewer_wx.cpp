@@ -42,12 +42,12 @@ codes used to build scene editor with wxWidgets.
  *
  * ***** END LICENSE BLOCK ***** */
 
-#if defined (BUILD_WITH_CMAKE)
+#if 1
 #include "configure/cmgui_configure.h"
 #endif
 #include <string>
-extern "C" {
 #include <stdio.h>
+
 #include "api/cmiss_rendition.h"
 #include "api/cmiss_graphic.h"
 #include "api/cmiss_graphics_module.h"
@@ -57,8 +57,11 @@ extern "C" {
 #include "general/object.h"
 #include "graphics/graphics_object.h"
 #include "graphics/scene.h"
-#include "user_interface/message.h"
-}
+#include "general/message.h"
+#include "user_interface/user_interface.h"
+#include "command/parser.h"
+#include "graphics/auxiliary_graphics_types_app.h"
+
 #include "wx/wx.h"
 #include <wx/tglbtn.h>
 #include <wx/treectrl.h>
@@ -75,7 +78,7 @@ extern "C" {
 #include "icon/cmiss_icon.xpm"
 #include "icon/tickbox.xpm"
 #include "icon/unticked_box.xpm"
-extern "C" {
+
 #include "computed_field/computed_field_finite_element.h"
 #include "computed_field/computed_field.h"
 #include "graphics/region_tree_viewer_wx.h"
@@ -83,7 +86,6 @@ extern "C" {
 #include "graphics/rendition.h"
 #include "graphics/graphic.h"
 #include "graphics/graphics_module.h"
-}
 #include "graphics/graphics_coordinate_system.hpp"
 #include "graphics/tessellation.hpp"
 #include "graphics/region_tree_viewer_wx.xrch"
@@ -117,7 +119,7 @@ class wxCmguiHierachicalTree;
 class wxCmguiHierachicalTreeItemData :public wxTreeItemData
 {
 	struct Cmiss_region *region;
- 	wxCmguiHierachicalTree *treectrl;
+	wxCmguiHierachicalTree *treectrl;
 
 public:
 	wxCmguiHierachicalTreeItemData(struct Cmiss_region *input_region,
@@ -128,7 +130,7 @@ public:
 		Cmiss_region_add_callback(region,
 			propagate_region_change, (void *)this);
 	}
-	
+
 	virtual ~wxCmguiHierachicalTreeItemData()
 	{
 		Cmiss_region_remove_callback(region,
@@ -161,7 +163,7 @@ public:
 			wxMouseEventHandler(wxCmguiHierachicalTree::SendLeftDownEvent),
 			NULL,this);
 	}
-	
+
 	wxCmguiHierachicalTree()
 	{
 	};
@@ -172,7 +174,7 @@ public:
 
 	void SetTreeIdRegionWithCallback(wxTreeItemId id, Cmiss_region *region)
 	{
-		wxCmguiHierachicalTreeItemData *data = 
+		wxCmguiHierachicalTreeItemData *data =
 			new wxCmguiHierachicalTreeItemData(region, this);
 		SetItemData(id, data);
 	}
@@ -226,7 +228,7 @@ public:
 			}
 			if (!return_code)
 			{
-				child_id = InsertItem(parent_id, i, child_name,0,0);
+				child_id = InsertItem(parent_id, i, wxString::FromAscii(child_name),0,0);
 				SetTreeIdRegionWithCallback(child_id, child_region);
 				if (!(this->IsExpanded(parent_id)))
 					this->Expand(parent_id);
@@ -256,7 +258,7 @@ public:
 				{
 					child_region = region_changes->child_added;
 					char *name = Cmiss_region_get_name(child_region);
-					wxTreeItemId child_id = AppendItem(parent_id,name,0,0);
+					wxTreeItemId child_id = AppendItem(parent_id,wxString::FromAscii(name),0,0);
 					SetTreeIdRegionWithCallback(child_id, child_region);
 					update_current_tree_item(child_id);
 					DEALLOCATE(name);
@@ -273,7 +275,7 @@ public:
 					remove_child_with_region(parent_id, NULL);
 					update_current_tree_item(parent_id);
 				}
-			}	
+			}
 		}
 		else
 		{
@@ -288,7 +290,7 @@ void add_all_child_regions_to_tree_item(wxTreeItemId parent_id)
 	char *child_name;
 	wxTreeItemId child_id;
 	Cmiss_region *parent_region, *child_region;
-	
+
 	parent_region = dynamic_cast<wxCmguiHierachicalTreeItemData *>
 		(GetItemData(parent_id))->GetRegion();
 	child_region = Cmiss_region_get_first_child(parent_region);
@@ -297,7 +299,7 @@ void add_all_child_regions_to_tree_item(wxTreeItemId parent_id)
 		child_name = Cmiss_region_get_name(child_region);
 		if (child_name)
 		{
-			child_id = AppendItem(parent_id,child_name,0,0);
+			child_id = AppendItem(parent_id,wxString::FromAscii(child_name),0,0);
 			SetTreeIdRegionWithCallback(child_id, child_region);
 			add_all_child_regions_to_tree_item(child_id);
 			DEALLOCATE(child_name);
@@ -320,7 +322,7 @@ IMPLEMENT_DYNAMIC_CLASS(wxCmguiHierachicalTree, wxFrame)
 void wxCmguiHierachicalTreeItemData::propagate_region_change(
 	struct Cmiss_region *region,struct Cmiss_region_changes *region_changes, void *data_void)
 {
-	wxCmguiHierachicalTreeItemData *data = 
+	wxCmguiHierachicalTreeItemData *data =
 		static_cast<wxCmguiHierachicalTreeItemData *>(data_void);
 	data->treectrl->region_change(region,
 		region_changes, data);
@@ -391,7 +393,7 @@ void Region_tree_viewer_wx_transformation_change(struct Cmiss_rendition *renditi
 
 /***************************************************************************//**
 * Revert changes done on the edit gt element group.
-* 
+*
 */
 int Region_tree_viewer_revert_changes(Region_tree_viewer *region_tree_viewer);
 
@@ -436,7 +438,7 @@ void Region_tree_viewer_wx_transformation_change(struct Cmiss_rendition *renditi
 {
 	struct Region_tree_viewer *region_tree_viewer =
 		(struct Region_tree_viewer *)region_tree_viewer_void;
-	
+
 	if (region_tree_viewer)
 	{
 		if (rendition == region_tree_viewer->rendition)
@@ -472,7 +474,7 @@ DEFINE_EVENT_TYPE(wxEVT_TREE_IMAGE_CLICK_EVENT)
 void wxCmguiHierachicalTree::SendLeftDownEvent(wxMouseEvent& event)
 {
 	int flags;
-	wxTreeItemId id = HitTest( event.GetPosition(), flags ); 
+	wxTreeItemId id = HitTest( event.GetPosition(), flags );
 	if(flags & wxTREE_HITTEST_ONITEMICON)
 	{
 		if (this->GetSelection() != id)
@@ -492,7 +494,7 @@ void wxCmguiHierachicalTree::SendLeftDownEvent(wxMouseEvent& event)
 
 
 class wxRegionTreeViewer : public wxFrame
-{	
+{
 	Region_tree_viewer *region_tree_viewer;
 #if defined (__WXMSW__)
 	Region_tree_viewer_size region_tree_viewer_size;
@@ -506,8 +508,8 @@ class wxRegionTreeViewer : public wxFrame
 		*isoscalartext, *glyphtext, *offsettext, *baseglyphsizetext, *selectmodetext,
 		*glyphscalefactorstext, *useelementtypetext, *xidiscretizationmodetext,
 		*tessellationtext,
-		*discretizationtext, *circlediscretizationtext,*densityfieldtext,*xitext, 
-		*streamtypetext, *streamlengthtext, *streamwidthtext, *streamvectortext, 
+		*discretizationtext, *circlediscretizationtext,*densityfieldtext,*xitext,
+		*streamtypetext, *streamlengthtext, *streamwidthtext, *streamvectortext,
 		*linewidthtext, *streamlinedatatypetext, *spectrumtext, *rendertypetext, *fonttext;
 	wxButton *sceneupbutton, scenedownbutton, *applybutton, *revertbutton, *tessellationbutton;
 	wxCheckBox *nativediscretizationcheckbox,*autocheckbox,
@@ -525,8 +527,8 @@ class wxRegionTreeViewer : public wxFrame
 		*orientation_scale_field_chooser_panel, *variable_scale_field_chooser_panel,
 		*label_chooser_panel, *font_chooser_panel, *select_mode_chooser_panel,
 		*use_element_type_chooser_panel, *xi_discretization_mode_chooser_panel,
-		*native_discretization_field_chooser_panel, *density_field_chooser_panel, 
-		*streamline_type_chooser_panel, *stream_vector_chooser_panel, 
+		*native_discretization_field_chooser_panel, *density_field_chooser_panel,
+		*streamline_type_chooser_panel, *stream_vector_chooser_panel,
 		*streamline_data_type_chooser_panel, *spectrum_chooser_panel,
 		*texture_coordinates_chooser_panel, *render_type_chooser_panel,
 		*seed_element_panel, *subgroup_field_chooser_panel, *tessellation_chooser_panel;
@@ -556,23 +558,23 @@ class wxRegionTreeViewer : public wxFrame
 	Managed_object_chooser<Spectrum,MANAGER_CLASS(Spectrum)>
 	*spectrum_chooser;
 	Managed_object_chooser<Computed_field,MANAGER_CLASS(Computed_field)>
-	*radius_scalar_chooser;	
+	*radius_scalar_chooser;
 	Managed_object_chooser<Computed_field,MANAGER_CLASS(Computed_field)>
-	*iso_scalar_chooser;	
+	*iso_scalar_chooser;
 	DEFINE_MANAGER_CLASS(GT_object);
 	Managed_object_chooser<GT_object,MANAGER_CLASS(GT_object)>
 	*glyph_chooser;
 	Managed_object_chooser<Computed_field,MANAGER_CLASS(Computed_field)>
-	*orientation_scale_field_chooser;		
+	*orientation_scale_field_chooser;
 	Managed_object_chooser<Computed_field,MANAGER_CLASS(Computed_field)>
 	*variable_scale_field_chooser;
 	Managed_object_chooser<Computed_field,MANAGER_CLASS(Computed_field)>
 	*label_field_chooser;
 	Managed_object_chooser<Computed_field,MANAGER_CLASS(Computed_field)>
 	*subgroup_field_chooser;
-	DEFINE_MANAGER_CLASS(Graphics_font); 
+	DEFINE_MANAGER_CLASS(Graphics_font);
 		 Managed_object_chooser<Graphics_font,MANAGER_CLASS(Graphics_font)>
-	*font_chooser;	
+	*font_chooser;
 	DEFINE_ENUMERATOR_TYPE_CLASS(Use_element_type);
 	Enumerator_chooser<ENUMERATOR_TYPE_CLASS(Use_element_type)>
 		*use_element_type_chooser;
@@ -607,7 +609,7 @@ class wxRegionTreeViewer : public wxFrame
 public:
 
   wxRegionTreeViewer(Region_tree_viewer *region_tree_viewer) :
-  	region_tree_viewer(region_tree_viewer)
+	region_tree_viewer(region_tree_viewer)
   {
 		wxXmlInit_region_tree_viewer_wx();
 		region_tree_viewer->wx_region_tree_viewer = (wxRegionTreeViewer *)NULL;
@@ -628,12 +630,12 @@ public:
 	/* Set the graphical_material_chooser_panel*/
 	wxPanel *graphical_material_chooser_panel =
 		XRCCTRL(*this, "GraphicalMaterialChooserPanel",wxPanel);
-	graphical_material_chooser = 
+	graphical_material_chooser =
 		new Managed_object_chooser<Graphical_material,MANAGER_CLASS(Graphical_material)>
 		(graphical_material_chooser_panel, region_tree_viewer->default_material, region_tree_viewer->graphical_material_manager,
 				(MANAGER_CONDITIONAL_FUNCTION(Graphical_material) *)NULL, (void *)NULL, region_tree_viewer->user_interface);
-	Callback_base< Graphical_material* > *graphical_material_callback = 
-		new Callback_member_callback< Graphical_material*, 
+	Callback_base< Graphical_material* > *graphical_material_callback =
+		new Callback_member_callback< Graphical_material*,
 				wxRegionTreeViewer, int (wxRegionTreeViewer::*)(Graphical_material *) >
 		(this, &wxRegionTreeViewer::graphical_material_callback);
 	graphical_material_chooser->set_callback(graphical_material_callback);
@@ -641,12 +643,12 @@ public:
 	/* Set the selected_material_chooser_panel*/
 	wxPanel *selected_material_chooser_panel =
 		XRCCTRL(*this, "SelectedMaterialChooserPanel",wxPanel);
-	selected_material_chooser = 
+	selected_material_chooser =
 		new Managed_object_chooser<Graphical_material,MANAGER_CLASS(Graphical_material)>
 		(selected_material_chooser_panel, region_tree_viewer->selected_material, region_tree_viewer->graphical_material_manager,
 				(MANAGER_CONDITIONAL_FUNCTION(Graphical_material) *)NULL, (void *)NULL, region_tree_viewer->user_interface);
-	Callback_base< Graphical_material* > *selected_material_callback = 
-		new Callback_member_callback< Graphical_material*, 
+	Callback_base< Graphical_material* > *selected_material_callback =
+		new Callback_member_callback< Graphical_material*,
 				wxRegionTreeViewer, int (wxRegionTreeViewer::*)(Graphical_material *) >
 		(this, &wxRegionTreeViewer::selected_material_callback);
 	selected_material_chooser->set_callback(selected_material_callback);
@@ -654,15 +656,15 @@ public:
 	tessellationWindowID = 0;
 	wxPanel *graphic_type_chooser_panel =
 		XRCCTRL(*this, "TypeFormChooser", wxPanel);
-	graphic_type_chooser = 
+	graphic_type_chooser =
 		new Enumerator_chooser<ENUMERATOR_TYPE_CLASS(Cmiss_graphic_type)>
-		(graphic_type_chooser_panel, 
+		(graphic_type_chooser_panel,
 				region_tree_viewer->current_graphic_type,
 				(ENUMERATOR_CONDITIONAL_FUNCTION(Cmiss_graphic_type) *)NULL,
 				(void *)NULL, region_tree_viewer->user_interface);
   graphic_type_chooser_panel->Fit();
-	Callback_base< enum Cmiss_graphic_type > *graphic_type_callback = 
-		new Callback_member_callback< enum Cmiss_graphic_type, 
+	Callback_base< enum Cmiss_graphic_type > *graphic_type_callback =
+		new Callback_member_callback< enum Cmiss_graphic_type,
 				wxRegionTreeViewer, int (wxRegionTreeViewer::*)(enum Cmiss_graphic_type) >
 		(this, &wxRegionTreeViewer::Region_tree_viewer_graphic_type_callback);
 	graphic_type_chooser->set_callback(graphic_type_callback);
@@ -681,12 +683,12 @@ public:
 	/* Set the spectrum_chooser*/
 	wxPanel *spectrum_chooser_panel =
 		XRCCTRL(*this,"SpectrumChooserPanel", wxPanel);
-	spectrum_chooser = 
+	spectrum_chooser =
 		new Managed_object_chooser<Spectrum,MANAGER_CLASS(Spectrum)>
 		(spectrum_chooser_panel, region_tree_viewer->spectrum, region_tree_viewer->spectrum_manager,
 				(MANAGER_CONDITIONAL_FUNCTION(Spectrum) *)NULL, (void *)NULL, region_tree_viewer->user_interface);
-	Callback_base< Spectrum* > *spectrum_callback = 
-		new Callback_member_callback< Spectrum*, 
+	Callback_base< Spectrum* > *spectrum_callback =
+		new Callback_member_callback< Spectrum*,
 				wxRegionTreeViewer, int (wxRegionTreeViewer::*)(Spectrum *) >
 		(this, &wxRegionTreeViewer::spectrum_callback);
 	spectrum_chooser->set_callback(spectrum_callback);
@@ -726,10 +728,10 @@ public:
 	coordinate_system_chooser_panel->Fit();
 
 	select_mode_chooser = NULL;
-	radius_scalar_chooser = NULL;	
+	radius_scalar_chooser = NULL;
 	iso_scalar_chooser = NULL;
 	glyph_chooser = NULL;
-	orientation_scale_field_chooser = NULL;		
+	orientation_scale_field_chooser = NULL;
 	variable_scale_field_chooser = NULL;
 	label_field_chooser= NULL;
 	subgroup_field_chooser= NULL;
@@ -816,7 +818,7 @@ public:
 				delete graphical_material_chooser;
 			if (selected_material_chooser)
 				delete selected_material_chooser;
-			if (graphic_type_chooser)		
+			if (graphic_type_chooser)
 				delete graphic_type_chooser;
 			if (select_mode_chooser)
 				delete select_mode_chooser;
@@ -866,7 +868,7 @@ public:
 
 /***************************************************************************//**
 * Set manager in different field manager object choosers.
-* 
+*
 * @param region_tree_viewer scene editor to be modify
 */
 void Region_tree_viewer_wx_set_manager_in_choosers(struct Region_tree_viewer *region_tree_viewer)
@@ -971,7 +973,7 @@ Callback from wxChooser<Selected Material> when choice is made.
 int Region_tree_viewer_graphic_type_callback(enum Cmiss_graphic_type new_value)
 {
 	int return_code = 0;
-	
+
 	if (region_tree_viewer)
 	{
 		if (region_tree_viewer->current_graphic_type != new_value)
@@ -988,7 +990,7 @@ int Region_tree_viewer_graphic_type_callback(enum Cmiss_graphic_type new_value)
 				(void*)region_tree_viewer->current_graphic_type);
 			if (graphic)
 			{
-				for (int i=0;number>i;i++) 
+				for (int i=0;number>i;i++)
 				{
 					Cmiss_graphic *newgraphic;
 					newgraphic = Cmiss_rendition_get_graphic_at_position(
@@ -1026,7 +1028,7 @@ int Region_tree_viewer_graphic_type_callback(enum Cmiss_graphic_type new_value)
 						NULL);
 			}
 		}
-		
+
 	}
 	else
 	{
@@ -1034,7 +1036,7 @@ int Region_tree_viewer_graphic_type_callback(enum Cmiss_graphic_type new_value)
 			"setting type callback.  Invalid argument(s)");
 		return_code =  0;
 	}
-	return (return_code);	
+	return (return_code);
 }
 
 int select_mode_callback(enum Graphics_select_mode select_mode)
@@ -1079,7 +1081,7 @@ DESCRIPTION :
 Callback from wxChooser<Radius Scalar> when choice is made.
 ==============================================================================*/
 {
-	float constant_radius,scale_factor; 
+	float constant_radius,scale_factor;
 	double temp;
 
 	constantradiustextctrl=XRCCTRL(*this, "ConstantRadiusTextCtrl",wxTextCtrl);
@@ -1206,13 +1208,13 @@ Callback from wxChooser<Orientation Scale> when choice is made.
 			glyphscalefactorstextctrl->Disable();
 		}
 		if (Cmiss_graphic_get_glyph_parameters(
-		    region_tree_viewer->current_graphic, &glyph, &glyph_scaling_mode,
-		    glyph_offset, glyph_size, &temp_orientation_scale_field, glyph_scale_factors,
-		    &variable_scale_field)&&
+			region_tree_viewer->current_graphic, &glyph, &glyph_scaling_mode,
+			glyph_offset, glyph_size, &temp_orientation_scale_field, glyph_scale_factors,
+			&variable_scale_field)&&
 		   Cmiss_graphic_set_glyph_parameters(
-		    region_tree_viewer->current_graphic, glyph, glyph_scaling_mode,
-		    glyph_offset, glyph_size,orientation_scale_field, glyph_scale_factors,
-		    variable_scale_field))
+			region_tree_viewer->current_graphic, glyph, glyph_scaling_mode,
+			glyph_offset, glyph_size,orientation_scale_field, glyph_scale_factors,
+			variable_scale_field))
 		{
 			/* inform the client of the change */
 			Region_tree_viewer_autoapply(region_tree_viewer->rendition,
@@ -1255,7 +1257,7 @@ Callback from wxChooser<Variable Scale> when choice is made.
 	Cmiss_graphic_set_glyph_parameters(
 	 region_tree_viewer->current_graphic,glyph, glyph_scaling_mode, glyph_offset,
 	 glyph_size, orientation_scale_field, glyph_scale_factors,
-	 variable_scale_field);		
+	 variable_scale_field);
 	Region_tree_viewer_autoapply(region_tree_viewer->rendition,
 		region_tree_viewer->edit_rendition);
 	//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphic);
@@ -1332,7 +1334,7 @@ Callback from wxChooser<Use Element Type> when choice is made.
 	if (CMISS_GRAPHIC_ISO_SURFACES==region_tree_viewer->current_graphic_type)
 	{
 		linewidthtextctrl=XRCCTRL(*this,"LineWidthTextCtrl",wxTextCtrl);
-		if (USE_FACES != use_element_type) 
+		if (USE_FACES != use_element_type)
 		{
 			linewidthtextctrl->Disable();
 		}
@@ -1341,13 +1343,13 @@ Callback from wxChooser<Use Element Type> when choice is made.
 			linewidthtextctrl->Enable();
 		}
 	}
-	if  (USE_ELEMENTS != use_element_type) 
+	if  (USE_ELEMENTS != use_element_type)
 	{
 		exteriorcheckbox->Enable();
 		facecheckbox->Enable();
 		Cmiss_graphic_set_exterior(region_tree_viewer->current_graphic,
 			exteriorcheckbox->IsChecked());
-		if (facecheckbox->IsChecked()) 
+		if (facecheckbox->IsChecked())
 		{
 			facechoice->Enable();
 			face = facechoice->GetSelection();
@@ -1404,7 +1406,7 @@ Callback from wxChooser<xi Discretization Mode> when choice is made.
 				if (!xi_point_density_field)
 				{
 					/* get xi_point_density_field from widget */
-					xi_point_density_field=xi_point_density_field_chooser->get_object();	
+					xi_point_density_field=xi_point_density_field_chooser->get_object();
 				}
 			}
 			else
@@ -1430,7 +1432,7 @@ Callback from wxChooser<xi Discretization Mode> when choice is made.
 			{
 				FE_field *native_discretization_field=
 				Cmiss_graphic_get_native_discretization_field(region_tree_viewer->current_graphic);
-				discretizationtextctrl->Enable();	
+				discretizationtextctrl->Enable();
 				discretizationtext->Enable();
 				nativediscretizationfieldtext->Enable();
 				native_discretization_field_chooser_panel->Enable();
@@ -1444,10 +1446,10 @@ Callback from wxChooser<xi Discretization Mode> when choice is made.
 				{
 				native_discretization_field_chooser_panel->Disable();
 				}
-			}			
+			}
 			else
-			{	
-				discretizationtextctrl->Disable();	
+			{
+				discretizationtextctrl->Disable();
 				discretizationtext->Disable();
 				nativediscretizationfieldtext->Disable();
 				native_discretization_field_chooser_panel->Disable();
@@ -1509,7 +1511,7 @@ Callback from wxChooser<xi Point Denstiy Field> when choice is made.
 	Cmiss_graphic_get_xi_discretization(
 		region_tree_viewer->current_graphic, &xi_discretization_mode,
 		&temp_xi_point_density_field);
-        Cmiss_graphic_set_xi_discretization(
+		Cmiss_graphic_set_xi_discretization(
 		region_tree_viewer->current_graphic, xi_discretization_mode,
 		xi_point_density_field);
 	Region_tree_viewer_autoapply(region_tree_viewer->rendition,
@@ -1583,7 +1585,7 @@ Callback from wxChooser<Stream Vector> when choice is made.
 			stream_vector_field,reverse_track,
 		   streamline_length,streamline_width))
 	{
- 		/* inform the client of the change */
+		/* inform the client of the change */
 		Region_tree_viewer_autoapply(region_tree_viewer->rendition,
 			region_tree_viewer->edit_rendition);
 		//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphic);
@@ -1607,7 +1609,7 @@ Callback from wxChooser<Stream Data Type> when choice is made.
 	spectrumtext=XRCCTRL(*this, "SpectrumText", wxStaticText);
 	spectrum_chooser_panel=XRCCTRL(*this,"SpectrumChooserPanel", wxPanel);
 
- 	if (Cmiss_graphic_get_data_spectrum_parameters_streamlines(
+	if (Cmiss_graphic_get_data_spectrum_parameters_streamlines(
 		region_tree_viewer->current_graphic,&old_streamline_data_type,
 		&data_field,&spectrum))
 		{
@@ -1773,7 +1775,7 @@ Callback from wxChooser<Texture Coord Field> when choice is made.
 		region_tree_viewer->current_graphic, texture_coord_field);
 			/* inform the client of the change */
 	Region_tree_viewer_autoapply(region_tree_viewer->rendition,
-			      region_tree_viewer->edit_rendition);
+				  region_tree_viewer->edit_rendition);
 	//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphic);
 	return 1;
 }
@@ -1796,7 +1798,7 @@ Callback from wxChooser<Render Type> when choice is made.
 }
 
 /***************************************************************************//**
-*	Refresh the widgets upon collapsible pane change event.																																						
+*	Refresh the widgets upon collapsible pane change event.
 * WXMSW only: Revert the size of the frame as this event will change the size
 *             of the window somehow.
 */
@@ -1812,7 +1814,7 @@ void CollapsiblepaneChangedEvent(wxCollapsiblePaneEvent& event)
 		verticalsplitter=XRCCTRL(*this,"VerticalSplitter",wxSplitterWindow);
 		verticalsplitter->Layout();
 		lowersplitter=XRCCTRL(*this,"LowerSplitter",wxSplitterWindow);
-		lowersplitter->Layout();	
+		lowersplitter->Layout();
 		frame->SetMinSize(wxSize(50,100));
 		frame->SetMaxSize(wxSize(2000,2000));
 		frame->Layout();
@@ -1829,7 +1831,7 @@ void CollapsiblepaneChangedEvent(wxCollapsiblePaneEvent& event)
 /***************************************************************************//**
 * Get the size of the frame in case the collapsible panes change the size
 * of the frame.
-* 
+*
 */
 void FrameGetSize(wxSizeEvent &event)
 {
@@ -1887,7 +1889,7 @@ void Region_tree_viewer_wx_set_list_string(Cmiss_graphic *graphic)
 	selection=graphicalitemschecklist->GetSelection();
 	check = graphicalitemschecklist->IsChecked(selection);
 	graphic_string = Cmiss_graphic_get_summary_string(graphic);
-	graphicalitemschecklist->SetString(selection, graphic_string);
+	graphicalitemschecklist->SetString(selection, wxString::FromAscii(graphic_string));
 	graphicalitemschecklist->Check(selection,check);
 	DEALLOCATE(graphic_string);
 }
@@ -1899,14 +1901,14 @@ void Region_tree_viewer_renew_label_on_list(Cmiss_graphic *graphic)
 {
 	int position, check;
 	char *graphic_string;
-	
+
 	graphicalitemschecklist=XRCCTRL(*this,"CmissGraphicListBox",wxCheckListBox);
 
 	position = Cmiss_rendition_get_graphic_position(
 		region_tree_viewer->edit_rendition, graphic);
 	check=graphicalitemschecklist->IsChecked(position - 1);
 	graphic_string = Cmiss_graphic_get_summary_string(region_tree_viewer->current_graphic);
-	graphicalitemschecklist->SetString(position-1, graphic_string);
+	graphicalitemschecklist->SetString(position-1, wxString::FromAscii(graphic_string));
 	graphicalitemschecklist->Check(position-1, check);
 	DEALLOCATE(graphic_string);
 }
@@ -1914,15 +1916,15 @@ void Region_tree_viewer_renew_label_on_list(Cmiss_graphic *graphic)
 void ResetWindow(wxSplitterEvent& event)
 {
 	USE_PARAMETER(event);
-	frame = 
+	frame =
 			XRCCTRL(*this, "CmguiRegionTreeViewer", wxFrame);
 	frame->Layout();
 	frame->SetMinSize(wxSize(50,100));
 	verticalsplitter=XRCCTRL(*this,"VerticalSplitter",wxSplitterWindow);
-	verticalsplitter->Layout();	
+	verticalsplitter->Layout();
 	lowersplitter=XRCCTRL(*this,"LowerSplitter",wxSplitterWindow);
 	lowersplitter->Layout();
-	sceneediting = 
+	sceneediting =
 		XRCCTRL(*this, "SceneEditing", wxScrolledWindow);
 	sceneediting->Layout();
 	sceneediting->SetScrollbars(10,10,40,40);
@@ -2040,7 +2042,7 @@ void GraphicListBoxChecked(wxCommandEvent &event)
 	GraphicListBoxProcessSelection(selection);
 	Cmiss_graphic *temp_graphic = Cmiss_rendition_get_graphic_at_position(
 		region_tree_viewer->edit_rendition, selection+1);
-	Cmiss_graphic_set_visibility_flag(temp_graphic, 
+	Cmiss_graphic_set_visibility_flag(temp_graphic,
 		graphicalitemschecklist->IsChecked(selection));
 	Region_tree_viewer_autoapply(region_tree_viewer->rendition,
 		region_tree_viewer->edit_rendition);
@@ -2084,7 +2086,7 @@ void AddGraphic(Cmiss_graphic *graphic_to_copy, enum Cmiss_graphic_type graphic_
 			for_each_graphic_in_Cmiss_rendition(region_tree_viewer->edit_rendition,
 				Region_tree_viewer_add_graphic_item, (void *)region_tree_viewer);
 			graphicalitemschecklist->SetSelection((graphicalitemschecklist->GetCount()-1));
-			sceneediting = 
+			sceneediting =
 				XRCCTRL(*this, "SceneEditing", wxScrolledWindow);
 			sceneediting->Freeze();
 			Cmiss_graphic *temp_graphic = Cmiss_rendition_get_graphic_at_position(
@@ -2117,7 +2119,7 @@ void AddGraphicItemFromMenu(wxCommandEvent &event)
 	if (AddMenuItemNode == event.GetId())
 	{
 		current_graphic_type = CMISS_GRAPHIC_NODE_POINTS;
-	} 
+	}
 	else if (AddMenuItemData == event.GetId())
 	{
 		current_graphic_type = CMISS_GRAPHIC_DATA_POINTS;
@@ -2318,7 +2320,7 @@ void MoveUpInGraphicList(wxCommandEvent &event)
 			char *name = Cmiss_graphic_get_name_internal(region_tree_viewer->current_graphic);
 			nametextfield = XRCCTRL(*this, "NameTextField", wxTextCtrl);
 			wxString wxTextEntry = nametextfield->GetValue();
-			const char *text_entry = wxTextEntry.c_str();
+			const char *text_entry = wxTextEntry.mb_str(wxConvUTF8);
 			if (text_entry)
 			{
 				char *new_name = duplicate_string(text_entry);
@@ -2328,7 +2330,7 @@ void MoveUpInGraphicList(wxCommandEvent &event)
 					Cmiss_graphic_set_name(
 						region_tree_viewer->current_graphic, new_name);
 						/* inform the client of the change */
-					nametextfield->SetValue(new_name);
+					nametextfield->SetValue(wxString::FromAscii(new_name));
 					Region_tree_viewer_autoapply(region_tree_viewer->rendition,
 						region_tree_viewer->edit_rendition);
 					Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphic);
@@ -2345,12 +2347,12 @@ void MoveUpInGraphicList(wxCommandEvent &event)
 		else
 		{
 			display_message(ERROR_MESSAGE,
-		     "graphic_editor_constant_radius_text_CB.  Invalid argument(s)");
+			 "graphic_editor_constant_radius_text_CB.  Invalid argument(s)");
 		}
 	}
 
 	void EnterRadius(wxCommandEvent &event)
- 	{
+	{
 		float constant_radius, scale_factor;
 		double temp;
 		struct Computed_field *radius_scalar_field;
@@ -2362,7 +2364,7 @@ void MoveUpInGraphicList(wxCommandEvent &event)
 		constant_radius=(float)temp;
 		scalefactorstextctrl=XRCCTRL(*this,"ScaleFactorsTextCtrl",wxTextCtrl);
 		(scalefactorstextctrl->GetValue()).ToDouble(&temp);
-		scale_factor=(float)temp;	
+		scale_factor=(float)temp;
 		radius_scalar_chooser_panel=XRCCTRL(*this, "RadiusScalarChooserPanel",wxPanel);
 		scalefactor = XRCCTRL(*this,"ScaleFactorLabel", wxStaticText);
 		radius_scalar_field=radius_scalar_chooser->get_object();
@@ -2370,7 +2372,7 @@ void MoveUpInGraphicList(wxCommandEvent &event)
 		{
 			scalefactorstextctrl->Enable();
 		}
-		else	
+		else
 		{
 			scalefactorstextctrl->Disable();
 		}
@@ -2379,7 +2381,7 @@ void MoveUpInGraphicList(wxCommandEvent &event)
 		Region_tree_viewer_autoapply(region_tree_viewer->rendition,
 			region_tree_viewer->edit_rendition);
 		//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphic);
- 	}
+	}
 
 	void EnterIsoScalar(wxCommandEvent &event)
 	{
@@ -2394,7 +2396,7 @@ void MoveUpInGraphicList(wxCommandEvent &event)
 #define VARIABLE_LENGTH_ALLOCATION_STEP (10)
 
 	 USE_PARAMETER(event);
-		
+
 		if (region_tree_viewer && region_tree_viewer->current_graphic)
 		{
 			Cmiss_graphic_get_iso_surface_parameters(
@@ -2404,12 +2406,12 @@ void MoveUpInGraphicList(wxCommandEvent &event)
 				&decimation_threshold);
 			isovaluelistradiobutton=XRCCTRL(*this,"IsoValueListRadioButton",wxRadioButton);
 			isovaluesequenceradiobutton=XRCCTRL(*this,"IsoValueSequenceRadioButton",wxRadioButton);
-			
+
 			isoscalartextctrl=XRCCTRL(*this,"IsoScalarTextCtrl",wxTextCtrl);
 			isovaluesequencenumbertextctrl=XRCCTRL(*this,"IsoValueSequenceNumberTextCtrl",wxTextCtrl);
 			isovaluesequencefirsttextctrl=XRCCTRL(*this,"IsoValueSequenceFirstTextCtrl",wxTextCtrl);
 			isovaluesequencelasttextctrl=XRCCTRL(*this,"IsoValueSequenceLastTextCtrl",wxTextCtrl);
-			
+
 			if (isovaluelistradiobutton->GetValue())
 			{
 				isoscalartextctrl->Enable();
@@ -2417,7 +2419,7 @@ void MoveUpInGraphicList(wxCommandEvent &event)
 				isovaluesequencefirsttextctrl->Disable();
 				isovaluesequencelasttextctrl->Disable();
 				wxString wxTextEntry = isoscalartextctrl->GetValue();
-				const char *text_entry = wxTextEntry.c_str();
+				const char *text_entry = wxTextEntry.mb_str(wxConvUTF8);
 				if (text_entry)
 				{
 					i = 0;
@@ -2430,7 +2432,7 @@ void MoveUpInGraphicList(wxCommandEvent &event)
 					{
 						if (i >= allocated_length)
 						{
-							REALLOCATE(iso_values, iso_values, double, 
+							REALLOCATE(iso_values, iso_values, double,
 								allocated_length + VARIABLE_LENGTH_ALLOCATION_STEP);
 							allocated_length += VARIABLE_LENGTH_ALLOCATION_STEP;
 						}
@@ -2470,7 +2472,7 @@ void MoveUpInGraphicList(wxCommandEvent &event)
 				{
 					DEALLOCATE(current_iso_values);
 				}
-				
+
 				vector_temp_string = (char *)NULL;
 				error = 0;
 				for (i = 0 ; !error && (i < number_of_iso_values) ; i++)
@@ -2480,7 +2482,7 @@ void MoveUpInGraphicList(wxCommandEvent &event)
 				}
 				if (vector_temp_string)
 				{
-					isoscalartextctrl->SetValue(vector_temp_string);
+					isoscalartextctrl->SetValue(wxString::FromAscii(vector_temp_string));
 					DEALLOCATE(vector_temp_string);
 				}
 				if (iso_values)
@@ -2499,7 +2501,7 @@ void MoveUpInGraphicList(wxCommandEvent &event)
 				isovaluesequencefirsttextctrl->Enable();
 				isovaluesequencelasttextctrl->Enable();
 				wxString wxTextEntry = isovaluesequencenumbertextctrl->GetValue();
-				const char *text_entry = wxTextEntry.c_str();
+				const char *text_entry = wxTextEntry.mb_str(wxConvUTF8);
 				if (text_entry)
 				{
 					sscanf(text_entry,"%d",&new_number_of_iso_values);
@@ -2511,7 +2513,7 @@ void MoveUpInGraphicList(wxCommandEvent &event)
 				}
 
 				wxTextEntry = isovaluesequencefirsttextctrl->GetValue();
-				text_entry = wxTextEntry.c_str();
+				text_entry = wxTextEntry.mb_str(wxConvUTF8);
 				if (text_entry)
 				{
 					sscanf(text_entry,"%lg",&first_iso_value);
@@ -2521,9 +2523,9 @@ void MoveUpInGraphicList(wxCommandEvent &event)
 					display_message(ERROR_MESSAGE,
 						"graphic_editor_streamline_width_text_CB.  Missing text");
 				}
-				
+
 				wxTextEntry = isovaluesequencelasttextctrl->GetValue();
-				text_entry = wxTextEntry.c_str();
+				text_entry = wxTextEntry.mb_str(wxConvUTF8);
 				if (text_entry)
 				{
 					sscanf(text_entry,"%lg",&last_iso_value);
@@ -2533,7 +2535,7 @@ void MoveUpInGraphicList(wxCommandEvent &event)
 					display_message(ERROR_MESSAGE,
 						"graphic_editor_streamline_width_text_CB.  Missing text");
 				}
-				
+
 				if ((changed_value != number_of_iso_values) ||
 					(current_first_iso_value != first_iso_value) ||
 					(current_last_iso_value != last_iso_value))
@@ -2542,29 +2544,29 @@ void MoveUpInGraphicList(wxCommandEvent &event)
 						region_tree_viewer->current_graphic,scalar_field,
 						new_number_of_iso_values, /*iso value list*/(double *)NULL,
 					first_iso_value, last_iso_value, decimation_threshold);
-					
+
 					/* inform the client of the change */
 					Region_tree_viewer_autoapply(region_tree_viewer->rendition,
 						region_tree_viewer->edit_rendition);
 					//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphic);
 				}
-				
+
 				/* always restore strings to actual value in use */
 				sprintf(temp_string,"%d",new_number_of_iso_values);
-				isovaluesequencenumbertextctrl->SetValue(temp_string);			
-				
+				isovaluesequencenumbertextctrl->SetValue(wxString::FromAscii(temp_string));
+
 				sprintf(temp_string,"%g",first_iso_value);
-				isovaluesequencefirsttextctrl->SetValue(temp_string);			
-				
+				isovaluesequencefirsttextctrl->SetValue(wxString::FromAscii(temp_string));
+
 				sprintf(temp_string,"%g",last_iso_value);
-				isovaluesequencelasttextctrl->SetValue(temp_string);			
-				
+				isovaluesequencelasttextctrl->SetValue(wxString::FromAscii(temp_string));
+
 			}
 			else
 			{
 				display_message(ERROR_MESSAGE,
 					"wx_graphic_editor_enter_iso_scalar.  Missing iso value option.");
-				
+
 			}
 		}
 	}
@@ -2582,7 +2584,7 @@ void EnterGlyphOffset(wxCommandEvent &event)
 	USE_PARAMETER(event);
 
 	offsettextctrl=XRCCTRL(*this,"OffsetTextCtrl",wxTextCtrl);
-	
+
 	if (region_tree_viewer->current_graphic)
 	{
 		if (Cmiss_graphic_get_glyph_parameters(
@@ -2592,7 +2594,7 @@ void EnterGlyphOffset(wxCommandEvent &event)
 		{
 			/* Get the text string */
 			wxString wxTextEntry = offsettextctrl->GetValue();
-			const char *text_entry = wxTextEntry.c_str();
+			const char *text_entry = wxTextEntry.mb_str(wxConvUTF8);
 			if (text_entry)
 			{
 				/* clean up spaces? */
@@ -2615,7 +2617,7 @@ void EnterGlyphOffset(wxCommandEvent &event)
 						&variable_scale_field);
 					sprintf(temp_string,"%g,%g,%g",
 						glyph_offset[0],glyph_offset[1],glyph_offset[2]);
-					offsettextctrl->ChangeValue(temp_string);
+					offsettextctrl->ChangeValue(wxString::FromAscii(temp_string));
 				}
 			}
 			else
@@ -2648,7 +2650,7 @@ void EnterGlyphSize(wxCommandEvent &event)
 		{
 			/* Get the text string */
 			wxString wxTextEntry = baseglyphsizetextctrl->GetValue();
-			const char *text_entry = wxTextEntry.c_str();
+			const char *text_entry = wxTextEntry.mb_str(wxConvUTF8);
 			if (text_entry)
 			{
 				/* clean up spaces? */
@@ -2670,7 +2672,7 @@ void EnterGlyphSize(wxCommandEvent &event)
 						&variable_scale_field);
 					sprintf(temp_string,"%g*%g*%g",
 						glyph_size[0],glyph_size[1],glyph_size[2]);
-					baseglyphsizetextctrl->ChangeValue(temp_string);
+					baseglyphsizetextctrl->ChangeValue(wxString::FromAscii(temp_string));
 					destroy_Parse_state(&temp_state);
 				}
 			}
@@ -2707,7 +2709,7 @@ void EnterGlyphSize(wxCommandEvent &event)
 			{
 				/* Get the text string */
 				wxString wxTextEntry = glyphscalefactorstextctrl->GetValue();
-				const char *text_entry = wxTextEntry.c_str();
+				const char *text_entry = wxTextEntry.mb_str(wxConvUTF8);
 				if (text_entry)
 				{
 					/* clean up spaces? */
@@ -2719,19 +2721,19 @@ void EnterGlyphSize(wxCommandEvent &event)
 						if (orientation_scale_field)
 						{
 							glyphscalefactorstext->Enable();
-							glyphscalefactorstextctrl->Enable();					
+							glyphscalefactorstextctrl->Enable();
 						}
 						else
 						{
 							glyphscalefactorstext->Disable();
-							glyphscalefactorstextctrl->Disable();					
+							glyphscalefactorstextctrl->Disable();
 						}
 						Cmiss_graphic_set_glyph_parameters(
 							region_tree_viewer->current_graphic, glyph, glyph_scaling_mode,
 							glyph_offset, glyph_size, orientation_scale_field,
 							glyph_scale_factors, variable_scale_field);
 						Region_tree_viewer_autoapply(region_tree_viewer->rendition,
-						       region_tree_viewer->edit_rendition);
+							   region_tree_viewer->edit_rendition);
 						//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphic);
 						destroy_Parse_state(&temp_state);
 						Cmiss_graphic_get_glyph_parameters(
@@ -2740,7 +2742,7 @@ void EnterGlyphSize(wxCommandEvent &event)
 							&variable_scale_field);
 						sprintf(temp_string,"%g*%g*%g",
 							glyph_scale_factors[0],glyph_scale_factors[1],glyph_scale_factors[2]);
-						glyphscalefactorstextctrl->ChangeValue(temp_string);
+						glyphscalefactorstextctrl->ChangeValue(wxString::FromAscii(temp_string));
 					}
 				}
 				else
@@ -2769,7 +2771,7 @@ void EnterGlyphSize(wxCommandEvent &event)
 		}
 		else
 		{
-			overlay_textctrl->Disable();	
+			overlay_textctrl->Disable();
 		}
 	}
 
@@ -2779,7 +2781,7 @@ void EnterGlyphSize(wxCommandEvent &event)
 		int new_overlay_order;
 
 		USE_PARAMETER(event);
-		const char *text_entry=const_cast<char *>(overlay_textctrl->GetValue().c_str());
+		const char *text_entry=const_cast<char *>(overlay_textctrl->GetValue().mb_str(wxConvUTF8));
 		sscanf(text_entry,"%d",&new_overlay_order);
 		Cmiss_graphic_set_overlay_order(region_tree_viewer->current_graphic, new_overlay_order);
 		Region_tree_viewer_autoapply(region_tree_viewer->rendition,
@@ -2801,7 +2803,7 @@ void EnterElementDiscretization(wxCommandEvent &event)
 		/* Get the text string */
 		discretizationtextctrl=XRCCTRL(*this,"DiscretizationTextCtrl",wxTextCtrl);
 		wxString wxTextEntry = discretizationtextctrl->GetValue();
-		const char *text_entry = wxTextEntry.c_str();
+		const char *text_entry = wxTextEntry.mb_str(wxConvUTF8);
 		if (text_entry)
 		{
 			temp_state=create_Parse_state(text_entry);
@@ -2837,7 +2839,7 @@ void EnterElementDiscretization(wxCommandEvent &event)
 			/* always restore constant_radius to actual value in use */
 			sprintf(temp_string,"%d*%d*%d",discretization.number_in_xi1,
 				discretization.number_in_xi2,discretization.number_in_xi3);
-			discretizationtextctrl->ChangeValue(temp_string);
+			discretizationtextctrl->ChangeValue(wxString::FromAscii(temp_string));
 		}
 	}
 }
@@ -2848,11 +2850,11 @@ void EnterCircleDiscretization(wxCommandEvent &event)
 	int circle_discretization;
 
 	USE_PARAMETER(event);
-	
+
 	if (region_tree_viewer->current_graphic)
 	{
 		wxString circle_discretization_string = circlediscretizationtextctrl->GetValue();
-		circle_discretization = atoi(circle_discretization_string.c_str());
+		circle_discretization = atoi(circle_discretization_string.mb_str(wxConvUTF8));
 		/* Get the text string */
 		Cmiss_graphic_set_circle_discretization(
 			region_tree_viewer->current_graphic,circle_discretization);
@@ -2866,11 +2868,11 @@ void EnterCircleDiscretization(wxCommandEvent &event)
 		display_message(ERROR_MESSAGE,
 			"EnterCircleDiscretization. Invalid argument");
 	}
- 
+
 	/* always restore constant_radius to actual value in use */
-	sprintf(temp_string,"%d", 
+	sprintf(temp_string,"%d",
 		Cmiss_graphic_get_circle_discretization(region_tree_viewer->current_graphic));
-	circlediscretizationtextctrl->ChangeValue(temp_string);
+	circlediscretizationtextctrl->ChangeValue(wxString::FromAscii(temp_string));
 }
 
 void SeedElementChecked(wxCommandEvent &event)
@@ -2910,7 +2912,7 @@ void EnterSeedXi(wxCommandEvent &event)
 	{
 		/* Get the text string */
 		wxString wxTextEntry = xitextctrl->GetValue();
-		const char *text_entry = wxTextEntry.c_str();
+		const char *text_entry = wxTextEntry.mb_str(wxConvUTF8);
 		if (text_entry)
 		{
 			/* clean up spaces? */
@@ -2935,7 +2937,7 @@ void EnterSeedXi(wxCommandEvent &event)
 		}
 		/* always re-display the values actually set */
 		sprintf(temp_string,"%g,%g,%g",seed_xi[0],seed_xi[1],seed_xi[2]);
-		xitextctrl->ChangeValue(temp_string);
+		xitextctrl->ChangeValue(wxString::FromAscii(temp_string));
 	}
 }
 
@@ -2946,7 +2948,7 @@ void EnterLength(wxCommandEvent &event)
 	float streamline_length,streamline_width;
 	int reverse_track;
 	struct Computed_field *stream_vector_field;
-	
+
 	USE_PARAMETER(event);
 	lengthtextctrl=XRCCTRL(*this,"LengthTextCtrl",wxTextCtrl);
 	Cmiss_graphic_get_streamline_parameters(
@@ -2954,7 +2956,7 @@ void EnterLength(wxCommandEvent &event)
 		&stream_vector_field,&reverse_track,&streamline_length,
 		&streamline_width);
 	wxString wxTextEntry = lengthtextctrl->GetValue();
-	const char *text_entry = wxTextEntry.c_str();
+	const char *text_entry = wxTextEntry.mb_str(wxConvUTF8);
 	if (text_entry)
 	{
 		sscanf(text_entry,"%g",&streamline_length);
@@ -2973,7 +2975,7 @@ void EnterLength(wxCommandEvent &event)
 			"settings_editor_streamline_length_text_CB.  Missing text");
 	}
 	sprintf(temp_string,"%g",streamline_length);
-	lengthtextctrl->SetValue(temp_string);		
+	lengthtextctrl->SetValue(wxString::FromAscii(temp_string));
 }
 
 void EnterWidth(wxCommandEvent &event)
@@ -2992,7 +2994,7 @@ void EnterWidth(wxCommandEvent &event)
 		&streamline_width);
 	/* Get the text string */
 	wxString wxTextEntry = widthtextctrl->GetValue();
-	const char *text_entry = wxTextEntry.c_str();
+	const char *text_entry = wxTextEntry.mb_str(wxConvUTF8);
 	if (text_entry)
 	{
 		sscanf(text_entry,"%g",&streamline_width);
@@ -3011,7 +3013,7 @@ void EnterWidth(wxCommandEvent &event)
 	}
 	/* always restore streamline_width to actual value in use */
 	sprintf(temp_string,"%g",streamline_width);
-	widthtextctrl->SetValue(temp_string);			
+	widthtextctrl->SetValue(wxString::FromAscii(temp_string));
 }
 
 void ReverseChecked(wxCommandEvent &event)
@@ -3049,7 +3051,7 @@ void EnterLineWidth(wxCommandEvent &event)
 	new_line_width = line_width;
 	/* Get the text string */
 	wxString wxTextEntry = linewidthtextctrl->GetValue();
-	const char *text_entry = wxTextEntry.c_str();
+	const char *text_entry = wxTextEntry.mb_str(wxConvUTF8);
 	if (text_entry)
 	{
 		sscanf(text_entry,"%d",&new_line_width);
@@ -3059,7 +3061,7 @@ void EnterLineWidth(wxCommandEvent &event)
 				region_tree_viewer->current_graphic, new_line_width);
 			/* inform the client of the change */
 			Region_tree_viewer_autoapply(region_tree_viewer->rendition,
-				      region_tree_viewer->edit_rendition);
+					  region_tree_viewer->edit_rendition);
 			//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphic);
 		}
 	}
@@ -3070,13 +3072,13 @@ void EnterLineWidth(wxCommandEvent &event)
 	}
 	/* always restore streamline_width to actual value in use */
 	sprintf(temp_string,"%d",new_line_width);
-	linewidthtextctrl->SetValue(temp_string);
+	linewidthtextctrl->SetValue(wxString::FromAscii(temp_string));
 }
 
 void ExteriorChecked(wxCommandEvent &event)
 {
 	USE_PARAMETER(event);
-	exteriorcheckbox=XRCCTRL(*this,"ExteriorCheckBox",wxCheckBox); 
+	exteriorcheckbox=XRCCTRL(*this,"ExteriorCheckBox",wxCheckBox);
 	Cmiss_graphic_set_exterior(region_tree_viewer->current_graphic,
 		exteriorcheckbox->IsChecked());
 		/* inform the client of the change */
@@ -3091,7 +3093,7 @@ void FaceChecked(wxCommandEvent &event)
 	USE_PARAMETER(event);
 	facecheckbox=XRCCTRL(*this, "FaceCheckBox",wxCheckBox);
 	facechoice=XRCCTRL(*this, "FaceChoice",wxChoice);
-	if (facecheckbox->IsChecked()) 
+	if (facecheckbox->IsChecked())
 	{
 		facechoice->Enable();
 		face = facechoice->GetSelection();
@@ -3122,7 +3124,7 @@ void FaceChosen(wxCommandEvent &event)
 void SetBothMaterialChooser(Cmiss_graphic *graphic)
 {
 	graphical_material_chooser->set_object(Cmiss_graphic_get_material
-		(graphic));	
+		(graphic));
 	selected_material_chooser->set_object(Cmiss_graphic_get_selected_material
 		(graphic));
 }
@@ -3133,8 +3135,8 @@ void SetGraphic(Cmiss_graphic *graphic)
 	double decimation_threshold, *iso_values, first_iso_value,
 		last_iso_value;
 	char temp_string[50], *vector_temp_string;
-	struct Computed_field *radius_scalar_field, *iso_scalar_field, 
-		*orientation_scale_field, *variable_scale_field,	*label_field, 
+	struct Computed_field *radius_scalar_field, *iso_scalar_field,
+		*orientation_scale_field, *variable_scale_field,	*label_field,
 		*xi_point_density_field, *stream_vector_field,
 		*data_field, *texture_coord_field;
 	float constant_radius,scale_factor,streamline_length,streamline_width;
@@ -3165,12 +3167,12 @@ void SetGraphic(Cmiss_graphic *graphic)
 		}
 		if (coordinate_field_chooser ==NULL)
 		{
-			coordinate_field_chooser = 
+			coordinate_field_chooser =
 				new Managed_object_chooser<Computed_field,MANAGER_CLASS(Computed_field)>
 				(coordinate_field_chooser_panel, temp_coordinate_field, region_tree_viewer->field_manager,
 					(MANAGER_CONDITIONAL_FUNCTION(Computed_field) *)NULL, (void *)NULL, region_tree_viewer->user_interface);
-			Callback_base< Computed_field* > *coordinate_field_callback = 
-				new Callback_member_callback< Computed_field*, 
+			Callback_base< Computed_field* > *coordinate_field_callback =
+				new Callback_member_callback< Computed_field*,
 				wxRegionTreeViewer, int (wxRegionTreeViewer::*)(Computed_field *) >
 				(this, &wxRegionTreeViewer::coordinate_field_callback);
 			coordinate_field_chooser->set_callback(coordinate_field_callback);
@@ -3209,18 +3211,18 @@ void SetGraphic(Cmiss_graphic *graphic)
 		radius_scalar_chooser_panel->Show();
 		scalefactor->Show();
 		sprintf(temp_string,"%g",constant_radius);
-		constantradiustextctrl->SetValue(temp_string);
+		constantradiustextctrl->SetValue(wxString::FromAscii(temp_string));
 		sprintf(temp_string,"%g",scale_factor);
-		scalefactorstextctrl->SetValue(temp_string);
-		
+		scalefactorstextctrl->SetValue(wxString::FromAscii(temp_string));
+
 		if (radius_scalar_chooser == NULL)
 		{
-			radius_scalar_chooser = 
+			radius_scalar_chooser =
 			new Managed_object_chooser<Computed_field,MANAGER_CLASS(Computed_field)>
 				(radius_scalar_chooser_panel, region_tree_viewer->radius_scalar_field, region_tree_viewer->field_manager,
 				Computed_field_is_scalar, (void *)NULL, region_tree_viewer->user_interface);
-			Callback_base< Computed_field* > *radius_scalar_callback = 
-				new Callback_member_callback< Computed_field*, 
+			Callback_base< Computed_field* > *radius_scalar_callback =
+				new Callback_member_callback< Computed_field*,
 			wxRegionTreeViewer, int (wxRegionTreeViewer::*)(Computed_field *) >
 				(this, &wxRegionTreeViewer::radius_scalar_callback);
 			radius_scalar_chooser->set_callback(radius_scalar_callback);
@@ -3273,12 +3275,12 @@ void SetGraphic(Cmiss_graphic *graphic)
 				isovalueoptionspane->Show();
 				if (iso_scalar_chooser == NULL)
 				{
-					iso_scalar_chooser = 
+					iso_scalar_chooser =
 							new Managed_object_chooser<Computed_field,MANAGER_CLASS(Computed_field)>
 							(iso_scalar_chooser_panel, iso_scalar_field, region_tree_viewer->field_manager,
 								Computed_field_is_scalar, (void *)NULL, region_tree_viewer->user_interface);
-					Callback_base< Computed_field* > *iso_scalar_callback = 
-							new Callback_member_callback< Computed_field*, 
+					Callback_base< Computed_field* > *iso_scalar_callback =
+							new Callback_member_callback< Computed_field*,
 							wxRegionTreeViewer, int (wxRegionTreeViewer::*)(Computed_field *) >
 							(this, &wxRegionTreeViewer::iso_scalar_callback);
 					iso_scalar_chooser->set_callback(iso_scalar_callback);
@@ -3301,7 +3303,7 @@ void SetGraphic(Cmiss_graphic *graphic)
 					}
 					if (vector_temp_string)
 					{
-						isoscalartextctrl ->SetValue(vector_temp_string);
+						isoscalartextctrl ->SetValue(wxString::FromAscii(vector_temp_string));
 						DEALLOCATE(vector_temp_string);
 					}
 					DEALLOCATE(iso_values);
@@ -3314,16 +3316,16 @@ void SetGraphic(Cmiss_graphic *graphic)
 					isovaluesequencelasttextctrl->Enable();
 					isovaluesequenceradiobutton->SetValue(true);
 					sprintf(temp_string,"%d", number_of_iso_values);
-					isovaluesequencenumbertextctrl->SetValue(temp_string);
+					isovaluesequencenumbertextctrl->SetValue(wxString::FromAscii(temp_string));
 					sprintf(temp_string,"%g", first_iso_value);
-					isovaluesequencefirsttextctrl->SetValue(temp_string);
+					isovaluesequencefirsttextctrl->SetValue(wxString::FromAscii(temp_string));
 					sprintf(temp_string,"%g", last_iso_value);
-					isovaluesequencelasttextctrl->SetValue(temp_string);
+					isovaluesequencelasttextctrl->SetValue(wxString::FromAscii(temp_string));
 				}
 				iso_scalar_chooser->set_object(iso_scalar_field);
 			}
 		else
-			{			
+			{
 				iso_scalar_chooser_panel->Hide();
 				isoscalartextctrl->Hide();
 				isoscalartext->Hide();
@@ -3360,7 +3362,7 @@ void SetGraphic(Cmiss_graphic *graphic)
 			}
 			else
 			{
-				overlay_textctrl->Disable();		
+				overlay_textctrl->Disable();
 			}
 			sprintf(temp_string,"%d ",Cmiss_graphic_get_overlay_order(graphic));
 			overlay_textctrl->SetValue(temp_string);
@@ -3370,7 +3372,7 @@ void SetGraphic(Cmiss_graphic *graphic)
 		{
 			overlay_textctrl->Hide();
 			overlay_textctrl->Disable();
-			overlay_checkbox->Hide();	
+			overlay_checkbox->Hide();
 		}
 		*/
 		if (((CMISS_GRAPHIC_NODE_POINTS == region_tree_viewer->current_graphic_type) ||
@@ -3407,20 +3409,20 @@ void SetGraphic(Cmiss_graphic *graphic)
 				}
 				if (glyph_chooser == NULL)
 				{
-					glyph_chooser = 
+					glyph_chooser =
 							new Managed_object_chooser<GT_object, MANAGER_CLASS(GT_object)>
 							(glyph_chooser_panel, glyph, region_tree_viewer->glyph_manager,
-								(LIST_CONDITIONAL_FUNCTION(GT_object) *)NULL, (void *)NULL, 
+								(LIST_CONDITIONAL_FUNCTION(GT_object) *)NULL, (void *)NULL,
 								region_tree_viewer->user_interface);
-					Callback_base< GT_object* > *glyph_callback = 
-							new Callback_member_callback< GT_object*, 
+					Callback_base< GT_object* > *glyph_callback =
+							new Callback_member_callback< GT_object*,
 							wxRegionTreeViewer, int (wxRegionTreeViewer::*)(GT_object *) >
 							(this, &wxRegionTreeViewer::glyph_callback);
 					glyph_chooser->include_null_item(true);
-					glyph_chooser->set_callback(glyph_callback);	
+					glyph_chooser->set_callback(glyph_callback);
 					glyph_chooser_panel->Fit();
 				}
-			
+
 				if (orientation_scale_field_chooser == NULL)
 				{
 					orientation_scale_field_chooser=
@@ -3428,8 +3430,8 @@ void SetGraphic(Cmiss_graphic *graphic)
 							(orientation_scale_field_chooser_panel, orientation_scale_field, region_tree_viewer->field_manager,
 								Computed_field_is_orientation_scale_capable, NULL,
 								region_tree_viewer->user_interface);
-					Callback_base< Computed_field* > *orientation_scale_callback = 
-							new Callback_member_callback< Computed_field*, 
+					Callback_base< Computed_field* > *orientation_scale_callback =
+							new Callback_member_callback< Computed_field*,
 							wxRegionTreeViewer, int (wxRegionTreeViewer::*)(Computed_field *) >
 							(this, &wxRegionTreeViewer::orientation_scale_callback);
 					orientation_scale_field_chooser->set_callback(orientation_scale_callback);
@@ -3441,10 +3443,10 @@ void SetGraphic(Cmiss_graphic *graphic)
 					variable_scale_field_chooser=
 							new Managed_object_chooser<Computed_field,MANAGER_CLASS(Computed_field)>
 							(variable_scale_field_chooser_panel, variable_scale_field, region_tree_viewer->field_manager,
-								Computed_field_has_up_to_3_numerical_components, (void *)NULL, 
+								Computed_field_has_up_to_3_numerical_components, (void *)NULL,
 								region_tree_viewer->user_interface);
-					Callback_base< Computed_field* > *variable_scale_callback = 
-							new Callback_member_callback< Computed_field*, 
+					Callback_base< Computed_field* > *variable_scale_callback =
+							new Callback_member_callback< Computed_field*,
 							wxRegionTreeViewer, int (wxRegionTreeViewer::*)(Computed_field *) >
 							(this, &wxRegionTreeViewer::variable_scale_callback);
 					variable_scale_field_chooser->set_callback(variable_scale_callback);
@@ -3453,17 +3455,17 @@ void SetGraphic(Cmiss_graphic *graphic)
 				}
 
 				glyph_chooser->set_object(glyph);
-					
+
 				sprintf(temp_string,"%g,%g,%g",
 					glyph_offset[0],glyph_offset[1],glyph_offset[2]);
-				offsettextctrl->SetValue(temp_string);
+				offsettextctrl->SetValue(wxString::FromAscii(temp_string));
 				sprintf(temp_string,"%g*%g*%g",
 					glyph_size[0],glyph_size[1],glyph_size[2]);
-				baseglyphsizetextctrl->SetValue(temp_string);
+				baseglyphsizetextctrl->SetValue(wxString::FromAscii(temp_string));
 				sprintf(temp_string,"%g*%g*%g",glyph_scale_factors[0],
 					glyph_scale_factors[1],glyph_scale_factors[2]);
-				glyphscalefactorstextctrl->SetValue(temp_string);
-			
+				glyphscalefactorstextctrl->SetValue(wxString::FromAscii(temp_string));
+
 				 orientation_scale_field_chooser->set_object(orientation_scale_field);
 				if ((struct Computed_field *)NULL!=orientation_scale_field)
 				{
@@ -3498,7 +3500,7 @@ void SetGraphic(Cmiss_graphic *graphic)
 		/* label field */
 		label_chooser_panel = XRCCTRL(*this,"LabelChooserPanel",wxPanel);
 		fonttext=XRCCTRL(*this,"FontText",wxStaticText);
-		font_chooser_panel = XRCCTRL(*this,"FontChooserPanel",wxPanel);	
+		font_chooser_panel = XRCCTRL(*this,"FontChooserPanel",wxPanel);
 		wxStaticText *labeltext = XRCCTRL(*this,"LabelText",wxStaticText);
 		if (((CMISS_GRAPHIC_NODE_POINTS==region_tree_viewer->current_graphic_type)||
 			(CMISS_GRAPHIC_DATA_POINTS==region_tree_viewer->current_graphic_type)||
@@ -3511,10 +3513,10 @@ void SetGraphic(Cmiss_graphic *graphic)
 						label_field_chooser =
 							new Managed_object_chooser<Computed_field,MANAGER_CLASS(Computed_field)>
 							(label_chooser_panel, label_field, region_tree_viewer->field_manager,
-									(MANAGER_CONDITIONAL_FUNCTION(Computed_field) *)NULL , (void *)NULL, 
+									(MANAGER_CONDITIONAL_FUNCTION(Computed_field) *)NULL , (void *)NULL,
 									region_tree_viewer->user_interface);
-						Callback_base< Computed_field* > *label_callback = 
-							new Callback_member_callback< Computed_field*, 
+						Callback_base< Computed_field* > *label_callback =
+							new Callback_member_callback< Computed_field*,
 							wxRegionTreeViewer, int (wxRegionTreeViewer::*)(Computed_field *) >
 							(this, &wxRegionTreeViewer::label_callback);
 						label_field_chooser->set_callback(label_callback);
@@ -3526,10 +3528,10 @@ void SetGraphic(Cmiss_graphic *graphic)
 						font_chooser =
 							new Managed_object_chooser<Graphics_font,MANAGER_CLASS(Graphics_font)>
 							(font_chooser_panel, font, region_tree_viewer->font_manager,
-									(MANAGER_CONDITIONAL_FUNCTION(Graphics_font) *)NULL , (void *)NULL, 
+									(MANAGER_CONDITIONAL_FUNCTION(Graphics_font) *)NULL , (void *)NULL,
 									region_tree_viewer->user_interface);
-						Callback_base< Graphics_font* > *font_callback = 
-							new Callback_member_callback< Graphics_font*, 
+						Callback_base< Graphics_font* > *font_callback =
+							new Callback_member_callback< Graphics_font*,
 							wxRegionTreeViewer, int (wxRegionTreeViewer::*)(Graphics_font *) >
 							(this, &wxRegionTreeViewer::font_callback);
 						font_chooser->set_callback(font_callback);
@@ -3559,7 +3561,7 @@ void SetGraphic(Cmiss_graphic *graphic)
 			fonttext->Hide();
 			labeltext->Hide();
 		}
-		
+
 		/* Subgroup field */
 		wxStaticText *subgroup_field_text=XRCCTRL(*this,"SubgroupFieldText",wxStaticText);
 		subgroup_field_chooser_panel = XRCCTRL(*this,"SubgroupFieldChooserPanel",wxPanel);
@@ -3584,24 +3586,24 @@ void SetGraphic(Cmiss_graphic *graphic)
 		subgroup_field_text->Show();
 		subgroup_field_chooser->set_object(subgroup_field);
 		subgroup_field_chooser_panel->Show();
-		
+
 		/* Set the select_mode_chooser_panel*/
-		select_mode_chooser_panel = 
+		select_mode_chooser_panel =
 			XRCCTRL(*this, "SelectModeChooserPanel", wxPanel);
 		selectmodetext=XRCCTRL(*this,"SelectModeText",wxStaticText);
 		if (CMISS_GRAPHIC_POINT!=region_tree_viewer->current_graphic_type)
 		{
 			if (select_mode_chooser == NULL)
 			{
-				select_mode_chooser = 
+				select_mode_chooser =
 					new Enumerator_chooser<ENUMERATOR_TYPE_CLASS(Graphics_select_mode)>
-					(select_mode_chooser_panel, 
+					(select_mode_chooser_panel,
 						region_tree_viewer->select_mode,
 						(ENUMERATOR_CONDITIONAL_FUNCTION(Graphics_select_mode) *)NULL,
 						(void *)NULL, region_tree_viewer->user_interface);
 				select_mode_chooser_panel->Fit();
-				Callback_base< enum Graphics_select_mode > *select_mode_callback = 
-					new Callback_member_callback< enum Graphics_select_mode, 
+				Callback_base< enum Graphics_select_mode > *select_mode_callback =
+					new Callback_member_callback< enum Graphics_select_mode,
 					wxRegionTreeViewer, int (wxRegionTreeViewer::*)(enum Graphics_select_mode) >
 					(this, &wxRegionTreeViewer::select_mode_callback);
 				select_mode_chooser->set_callback(select_mode_callback);
@@ -3618,23 +3620,23 @@ void SetGraphic(Cmiss_graphic *graphic)
 
 		/* element_points and iso_surfaces */
 		/*use_element_type*/
-			use_element_type_chooser_panel = 
+			use_element_type_chooser_panel =
 				XRCCTRL(*this, "UseElementTypeChooserPanel", wxPanel);
 			useelementtypetext=XRCCTRL(*this,"UseElementTypeText",wxStaticText);
 			if ((CMISS_GRAPHIC_ELEMENT_POINTS==region_tree_viewer->current_graphic_type)||
-			    (CMISS_GRAPHIC_ISO_SURFACES==region_tree_viewer->current_graphic_type))
+				(CMISS_GRAPHIC_ISO_SURFACES==region_tree_viewer->current_graphic_type))
 			{
 				if (use_element_type_chooser == NULL)
 				{
-						use_element_type_chooser = 
+						use_element_type_chooser =
 							new Enumerator_chooser<ENUMERATOR_TYPE_CLASS(Use_element_type)>
-							(use_element_type_chooser_panel, 
+							(use_element_type_chooser_panel,
 									region_tree_viewer->use_element_type,
 									(ENUMERATOR_CONDITIONAL_FUNCTION(Use_element_type) *)NULL,
 									(void *)NULL, region_tree_viewer->user_interface);
 						use_element_type_chooser_panel->Fit();
-						Callback_base< enum Use_element_type > *use_element_type_callback = 
-							new Callback_member_callback< enum Use_element_type, 
+						Callback_base< enum Use_element_type > *use_element_type_callback =
+							new Callback_member_callback< enum Use_element_type,
 							wxRegionTreeViewer, int (wxRegionTreeViewer::*)(enum Use_element_type) >
 							(this, &wxRegionTreeViewer::use_element_type_callback);
 						use_element_type_chooser->set_callback(use_element_type_callback);
@@ -3646,7 +3648,7 @@ void SetGraphic(Cmiss_graphic *graphic)
 			else
 			{
 				use_element_type_chooser_panel->Hide();
-				useelementtypetext->Hide();	 
+				useelementtypetext->Hide();
 			}
 		discretizationtext=XRCCTRL(*this,"DiscretizationText",wxStaticText);
 		discretizationtextctrl=XRCCTRL(*this,"DiscretizationTextCtrl",wxTextCtrl);
@@ -3662,7 +3664,7 @@ void SetGraphic(Cmiss_graphic *graphic)
 				&discretization);
 			sprintf(temp_string,"%d*%d*%d",discretization.number_in_xi1,
 				discretization.number_in_xi2,discretization.number_in_xi3);
-			discretizationtextctrl->SetValue(temp_string);
+			discretizationtextctrl->SetValue(wxString::FromAscii(temp_string));
 			discretizationtextctrl->Show();
 			discretizationtext->Show();
 		}
@@ -3698,13 +3700,13 @@ void SetGraphic(Cmiss_graphic *graphic)
 		if (CMISS_GRAPHIC_CYLINDERS==region_tree_viewer->current_graphic_type)
 		{
 			sprintf(temp_string,"%d",Cmiss_graphic_get_circle_discretization(graphic));
-			circlediscretizationtextctrl->SetValue(temp_string);
-			circlediscretizationtextctrl->Show();	
+			circlediscretizationtextctrl->SetValue(wxString::FromAscii(temp_string));
+			circlediscretizationtextctrl->Show();
 			circlediscretizationtext->Show();
 		}
 		else
 		{
-			circlediscretizationtextctrl->Hide();	
+			circlediscretizationtextctrl->Hide();
 			circlediscretizationtext->Hide();
 		}
 
@@ -3723,11 +3725,11 @@ void SetGraphic(Cmiss_graphic *graphic)
 			{
 				native_discretization_field_chooser =
 					new Managed_object_chooser<Computed_field,MANAGER_CLASS(Computed_field)>
-					(native_discretization_field_chooser_panel,(Computed_field*)NULL, 
+					(native_discretization_field_chooser_panel,(Computed_field*)NULL,
 						region_tree_viewer->field_manager,
 						Computed_field_is_type_finite_element_iterator, (void *)NULL, region_tree_viewer->user_interface);
-				Callback_base< Computed_field* > *native_discretization_callback = 
-					new Callback_member_callback< Computed_field*, 
+				Callback_base< Computed_field* > *native_discretization_callback =
+					new Callback_member_callback< Computed_field*,
 					wxRegionTreeViewer, int (wxRegionTreeViewer::*)(Computed_field *) >
 					(this, &wxRegionTreeViewer::native_discretization_callback);
 				native_discretization_field_chooser->set_callback(native_discretization_callback);
@@ -3762,14 +3764,14 @@ void SetGraphic(Cmiss_graphic *graphic)
 				&xi_discretization_mode, &xi_point_density_field);
 			if (xi_discretization_mode_chooser ==NULL)
 			{
-				xi_discretization_mode_chooser = 
+				xi_discretization_mode_chooser =
 					new Enumerator_chooser<ENUMERATOR_TYPE_CLASS(Xi_discretization_mode)>
 					(xi_discretization_mode_chooser_panel, xi_discretization_mode,
 						(ENUMERATOR_CONDITIONAL_FUNCTION(Xi_discretization_mode) *)NULL,
 						(void *)NULL, region_tree_viewer->user_interface);
 				xi_discretization_mode_chooser_panel->Fit();
-				Callback_base< enum Xi_discretization_mode > *xi_discretization_mode_callback = 
-					new Callback_member_callback< enum Xi_discretization_mode, 
+				Callback_base< enum Xi_discretization_mode > *xi_discretization_mode_callback =
+					new Callback_member_callback< enum Xi_discretization_mode,
 					wxRegionTreeViewer, int (wxRegionTreeViewer::*)(enum Xi_discretization_mode) >
 					(this, &wxRegionTreeViewer::xi_discretization_mode_callback);
 				xi_discretization_mode_chooser->set_callback(xi_discretization_mode_callback);
@@ -3777,17 +3779,17 @@ void SetGraphic(Cmiss_graphic *graphic)
 			xi_discretization_mode_chooser_panel->Show();
 			xidiscretizationmodetext->Show();
 			xi_discretization_mode_chooser->set_value(xi_discretization_mode);
-			
+
 			if (xi_point_density_field_chooser == NULL)
 			{
 				xi_point_density_field_chooser =
 					new Managed_object_chooser<Computed_field,MANAGER_CLASS(Computed_field)>
 					(density_field_chooser_panel, xi_point_density_field, region_tree_viewer->field_manager,
-						Computed_field_is_scalar, (void *)NULL, 
+						Computed_field_is_scalar, (void *)NULL,
 						region_tree_viewer->user_interface);
 				xi_point_density_field_chooser->include_null_item(true);
-				Callback_base< Computed_field* > *xi_point_density_callback = 
-					new Callback_member_callback< Computed_field*, 
+				Callback_base< Computed_field* > *xi_point_density_callback =
+					new Callback_member_callback< Computed_field*,
 					wxRegionTreeViewer, int (wxRegionTreeViewer::*)(Computed_field *) >
 					(this, &wxRegionTreeViewer::xi_point_density_callback);
 				xi_point_density_field_chooser->set_callback(xi_point_density_callback);
@@ -3796,10 +3798,10 @@ void SetGraphic(Cmiss_graphic *graphic)
 			densityfieldtext->Show();
 			density_field_chooser_panel->Show();
 			xi_point_density_field_chooser->set_object(xi_point_density_field);
-			
+
 			if (XI_DISCRETIZATION_EXACT_XI != xi_discretization_mode)
 			{
-				discretizationtextctrl->Enable();	
+				discretizationtextctrl->Enable();
 				discretizationtext->Enable();
 				struct FE_field *native_discretization_field =
 					Cmiss_graphic_get_native_discretization_field(graphic);
@@ -3809,8 +3811,8 @@ void SetGraphic(Cmiss_graphic *graphic)
 				}
 			}
 			else
-			{	
-				discretizationtextctrl->Disable();	
+			{
+				discretizationtextctrl->Disable();
 				discretizationtext->Disable();
 				native_discretization_field_chooser_panel->Disable();
 			}
@@ -3827,10 +3829,10 @@ void SetGraphic(Cmiss_graphic *graphic)
 			}
 		}
 		else
-		{	
+		{
 			xidiscretizationmodetext->Hide();
 			xi_discretization_mode_chooser_panel->Hide();
-			densityfieldtext->Hide();	
+			densityfieldtext->Hide();
 			density_field_chooser_panel->Hide();
 		}
 
@@ -3849,9 +3851,9 @@ void SetGraphic(Cmiss_graphic *graphic)
 			if (seed_element_chooser == NULL)
 			{
 				seed_element_chooser = new wxFeElementTextChooser(seed_element_panel,
-						seed_element, fe_region, FE_element_is_top_level,(void *)NULL); 
-				Callback_base<FE_element *> *seed_element_callback = 
-						new Callback_member_callback< FE_element*, 
+						seed_element, fe_region, FE_element_is_top_level,(void *)NULL);
+				Callback_base<FE_element *> *seed_element_callback =
+						new Callback_member_callback< FE_element*,
 						wxRegionTreeViewer, int (wxRegionTreeViewer::*)(FE_element *) >
 						(this, &wxRegionTreeViewer::seed_element_callback);
 				seed_element_chooser->set_callback(seed_element_callback);
@@ -3885,7 +3887,7 @@ void SetGraphic(Cmiss_graphic *graphic)
 			xitextctrl->Show();
 			Cmiss_graphic_get_seed_xi(region_tree_viewer->current_graphic,seed_xi);
 			sprintf(temp_string,"%g,%g,%g",seed_xi[0],seed_xi[1],seed_xi[2]);
-			xitextctrl->SetValue(temp_string);
+			xitextctrl->SetValue(wxString::FromAscii(temp_string));
 			if (XI_DISCRETIZATION_EXACT_XI == xi_discretization_mode)
 			{
 				xitext->Enable();
@@ -3930,32 +3932,32 @@ void SetGraphic(Cmiss_graphic *graphic)
 					&streamline_length,&streamline_width);
 				if (streamline_type_chooser == NULL)
 				{
-					streamline_type_chooser = 
+					streamline_type_chooser =
 							new Enumerator_chooser<ENUMERATOR_TYPE_CLASS(Streamline_type)>
 							(streamline_type_chooser_panel, streamline_type,
 								(ENUMERATOR_CONDITIONAL_FUNCTION(Streamline_type) *)NULL,
 								(void *)NULL, region_tree_viewer->user_interface);
 					streamline_type_chooser_panel->Fit();
-					Callback_base< enum Streamline_type > *streamline_type_callback = 
-							new Callback_member_callback< enum Streamline_type, 
+					Callback_base< enum Streamline_type > *streamline_type_callback =
+							new Callback_member_callback< enum Streamline_type,
 							wxRegionTreeViewer, int (wxRegionTreeViewer::*)(enum Streamline_type) >
 							(this, &wxRegionTreeViewer::streamline_type_callback);
 					streamline_type_chooser->set_callback(streamline_type_callback);
 				}
 				streamline_type_chooser->set_value(streamline_type);
 				sprintf(temp_string,"%g",streamline_length);
-				lengthtextctrl->SetValue(temp_string);
+				lengthtextctrl->SetValue(wxString::FromAscii(temp_string));
 				sprintf(temp_string,"%g",streamline_width);
-				widthtextctrl->SetValue(temp_string);
+				widthtextctrl->SetValue(wxString::FromAscii(temp_string));
 				if (stream_vector_chooser == NULL)
 				{
 					stream_vector_chooser =
 							new Managed_object_chooser<Computed_field,MANAGER_CLASS(Computed_field)>
 							(stream_vector_chooser_panel, stream_vector_field, region_tree_viewer->field_manager,
-								Computed_field_is_stream_vector_capable, (void *)NULL, 
+								Computed_field_is_stream_vector_capable, (void *)NULL,
 								region_tree_viewer->user_interface);
-					Callback_base< Computed_field* > *stream_vector_callback = 
-							new Callback_member_callback< Computed_field*, 
+					Callback_base< Computed_field* > *stream_vector_callback =
+							new Callback_member_callback< Computed_field*,
 							wxRegionTreeViewer, int (wxRegionTreeViewer::*)(Computed_field *) >
 							(this, &wxRegionTreeViewer::stream_vector_callback);
 					stream_vector_chooser->set_callback(stream_vector_callback);
@@ -3976,18 +3978,18 @@ void SetGraphic(Cmiss_graphic *graphic)
 				streamvectortext->Hide();
 				stream_vector_chooser_panel->Hide();
 				reversecheckbox->Hide();
-           }
+		   }
 		/* line_width */
 		linewidthtext=XRCCTRL(*this,"LineWidthText",wxStaticText);
 		linewidthtextctrl=XRCCTRL(*this,"LineWidthTextCtrl",wxTextCtrl);
-		
+
 		if (CMISS_GRAPHIC_LINES==region_tree_viewer->current_graphic_type)
 		{
 			linewidthtext->Show();
 			linewidthtextctrl->Show();
 			line_width = Cmiss_graphic_get_line_width(graphic);
 			sprintf(temp_string,"%d",line_width);
-			linewidthtextctrl->SetValue(temp_string);
+			linewidthtextctrl->SetValue(wxString::FromAscii(temp_string));
 			linewidthtextctrl->Enable();
 			if (CMISS_GRAPHIC_ISO_SURFACES==region_tree_viewer->current_graphic_type &&
 				USE_FACES != Cmiss_graphic_get_use_element_type(graphic))
@@ -4000,7 +4002,7 @@ void SetGraphic(Cmiss_graphic *graphic)
 			linewidthtext->Hide();
 			linewidthtextctrl->Hide();
 		}
-		
+
 		streamlinedatatypetext=XRCCTRL(*this, "StreamlineDataTypeText", wxStaticText);
 		streamline_data_type_chooser_panel = XRCCTRL(*this,"StreamlineDataTypeChooserPanel",wxPanel);
 		spectrumtext=XRCCTRL(*this, "SpectrumText", wxStaticText);
@@ -4019,12 +4021,12 @@ void SetGraphic(Cmiss_graphic *graphic)
 					Cmiss_graphic_get_data_spectrum_parameters(region_tree_viewer->current_graphic,
 						&temp_data_field,&temp_spectrum);
 				}
-				data_field_chooser = 
+				data_field_chooser =
 					new Managed_object_chooser<Computed_field,MANAGER_CLASS(Computed_field)>
 					(data_chooser_panel,temp_data_field, region_tree_viewer->field_manager,
 						Computed_field_has_numerical_components, (void *)NULL, region_tree_viewer->user_interface);
-				Callback_base< Computed_field* > *data_field_callback = 
-					new Callback_member_callback< Computed_field*, 
+				Callback_base< Computed_field* > *data_field_callback =
+					new Callback_member_callback< Computed_field*,
 					wxRegionTreeViewer, int (wxRegionTreeViewer::*)(Computed_field *) >
 					(this, &wxRegionTreeViewer::data_field_callback);
 				data_field_chooser->set_callback(data_field_callback);
@@ -4039,7 +4041,7 @@ void SetGraphic(Cmiss_graphic *graphic)
 			datatext->Hide();
 			data_chooser_panel->Hide();
 		}
-		
+
 		if (CMISS_GRAPHIC_STREAMLINES==region_tree_viewer->current_graphic_type)
 		{
 			streamlinedatatypetext->Show();
@@ -4053,8 +4055,8 @@ void SetGraphic(Cmiss_graphic *graphic)
 					(streamline_data_type_chooser_panel, streamline_data_type,
 						(ENUMERATOR_CONDITIONAL_FUNCTION(Streamline_data_type) *)NULL,
 						(void *)NULL, region_tree_viewer->user_interface);
-				Callback_base< enum Streamline_data_type > *streamline_data_type_callback = 
-					new Callback_member_callback< enum Streamline_data_type, 
+				Callback_base< enum Streamline_data_type > *streamline_data_type_callback =
+					new Callback_member_callback< enum Streamline_data_type,
 					wxRegionTreeViewer, int (wxRegionTreeViewer::*)(enum Streamline_data_type) >
 					(this, &wxRegionTreeViewer::streamline_data_type_callback);
 				streamline_data_type_chooser->set_callback(streamline_data_type_callback);
@@ -4097,7 +4099,7 @@ void SetGraphic(Cmiss_graphic *graphic)
 				}
 			}
 		}
-		
+
 		wxStaticText *texturecoordinatestext = XRCCTRL(*this, "TextureCoordinatesText", wxStaticText);
 		texture_coordinates_chooser_panel = XRCCTRL(*this, "TextrueCoordinatesChooserPanel", wxPanel);
 		if ((CMISS_GRAPHIC_CYLINDERS == region_tree_viewer->current_graphic_type) ||
@@ -4113,10 +4115,10 @@ void SetGraphic(Cmiss_graphic *graphic)
 				texture_coord_field_chooser =
 						new Managed_object_chooser<Computed_field,MANAGER_CLASS(Computed_field)>
 				   (texture_coordinates_chooser_panel,texture_coord_field, region_tree_viewer->field_manager,
-							Computed_field_has_up_to_3_numerical_components, (void *)NULL, 
+							Computed_field_has_up_to_3_numerical_components, (void *)NULL,
 							region_tree_viewer->user_interface);
-				Callback_base< Computed_field* > *texture_coord_field_callback = 
-						new Callback_member_callback< Computed_field*, 
+				Callback_base< Computed_field* > *texture_coord_field_callback =
+						new Callback_member_callback< Computed_field*,
 					wxRegionTreeViewer, int (wxRegionTreeViewer::*)(Computed_field *) >
 						(this, &wxRegionTreeViewer::texture_coord_field_callback);
 				texture_coord_field_chooser->set_callback(texture_coord_field_callback);
@@ -4131,7 +4133,7 @@ void SetGraphic(Cmiss_graphic *graphic)
 			texturecoordinatestext->Hide();
 		}
 
-		/* render_type */		
+		/* render_type */
 		rendertypetext=XRCCTRL(*this, "RenderTypeText",wxStaticText);
 		render_type_chooser_panel=XRCCTRL(*this,"RenderTypeChooserPanel",wxPanel);
 		if ((CMISS_GRAPHIC_CYLINDERS == region_tree_viewer->current_graphic_type) ||
@@ -4144,7 +4146,7 @@ void SetGraphic(Cmiss_graphic *graphic)
 			render_type=Cmiss_graphic_get_render_type(graphic);
 			if (render_type_chooser == NULL)
 			{
-				render_type_chooser = 
+				render_type_chooser =
 						new Enumerator_chooser<ENUMERATOR_TYPE_CLASS(Cmiss_graphics_render_type)>
 						(render_type_chooser_panel, render_type,
 							(ENUMERATOR_CONDITIONAL_FUNCTION(Cmiss_graphics_render_type) *)NULL,
@@ -4163,7 +4165,7 @@ void SetGraphic(Cmiss_graphic *graphic)
 			rendertypetext->Hide();
 			render_type_chooser_panel->Hide();
 		}
-		
+
 		exteriorcheckbox=XRCCTRL(*this,"ExteriorCheckBox",wxCheckBox);
 		facecheckbox=XRCCTRL(*this, "FaceCheckBox",wxCheckBox);
 		facechoice=XRCCTRL(*this, "FaceChoice",wxChoice);
@@ -4176,11 +4178,11 @@ void SetGraphic(Cmiss_graphic *graphic)
 			facecheckbox->Show();
 			facechoice->Show();
 
- 			if ((CMISS_GRAPHIC_ISO_SURFACES!=region_tree_viewer->current_graphic_type) &&
-   				(CMISS_GRAPHIC_ELEMENT_POINTS!=region_tree_viewer->current_graphic_type))
+			if ((CMISS_GRAPHIC_ISO_SURFACES!=region_tree_viewer->current_graphic_type) &&
+				(CMISS_GRAPHIC_ELEMENT_POINTS!=region_tree_viewer->current_graphic_type))
 			{
 					exteriorcheckbox->Enable();
-					facecheckbox->Enable();				
+					facecheckbox->Enable();
 			}
 			else
 			{
@@ -4203,7 +4205,7 @@ void SetGraphic(Cmiss_graphic *graphic)
 			else
 			{
 				exteriorcheckbox->SetValue(0);
-			}		
+			}
 			if (Cmiss_graphic_get_face(graphic,&face))
 			{
 				facecheckbox->SetValue(1);
@@ -4231,25 +4233,25 @@ const char *GetRegionPathFromTreeItemId(wxTreeItemId current_item_id)
 
 	path_name = region_tree_viewer->testing_tree_ctrl->
 		GetItemText(current_item_id);
-	root_item_id = 
+	root_item_id =
 		region_tree_viewer->testing_tree_ctrl->GetRootItem();
 	if (current_item_id != root_item_id)
 	{
-		parent_id = 
+		parent_id =
 			region_tree_viewer->testing_tree_ctrl->GetItemParent(current_item_id);
 		while (parent_id != root_item_id)
 		{
 			current_region_name = region_tree_viewer->testing_tree_ctrl->
 				GetItemText(parent_id);
-			path_name = "/" + path_name;
+			path_name = wxString::FromAscii("/") + path_name;
 			path_name = current_region_name + path_name;
-			parent_id = 
+			parent_id =
 				region_tree_viewer->testing_tree_ctrl->GetItemParent(parent_id);
 		}
 		path_name = region_tree_viewer->testing_tree_ctrl->
 			GetItemText(root_item_id) + path_name;
 	}
-	return duplicate_string(path_name.c_str());
+	return duplicate_string(path_name.mb_str(wxConvUTF8));
 }
 
 void TreeControlSelectionChanged(wxTreeEvent &event)
@@ -4264,7 +4266,7 @@ void TreeControlSelectionChanged(wxTreeEvent &event)
 	wxArrayTreeItemIds array;
 
 	if (new_id.IsOk())
-	{ 
+	{
 		data = dynamic_cast<wxCmguiHierachicalTreeItemData*>(
 			region_tree_viewer->testing_tree_ctrl->GetItemData(new_id));
 	}
@@ -4346,8 +4348,8 @@ void ShowMenu(wxTreeItemId id, const wxPoint& pt)
 {
 	const char *full_path = GetRegionPathFromTreeItemId(
 		id);
-	wxMenu menu(full_path);
-	wxMenu *add_menu= new wxMenu("Graphic");
+	wxMenu menu(wxString::FromAscii(full_path));
+	wxMenu *add_menu= new wxMenu(wxT("Graphic"));
 	add_menu->Append(AddMenuItemNode, wxT("node_points"));
 	add_menu->Append(AddMenuItemData, wxT("data_points"));
 	add_menu->Append(AddMenuItemLines, wxT("lines"));
@@ -4368,7 +4370,7 @@ void OnItemMenu(wxTreeEvent &event)
 {
 	wxTreeItemId itemId = event.GetItem();
 	wxPoint clientpt = event.GetPoint();
-	
+
 	ShowMenu(itemId, clientpt);
 	event.Skip();
 }
@@ -4378,7 +4380,7 @@ void SetVisibilityOfTreeId(wxTreeItemId current_item_id, int flag)
 	struct Cmiss_region *region;
 	struct Cmiss_rendition *rendition;
 
-	wxCmguiHierachicalTreeItemData* data = 
+	wxCmguiHierachicalTreeItemData* data =
 		dynamic_cast<wxCmguiHierachicalTreeItemData*>(
 			region_tree_viewer->testing_tree_ctrl->GetItemData(current_item_id));
 	if ((region = data->GetRegion()))
@@ -4414,7 +4416,7 @@ void PropagateChanges(wxTreeItemId current_item_id, int flag)
 
 void TreeControlImageClicked(wxEvent &event)
 {
-	wxTreeEvent *tree_event = (wxTreeEvent *)&event;  
+	wxTreeEvent *tree_event = (wxTreeEvent *)&event;
 	SetVisibilityOfTreeId(tree_event->GetItem(),
 		!Cmiss_rendition_get_visibility_flag(region_tree_viewer->edit_rendition));
 }
@@ -4543,7 +4545,7 @@ END_EVENT_TABLE()
 int Region_tree_viewer_revert_changes(Region_tree_viewer *region_tree_viewer)
 {
 	int return_code = 0;
- 	gtMatrix transformation_matrix;
+	gtMatrix transformation_matrix;
 	if (region_tree_viewer && region_tree_viewer->wx_region_tree_viewer)
 	{
 		return_code = 1;
@@ -4555,7 +4557,7 @@ int Region_tree_viewer_revert_changes(Region_tree_viewer *region_tree_viewer)
 				region_tree_viewer->graphiclistbox =  XRCCTRL(*region_tree_viewer->wx_region_tree_viewer,
 					"CmissGraphicListBox",wxCheckListBox);
 			}
-			
+
 			int selection=	region_tree_viewer->graphiclistbox->GetSelection();
 			region_tree_viewer->graphiclistbox->SetSelection(wxNOT_FOUND);
 			region_tree_viewer->graphiclistbox->Clear();
@@ -4615,9 +4617,9 @@ int Region_tree_viewer_revert_changes(Region_tree_viewer *region_tree_viewer)
 *AW: Reaccess both pointers of region_tree_viewer->rendition and
 *region_tree_viewer->edit_rendition to rendition if scene object is
 *this also change the current field manager in scene editor.
-* 
+*
 * @param region_tree_viewer scene editor to be modified
-* @param scene_object Currently active object 
+* @param scene_object Currently active object
 */
 
 void Region_tree_viewer_set_active_rendition(
@@ -4780,7 +4782,7 @@ static int get_and_set_Cmiss_graphic_widgets(void *region_tree_viewer_void)
 	{
 		char *name = Cmiss_graphic_get_name_internal(region_tree_viewer->current_graphic);
 		wxTextCtrl *nametextfield = XRCCTRL(*region_tree_viewer->wx_region_tree_viewer, "NameTextField", wxTextCtrl);
-		nametextfield->SetValue(name);
+		nametextfield->SetValue(wxString::FromAscii(name));
 		DEALLOCATE(name);
 
 		/*for the selected and material chooser*/
@@ -4806,7 +4808,7 @@ static int Region_tree_viewer_add_graphic_item(
 	{
 		graphic_string = Cmiss_graphic_get_summary_string(graphic);
 		wxCheckListBox *graphicalitemschecklist =  XRCCTRL(*region_tree_viewer->wx_region_tree_viewer, "CmissGraphicListBox",wxCheckListBox);
-		graphicalitemschecklist->Append(graphic_string);
+		graphicalitemschecklist->Append(wxString::FromAscii(graphic_string));
 		if (Cmiss_graphic_get_visibility_flag(graphic))
 		{
 				graphicalitemschecklist->Check((graphicalitemschecklist->GetCount()-1),1);
@@ -4828,20 +4830,20 @@ static int Region_tree_viewer_add_graphic_item(
 #endif /* defined (WX_USER_INTERFACE) */
 
 void Region_tree_viewer_region_tree_region_add_child(Region_tree_viewer *region_tree_viewer, Cmiss_region *parent_region,
-       wxTreeItemId parent)
+	   wxTreeItemId parent)
 {
 	char *child_name;
 	wxTreeItemId current;
 	Cmiss_region *current_region;
 	ENTER(Scene_edito);
-	
+
 	current_region = Cmiss_region_get_first_child(parent_region);
 	while (current_region)
 	{
 		child_name = Cmiss_region_get_name(current_region);
 		if (child_name)
 		{
-			current = region_tree_viewer->testing_tree_ctrl->AppendItem(parent,child_name,0,0);
+			current = region_tree_viewer->testing_tree_ctrl->AppendItem(parent,wxString::FromAscii(child_name),0,0);
 			Region_tree_viewer_region_tree_region_add_child(region_tree_viewer,current_region,current);
 			DEALLOCATE(child_name);
 		}
@@ -4856,13 +4858,13 @@ void Region_tree_viewer_setup_region_tree(Region_tree_viewer *region_tree_viewer
 	wxTreeItemId current;
 	char *root_region_path;
 	struct Cmiss_rendition *rendition;
-	
+
 	ENTER(Region_tree_viewer_setup_region_tree);
-	
+
 	root_region_path = Cmiss_region_get_root_region_path();
 	if (root_region_path)
 	{
-		current = region_tree_viewer->testing_tree_ctrl->AddRoot(root_region_path,0,0);
+		current = region_tree_viewer->testing_tree_ctrl->AddRoot(wxString::FromAscii(root_region_path),0,0);
 		region_tree_viewer->testing_tree_ctrl->SetTreeIdRegionWithCallback(
 			current, region_tree_viewer->root_region);
 		region_tree_viewer->testing_tree_ctrl->add_all_child_regions_to_tree_item(current);
@@ -4881,7 +4883,7 @@ Global functions
 ----------------
 */
 
-struct Region_tree_viewer *CREATE(Region_tree_viewer)(	
+struct Region_tree_viewer *CREATE(Region_tree_viewer)(
 	struct Region_tree_viewer **region_tree_viewer_address,
 	struct Cmiss_graphics_module *graphics_module,
 	struct MANAGER(Scene) *scene_manager, struct Scene *scene,
@@ -4902,7 +4904,7 @@ DESCRIPTION :
 ==============================================================================*/
 {
 	struct Region_tree_viewer *region_tree_viewer;
- 
+
 	ENTER(CREATE(Region_tree_viewer));
 	region_tree_viewer = (struct Region_tree_viewer *)NULL;
 	if (graphics_module && scene_manager && scene && root_region &&
@@ -4911,7 +4913,7 @@ DESCRIPTION :
 		volume_texture_manager && font_package && user_interface)
 	{
 		if (ALLOCATE(region_tree_viewer,struct Region_tree_viewer,1))
-		{		
+		{
 			region_tree_viewer->auto_apply = 1;
 			region_tree_viewer->child_edited =1;
 			region_tree_viewer->child_expanded=1;
@@ -5166,7 +5168,7 @@ Sets the root scene of the <region_tree_viewer>. Updates widgets.
 		{
 				return_code = 1;
 		}
-		else 
+		else
 		{
 				if(region_tree_viewer->wx_region_tree_viewer)
 				{
@@ -5198,7 +5200,7 @@ Sets the root scene of the <region_tree_viewer>. Updates widgets.
 
 /***************************************************************************//**
 * Setup the graphic widgets.
-* 
+*
 * @param region_tree_viewer scene editor to be be modified
 */
 void Region_tree_viewer_set_graphic_widgets_for_rendition(Region_tree_viewer *region_tree_viewer)
@@ -5221,8 +5223,8 @@ static int Region_tree_viewer_wx_rendition_change(
 	Region_tree_viewer *region_tree_viewer;
 	int return_code;
 	//	wxCheckListBox *cmiss_graphic_checklist;
-	
-	if (rendition && 
+
+	if (rendition &&
 		(region_tree_viewer = (struct Region_tree_viewer *)region_tree_viewer_void))
 	{
 		return_code = 1;
@@ -5265,7 +5267,7 @@ static int Region_tree_viewer_add_graphic(
 	{
 		graphic_string = Cmiss_graphic_get_summary_string(graphic);
 		wxCheckListBox *graphicchecklist =  XRCCTRL(*region_tree_viewer->wx_region_tree_viewer, "CmissGraphicListBox",wxCheckListBox);
-		graphicchecklist->Append(graphic_string);
+		graphicchecklist->Append(wxString::FromAscii(graphic_string));
 		if (Cmiss_graphic_get_visibility_flag(graphic))
 		{
 			graphicchecklist->Check((graphicchecklist->GetCount()-1),1);

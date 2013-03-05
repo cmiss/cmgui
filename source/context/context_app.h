@@ -1,6 +1,6 @@
 /***************************************************************************//**
  * context.cpp
- * 
+ *
  * The main root structure of cmgui.
  */
 /* ***** BEGIN LICENSE BLOCK *****
@@ -39,8 +39,8 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-#if !defined (CONTEXT_H)
-#define CONTEXT_H
+#if !defined (CONTEXT_APP_H)
+#define CONTEXT_APP_H
 
 #define Context Cmiss_context
 struct Context;
@@ -49,6 +49,20 @@ struct Context;
 #include "command/cmiss.h"
 #include "context/user_interface_module.h"
 
+/**
+ * Create the application context.
+ * @param id
+ * @return
+ */
+struct Cmiss_context_app *Cmiss_context_app_create(const char *id);
+
+/**
+ * Destroy the given handle to the application context.
+ * @param context_address
+ * @return
+ */
+int Cmiss_context_app_destroy(struct Cmiss_context_app **context_address);
+
 /***************************************************************************//**
  * Return the default command data object in context.
  *
@@ -56,25 +70,7 @@ struct Context;
  * @return  the default command data if successfully, otherwise NULL.
  */
 struct Cmiss_command_data *Cmiss_context_get_default_command_interpreter(
-	struct Context *context);
-
-/***************************************************************************//**
- * Return the any object selection in context.
- *
- * @param context  Pointer to a cmiss_context object.
- * @return  the any_object_selection if successfully, otherwise NULL.
- */
-struct Any_object_selection *Cmiss_context_get_any_object_selection(
-	struct Context *context);
-
-/***************************************************************************//**
- * Return the element point ranges selection in context.
- *
- * @param context  Pointer to a cmiss_context object.
- * @return  the Element_point_ranges_selection if successfully, otherwise NULL.
- */
-struct Element_point_ranges_selection *Cmiss_context_get_element_point_ranges_selection(
-	struct Context *context);
+	struct Cmiss_context_app *context);
 
 /***************************************************************************//**
  * Return the event dispatcher in context.
@@ -82,40 +78,22 @@ struct Element_point_ranges_selection *Cmiss_context_get_element_point_ranges_se
  * @param context  Pointer to a cmiss_context object.
  * @return  the default event_dispatcher if successfully, otherwise NULL.
  */
-struct Event_dispatcher *Cmiss_context_get_default_event_dispatcher(
-	struct Context *context);
-
-/***************************************************************************//**
- * Return the IO_stream_package in context.
- *
- * @param context  Pointer to a cmiss_context object.
- * @return  the default IO_stream_package if successfully, otherwise NULL.
- */
-struct IO_stream_package *Cmiss_context_get_default_IO_stream_package(
-	struct Context *context);
-
-/***************************************************************************//**
- * Return the default curve manager in context.
- *
- * @param context  Pointer to a cmiss_context object.
- * @return  the default curve_manager if successfully, otherwise NULL.
- */
-struct MANAGER(Curve) *Cmiss_context_get_default_curve_manager(
-	Cmiss_context_id context);
+struct Event_dispatcher *Cmiss_context_app_get_default_event_dispatcher(
+	struct Cmiss_context_app *context);
 
 /***************************************************************************//**
  * Create and returns the internal user interface module in cmgui.
  *
  * @param context  Pointer to a cmiss_context object.
- * @return  user_interface_module if successfully create the user interface, 
+ * @return  user_interface_module if successfully create the user interface,
  *    otherwise NULL.
  */
 #if defined (WX_USER_INTERFACE) || (!defined (WIN32_USER_INTERFACE) && !defined (_MSC_VER))
 struct User_interface_module *Cmiss_context_create_user_interface(
-	struct Context *context, int in_argc, const char *in_argv[], void *user_interface_instance);
+	struct Cmiss_context_app *context, int in_argc, const char *in_argv[], void *user_interface_instance);
 #else
 struct User_interface_module *Cmiss_context_create_user_interface(
-	struct Context *context, int in_argc, const char *in_argv[],
+	struct Cmiss_context_app *context, int in_argc, const char *in_argv[],
 	HINSTANCE current_instance, HINSTANCE previous_instance,
 	LPSTR command_line,int initial_main_window_state, void *user_interface_instance);
 #endif
@@ -124,5 +102,12 @@ struct User_interface_module *Cmiss_context_create_user_interface(
  * Clean up any internally accessed context pointers
  */
 void Context_internal_cleanup();
+
+/**
+ * Returns a the handle to the core context from the given application context.
+ * @param context
+ * @return
+ */
+struct Context *Cmiss_context_app_get_core_context(struct Cmiss_context_app *context);
 
 #endif /* !defined (CONTEXT_H) */

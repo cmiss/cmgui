@@ -1,52 +1,12 @@
-/*******************************************************************************
-FILE : graphics_buffer.cpp
 
-LAST MODIFIED : 19 February 2007
 
-DESCRIPTION :
-This provides a Cmgui interface to the OpenGL contexts of many types.
-******************************************************************************/
-/* ***** BEGIN LICENSE BLOCK *****
- * Version: MPL 1.1/GPL 2.0/LGPL 2.1
- *
- * The contents of this file are subject to the Mozilla Public License Version
- * 1.1 (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- * http://www.mozilla.org/MPL/
- *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
- * for the specific language governing rights and limitations under the
- * License.
- *
- * The Original Code is cmgui.
- *
- * The Initial Developer of the Original Code is
- * Auckland Uniservices Ltd, Auckland, New Zealand.
- * Portions created by the Initial Developer are Copyright (C) 2005
- * the Initial Developer. All Rights Reserved.
- *
- * Contributor(s):
- *
- * Alternatively, the contents of this file may be used under the terms of
- * either the GNU General Public License Version 2 or later (the "GPL"), or
- * the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
- * in which case the provisions of the GPL or the LGPL are applicable instead
- * of those above. If you wish to allow use of your version of this file only
- * under the terms of either the GPL or the LGPL, and not to allow others to
- * use your version of this file under the terms of the MPL, indicate your
- * decision by deleting the provisions above and replace them with the notice
- * and other provisions required by the GPL or the LGPL. If you do not delete
- * the provisions above, a recipient may use your version of this file under
- * the terms of any one of the MPL, the GPL or the LGPL.
- *
- * ***** END LICENSE BLOCK ***** */
 
-#if defined (BUILD_WITH_CMAKE)
+
+
+#if 1
 #include "configure/cmgui_configure.h"
 #endif /* defined (BUILD_WITH_CMAKE) */
 
-extern "C" {
 #if defined (GTK_USER_INTERFACE)
 #include <gtk/gtk.h>
 #if ( GTK_MAJOR_VERSION < 2 ) || defined (WIN32_SYSTEM)
@@ -67,19 +27,17 @@ extern "C" {
 /* Minimum supported version to allow use of AlphaBlend function */
 #define WINVER Windows98
 #endif /* defined (__CYGWIN__) || defined (__MINGW32__) */
-//#define WINDOWS_LEAN_AND_MEAN
-#define NOMINMAX
-#include <windows.h>
-#include <GL/glew.h>
+
+
+
+
 #include <GL/gl.h>
 #endif /* defined (WIN32_USER_INTERFACE) */
 #if defined (CARBON_USER_INTERFACE)
 #include <OpenGL/glu.h>
 #include <AGL/agl.h>
 #endif /* defined (CARBON_USER_INTERFACE) */
-}
 #if defined (WX_USER_INTERFACE)
-extern "C" {
 #if defined (WIN32)
 //#	define WINDOWS_LEAN_AND_MEAN
 #	define NOMINMAX
@@ -87,61 +45,24 @@ extern "C" {
 #endif
 #define GL_GLEXT_PROTOTYPES
 #include "graphics/graphics_library.h"
-}
 #include <wx/wx.h>
 #include <wx/glcanvas.h>
 #include <wx/debug.h>
 #endif /* defined (WX_USER_INTERFACE) */
-extern "C" {
+#include "general/debug.h"
+#include "general/message.h"
 #include "general/callback_private.h"
 #include "general/debug.h"
 #include "general/indexed_list_private.h"
 #include "general/object.h"
+#include "graphics/scene_viewer.h"
 #include "three_d_drawing/graphics_buffer.h"
+#include "three_d_drawing/graphics_buffer_app.h"
 #if defined (UNIX) && !defined (DARWIN)
 #include "user_interface/event_dispatcher.h"
-#endif /* defined (UNIX) && !defined (DARWIN) */
-#include "user_interface/message.h"
-#include "user_interface/user_interface.h"
-
-#include "three_d_drawing/window_system_extensions.h"
-
-/* #define DEBUG_CODE */
-#if defined DEBUG_CODE || defined (WIN32_USER_INTERFACE)
-#  include <stdio.h>
 #endif
-}
-
-#if !defined (AIX)
-/* SAB 30 June 2004
-	These calls should be available in every system with GLX 1.3 or greater
-	but on the SGI the original code seems to work better with movies and
-	with grabbing frames off the screen.  This is done by trying the SGI versions
-	first on these machines.
-	The SGI allows the creation of the correct Pbuffer using GLX commands
-	and then generates a bad alloc error when I try to make it current.
-	The code should still run on an older GLX even if it is compiled on a GLX 1.3 by
-	falling through to section 4.
-	AIX is still having problems with rendering triangles badly and the fbconfig code
-	doesn't work well set displayed so it is back off again. */
-/*???DB.  The old version of GLX (glx.h 1999/12/11), has GLX_VERSION_1_3
-	defined, but doesn't define GLX_PBUFFER_WIDTH, GLX_PBUFFER_HEIGHT and
-	GLX_RGBA_BIT */
-#if defined (GLX_VERSION_1_3) && defined (GLX_PBUFFER_WIDTH) && \
-	defined (GLX_PBUFFER_HEIGHT) && defined (GLX_RGBA_BIT)
-#define USE_GLX_PBUFFER 1
-#define USE_GLX_FBCONFIG 1
-#endif /* defined (GLX_VERSION_1_3) */
-#endif /* !defined (AIX) */
-/* Despite being in the Mesa headers we do not want to use the SGI FB extensions at all,
-   the GLX versions are preferable. */
-#undef GLX_SGIX_pbuffer
-#undef GLX_SGIX_dmbuffer
-
-/*
-Module types
-------------
-*/
+#include "user_interface/user_interface.h"
+#include "three_d_drawing/window_system_extensions.h"
 
 enum Graphics_buffer_class
 /*******************************************************************************
@@ -170,15 +91,12 @@ enum Graphics_buffer_pbuffer_support
 };
 #endif /* defined (WIN32_USER_INTERFACE) */
 
-struct Graphics_buffer_package
-/*******************************************************************************
-LAST MODIFIED : 5 May 2004
 
-DESCRIPTION :
-==============================================================================*/
+
+struct Graphics_buffer_app_package
 {
-	int override_visual_id;
 
+	struct Graphics_buffer_package *core_package;
 #if defined (GTK_USER_INTERFACE)
 #  if defined (GTK_USE_GTKGLAREA)
 	  GtkWidget *share_glarea;
@@ -200,7 +118,7 @@ DESCRIPTION :
 	/* Flag to enable work around on Intel cards when using a single context the viewport
 	 * isn't updated correctly by forcing a glscissor command to update the viewport size. */
 	int intel_single_context_force_clipping;
-	
+
 #endif /* defined (WIN32_USER_INTERFACE) */
 #if defined (WX_USER_INTERFACE)
 	wxGLContext* wxSharedContext;
@@ -208,21 +126,25 @@ DESCRIPTION :
 };
 
 FULL_DECLARE_CMISS_CALLBACK_TYPES(Graphics_buffer_callback, \
-	struct Graphics_buffer *, void *);
+	struct Graphics_buffer_app *, void *);
 
 FULL_DECLARE_CMISS_CALLBACK_TYPES(Graphics_buffer_input_callback, \
-	struct Graphics_buffer *, struct Graphics_buffer_input *);
+	struct Graphics_buffer_app *, struct Graphics_buffer_input *);
 
-struct Graphics_buffer
 /*******************************************************************************
 LAST MODIFIED : 5 May 2004
 
 DESCRIPTION :
 ==============================================================================*/
+
+struct Graphics_buffer_app
 {
-	enum Graphics_buffer_type type;
-	struct Graphics_buffer_package *package;
+
+
+	struct Graphics_buffer_app_package *package;
 	int access_count;
+
+	struct Graphics_buffer *core_buffer;
 
 	struct LIST(CMISS_CALLBACK_ITEM(Graphics_buffer_callback))
 		  *initialise_callback_list;
@@ -241,8 +163,9 @@ DESCRIPTION :
 #  if defined (GTK_USE_GTKGLAREA)
 	   /* For GRAPHICS_BUFFER_GTKGLAREA_TYPE */
 	   /* No inquiry functions so we save the state */
-	   enum Graphics_buffer_buffering_mode buffering_mode;
-	   enum Graphics_buffer_stereo_mode stereo_mode;
+
+
+
 #   else /* defined (GTK_USE_GTKGLAREA) */
 	   /* For GRAPHICS_BUFFER_GTKGLEXT_TYPE */
 	   GdkGLConfig *glconfig;
@@ -272,12 +195,12 @@ DESCRIPTION :
 	int height;
 	int x;
 	int y;
-    /* Work around bug in firefox 3.0 and 3.5 where mouse coordinates are always given with respect
-     * to the containing window, rather than the last SetWindow call.
-     * Try to discern the offset of the containing window by assuming we will get a full
-     * window redraw before any mouse events.
-     * See https://tracker.physiomeproject.org/show_bug.cgi?id=921
-     */
+	/* Work around bug in firefox 3.0 and 3.5 where mouse coordinates are always given with respect
+	 * to the containing window, rather than the last SetWindow call.
+	 * Try to discern the offset of the containing window by assuming we will get a full
+	 * window redraw before any mouse events.
+	 * See https://tracker.physiomeproject.org/show_bug.cgi?id=921
+	 */
 	int mouse_x;
 	int mouse_y;
 	/* For offscreen rendering */
@@ -292,8 +215,8 @@ DESCRIPTION :
 	int minimum_depth_buffer_depth;
 	int minimum_accumulation_buffer_depth;
 	int minimum_alpha_buffer_depth;
-    enum Graphics_buffer_stereo_mode stereo_mode;
-	
+	enum Graphics_buffer_stereo_mode stereo_mode;
+
 	/* Windows bitmap, either used with non accelerated windows OpenGL or
 		for copying from pbuffer for rendering to screen */
 	HBITMAP device_independent_bitmap;
@@ -301,12 +224,12 @@ DESCRIPTION :
 	void *device_independent_bitmap_pixels;
 	/* So we know how to composite we need to keep the buffering mode */
 	enum Graphics_buffer_buffering_mode buffering_mode;
-    /* Some calls to the scene viewer mean that we will need to rerender
-       the offscreen window (such as resizing) so this flag tells us this. */
-    int offscreen_render_required;
+	/* Some calls to the scene viewer mean that we will need to rerender
+	   the offscreen window (such as resizing) so this flag tells us this. */
+	int offscreen_render_required;
 #endif /* defined (WIN32_USER_INTERFACE) */
 #if defined (CARBON_USER_INTERFACE)
-    WindowRef theWindow;
+	WindowRef theWindow;
 	/* These parameters are provided by the hosting application and should be
 		respected by this graphics_buffer */
 	int width;
@@ -322,20 +245,15 @@ DESCRIPTION :
 #if defined (WX_USER_INTERFACE)
 	wxPanel *parent;
 	wxGraphicsBuffer *canvas;
-	int *attrib_list, framebuffer_width, framebuffer_height;
-#if defined (OPENGL_API)
-	GLuint fbo, depthbuffer, img;
-#if defined (USE_MSAA)
-	GLuint msbuffer, multi_depthbuffer, multi_fbo;
-#endif
-#endif
 #endif /* defined (WX_USER_INTERFACE) */
 };
 
-/*
-Module functions
-----------------
-*/
+
+struct Graphics_buffer_package *Graphics_buffer_package_get_core_package(struct Graphics_buffer_app_package* package)
+{
+	return package->core_package;
+}
+
 
 #if defined (WIN32_USER_INTERFACE)
 static LRESULT CALLBACK Graphics_buffer_callback_proc(HWND window, UINT message_identifier,
@@ -345,17 +263,20 @@ static LRESULT CALLBACK Graphics_buffer_callback_proc(HWND window, UINT message_
 DEFINE_CMISS_CALLBACK_MODULE_FUNCTIONS(Graphics_buffer_callback, void)
 
 DEFINE_CMISS_CALLBACK_FUNCTIONS(Graphics_buffer_callback, \
-	struct Graphics_buffer *,void *)
+	struct Graphics_buffer_app *,void *)
 
 DEFINE_CMISS_CALLBACK_MODULE_FUNCTIONS(Graphics_buffer_input_callback, void)
 
 DEFINE_CMISS_CALLBACK_FUNCTIONS(Graphics_buffer_input_callback, \
-	struct Graphics_buffer *, struct Graphics_buffer_input *)
+	struct Graphics_buffer_app *, struct Graphics_buffer_input *)
 
-DECLARE_OBJECT_FUNCTIONS(Graphics_buffer)
+DECLARE_OBJECT_FUNCTIONS(Graphics_buffer_app)
 
-static struct Graphics_buffer *CREATE(Graphics_buffer)(
-	struct Graphics_buffer_package *package)
+static struct Graphics_buffer_app *CREATE(Graphics_buffer_app)(
+	struct Graphics_buffer_app_package *package,
+		enum Graphics_buffer_type type,
+		enum Graphics_buffer_buffering_mode buffering_mode,
+		enum Graphics_buffer_stereo_mode stereo_mode)
 /*******************************************************************************
 LAST MODIFIED : 4 May 2004
 
@@ -364,16 +285,14 @@ This is static as it is designed to be called by the different constructors
 contained in the this module only.
 ==============================================================================*/
 {
-	struct Graphics_buffer *buffer;
 
-	ENTER(CREATE(Graphics_buffer));
 
-	if (ALLOCATE(buffer, struct Graphics_buffer, 1))
+	struct Graphics_buffer_app *buffer = 0;
+
+	if (ALLOCATE(buffer, struct Graphics_buffer_app, 1))
 	{
-		buffer->type = GRAPHICS_BUFFER_INVALID_TYPE;
-		buffer->package = package;
-		buffer->access_count = 0;
-
+		buffer->access_count = 1;
+		buffer->core_buffer = CREATE(Graphics_buffer)(package->core_package, type, buffering_mode, stereo_mode);
 		buffer->initialise_callback_list=
 			CREATE(LIST(CMISS_CALLBACK_ITEM(Graphics_buffer_callback)))();
 		buffer->resize_callback_list=
@@ -390,14 +309,14 @@ contained in the this module only.
 
 #   if defined (GTK_USE_GTKGLAREA)
 /* For GRAPHICS_BUFFER_GTKGLAREA_TYPE */
-	    /* No inquiry functions so we save the state */
-	    buffer->buffering_mode = GRAPHICS_BUFFER_ANY_BUFFERING_MODE;
+		/* No inquiry functions so we save the state */
+		buffer->buffering_mode = GRAPHICS_BUFFER_ANY_BUFFERING_MODE;
 		 buffer->stereo_mode = GRAPHICS_BUFFER_ANY_STEREO_MODE;
 #   else /* defined (GTK_USE_GTKGLAREA) */
 /* For GRAPHICS_BUFFER_GTKGLEXT_TYPE */
-	    buffer->glconfig = (GdkGLConfig *)NULL;
-	    buffer->glcontext = (GdkGLContext *)NULL;
-	    buffer->gldrawable = (GdkGLDrawable *)NULL;
+		buffer->glconfig = (GdkGLConfig *)NULL;
+		buffer->glcontext = (GdkGLContext *)NULL;
+		buffer->gldrawable = (GdkGLDrawable *)NULL;
 #   endif /* ! defined (GTK_USER_GLAREA) */
 #endif /* defined (GTK_USER_INTERFACE) */
 
@@ -406,7 +325,9 @@ contained in the this module only.
 		 buffer->hDC = (HDC)NULL;
 		 buffer->hRC = (HGLRC)NULL;
 		 buffer->pixel_format = 0;
-		 buffer->width = 0;
+
+
+
 		 buffer->height = 0;
 		 buffer->x = 0;
 		 buffer->y = 0;
@@ -417,7 +338,7 @@ contained in the this module only.
 #ifdef WGL_ARB_pbuffer
 		 buffer->pbuffer = (HPBUFFERARB)NULL;
 #endif /* defined (WGL_ARB_pbuffer) */
-	    buffer->buffering_mode = GRAPHICS_BUFFER_ANY_BUFFERING_MODE;
+		buffer->buffering_mode = GRAPHICS_BUFFER_ANY_BUFFERING_MODE;
 		 buffer->minimum_colour_buffer_depth = 0;
 		 buffer->minimum_depth_buffer_depth = 0;
 		 buffer->minimum_accumulation_buffer_depth = 0;
@@ -428,6 +349,8 @@ contained in the this module only.
 		 buffer->device_independent_bitmap_pixels = NULL;
 		 buffer->offscreen_render_required = 0;
 #endif // defined (WIN32_USER_INTERFACE)
+
+
 
 #if defined (CARBON_USER_INTERFACE)
 		 buffer->theWindow = 0;
@@ -444,49 +367,38 @@ contained in the this module only.
 #if defined (WX_USER_INTERFACE)
 		 buffer->parent = (wxPanel *)NULL;
 		 buffer->canvas = (wxGraphicsBuffer *)NULL;
-		 buffer->attrib_list = NULL;
-#if defined (OPENGL_API)
-		 buffer->fbo = 0;
-		 buffer->depthbuffer = 0;
-		 buffer->img = 0;
-#if defined (USE_MSAA)
-		 buffer->msbuffer = 0;
-		 buffer->multi_fbo = 0;
-		 buffer->multi_depthbuffer = 0;
-#endif
-#endif
-		 buffer->framebuffer_height = 0;
-		 buffer->framebuffer_width = 0;
 #endif /* defined (CARBON_USER_INTERFACE) */
 	}
 	else
 	{
-		display_message(ERROR_MESSAGE,"CREATE(Graphics_buffer). Unable to allocate buffer structure");
-		buffer = (struct Graphics_buffer *)NULL;
+		display_message(ERROR_MESSAGE,"CREATE(Graphics_buffer_app). Unable to allocate buffer structure");
 	}
 
-	LEAVE;
 	return (buffer);
-} /* CREATE(Graphics_buffer) */
+} /* CREATE(Graphics_buffer_app) */
+
+
+
+
 
 #if defined (WX_USER_INTERFACE)
 class wxGraphicsBuffer : public wxGLCanvas
 {
-	Graphics_buffer *graphics_buffer;
+	Graphics_buffer_app *graphics_buffer;
 	wxPanel *parent;
 	int key_code, cursor_x, cursor_y;
 public:
 
 	wxGraphicsBuffer(wxPanel *parent, wxGLContext* sharedContext,
-		Graphics_buffer *graphics_buffer
+		Graphics_buffer_app *graphics_buffer
 		 , int *attrib_list):
 	wxGLCanvas(parent, sharedContext, wxID_ANY, wxDefaultPosition, parent->GetSize(),
-		 wxFULL_REPAINT_ON_RESIZE, "GLCanvas"
+		 wxFULL_REPAINT_ON_RESIZE, wxT("GLCanvas")
 		 , attrib_list),
 		graphics_buffer(graphics_buffer), parent(parent), key_code(0), cursor_x(-1),
 		cursor_y(-1)
 	{
-	};
+	}
 
 	~wxGraphicsBuffer()
 	{
@@ -498,21 +410,22 @@ public:
 				graphics_buffer->package->wxSharedContext = (wxGLContext *)NULL;
 			}
 		}
-	};
+	}
 
 	void ClearGraphicsBufferReference()
 	{
-		graphics_buffer = (Graphics_buffer *)NULL;
+		graphics_buffer = 0;
 	}
+
 
 	void OnPaint( wxPaintEvent& WXUNUSED(event) )
 	{
+
 		/* Unfortunately can't find a better place to copy the shareable context */
 		if (!graphics_buffer->package->wxSharedContext)
 		{
 			graphics_buffer->package->wxSharedContext = GetContext();
 		}
-
 		/* must always be here */
 		wxPaintDC dc(this);
 
@@ -524,6 +437,9 @@ public:
 	{
 		// this is also necessary to update the context on some platforms
 		wxGLCanvas::OnSize(event);
+
+		Graphics_buffer_set_height(graphics_buffer->core_buffer, event.GetSize().GetHeight());
+		Graphics_buffer_set_width(graphics_buffer->core_buffer, event.GetSize().GetWidth());
 
 		CMISS_CALLBACK_LIST_CALL(Graphics_buffer_callback)(
 			graphics_buffer->resize_callback_list, graphics_buffer, NULL);
@@ -546,7 +462,7 @@ public:
 	void OnKeyUp( wxKeyEvent& event )
 	{
 		struct Graphics_buffer_input input;
-		input.type = GRAPHICS_BUFFER_KEY_RELEASE;
+		input.type = CMISS_SCENE_VIEWER_INPUT_KEY_RELEASE;
 		key_code = event.GetKeyCode();
 		input.key_code = key_code;
 		int input_modifier = 0;
@@ -571,7 +487,7 @@ public:
 	void OnKeyDown( wxKeyEvent& event )
 	{
 		struct Graphics_buffer_input input;
-		input.type = GRAPHICS_BUFFER_KEY_PRESS;
+		input.type = CMISS_SCENE_VIEWER_INPUT_KEY_PRESS;
 		key_code = event.GetKeyCode();
 		input.key_code = key_code;
 		int input_modifier = 0;
@@ -595,11 +511,10 @@ public:
 
 	void OnMouse( wxMouseEvent& event )
 	{
-		int input_modifier, return_code;
+		int input_modifier, return_code = 1;
 		struct Graphics_buffer_input input;
 
-		return_code = 1;
-		input.type = GRAPHICS_BUFFER_INVALID_INPUT;
+		input.type = CMISS_SCENE_VIEWER_INPUT_INVALID;
 		input.button_number = 0;
 		input.key_code = key_code;
 		cursor_x = input.position_x = event.GetX();
@@ -625,7 +540,7 @@ public:
 
 		if (event.Dragging())
 		{
-			input.type = GRAPHICS_BUFFER_MOTION_NOTIFY;
+			input.type = CMISS_SCENE_VIEWER_INPUT_MOTION_NOTIFY;
 			if (event.LeftIsDown())
 			{
 				input_modifier |= GRAPHICS_BUFFER_INPUT_MODIFIER_BUTTON1;
@@ -638,7 +553,7 @@ public:
 				input.key_code = 0;
 				this->SetFocus();
 			}
-			input.type = GRAPHICS_BUFFER_BUTTON_PRESS;
+			input.type = CMISS_SCENE_VIEWER_INPUT_BUTTON_PRESS;
 			switch (event.GetButton())
 			{
 				case wxMOUSE_BTN_LEFT:
@@ -664,7 +579,7 @@ public:
 		}
 		else if (event.ButtonUp())
 		{
-			input.type = GRAPHICS_BUFFER_BUTTON_RELEASE;
+			input.type = CMISS_SCENE_VIEWER_INPUT_BUTTON_RELEASE;
 			switch (event.GetButton())
 			{
 				case wxMOUSE_BTN_LEFT:
@@ -690,8 +605,8 @@ public:
 		}
 		else
 		{
-		  /* Ignore other events */
-		  return_code=0;
+			/* Ignore other events */
+			return_code = 0;
 		}
 
 		input.input_modifier = static_cast<enum Graphics_buffer_input_modifier>
@@ -704,35 +619,35 @@ public:
 		}
 	}
 
-   DECLARE_EVENT_TABLE();
+	DECLARE_EVENT_TABLE();
 };
 
 BEGIN_EVENT_TABLE(wxGraphicsBuffer, wxGLCanvas)
-    EVT_SIZE(wxGraphicsBuffer::OnSize)
-    EVT_PAINT(wxGraphicsBuffer::OnPaint)
-    EVT_ERASE_BACKGROUND(wxGraphicsBuffer::OnEraseBackground)
-    EVT_KEY_UP(wxGraphicsBuffer::OnKeyUp)
-    EVT_KEY_DOWN(wxGraphicsBuffer::OnKeyDown)
-    EVT_MOUSE_EVENTS(wxGraphicsBuffer::OnMouse)
+	EVT_SIZE(wxGraphicsBuffer::OnSize)
+	EVT_PAINT(wxGraphicsBuffer::OnPaint)
+	EVT_ERASE_BACKGROUND(wxGraphicsBuffer::OnEraseBackground)
+	EVT_KEY_UP(wxGraphicsBuffer::OnKeyUp)
+	EVT_KEY_DOWN(wxGraphicsBuffer::OnKeyDown)
+	EVT_MOUSE_EVENTS(wxGraphicsBuffer::OnMouse)
 END_EVENT_TABLE()
 
 class wxTestingBuffer : public wxGLCanvas
 {
 	 wxPanel *parent;
-	 Graphics_buffer *graphics_buffer;
+	 Graphics_buffer_app *graphics_buffer;
 	 wxGLContext *sharedContext;
 
 public:
-	wxTestingBuffer(wxPanel *parent, Graphics_buffer *graphics_buffer, wxGLContext* sharedContext, int *attrib_array)
+	wxTestingBuffer(wxPanel *parent, Graphics_buffer_app *graphics_buffer, wxGLContext* sharedContext, int *attrib_array)
 		: wxGLCanvas(parent, sharedContext, wxID_ANY, wxDefaultPosition, parent->GetSize(),
-			wxFULL_REPAINT_ON_RESIZE, "GLCanvas", attrib_array)
+			wxFULL_REPAINT_ON_RESIZE, wxT("GLCanvas"), attrib_array)
 		, parent(parent), graphics_buffer(graphics_buffer), sharedContext(sharedContext)
-	 {
-	 };
+	{
+	}
 
 	~wxTestingBuffer()
 	{
-	};
+	}
 
 	void Set_wx_SharedContext()
 	{
@@ -744,53 +659,52 @@ public:
 };
 
 #if defined (OPENGL_API) && defined (USE_MSAA)
-void Graphics_buffer_reset_multisample_framebuffer(struct Graphics_buffer *buffer)
+void Graphics_buffer_reset_multisample_framebuffer(struct Graphics_buffer_app *buffer)
 {
-	 if (buffer->multi_fbo)
-			glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, buffer->multi_fbo);
+	 if (buffer->core_buffer->multi_fbo)
+			glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, buffer->core_buffer->multi_fbo);
 }
 
-void Graphics_buffer_blit_framebuffer(struct Graphics_buffer *buffer)
+void Graphics_buffer_blit_framebuffer(struct Graphics_buffer_app *buffer)
 {
 #ifdef GL_EXT_framebuffer_blit
-	 int renderbuffer_width, renderbuffer_height;
-	 int max_renderbuffer_size = 2048;
+	int renderbuffer_width, renderbuffer_height;
+	unsigned int max_renderbuffer_size = 2048;
 
-	 if (buffer->framebuffer_width > max_renderbuffer_size)
-	 {
-			renderbuffer_width = max_renderbuffer_size;
-	 }
-	 else
-	 {
-			renderbuffer_width = buffer->framebuffer_width;
-	 }
-
-	 if (buffer->framebuffer_height > max_renderbuffer_size)
-	 {
+	if (buffer->core_buffer->width > max_renderbuffer_size)
+	{
+		renderbuffer_width = max_renderbuffer_size;
+	}
+	else
+	{
+		renderbuffer_width = buffer->core_buffer->width;
+	}
+	if (buffer->core_buffer->height > max_renderbuffer_size)
+	{
 			renderbuffer_height = max_renderbuffer_size;
-	 }
-	 else
-	 {
-			renderbuffer_height = buffer->framebuffer_height;
-	 }
-	 if (Graphics_library_check_extension(GL_EXT_framebuffer_blit))
-	 {
-			glBindFramebufferEXT(GL_READ_FRAMEBUFFER_EXT, buffer->multi_fbo);
-			glBindFramebufferEXT(GL_DRAW_FRAMEBUFFER_EXT, buffer->fbo);
+	}
+	else
+	{
+			renderbuffer_height = buffer->core_buffer->height;
+	}
+	if (Graphics_library_check_extension(GL_EXT_framebuffer_blit))
+	{
+			glBindFramebufferEXT(GL_READ_FRAMEBUFFER_EXT, buffer->core_buffer->multi_fbo);
+			glBindFramebufferEXT(GL_DRAW_FRAMEBUFFER_EXT, buffer->core_buffer->fbo);
 			glBlitFramebufferEXT(0, 0, renderbuffer_width, renderbuffer_height,
 				0, 0, renderbuffer_width, renderbuffer_height,
 				GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT, GL_NEAREST);
-			glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, buffer->fbo);
-	 }
-	 else
-	 {
+			glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, buffer->core_buffer->fbo);
+	}
+	else
+	{
 		 display_message(INFORMATION_MESSAGE,
 			 "Graphics_buffer_blit_framebuffer. glBlitFramebufferEXT not supported\n");
-	 }
+	}
 #endif /* defined (GL_EXT_framebuffer_blit) */
 }
 
-int Graphics_buffer_set_multisample_framebuffer(struct Graphics_buffer *buffer, int preferred_antialias)
+int Graphics_buffer_set_multisample_framebuffer(struct Graphics_buffer_app *buffer, int preferred_antialias)
 {
 #ifdef GL_EXT_framebuffer_multisample
 	 int antialias;
@@ -799,10 +713,10 @@ int Graphics_buffer_set_multisample_framebuffer(struct Graphics_buffer *buffer, 
 	 {
 			int max_samples;
 			glGetIntegerv(GL_MAX_SAMPLES_EXT, &max_samples);
-			glGenFramebuffersEXT(1, &buffer->multi_fbo);
-			glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, buffer->multi_fbo);
-			if (buffer->img > 0) {
-				 glBindTexture(GL_TEXTURE_2D, buffer->img);
+			glGenFramebuffersEXT(1, &buffer->core_buffer->multi_fbo);
+			glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, buffer->core_buffer->multi_fbo);
+			if (buffer->core_buffer->img > 0) {
+				 glBindTexture(GL_TEXTURE_2D, buffer->core_buffer->img);
 			}
 			if (preferred_antialias > max_samples)
 			{
@@ -817,19 +731,19 @@ int Graphics_buffer_set_multisample_framebuffer(struct Graphics_buffer *buffer, 
 			{
 				 antialias = preferred_antialias;
 			}
-			glGenRenderbuffersEXT(1, &buffer->msbuffer);
-			glBindRenderbufferEXT(GL_RENDERBUFFER_EXT,buffer->msbuffer);
+			glGenRenderbuffersEXT(1, &buffer->core_buffer->msbuffer);
+			glBindRenderbufferEXT(GL_RENDERBUFFER_EXT,buffer->core_buffer->msbuffer);
 			glRenderbufferStorageMultisampleEXT(
 				 GL_RENDERBUFFER_EXT, antialias, GL_RGBA,
-				 buffer->framebuffer_width, buffer->framebuffer_height);
+				 buffer->core_buffer->width, buffer->core_buffer->height);
 			glFramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT,
-				 GL_RENDERBUFFER_EXT, buffer->msbuffer);
-			glGenRenderbuffersEXT(1, &buffer->multi_depthbuffer);
-			glBindRenderbufferEXT(GL_RENDERBUFFER_EXT,buffer->multi_depthbuffer);
+				 GL_RENDERBUFFER_EXT, buffer->core_buffer->msbuffer);
+			glGenRenderbuffersEXT(1, &buffer->core_buffer->multi_depthbuffer);
+			glBindRenderbufferEXT(GL_RENDERBUFFER_EXT,buffer->core_buffer->multi_depthbuffer);
 			glRenderbufferStorageMultisampleEXT(GL_RENDERBUFFER_EXT, antialias, GL_DEPTH_COMPONENT,
-				  buffer->framebuffer_width,  buffer->framebuffer_height);
+				  buffer->core_buffer->width,  buffer->core_buffer->height);
 			glFramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT,
-				 GL_RENDERBUFFER_EXT, buffer->multi_depthbuffer);
+				 GL_RENDERBUFFER_EXT, buffer->core_buffer->multi_depthbuffer);
 			return 1;
 	 }
 	 else
@@ -843,343 +757,337 @@ int Graphics_buffer_set_multisample_framebuffer(struct Graphics_buffer *buffer, 
 }
 #endif /* defined (OPENGL_API) */
 
-static void Graphics_buffer_create_buffer_wx(
-	struct Graphics_buffer *buffer,
-	struct Graphics_buffer_package *graphics_buffer_package,
+void Graphics_buffer_create_buffer_wx(
+	struct Graphics_buffer_app *buffer,
+	struct Graphics_buffer_app_package *graphics_buffer_package,
 	wxPanel *parent,
 	enum Graphics_buffer_buffering_mode buffering_mode,
 	enum Graphics_buffer_stereo_mode stereo_mode,
 	int minimum_colour_buffer_depth, int minimum_depth_buffer_depth,
 	int minimum_accumulation_buffer_depth,
-	int width, int height, struct Graphics_buffer  *buffer_to_match)
-/*******************************************************************************
-LAST MODIFIED : 16 October  2007
-
-DESCRIPTION :
-==============================================================================*/
+	int width, int height, struct Graphics_buffer_app  *buffer_to_match)
 {
-	 int *visual_attributes;
-	 int return_code;
-	ENTER(Graphics_buffer_create_buffer_wx);
+
+	int *visual_attributes;
+	int return_code = 0;
 	wxLogNull logNo;
 	if (buffer)
 	{
-		 buffer->parent = parent;
-		 return_code = 0;
-		 if (buffer->type == GRAPHICS_BUFFER_GL_EXT_FRAMEBUFFER_TYPE)
-		 {
+		buffer->parent = parent;
+		if (buffer->core_buffer->type == GRAPHICS_BUFFER_GL_EXT_FRAMEBUFFER_TYPE)
+		{
 #if defined (OPENGL_API) && defined (GL_EXT_framebuffer_object)
-			 if (Graphics_library_check_extension(GL_EXT_framebuffer_object))
-			 {
-				 GLint buffer_size;
-				 glGenFramebuffersEXT(1,&buffer->fbo);
-				 glGenRenderbuffersEXT(1, &buffer->depthbuffer);
-				 glGetIntegerv(GL_MAX_RENDERBUFFER_SIZE_EXT, &buffer_size);
-				 if (height > buffer_size)
-				 {
-					 display_message(WARNING_MESSAGE,"Graphics_buffer_create_buffer_wx.  "
-						 "Request height is larger than allowed, set height to maximum possible"
-						 "height.");
-					 buffer->framebuffer_height = buffer_size;
-				 }
-				 else
-				 {
-					 buffer->framebuffer_height = height;
-				 }
-				 if (width > buffer_size)
-				 {
-					 display_message(WARNING_MESSAGE,"Graphics_buffer_create_buffer_wx.  "
-						 "Request width is larger than allowed, set width to maximum possible"
-						 "width.");
-					 buffer->framebuffer_width = buffer_size;
-				 }
-				 else
-				 {
-					 buffer->framebuffer_width = width;
-				 }
-				 glGenTextures(1, &buffer->img);
-				 glBindTexture(GL_TEXTURE_2D, buffer->img);
-				 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-				 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-				 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-				 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-				 glTexImage2D(GL_TEXTURE_2D, 0,GL_RGBA8, width, height, 0,
-					 GL_RGBA,GL_UNSIGNED_BYTE,NULL);
-			 }
-#endif
-		 }
-		 else if (buffer->type == GRAPHICS_BUFFER_WX_OFFSCREEN_TYPE)
-		 {
-		 }
-		 else
-		 {
-#if defined (UNIX)
-#if !defined (DARWIN)
-				wxGLCanvas *test_canvas;
-				int *attribute_ptr, number_of_visual_attributes, selection_level;
-				visual_attributes = NULL;
-				number_of_visual_attributes = 0;
-				Event_dispatcher_use_wxCmguiApp_OnAssertFailure(1);
-				number_of_visual_attributes = 20;
-				return_code = 0;
-				/* test either there are visual attributes stored in the current
-					 buffer or not*/
-				if (buffer_to_match)
+			if (Graphics_library_check_extension(GL_EXT_framebuffer_object))
+			{
+				GLint buffer_size;
+				glGenFramebuffersEXT(1,&buffer->core_buffer->fbo);
+				glGenRenderbuffersEXT(1, &buffer->core_buffer->depthbuffer);
+				glGetIntegerv(GL_MAX_RENDERBUFFER_SIZE_EXT, &buffer_size);
+				if (height > buffer_size)
 				{
-					 if (buffer_to_match->attrib_list)
-					 {
-							return_code = 1;
-					 }
-				}
-				if (!return_code)
-				{
-					 /* if not, test, create a new visual attribute list and create a
-							new canvas, else use the current visual attribute list*/
-					 test_canvas = new wxTestingBuffer(parent, (Graphics_buffer *)NULL,
-							graphics_buffer_package->wxSharedContext,
-							visual_attributes);
-					 if (ALLOCATE(visual_attributes, int, number_of_visual_attributes))
-					 {
-						selection_level = 5;
-						while ((selection_level > 0) && ((test_canvas->m_vi == NULL) || (selection_level == 5)))
-						{
-							 attribute_ptr = visual_attributes;
-							 *attribute_ptr = WX_GL_RGBA;
-							 attribute_ptr++;
-							 *attribute_ptr = WX_GL_MIN_RED;
-							 attribute_ptr++;
-							 *attribute_ptr = (minimum_colour_buffer_depth + 2) / 3;
-							 attribute_ptr++;
-							 *attribute_ptr = WX_GL_MIN_GREEN;
-							 attribute_ptr++;
-							 *attribute_ptr = (minimum_colour_buffer_depth + 2) / 3;
-							 attribute_ptr++;
-							 *attribute_ptr = WX_GL_MIN_BLUE;
-							 attribute_ptr++;
-							 *attribute_ptr = (minimum_colour_buffer_depth + 2) / 3;
-							 attribute_ptr++;
-							 if (selection_level > 3)
-							 {
-								*attribute_ptr = WX_GL_MIN_ALPHA;
-								attribute_ptr++;
-								*attribute_ptr = 1;
-								attribute_ptr++;
-							 }
-							 if (minimum_depth_buffer_depth > 0)
-							 {
-								*attribute_ptr = WX_GL_DEPTH_SIZE;
-								attribute_ptr++;
-								*attribute_ptr = minimum_depth_buffer_depth;
-								attribute_ptr++;
-							 }
-							 else
-							 {
-								if (selection_level > 2)
-								{
-									 /* Try to get a depth buffer anyway */
-									 *attribute_ptr = WX_GL_DEPTH_SIZE;
-									 attribute_ptr++;
-									 *attribute_ptr = 16;
-									 attribute_ptr++;
-								}
-							 }
-							 if (minimum_accumulation_buffer_depth > 0)
-							 {
-								*attribute_ptr = WX_GL_MIN_ACCUM_RED;
-								attribute_ptr++;
-								*attribute_ptr = (minimum_accumulation_buffer_depth + 2) / 3;
-								attribute_ptr++;
-								*attribute_ptr = WX_GL_MIN_ACCUM_GREEN;
-								attribute_ptr++;
-								*attribute_ptr = (minimum_accumulation_buffer_depth + 2) / 3;
-								attribute_ptr++;
-								*attribute_ptr = WX_GL_MIN_ACCUM_BLUE;
-								attribute_ptr++;
-								*attribute_ptr = (minimum_accumulation_buffer_depth + 2) / 3;
-								attribute_ptr++;
-							 }
-							 else
-							 {
-								if (selection_level > 4)
-								{
-									 /* Try to get an accumulation buffer anyway */
-									 *attribute_ptr = WX_GL_MIN_ACCUM_RED;
-									 attribute_ptr++;
-									 *attribute_ptr = (minimum_colour_buffer_depth + 2) / 3;
-									 attribute_ptr++;
-									 *attribute_ptr = WX_GL_MIN_ACCUM_GREEN;
-									 attribute_ptr++;
-									 *attribute_ptr = (minimum_colour_buffer_depth + 2) / 3;
-									 attribute_ptr++;
-									 *attribute_ptr = WX_GL_MIN_ACCUM_BLUE;
-									 attribute_ptr++;
-									 *attribute_ptr = (minimum_colour_buffer_depth + 2) / 3;
-									 attribute_ptr++;
-								}
-							 }
-							 switch (buffering_mode)
-							 {
-								case GRAPHICS_BUFFER_SINGLE_BUFFERING:
-								case GRAPHICS_BUFFER_DOUBLE_BUFFERING:
-								{
-									 *attribute_ptr = WX_GL_DOUBLEBUFFER;
-									 attribute_ptr++;
-								}break;
-								case GRAPHICS_BUFFER_ANY_BUFFERING_MODE:
-								case GRAPHICS_BUFFER_RENDER_OFFSCREEN_AND_COPY:
-								case GRAPHICS_BUFFER_RENDER_OFFSCREEN_AND_BLEND:
-								{
-									/* Do nothing */
-								} break;
-							 }
-							 switch (stereo_mode)
-							 {
-								case GRAPHICS_BUFFER_MONO:
-								case GRAPHICS_BUFFER_STEREO:
-								{
-									 *attribute_ptr = GL_STEREO;
-									 attribute_ptr++;
-								} break;
-								case GRAPHICS_BUFFER_ANY_STEREO_MODE:
-								{
-									/* default GRAPHICS_BUFFER_ANY_STEREO_MODE*/
-								} break;
-							 }
-							 *attribute_ptr = 0;
-							 attribute_ptr++;
-							 if (test_canvas)
-							 {
-									delete test_canvas;
-							 }
-							 test_canvas = new wxTestingBuffer(parent, (Graphics_buffer *)NULL,
-									graphics_buffer_package->wxSharedContext,
-									visual_attributes);
-							 selection_level--;
-							 if ((selection_level == 0) && (test_canvas->m_vi == NULL))
-							 {
-									DEALLOCATE(visual_attributes);
-									visual_attributes = NULL;
-									buffer->attrib_list = visual_attributes;
-							 }
-							 else if(test_canvas->m_vi != NULL)
-							 {
-									buffer->attrib_list = visual_attributes;
-							 }
-						}
-						if (test_canvas)
-						{
-							 delete test_canvas;
-						}
-					 }
+					display_message(WARNING_MESSAGE,"Graphics_buffer_create_buffer_wx.  "
+									"Request height is larger than allowed, set height to maximum possible"
+									"height.");
+					buffer->core_buffer->height = buffer_size;
 				}
 				else
 				{
-					 if (buffer_to_match->attrib_list)
-					 {
-							/* if attrib_list is found on the buffer to match, copy it
+					buffer->core_buffer->height = height;
+				}
+				if (width > buffer_size)
+				{
+					display_message(WARNING_MESSAGE,"Graphics_buffer_create_buffer_wx.  "
+									"Request width is larger than allowed, set width to maximum possible"
+									"width.");
+					buffer->core_buffer->width = buffer_size;
+				}
+				else
+				{
+					buffer->core_buffer->width = width;
+				}
+				glGenTextures(1, &buffer->core_buffer->img);
+				glBindTexture(GL_TEXTURE_2D, buffer->core_buffer->img);
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+				glTexImage2D(GL_TEXTURE_2D, 0,GL_RGBA8, width, height, 0,
+							 GL_RGBA,GL_UNSIGNED_BYTE,NULL);
+			}
+#endif
+		}
+		else if (buffer->core_buffer->type == GRAPHICS_BUFFER_WX_OFFSCREEN_TYPE)
+		{
+		}
+		else
+		{
+#if defined (UNIX)
+#if !defined (DARWIN)
+			wxGLCanvas *test_canvas;
+			int *attribute_ptr, number_of_visual_attributes, selection_level;
+			visual_attributes = NULL;
+			number_of_visual_attributes = 0;
+			Event_dispatcher_use_wxCmguiApp_OnAssertFailure(1);
+			number_of_visual_attributes = 20;
+			return_code = 0;
+			/* test either there are visual attributes stored in the current
+					 buffer or not*/
+			if (buffer_to_match)
+			{
+				if (buffer_to_match->core_buffer->attrib_list)
+				{
+					return_code = 1;
+				}
+			}
+			if (!return_code)
+			{
+				/* if not, test, create a new visual attribute list and create a
+							new canvas, else use the current visual attribute list*/
+				test_canvas = new wxTestingBuffer(parent, 0,
+												  graphics_buffer_package->wxSharedContext,
+												  visual_attributes);
+				if (ALLOCATE(visual_attributes, int, number_of_visual_attributes))
+				{
+					selection_level = 5;
+					while ((selection_level > 0) && ((test_canvas->m_vi == NULL) || (selection_level == 5)))
+					{
+						attribute_ptr = visual_attributes;
+						*attribute_ptr = WX_GL_RGBA;
+						attribute_ptr++;
+						*attribute_ptr = WX_GL_MIN_RED;
+						attribute_ptr++;
+						*attribute_ptr = (minimum_colour_buffer_depth + 2) / 3;
+						attribute_ptr++;
+						*attribute_ptr = WX_GL_MIN_GREEN;
+						attribute_ptr++;
+						*attribute_ptr = (minimum_colour_buffer_depth + 2) / 3;
+						attribute_ptr++;
+						*attribute_ptr = WX_GL_MIN_BLUE;
+						attribute_ptr++;
+						*attribute_ptr = (minimum_colour_buffer_depth + 2) / 3;
+						attribute_ptr++;
+						if (selection_level > 3)
+						{
+							*attribute_ptr = WX_GL_MIN_ALPHA;
+							attribute_ptr++;
+							*attribute_ptr = 1;
+							attribute_ptr++;
+						}
+						if (minimum_depth_buffer_depth > 0)
+						{
+							*attribute_ptr = WX_GL_DEPTH_SIZE;
+							attribute_ptr++;
+							*attribute_ptr = minimum_depth_buffer_depth;
+							attribute_ptr++;
+						}
+						else
+						{
+							if (selection_level > 2)
+							{
+								/* Try to get a depth buffer anyway */
+								*attribute_ptr = WX_GL_DEPTH_SIZE;
+								attribute_ptr++;
+								*attribute_ptr = 16;
+								attribute_ptr++;
+							}
+						}
+						if (minimum_accumulation_buffer_depth > 0)
+						{
+							*attribute_ptr = WX_GL_MIN_ACCUM_RED;
+							attribute_ptr++;
+							*attribute_ptr = (minimum_accumulation_buffer_depth + 2) / 3;
+							attribute_ptr++;
+							*attribute_ptr = WX_GL_MIN_ACCUM_GREEN;
+							attribute_ptr++;
+							*attribute_ptr = (minimum_accumulation_buffer_depth + 2) / 3;
+							attribute_ptr++;
+							*attribute_ptr = WX_GL_MIN_ACCUM_BLUE;
+							attribute_ptr++;
+							*attribute_ptr = (minimum_accumulation_buffer_depth + 2) / 3;
+							attribute_ptr++;
+						}
+						else
+						{
+							if (selection_level > 4)
+							{
+								/* Try to get an accumulation buffer anyway */
+								*attribute_ptr = WX_GL_MIN_ACCUM_RED;
+								attribute_ptr++;
+								*attribute_ptr = (minimum_colour_buffer_depth + 2) / 3;
+								attribute_ptr++;
+								*attribute_ptr = WX_GL_MIN_ACCUM_GREEN;
+								attribute_ptr++;
+								*attribute_ptr = (minimum_colour_buffer_depth + 2) / 3;
+								attribute_ptr++;
+								*attribute_ptr = WX_GL_MIN_ACCUM_BLUE;
+								attribute_ptr++;
+								*attribute_ptr = (minimum_colour_buffer_depth + 2) / 3;
+								attribute_ptr++;
+							}
+						}
+						switch (buffering_mode)
+						{
+						case GRAPHICS_BUFFER_SINGLE_BUFFERING:
+						case GRAPHICS_BUFFER_DOUBLE_BUFFERING:
+						{
+							*attribute_ptr = WX_GL_DOUBLEBUFFER;
+							attribute_ptr++;
+						}break;
+						case GRAPHICS_BUFFER_ANY_BUFFERING_MODE:
+						case GRAPHICS_BUFFER_RENDER_OFFSCREEN_AND_COPY:
+						case GRAPHICS_BUFFER_RENDER_OFFSCREEN_AND_BLEND:
+						{
+							/* Do nothing */
+						} break;
+						}
+						switch (stereo_mode)
+						{
+						case GRAPHICS_BUFFER_MONO:
+						case GRAPHICS_BUFFER_STEREO:
+						{
+							*attribute_ptr = GL_STEREO;
+							attribute_ptr++;
+						} break;
+						case GRAPHICS_BUFFER_ANY_STEREO_MODE:
+						{
+							/* default GRAPHICS_BUFFER_ANY_STEREO_MODE*/
+						} break;
+						}
+						*attribute_ptr = 0;
+						attribute_ptr++;
+						if (test_canvas)
+						{
+							delete test_canvas;
+						}
+						test_canvas = new wxTestingBuffer(parent, 0,
+														  graphics_buffer_package->wxSharedContext,
+														  visual_attributes);
+						selection_level--;
+						if ((selection_level == 0) && (test_canvas->m_vi == NULL))
+						{
+							DEALLOCATE(visual_attributes);
+							visual_attributes = NULL;
+							buffer->core_buffer->attrib_list = visual_attributes;
+						}
+						else if(test_canvas->m_vi != NULL)
+						{
+							buffer->core_buffer->attrib_list = visual_attributes;
+						}
+					}
+					if (test_canvas)
+					{
+						delete test_canvas;
+					}
+				}
+			}
+			else
+			{
+				if (buffer_to_match->core_buffer->attrib_list)
+				{
+					/* if attrib_list is found on the buffer to match, copy it
 								 into the new buffer, if not found, that means the
 								 current buffer does not have any special attributes
 								 setting, thus the new attributes will be default as NULL */
-							int count;
-							int *buffer_to_match_attribute_ptr;
-							if (ALLOCATE(buffer->attrib_list,int, number_of_visual_attributes))
-							{
-								 buffer_to_match_attribute_ptr = buffer_to_match->attrib_list;
-								 attribute_ptr = buffer->attrib_list;
-								 for (count = 0; count < number_of_visual_attributes; count++)
-								 {
-										*attribute_ptr = *buffer_to_match_attribute_ptr;
-										attribute_ptr++;
-										buffer_to_match_attribute_ptr++;
-								 }
-							}
-					 }
+					int count;
+					int *buffer_to_match_attribute_ptr;
+					if (ALLOCATE(buffer->core_buffer->attrib_list,int, number_of_visual_attributes))
+					{
+						buffer_to_match_attribute_ptr = buffer_to_match->core_buffer->attrib_list;
+						attribute_ptr = buffer->core_buffer->attrib_list;
+						for (count = 0; count < number_of_visual_attributes; count++)
+						{
+							*attribute_ptr = *buffer_to_match_attribute_ptr;
+							attribute_ptr++;
+							buffer_to_match_attribute_ptr++;
+						}
+					}
 				}
+			}
 #else /*defined (DARWIN) */
-				/* Mac will receive an argument from wxGLCanvas to get
+			/* Mac will receive an argument from wxGLCanvas to get
 				   the best settings but requires the program to state
 					 all the desired settings with a minimum settings. */
-				visual_attributes = NULL;
-				if (ALLOCATE(buffer->attrib_list, int, 25))
-				{
-					buffer->attrib_list[0] = WX_GL_RGBA;
-					buffer->attrib_list[1] = WX_GL_DOUBLEBUFFER;
-					buffer->attrib_list[2] = WX_GL_DEPTH_SIZE;
-					buffer->attrib_list[3] = 1;
-					buffer->attrib_list[4] = WX_GL_MIN_RED;
-					buffer->attrib_list[5] = 1;
-					buffer->attrib_list[6] = WX_GL_MIN_GREEN;
-					buffer->attrib_list[7] = 1;
-					buffer->attrib_list[8] = WX_GL_MIN_BLUE;
-					buffer->attrib_list[9] = 1;
-					buffer->attrib_list[10] = WX_GL_MIN_ALPHA;
-					buffer->attrib_list[11] = 1;
-					buffer->attrib_list[12] = WX_GL_MIN_ACCUM_RED;
-					buffer->attrib_list[13] = 1;
-					buffer->attrib_list[14] = WX_GL_MIN_ACCUM_GREEN;
-					buffer->attrib_list[15] = 1;
-					buffer->attrib_list[16] = WX_GL_MIN_ACCUM_BLUE;
-					buffer->attrib_list[17] = 1;
-					buffer->attrib_list[18] = WX_GL_MIN_ACCUM_ALPHA;
-					buffer->attrib_list[19] = 1;
-					buffer->attrib_list[20] = WX_GL_DEPTH_SIZE;
-					buffer->attrib_list[21] = 1;
-					buffer->attrib_list[22] = WX_GL_STENCIL_SIZE;
-					buffer->attrib_list[23] = 1;
-					buffer->attrib_list[24] = 0;
-				};
+			visual_attributes = NULL;
+			if (ALLOCATE(buffer->core_buffer->attrib_list, int, 25))
+			{
+				buffer->core_buffer->attrib_list[0] = WX_GL_RGBA;
+				buffer->core_buffer->attrib_list[1] = WX_GL_DOUBLEBUFFER;
+				buffer->core_buffer->attrib_list[2] = WX_GL_DEPTH_SIZE;
+				buffer->core_buffer->attrib_list[3] = 1;
+				buffer->core_buffer->attrib_list[4] = WX_GL_MIN_RED;
+				buffer->core_buffer->attrib_list[5] = 1;
+				buffer->core_buffer->attrib_list[6] = WX_GL_MIN_GREEN;
+				buffer->core_buffer->attrib_list[7] = 1;
+				buffer->core_buffer->attrib_list[8] = WX_GL_MIN_BLUE;
+				buffer->core_buffer->attrib_list[9] = 1;
+				buffer->core_buffer->attrib_list[10] = WX_GL_MIN_ALPHA;
+				buffer->core_buffer->attrib_list[11] = 1;
+				buffer->core_buffer->attrib_list[12] = WX_GL_MIN_ACCUM_RED;
+				buffer->core_buffer->attrib_list[13] = 1;
+				buffer->core_buffer->attrib_list[14] = WX_GL_MIN_ACCUM_GREEN;
+				buffer->core_buffer->attrib_list[15] = 1;
+				buffer->core_buffer->attrib_list[16] = WX_GL_MIN_ACCUM_BLUE;
+				buffer->core_buffer->attrib_list[17] = 1;
+				buffer->core_buffer->attrib_list[18] = WX_GL_MIN_ACCUM_ALPHA;
+				buffer->core_buffer->attrib_list[19] = 1;
+				buffer->core_buffer->attrib_list[20] = WX_GL_DEPTH_SIZE;
+				buffer->core_bufferffer->attrib_list[21] = 1;
+				buffer->core_buffer->attrib_list[22] = WX_GL_STENCIL_SIZE;
+				buffer->core_buffer->attrib_list[23] = 1;
+				buffer->core_buffer->attrib_list[24] = 0;
+			};
 #endif /*defined (DARWIN) */
 #else /* defined (UNIX) */
-				USE_PARAMETER(buffer_to_match);
-				USE_PARAMETER(buffering_mode);
-				USE_PARAMETER(minimum_accumulation_buffer_depth);
-				USE_PARAMETER(minimum_colour_buffer_depth);
-				USE_PARAMETER(minimum_depth_buffer_depth);
-				USE_PARAMETER(stereo_mode);
+			USE_PARAMETER(buffer_to_match);
+			USE_PARAMETER(buffering_mode);
+			USE_PARAMETER(minimum_accumulation_buffer_depth);
+			USE_PARAMETER(minimum_colour_buffer_depth);
+			USE_PARAMETER(minimum_depth_buffer_depth);
+			USE_PARAMETER(stereo_mode);
 
-				/* The above routine does not work for win32 as it does not have the
+			/* The above routine does not work for win32 as it does not have the
 					 member m_vi in wxGLCanvas.
 					 should find a way to get the best buffer, but this default setting should work fine. */
-				visual_attributes = NULL;
-				if (ALLOCATE(buffer->attrib_list, int, 5))
-				{
-					 buffer->attrib_list[0] = WX_GL_DOUBLEBUFFER;
-					 buffer->attrib_list[1] = WX_GL_RGBA;
-					 buffer->attrib_list[2] = WX_GL_MIN_ALPHA;
-					 buffer->attrib_list[3] = 8;
-					 buffer->attrib_list[4] = 0;
-				}
+			visual_attributes = NULL;
+			if ALLOCATE(buffer->core_buffer->attrib_list, int, 5)
+			{
+				buffer->core_buffer->attrib_list[0] = WX_GL_DOUBLEBUFFER;
+				buffer->core_buffer->attrib_list[1] = WX_GL_RGBA;
+				buffer->core_buffer->attrib_list[2] = WX_GL_MIN_ALPHA;
+				buffer->core_buffer->attrib_list[3] = 8;
+				buffer->core_buffer->attrib_list[4] = 0;
+			}
 #endif /* defined (UNIX) */
-				if (!buffer->package->wxSharedContext)
-				{
-					wxFrame *frame = new wxFrame(parent, -1, "temporary");
-					wxPanel *temp = new wxPanel(frame);
-					wxTestingBuffer *testingbuffer;
-					struct Graphics_buffer *temp_buffer;
-					temp_buffer = CREATE(Graphics_buffer)(graphics_buffer_package);
-					temp_buffer->type= GRAPHICS_BUFFER_WX_TYPE;
-					temp_buffer->parent = temp;
-					temp_buffer->attrib_list = NULL;
-					testingbuffer = new wxTestingBuffer(temp, temp_buffer,
-						graphics_buffer_package->wxSharedContext,
-						buffer->attrib_list);
-					testingbuffer->Set_wx_SharedContext();
-					frame->Show(false);
-					DESTROY(Graphics_buffer)(&temp_buffer);
-				}
-				buffer->canvas = new wxGraphicsBuffer(parent,
-					graphics_buffer_package->wxSharedContext,
-					buffer, buffer->attrib_list);
-				wxBoxSizer *topsizer = new wxBoxSizer( wxVERTICAL );
-				topsizer->Add(buffer->canvas, wxSizerFlags(1).Align(wxALIGN_CENTER).Expand());
-				parent->SetSizer(topsizer);
-		 }
+			if (!buffer->package->wxSharedContext)
+			{
+				wxFrame *frame = new wxFrame(parent, -1, wxT("temporary"));
+				wxPanel *temp = new wxPanel(frame);
+				wxTestingBuffer *testingbuffer;
+				struct Graphics_buffer_app *temp_buffer;
+				temp_buffer = CREATE(Graphics_buffer_app)(graphics_buffer_package,
+					GRAPHICS_BUFFER_ONSCREEN_TYPE, GRAPHICS_BUFFER_ANY_BUFFERING_MODE, GRAPHICS_BUFFER_ANY_STEREO_MODE);
+				temp_buffer->parent = temp;
+				temp_buffer->core_buffer->attrib_list = NULL;
+				testingbuffer = new wxTestingBuffer(temp, temp_buffer,
+													graphics_buffer_package->wxSharedContext,
+													buffer->core_buffer->attrib_list);
+				testingbuffer->Set_wx_SharedContext();
+				frame->Show(false);
+				DESTROY(Graphics_buffer_app)(&temp_buffer);
+			}
+			buffer->canvas = new wxGraphicsBuffer(parent,
+												  graphics_buffer_package->wxSharedContext,
+												  buffer, buffer->core_buffer->attrib_list);
+			wxBoxSizer *topsizer = new wxBoxSizer( wxVERTICAL );
+			topsizer->Add(buffer->canvas, wxSizerFlags(1).Align(wxALIGN_CENTER).Expand());
+			parent->SetSizer(topsizer);
+		}
 	}
 	else
 	{
-		 display_message(ERROR_MESSAGE,"Graphics_buffer_create_buffer_wx.  "
-				"Unable to create generic Graphics_buffer.");
-		 buffer = (struct Graphics_buffer *)NULL;
+		display_message(ERROR_MESSAGE,"Graphics_buffer_create_buffer_wx.  "
+						"Unable to create generic Graphics_buffer.");
+		buffer = 0;
 	}
 	LEAVE;
 
@@ -1647,10 +1555,10 @@ returned to the scene.
 
 /*
 Global functions
-----------------
+-
 */
 
-struct Graphics_buffer_package *CREATE(Graphics_buffer_package)(
+struct Graphics_buffer_app_package *CREATE(Graphics_buffer_app_package)(
 	struct User_interface *user_interface)
 /*******************************************************************************
 LAST MODIFIED : 6 May 2004
@@ -1660,14 +1568,12 @@ Creates a Graphics_buffer_package which enables Graphics_buffers created from
 it to share graphics contexts.
 ==============================================================================*/
 {
-	struct Graphics_buffer_package *package;
-
-	ENTER(CREATE(Graphics_buffer_package));
+	struct Graphics_buffer_app_package *package;
 
 	USE_PARAMETER(user_interface);
-	if (ALLOCATE(package, struct Graphics_buffer_package, 1))
+	if (ALLOCATE(package, struct Graphics_buffer_app_package, 1))
 	{
-		package->override_visual_id = 0;
+		package->core_package = CREATE(Graphics_buffer_package)();
 
 #if defined (GTK_USER_INTERFACE)
 #  if defined (GTK_USE_GTKGLAREA)
@@ -1695,7 +1601,7 @@ it to share graphics contexts.
 			&& (cmiss_intel_single_context_force_clipping = env_buffer))
 #else /* defined (WIN32_SYSTEM) */
 		cmiss_intel_single_context_force_clipping = getenv("CMISS_INTEL_SINGLE_CONTEXT_FORCE_CLIPPING");
-		if (cmiss_intel_single_context_force_clipping)	
+		if (cmiss_intel_single_context_force_clipping)
 #endif /* defined (WIN32_SYSTEM) */
 		{
 			if (sscanf(cmiss_intel_single_context_force_clipping, "%d", &force_clipping_int))
@@ -1713,14 +1619,14 @@ it to share graphics contexts.
 	{
 		display_message(ERROR_MESSAGE,"CREATE(Graphics_buffer_package). "
 			"Unable to allocate package structure");
-		package = (struct Graphics_buffer_package *)NULL;
+		package = 0;
 	}
 
 	LEAVE;
 	return (package);
 } /* CREATE(Graphics_buffer_package) */
 
-int DESTROY(Graphics_buffer_package)(struct Graphics_buffer_package **package_ptr)
+int DESTROY(Graphics_buffer_app_package)(struct Graphics_buffer_app_package **package_ptr)
 /*******************************************************************************
 LAST MODIFIED : 6 May 2004
 
@@ -1729,9 +1635,8 @@ Closes the Graphics buffer package
 ==============================================================================*/
 {
 	int return_code;
-	struct Graphics_buffer_package *package;
+	struct Graphics_buffer_app_package *package;
 
-	ENTER(DESTROY(Graphics_buffer_package));
 	if (package_ptr && (package = *package_ptr))
 	{
 		return_code=1;
@@ -1764,8 +1669,9 @@ Closes the Graphics buffer package
 		}
 #endif /* defined (WIN32_USER_INTERFACE) */
 
+		DESTROY(Graphics_buffer_package)(&(package->core_package));
 		DEALLOCATE(*package_ptr);
-		*package_ptr = (struct Graphics_buffer_package *)NULL;
+		*package_ptr = 0;
 	}
 	else
 	{
@@ -1807,8 +1713,7 @@ Sets a particular visual to be used by all graphics buffers.
 	return (return_code);
 } /* Graphics_buffer_package_set_override_visual_id */
 
-struct Graphics_buffer *create_Graphics_buffer_offscreen(
-	struct Graphics_buffer_package *graphics_buffer_package,
+struct Graphics_buffer_app *create_Graphics_buffer_offscreen(Graphics_buffer_app_package *graphics_buffer_package,
 	int width, int height,
 	enum Graphics_buffer_buffering_mode buffering_mode,
 	enum Graphics_buffer_stereo_mode stereo_mode,
@@ -1820,11 +1725,12 @@ LAST MODIFIED : 6 May 2004
 DESCRIPTION :
 ==============================================================================*/
 {
-	struct Graphics_buffer *buffer;
+	struct Graphics_buffer_app *buffer;
 
 	ENTER(create_Graphics_buffer_offscreen);
 
-	buffer = CREATE(Graphics_buffer)(graphics_buffer_package);
+	buffer = CREATE(Graphics_buffer_app)(graphics_buffer_package,
+		GRAPHICS_BUFFER_INVALID_TYPE, buffering_mode, stereo_mode);
 	if (buffer != NULL)
 	{
 		USE_PARAMETER(width);
@@ -1834,28 +1740,27 @@ DESCRIPTION :
 		USE_PARAMETER(minimum_colour_buffer_depth);
 		USE_PARAMETER(minimum_depth_buffer_depth);
 		USE_PARAMETER(minimum_accumulation_buffer_depth);
-		if (buffer->type == GRAPHICS_BUFFER_INVALID_TYPE)
+		if (buffer->core_buffer->type == GRAPHICS_BUFFER_INVALID_TYPE)
 		{
 #if defined (DEBUG_CODE)
 			display_message(ERROR_MESSAGE,"create_Graphics_buffer_offscreen.  "
 				"Unable to create offscreen graphics buffer.");
 #endif /* defined (DEBUG_CODE) */
-			DESTROY(Graphics_buffer)(&buffer);
+			DESTROY(Graphics_buffer_app)(&buffer);
 		}
 	}
 	else
 	{
 		display_message(ERROR_MESSAGE,"create_Graphics_buffer_offscreen.  "
 			"Unable to create generic Graphics_buffer.");
-		buffer = (struct Graphics_buffer *)NULL;
+		buffer = 0;
 	}
 	LEAVE;
 
 	return (buffer);
 } /* create_Graphics_buffer_offscreen */
 
-struct Graphics_buffer *create_Graphics_buffer_shared_offscreen(
-	struct Graphics_buffer_package *graphics_buffer_package,
+struct Graphics_buffer_app *create_Graphics_buffer_shared_offscreen(Graphics_buffer_app_package *graphics_buffer_package,
 	int width, int height,
 	enum Graphics_buffer_buffering_mode buffering_mode,
 	enum Graphics_buffer_stereo_mode stereo_mode,
@@ -1867,11 +1772,12 @@ LAST MODIFIED : 6 May 2004
 DESCRIPTION :
 ==============================================================================*/
 {
-	struct Graphics_buffer *buffer;
+	struct Graphics_buffer_app *buffer;
 
 	ENTER(create_Graphics_buffer_offscreen);
 
-	buffer = CREATE(Graphics_buffer)(graphics_buffer_package);
+	buffer = CREATE(Graphics_buffer_app)(graphics_buffer_package,
+		GRAPHICS_BUFFER_INVALID_TYPE, buffering_mode, stereo_mode);
 	if (buffer != NULL)
 	{
 		USE_PARAMETER(width);
@@ -1881,47 +1787,48 @@ DESCRIPTION :
 		USE_PARAMETER(minimum_colour_buffer_depth);
 		USE_PARAMETER(minimum_depth_buffer_depth);
 		USE_PARAMETER(minimum_accumulation_buffer_depth);
-		if (buffer->type == GRAPHICS_BUFFER_INVALID_TYPE)
+		if (buffer->core_buffer->type == GRAPHICS_BUFFER_INVALID_TYPE)
 		{
 #if defined (DEBUG_CODE)
 			display_message(ERROR_MESSAGE,"create_Graphics_buffer_offscreen.  "
 				"Unable to create offscreen graphics buffer.");
 #endif /* defined (DEBUG_CODE) */
-			DESTROY(Graphics_buffer)(&buffer);
+			DESTROY(Graphics_buffer_app)(&buffer);
 		}
 	}
 	else
 	{
 		display_message(ERROR_MESSAGE,"create_Graphics_buffer_offscreen.  "
 			"Unable to create generic Graphics_buffer.");
-		buffer = (struct Graphics_buffer *)NULL;
+		buffer = 0;
 	}
 	LEAVE;
 
 	return (buffer);
 } /* create_Graphics_buffer_offscreen */
 
-struct Graphics_buffer *create_Graphics_buffer_offscreen_from_buffer(
-	int width, int height, struct Graphics_buffer *buffer_to_match)
+struct Graphics_buffer_app *create_Graphics_buffer_offscreen_from_buffer(
+	int width, int height, struct Graphics_buffer_app *buffer_to_match)
 /*******************************************************************************
 LAST MODIFIED : 6 May 2004
 
 DESCRIPTION :
 ==============================================================================*/
 {
-	struct Graphics_buffer *buffer;
+	struct Graphics_buffer_app *buffer;
 
 	ENTER(create_Graphics_buffer_offscreen_from_buffer);
 
-	buffer = CREATE(Graphics_buffer)(buffer_to_match->package);
+	buffer = CREATE(Graphics_buffer_app)(buffer_to_match->package,
+		buffer_to_match->core_buffer->type, buffer_to_match->core_buffer->buffering_mode, buffer_to_match->core_buffer->stereo_mode);
 	if (buffer != NULL)
 	{
 #if defined (WX_USER_INTERFACE)
- 		buffer->type = GRAPHICS_BUFFER_WX_OFFSCREEN_TYPE;
+		buffer->core_buffer->type = GRAPHICS_BUFFER_WX_OFFSCREEN_TYPE;
 #if defined (OPENGL_API) && (GL_EXT_framebuffer_object)
 		if (Graphics_library_load_extension("GL_EXT_framebuffer_object"))
 		{
-			buffer->type = GRAPHICS_BUFFER_GL_EXT_FRAMEBUFFER_TYPE;
+			buffer->core_buffer->type = GRAPHICS_BUFFER_GL_EXT_FRAMEBUFFER_TYPE;
 		}
 #endif
 		Graphics_buffer_create_buffer_wx(buffer, buffer_to_match->package,
@@ -1934,21 +1841,21 @@ DESCRIPTION :
 		USE_PARAMETER(height);
 		USE_PARAMETER(buffer_to_match);
 #endif /* defined (WX_USER_INTERFACE) */
-		if (buffer->type == GRAPHICS_BUFFER_INVALID_TYPE)
+		if (buffer->core_buffer->type == GRAPHICS_BUFFER_INVALID_TYPE)
 		{
 #if defined (DEBUG_CODE)
 			display_message(ERROR_MESSAGE,"create_Graphics_buffer_offscreen_from_buffer.  "
 				"Unable to create offscreen_from_buffer graphics buffer.");
-			buffer = (struct Graphics_buffer *)NULL;
+			buffer = (struct Graphics_buffer_app *)NULL;
 #endif /* defined (DEBUG_CODE) */
-			DESTROY(Graphics_buffer)(&buffer);
+			DESTROY(Graphics_buffer_app)(&buffer);
 		}
 	}
 	else
 	{
 		display_message(ERROR_MESSAGE,"create_Graphics_buffer_offscreen_from_buffer.  "
 			"Unable to create generic Graphics_buffer.");
-		buffer = (struct Graphics_buffer *)NULL;
+		buffer = (struct Graphics_buffer_app *)NULL;
 	}
 	LEAVE;
 
@@ -1996,24 +1903,24 @@ Resizes the offscreen pbuffer used for rendering with windowless mode.
 
 			GenRenderbuffersEXT(1, &buffer->framebuffer_object);
 
-	        // Enable render-to-texture
-	        glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, buffer->framebuffer_object);
+			// Enable render-to-texture
+			glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, buffer->framebuffer_object);
 
-	        // Set up color_tex and depth_rb for render-to-texture
-	        glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT,
-	                                  GL_COLOR_ATTACHMENT0_EXT,
-	                                  GL_TEXTURE_2D, color_tex, 0);
-	        glFramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT,
-	                                     GL_DEPTH_ATTACHMENT_EXT,
-	                                     GL_RENDERBUFFER_EXT, depth_rb);
+			// Set up color_tex and depth_rb for render-to-texture
+			glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT,
+									  GL_COLOR_ATTACHMENT0_EXT,
+									  GL_TEXTURE_2D, color_tex, 0);
+			glFramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT,
+										 GL_DEPTH_ATTACHMENT_EXT,
+										 GL_RENDERBUFFER_EXT, depth_rb);
 
-	        // Check framebuffer completeness at the end of initialization.
-	        CHECK_FRAMEBUFFER_STATUS();
+			// Check framebuffer completeness at the end of initialization.
+			CHECK_FRAMEBUFFER_STATUS();
 
-	        <draw to the texture and renderbuffer>
+			<draw to the texture and renderbuffer>
 
-	        // Re-enable rendering to the window
-	        glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
+			// Re-enable rendering to the window
+			glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
 
 
 
@@ -2164,7 +2071,7 @@ Resizes the offscreen pbuffer used for rendering with windowless mode.
 			{
 				buffer->offscreen_width = required_width;
 				buffer->offscreen_height = required_height;
-                buffer->offscreen_render_required = 1;
+				buffer->offscreen_render_required = 1;
 			}
 		}
 		else
@@ -2831,13 +2738,13 @@ Actually make the OpenGL context.
 			{
 			  /* Try the automatic chooser */
 			  memset(&pfd,0, sizeof(PIXELFORMATDESCRIPTOR)) ;
-			  pfd.nSize = sizeof(PIXELFORMATDESCRIPTOR); 
+			  pfd.nSize = sizeof(PIXELFORMATDESCRIPTOR);
 			  pfd.nVersion = 1 ;
 			  pfd.dwFlags =  PFD_SUPPORT_OPENGL ;
 			  pfd.iPixelType = PFD_TYPE_RGBA ;
 			  pfd.cColorBits = 24 ;
 			  pfd.cDepthBits = 32 ;
-			  pfd.iLayerType = PFD_MAIN_PLANE ;				  
+			  pfd.iLayerType = PFD_MAIN_PLANE ;
 			  // Choose the pixel format.
 			  format = ChoosePixelFormat(buffer->hDC, &pfd);
 			  best_selection_level = -1;  /* Set a value to show that it was selected by ChoosePixelFormat */
@@ -2923,9 +2830,9 @@ Actually make the OpenGL context.
 					ZeroMemory( &pfd, sizeof( PIXELFORMATDESCRIPTOR ) );
 					pfd.nSize = sizeof( pfd );
 					pfd.nVersion = 1;
-	
+
 					DescribePixelFormat(buffer->hDC, buffer->pixel_format, pfd.nSize, &pfd);
-	
+
 					printf("Pixel format %d\n", buffer->pixel_format);
 					const char *vendor_string = (const char *)glGetString(GL_VENDOR);
 					printf("OpenGL vendor string %s\n", vendor_string);
@@ -3064,7 +2971,7 @@ Resizes the offscreen pbuffer used for rendering with windowless mode.
 
 					if (!buffer->package->hidden_graphics_package)
 						buffer->package->hidden_graphics_package = CREATE(Graphics_buffer_package)(buffer->package->user_interface);
-					
+
 					buffer->package->hidden_graphics_buffer = create_Graphics_buffer_win32(
 						buffer->package->hidden_graphics_package,
 						buffer->package->hidden_accelerated_window, (HDC)NULL,
@@ -3196,7 +3103,7 @@ Resizes the offscreen pbuffer used for rendering with windowless mode.
 
 #if defined (DEBUG_CODE)
 				printf("Bitmap bit count %d %d\n", bmi.bmiHeader.biBitCount,
-				       GetDeviceCaps(onscreen_hdc, BITSPIXEL));
+					   GetDeviceCaps(onscreen_hdc, BITSPIXEL));
 #endif /* defined (DEBUG_CODE) */
 
 				bmi.bmiHeader.biCompression = BI_RGB;
@@ -3223,8 +3130,8 @@ Resizes the offscreen pbuffer used for rendering with windowless mode.
 
 #if defined (DEBUG_CODE)
 				printf("Made dib %p %p %d\n",
-				       buffer->device_independent_bitmap_hdc,
-				       buffer->device_independent_bitmap, buffer->type);
+					   buffer->device_independent_bitmap_hdc,
+					   buffer->device_independent_bitmap, buffer->type);
 #endif /* defined (DEBUG_CODE) */
 
 				return_code = 1;
@@ -3255,7 +3162,7 @@ Resizes the offscreen pbuffer used for rendering with windowless mode.
 					if (buffer->hRC && (buffer->hRC != buffer->package->wgl_shared_context))
 					{
 #if defined (DEBUG_CODE)
-						printf("Graphics_buffer_win32_reallocate_offscreen_size %p wglDeleteContext %p\n", buffer, buffer->hRC);	
+						printf("Graphics_buffer_win32_reallocate_offscreen_size %p wglDeleteContext %p\n", buffer, buffer->hRC);
 #endif //defined (DEBUG_CODE)
 						wglDeleteContext(buffer->hRC);
 					}
@@ -3357,7 +3264,7 @@ are performed but the graphics window will render into the supplied device conte
 			if (!Graphics_buffer_win32_create_context(buffer))
 			{
 				DESTROY(Graphics_buffer)(&buffer);
-				buffer = (struct Graphics_buffer *)NULL;				
+				buffer = (struct Graphics_buffer *)NULL;
 			}
 		}
 	}
@@ -3445,7 +3352,7 @@ mode with zinc.
 			  {
 #if defined (DEBUG_CODE)
 				  printf("Graphics_buffer_handle_windows_event opengl update %p\n",
-				     buffer);
+					 buffer);
 #endif // defined (DEBUG_CODE)
 
 				  glPixelStorei(GL_PACK_ROW_LENGTH, buffer->offscreen_width);
@@ -3483,29 +3390,29 @@ mode with zinc.
 
 		  /* Work around bug in firefox.  See definition of mouse_x.
 		   */
-          if (((drc->left == buffer->x) || (drc->left == buffer->x - 1))
-        	&& ((drc->top == buffer->y) || (drc->top == buffer->y - 1)) &&
-        	((drc->right - drc->left) >= buffer->width) && ((drc->bottom - drc->top) >= buffer->height))
-          {
-        	  buffer->mouse_x = buffer->x;
-        	  buffer->mouse_y = buffer->y;
-          }
+		  if (((drc->left == buffer->x) || (drc->left == buffer->x - 1))
+			&& ((drc->top == buffer->y) || (drc->top == buffer->y - 1)) &&
+			((drc->right - drc->left) >= buffer->width) && ((drc->bottom - drc->top) >= buffer->height))
+		  {
+			  buffer->mouse_x = buffer->x;
+			  buffer->mouse_y = buffer->y;
+		  }
 
 		  {
- 			  int x = drc->left;
+			  int x = drc->left;
 			  int y = drc->top;
 
 			  x -= buffer->x;
 			  y -= buffer->y;
 
- 			  if (x < buffer->x)
- 			  {
- 				  x = buffer->x;
- 			  }
- 			  if (y < buffer->y)
- 			  {
- 				  y = buffer->y;
- 			  }
+			  if (x < buffer->x)
+			  {
+				  x = buffer->x;
+			  }
+			  if (y < buffer->y)
+			  {
+				  y = buffer->y;
+			  }
 
 			  int right = drc->right;
 			  int bottom = drc->bottom;
@@ -3529,7 +3436,7 @@ mode with zinc.
 
 			  int width = right - x;
 			  int height = bottom - y;
-	                  
+
 			  if ((width > 0) && (height > 0))
 			  {
 #if defined (DEBUG_CODE)
@@ -3579,7 +3486,7 @@ mode with zinc.
 								  int i;
 								  for (i = 0 ; i < 50 ; i++)
 									  if (ERROR_INVALID_PARAMETER ==SetPixel(buffer->hDC,
-										  x - buffer->x + i, 
+										  x - buffer->x + i,
 										  buffer->offscreen_height - height - y + buffer->y + i, RGB(255, 200, 10)))
 										  printf("Error writing pixel to %p", buffer->hDC);
 							  }
@@ -3596,7 +3503,7 @@ mode with zinc.
 								  [4 * buffer->offscreen_width * (buffer->offscreen_height - height - y + buffer->y) + 2],
 								  ((unsigned char *)buffer->device_independent_bitmap_pixels)
 								  [4 * buffer->offscreen_width * (buffer->offscreen_height - height - y + buffer->y) + 3]);
-							  
+
 #if defined (WRITE_EVERY_PIXEL)
 							  {
 								  int i, j;
@@ -3625,7 +3532,7 @@ mode with zinc.
 #endif // defined (WRITE_EVERY_PIXEL)
 #endif /* defined (DEBUG_CODE) */
 
-							  
+
 							  BitBlt(hdc, x, y, width, height,
 								  buffer->hDC, x - buffer->x,
 								  buffer->offscreen_height - height - y + buffer->y,
@@ -3773,8 +3680,8 @@ mode with zinc.
 	  } break;
 	  case WM_SETCURSOR:
 	  {
-	    /* This message does not seem to propagate through to zinc so
-	     setting cursor on WM_MOUSEMOVE above instead*/
+		/* This message does not seem to propagate through to zinc so
+		 setting cursor on WM_MOUSEMOVE above instead*/
 #if defined (DEBUG_CODE)
 		  printf ("Graphics_buffer_handle_windows_event WM_SETCURSOR\n");
 #endif /* defined (DEBUG_CODE) */
@@ -3984,7 +3891,7 @@ LAST MODIFIED : 17 November 2005
 DESCRIPTION :
 ==============================================================================*/
 {
-  	int return_code;
+	int return_code;
 
 	ENTER(Graphics_buffer_win32_use_font_bitmaps);
 
@@ -4056,7 +3963,7 @@ DESCRIPTION :
 			location.x, location.y);
 #endif // defined (DEBUG_CODE)
 
- 		// Convert from global screen coordinates to window coordinates
+		// Convert from global screen coordinates to window coordinates
 		GetWindowBounds(buffer->theWindow,
 			kWindowGlobalPortRgn, &global_bounds);
 
@@ -4120,9 +4027,9 @@ DESCRIPTION :
 		input_modifier = 0;
 
 		GetEventParameter (event, kEventParamKeyModifiers,
-                   typeUInt32, NULL,
-                   sizeof(modifier_keys), NULL,
-                   &modifier_keys);
+				   typeUInt32, NULL,
+				   sizeof(modifier_keys), NULL,
+				   &modifier_keys);
 
 		if (modifier_keys & shiftKey)
 		{
@@ -4250,9 +4157,9 @@ DESCRIPTION :
 		AGL_ACCUM_GREEN_SIZE, 1,
 		AGL_ACCUM_BLUE_SIZE, 1,
 		AGL_ACCUM_ALPHA_SIZE, 1,
-	    AGL_DEPTH_SIZE, 1,
-	    AGL_STENCIL_SIZE, 1,
-	    AGL_NONE};
+		AGL_DEPTH_SIZE, 1,
+		AGL_STENCIL_SIZE, 1,
+		AGL_NONE};
 	/* int accumulation_colour_size; */
 	struct Graphics_buffer *buffer;
 
@@ -4287,9 +4194,9 @@ DESCRIPTION :
 							expose_handler_UPP, resize_handler_UPP;
 
 						EventTypeSpec expose_event_list[] = {
-                    {kEventClassWindow, kEventWindowDrawContent}};
+					{kEventClassWindow, kEventWindowDrawContent}};
 						EventTypeSpec resize_event_list[] = {
-                    {kEventClassWindow, kEventWindowBoundsChanged}};
+					{kEventClassWindow, kEventWindowBoundsChanged}};
 						EventTypeSpec mouse_event_list[] = {
 							{kEventClassMouse, kEventMouseDragged},
 							{kEventClassMouse, kEventMouseUp},
@@ -4397,23 +4304,28 @@ respect.
 } /* Cmiss_graphics_buffer_carbon_set_window_size */
 #endif /* defined (CARBON_USER_INTERFACE) */
 
+struct Graphics_buffer *Graphics_buffer_app_get_core_buffer(struct Graphics_buffer_app *buffer)
+{
+	return buffer->core_buffer;
+}
+
 #if defined (WX_USER_INTERFACE)
-struct Graphics_buffer *create_Graphics_buffer_wx(
-	struct Graphics_buffer_package *graphics_buffer_package,
+Graphics_buffer_app *create_Graphics_buffer_wx(
+	struct Graphics_buffer_app_package *graphics_buffer_package,
 	wxPanel *parent,
 	enum Graphics_buffer_buffering_mode buffering_mode,
 	enum Graphics_buffer_stereo_mode stereo_mode,
 	int minimum_colour_buffer_depth, int minimum_depth_buffer_depth,
 	int minimum_accumulation_buffer_depth,
-	struct Graphics_buffer  *buffer_to_match)
+	struct Graphics_buffer_app  *buffer_to_match)
 {
-	 struct Graphics_buffer *buffer;
+	 struct Graphics_buffer_app *buffer;
 
 	ENTER(create_Graphics_buffer_wx);
-	buffer = CREATE(Graphics_buffer)(graphics_buffer_package);
+	buffer = CREATE(Graphics_buffer_app)(graphics_buffer_package,
+		GRAPHICS_BUFFER_ONSCREEN_TYPE, buffering_mode, stereo_mode);
 	if (buffer != NULL)
 	{
-		 buffer->type = GRAPHICS_BUFFER_WX_TYPE;
 		 Graphics_buffer_create_buffer_wx(buffer, graphics_buffer_package,
 				parent, buffering_mode, stereo_mode, minimum_colour_buffer_depth,
 				minimum_depth_buffer_depth, minimum_accumulation_buffer_depth, 0, 0,
@@ -4423,7 +4335,7 @@ struct Graphics_buffer *create_Graphics_buffer_wx(
 	{
 		display_message(ERROR_MESSAGE,"create_Graphics_buffer_wx.  "
 			"Unable to create generic Graphics_buffer.");
-		buffer = (struct Graphics_buffer *)NULL;
+		buffer = (struct Graphics_buffer_app *)NULL;
 	}
 	LEAVE;
 
@@ -4432,23 +4344,23 @@ struct Graphics_buffer *create_Graphics_buffer_wx(
 
 #endif /* defined (WX_USER_INTERFACE) */
 
-int Graphics_buffer_make_current(struct Graphics_buffer *buffer)
+int Graphics_buffer_app_make_current(struct Graphics_buffer_app *buffer)
 /*******************************************************************************
 LAST MODIFIED : 2 July 2002
 
 DESCRIPTION :
 ==============================================================================*/
 {
-  	int return_code = 0;
+	int return_code = 0;
 
-	ENTER(Graphics_buffer_make_current);
+	ENTER(Graphics_buffer_app_make_current);
 
 	if (buffer)
 	{
 #if defined (DEBUG_CODE)
-		printf("Graphics_buffer_make_current\n");
+		printf("Graphics_buffer_app_make_current\n");
 #endif /* defined (DEBUG_CODE) */
-		switch (buffer->type)
+		switch (buffer->core_buffer->type)
 		{
 #if defined (GTK_USER_INTERFACE)
 #if defined (GTK_USE_GTKGLAREA)
@@ -4461,7 +4373,7 @@ DESCRIPTION :
 			case GRAPHICS_BUFFER_GTKGLEXT_TYPE:
 			{
 #if defined (DEBUG_CODE)
-				printf("Graphics_buffer_make_current %p %p\n",
+				printf("Graphics_buffer_app_make_current %p %p\n",
 					buffer->gldrawable, buffer->glcontext);
 #endif /* defined (DEBUG_CODE) */
 				gdk_gl_drawable_make_current(buffer->gldrawable, buffer->glcontext);
@@ -4482,7 +4394,7 @@ DESCRIPTION :
 			case GRAPHICS_BUFFER_WIN32_COPY_BITMAP_TYPE:
 			{
 #if defined (DEBUG_CODE)
-				printf("Graphics_buffer_make_current %p %p\n",
+				printf("Graphics_buffer_app_make_current %p %p\n",
 					buffer->hDC, buffer->hRC);
 #endif /* defined (DEBUG_CODE) */
 				wglMakeCurrent( buffer->hDC, buffer->hRC );
@@ -4495,8 +4407,8 @@ DESCRIPTION :
 				GLint parms[4] ;
 				Rect port_bounds;
 				GetWindowBounds (buffer->theWindow, kWindowContentRgn, &port_bounds);
- 				buffer->clip_width = port_bounds.right - port_bounds.left;
- 				buffer->clip_height = port_bounds.bottom - port_bounds.top;
+				buffer->clip_width = port_bounds.right - port_bounds.left;
+				buffer->clip_height = port_bounds.bottom - port_bounds.top;
 				parms[0] = 0;
 				parms[1] = 0;
 				parms[2] = buffer->clip_width;
@@ -4508,7 +4420,7 @@ DESCRIPTION :
 			} break;
 #endif /* defined (CARBON_USER_INTERFACE) */
 #if defined (WX_USER_INTERFACE)
-			case GRAPHICS_BUFFER_WX_TYPE:
+			case GRAPHICS_BUFFER_ONSCREEN_TYPE:
 			{
 				 if (buffer->canvas)
 				 {
@@ -4529,37 +4441,37 @@ DESCRIPTION :
 #if defined (OPENGL_API) && defined (GL_EXT_framebuffer_object)
 				if (Graphics_library_check_extension(GL_EXT_framebuffer_object))
 				{
-					if (buffer->fbo && buffer->depthbuffer && buffer->img)
+					if (buffer->core_buffer->fbo && buffer->core_buffer->depthbuffer && buffer->core_buffer->img)
 					{
-						glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, buffer->fbo);
-						glBindRenderbufferEXT(GL_RENDERBUFFER_EXT,buffer->depthbuffer);
+						glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, buffer->core_buffer->fbo);
+						glBindRenderbufferEXT(GL_RENDERBUFFER_EXT,buffer->core_buffer->depthbuffer);
 						glRenderbufferStorageEXT(GL_RENDERBUFFER_EXT, GL_DEPTH_COMPONENT,
-							buffer->framebuffer_width, buffer->framebuffer_height);
+							buffer->core_buffer->width, buffer->core_buffer->height);
 						glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT,
-							GL_COLOR_ATTACHMENT0_EXT,GL_TEXTURE_2D, buffer->img, 0);
-						glFramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT, 
-							GL_DEPTH_ATTACHMENT_EXT, GL_RENDERBUFFER_EXT, buffer->depthbuffer);
+							GL_COLOR_ATTACHMENT0_EXT,GL_TEXTURE_2D, buffer->core_buffer->img, 0);
+						glFramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT,
+							GL_DEPTH_ATTACHMENT_EXT, GL_RENDERBUFFER_EXT, buffer->core_buffer->depthbuffer);
 						GLenum status;
 						status = glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT);
-						switch(status) 
-						{                                          
+						switch(status)
+						{
 							case GL_FRAMEBUFFER_COMPLETE_EXT:
 							{
 								return_code = 1;
-							}    
+							}
 							break;
 							case GL_FRAMEBUFFER_UNSUPPORTED_EXT:
 							{
 								display_message(ERROR_MESSAGE,
-									"Graphics_buffer_make_current."
+									"Graphics_buffer_app_make_current."
 									"Framebuffer object format not supported.\n");
 								return_code = 0;
-							} 
+							}
 							break;
 							default:
 							{
-								display_message(ERROR_MESSAGE, 
-									"Graphics_buffer_make_current." 
+								display_message(ERROR_MESSAGE,
+									"Graphics_buffer_app_make_current."
 									"Framebuffer object not supported.\n");
 								return_code = 0;
 							}
@@ -4575,7 +4487,7 @@ DESCRIPTION :
 #endif /* defined (WX_USER_INTERFACE) */
 			default:
 			{
-				display_message(ERROR_MESSAGE,"Graphics_buffer_make_current.  "
+				display_message(ERROR_MESSAGE,"Graphics_buffer_app_make_current.  "
 					"Graphics_bufffer type unknown or not supported.");
 				return_code = 0;
 			} break;
@@ -4583,16 +4495,16 @@ DESCRIPTION :
 	}
 	else
 	{
-		display_message(ERROR_MESSAGE,"Graphics_buffer_make_current.  "
+		display_message(ERROR_MESSAGE,"Graphics_buffer_app_make_current.  "
 			"Graphics_bufffer missing.");
 		return_code = 0;
 	}
 	LEAVE;
 
 	return (return_code);
-} /* Graphics_buffer_make_current */
+} /* Graphics_buffer_app_make_current */
 
-int Graphics_buffer_get_visual_id(struct Graphics_buffer *buffer, int *visual_id)
+int Graphics_buffer_get_visual_id(Graphics_buffer_app *buffer, int *visual_id)
 /*******************************************************************************
 LAST MODIFIED : 19 September 2002
 
@@ -4606,7 +4518,7 @@ Returns the visual id used by the graphics buffer.
 
 	if (buffer)
 	{
-		switch (buffer->type)
+		switch (buffer->core_buffer->type)
 		{
 #if defined (GTK_USER_INTERFACE)
 #if defined (GTK_USE_GTKGLAREA)
@@ -4640,7 +4552,7 @@ Returns the visual id used by the graphics buffer.
 			} break;
 #endif /* defined (CARBON_USER_INTERFACE) */
 #if defined (WX_USER_INTERFACE)
-			case GRAPHICS_BUFFER_WX_TYPE:
+			case GRAPHICS_BUFFER_ONSCREEN_TYPE:
 			{
 #if defined (__WXGTK__)
 				*visual_id = (int)((XVisualInfo*)buffer->canvas->m_vi)
@@ -4671,7 +4583,7 @@ Returns the visual id used by the graphics buffer.
 	return (return_code);
 } /* Graphics_buffer_get_visual_id */
 
-int Graphics_buffer_get_colour_buffer_depth(struct Graphics_buffer *buffer,
+int Graphics_buffer_get_colour_buffer_depth(struct Graphics_buffer_app *buffer,
 	int *colour_buffer_depth)
 /*******************************************************************************
 LAST MODIFIED : 19 September 2002
@@ -4680,16 +4592,16 @@ DESCRIPTION :
 Returns the depth of the colour buffer used by the graphics buffer.
 ==============================================================================*/
 {
-	int return_code;
+	int return_code = 0;
 
 	ENTER(Graphics_buffer_get_colour_buffer_depth);
 	if (buffer)
 	{
 		return_code = 1;
-		switch (buffer->type)
+		switch (buffer->core_buffer->type)
 		{
 #if defined (WX_USER_INTERFACE)
-			 case GRAPHICS_BUFFER_WX_TYPE:
+			 case GRAPHICS_BUFFER_ONSCREEN_TYPE:
 			{
 				 GLint colour_buffer_bits;
 				 glGetIntegerv(GL_RED_BITS, &colour_buffer_bits);
@@ -4737,15 +4649,23 @@ Returns the depth of the colour buffer used by the graphics buffer.
 #if defined (CARBON_USER_INTERFACE)
 			case GRAPHICS_BUFFER_CARBON_TYPE:
 			{
-				 GLint colour_buffer_bits;
+
+
+
 				 aglDescribePixelFormat (buffer->aglPixelFormat, AGL_RED_SIZE, &colour_buffer_bits);
-				 *colour_buffer_depth = colour_buffer_bits;
+
+
+
 				 aglDescribePixelFormat (buffer->aglPixelFormat, AGL_GREEN_SIZE, &colour_buffer_bits);
-				 *colour_buffer_depth += colour_buffer_bits;
+
+
+
 				 aglDescribePixelFormat (buffer->aglPixelFormat, AGL_BLUE_SIZE, &colour_buffer_bits);
-				 *colour_buffer_depth += colour_buffer_bits;
+
+
+
 				 aglDescribePixelFormat (buffer->aglPixelFormat, AGL_ALPHA_SIZE, &colour_buffer_bits);
-				 *colour_buffer_depth += colour_buffer_bits;
+
 				 return_code = 1;
 			} break;
 #endif /* defined (CARBON_USER_INTERFACE) */
@@ -4757,6 +4677,7 @@ Returns the depth of the colour buffer used by the graphics buffer.
 				return_code = 0;
 			} break;
 		}
+
 	}
 	else
 	{
@@ -4769,30 +4690,21 @@ Returns the depth of the colour buffer used by the graphics buffer.
 	return (return_code);
 } /* Graphics_buffer_get_colour_buffer_depth */
 
-int Graphics_buffer_get_depth_buffer_depth(struct Graphics_buffer *buffer,
+int Graphics_buffer_get_depth_buffer_depth(struct Graphics_buffer_app *buffer,
 	int *depth_buffer_depth)
-/*******************************************************************************
-LAST MODIFIED : 19 September 2002
-
-DESCRIPTION :
-Returns the depth of the depth buffer used by the graphics buffer.
-==============================================================================*/
 {
-	int return_code;
-
+	int return_code = 0;
 	ENTER(Graphics_buffer_get_depth_buffer_depth);
+
 	if (buffer)
 	{
 		return_code = 1;
-		switch (buffer->type)
+		switch (buffer->core_buffer->type)
 		{
 #if defined (WX_USER_INTERFACE)
-			 case GRAPHICS_BUFFER_WX_TYPE:
+			 case GRAPHICS_BUFFER_ONSCREEN_TYPE:
 			{
-				 GLint depth_bits;
-				 glGetIntegerv(GL_DEPTH_BITS, &depth_bits);
-				 *depth_buffer_depth = depth_bits;
-				 return_code = 1;
+
 			} break;
 #endif /* defined (WX_USER_INTERFACE) */
 #if defined (GTK_USER_INTERFACE)
@@ -4855,7 +4767,7 @@ Returns the depth of the depth buffer used by the graphics buffer.
 	return (return_code);
 } /* Graphics_buffer_get_depth_buffer_depth */
 
-int Graphics_buffer_get_accumulation_buffer_depth(struct Graphics_buffer *buffer,
+int Graphics_buffer_get_accumulation_buffer_depth(struct Graphics_buffer_app *buffer,
 	int *accumulation_buffer_depth)
 /*******************************************************************************
 LAST MODIFIED : 19 September 2002
@@ -4864,27 +4776,18 @@ DESCRIPTION :
 Returns the depth of the accumulation buffer used by the graphics buffer.
 ==============================================================================*/
 {
-	int return_code;
-
+	int return_code = 0;
 	ENTER(Graphics_buffer_get_accumulation_buffer_depth);
+
 	if (buffer)
 	{
 		return_code = 1;
-		switch (buffer->type)
+		switch (buffer->core_buffer->type)
 		{
 #if defined (WX_USER_INTERFACE)
-			 case GRAPHICS_BUFFER_WX_TYPE:
+			 case GRAPHICS_BUFFER_ONSCREEN_TYPE:
 			{
-				 GLint accumulation_buffer_bits;
-				 glGetIntegerv(GL_ACCUM_RED_BITS, &accumulation_buffer_bits);
-				 *accumulation_buffer_depth = accumulation_buffer_bits;
-				 glGetIntegerv(GL_ACCUM_BLUE_BITS, &accumulation_buffer_bits);
-				 *accumulation_buffer_depth += accumulation_buffer_bits;
-				 glGetIntegerv(GL_ACCUM_GREEN_BITS, &accumulation_buffer_bits);
-				 *accumulation_buffer_depth += accumulation_buffer_bits;
-				 glGetIntegerv(GL_ACCUM_ALPHA_BITS, &accumulation_buffer_bits);
-				 *accumulation_buffer_depth += accumulation_buffer_bits;
-				 return_code = 1;
+
 			} break;
 #endif /* defined (WX_USER_INTERFACE) */
 #if defined (GTK_USER_INTERFACE)
@@ -4962,7 +4865,7 @@ Returns the depth of the accumulation buffer used by the graphics buffer.
 	return (return_code);
 } /* Graphics_buffer_get_accumulation_buffer_depth */
 
-int Graphics_buffer_get_buffering_mode(struct Graphics_buffer *buffer,
+int Graphics_buffer_get_buffering_mode(struct Graphics_buffer_app *buffer,
 	enum Graphics_buffer_buffering_mode *buffering_mode)
 /*******************************************************************************
 LAST MODIFIED : 19 September 2002
@@ -4977,16 +4880,16 @@ Returns the buffering mode used by the graphics buffer.
 #if defined (GTK_USER_INTERFACE)
 	USE_PARAMETER(buffering_mode);
 #endif /* defined (GTK_USER_INTERFACE) */
+
 	if (buffer)
 	{
-		switch (buffer->type)
+		switch (buffer->core_buffer->type)
 		{
 #if defined (GTK_USER_INTERFACE)
 #if defined (GTK_USE_GTKGLAREA)
 			case GRAPHICS_BUFFER_GTKGLAREA_TYPE:
 			{
-				*buffering_mode = buffer->buffering_mode;
-				return_code = 1;
+
 			} break;
 #else /* defined (GTK_USE_GTKGLAREA) */
 			case GRAPHICS_BUFFER_GTKGLEXT_TYPE:
@@ -5050,7 +4953,7 @@ Returns the buffering mode used by the graphics buffer.
 			} break;
 #endif /* defined (CARBON_USER_INTERFACE) */
 #if defined (WX_USER_INTERFACE)
-			case GRAPHICS_BUFFER_WX_TYPE:
+			case GRAPHICS_BUFFER_ONSCREEN_TYPE:
 			{
 				*buffering_mode = GRAPHICS_BUFFER_DOUBLE_BUFFERING;
 				return_code = 1;
@@ -5072,10 +4975,11 @@ Returns the buffering mode used by the graphics buffer.
 	}
 	LEAVE;
 
+
 	return (return_code);
 } /* Graphics_buffer_get_buffering_mode */
 
-int Graphics_buffer_get_stereo_mode(struct Graphics_buffer *buffer,
+int Graphics_buffer_get_stereo_mode(struct Graphics_buffer_app *buffer,
 	enum Graphics_buffer_stereo_mode *stereo_mode)
 /*******************************************************************************
 LAST MODIFIED : 19 September 2002
@@ -5084,21 +4988,21 @@ DESCRIPTION :
 Returns the stereo mode used by the graphics buffer.
 ==============================================================================*/
 {
-	int return_code;
+	int return_code = 0;
 	ENTER(Graphics_buffer_get_stereo_mode);
 #if defined (GTK_USER_INTERFACE)
 	USE_PARAMETER(stereo_mode);
 #endif /* defined (GTK_USER_INTERFACE) */
+
 	if (buffer)
 	{
-		switch (buffer->type)
+		switch (buffer->core_buffer->type)
 		{
 #if defined (GTK_USER_INTERFACE)
 #if defined (GTK_USE_GTKGLAREA)
 			case GRAPHICS_BUFFER_GTKGLAREA_TYPE:
 			{
-				*stereo_mode = buffer->stereo_mode;
-				return_code = 1;
+
 			} break;
 #else /* defined (GTK_USE_GTKGLAREA) */
 			case GRAPHICS_BUFFER_GTKGLEXT_TYPE:
@@ -5162,7 +5066,7 @@ Returns the stereo mode used by the graphics buffer.
 			} break;
 #endif /* defined (CARBON_USER_INTERFACE) */
 #if defined (WX_USER_INTERFACE)
-			case GRAPHICS_BUFFER_WX_TYPE:
+			case GRAPHICS_BUFFER_ONSCREEN_TYPE:
 			{
 				*stereo_mode = GRAPHICS_BUFFER_MONO;
 				return_code = 1;
@@ -5183,12 +5087,13 @@ Returns the stereo mode used by the graphics buffer.
 			"Graphics_bufffer missing.");
 		return_code = 0;
 	}
+
 	LEAVE;
 
 	return (return_code);
 } /* Graphics_buffer_get_stereo_mode */
 
-int Graphics_buffer_swap_buffers(struct Graphics_buffer *buffer)
+int Graphics_buffer_app_swap_buffers(struct Graphics_buffer_app *buffer)
 /*******************************************************************************
 LAST MODIFIED : 2 July 2002
 
@@ -5201,7 +5106,7 @@ DESCRIPTION :
 
 	if (buffer)
 	{
-		switch (buffer->type)
+		switch (buffer->core_buffer->type)
 		{
 #if defined (GTK_USER_INTERFACE)
 #if defined (GTK_USE_GTKGLAREA)
@@ -5231,7 +5136,7 @@ DESCRIPTION :
 			} break;
 #endif /* defined (WIN32_USER_INTERFACE) */
 #if defined (WX_USER_INTERFACE)
-			case GRAPHICS_BUFFER_WX_TYPE:
+			case GRAPHICS_BUFFER_ONSCREEN_TYPE:
 			{
 				buffer->canvas->SwapBuffers();
 				return_code = 1;
@@ -5263,7 +5168,7 @@ DESCRIPTION :
 	return (return_code);
 } /* Graphics_buffer_swap_buffers */
 
-int Graphics_buffer_make_read_current(struct Graphics_buffer *buffer)
+int Graphics_buffer_make_read_current(struct Graphics_buffer_app *buffer)
 /*******************************************************************************
 LAST MODIFIED : 28 May 2004
 
@@ -5293,20 +5198,17 @@ made current) to be the GLX destination.
 	return (return_code);
 } /* Graphics_buffer_make_read_current */
 
-int Graphics_buffer_get_width(struct Graphics_buffer *buffer)
-/*******************************************************************************
-LAST MODIFIED : 1 July 2002
+int Graphics_buffer_get_width(struct Graphics_buffer_app *buffer)
 
-DESCRIPTION :
-Returns the width of buffer represented by <buffer>.
-==============================================================================*/
+
 {
 	int width;
 
 	ENTER(Graphics_buffer_get_width);
+
 	if (buffer)
 	{
-		switch (buffer->type)
+		switch (buffer->core_buffer->type)
 		{
 #if defined (GTK_USER_INTERFACE)
 #if defined (GTK_USE_GTKGLAREA)
@@ -5347,7 +5249,7 @@ Returns the width of buffer represented by <buffer>.
 			} break;
 #endif /* defined (WIN32_USER_INTERFACE) */
 #if defined (WX_USER_INTERFACE)
-			case GRAPHICS_BUFFER_WX_TYPE:
+			case GRAPHICS_BUFFER_ONSCREEN_TYPE:
 			{
 				int height;
 				buffer->canvas->GetClientSize(&width, &height);
@@ -5381,30 +5283,26 @@ Returns the width of buffer represented by <buffer>.
 	return (width);
 } /* Graphics_buffer_get_width */
 
-int Graphics_buffer_set_width(struct Graphics_buffer *buffer, int width)
-/*******************************************************************************
-LAST MODIFIED : 1 July 2002
 
-DESCRIPTION :
-Sets the width of buffer represented by <buffer>.
-==============================================================================*/
+int Graphics_buffer_set_width(struct Graphics_buffer_app *buffer, int width)
 {
-	int return_code;
+	int return_code = 0;
 
 	ENTER(Graphics_buffer_set_width);
-	USE_PARAMETER(width);
 	if (buffer)
 	{
-		switch (buffer->type)
+		switch (buffer->core_buffer->type)
 		{
 #if defined (WX_USER_INTERFACE)
-			case GRAPHICS_BUFFER_WX_TYPE:
+			case GRAPHICS_BUFFER_ONSCREEN_TYPE:
 			{
 				int old_width, height;
 				buffer->canvas->GetClientSize(&old_width, &height);
 				buffer->canvas->SetClientSize(width, height);
 				return_code = 1;
 			} break;
+#else
+
 #endif /* defined (WX_USER_INTERFACE) */
 			default:
 			{
@@ -5418,27 +5316,22 @@ Sets the width of buffer represented by <buffer>.
 	{
 		display_message(ERROR_MESSAGE,
 			"Graphics_buffer_set_width.  Invalid buffer");
-		return_code = 1;
 	}
 	LEAVE;
 
 	return (return_code);
 } /* Graphics_buffer_set_width */
 
-int Graphics_buffer_get_height(struct Graphics_buffer *buffer)
-/*******************************************************************************
-LAST MODIFIED : 1 July 2002
 
-DESCRIPTION :
-Returns the height of buffer represented by <buffer>.
-==============================================================================*/
+int Graphics_buffer_get_height(struct Graphics_buffer_app *buffer)
 {
+
 	int height;
 
 	ENTER(Graphics_buffer_get_height);
 	if (buffer)
 	{
-		switch (buffer->type)
+		switch (buffer->core_buffer->type)
 		{
 #if defined (GTK_USER_INTERFACE)
 #if defined (GTK_USE_GTKGLAREA)
@@ -5474,12 +5367,11 @@ Returns the height of buffer represented by <buffer>.
 				}
 				else
 				{
-					height = buffer->height;
-				}
+
 			} break;
 #endif /* defined (WIN32_USER_INTERFACE) */
 #if defined (WX_USER_INTERFACE)
-			case GRAPHICS_BUFFER_WX_TYPE:
+			case GRAPHICS_BUFFER_ONSCREEN_TYPE:
 			{
 				int width;
 				buffer->canvas->GetClientSize(&width, &height);
@@ -5513,24 +5405,19 @@ Returns the height of buffer represented by <buffer>.
 	return (height);
 } /* Graphics_buffer_get_height */
 
-int Graphics_buffer_set_height(struct Graphics_buffer *buffer, int height)
-/*******************************************************************************
-LAST MODIFIED : 1 July 2002
-
-DESCRIPTION :
-Sets the height of buffer represented by <buffer>.
-==============================================================================*/
+int Graphics_buffer_set_height(struct Graphics_buffer_app *buffer, int height)
 {
-	int return_code;
+	int return_code = 0;
 
 	ENTER(Graphics_buffer_set_height);
 	USE_PARAMETER(height);
+
 	if (buffer)
 	{
-		switch (buffer->type)
+		switch (buffer->core_buffer->type)
 		{
 #if defined (WX_USER_INTERFACE)
-			case GRAPHICS_BUFFER_WX_TYPE:
+			case GRAPHICS_BUFFER_ONSCREEN_TYPE:
 			{
 				int width, old_height;
 				buffer->canvas->GetClientSize(&width, &old_height);
@@ -5557,85 +5444,7 @@ Sets the height of buffer represented by <buffer>.
 	return (return_code);
 } /* Graphics_buffer_set_height */
 
-int Graphics_buffer_get_origin_x(struct Graphics_buffer *buffer)
-/*******************************************************************************
-LAST MODIFIED : 16 February 2007
-
-DESCRIPTION :
-Returns the x origin of buffer represented by <buffer>.
-==============================================================================*/
-{
-	int origin_x = 0;
-
-	ENTER(Graphics_buffer_get_origin_x);
-	if (buffer)
-	{
-#if defined (CARBON_USER_INTERFACE)
-		switch (buffer->type)
-		{
-			case GRAPHICS_BUFFER_CARBON_TYPE:
-			{
-				// Respect the values we have been given
-				origin_x = buffer->clip_width - buffer->width;
-			} break;
-			default:
-			{
-				origin_x = 0;
-			} break;
-		}
-#endif /* defined (CARBON_USER_INTERFACE) */
-	}
-	else
-	{
-		display_message(ERROR_MESSAGE,
-			"Graphics_buffer_get_origin_x.  Invalid buffer");
-		origin_x = 0;
-	}
-	LEAVE;
-
-	return (origin_x);
-} /* Graphics_buffer_get_origin_x */
-
-int Graphics_buffer_get_origin_y(struct Graphics_buffer *buffer)
-/*******************************************************************************
-LAST MODIFIED : 16 February 2007
-
-DESCRIPTION :
-Returns the y origin of buffer represented by <buffer>.
-==============================================================================*/
-{
-	int origin_y = 0;
-
-	ENTER(Graphics_buffer_get_origin_y);
-	if (buffer)
-	{
-#if defined (CARBON_USER_INTERFACE)
-		switch (buffer->type)
-		{
-			case GRAPHICS_BUFFER_CARBON_TYPE:
-			{
-				// Respect the values we have been given
-				origin_y = buffer->clip_height - buffer->height;
-			} break;
-			default:
-			{
-				origin_y = 0;
-			} break;
-		}
-#endif /* defined (CARBON_USER_INTERFACE) */
-	}
-	else
-	{
-		display_message(ERROR_MESSAGE,
-			"Graphics_buffer_get_origin_y.  Invalid buffer");
-	   origin_y = 0;
-	}
-	LEAVE;
-
-	return (origin_y);
-} /* Graphics_buffer_get_origin_y */
-
-int Graphics_buffer_is_visible(struct Graphics_buffer *buffer)
+int Graphics_buffer_is_visible(struct Graphics_buffer_app *buffer)
 /*******************************************************************************
 LAST MODIFIED : 1 July 2002
 
@@ -5648,10 +5457,12 @@ into unmanaged or invisible widgets.
 	int return_code;
 
 	ENTER(Graphics_buffer_is_visible);
+
 	if (buffer)
 	{
 		return_code = 0;
-		switch (buffer->type)
+
+		switch (buffer->core_buffer->type)
 		{
 #if defined (GTK_USER_INTERFACE)
 #if defined (GTK_USE_GTKGLAREA)
@@ -5675,16 +5486,14 @@ into unmanaged or invisible widgets.
 			} break;
 #endif /* defined (WIN32_USER_INTERFACE) */
 #if defined (WX_USER_INTERFACE)
-			case GRAPHICS_BUFFER_WX_TYPE:
+			case GRAPHICS_BUFFER_ONSCREEN_TYPE:
 			{
 				return_code = 1;
 			} break;
 #endif /* defined (WX_USER_INTERFACE) */
 #if defined (CARBON_USER_INTERFACE)
 			case GRAPHICS_BUFFER_CARBON_TYPE:
-			{
-				return_code = 1;
-			} break;
+
 #endif /* defined (CARBON_USER_INTERFACE) */
 			default:
 			{
@@ -5705,7 +5514,7 @@ into unmanaged or invisible widgets.
 	return (return_code);
 } /* Graphics_buffer_is_visible */
 
-int Graphics_buffer_awaken(struct Graphics_buffer *buffer)
+int Graphics_buffer_app_awaken(struct Graphics_buffer_app *buffer)
 /*******************************************************************************
 LAST MODIFIED : 1 July 2002
 
@@ -5718,7 +5527,7 @@ Activates the graphics <buffer>.
 	ENTER(Graphics_buffer_awaken);
 	if (buffer)
 	{
-		switch (buffer->type)
+		switch (buffer->core_buffer->type)
 		{
 #if defined (GTK_USER_INTERFACE)
 #if defined (GTK_USE_GTKGLAREA)
@@ -5744,7 +5553,7 @@ Activates the graphics <buffer>.
 			} break;
 #endif /* defined (WIN32_USER_INTERFACE) */
 #if defined (WX_USER_INTERFACE)
-			case GRAPHICS_BUFFER_WX_TYPE:
+			case GRAPHICS_BUFFER_ONSCREEN_TYPE:
 			{
 				return_code = 1;
 			} break;
@@ -5774,33 +5583,7 @@ Activates the graphics <buffer>.
 	return (return_code);
 } /* Graphics_buffer_awaken */
 
-enum Graphics_buffer_type Graphics_buffer_get_type(struct Graphics_buffer *buffer)
-/*******************************************************************************
-LAST MODIFIED : 27 May 2004
-
-DESCRIPTION :
-Returns information about the type of buffer that was created.
-==============================================================================*/
-{
-	enum Graphics_buffer_type buffer_type;
-
-	ENTER(Graphics_buffer_get_type);
-	if (buffer)
-	{
-		buffer_type = buffer->type;
-	}
-	else
-	{
-		display_message(ERROR_MESSAGE,
-			"Graphics_buffer_get_display.  Invalid buffer");
-		buffer_type = GRAPHICS_BUFFER_INVALID_TYPE;
-	}
-	LEAVE;
-
-	return (buffer_type);
-} /* Graphics_buffer_get_type */
-
-int Graphics_buffer_add_initialise_callback(struct Graphics_buffer *buffer,
+int Graphics_buffer_add_initialise_callback(struct Graphics_buffer_app *buffer,
 	CMISS_CALLBACK_FUNCTION(Graphics_buffer_callback) initialise_callback, void *user_data)
 /*******************************************************************************
 LAST MODIFIED : 1 July 2002
@@ -5829,7 +5612,7 @@ Adds an initialise callback to the graphics <buffer>.
 	return (return_code);
 } /* Graphics_buffer_add_initialise_callback */
 
-int Graphics_buffer_add_resize_callback(struct Graphics_buffer *buffer,
+int Graphics_buffer_add_resize_callback(struct Graphics_buffer_app *buffer,
 	CMISS_CALLBACK_FUNCTION(Graphics_buffer_callback) resize_callback, void *user_data)
 /*******************************************************************************
 LAST MODIFIED : 1 July 2002
@@ -5858,7 +5641,7 @@ Adds an resize callback to the graphics <buffer>.
 	return (return_code);
 } /* Graphics_buffer_add_resize_callback */
 
-int Graphics_buffer_add_expose_callback(struct Graphics_buffer *buffer,
+int Graphics_buffer_app_add_expose_callback(struct Graphics_buffer_app *buffer,
 	CMISS_CALLBACK_FUNCTION(Graphics_buffer_callback) expose_callback, void *user_data)
 /*******************************************************************************
 LAST MODIFIED : 1 July 2002
@@ -5887,7 +5670,7 @@ Adds an expose callback to the graphics <buffer>.
 	return (return_code);
 } /* Graphics_buffer_add_expose_callback */
 
-int Graphics_buffer_add_input_callback(struct Graphics_buffer *buffer,
+int Graphics_buffer_app_add_input_callback(struct Graphics_buffer_app *buffer,
 	CMISS_CALLBACK_FUNCTION(Graphics_buffer_input_callback) input_callback,
 	void *user_data)
 /*******************************************************************************
@@ -5917,7 +5700,8 @@ Adds an input callback to the graphics <buffer>.
 	return (return_code);
 } /* Graphics_buffer_add_input_callback */
 
-int DESTROY(Graphics_buffer)(struct Graphics_buffer **buffer_ptr)
+
+int DESTROY(Graphics_buffer_app)(struct Graphics_buffer_app **buffer_ptr)
 /*******************************************************************************
 LAST MODIFIED : 1 July 2002
 
@@ -5926,9 +5710,10 @@ Closes a Graphics buffer instance
 x==============================================================================*/
 {
 	int return_code;
-	struct Graphics_buffer *buffer;
+	struct Graphics_buffer_app *buffer;
 
-	ENTER(DESTROY(Graphics_buffer));
+	ENTER(DESTROY(Graphics_buffer_app));
+
 	if (buffer_ptr && (buffer = *buffer_ptr))
 	{
 		return_code=1;
@@ -5987,7 +5772,7 @@ x==============================================================================*
 		if (buffer->hRC && (buffer->hRC != buffer->package->wgl_shared_context))
 		{
 #if defined (DEBUG_CODE)
-			printf("wglDeleteContext %p\n", buffer->hRC);	
+			printf("wglDeleteContext %p\n", buffer->hRC);
 #endif //defined (DEBUG_CODE)
 			wglDeleteContext(buffer->hRC);
 		}
@@ -6049,57 +5834,12 @@ x==============================================================================*
 			buffer->canvas->ClearGraphicsBufferReference();
 			delete buffer->canvas;
 		}
-		if (buffer->attrib_list != NULL)
-		{
-				DEALLOCATE(buffer->attrib_list);
-		}
-		if (buffer->type == GRAPHICS_BUFFER_GL_EXT_FRAMEBUFFER_TYPE)
-		 {
-#if defined (OPENGL_API) && defined (GL_EXT_framebuffer_object)
-			 GLint framebuffer_flag;
-			 if (Graphics_library_check_extension(GL_EXT_framebuffer_object))
-			 {
-				 glGetIntegerv(GL_FRAMEBUFFER_BINDING_EXT, &framebuffer_flag);
-				 if (framebuffer_flag != 0)
-				 {
-					 if (buffer->fbo != 0)
-					 {
-						 if (framebuffer_flag == (GLint)buffer->fbo)
-						 {
-							 glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
-						 }
-						 glDeleteFramebuffersEXT(1, &buffer->fbo);
-					 }
-					 if (buffer->depthbuffer != 0)
-					 {
-						 glDeleteRenderbuffersEXT(1, &buffer->depthbuffer);
-					 }
-#if defined (USE_MSAA)
-					 if (buffer->multi_fbo != 0)
-					 {
-						 glDeleteFramebuffersEXT(1, &buffer->multi_fbo);
-					 }
-					 if (buffer->multi_depthbuffer != 0)
-					 {
-						 glDeleteFramebuffersEXT(1, &buffer->multi_depthbuffer);
-					 }
-					 if (buffer->msbuffer != 0)
-					 {
-						 glDeleteRenderbuffersEXT(1, &buffer->msbuffer);
-					 }
-#endif
-					 if (buffer->img != 0)
-					 {
-						 glDeleteTextures(1, &buffer->img);
-					 }
 
-				 }
-			 }
-		 }
-#endif /* defined (OPENGL_API) && defined (GL_EXT_framebuffer_object) */
 #endif /* defined (WX_USER_INTERFACE) */
+
+		DESTROY(Graphics_buffer)(&(buffer->core_buffer));
 		DEALLOCATE(*buffer_ptr);
-		*buffer_ptr = (struct Graphics_buffer *)NULL;
+		*buffer_ptr = 0;
 	}
 	else
 	{
@@ -6111,3 +5851,66 @@ x==============================================================================*
 
 	return (return_code);
 } /* DESTROY(Graphics_buffer) */
+
+int Graphics_buffer_app_is_visible(struct Graphics_buffer_app *buffer)
+{
+	return Graphics_buffer_is_visible(buffer->core_buffer);
+}
+
+int Graphics_buffer_app_add_initialise_callback(struct Graphics_buffer_app *buffer,
+	CMISS_CALLBACK_FUNCTION(Graphics_buffer_callback) initialise_callback, void *user_data)
+/*******************************************************************************
+LAST MODIFIED : 1 July 2002
+
+DESCRIPTION :
+Adds an initialise callback to the graphics <buffer>.
+==============================================================================*/
+{
+	int return_code;
+
+	ENTER(Graphics_buffer_awaken);
+	if (buffer)
+	{
+		return_code = CMISS_CALLBACK_LIST_ADD_CALLBACK(Graphics_buffer_callback)(
+			buffer->initialise_callback_list, initialise_callback,
+			user_data);
+	}
+	else
+	{
+		display_message(ERROR_MESSAGE,
+			"Graphics_buffer_add_initialise_callback.  Invalid buffer");
+		return_code=0;
+	}
+	LEAVE;
+
+	return (return_code);
+} /* Graphics_buffer_add_initialise_callback */
+
+int Graphics_buffer_app_add_resize_callback(struct Graphics_buffer_app *buffer,
+	CMISS_CALLBACK_FUNCTION(Graphics_buffer_callback) resize_callback, void *user_data)
+/*******************************************************************************
+LAST MODIFIED : 1 July 2002
+
+DESCRIPTION :
+Adds an resize callback to the graphics <buffer>.
+==============================================================================*/
+{
+	int return_code;
+
+	if (buffer)
+	{
+		return_code = CMISS_CALLBACK_LIST_ADD_CALLBACK(Graphics_buffer_callback)(
+			buffer->resize_callback_list, resize_callback,
+			user_data);
+	}
+	else
+	{
+		display_message(ERROR_MESSAGE,
+			"Graphics_buffer_add_resize_callback.  Invalid buffer");
+		return_code=0;
+	}
+	LEAVE;
+
+	return (return_code);
+} /* Graphics_buffer_add_resize_callback */
+

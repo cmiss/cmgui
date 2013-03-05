@@ -43,22 +43,20 @@ the default button.
  * the terms of any one of the MPL, the GPL or the LGPL.
  *
  * ***** END LICENSE BLOCK ***** */
-#if defined (BUILD_WITH_CMAKE)
+#if 1
 #include "configure/cmgui_configure.h"
-#endif /* defined (BUILD_WITH_CMAKE) */
+#endif /* defined (1) */
 
-extern "C" {
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include "general/debug.h"
 #include "user_interface/filedir.h"
-#include "user_interface/message.h"
+#include "general/message.h"
 #include "user_interface/user_interface.h"
 #include "general/mystring.h"
 #include "command/command.h"
-}
 #if defined (WX_USER_INTERFACE)
 #include "wx/wx.h"
 #include <wx/tglbtn.h>
@@ -235,6 +233,10 @@ frees the memory for <**file_open_data> and changes <*file_open_data> to NULL.
 		{
 			 DEALLOCATE((*file_open_data)->filter_extension);
 		}
+		if ((*file_open_data)->file_name)
+		{
+			DEALLOCATE((*file_open_data)->file_name);
+		}
 		DEALLOCATE(*file_open_data);
 		*file_open_data=(struct File_open_data *)NULL;
 	}
@@ -260,7 +262,8 @@ name the <file_operation> is performed on the file with the <arguments>.
 {
 #if defined (WX_USER_INTERFACE)
 	const char *shell_title;
-	char *allocated_shell_title,*filename,*temp_string,*extension;
+	char *allocated_shell_title,*temp_string,*extension;
+	const char *filename;
 	int length;
 #endif /* defined (WX_USER_INTERFACE) */
 #if defined (WIN32_USER_INTERFACE)
@@ -360,28 +363,26 @@ name the <file_operation> is performed on the file with the <arguments>.
 			shell_title=(char *)NULL;
 		} break;
 	}
-	wxFileDialog *ReadData = new wxFileDialog ((wxWindow *)NULL,shell_title,"","",
-		 extension,wxOPEN|wxFILE_MUST_EXIST,wxDefaultPosition);
+	wxFileDialog *ReadData = new wxFileDialog ((wxWindow *)NULL,wxString::FromAscii(shell_title),wxT(""),wxT(""),
+											   wxT("*.com"),wxOPEN|wxFILE_MUST_EXIST,wxDefaultPosition);
 	if (ReadData->ShowModal() == wxID_OK)
 	{
 		 wxString file_name=ReadData->GetPath();
-		 file_open_data->file_name=(char*)file_name.mb_str();
+		 file_open_data->file_name=duplicate_string(file_name.mb_str(wxConvUTF8));
 #if defined (WIN32_SYSTEM)
 		 char *drive_name = NULL;
-		 char *first = NULL;	
-		 char *last = NULL;	
 		 char *temp_directory_name,*directory_name, *temp_name;
 		 int lastlength;
 		 filename = file_open_data->file_name;
 		 directory_name = NULL;
-		 first = strchr(filename, '\\');
-		 last = strrchr(filename, '\\');
+		 const char *first = strchr(filename, '\\');
+		 const char *last = strrchr(filename, '\\');
 		 lastlength = last - filename +1;
 		 length = first - filename +1;
 		 if ((length>0))
 		 {
 				if (ALLOCATE(drive_name,char,length))
-				{		 
+				{
 					 strncpy(drive_name,file_name,length);
 					 drive_name[length-1]='\0';
 					 if (ALLOCATE(temp_string,char,length+8))
@@ -395,7 +396,7 @@ name the <file_operation> is performed on the file with the <arguments>.
 					 DEALLOCATE(drive_name);
 					 if (length == lastlength)
 					 {
-							temp_name = &filename[lastlength];
+							temp_name = const_cast<char *>(&filename[lastlength]);
 					 }
 				}
 				if (lastlength>length)
@@ -414,7 +415,7 @@ name the <file_operation> is performed on the file with the <arguments>.
 										strcat(temp_string, "\'");
 										temp_string[lastlength-length+10]='\0';
 										Execute_command_execute_string(file_open_data->execute_command,temp_string);
-										temp_name=&filename[lastlength];
+										temp_name=const_cast<char *>(&filename[lastlength]);
 										if (file_open_data->operation)
 										{
 											(file_open_data->operation)((temp_name)
@@ -436,14 +437,15 @@ name the <file_operation> is performed on the file with the <arguments>.
 		 }
 		 char *old_directory = NULL;
 		 char *old_directory_name = NULL;
-		 char *last,*pathname;
+		 const char *last;
+		char *pathname;
 		 int return_code=1;
 		 old_directory = (char *)malloc(4096);
-		 if (!getcwd(old_directory, 4096)) 
-		 { 
-		   // Unable to read old directory so just set it to a empty string 
-		   old_directory[0] = 0; 
-		 } 
+		 if (!getcwd(old_directory, 4096))
+		 {
+		   // Unable to read old directory so just set it to a empty string
+		   old_directory[0] = 0;
+		 }
 		 length = strlen(old_directory);
 		 filename = file_open_data->file_name;
 		 if ((ALLOCATE(old_directory_name,char,length+2)) && old_directory !=NULL)
@@ -457,7 +459,7 @@ name the <file_operation> is performed on the file with the <arguments>.
 				return_code=0;
 		 }
 		 if (strcmp(file_open_data->filter_extension, ".com") != 0)
-				/* Set the directory if the file extension is not .com. 
+				/* Set the directory if the file extension is not .com.
 					 if the file extension is .com, the directory will be set in the
 					 comfile.com */
 		 {
@@ -485,13 +487,13 @@ name the <file_operation> is performed on the file with the <arguments>.
 								 {
 										DEALLOCATE(temp_string);
 								 }
-							}					
+							}
 					 }
 					 if (pathname)
 					 {
 							DEALLOCATE(pathname);
-					 }	
-				}			 
+					 }
+				}
 		 }
 		 if (old_directory_name)
 		 {
@@ -629,8 +631,8 @@ specified file.
 			shell_title=(char *)NULL;
 		} break;
 	}
-	wxFileDialog *SaveData = new wxFileDialog ((wxWindow *)NULL,shell_title,"","",
-		extension,wxSAVE|wxOVERWRITE_PROMPT,wxDefaultPosition);
+	wxFileDialog *SaveData = new wxFileDialog ((wxWindow *)NULL,wxString::FromAscii(shell_title),wxT(""),wxT(""),
+		wxString::FromAscii(extension),wxSAVE|wxOVERWRITE_PROMPT,wxDefaultPosition);
 	if (temp_string)
 	{
 		DEALLOCATE(temp_string);
@@ -642,22 +644,20 @@ specified file.
  if (SaveData->ShowModal() == wxID_OK)
 	{
 	  wxString file_name=SaveData->GetPath();
-		file_open_data->file_name=(char*)file_name.mb_str();
+		file_open_data->file_name=duplicate_string(file_name.mb_str(wxConvUTF8));
 #if defined (WIN32_SYSTEM)
 		 char *drive_name = NULL;
-		 char *first = NULL;	
-		 char *last = NULL;	
-		 char *temp_directory_name,*directory_name, *temp_name, *filename;
+		 char *temp_directory_name,*directory_name, *temp_name;
 		 int lastlength, length;
-		 filename = file_open_data->file_name;
-		 first = strchr(filename, '\\');
-		 last = strrchr(filename, '\\');
+		 const char *filename = file_open_data->file_name;
+		 const char *first = strchr(filename, '\\');
+		 const char *last = strrchr(filename, '\\');
 		 lastlength = last - filename +1;
 		 length = first - filename +1;
 		 if ((length>0))
 		 {
 				if (ALLOCATE(drive_name,char,length))
-				{		 
+				{
 					 strncpy(drive_name,file_name,length);
 					 drive_name[length-1]='\0';
 					 if (ALLOCATE(temp_string,char,length+8))
@@ -671,7 +671,7 @@ specified file.
 					 DEALLOCATE(drive_name);
 					 if (length == lastlength)
 					 {
-							temp_name = &filename[lastlength];
+							temp_name = const_cast<char *>(&filename[lastlength]);
 					 }
 				}
 				if (lastlength>length)
@@ -682,7 +682,7 @@ specified file.
 							if (ALLOCATE(directory_name,char,lastlength-length+1))
 							{
 								 directory_name = &temp_directory_name[length-1];
-								 directory_name[lastlength-length]='\0';			
+								 directory_name[lastlength-length]='\0';
 								 if (ALLOCATE(temp_string,char,lastlength-length+11))
 								 {
 										strcpy(temp_string, "set dir \'");
@@ -690,7 +690,7 @@ specified file.
 										strcat(temp_string, "\'");
 										temp_string[lastlength-length+10]='\0';
 										Execute_command_execute_string(file_open_data->execute_command,temp_string);
-										temp_name=&filename[lastlength];
+										temp_name = const_cast<char *>(&filename[lastlength]);
 										DEALLOCATE(temp_string);
 								 }
 							}
@@ -741,8 +741,8 @@ Register a callback that gets called when the file dialog is cancelled.
 } /* register_file_cancel_callback */
 
 #if defined (WX_USER_INTERFACE)
-int filedir_compressing_process_wx_compress(const char *com_file_name, const char *data_file_name, 
-	 const char *elem_file_name, const char *node_file_name, int data_return_code, int elem_return_code, 
+int filedir_compressing_process_wx_compress(const char *com_file_name, const char *data_file_name,
+	 const char *elem_file_name, const char *node_file_name, int data_return_code, int elem_return_code,
 	 int node_return_code, const char *file_name, const char *temp_data ,const char *temp_elem, const char *temp_node)
 /*******************************************************************************
 LAST MODIFIED : 17 Aug 2007
@@ -764,34 +764,34 @@ Zip .com, .exnode, .exelem and .exdata files into a single zip file
 			strcpy(zip_file_name, file_name);
 			strcat(zip_file_name, ".zip");
 			zip_file_name[length+5]='\0';
-			wxFFileOutputStream out(_T(zip_file_name));
+			wxFFileOutputStream out(wxString::FromAscii(zip_file_name));
 			wxZipOutputStream zip(out);
-			
+
 			if (data_return_code)
 			{
-				 wxFFileInputStream data_in(wxT(temp_data), wxT("rb"));
-				 zip.PutNextEntry(wxT(data_file_name));
+				 wxFFileInputStream data_in(wxString::FromAscii(temp_data), wxT("rb"));
+				 zip.PutNextEntry(wxString::FromAscii(data_file_name));
 				 zip.Write(data_in);
 			}
-			
+
 			if (elem_return_code)
-			{	 
-				 wxFFileInputStream element_in(wxT(temp_elem), wxT("rb"));
-				 zip.PutNextEntry(wxT(elem_file_name));
+			{
+				 wxFFileInputStream element_in(wxString::FromAscii(temp_elem), wxT("rb"));
+				 zip.PutNextEntry(wxString::FromAscii(elem_file_name));
 				 zip.Write(element_in);
 			}
-			
+
 			if (node_return_code)
 			{
-				 wxFFileInputStream node_in(wxT(temp_node), wxT("rb"));
-				 zip.PutNextEntry(wxT(node_file_name));
+				 wxFFileInputStream node_in(wxString::FromAscii(temp_node), wxT("rb"));
+				 zip.PutNextEntry(wxString::FromAscii(node_file_name));
 				 zip.Write(node_in);
 			}
-			wxFFileInputStream com_in(wxT(com_file_name),wxT("rb"));
-			zip.PutNextEntry(wxT(com_file_name));
+			wxFFileInputStream com_in(wxString::FromAscii(com_file_name),wxT("rb"));
+			zip.PutNextEntry(wxString::FromAscii(com_file_name));
 			zip.Write(com_in);
 			return_code = zip.Close();
- 
+
 			DEALLOCATE(zip_file_name);
 	 }
 	 return(return_code);

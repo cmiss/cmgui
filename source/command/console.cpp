@@ -43,9 +43,10 @@ Management routines for the main command window.
  * ***** END LICENSE BLOCK ***** */
 #include <stdio.h>
 #include <stdlib.h>
-#if defined (BUILD_WITH_CMAKE)
+#if 1
+#include "cmiss_zinc_configure.h"
 #include "configure/cmgui_configure.h"
-#endif /* defined (BUILD_WITH_CMAKE) */
+#endif /* defined (1) */
 
 #if defined (WIN32_SYSTEM)
 #  include <direct.h>
@@ -57,12 +58,15 @@ Management routines for the main command window.
 #include <termios.h>
 #include <sgtty.h>
 #endif /* defined (UNIX) */
+
+#include "api/cmiss_fdio.h"
 #include "general/debug.h"
 #include "general/object.h"
 #include "command/console.h"
 #include "command/command.h"
+#include "user_interface/fd_io.h"
 #include "user_interface/event_dispatcher.h"
-#include "user_interface/message.h"
+#include "general/message.h"
 
 /*
 Module types

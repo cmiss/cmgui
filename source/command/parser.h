@@ -45,9 +45,9 @@ it is nothing but a strings container, and some comparison functions)
 #if !defined (PARSER_H)
 #define PARSER_H
 
-#if defined (BUILD_WITH_CMAKE)
+#if 1
 #include "configure/cmgui_configure.h"
-#endif /* defined (BUILD_WITH_CMAKE) */
+#endif /* defined (1) */
 
 #if defined (UNIX)
 #include <ctype.h>

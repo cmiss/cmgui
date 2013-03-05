@@ -47,10 +47,10 @@ interest and set scene_viewer values directly.
  *
  * ***** END LICENSE BLOCK ***** */
 #include <string>
-#if defined (BUILD_WITH_CMAKE)
+#if 1
 #include "configure/cmgui_configure.h"
-#endif /* defined (BUILD_WITH_CMAKE) */
-extern "C" {
+#endif /* defined (1) */
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
@@ -68,7 +68,6 @@ extern "C" {
 #include "graphics/colour.h"
 #include "graphics/graphic.h"
 #include "graphics/graphics_window.h"
-}
 #include "graphics/graphics_window_private.hpp"
 #if defined (WX_USER_INTERFACE)
 #include "wx/wx.h"
@@ -78,14 +77,11 @@ extern "C" {
 #include "choose/choose_manager_class.hpp"
 #include "graphics/graphics_window.xrch"
 #endif /* defined (WX_USER_INTERFACE)*/
-extern "C" {
 #include "graphics/light.h"
 #include "graphics/light_model.h"
 #include "graphics/scene.h"
-}
 #include "graphics/graphics_coordinate_system.hpp"
 #include "graphics/scene.hpp"
-extern "C" {
 #include "graphics/scene_viewer.h"
 #include "graphics/texture.h"
 #include "graphics/transform_tool.h"
@@ -119,7 +115,7 @@ extern "C" {
 #include "icon/cross.xpm"
 #include "icon/cross_selected.xpm"
 #endif /* defined (WX_USER_INTERFACE) */
-#include "user_interface/message.h"
+#include "general/message.h"
 #include "user_interface/user_interface.h"
 /* for writing bitmap to file: */
 #include "general/image_utilities.h"
@@ -131,8 +127,14 @@ extern "C" {
 #define NOMINMAX
 #include <windows.h>
 #endif /* defined (WIN32_USER_INTERFACE) */
-}
 #include "user_interface/process_list_or_write_command.hpp"
+#include "graphics/colour_app.h"
+#include "graphics/scene_app.h"
+#include "graphics/light_app.h"
+#include "graphics/light_model_app.h"
+#include "three_d_drawing/graphics_buffer_app.h"
+#include "graphics/scene_viewer_app.h"
+
 /*
 Module constants
 ----------------
@@ -167,7 +169,7 @@ Contains information for a graphics window.
 	struct MANAGER(Graphics_window) *graphics_window_manager;
 	int manager_change_status;
 
-	struct Graphics_buffer_package *graphics_buffer_package;
+	struct Graphics_buffer_app_package *graphics_buffer_package;
 #if defined (GTK_USER_INTERFACE)
 	GtkWidget *shell_window;
 #if GTK_MAJOR_VERSION >= 2
@@ -176,26 +178,26 @@ Contains information for a graphics window.
 #elif defined (WIN32_USER_INTERFACE)
 	HWND hWnd;
 #elif defined (WX_USER_INTERFACE)
-	 double maximum_time, minimum_time, current_time;
-	 wxBitmapButton *fast_backward, *backward_by_frame, *backward, *stop_button,
-			*forward, *forward_by_frame, *fast_forward, *hide_time_bitmapbutton;
-	 wxBitmapButton *transform_tool_button, *node_tool_button, *data_tool_button,
-			*element_tool_button, *cad_tool_button, *element_point_tool_button;
-	 wxButton *front_view_options;
-	 wxCheckBox *wx_perspective_button, *time_play_every_frame_checkbox;
-	 wxChoice *up_view_options;
-	 wxFrame *GraphicsWindowTitle;
-	 wxGraphicsWindow *wx_graphics_window;
-	 wxGridSizer *grid_field;
+	double maximum_time, minimum_time, current_time;
+	wxBitmapButton *fast_backward, *backward_by_frame, *backward, *stop_button,
+		*forward, *forward_by_frame, *fast_forward, *hide_time_bitmapbutton;
+	wxBitmapButton *transform_tool_button, *node_tool_button, *data_tool_button,
+		*element_tool_button, *cad_tool_button, *element_point_tool_button;
+	wxButton *front_view_options;
+	wxCheckBox *wx_perspective_button, *time_play_every_frame_checkbox;
+	wxChoice *up_view_options;
+	wxFrame *GraphicsWindowTitle;
+	wxGraphicsWindow *wx_graphics_window;
+	wxGridSizer *grid_field;
 	wxPanel *panel, *panel2, *panel3, *panel4,*interactive_toolbar_panel, *time_editor_panel, *right_panel;
-	 wxScrolledWindow  *left_panel, *ToolPanel;
-	 wxSlider *time_slider;
-	 wxTextCtrl *time_text_ctrl, *time_framerate_text_ctrl, *time_step_size_text_ctrl;
-	 wxToggleButton *time_editor_togglebutton;
+	wxScrolledWindow  *left_panel, *ToolPanel;
+	wxSlider *time_slider;
+	wxTextCtrl *time_text_ctrl, *time_framerate_text_ctrl, *time_step_size_text_ctrl;
+	wxToggleButton *time_editor_togglebutton;
 #endif /* defined (GTK_USER_INTERFACE) */
 	/* scene_viewers and their parameters: */
 	enum Graphics_window_layout_mode layout_mode;
-	struct Scene_viewer **scene_viewer_array;
+	struct Scene_viewer_app **scene_viewer_array;
 	/* The viewing_width and viewing_height are the size of the viewing area when
 		 the graphics window has only one pane. When multiple panes are used, they
 		 are separated by 2 pixel borders within the viewing area.
@@ -269,10 +271,10 @@ Module functions
 ----------------
 */
 DECLARE_INDEXED_LIST_MODULE_FUNCTIONS(Graphics_window, \
-        name,const char *,strcmp)
-DECLARE_LOCAL_MANAGER_FUNCTIONS(Graphics_window)
+		name,const char *,strcmp)
+DECLARE_LOCAL_MANAGER_FUNCTIONS(Graphics_window);
 
-	struct MANAGER(Interactive_tool) *Graphics_window_get_interactive_tool_manager(struct Graphics_window *window);
+struct MANAGER(Interactive_tool) *Graphics_window_get_interactive_tool_manager(struct Graphics_window *window);
 /*******************************************************************************
 LAST MODIFIED : 27 March 2007
 
@@ -282,7 +284,7 @@ Prototype.
 
 
 
-	static int axis_name_to_axis_number(const char *axis_name)
+static int axis_name_to_axis_number(const char *axis_name)
 /*******************************************************************************
 LAST MODIFIED : 16 December 1997
 
@@ -409,7 +411,7 @@ static int Graphics_window_adjust_sizes_for_window_frame(int *width, int *height
 	window_size.right = *width;
 	window_size.top = 0;
 	window_size.bottom = *height;
-	
+
 	/* AdjustWindowRect doesn't work for WS_SIZEBOX so attempt to account for this manually */
 	/* This style should match that used by the Window Create function (except for WS_SIZEBOX). */
 	dwStyle = WS_CAPTION | WS_POPUPWINDOW | WS_VISIBLE;
@@ -419,7 +421,7 @@ static int Graphics_window_adjust_sizes_for_window_frame(int *width, int *height
 
 	*width = window_size.right - window_size.left;
 	*height = window_size.bottom - window_size.top;
-	
+
 	return (1);
 }
 #endif /* defined (WIN32_USER_INTERFACE) */
@@ -538,7 +540,7 @@ Updates the time display of the time_slider
 					} break;
 					case TIME_KEEPER_NEW_MINIMUM:
 					{
-						 window->minimum_time = Time_keeper_get_minimum(window->time_keeper);			
+						 window->minimum_time = Time_keeper_get_minimum(window->time_keeper);
 						 return_code = 1;
 					} break;
 					case TIME_KEEPER_NEW_MAXIMUM:
@@ -581,7 +583,7 @@ Manager Callback Module functions
 ---------------------------------
 */
 
-static void Graphics_window_Scene_viewer_view_changed(struct Scene_viewer *scene_viewer,
+void Graphics_window_Scene_viewer_view_changed(struct Scene_viewer_app *scene_viewer,
 	void *dummy_void, void *window_void)
 /*******************************************************************************
 LAST MODIFIED : 5 July 2000
@@ -856,7 +858,7 @@ the changes are to be applied to all panes.
 	struct Graphics_window *window;
 	struct Modify_graphics_window_data *modify_graphics_window_data;
 	struct Option_table *option_table, *undistort_option_table;
-	struct Scene_viewer *scene_viewer;
+	struct Scene_viewer_app *scene_viewer;
 	/* do not make the following static as 'set' flag must start at 0 */
 	struct Set_vector_with_help_data texture_placement_data=
 		{4," TEXTURE_LEFT TEXTURE_TOP TEXTURE_WIDTH TEXTURE_HEIGHT",0};
@@ -876,17 +878,17 @@ the changes are to be applied to all panes.
 					 (window->scene_viewer_array) &&
 					(scene_viewer=window->scene_viewer_array[window->current_pane]))
 				{
-					Scene_viewer_get_background_colour(scene_viewer,&background_colour);
+					Scene_viewer_get_background_colour(scene_viewer->core_scene_viewer,&background_colour);
 					image_field = Cmiss_field_image_base_cast(
-						Scene_viewer_get_background_image_field(scene_viewer));
-					Scene_viewer_get_background_texture_info(scene_viewer,
+						Scene_viewer_get_background_image_field(scene_viewer->core_scene_viewer));
+					Scene_viewer_get_background_texture_info(scene_viewer->core_scene_viewer,
 						&(texture_placement[0]),&(texture_placement[1]),
 						&(texture_placement[2]),&(texture_placement[3]),
 						&undistort_on,&max_pixels_per_polygon);
 				}
 				else
 				{
-					scene_viewer=(struct Scene_viewer *)NULL;
+					scene_viewer = 0;
 					background_colour.red=0.0;
 					background_colour.green=0.0;
 					background_colour.blue=0.0;
@@ -912,7 +914,7 @@ the changes are to be applied to all panes.
 				Option_table_add_entry(option_table, "texture",
 					&image_field, modify_graphics_window_data->root_region, set_image_field);
 				/* tex_placement */
-				Option_table_add_double_vector_with_help_entry(option_table, "tex_placement", 
+				Option_table_add_double_vector_with_help_entry(option_table, "tex_placement",
 					texture_placement, &texture_placement_data);
 				/* undistort_texture/no_undistort_texture */
 				undistort_option_table = CREATE(Option_table)();
@@ -956,10 +958,10 @@ the changes are to be applied to all panes.
 						for (pane_no=first_pane;pane_no <= last_pane;pane_no++)
 						{
 							scene_viewer=window->scene_viewer_array[pane_no];
-							Scene_viewer_set_background_colour(scene_viewer,
+							Scene_viewer_set_background_colour(scene_viewer->core_scene_viewer,
 								&background_colour);
 							Cmiss_field_image_id image = Cmiss_field_cast_image(image_field);
-							Scene_viewer_set_background_image_field(scene_viewer,	image);
+							Scene_viewer_set_background_image_field(scene_viewer->core_scene_viewer, image);
 							if ((texture_placement[2] == 0.0) && (texture_placement[3] == 0.0))
 							{
 								if (image_field)
@@ -969,7 +971,7 @@ the changes are to be applied to all panes.
 										&pixelsx, &pixelsy, &pixelsz);
 									texture_placement[2] = pixelsx;
 									texture_placement[3] = pixelsy;
-									Scene_viewer_set_background_texture_info(scene_viewer,
+									Scene_viewer_set_background_texture_info(scene_viewer->core_scene_viewer,
 										texture_placement[0],texture_placement[1],
 										texture_placement[2],texture_placement[3],
 										undistort_on,max_pixels_per_polygon);
@@ -977,7 +979,7 @@ the changes are to be applied to all panes.
 							}
 							else
 							{
-								Scene_viewer_set_background_texture_info(scene_viewer,
+								Scene_viewer_set_background_texture_info(scene_viewer->core_scene_viewer,
 									texture_placement[0],texture_placement[1],
 									texture_placement[2],texture_placement[3],
 									undistort_on,max_pixels_per_polygon);
@@ -1081,10 +1083,10 @@ Change the values on the wx interface if different.
 			time=Time_keeper_get_speed(window->time_keeper);
 			text_entry.Printf(_T("%f"),time);
 			window->time_framerate_text_ctrl->ChangeValue(text_entry);
-	 
+
 			time = window->time_step;
 			text_entry.Printf(_T("%f"),time);
-			
+
 			window->time_step_size_text_ctrl->ChangeValue(text_entry);
 			window->time_play_every_frame_checkbox->SetValue(
 				 Time_keeper_get_play_every_frame(window->time_keeper));
@@ -1099,7 +1101,7 @@ class wxGraphicsWindow : public wxFrame
 {
 	 Graphics_window *graphics_window;
 	 wxBitmapButton *last_button;
-	 wxChoice *view_options;     
+	 wxChoice *view_options;
 	 wxFrame *Redrawwindow;
 	 wxChoice *up_view_options;
 	 wxButton *front_view_options;
@@ -1115,8 +1117,8 @@ class wxGraphicsWindow : public wxFrame
 	 Managed_object_chooser<Cmiss_scene,MANAGER_CLASS(Cmiss_scene)>
 	 *graphics_window_scene_chooser;
 public:
-	 
-	 wxGraphicsWindow(Graphics_window *graphics_window): 
+
+	 wxGraphicsWindow(Graphics_window *graphics_window):
 			graphics_window(graphics_window)
 	 {
 			wxXmlInit_graphics_window();
@@ -1132,13 +1134,13 @@ public:
 				 new Managed_object_chooser<Cmiss_scene, MANAGER_CLASS(Cmiss_scene)>
 				 (graphics_window_scene_chooser_panel, graphics_window->scene,
 						graphics_window->scene_manager,
-						(MANAGER_CONDITIONAL_FUNCTION(Scene) *)NULL, (void *)NULL, 
+						(MANAGER_CONDITIONAL_FUNCTION(Scene) *)NULL, (void *)NULL,
 						graphics_window->user_interface);
-			Callback_base< Scene* > *graphics_window_scene_callback = 
-				 new Callback_member_callback< Scene*, 
+			Callback_base< Scene* > *graphics_window_scene_callback =
+				 new Callback_member_callback< Scene*,
 				 wxGraphicsWindow, int (wxGraphicsWindow::*)(Scene *) >
 				 (this, &wxGraphicsWindow::graphics_window_scene_callback);
-      graphics_window_scene_chooser->set_callback(graphics_window_scene_callback);
+	  graphics_window_scene_chooser->set_callback(graphics_window_scene_callback);
 
 			XRCCTRL(*this, "GraphicsWindowTimeTextCtrl", wxTextCtrl)->Connect(wxEVT_KILL_FOCUS,
 				wxCommandEventHandler(wxGraphicsWindow::OnTimeTextEntered), NULL, this);
@@ -1147,11 +1149,11 @@ public:
 			XRCCTRL(*this, "GraphicsWindowTimeStepSizeTextCtrl", wxTextCtrl)->Connect(wxEVT_KILL_FOCUS,
 				wxCommandEventHandler(wxGraphicsWindow::OnTimeStepSizeTextEntered), NULL, this);
 	 };
-	 
+
 	 wxGraphicsWindow()
 	 {
 	 };
-	 
+
 	 ~wxGraphicsWindow()
 	 {
 			int pane_no;
@@ -1163,7 +1165,7 @@ public:
 				 /* close the Scene_viewer(s) */
 				 for (pane_no=0;pane_no<graphics_window->number_of_scene_viewers;pane_no++)
 				 {
-						DESTROY(Scene_viewer)(&(graphics_window->scene_viewer_array[pane_no]));
+						DESTROY(Scene_viewer_app)(&(graphics_window->scene_viewer_array[pane_no]));
 				 }
 				 DEALLOCATE(graphics_window->scene_viewer_array);
 				 graphics_window->scene_viewer_array = NULL;
@@ -1181,7 +1183,7 @@ Callback from wxChooser<Scene> when choice is made.
 =================================================*/
 {
 	 int pane_no;
-	 struct Scene_viewer *scene_viewer;
+	 struct Scene_viewer_app *scene_viewer;
 
 	 if ((graphics_window->scene_viewer_array) &&
 			(scene_viewer = graphics_window->scene_viewer_array[0]))
@@ -1193,7 +1195,7 @@ Callback from wxChooser<Scene> when choice is made.
 				 if (scene)
 				 {
 					 REACCESS(Scene)(&(graphics_window->scene), scene);
-					 Scene_viewer_set_scene(scene_viewer,scene);
+					 Scene_viewer_set_scene(scene_viewer->core_scene_viewer,scene);
 					 Graphics_window_update_now(graphics_window);
 				 }
 			}
@@ -1209,16 +1211,16 @@ void graphics_window_set_scene_chooser_selected_item(Scene *scene)
 {
 	 graphics_window_scene_chooser->set_object(scene);
 }
-	 
+
    void OnViewallpressed(wxCommandEvent& event)
-	 {    
+	 {
 	USE_PARAMETER(event);
 			if (Graphics_window_view_all(graphics_window))
 			{
 				 Graphics_window_update(graphics_window);
 			}
 	 }
-	 
+
 	 void OnSaveaspressed(wxCommandEvent& event)
 	 {
 			enum Texture_storage_type storage;
@@ -1228,19 +1230,19 @@ void graphics_window_set_scene_chooser_selected_item(Scene *scene)
 			wxString file_name;
 			wxString filepath;
 			char*  filename;
-			wxFileDialog *saveImage = new wxFileDialog (this,"Save file","","",
-				 "PNG files (*.png)|*.png|JPEG files (*.jpg)|*.jpg|SGI files (*.sgi)|*.sgi|TIF files (*.tiff)|*.tiff|BMP files (*.bmp)|*.bmp|GIF files (*.gif)|*.gif",wxSAVE,wxDefaultPosition);  
-			
+			wxFileDialog *saveImage = new wxFileDialog (this,wxT("Save file"),wxT(""),wxT(""),
+				 wxT("PNG files (*.png)|*.png|JPEG files (*.jpg)|*.jpg|SGI files (*.sgi)|*.sgi|TIF files (*.tiff)|*.tiff|BMP files (*.bmp)|*.bmp|GIF files (*.gif)|*.gif"),wxSAVE,wxDefaultPosition);
+
 	USE_PARAMETER(event);
 			if (saveImage->ShowModal() == wxID_OK)
-			{ 
+			{
 				 file_name=saveImage->GetFilename();
 				 filepath=saveImage->GetPath();
-				 filename=(char*)filepath.mb_str();
+				 filename=duplicate_string(filepath.mb_str(wxConvUTF8));
 #if !defined (__WXMSW__)
 				 int filter_index;
 				 if ((strstr(filename, ".png") == NULL) && (strstr(filename, ".jpg") == NULL) && (strstr(filename, ".sgi") == NULL) &&
-						(strstr(filename, ".tiff")== NULL) && (strstr(filename, ".bmp")== NULL) && (strstr(filename, ".gif") == NULL) && 
+						(strstr(filename, ".tiff")== NULL) && (strstr(filename, ".bmp")== NULL) && (strstr(filename, ".gif") == NULL) &&
 						(strstr(filename, ".PNG") == NULL) && (strstr(filename, ".JPG") == NULL) && (strstr(filename, ".SGI") == NULL) &&
 						(strstr(filename, ".TIFF")== NULL) && (strstr(filename, ".BMP")== NULL) && (strstr(filename, ".GIF") == NULL))
 				 {
@@ -1271,14 +1273,14 @@ void graphics_window_set_scene_chooser_selected_item(Scene *scene)
 						}
 				 }
 #endif  /*!defined (__WXMSW__)*/
-						
+
 				 storage = TEXTURE_RGBA;
 				 force_onscreen = 0;
 				 width = 0;
 				 height = 0;
 				 cmgui_image = Graphics_window_get_image(graphics_window,
-				 	force_onscreen, width, height, /*preferred_antialias*/8,
-				 	/*preferred_transparency_layers*/0, storage);
+					force_onscreen, width, height, /*preferred_antialias*/8,
+					/*preferred_transparency_layers*/0, storage);
 				 if(cmgui_image)
 				 {
 						cmgui_image_information = CREATE(Cmgui_image_information)();
@@ -1287,66 +1289,67 @@ void graphics_window_set_scene_chooser_selected_item(Scene *scene)
 						DESTROY(Cmgui_image_information)(&cmgui_image_information);
 						DESTROY(Cmgui_image)(&cmgui_image);
 				 }
+				 DEALLOCATE(filename);
 			}
 	 }
-	 
+
 	 void OnViewOptionspressed(wxCommandEvent& event)
-	 {  
+	 {
 		USE_PARAMETER(event);
-      view_options = XRCCTRL(*this,"View", wxChoice);
-      up_view_options = XRCCTRL(*this,"UpViewOptions", wxChoice);
-      front_view_options = XRCCTRL(*this,"FrontViewOptions", wxButton);
-      
-      choices = view_options->GetCurrentSelection();
-      if (choices == 0) 
+	  view_options = XRCCTRL(*this,"View", wxChoice);
+	  up_view_options = XRCCTRL(*this,"UpViewOptions", wxChoice);
+	  front_view_options = XRCCTRL(*this,"FrontViewOptions", wxButton);
+
+	  choices = view_options->GetCurrentSelection();
+	  if (choices == 0)
 			{
 				 front_view_options->Enable();
 				 up_view_options->Enable();
 				 Graphics_window_set_layout_mode(graphics_window,GRAPHICS_WINDOW_LAYOUT_2D);
 			}
-      else if (choices == 1 )
+	  else if (choices == 1 )
 			{
 				 front_view_options->Disable();
 				 up_view_options->Disable();
 				 Graphics_window_set_layout_mode(graphics_window,GRAPHICS_WINDOW_LAYOUT_FREE_ORTHO);
 			}
-      else if (choices == 2)
+	  else if (choices == 2)
 			{
 				 front_view_options->Enable();
 				 up_view_options->Enable();
-				 Graphics_window_set_layout_mode(graphics_window,GRAPHICS_WINDOW_LAYOUT_FRONT_BACK);  
+				 Graphics_window_set_layout_mode(graphics_window,GRAPHICS_WINDOW_LAYOUT_FRONT_BACK);
 			}
-      else if (choices == 3)
+	  else if (choices == 3)
 			{
 				 front_view_options->Enable();
 				 up_view_options->Enable();
 				 Graphics_window_set_layout_mode(graphics_window,GRAPHICS_WINDOW_LAYOUT_FRONT_SIDE);
 			}
-      else if (choices == 4)
+	  else if (choices == 4)
 			{
 				 front_view_options->Enable();
 				 up_view_options->Enable();
 				 Graphics_window_set_layout_mode(graphics_window,GRAPHICS_WINDOW_LAYOUT_ORTHOGRAPHIC);
 			}
-      else if (choices == 5)
+	  else if (choices == 5)
 			{
 				 front_view_options->Disable();
 				 up_view_options->Disable();
-				 Graphics_window_set_layout_mode(graphics_window,GRAPHICS_WINDOW_LAYOUT_PSEUDO_3D);  
+				 Graphics_window_set_layout_mode(graphics_window,GRAPHICS_WINDOW_LAYOUT_PSEUDO_3D);
 			}
-      else if (choices == 6)
+	  else if (choices == 6)
 			{
 				 front_view_options->Disable();
 				 up_view_options->Disable();
-				 Graphics_window_set_layout_mode(graphics_window,GRAPHICS_WINDOW_LAYOUT_TWO_FREE);  
+				 Graphics_window_set_layout_mode(graphics_window,GRAPHICS_WINDOW_LAYOUT_TWO_FREE);
 			}
-      else if (choices == 7)
+	  else if (choices == 7)
 			{
 				 front_view_options->Disable();
 				 up_view_options->Disable();
 				 Graphics_window_set_layout_mode(graphics_window,GRAPHICS_WINDOW_LAYOUT_SIMPLE);
 			}
-      else
+	  else
 			{
 				 printf("OnViewOptionspressed error. Invalid argument.");
 			}
@@ -1359,7 +1362,7 @@ void graphics_window_set_scene_chooser_selected_item(Scene *scene)
 			graphics_window->GraphicsWindowTitle->SetSize(graphics_window->GraphicsWindowTitle->GetSize()-wxSize(0,1));
 			graphics_window->GraphicsWindowTitle->Layout();
 	 }
-	 
+
 void OnPerspectivePressed(wxCommandEvent& event)
 {
 	 enum Scene_viewer_projection_mode projection_mode;
@@ -1369,12 +1372,12 @@ void OnPerspectivePressed(wxCommandEvent& event)
 	 {
 			Graphics_window_set_projection_mode(graphics_window,
 				 graphics_window->current_pane, SCENE_VIEWER_PARALLEL);
-	 }																				 
+	 }
 	 else
 	 {
 			Graphics_window_set_projection_mode(graphics_window,
 				 graphics_window->current_pane, SCENE_VIEWER_PERSPECTIVE);
-	 }		
+	 }
 }
 
 void OnTimeEditorButtonPressed(wxCommandEvent& event)
@@ -1393,69 +1396,69 @@ void OnTimeEditorButtonPressed(wxCommandEvent& event)
 			graphics_window->GraphicsWindowTitle->SetSize(graphics_window->GraphicsWindowTitle->GetSize()-wxSize(0,1));
 			graphics_window->GraphicsWindowTitle->Layout();
 	 }
-	 
+
 	 LEAVE;
 }
-	 
+
 	 void OnUpViewOptionspressed(wxCommandEvent& event)
 	 {
 		USE_PARAMETER(event);
-      wxString option[6] = { "x", "y", "z","-x", "-y", "-z"};
-      up_view_options = XRCCTRL(*this,"UpViewOptions", wxChoice);
-      front_view_options = XRCCTRL(*this,"FrontViewOptions", wxButton);
-      up_choices = up_view_options->GetCurrentSelection();
-      front_choices = front_view_options->GetLabel();
-      for (int n=0; n<6; n++)
+	  wxString option[6] = { wxT("x"), wxT("y"), wxT("z"),wxT("-x"), wxT("-y"), wxT("-z")};
+	  up_view_options = XRCCTRL(*this,"UpViewOptions", wxChoice);
+	  front_view_options = XRCCTRL(*this,"FrontViewOptions", wxButton);
+	  up_choices = up_view_options->GetCurrentSelection();
+	  front_choices = front_view_options->GetLabel();
+	  for (int n=0; n<6; n++)
 			{
 				 if (front_choices == option[n])
 						location = n;
 			}
-      if ((up_choices == location) || (up_choices == ((location+3) % 6)))
-			{     
+	  if ((up_choices == location) || (up_choices == ((location+3) % 6)))
+			{
 				 front_view_options->SetLabel(option[(location+1) % 6]);
 			}
-			
-      front_choices = front_view_options->GetLabel();
-      wx_ortho_up_axis = axis_name_to_axis_number((char*) option[up_choices].mb_str());
-      wx_ortho_front_axis = axis_name_to_axis_number((char*) front_choices.mb_str());
-      Graphics_window_set_orthographic_axes(graphics_window,wx_ortho_up_axis, wx_ortho_front_axis);
-      Graphics_window_set_layout_mode(graphics_window,graphics_window->layout_mode);
-      Graphics_window_update(graphics_window);
+
+	  front_choices = front_view_options->GetLabel();
+	  wx_ortho_up_axis = axis_name_to_axis_number(option[up_choices].mb_str(wxConvUTF8));
+	  wx_ortho_front_axis = axis_name_to_axis_number(front_choices.mb_str(wxConvUTF8));
+	  Graphics_window_set_orthographic_axes(graphics_window,wx_ortho_up_axis, wx_ortho_front_axis);
+	  Graphics_window_set_layout_mode(graphics_window,graphics_window->layout_mode);
+	  Graphics_window_update(graphics_window);
 	 }
-	 
+
 	 void OnFrontViewOptionspressed(wxCommandEvent& event)
 	 {
 		USE_PARAMETER(event);
-      wxString option[6] = { "x", "y", "z","-x", "-y", "-z"};
-      up_view_options = XRCCTRL(*this,"UpViewOptions", wxChoice);
-      front_view_options = XRCCTRL(*this,"FrontViewOptions", wxButton);
-      up_choices = up_view_options->GetCurrentSelection();
-      front_choices = front_view_options->GetLabel();
-      for (int n=0; n<6; n++) {
+		wxString option[6] = { wxT("x"), wxT("y"), wxT("z"),wxT("-x"), wxT("-y"), wxT("-z")};
+	  up_view_options = XRCCTRL(*this,"UpViewOptions", wxChoice);
+	  front_view_options = XRCCTRL(*this,"FrontViewOptions", wxButton);
+	  up_choices = up_view_options->GetCurrentSelection();
+	  front_choices = front_view_options->GetLabel();
+	  for (int n=0; n<6; n++) {
 				 if (front_choices == option[n])
 						location = n;
 			}
-      {
+	  {
 				 if ((((location+1) % 6) == up_choices) || (((location+4) % 6) == up_choices))
 						front_view_options->SetLabel(option[(location+2) % 6]);
 				 else
 						front_view_options->SetLabel(option[(location+1) % 6]);
-      }
-			
-      front_choices = front_view_options->GetLabel();
-      wx_ortho_up_axis = axis_name_to_axis_number((char*) option[up_choices].mb_str());
-      wx_ortho_front_axis = axis_name_to_axis_number((char*) front_choices.mb_str());
-      Graphics_window_set_orthographic_axes(graphics_window,wx_ortho_up_axis,wx_ortho_front_axis);
-      Graphics_window_set_layout_mode(graphics_window,graphics_window->layout_mode);
-      Graphics_window_update(graphics_window);
-     }
+	  }
+
+	  front_choices = front_view_options->GetLabel();
+	  wx_ortho_up_axis = axis_name_to_axis_number(option[up_choices].mb_str(wxConvUTF8));
+	  wx_ortho_front_axis = axis_name_to_axis_number(front_choices.mb_str(wxConvUTF8));
+	  Graphics_window_set_orthographic_axes(graphics_window,wx_ortho_up_axis,wx_ortho_front_axis);
+	  Graphics_window_set_layout_mode(graphics_window,graphics_window->layout_mode);
+	  Graphics_window_update(graphics_window);
+	 }
 
 	void InteractiveButtonSetClickedBMP(wxBitmapButton *button)
 	{
 		if (last_button != button)
 		{
 			wxString wx_test_string = button->GetLabel();
-			const char *test_string = wx_test_string.c_str();
+			const char *test_string = wx_test_string.mb_str(wxConvUTF8);
 			if (strcmp("Transform tool", test_string) == 0)
 			{
 				wxBitmap interactive_clicked_bmp(Transform_tool_clicked_xpm);
@@ -1506,7 +1509,7 @@ void GraphicsWindowSetInteractiveButtonSelected(wxBitmapButton *button, Interact
 		if (last_button)
 		{
 			wxString wx_test_string = last_button->GetLabel();
-			const char *test_string = wx_test_string.c_str();
+			const char *test_string = wx_test_string.mb_str(wxConvUTF8);
 			if (strcmp("Transform tool", test_string) == 0)
 			{
 				wxBitmap interactive_unclicked_bmp(Transform_tool_unclicked_xpm);
@@ -1554,7 +1557,7 @@ void OnSplitterPositionChanged(wxSplitterEvent &event)
 	 toolscrolledwindow->SetSize(toolscrolledwindow->GetSize()-wxSize(0,1));
 }
 
-void OnTimeSliderChanged( wxScrollEvent& event)	 
+void OnTimeSliderChanged( wxScrollEvent& event)
 {
 	 int value;
 	 double time;
@@ -1579,12 +1582,12 @@ void OnTimeTextEntered(wxCommandEvent& event)
 {
 	USE_PARAMETER(event);
 	wxString wx_text_entry = graphics_window->time_text_ctrl->GetValue();
-	const char *text_entry = wx_text_entry.c_str();
+	const char *text_entry = wx_text_entry.mb_str(wxConvUTF8);
 	if (text_entry)
 	{
 		double time;
 		sscanf(text_entry, "%lg", &time);
-		Time_keeper_request_new_time(graphics_window->time_keeper, time);	
+		Time_keeper_request_new_time(graphics_window->time_keeper, time);
 	}
 	Graphics_window_time_keeper_callback(graphics_window->time_keeper,
 		TIME_KEEPER_NEW_TIME,(void *)graphics_window);
@@ -1689,12 +1692,12 @@ void OnTimeFramerateTextEntered(wxCommandEvent& event)
 {
 	USE_PARAMETER(event);
 	wxString wx_text_entry = graphics_window->time_framerate_text_ctrl->GetValue();
-	const char *text_entry = wx_text_entry.c_str();
+	const char *text_entry = wx_text_entry.mb_str(wxConvUTF8);
 	if (text_entry)
 	{
 		double framerate;
 		sscanf(text_entry, "%lg", &framerate);
-		Time_keeper_set_speed(graphics_window->time_keeper, framerate);	
+		Time_keeper_set_speed(graphics_window->time_keeper, framerate);
 	}
 	Graphics_window_update_time_settings_wx(graphics_window, (void *)NULL);
 }
@@ -1703,7 +1706,7 @@ void OnTimeStepSizeTextEntered(wxCommandEvent& event)
 {
 	USE_PARAMETER(event);
 	wxString wx_text_entry = graphics_window->time_step_size_text_ctrl->GetValue();
-	const char *text_entry = wx_text_entry.c_str();
+	const char *text_entry = wx_text_entry.mb_str(wxConvUTF8);
 	if (text_entry)
 	{
 		double timestep;
@@ -1718,7 +1721,7 @@ void OnEveryFrameChecked(wxCommandEvent& event)
 	USE_PARAMETER(event);
 	if (graphics_window->time_play_every_frame_checkbox->GetValue())
 	{
-		Time_keeper_set_play_every_frame(graphics_window->time_keeper);	
+		Time_keeper_set_play_every_frame(graphics_window->time_keeper);
 	}
 	else
 	{
@@ -1758,11 +1761,11 @@ class wxInteractiveToolButton : public wxBitmapButton
 {
   Interactive_tool *tool;
   Graphics_window *graphics_window;
-  
+
 public:
 
   wxInteractiveToolButton(Interactive_tool *tool, Graphics_window *graphics_window) :
-    tool(tool), graphics_window(graphics_window)
+	tool(tool), graphics_window(graphics_window)
 	 {
 	 };
 
@@ -1777,8 +1780,8 @@ public:
   void OnInteractiveButtonPressed(wxCommandEvent& event)
   {
 		USE_PARAMETER(event);
-    graphics_window->wx_graphics_window->GraphicsWindowSetInteractiveButtonSelected
-      (this, tool,graphics_window);
+	graphics_window->wx_graphics_window->GraphicsWindowSetInteractiveButtonSelected
+	  (this, tool,graphics_window);
    }
 
 };
@@ -1801,7 +1804,7 @@ static int add_interactive_tool_to_wx_toolbar(struct Interactive_tool *interacti
 	{
 		wxBitmap interactive_unclicked_bmp(Transform_tool_unclicked_xpm);
 		button->Create(panel, /*id*/-1, interactive_unclicked_bmp);
-		button->SetLabel("Transform tool");
+		button->SetLabel(wxT("Transform tool"));
 		window->transform_tool_button = button;
 		window->grid_field->Add(button);
 		return_int = 1;
@@ -1810,7 +1813,7 @@ static int add_interactive_tool_to_wx_toolbar(struct Interactive_tool *interacti
 	{
 		wxBitmap interactive_unclicked_bmp(Node_tool_unclicked_xpm);
 		button->Create(panel, /*id*/-1, interactive_unclicked_bmp);
-		button->SetLabel("Node tool");
+		button->SetLabel(wxT("Node tool"));
 		window->node_tool_button = button;
 		window->grid_field->Add(button);
 		return_int = 1;
@@ -1819,7 +1822,7 @@ static int add_interactive_tool_to_wx_toolbar(struct Interactive_tool *interacti
 	{
 		wxBitmap interactive_unclicked_bmp(Data_tool_unclicked_xpm);
 		button->Create(panel, /*id*/-1, interactive_unclicked_bmp);
-		button->SetLabel("Data tool");
+		button->SetLabel(wxT("Data tool"));
 		window->data_tool_button = button;
 		window->grid_field->Add(button);
 		return_int = 1;
@@ -1828,7 +1831,7 @@ static int add_interactive_tool_to_wx_toolbar(struct Interactive_tool *interacti
 	{
 		wxBitmap interactive_unclicked_bmp(Element_tool_unclicked_xpm);
 		button->Create(panel, /*id*/-1, interactive_unclicked_bmp);
-		button->SetLabel("Element tool");
+		button->SetLabel(wxT("Element tool"));
 		window->element_tool_button = button;
 		window->grid_field->Add(button);
 		return_int = 1;
@@ -1838,7 +1841,7 @@ static int add_interactive_tool_to_wx_toolbar(struct Interactive_tool *interacti
 	{
 		wxBitmap interactive_unclicked_bmp(Cad_tool_unclicked_xpm);
 		button->Create(panel, /*id*/-1, interactive_unclicked_bmp);
-		button->SetLabel("Cad tool");
+		button->SetLabel(wxT("Cad tool"));
 		window->cad_tool_button = button;
 		window->grid_field->Add(button);
 		return_int = 1;
@@ -1848,7 +1851,7 @@ static int add_interactive_tool_to_wx_toolbar(struct Interactive_tool *interacti
 	{
 		wxBitmap interactive_unclicked_bmp(Element_point_tool_unclicked_xpm);
 		button->Create(panel, /*id*/-1, interactive_unclicked_bmp);
-		button->SetLabel("Element point tool");
+		button->SetLabel(wxT("Element point tool"));
 		window->element_point_tool_button = button;
 		window->grid_field->Add(button);
 		return_int = 1;
@@ -1869,7 +1872,7 @@ static int add_interactive_tool_to_wx_toolbar(struct Interactive_tool *interacti
 	if (return_int ==1)
 	{
 		DEALLOCATE(interactive_tool_name);
-		
+
 		if (Interactive_tool_is_Transform_tool(interactive_tool))
 		{
 			wxBitmap interactive_clicked_bmp(Transform_tool_clicked_xpm);
@@ -1877,7 +1880,7 @@ static int add_interactive_tool_to_wx_toolbar(struct Interactive_tool *interacti
 			window->wx_graphics_window->GraphicsWindowSetInteractiveButtonSelected
 				(button, interactive_tool, window);
 		}
-		button->Connect(wxEVT_COMMAND_BUTTON_CLICKED, 
+		button->Connect(wxEVT_COMMAND_BUTTON_CLICKED,
 			wxCommandEventHandler(wxInteractiveToolButton::OnInteractiveButtonPressed));
 		return (1);
 	}
@@ -1909,7 +1912,7 @@ etc.) in all panes of the <window>.
 	struct Modify_graphics_window_data *modify_graphics_window_data;
 	struct Option_table *option_table;
 	struct Scene *scene;
-	struct Scene_viewer *scene_viewer;
+	struct Scene_viewer_app *scene_viewer;
 	static struct Set_vector_with_help_data
 		rotate_command_data={4," AXIS_X AXIS_Y AXIS_Z ANGLE",0};
 
@@ -1922,13 +1925,13 @@ etc.) in all panes of the <window>.
 		{
 			if (state->current_token)
 			{
-				 
+
 				 /* get defaults from scene_viewer for first pane of window */
 				window=(struct Graphics_window *)window_void;
 				 if (window && (window->scene_viewer_array) &&
 						(scene_viewer=window->scene_viewer_array[0]))
 				 {
-					 light_model=Scene_viewer_get_light_model(scene_viewer);
+					 light_model=Scene_viewer_get_light_model(scene_viewer->core_scene_viewer);
 					 if (light_model)
 					 {
 						 ACCESS(Light_model)(light_model);
@@ -1938,10 +1941,10 @@ etc.) in all panes of the <window>.
 				 else
 				 {
 						scene=(struct Scene *)NULL;
-						scene_viewer=(struct Scene_viewer *)NULL;
+						scene_viewer = 0;
 						light_model=(struct Light_model *)NULL;
 				 }
-				 
+
 				light_to_add=(struct Light *)NULL;
 				light_to_remove=(struct Light *)NULL;
 				rotate_command_data.set=0;
@@ -1959,16 +1962,16 @@ etc.) in all panes of the <window>.
 				Option_table_add_entry(option_table, "remove_light", &light_to_remove,
 					modify_graphics_window_data->light_manager, set_Light);
 				/* rotate */
-				Option_table_add_double_vector_with_help_entry(option_table, "rotate", 
+				Option_table_add_double_vector_with_help_entry(option_table, "rotate",
 					rotate_data, &rotate_command_data);
 				/* scene */
 				Option_table_add_entry(option_table, "scene", &scene,
 					modify_graphics_window_data->scene_manager, set_Scene);
 				/* update */
-				Option_table_add_char_flag_entry(option_table, "update", 
+				Option_table_add_char_flag_entry(option_table, "update",
 					&update_flag);
 				/* view_all */
-				Option_table_add_char_flag_entry(option_table, "view_all", 
+				Option_table_add_char_flag_entry(option_table, "view_all",
 					&view_all_flag);
 				return_code=Option_table_multi_parse(option_table, state);
 				if (return_code)
@@ -1976,14 +1979,14 @@ etc.) in all panes of the <window>.
 					if (scene_viewer)
 					{
 						return_code=1;
-						if (light_to_add&&Scene_viewer_has_light(scene_viewer,light_to_add))
+						if (light_to_add&&Scene_viewer_has_light(scene_viewer->core_scene_viewer,light_to_add))
 						{
 							/*display_message(WARNING_MESSAGE,"Light is already in window");*/
 							DEACCESS(Light)(&light_to_add);
 							light_to_add=(struct Light *)NULL;
 						}
 						if (light_to_remove&&
-							!Scene_viewer_has_light(scene_viewer,light_to_remove))
+							!Scene_viewer_has_light(scene_viewer->core_scene_viewer,light_to_remove))
 						{
 							display_message(WARNING_MESSAGE,
 								"Cannot remove light that is not in scene");
@@ -2004,24 +2007,24 @@ etc.) in all panes of the <window>.
 							scene_viewer=window->scene_viewer_array[pane_no];
 							if (light_model)
 							{
-								Scene_viewer_set_light_model(scene_viewer,light_model);
+								Scene_viewer_set_light_model(scene_viewer->core_scene_viewer,light_model);
 							}
 							if (light_to_add)
 							{
-								Scene_viewer_add_light(scene_viewer,light_to_add);
+								Scene_viewer_add_light(scene_viewer->core_scene_viewer,light_to_add);
 							}
 							if (light_to_remove)
 							{
-								Scene_viewer_remove_light(scene_viewer,light_to_remove);
+								Scene_viewer_remove_light(scene_viewer->core_scene_viewer,light_to_remove);
 							}
 							if (rotate_command_data.set)
 							{
-								Scene_viewer_rotate_about_lookat_point(scene_viewer,
+								Scene_viewer_rotate_about_lookat_point(scene_viewer->core_scene_viewer,
 									rotate_axis,rotate_angle);
 							}
 							if (scene)
 							{
-								Scene_viewer_set_scene(scene_viewer,scene);
+								Scene_viewer_set_scene(scene_viewer->core_scene_viewer,scene);
 #if defined (WX_USER_INTERFACE)
 								window->wx_graphics_window->
 									 graphics_window_set_scene_chooser_selected_item(scene);
@@ -2266,7 +2269,7 @@ certain values are supported 0/1 = off, 2, 4 & 8 are on.
 			pane_no++)
 		{
 			return_code=Scene_viewer_set_antialias_mode(
-				graphics_window->scene_viewer_array[pane_no],antialias_mode);
+				graphics_window->scene_viewer_array[pane_no]->core_scene_viewer,antialias_mode);
 		}
 		if (return_code)
 		{
@@ -2301,7 +2304,7 @@ DESCRIPTION :
 			pane_no++)
 		{
 			return_code=Scene_viewer_set_depth_of_field(
-				graphics_window->scene_viewer_array[pane_no],
+				graphics_window->scene_viewer_array[pane_no]->core_scene_viewer,
 				depth_of_field, focal_depth);
 		}
 		if (return_code)
@@ -2340,7 +2343,7 @@ Sets if the <graphics_window> perturbs lines or not, using <perturb_lines>
 			pane_no++)
 		{
 			return_code=Scene_viewer_set_perturb_lines(
-				graphics_window->scene_viewer_array[pane_no],perturb_lines);
+				graphics_window->scene_viewer_array[pane_no]->core_scene_viewer,perturb_lines);
 		}
 		if (return_code)
 		{
@@ -2376,7 +2379,7 @@ Sets the <blending_mode> used by the <graphics_window>.
 			pane_no++)
 		{
 			return_code=Scene_viewer_set_blending_mode(
-				graphics_window->scene_viewer_array[pane_no],blending_mode);
+				graphics_window->scene_viewer_array[pane_no]->core_scene_viewer,blending_mode);
 		}
 		if (return_code)
 		{
@@ -2638,7 +2641,7 @@ Parser commands for setting simple parameters applicable to the whole <window>.
 							 if (graphics_window->time_editor_panel)
 							 {
 									graphics_window->time_editor_panel->Show(show_time_editor_flag);
-									graphics_window->time_editor_togglebutton->SetValue(show_time_editor_flag);	
+									graphics_window->time_editor_togglebutton->SetValue(show_time_editor_flag);
 							 }
 							 if (show_time_editor_flag && graphics_window->GraphicsWindowTitle)
 							 {
@@ -2673,12 +2676,12 @@ Parser commands for setting simple parameters applicable to the whole <window>.
 								pane_no++)
 							{
 								Scene_viewer_set_transparency_mode(
-									graphics_window->scene_viewer_array[pane_no],
+									graphics_window->scene_viewer_array[pane_no]->core_scene_viewer,
 									transparency_mode);
 								if (layered_transparency||order_independent_transparency)
 								{
 									Scene_viewer_set_transparency_layers(
-										graphics_window->scene_viewer_array[pane_no],
+										graphics_window->scene_viewer_array[pane_no]->core_scene_viewer,
 										transparency_layers);
 								}
 							}
@@ -2759,7 +2762,7 @@ view angle, interest point etc.
 	struct Graphics_window *window;
 	struct Option_table *option_table, *projection_mode_option_table,
 		*viewport_mode_option_table;
-	struct Scene_viewer *scene_viewer;
+	struct Scene_viewer_app *scene_viewer;
 	static struct Set_vector_with_help_data
 		clip_plane_add_data=
 			{4," A B C D",0},
@@ -2775,7 +2778,7 @@ view angle, interest point etc.
 			{16," M11 M12 M13 M14 M21 M22 M23 M24 M31 M32 M33 M34 M41 M42 M43 M44",0},
 		viewport_coordinates_data=
 			{4," VIEWPORT_LEFT VIEWPORT_TOP PIXELS_PER_UNIT_X PIXELS_PER_UNIT_Y",0};
-	 		
+
 
 	ENTER(modify_Graphics_window_view);
 	USE_PARAMETER(modify_graphics_window_data_void);
@@ -2784,15 +2787,15 @@ view angle, interest point etc.
 		if (state->current_token)
 		{
 			/* get defaults from scene_viewer of current pane of window */
-			if ((window=(struct Graphics_window *)window_void)&& 
+			if ((window=(struct Graphics_window *)window_void)&&
 				 (window->scene_viewer_array != NULL) &&
 				 (scene_viewer=window->scene_viewer_array[window->current_pane])&&
-				 Scene_viewer_get_lookat_parameters(scene_viewer,
+				 Scene_viewer_get_lookat_parameters(scene_viewer->core_scene_viewer,
 					&(eye[0]),&(eye[1]),&(eye[2]),
 					&(lookat[0]),&(lookat[1]),&(lookat[2]),&(up[0]),&(up[1]),&(up[2]))&&
-				Scene_viewer_get_viewing_volume(scene_viewer,&left,&right,
+				Scene_viewer_get_viewing_volume(scene_viewer->core_scene_viewer,&left,&right,
 					&bottom,&top,&near_plane,&far_plane)&&
-				Scene_viewer_get_view_angle(scene_viewer,&view_angle))
+				Scene_viewer_get_view_angle(scene_viewer->core_scene_viewer,&view_angle))
 			{
 				view_angle *= (180.0/PI);
 			}
@@ -2804,7 +2807,7 @@ view angle, interest point etc.
 				left=right=bottom=top=0.0;
 				near_plane=far_plane=0.0;
 				view_angle=0.0;
-				scene_viewer=(struct Scene_viewer *)NULL;
+				scene_viewer = 0;
 			}
 			allow_skew_flag=0;
 			absolute_viewport_flag=0;
@@ -2825,10 +2828,10 @@ view angle, interest point etc.
 			/* allow_skew */
 			Option_table_add_char_flag_entry(option_table, "allow_skew", &allow_skew_flag);
 			/* clip_plane_add */
-			Option_table_add_double_vector_with_help_entry(option_table, "clip_plane_add", 
+			Option_table_add_double_vector_with_help_entry(option_table, "clip_plane_add",
 				clip_plane_add, &clip_plane_add_data);
 			/* clip_plane_remove */
-			Option_table_add_double_vector_with_help_entry(option_table, "clip_plane_remove", 
+			Option_table_add_double_vector_with_help_entry(option_table, "clip_plane_remove",
 				clip_plane_remove, &clip_plane_remove_data);
 			/* eye_point */
 			Option_table_add_double_vector_entry(option_table, "eye_point", eye,
@@ -2839,7 +2842,7 @@ view angle, interest point etc.
 			Option_table_add_double_vector_entry(option_table, "interest_point", lookat,
 				&number_of_components);
 			/* modelview_matrix */
-			Option_table_add_double_vector_with_help_entry(option_table, "modelview_matrix", 
+			Option_table_add_double_vector_with_help_entry(option_table, "modelview_matrix",
 				modelview_matrix, &modelview_matrix_data);
 			/* ndc_placement (normalised device coordinate placement) */
 			Option_table_add_double_vector_with_help_entry(option_table, "ndc_placement",
@@ -2918,12 +2921,12 @@ view angle, interest point etc.
 					if (perspective_projection_flag)
 					{
 						Graphics_window_set_projection_mode(window,window->current_pane,
-							SCENE_VIEWER_PERSPECTIVE);	 
+							SCENE_VIEWER_PERSPECTIVE);
 					}
 					if (custom_projection_flag)
 					{
 						Graphics_window_set_projection_mode(window,window->current_pane,
-							SCENE_VIEWER_CUSTOM); 
+							SCENE_VIEWER_CUSTOM);
 					}
 					projection_mode=
 						Graphics_window_get_projection_mode(window,window->current_pane);
@@ -2931,24 +2934,24 @@ view angle, interest point etc.
 					{
 						/* must set viewing volume before view_angle otherwise view_angle
 							is overwritten */
-						Scene_viewer_set_viewing_volume(scene_viewer,left,right,bottom,top,
+						Scene_viewer_set_viewing_volume(scene_viewer->core_scene_viewer,left,right,bottom,top,
 							near_plane,far_plane);
 						if (allow_skew_flag)
 						{
-							Scene_viewer_set_lookat_parameters(scene_viewer,
+							Scene_viewer_set_lookat_parameters(scene_viewer->core_scene_viewer,
 								eye[0],eye[1],eye[2],lookat[0],lookat[1],lookat[2],
 								up[0],up[1],up[2]);
 						}
 						else
 						{
-							Scene_viewer_set_lookat_parameters_non_skew(scene_viewer,
+							Scene_viewer_set_lookat_parameters_non_skew(scene_viewer->core_scene_viewer,
 								eye[0],eye[1],eye[2],lookat[0],lookat[1],lookat[2],
 								up[0],up[1],up[2]);
 						}
 						/* must set view angle after lookat parameters */
 						if ((0.0<view_angle)&&(view_angle<180.0))
 						{
-							Scene_viewer_set_view_angle(scene_viewer,view_angle*(PI/180.0));
+							Scene_viewer_set_view_angle(scene_viewer->core_scene_viewer,view_angle*(PI/180.0));
 						}
 						else
 						{
@@ -2957,17 +2960,17 @@ view angle, interest point etc.
 						}
 						if (absolute_viewport_flag)
 						{
-							Scene_viewer_set_viewport_mode(scene_viewer,
+							Scene_viewer_set_viewport_mode(scene_viewer->core_scene_viewer,
 								SCENE_VIEWER_ABSOLUTE_VIEWPORT);
 						}
 						if (relative_viewport_flag)
 						{
-							Scene_viewer_set_viewport_mode(scene_viewer,
+							Scene_viewer_set_viewport_mode(scene_viewer->core_scene_viewer,
 								SCENE_VIEWER_RELATIVE_VIEWPORT);
 						}
 						if (distorting_relative_viewport_flag)
 						{
-							Scene_viewer_set_viewport_mode(scene_viewer,
+							Scene_viewer_set_viewport_mode(scene_viewer->core_scene_viewer,
 								SCENE_VIEWER_DISTORTING_RELATIVE_VIEWPORT);
 						}
 					}
@@ -2977,7 +2980,7 @@ view angle, interest point etc.
 					{
 						if (SCENE_VIEWER_CUSTOM==projection_mode)
 						{
-							Scene_viewer_set_modelview_matrix(scene_viewer,
+							Scene_viewer_set_modelview_matrix(scene_viewer->core_scene_viewer,
 								modelview_matrix);
 						}
 						else
@@ -2989,14 +2992,14 @@ view angle, interest point etc.
 					/* must set ndc_placement before photogrammetry_matrix */
 					if (ndc_placement_data.set)
 					{
-						Scene_viewer_set_NDC_info(scene_viewer,ndc_placement[0],
+						Scene_viewer_set_NDC_info(scene_viewer->core_scene_viewer,ndc_placement[0],
 							ndc_placement[1],ndc_placement[2],ndc_placement[3]);
 					}
 					if (projection_matrix_data.set)
 					{
 						if (SCENE_VIEWER_CUSTOM==projection_mode)
 						{
-							Scene_viewer_set_projection_matrix(scene_viewer,
+							Scene_viewer_set_projection_matrix(scene_viewer->core_scene_viewer,
 								projection_matrix);
 						}
 						else
@@ -3051,24 +3054,24 @@ view angle, interest point etc.
 					}
 					if (viewport_coordinates_data.set)
 					{
-						Scene_viewer_set_viewport_info(scene_viewer,
+						Scene_viewer_set_viewport_info(scene_viewer->core_scene_viewer,
 							viewport_coordinates[0],viewport_coordinates[1],
 							viewport_coordinates[2],viewport_coordinates[3]);
 					}
 					if (clip_plane_remove_data.set)
 					{
-						Scene_viewer_remove_clip_plane(scene_viewer,
+						Scene_viewer_remove_clip_plane(scene_viewer->core_scene_viewer,
 							clip_plane_remove[0], clip_plane_remove[1], clip_plane_remove[2],
 							clip_plane_remove[3]);
 					}
 					if (clip_plane_add_data.set)
 					{
-						Scene_viewer_add_clip_plane(scene_viewer,
+						Scene_viewer_add_clip_plane(scene_viewer->core_scene_viewer,
 							clip_plane_add[0], clip_plane_add[1], clip_plane_add[2],
 							clip_plane_add[3]);
 					}
 					/* redraw the Scene_viewer */
-					Scene_viewer_redraw_now(scene_viewer);
+					Scene_viewer_app_redraw_now(scene_viewer);
 					/* allow changes to flow to tied panes */
 					Graphics_window_view_changed(window,window->current_pane);
 				}
@@ -3109,7 +3112,7 @@ struct Graphics_window *CREATE(Graphics_window)(const char *name,
 	enum Graphics_window_stereo_mode stereo_mode,
 	int minimum_colour_buffer_depth, int minimum_depth_buffer_depth,
 	int minimum_accumulation_buffer_depth,
-	struct Graphics_buffer_package *graphics_buffer_package,
+	struct Graphics_buffer_app_package *graphics_buffer_package,
 	struct Colour *background_colour,
 	struct MANAGER(Light) *light_manager,
 	struct Light *default_light,
@@ -3141,7 +3144,7 @@ it.
 	int ortho_front_axis,ortho_up_axis;
 #endif /*(WX_USER_INTERFACE) */
 	int pane_no;
-	struct Graphics_buffer *graphics_buffer;
+	struct Graphics_buffer_app *graphics_buffer;
 	struct Graphics_window *window=NULL;
 
 	ENTER(create_graphics_window);
@@ -3188,7 +3191,7 @@ it.
 			window->layout_mode=GRAPHICS_WINDOW_LAYOUT_ORTHOGRAPHIC;
 			window->number_of_scene_viewers = 0;
 			window->number_of_panes=0;
-			window->scene_viewer_array = (struct Scene_viewer **)NULL;
+			window->scene_viewer_array = 0;
 			window->current_pane=0;
 			window->antialias_mode=0;
 			window->perturb_lines=0;
@@ -3281,7 +3284,7 @@ it.
 								window->interactive_tool);
 							/* get scene_viewer transform callbacks to allow
 								synchronising of views in multiple panes */
-							Scene_viewer_add_sync_callback(
+							Scene_viewer_app_add_sync_callback(
 								window->scene_viewer_array[pane_no],
 								Graphics_window_Scene_viewer_view_changed,
 								window);
@@ -3396,7 +3399,7 @@ it.
 						minimum_colour_buffer_depth, minimum_depth_buffer_depth,
 						minimum_accumulation_buffer_depth))
 					{
-					       SetWindowLongPtr(window->hWnd, 0, (LONG_PTR)graphics_buffer);
+						   SetWindowLongPtr(window->hWnd, 0, (LONG_PTR)graphics_buffer);
 
 						/* create one Scene_viewers */
 						window->number_of_scene_viewers = 1;
@@ -3405,7 +3408,7 @@ it.
 							window->number_of_scene_viewers))
 						{
 							pane_no = 0;
-							if (window->scene_viewer_array[pane_no] = 
+							if (window->scene_viewer_array[pane_no] =
 								 CREATE(Scene_viewer)(graphics_buffer,
 								 background_colour, light_manager,default_light,
 								 light_model_manager,default_light_model,
@@ -3417,7 +3420,7 @@ it.
 									window->interactive_tool);
 								/* get scene_viewer transform callbacks to allow
 									synchronising of views in multiple panes */
-								Scene_viewer_add_sync_callback(
+								Scene_viewer_app_add_sync_callback(
 									window->scene_viewer_array[pane_no],
 									Graphics_window_Scene_viewer_view_changed,
 									window);
@@ -3481,16 +3484,16 @@ it.
 			USE_PARAMETER(pane_no);
 			USE_PARAMETER(minimum_colour_buffer_depth);
 			USE_PARAMETER(minimum_depth_buffer_depth);
- 			USE_PARAMETER(minimum_accumulation_buffer_depth);
- 			USE_PARAMETER(Graphics_window_Scene_viewer_view_changed);
-			
+			USE_PARAMETER(minimum_accumulation_buffer_depth);
+			USE_PARAMETER(Graphics_window_Scene_viewer_view_changed);
+
 			wxLogNull logNo;
- 			window->wx_graphics_window = new 
+			window->wx_graphics_window = new
 				 wxGraphicsWindow(window);
 			window->grid_field =NULL;
-			window->GraphicsWindowTitle = XRCCTRL(*window->wx_graphics_window, 
+			window->GraphicsWindowTitle = XRCCTRL(*window->wx_graphics_window,
 				 "CmguiGraphicsWindow", wxFrame);
-			window->GraphicsWindowTitle->SetTitle(window_title);
+			window->GraphicsWindowTitle->SetTitle(wxString::FromAscii(window_title));
 			window->wx_perspective_button = XRCCTRL(*window->wx_graphics_window,
 				 "PerspectiveButton", wxCheckBox);
 			if (window_title)
@@ -3505,62 +3508,62 @@ it.
 			window->up_view_options = XRCCTRL(*window->wx_graphics_window,
 				 "UpViewOptions", wxChoice);
 			window->up_view_options->Disable();
-			window->front_view_options = XRCCTRL(*window->wx_graphics_window, 
+			window->front_view_options = XRCCTRL(*window->wx_graphics_window,
 				 "FrontViewOptions", wxButton);
 			window->front_view_options->Disable();
 			window->left_panel =XRCCTRL(*window->wx_graphics_window, "GraphicsLeftPanel", wxScrolledWindow);
- 			window->left_panel->FitInside();
+			window->left_panel->FitInside();
 			window->left_panel->SetMinSize(wxSize(10,10));
-			window->ToolPanel = XRCCTRL(*window->wx_graphics_window, 
+			window->ToolPanel = XRCCTRL(*window->wx_graphics_window,
 				 "ToolPanel", wxScrolledWindow);
 			window->ToolPanel ->Layout();
 			window->interactive_toolbar_panel = NULL;
 
 			/* setting up the time editor */
 			wxBitmap cross_bmp(cross_xpm);
-			window->hide_time_bitmapbutton = XRCCTRL(*window->wx_graphics_window, 
+			window->hide_time_bitmapbutton = XRCCTRL(*window->wx_graphics_window,
 				 "GraphicsWindowHideTimeBitmapButton", wxBitmapButton);
 			window->hide_time_bitmapbutton->SetBitmapLabel(cross_bmp);
 			wxBitmap cross_selected_bmp(cross_selected_xpm);
 			window->hide_time_bitmapbutton->SetBitmapFocus(cross_selected_xpm);
 
-			window->time_slider = XRCCTRL(*window->wx_graphics_window, 
+			window->time_slider = XRCCTRL(*window->wx_graphics_window,
 				 "GraphicsWindowTimeSlider", wxSlider);
 			window->time_slider->SetRange(0,1000);
 
 			wxBitmap time_editor_bmp1(fastbackward_xpm);
-			window->fast_backward = XRCCTRL(*window->wx_graphics_window, 
+			window->fast_backward = XRCCTRL(*window->wx_graphics_window,
 				 "GraphicsWindowFastBackward", wxBitmapButton);
 			window->fast_backward->SetBitmapLabel(time_editor_bmp1);
 
 			wxBitmap time_editor_bmp2(backward_by_frame_xpm);
-			window->backward_by_frame = XRCCTRL(*window->wx_graphics_window, 
+			window->backward_by_frame = XRCCTRL(*window->wx_graphics_window,
 				 "GraphicsWindowBackwardByStep", wxBitmapButton);
 			window->backward_by_frame->SetBitmapLabel(time_editor_bmp2);
 
 			wxBitmap time_editor_bmp3(backward_xpm);
-			window->backward = XRCCTRL(*window->wx_graphics_window, 
+			window->backward = XRCCTRL(*window->wx_graphics_window,
 				 "GraphicsWindowBackward", wxBitmapButton);
 			window->backward->SetBitmapLabel(time_editor_bmp3);
 
 			wxBitmap time_editor_bmp4(stop_button_xpm);
-			window->stop_button = XRCCTRL(*window->wx_graphics_window, 
+			window->stop_button = XRCCTRL(*window->wx_graphics_window,
 				 "GraphicsWindowStop", wxBitmapButton);
 			window->stop_button->SetBitmapLabel(time_editor_bmp4);
 
 			wxBitmap time_editor_bmp5(forward_xpm);
-			window->forward = XRCCTRL(*window->wx_graphics_window, 
+			window->forward = XRCCTRL(*window->wx_graphics_window,
 				 "GraphicsWindowForward", wxBitmapButton);
 			window->forward->SetBitmapLabel(time_editor_bmp5);
 
 			wxBitmap time_editor_bmp6(forward_by_frame_xpm);
-			window->forward_by_frame = XRCCTRL(*window->wx_graphics_window, 
+			window->forward_by_frame = XRCCTRL(*window->wx_graphics_window,
 				 "GraphicsWindowForwardByStep", wxBitmapButton);
 			window->forward_by_frame->SetBitmapLabel(time_editor_bmp6);
 
 			wxBitmap time_editor_bmp7(fastforward_xpm);
-			window->fast_forward = XRCCTRL(*window->wx_graphics_window, 
-				 "GraphicsWindowFastForward", wxBitmapButton); 
+			window->fast_forward = XRCCTRL(*window->wx_graphics_window,
+				 "GraphicsWindowFastForward", wxBitmapButton);
 			window->fast_forward->SetBitmapLabel(time_editor_bmp7);
 
 			window->time_editor_togglebutton = XRCCTRL(*window->wx_graphics_window,
@@ -3592,13 +3595,12 @@ it.
 			Time_keeper_add_callback(window->time_keeper,
 				 Graphics_window_time_keeper_callback,
 				 (void *)window,
-				 (enum Time_keeper_event) (TIME_KEEPER_NEW_TIME | 
+				 (enum Time_keeper_event) (TIME_KEEPER_NEW_TIME |
 						TIME_KEEPER_NEW_MINIMUM | TIME_KEEPER_NEW_MAXIMUM ));
 			Graphics_window_time_keeper_callback(window->time_keeper, TIME_KEEPER_NEW_TIME,
 				 (void *)window);
 			Graphics_window_update_time_settings_wx(window, (void *)NULL);
 
-			USE_PARAMETER(graphics_buffer);
 			USE_PARAMETER(add_interactive_tool_to_wx_toolbar);
 
 			/* make sure the first scene_viewer shows */
@@ -3608,19 +3610,19 @@ it.
 					graphics_buffer_package,
 					window->panel, graphics_buffer_buffering_mode, graphics_buffer_stereo_mode,
 					minimum_colour_buffer_depth, minimum_depth_buffer_depth,
-					minimum_accumulation_buffer_depth, (Graphics_buffer *)NULL);
+					minimum_accumulation_buffer_depth, (Graphics_buffer_app *)NULL);
 				 if (graphics_buffer)
 				 {
 						/* create one Scene_viewers */
 						window->number_of_scene_viewers = 1;
 						if (ALLOCATE(window->scene_viewer_array,
-									struct Scene_viewer *,
+									struct Scene_viewer_app *,
 									window->number_of_scene_viewers))
 						{
 							 pane_no = 0;
-							 window->scene_viewer_array[pane_no] = CREATE(Scene_viewer)(graphics_buffer,
-							 	background_colour, light_manager,default_light, light_model_manager,
-							 	default_light_model, scene_manager, window->scene, user_interface);
+							 window->scene_viewer_array[pane_no] = CREATE(Scene_viewer_app)(graphics_buffer,
+								background_colour, light_manager,default_light, light_model_manager,
+								default_light_model, scene_manager, window->scene, user_interface);
 							 if (window->scene_viewer_array[pane_no])
 							 {
 									ortho_up_axis=window->ortho_up_axis;
@@ -3629,7 +3631,7 @@ it.
 									window->ortho_front_axis=0;
 									Graphics_window_set_orthographic_axes(window,
 										 ortho_up_axis,ortho_front_axis);
-									window->interactive_toolbar_panel = 
+									window->interactive_toolbar_panel =
 										 XRCCTRL(*window->wx_graphics_window, "ToolbarPanel", wxPanel);
 									wxBoxSizer *toolbar_sizer = new wxBoxSizer( wxVERTICAL );
 									window->interactive_toolbar_panel->SetSizer(toolbar_sizer);
@@ -3642,18 +3644,18 @@ it.
 										 window->interactive_tool);
 									/* get scene_viewer transform callbacks to allow
 										 synchronising of views in multiple panes */
-									Scene_viewer_add_sync_callback(
+									Scene_viewer_app_add_sync_callback(
 										 window->scene_viewer_array[pane_no],
 										 Graphics_window_Scene_viewer_view_changed,
 										 window);
 									Scene_viewer_set_translation_rate(
-										 window->scene_viewer_array[pane_no], 2.0);
+										 window->scene_viewer_array[pane_no]->core_scene_viewer, 2.0);
 									Scene_viewer_set_tumble_rate(
-										 window->scene_viewer_array[pane_no], 1.5);
+										 window->scene_viewer_array[pane_no]->core_scene_viewer, 1.5);
 									Scene_viewer_set_zoom_rate(
-										 window->scene_viewer_array[pane_no], 2.0);
+										 window->scene_viewer_array[pane_no]->core_scene_viewer, 2.0);
 									if (Scene_viewer_get_lookat_parameters(
-												 window->scene_viewer_array[0],
+												 window->scene_viewer_array[0]->core_scene_viewer,
 												 &(eye[0]),&(eye[1]),&(eye[2]),
 												 &(lookat[0]),&(lookat[1]),&(lookat[2]),
 												 &(up[0]),&(up[1]),&(up[2]))&&
@@ -3667,7 +3669,7 @@ it.
 										 view[2]=eye[2]-lookat[2];
 										 eye_distance=normalize3(view);
 										 Scene_viewer_set_lookat_parameters(
-												window->scene_viewer_array[0],
+												window->scene_viewer_array[0]->core_scene_viewer,
 												lookat[0]+eye_distance*front[0],
 												lookat[1]+eye_distance*front[1],
 												lookat[2]+eye_distance*front[2],
@@ -3688,7 +3690,7 @@ it.
 										 window->default_viewing_height);
 									/* initial view is of all of the current scene */
 									Graphics_window_view_all(window);
-									window->wx_graphics_window->Show();		
+									window->wx_graphics_window->Show();
 							 }
 							 else
 							 {
@@ -3730,15 +3732,15 @@ it.
 			USE_PARAMETER(pane_no);
 			USE_PARAMETER(minimum_colour_buffer_depth);
 			USE_PARAMETER(minimum_depth_buffer_depth);
- 			USE_PARAMETER(minimum_accumulation_buffer_depth);
- 			USE_PARAMETER(Graphics_window_Scene_viewer_view_changed);
+			USE_PARAMETER(minimum_accumulation_buffer_depth);
+			USE_PARAMETER(Graphics_window_Scene_viewer_view_changed);
 
 			WindowRef carbon_window;
 			WindowAttributes  window_attributes;
 			Rect content_rectangle;
 			CFStringRef title_key;
 			CFStringRef carbon_window_title;
-			OSStatus result; 
+			OSStatus result;
 
 			window_attributes = kWindowResizableAttribute
 				| kWindowCloseBoxAttribute
@@ -3758,13 +3760,13 @@ it.
 			title_key = CFStringCreateWithCString (
 				kCFAllocatorDefault, window_title,
 				kCFStringEncodingMacRoman);
-			
+
 			carbon_window_title = CFCopyLocalizedString(title_key, NULL);
 
 			result = SetWindowTitleWithCFString (carbon_window, carbon_window_title);
 
 			CFRelease (title_key);
-			
+
 			CFRelease (carbon_window_title);
 
 
@@ -3782,7 +3784,7 @@ it.
 							window->number_of_scene_viewers))
 						{
 							pane_no = 0;
-							if (window->scene_viewer_array[pane_no] = 
+							if (window->scene_viewer_array[pane_no] =
 								 CREATE(Scene_viewer)(graphics_buffer,
 								 background_colour, light_manager,default_light,
 								 light_model_manager,default_light_model,
@@ -3794,7 +3796,7 @@ it.
 									window->interactive_tool);
 								/* get scene_viewer transform callbacks to allow
 									synchronising of views in multiple panes */
-								Scene_viewer_add_sync_callback(
+								Scene_viewer_app_add_sync_callback(
 									window->scene_viewer_array[pane_no],
 									Graphics_window_Scene_viewer_view_changed,
 									window);
@@ -3834,12 +3836,12 @@ it.
 							window = (struct Graphics_window *)NULL;
 						}
 			}
-			
-			
-			
-			RepositionWindow (carbon_window, NULL, kWindowCascadeOnMainScreen); 
 
-			ShowWindow (carbon_window); 
+
+
+			RepositionWindow (carbon_window, NULL, kWindowCascadeOnMainScreen);
+
+			ShowWindow (carbon_window);
 
 #endif /* switch (USER_INTERFACE) */
 		}
@@ -3878,7 +3880,7 @@ Graphics_window_destroy_CB.
 	ENTER(DESTROY(graphics_window));
 	if (graphics_window_address&&(window= *graphics_window_address))
 	{
-#if !defined (WX_USER_INTERFACE) 
+#if !defined (WX_USER_INTERFACE)
 		 /* the class wxGraphicsWindow destructor will handle the
 				destruction of the scene viewers. */
 		 int pane_no;
@@ -3900,7 +3902,7 @@ Graphics_window_destroy_CB.
 		{
 			DEACCESS(Light_model)(&window->default_light_model);
 		}
-#if defined (WX_USER_INTERFACE) 
+#if defined (WX_USER_INTERFACE)
 		/* In this version each graphics window has it's own interactive
 			 tool manager so we need to destroy it. */
 		if (window->interactive_tool_manager)
@@ -3912,7 +3914,7 @@ Graphics_window_destroy_CB.
 		DestroyWindow(window->hWnd);
 #elif defined (GTK_USER_INTERFACE) /* switch (USER_INTERFACE) */
 #if GTK_MAJOR_VERSION >= 2
-		g_signal_handler_disconnect (G_OBJECT(window->shell_window), 
+		g_signal_handler_disconnect (G_OBJECT(window->shell_window),
 			window->close_handler_id);
 #endif /* GTK_MAJOR_VERSION >= 2 */
 		gtk_widget_destroy (window->shell_window);
@@ -3933,7 +3935,7 @@ Graphics_window_destroy_CB.
 		{
 			DEACCESS(Time_keeper)(&(window->time_keeper));
 		}
-#if defined (WX_USER_INTERFACE) 
+#if defined (WX_USER_INTERFACE)
 		if (window->wx_graphics_window)
 		{
 			 delete (window->wx_graphics_window);
@@ -4172,7 +4174,7 @@ Sets the current_pane of the <window> to <pane_no>, from 0 to number_of_panes-1.
 	{
 		window->current_pane=pane_no;
 		/* make sure the parallel/perspective button is set up for pane */
-		Scene_viewer_get_projection_mode(window->scene_viewer_array[pane_no],
+		Scene_viewer_get_projection_mode(window->scene_viewer_array[pane_no]->core_scene_viewer,
 			&projection_mode);
 		Graphics_window_set_projection_mode(window,pane_no,projection_mode);
 
@@ -4233,9 +4235,9 @@ Sets the <eye_spacing> for the <graphics_window> used for 3-D viewing.
 		/* Set this on all the scene viewers too */
 		for (pane_no=0;pane_no<graphics_window->number_of_scene_viewers;pane_no++)
 		{
-			Scene_viewer_set_stereo_eye_spacing(graphics_window->scene_viewer_array[pane_no],
+			Scene_viewer_set_stereo_eye_spacing(graphics_window->scene_viewer_array[pane_no]->core_scene_viewer,
 				eye_spacing);
-		}		
+		}
 		return_code=1;
 	}
 	else
@@ -4297,7 +4299,7 @@ are SCENE_VIEWER_NO_INPUT, SCENE_VIEWER_SELECT and SCENE_VIEWER_TRANSFORM.
 		return_code=1;
 		for (pane_no=0;pane_no<window->number_of_scene_viewers;pane_no++)
 		{
-			Scene_viewer_set_input_mode(window->scene_viewer_array[pane_no],input_mode);
+			Scene_viewer_set_input_mode(window->scene_viewer_array[pane_no]->core_scene_viewer,input_mode);
 		}
 		if (input_mode != window->input_mode)
 		{
@@ -4362,8 +4364,8 @@ Sets the layout mode in effect on the <window>.
 	enum Scene_viewer_transparency_mode transparency_mode;
 	int perturb_lines;
 	struct Colour background_colour;
-	struct Graphics_buffer *graphics_buffer;
-	struct Scene_viewer *first_scene_viewer;
+	struct Graphics_buffer_app *graphics_buffer;
+	struct Scene_viewer_app *first_scene_viewer;
 	unsigned int transparency_layers;
 #endif /* defined (WX_USER_INTERFACE) */
 #if defined (WX_USER_INTERFACE)
@@ -4381,15 +4383,15 @@ Sets the layout mode in effect on the <window>.
 		{
 #if defined (WX_USER_INTERFACE)
 			first_scene_viewer = window->scene_viewer_array[0];
-			Scene_viewer_get_lookat_parameters(first_scene_viewer,
+			Scene_viewer_get_lookat_parameters(first_scene_viewer->core_scene_viewer,
 				&(eye[0]),&(eye[1]),&(eye[2]),
 				&(lookat[0]),&(lookat[1]),&(lookat[2]),&(up[0]),&(up[1]),&(up[2]));
-			Scene_viewer_get_viewing_volume(first_scene_viewer,
+			Scene_viewer_get_viewing_volume(first_scene_viewer->core_scene_viewer,
 				&left, &right, &bottom, &top, &near_plane, &far_plane);
 			radius = 0.5*(right - left);
-			
+
 			if (REALLOCATE(window->scene_viewer_array,
-					window->scene_viewer_array, struct Scene_viewer *,
+					window->scene_viewer_array, struct Scene_viewer_app *,
 					new_number_of_panes))
 			{
 				for (pane_no = window->number_of_scene_viewers ;
@@ -4422,15 +4424,15 @@ Sets the layout mode in effect on the <window>.
 					// is passed in.
 					graphics_buffer = create_Graphics_buffer_wx(window->graphics_buffer_package,
 						current_panel, GRAPHICS_BUFFER_DOUBLE_BUFFERING, GRAPHICS_BUFFER_ANY_STEREO_MODE,
-						/*minimum_colour_buffer_depth*/24, /*minimum_depth_buffer_depth*/16, 
-						/*minimum_accumulation_buffer_depth*/0, Scene_viewer_get_graphics_buffer(first_scene_viewer));
+						/*minimum_colour_buffer_depth*/24, /*minimum_depth_buffer_depth*/16,
+						/*minimum_accumulation_buffer_depth*/0, /*buffer_to_match*/0);
 					if (graphics_buffer)
 					{
-						Scene_viewer_get_background_colour(first_scene_viewer,&background_colour);
+						Scene_viewer_get_background_colour(first_scene_viewer->core_scene_viewer,&background_colour);
 						window->scene_viewer_array[pane_no]=
-							CREATE(Scene_viewer)(graphics_buffer,&background_colour,window->light_manager,
+							CREATE(Scene_viewer_app)(graphics_buffer,&background_colour,window->light_manager,
 								window->default_light, window->light_model_manager,window->default_light_model,
-								window->scene_manager,window->scene,window->user_interface);
+								window->scene_manager,window->scene, window->user_interface);
 						if (window->scene_viewer_array[pane_no])
 						{
 							Scene_viewer_set_interactive_tool(
@@ -4438,48 +4440,48 @@ Sets the layout mode in effect on the <window>.
 								window->interactive_tool);
 							if (Interactive_tool_is_Transform_tool(window->interactive_tool))
 							{
-								Scene_viewer_set_input_mode(window->scene_viewer_array[pane_no],SCENE_VIEWER_TRANSFORM);
+								Scene_viewer_set_input_mode(window->scene_viewer_array[pane_no]->core_scene_viewer,SCENE_VIEWER_TRANSFORM);
 							}
 							else
 							{
-								Scene_viewer_set_input_mode(window->scene_viewer_array[pane_no],SCENE_VIEWER_SELECT);
+								Scene_viewer_set_input_mode(window->scene_viewer_array[pane_no]->core_scene_viewer,SCENE_VIEWER_SELECT);
 							}
 							/* get scene_viewer transform callbacks to allow
 								synchronising of views in multiple panes */
-							Scene_viewer_add_sync_callback(
+							Scene_viewer_app_add_sync_callback(
 								window->scene_viewer_array[pane_no],
 								Graphics_window_Scene_viewer_view_changed,
 								window);
 							Scene_viewer_set_translation_rate(
-								window->scene_viewer_array[pane_no],
+								window->scene_viewer_array[pane_no]->core_scene_viewer,
 								window->default_translate_rate);
 							Scene_viewer_set_tumble_rate(
-								window->scene_viewer_array[pane_no],
+								window->scene_viewer_array[pane_no]->core_scene_viewer,
 								window->default_tumble_rate);
 							Scene_viewer_set_zoom_rate(
-								window->scene_viewer_array[pane_no],
+								window->scene_viewer_array[pane_no]->core_scene_viewer,
 								window->default_zoom_rate);
 							clip_factor = 10.0;
 							Scene_viewer_set_view_simple(
-								window->scene_viewer_array[pane_no], 
+								window->scene_viewer_array[pane_no]->core_scene_viewer,
 								lookat[0], lookat[1], lookat[2],
 								radius, window->std_view_angle, clip_factor*radius);
-							Scene_viewer_get_perturb_lines(first_scene_viewer,
+							Scene_viewer_get_perturb_lines(first_scene_viewer->core_scene_viewer,
 								&perturb_lines);
-							Scene_viewer_set_perturb_lines(window->scene_viewer_array[pane_no],
+							Scene_viewer_set_perturb_lines(window->scene_viewer_array[pane_no]->core_scene_viewer,
 								perturb_lines);
-							Scene_viewer_set_light_model(window->scene_viewer_array[pane_no],
-								Scene_viewer_get_light_model(first_scene_viewer));
-							Scene_viewer_get_transparency_layers(first_scene_viewer,
+							Scene_viewer_set_light_model(window->scene_viewer_array[pane_no]->core_scene_viewer,
+								Scene_viewer_get_light_model(first_scene_viewer->core_scene_viewer));
+							Scene_viewer_get_transparency_layers(first_scene_viewer->core_scene_viewer,
 								&transparency_layers);
-							Scene_viewer_set_transparency_layers(window->scene_viewer_array[pane_no],
+							Scene_viewer_set_transparency_layers(window->scene_viewer_array[pane_no]->core_scene_viewer,
 								transparency_layers);
-							Scene_viewer_get_transparency_mode(first_scene_viewer,
+							Scene_viewer_get_transparency_mode(first_scene_viewer->core_scene_viewer,
 								&transparency_mode);
-							Scene_viewer_set_transparency_mode(window->scene_viewer_array[pane_no],
+							Scene_viewer_set_transparency_mode(window->scene_viewer_array[pane_no]->core_scene_viewer,
 								transparency_mode);
 							Scene_viewer_set_antialias_mode(
-								window->scene_viewer_array[pane_no],window->antialias_mode);
+								window->scene_viewer_array[pane_no]->core_scene_viewer,window->antialias_mode);
 						}
 						else
 						{
@@ -4517,18 +4519,18 @@ Sets the layout mode in effect on the <window>.
 				wxChoice *layout_choice = XRCCTRL(
 					 *window->wx_graphics_window, "View", wxChoice);
 				layout_choice->SetStringSelection(
-					 Graphics_window_layout_mode_string(layout_mode));
+					 wxString::FromAscii(Graphics_window_layout_mode_string(layout_mode)));
 #endif /* defined (SWITCH_USER_INTERFACE) */
 				/* awaken scene_viewers in panes to be used; put others to sleep */
 				for (pane_no=0;pane_no<window->number_of_scene_viewers;pane_no++)
 				{
 					if (pane_no < window->number_of_panes)
 					{
-						Scene_viewer_awaken(window->scene_viewer_array[pane_no]);
+						Scene_viewer_awaken(window->scene_viewer_array[pane_no]->core_scene_viewer);
 					}
 					else
 					{
-						Scene_viewer_sleep(window->scene_viewer_array[pane_no]);
+						Scene_viewer_sleep(window->scene_viewer_array[pane_no]->core_scene_viewer);
 					}
 				}
 			}
@@ -4559,17 +4561,17 @@ Sets the layout mode in effect on the <window>.
 				{
 #if defined (WX_USER_INTERFACE)
 
-				      window->panel2->Hide();
-				      window->panel3->Hide();
-				      window->panel4->Hide();
+					  window->panel2->Hide();
+					  window->panel3->Hide();
+					  window->panel4->Hide();
 
 #endif /* defined (WX_USER_INTERFACE) */
 					/* re-enable tumbling in main scene viewer */
-					Scene_viewer_set_translation_rate(window->scene_viewer_array[0],
+					Scene_viewer_set_translation_rate(window->scene_viewer_array[0]->core_scene_viewer,
 						window->default_translate_rate);
-					Scene_viewer_set_tumble_rate(window->scene_viewer_array[0],
+					Scene_viewer_set_tumble_rate(window->scene_viewer_array[0]->core_scene_viewer,
 						window->default_tumble_rate);
-					Scene_viewer_set_zoom_rate(window->scene_viewer_array[0],
+					Scene_viewer_set_zoom_rate(window->scene_viewer_array[0]->core_scene_viewer,
 						window->default_zoom_rate);
 				}
 			} break;
@@ -4582,21 +4584,21 @@ Sets the layout mode in effect on the <window>.
 #if defined (WX_USER_INTERFACE)
 					window->panel2->Hide();
 					window->panel3->Hide();
-					window->panel4->Hide();	      
+					window->panel4->Hide();
 					/* un-grey orthographic view controls */
 					//XtSetSensitive(window->orthographic_form,True);
 #endif /* defined (WX_USER_INTERFACE) */
 
 					/* disable tumbling in main scene viewer */
-					Scene_viewer_set_translation_rate(window->scene_viewer_array[0],
+					Scene_viewer_set_translation_rate(window->scene_viewer_array[0]->core_scene_viewer,
 						window->default_translate_rate);
-					Scene_viewer_set_tumble_rate(window->scene_viewer_array[0],
+					Scene_viewer_set_tumble_rate(window->scene_viewer_array[0]->core_scene_viewer,
 						/*tumble_rate*/0.0);
-					Scene_viewer_set_zoom_rate(window->scene_viewer_array[0],
+					Scene_viewer_set_zoom_rate(window->scene_viewer_array[0]->core_scene_viewer,
 						window->default_zoom_rate);
 				}
 				/* set the plan view in pane 0 */
-				if (Scene_viewer_get_lookat_parameters(window->scene_viewer_array[0],
+				if (Scene_viewer_get_lookat_parameters(window->scene_viewer_array[0]->core_scene_viewer,
 					&(eye[0]),&(eye[1]),&(eye[2]),
 					&(lookat[0]),&(lookat[1]),&(lookat[2]),&(up[0]),&(up[1]),&(up[2]))&&
 					axis_number_to_axis_vector(window->ortho_up_axis,up)&&
@@ -4606,11 +4608,11 @@ Sets the layout mode in effect on the <window>.
 					view[1]=eye[1]-lookat[1];
 					view[2]=eye[2]-lookat[2];
 					eye_distance=normalize3(view);
-					Scene_viewer_set_lookat_parameters(window->scene_viewer_array[0],
+					Scene_viewer_set_lookat_parameters(window->scene_viewer_array[0]->core_scene_viewer,
 						lookat[0]+eye_distance*up[0],lookat[1]+eye_distance*up[1],
 						lookat[2]+eye_distance*up[2],lookat[0],lookat[1],lookat[2],
 						-front[0],-front[1],-front[2]);
-					Scene_viewer_redraw_now(window->scene_viewer_array[0]);
+					Scene_viewer_app_redraw_now(window->scene_viewer_array[0]);
 				}
 			} break;
 			case GRAPHICS_WINDOW_LAYOUT_ORTHOGRAPHIC:
@@ -4630,28 +4632,28 @@ Sets the layout mode in effect on the <window>.
 					/* make sure pane 0 is not using a custom projection */
 					Graphics_window_set_projection_mode(window,0,projection_mode);
 					/* re-enable tumbling in main scene viewer */
-					Scene_viewer_set_translation_rate(window->scene_viewer_array[0],
+					Scene_viewer_set_translation_rate(window->scene_viewer_array[0]->core_scene_viewer,
 						window->default_translate_rate);
-					Scene_viewer_set_tumble_rate(window->scene_viewer_array[0],
+					Scene_viewer_set_tumble_rate(window->scene_viewer_array[0]->core_scene_viewer,
 						window->default_tumble_rate);
-					Scene_viewer_set_zoom_rate(window->scene_viewer_array[0],
+					Scene_viewer_set_zoom_rate(window->scene_viewer_array[0]->core_scene_viewer,
 						window->default_zoom_rate);
 					/* make sure panes 1-3 use parallel projection and disable tumble */
 					for (pane_no=1;pane_no<4;pane_no++)
 					{
 						Graphics_window_set_projection_mode(window,pane_no,
 							SCENE_VIEWER_PARALLEL);
-						Scene_viewer_set_translation_rate(window->scene_viewer_array[pane_no],
+						Scene_viewer_set_translation_rate(window->scene_viewer_array[pane_no]->core_scene_viewer,
 							window->default_translate_rate);
-						Scene_viewer_set_tumble_rate(window->scene_viewer_array[pane_no],
+						Scene_viewer_set_tumble_rate(window->scene_viewer_array[pane_no]->core_scene_viewer,
 							/*tumble_rate*/0.0);
-						Scene_viewer_set_zoom_rate(window->scene_viewer_array[pane_no],
+						Scene_viewer_set_zoom_rate(window->scene_viewer_array[pane_no]->core_scene_viewer,
 							window->default_zoom_rate);
 					}
 				}
 				/* four views, 3 tied together as front, side and plan views */
 				/* set the plan view in pane 1 */
-				if (Scene_viewer_get_lookat_parameters(window->scene_viewer_array[1],
+				if (Scene_viewer_get_lookat_parameters(window->scene_viewer_array[1]->core_scene_viewer,
 						&(eye[0]),&(eye[1]),&(eye[2]),
 						&(lookat[0]),&(lookat[1]),&(lookat[2]),&(up[0]),&(up[1]),&(up[2]))&&
 					axis_number_to_axis_vector(window->ortho_up_axis,up)&&
@@ -4661,7 +4663,7 @@ Sets the layout mode in effect on the <window>.
 					view[1]=eye[1]-lookat[1];
 					view[2]=eye[2]-lookat[2];
 					eye_distance=normalize3(view);
-					Scene_viewer_set_lookat_parameters(window->scene_viewer_array[1],
+					Scene_viewer_set_lookat_parameters(window->scene_viewer_array[1]->core_scene_viewer,
 						lookat[0]+eye_distance*up[0],lookat[1]+eye_distance*up[1],
 						lookat[2]+eye_distance*up[2],lookat[0],lookat[1],lookat[2],
 						-front[0],-front[1],-front[2]);
@@ -4670,7 +4672,7 @@ Sets the layout mode in effect on the <window>.
 				Graphics_window_view_changed(window,1);
 				/* Graphics_window_view_changed redraws the scene viewers that are
 					 tied to pane 1, but not pane 1 itself, hence: */
-				Scene_viewer_redraw_now(window->scene_viewer_array[1]);
+				Scene_viewer_app_redraw_now(window->scene_viewer_array[1]);
 			} break;
 			case GRAPHICS_WINDOW_LAYOUT_FRONT_BACK:
 			case GRAPHICS_WINDOW_LAYOUT_FRONT_SIDE:
@@ -4683,7 +4685,7 @@ Sets the layout mode in effect on the <window>.
 #if defined (WX_USER_INTERFACE)
 					window->panel2->Show();
 					window->panel3->Hide();
-					window->panel4->Hide();					
+					window->panel4->Hide();
 					/* un-grey orthographic view controls */
 					//XtSetSensitive(window->orthographic_form,True);
 #endif /* defined (WX_USER_INTERFACE) */
@@ -4691,11 +4693,11 @@ Sets the layout mode in effect on the <window>.
 					for (pane_no=0;pane_no<2;pane_no++)
 					{
 						Graphics_window_set_projection_mode(window,pane_no,projection_mode);
-						Scene_viewer_set_translation_rate(window->scene_viewer_array[pane_no],
+						Scene_viewer_set_translation_rate(window->scene_viewer_array[pane_no]->core_scene_viewer,
 							window->default_translate_rate);
-						Scene_viewer_set_tumble_rate(window->scene_viewer_array[pane_no],
+						Scene_viewer_set_tumble_rate(window->scene_viewer_array[pane_no]->core_scene_viewer,
 							window->default_tumble_rate);
-						Scene_viewer_set_zoom_rate(window->scene_viewer_array[pane_no],
+						Scene_viewer_set_zoom_rate(window->scene_viewer_array[pane_no]->core_scene_viewer,
 							window->default_zoom_rate);
 					}
 #if defined (WX_USER_INTERFACE)
@@ -4716,7 +4718,7 @@ Sets the layout mode in effect on the <window>.
 					(GRAPHICS_WINDOW_LAYOUT_FRONT_SIDE==layout_mode))
 				{
 					/* set the front view in pane 0 */
-					if (Scene_viewer_get_lookat_parameters(window->scene_viewer_array[0],
+					if (Scene_viewer_get_lookat_parameters(window->scene_viewer_array[0]->core_scene_viewer,
 						&(eye[0]),&(eye[1]),&(eye[2]),
 						&(lookat[0]),&(lookat[1]),&(lookat[2]),&(up[0]),&(up[1]),&(up[2]))&&
 						axis_number_to_axis_vector(window->ortho_up_axis,up)&&
@@ -4726,12 +4728,12 @@ Sets the layout mode in effect on the <window>.
 						view[1]=eye[1]-lookat[1];
 						view[2]=eye[2]-lookat[2];
 						eye_distance=normalize3(view);
-						Scene_viewer_set_lookat_parameters(window->scene_viewer_array[0],
+						Scene_viewer_set_lookat_parameters(window->scene_viewer_array[0]->core_scene_viewer,
 							lookat[0]+eye_distance*front[0],lookat[1]+eye_distance*front[1],
 							lookat[2]+eye_distance*front[2],lookat[0],lookat[1],lookat[2],
 							up[0],up[1],up[2]);
 					}
-					Scene_viewer_redraw_now(window->scene_viewer_array[0]);
+					Scene_viewer_app_redraw_now(window->scene_viewer_array[0]);
 				}
 				/* put tied views in proper relationship to front view in pane 0 */
 				Graphics_window_view_changed(window,0);
@@ -4855,7 +4857,7 @@ Returns the projection mode used by pane <pane_no> of <window>.
 		 (pane_no<window->number_of_panes)&&
 		(window->scene_viewer_array[pane_no]))
 	{
-		Scene_viewer_get_projection_mode(window->scene_viewer_array[pane_no],
+		Scene_viewer_get_projection_mode(window->scene_viewer_array[pane_no]->core_scene_viewer,
 			&projection_mode);
 	}
 	else
@@ -4906,7 +4908,7 @@ Must call Graphics_window_view_changed after changing tied pane.
 			window->layout_mode,pane_no,projection_mode))
 		{
 			return_code=Scene_viewer_set_projection_mode(
-				window->scene_viewer_array[pane_no],projection_mode);
+				window->scene_viewer_array[pane_no]->core_scene_viewer,projection_mode);
 			if (return_code)
 			{
 				/* update perspective button widget if current_pane changed */
@@ -4984,7 +4986,7 @@ Returns the Scene for the <graphics_window>.
 	return (scene);
 } /* Graphics_window_get_Scene */
 
-struct Scene_viewer *Graphics_window_get_Scene_viewer(
+struct Scene_viewer_app *Graphics_window_get_Scene_viewer(
 	struct Graphics_window *window,int pane_no)
 /*******************************************************************************
 LAST MODIFIED : 8 October 1998
@@ -4994,11 +4996,11 @@ Returns the Scene_viewer in pane <pane_no> of <window>. Calling function can
 then set view and other parameters for the scene_viewer directly.
 ==============================================================================*/
 {
-	struct Scene_viewer *scene_viewer;
+	struct Scene_viewer_app *scene_viewer;
 
 	ENTER(Graphics_window_get_Scene_viewer);
 	if (window&&window->scene_viewer_array&&
-		 (0<=pane_no)&&(pane_no<window->number_of_panes) && 
+		 (0<=pane_no)&&(pane_no<window->number_of_panes) &&
 		 (window->scene_viewer_array!=NULL))
 	{
 		scene_viewer=window->scene_viewer_array[pane_no];
@@ -5007,7 +5009,7 @@ then set view and other parameters for the scene_viewer directly.
 	{
 		display_message(ERROR_MESSAGE,
 			"Graphics_window_get_Scene_viewer.  Invalid argument(s)");
-		scene_viewer=(struct Scene_viewer *)NULL;
+		scene_viewer = 0;
 	}
 	LEAVE;
 
@@ -5094,7 +5096,7 @@ separated by 2 pixel borders within the viewing area.
 {
 #if defined (WIN32_USER_INTERFACE)
 	RECT rect;
-#endif /* defined (WIN32_USER_INTERFACE) */	
+#endif /* defined (WIN32_USER_INTERFACE) */
 	int return_code;
 
 	ENTER(Graphics_window_get_viewing_area_size);
@@ -5127,7 +5129,7 @@ separated by 2 pixel borders within the viewing area.
 		}
 #else
 		display_message(ERROR_MESSAGE,
-			"Graphics_window_get_viewing_area_size.  Not implemented for this user interface.");		
+			"Graphics_window_get_viewing_area_size.  Not implemented for this user interface.");
 		return_code=0;
 #endif /* defined (USER_INTERFACE) */
 	}
@@ -5199,7 +5201,7 @@ separated by 2 pixel borders within the viewing area.
 
 		RECT current_position;
 		GetWindowRect(window->hWnd, &current_position);
-		
+
 		MoveWindow(window->hWnd,
 			current_position.left, current_position.top,
 			viewing_width, viewing_height, true);
@@ -5236,7 +5238,7 @@ until an explicit "gfx update" is entered.
 	{
 		for (pane_no=0;pane_no<graphics_window->number_of_panes;pane_no++)
 		{
-			Scene_viewer_redraw(graphics_window->scene_viewer_array[pane_no]);
+			Scene_viewer_app_redraw(graphics_window->scene_viewer_array[pane_no]);
 		}
 		return_code=1;
 	}
@@ -5275,7 +5277,7 @@ until an explicit "gfx update" is entered.
 #endif /* defined (NEW_CODE) */
 		for (pane_no=0;pane_no<graphics_window->number_of_panes;pane_no++)
 		{
-			Scene_viewer_redraw_now(graphics_window->scene_viewer_array[pane_no]);
+			Scene_viewer_app_redraw_now(graphics_window->scene_viewer_array[pane_no]);
 		}
 		return_code=1;
 	}
@@ -5309,7 +5311,7 @@ until an explicit "gfx update" is entered.
 	{
 		for (pane_no=0;pane_no<graphics_window->number_of_panes;pane_no++)
 		{
-			Scene_viewer_redraw_now(graphics_window->scene_viewer_array[pane_no]);
+			Scene_viewer_app_redraw_now(graphics_window->scene_viewer_array[pane_no]);
 		}
 		return_code=1;
 	}
@@ -5342,7 +5344,7 @@ the pixels out of the backbuffer before the frames are swapped.
 	{
 		for (pane_no=0;pane_no<graphics_window->number_of_panes;pane_no++)
 		{
-			Scene_viewer_redraw_now_without_swapbuffers
+			Scene_viewer_app_redraw_now_without_swapbuffers
 				(graphics_window->scene_viewer_array[pane_no]);
 		}
 		return_code=1;
@@ -5394,8 +5396,8 @@ graphics window on screen.
 #if defined (OPENGL_API) && defined (USE_MSAA) && defined (WX_USER_INTERFACE)
 	int multisample_framebuffer_flag = 0;
 #endif
-	struct Graphics_buffer *offscreen_buffer;
-	struct Scene_viewer *scene_viewer;
+	struct Graphics_buffer_app *offscreen_buffer;
+	struct Scene_viewer_app *scene_viewer;
 #if defined (SGI)
 /* The Octane can only handle 1024 */
 #define PBUFFER_MAX (1024)
@@ -5406,7 +5408,7 @@ graphics window on screen.
 	ENTER(Graphics_window_get_frame_pixels);
 	if (window && width && height)
 	{
-		Graphics_window_get_viewing_area_size(window, &panel_width, 
+		Graphics_window_get_viewing_area_size(window, &panel_width,
 			&panel_height);
 		antialias = preferred_antialias;
 		if (antialias == -1)
@@ -5429,7 +5431,7 @@ graphics window on screen.
 		/* If working offscreen try and allocate as large an area as possible */
 		if (!force_onscreen)
 		{
-			offscreen_buffer = (struct Graphics_buffer *)NULL;
+			offscreen_buffer = (struct Graphics_buffer_app *)NULL;
 #define PANE_BORDER (2)
 			switch (window->layout_mode)
 			{
@@ -5524,8 +5526,8 @@ graphics window on screen.
 #endif /* (WX_USER_INTERFACE) */
 			/*offscreen_buffer currently does not work well with Windows */
 			if (!(offscreen_buffer = create_Graphics_buffer_offscreen_from_buffer(
-				  tile_width, tile_height, Scene_viewer_get_graphics_buffer(
-				  Graphics_window_get_Scene_viewer(window,/*pane*/0)))))
+				  tile_width, tile_height, /*buffer_to_match*//*Scene_viewer_get_graphics_buffer(
+				  Graphics_window_get_Scene_viewer(window,pane0))*/0)))
 			{
 				force_onscreen = 1;
 			}
@@ -5533,11 +5535,11 @@ graphics window on screen.
 		if (!force_onscreen)
 		{
 			if (GRAPHICS_BUFFER_GL_EXT_FRAMEBUFFER_TYPE ==
-				Graphics_buffer_get_type(offscreen_buffer))
+				Graphics_buffer_get_type(Graphics_buffer_app_get_core_buffer(offscreen_buffer)))
 			{
 				for (pane = 0 ; pane < number_of_panes ; pane++)
 				{
-					Scene_viewer_redraw_now(
+					Scene_viewer_app_redraw_now(
 						Graphics_window_get_Scene_viewer(window,pane));
 				}
 			}
@@ -5547,8 +5549,8 @@ graphics window on screen.
 				number_of_components * (frame_width) * (frame_height)))
 			{
 				return_code = 1;
-				Graphics_buffer_make_current(offscreen_buffer);
-				if (Graphics_buffer_get_type(offscreen_buffer) ==	
+				Graphics_buffer_app_make_current(offscreen_buffer);
+				if (Graphics_buffer_get_type(Graphics_buffer_app_get_core_buffer(offscreen_buffer)) ==
 					GRAPHICS_BUFFER_GL_EXT_FRAMEBUFFER_TYPE)
 				{
 					if (antialias > 1)
@@ -5559,7 +5561,7 @@ graphics window on screen.
 							"image with anti-aliasing under offscreen mode at the moment.");
 #else
 #if defined (OPENGL_API)  && defined (WX_USER_INTERFACE)
-						multisample_framebuffer_flag = 
+						multisample_framebuffer_flag =
 							Graphics_buffer_set_multisample_framebuffer(offscreen_buffer, antialias);
 #endif
 #endif
@@ -5571,7 +5573,7 @@ graphics window on screen.
 				{
 					/* Clear the buffer as we are going to leave a border between panes */
 					glClearColor(0.0,0.0,0.0,0.);
-					glClear(GL_COLOR_BUFFER_BIT); 
+					glClear(GL_COLOR_BUFFER_BIT);
 				}
 #endif /* defined (OPENGL_API) */
 				if ((tiles_across > 1) || (panes_across > 1))
@@ -5585,23 +5587,23 @@ graphics window on screen.
 					scene_viewer = Graphics_window_get_Scene_viewer(window,pane);
 					if ((tiles_across > 1) || (tiles_down > 1))
 					{
-						Scene_viewer_get_viewing_volume(scene_viewer,
+						Scene_viewer_get_viewing_volume(scene_viewer->core_scene_viewer,
 							&original_left, &original_right, &original_bottom, &original_top,
 							&original_near_plane, &original_far_plane);
-						Scene_viewer_get_NDC_info(scene_viewer,
+						Scene_viewer_get_NDC_info(scene_viewer->core_scene_viewer,
 							&original_NDC_left, &original_NDC_top, &original_NDC_width, &original_NDC_height);
-						Scene_viewer_get_viewport_info(scene_viewer,
+						Scene_viewer_get_viewport_info(scene_viewer->core_scene_viewer,
 							&original_viewport_left, &original_viewport_top,
 							&original_viewport_pixels_per_x, &original_viewport_pixels_per_y);
-						Scene_viewer_get_viewing_volume_and_NDC_info_for_specified_size(scene_viewer,
-							frame_width, frame_height, panel_width, panel_height, &real_left, 
+						Scene_viewer_get_viewing_volume_and_NDC_info_for_specified_size(scene_viewer->core_scene_viewer,
+							frame_width, frame_height, panel_width, panel_height, &real_left,
 							&real_right, &real_bottom, &real_top, &scaled_NDC_width, &scaled_NDC_height);
 
 						NDC_width = scaled_NDC_width / fraction_across;
 						NDC_height = scaled_NDC_height / fraction_down;
 						viewport_pixels_per_x = original_viewport_pixels_per_x;
 						viewport_pixels_per_y = original_viewport_pixels_per_y;
-						
+
 					}
 					for (j = 0 ; return_code && (j < tiles_down) ; j++)
 					{
@@ -5618,31 +5620,31 @@ graphics window on screen.
 							if ((tiles_across > 1) || (tiles_down > 1))
 							{
 								left = real_left + (double)i * (real_right - real_left) / fraction_across;
-								right = real_left + 
+								right = real_left +
 									(double)(i + 1) * (real_right - real_left) / fraction_across;
 								NDC_left = original_NDC_left + (double)i *
 									 original_NDC_width / fraction_across;
 								viewport_left = i * tile_width / viewport_pixels_per_x;
 
-								Scene_viewer_set_viewing_volume(scene_viewer,
+								Scene_viewer_set_viewing_volume(scene_viewer->core_scene_viewer,
 									left, right, bottom, top,
 									original_near_plane, original_far_plane);
-								Scene_viewer_set_NDC_info(scene_viewer,
+								Scene_viewer_set_NDC_info(scene_viewer->core_scene_viewer,
 										NDC_left, NDC_top, NDC_width, NDC_height);
-								Scene_viewer_set_viewport_info(scene_viewer,
+								Scene_viewer_set_viewport_info(scene_viewer->core_scene_viewer,
 									viewport_left, viewport_top,
 									viewport_pixels_per_x, viewport_pixels_per_y);
 							}
-							if (Graphics_buffer_get_type(offscreen_buffer) ==	
+							if (Graphics_buffer_get_type(Graphics_buffer_app_get_core_buffer(offscreen_buffer)) ==
 								GRAPHICS_BUFFER_GL_EXT_FRAMEBUFFER_TYPE )
 							{
 #if !defined (USE_MSAA)
-								Scene_viewer_render_scene_in_viewport_with_overrides(scene_viewer,
+								Scene_viewer_render_scene_in_viewport_with_overrides(scene_viewer->core_scene_viewer,
 									/*left*/0, /*bottom*/0, /*right*/tile_width, /*top*/tile_height,
 									/*preferred_antialias*/0, preferred_transparency_layers,
 									/*drawing_offscreen*/1);
 #else
-								Scene_viewer_render_scene_in_viewport_with_overrides(scene_viewer,
+								Scene_viewer_render_scene_in_viewport_with_overrides(scene_viewer->core_scene_viewer,
 									/*left*/0, /*bottom*/0, /*right*/tile_width, /*top*/tile_height,
 									antialias, preferred_transparency_layers,
 									/*drawing_offscreen*/1);
@@ -5650,7 +5652,7 @@ graphics window on screen.
 							}
 							else
 							{
-								Scene_viewer_render_scene_in_viewport_with_overrides(scene_viewer,
+								Scene_viewer_render_scene_in_viewport_with_overrides(scene_viewer->core_scene_viewer,
 									/*left*/0, /*bottom*/0, /*right*/tile_width, /*top*/tile_height,
 									antialias, preferred_transparency_layers,
 									/*drawing_offscreen*/1);
@@ -5674,7 +5676,7 @@ graphics window on screen.
 									patch_height = pane_height - tile_height * (tiles_down - 1);
 								}
 
-								if (Graphics_buffer_get_type(offscreen_buffer) ==	
+								if (Graphics_buffer_get_type(Graphics_buffer_app_get_core_buffer(offscreen_buffer)) ==
 									GRAPHICS_BUFFER_GL_EXT_FRAMEBUFFER_TYPE)
 								{
 #if defined (OPENGL_API) && defined (USE_MSAA) && defined (WX_USER_INTERFACE)
@@ -5685,11 +5687,11 @@ graphics window on screen.
 #endif
 								}
 								return_code=Graphics_library_read_pixels(*frame_data +
-									(i * tile_width + pane_i * (pane_width + PANE_BORDER) + 
+									(i * tile_width + pane_i * (pane_width + PANE_BORDER) +
 										(j * tile_height + (panes_down - 1 - pane_j) * (pane_height + PANE_BORDER))
 										* frame_width) * number_of_components,
 									patch_width, patch_height, storage, /*front_buffer*/0);
-								if (Graphics_buffer_get_type(offscreen_buffer) ==	
+								if (Graphics_buffer_get_type(Graphics_buffer_app_get_core_buffer(offscreen_buffer)) ==
 									GRAPHICS_BUFFER_GL_EXT_FRAMEBUFFER_TYPE)
 								{
 #if defined (OPENGL_API) && defined (USE_MSAA) && defined (WX_USER_INTERFACE)
@@ -5708,12 +5710,12 @@ graphics window on screen.
 					}
 					if ((tiles_across > 1) || (tiles_down > 1))
 					{
-						Scene_viewer_set_viewing_volume(scene_viewer,
+						Scene_viewer_set_viewing_volume(scene_viewer->core_scene_viewer,
 							original_left, original_right, original_bottom, original_top,
 							original_near_plane, original_far_plane);
-						Scene_viewer_set_NDC_info(scene_viewer,
+						Scene_viewer_set_NDC_info(scene_viewer->core_scene_viewer,
 							original_NDC_left, original_NDC_top, original_NDC_width, original_NDC_height);
-						Scene_viewer_set_viewport_info(scene_viewer,
+						Scene_viewer_set_viewport_info(scene_viewer->core_scene_viewer,
 							original_viewport_left, original_viewport_top,
 							original_viewport_pixels_per_x, original_viewport_pixels_per_y);
 					}
@@ -5726,12 +5728,12 @@ graphics window on screen.
 				return_code=0;
 			}
 
-			DESTROY(Graphics_buffer)(&offscreen_buffer);
+			DESTROY(Graphics_buffer_app)(&offscreen_buffer);
 		}
 		else
 		{
 			/* Always use the window size if grabbing from screen */
-			Graphics_window_get_viewing_area_size(window, &frame_width, 
+			Graphics_window_get_viewing_area_size(window, &frame_width,
 				&frame_height);
 			if ((frame_width != *width) || (frame_height != *height))
 			{
@@ -5741,7 +5743,7 @@ graphics window on screen.
 				*width = frame_width;
 				*height = frame_height;
 			}
-			Scene_viewer_redraw_now_with_overrides(
+			Scene_viewer_app_redraw_now_with_overrides(
 				Graphics_window_get_Scene_viewer(window,/*pane_no*/0),
 				antialias, preferred_transparency_layers);
 			number_of_components =
@@ -5895,7 +5897,7 @@ with commands for setting these.
 		if (0 == radius)
 		{
 			/* get current "radius" from first scene viewer */
-			Scene_viewer_get_viewing_volume(window->scene_viewer_array[0],
+			Scene_viewer_get_viewing_volume(window->scene_viewer_array[0]->core_scene_viewer,
 				&left, &right, &bottom, &top, &near_plane, &far_plane);
 			radius = 0.5*(right - left);
 		}
@@ -5913,7 +5915,7 @@ with commands for setting these.
 			return_code; pane_no++)
 		{
 			return_code = Scene_viewer_set_view_simple(
-				window->scene_viewer_array[pane_no], centre_x, centre_y, centre_z,
+				window->scene_viewer_array[pane_no]->core_scene_viewer, centre_x, centre_y, centre_z,
 				radius, window->std_view_angle, clip_factor*radius);
 		}
 	}
@@ -5959,15 +5961,15 @@ current layout_mode, the function adjusts the view in all the panes tied to
 		{
 			if (pane_no != changed_pane)
 			{
-				Scene_viewer_stop_animations(window->scene_viewer_array[pane_no]);
+				Scene_viewer_stop_animations(window->scene_viewer_array[pane_no]->core_scene_viewer);
 			}
-			Scene_viewer_get_viewing_volume(window->scene_viewer_array[pane_no],
+			Scene_viewer_get_viewing_volume(window->scene_viewer_array[pane_no]->core_scene_viewer,
 				&left,&right,&bottom,&top,&(near_plane[pane_no]),&(far_plane[pane_no]));
 		}
 		return_code=(Scene_viewer_get_lookat_parameters(
-			window->scene_viewer_array[changed_pane],&(eye[0]),&(eye[1]),&(eye[2]),
+			window->scene_viewer_array[changed_pane]->core_scene_viewer,&(eye[0]),&(eye[1]),&(eye[2]),
 			&(lookat[0]),&(lookat[1]),&(lookat[2]),&(up[0]),&(up[1]),&(up[2]))&&
-			Scene_viewer_get_viewing_volume(window->scene_viewer_array[changed_pane],
+			Scene_viewer_get_viewing_volume(window->scene_viewer_array[changed_pane]->core_scene_viewer,
 				&left,&right,&bottom,&top,&(near_plane[changed_pane]),&(far_plane[changed_pane])));
 		if (return_code)
 		{
@@ -5998,10 +6000,10 @@ current layout_mode, the function adjusts the view in all the panes tied to
 							viewing volume (except for near and far) */
 						for (pane_no=0;pane_no<4;pane_no++)
 						{
-							Scene_viewer_set_lookat_parameters(window->scene_viewer_array[pane_no],
+							Scene_viewer_set_lookat_parameters(window->scene_viewer_array[pane_no]->core_scene_viewer,
 								eye[0],eye[1],eye[2],lookat[0],lookat[1],lookat[2],
 								up[0],up[1],up[2]);
-							Scene_viewer_set_viewing_volume(window->scene_viewer_array[pane_no],
+							Scene_viewer_set_viewing_volume(window->scene_viewer_array[pane_no]->core_scene_viewer,
 								left,right,bottom,top,near_plane[pane_no],far_plane[pane_no]);
 						}
 						/* now rotate all tied panes but the changed_pane to get the proper
@@ -6015,37 +6017,37 @@ current layout_mode, the function adjusts the view in all the panes tied to
 								extra_axis[1]=view[1]+up[1];
 								extra_axis[2]=view[2]+up[2];
 								normalize3(extra_axis);
-								Scene_viewer_rotate_about_lookat_point(window->scene_viewer_array[1],
+								Scene_viewer_rotate_about_lookat_point(window->scene_viewer_array[1]->core_scene_viewer,
 									view_left,0.25*PI);
-								Scene_viewer_rotate_about_lookat_point(window->scene_viewer_array[1],
+								Scene_viewer_rotate_about_lookat_point(window->scene_viewer_array[1]->core_scene_viewer,
 									extra_axis,0.25*PI);
-								Scene_viewer_rotate_about_lookat_point(window->scene_viewer_array[2],
+								Scene_viewer_rotate_about_lookat_point(window->scene_viewer_array[2]->core_scene_viewer,
 									view_left,-0.25*PI);
-								Scene_viewer_rotate_about_lookat_point(window->scene_viewer_array[2],
+								Scene_viewer_rotate_about_lookat_point(window->scene_viewer_array[2]->core_scene_viewer,
 									extra_axis,-0.25*PI);
-								Scene_viewer_rotate_about_lookat_point(window->scene_viewer_array[3],
+								Scene_viewer_rotate_about_lookat_point(window->scene_viewer_array[3]->core_scene_viewer,
 									view_left,-0.25*PI);
-								Scene_viewer_rotate_about_lookat_point(window->scene_viewer_array[3],
+								Scene_viewer_rotate_about_lookat_point(window->scene_viewer_array[3]->core_scene_viewer,
 									extra_axis,0.25*PI);
-								Scene_viewer_redraw_now(window->scene_viewer_array[1]);
-								Scene_viewer_redraw_now(window->scene_viewer_array[2]);
-								Scene_viewer_redraw_now(window->scene_viewer_array[3]);
+								Scene_viewer_app_redraw_now(window->scene_viewer_array[1]);
+								Scene_viewer_app_redraw_now(window->scene_viewer_array[2]);
+								Scene_viewer_app_redraw_now(window->scene_viewer_array[3]);
 							} break;
 							case 1:
 							{
-								Scene_viewer_rotate_about_lookat_point(window->scene_viewer_array[0],
+								Scene_viewer_rotate_about_lookat_point(window->scene_viewer_array[0]->core_scene_viewer,
 									view_left,-0.25*PI);
-								Scene_viewer_rotate_about_lookat_point(window->scene_viewer_array[0],
+								Scene_viewer_rotate_about_lookat_point(window->scene_viewer_array[0]->core_scene_viewer,
 									view,-0.25*PI);
-								Scene_viewer_rotate_about_lookat_point(window->scene_viewer_array[3],
+								Scene_viewer_rotate_about_lookat_point(window->scene_viewer_array[3]->core_scene_viewer,
 									view_left,-0.5*PI);
-								Scene_viewer_rotate_about_lookat_point(window->scene_viewer_array[2],
+								Scene_viewer_rotate_about_lookat_point(window->scene_viewer_array[2]->core_scene_viewer,
 									view_left,-0.5*PI);
-								Scene_viewer_rotate_about_lookat_point(window->scene_viewer_array[2],
+								Scene_viewer_rotate_about_lookat_point(window->scene_viewer_array[2]->core_scene_viewer,
 									view,-0.5*PI);
-								Scene_viewer_redraw_now(window->scene_viewer_array[0]);
-								Scene_viewer_redraw_now(window->scene_viewer_array[2]);
-								Scene_viewer_redraw_now(window->scene_viewer_array[3]);
+								Scene_viewer_app_redraw_now(window->scene_viewer_array[0]);
+								Scene_viewer_app_redraw_now(window->scene_viewer_array[2]);
+								Scene_viewer_app_redraw_now(window->scene_viewer_array[3]);
 							} break;
 							case 2:
 							{
@@ -6054,19 +6056,19 @@ current layout_mode, the function adjusts the view in all the panes tied to
 								extra_axis[1]=view_left[1]+view[1];
 								extra_axis[2]=view_left[2]+view[2];
 								normalize3(extra_axis);
-								Scene_viewer_rotate_about_lookat_point(window->scene_viewer_array[0],
+								Scene_viewer_rotate_about_lookat_point(window->scene_viewer_array[0]->core_scene_viewer,
 									up,0.25*PI);
-								Scene_viewer_rotate_about_lookat_point(window->scene_viewer_array[0],
+								Scene_viewer_rotate_about_lookat_point(window->scene_viewer_array[0]->core_scene_viewer,
 									extra_axis,0.25*PI);
-								Scene_viewer_rotate_about_lookat_point(window->scene_viewer_array[3],
+								Scene_viewer_rotate_about_lookat_point(window->scene_viewer_array[3]->core_scene_viewer,
 									up,0.5*PI);
-								Scene_viewer_rotate_about_lookat_point(window->scene_viewer_array[1],
+								Scene_viewer_rotate_about_lookat_point(window->scene_viewer_array[1]->core_scene_viewer,
 									up,0.5*PI);
-								Scene_viewer_rotate_about_lookat_point(window->scene_viewer_array[1],
+								Scene_viewer_rotate_about_lookat_point(window->scene_viewer_array[1]->core_scene_viewer,
 									view,0.5*PI);
-								Scene_viewer_redraw_now(window->scene_viewer_array[0]);
-								Scene_viewer_redraw_now(window->scene_viewer_array[1]);
-								Scene_viewer_redraw_now(window->scene_viewer_array[3]);
+								Scene_viewer_app_redraw_now(window->scene_viewer_array[0]);
+								Scene_viewer_app_redraw_now(window->scene_viewer_array[1]);
+								Scene_viewer_app_redraw_now(window->scene_viewer_array[3]);
 							} break;
 							case 3:
 							{
@@ -6075,17 +6077,17 @@ current layout_mode, the function adjusts the view in all the panes tied to
 								extra_axis[1]=view_left[1]-view[1];
 								extra_axis[2]=view_left[2]-view[2];
 								normalize3(extra_axis);
-								Scene_viewer_rotate_about_lookat_point(window->scene_viewer_array[0],
+								Scene_viewer_rotate_about_lookat_point(window->scene_viewer_array[0]->core_scene_viewer,
 									up,-0.25*PI);
-								Scene_viewer_rotate_about_lookat_point(window->scene_viewer_array[0],
+								Scene_viewer_rotate_about_lookat_point(window->scene_viewer_array[0]->core_scene_viewer,
 									extra_axis,0.25*PI);
-								Scene_viewer_rotate_about_lookat_point(window->scene_viewer_array[1],
+								Scene_viewer_rotate_about_lookat_point(window->scene_viewer_array[1]->core_scene_viewer,
 									view_left,0.5*PI);
-								Scene_viewer_rotate_about_lookat_point(window->scene_viewer_array[2],
+								Scene_viewer_rotate_about_lookat_point(window->scene_viewer_array[2]->core_scene_viewer,
 									up,-0.5*PI);
-								Scene_viewer_redraw_now(window->scene_viewer_array[0]);
-								Scene_viewer_redraw_now(window->scene_viewer_array[1]);
-								Scene_viewer_redraw_now(window->scene_viewer_array[2]);
+								Scene_viewer_app_redraw_now(window->scene_viewer_array[0]);
+								Scene_viewer_app_redraw_now(window->scene_viewer_array[1]);
+								Scene_viewer_app_redraw_now(window->scene_viewer_array[2]);
 							} break;
 						}
 					}
@@ -6102,10 +6104,10 @@ current layout_mode, the function adjusts the view in all the panes tied to
 								viewing volume (except for near and far) */
 							for (pane_no=1;pane_no<4;pane_no++)
 							{
-								Scene_viewer_set_lookat_parameters(window->scene_viewer_array[pane_no],
+								Scene_viewer_set_lookat_parameters(window->scene_viewer_array[pane_no]->core_scene_viewer,
 									eye[0],eye[1],eye[2],lookat[0],lookat[1],lookat[2],
 									up[0],up[1],up[2]);
-								Scene_viewer_set_viewing_volume(window->scene_viewer_array[pane_no],
+								Scene_viewer_set_viewing_volume(window->scene_viewer_array[pane_no]->core_scene_viewer,
 									left,right,bottom,top,near_plane[pane_no],far_plane[pane_no]);
 							}
 							/* now rotate all tied panes but the changed_pane to get the proper
@@ -6114,34 +6116,34 @@ current layout_mode, the function adjusts the view in all the panes tied to
 							{
 								case 1:
 								{
-									Scene_viewer_rotate_about_lookat_point(window->scene_viewer_array[3],
+									Scene_viewer_rotate_about_lookat_point(window->scene_viewer_array[3]->core_scene_viewer,
 										view_left,-0.5*PI);
-									Scene_viewer_rotate_about_lookat_point(window->scene_viewer_array[2],
+									Scene_viewer_rotate_about_lookat_point(window->scene_viewer_array[2]->core_scene_viewer,
 										view_left,-0.5*PI);
-									Scene_viewer_rotate_about_lookat_point(window->scene_viewer_array[2],
+									Scene_viewer_rotate_about_lookat_point(window->scene_viewer_array[2]->core_scene_viewer,
 										view,-0.5*PI);
-									Scene_viewer_redraw_now(window->scene_viewer_array[2]);
-									Scene_viewer_redraw_now(window->scene_viewer_array[3]);
+									Scene_viewer_app_redraw_now(window->scene_viewer_array[2]);
+									Scene_viewer_app_redraw_now(window->scene_viewer_array[3]);
 								} break;
 								case 2:
 								{
-									Scene_viewer_rotate_about_lookat_point(window->scene_viewer_array[3],
+									Scene_viewer_rotate_about_lookat_point(window->scene_viewer_array[3]->core_scene_viewer,
 										up,0.5*PI);
-									Scene_viewer_rotate_about_lookat_point(window->scene_viewer_array[1],
+									Scene_viewer_rotate_about_lookat_point(window->scene_viewer_array[1]->core_scene_viewer,
 										up,0.5*PI);
-									Scene_viewer_rotate_about_lookat_point(window->scene_viewer_array[1],
+									Scene_viewer_rotate_about_lookat_point(window->scene_viewer_array[1]->core_scene_viewer,
 										view,0.5*PI);
-									Scene_viewer_redraw_now(window->scene_viewer_array[1]);
-									Scene_viewer_redraw_now(window->scene_viewer_array[3]);
+									Scene_viewer_app_redraw_now(window->scene_viewer_array[1]);
+									Scene_viewer_app_redraw_now(window->scene_viewer_array[3]);
 								} break;
 								case 3:
 								{
-									Scene_viewer_rotate_about_lookat_point(window->scene_viewer_array[1],
+									Scene_viewer_rotate_about_lookat_point(window->scene_viewer_array[1]->core_scene_viewer,
 										view_left,0.5*PI);
-									Scene_viewer_rotate_about_lookat_point(window->scene_viewer_array[2],
+									Scene_viewer_rotate_about_lookat_point(window->scene_viewer_array[2]->core_scene_viewer,
 										up,-0.5*PI);
-									Scene_viewer_redraw_now(window->scene_viewer_array[1]);
-									Scene_viewer_redraw_now(window->scene_viewer_array[2]);
+									Scene_viewer_app_redraw_now(window->scene_viewer_array[1]);
+									Scene_viewer_app_redraw_now(window->scene_viewer_array[2]);
 								} break;
 							}
 						}
@@ -6167,10 +6169,10 @@ current layout_mode, the function adjusts the view in all the panes tied to
 						for (pane_no=0;pane_no<window->number_of_panes;pane_no++)
 						{
 							Graphics_window_set_projection_mode(window,pane_no,projection_mode);
-							Scene_viewer_set_lookat_parameters(window->scene_viewer_array[pane_no],
+							Scene_viewer_set_lookat_parameters(window->scene_viewer_array[pane_no]->core_scene_viewer,
 								eye[0],eye[1],eye[2],lookat[0],lookat[1],lookat[2],
 								up[0],up[1],up[2]);
-							Scene_viewer_set_viewing_volume(window->scene_viewer_array[pane_no],
+							Scene_viewer_set_viewing_volume(window->scene_viewer_array[pane_no]->core_scene_viewer,
 								left,right,bottom,top,near_plane[pane_no],far_plane[pane_no]);
 						}
 						/* now rotate all tied panes but the changed_pane to get the proper
@@ -6179,15 +6181,15 @@ current layout_mode, the function adjusts the view in all the panes tied to
 						{
 							case 0:
 							{
-								Scene_viewer_rotate_about_lookat_point(window->scene_viewer_array[1],
+								Scene_viewer_rotate_about_lookat_point(window->scene_viewer_array[1]->core_scene_viewer,
 									up,angle);
-								Scene_viewer_redraw_now(window->scene_viewer_array[1]);
+								Scene_viewer_app_redraw_now(window->scene_viewer_array[1]);
 							} break;
 							case 1:
 							{
-								Scene_viewer_rotate_about_lookat_point(window->scene_viewer_array[0],
+								Scene_viewer_rotate_about_lookat_point(window->scene_viewer_array[0]->core_scene_viewer,
 									up,-angle);
-								Scene_viewer_redraw_now(window->scene_viewer_array[0]);
+								Scene_viewer_app_redraw_now(window->scene_viewer_array[0]);
 							} break;
 						}
 					}
@@ -6205,10 +6207,10 @@ current layout_mode, the function adjusts the view in all the panes tied to
 							{
 								Graphics_window_set_projection_mode(window,pane_no,
 									projection_mode);
-								Scene_viewer_set_lookat_parameters(window->scene_viewer_array[pane_no],
+								Scene_viewer_set_lookat_parameters(window->scene_viewer_array[pane_no]->core_scene_viewer,
 									eye[0],eye[1],eye[2],lookat[0],lookat[1],lookat[2],
 									up[0],up[1],up[2]);
-								Scene_viewer_set_viewing_volume(window->scene_viewer_array[pane_no],
+								Scene_viewer_set_viewing_volume(window->scene_viewer_array[pane_no]->core_scene_viewer,
 									left,right,bottom,top,near_plane[pane_no],far_plane[pane_no]);
 							}
 							/* now rotate all tied panes but the changed_pane to get the proper
@@ -6221,15 +6223,15 @@ current layout_mode, the function adjusts the view in all the panes tied to
 							{
 								case 0:
 								{
-									Scene_viewer_rotate_about_lookat_point(window->scene_viewer_array[1],
+									Scene_viewer_rotate_about_lookat_point(window->scene_viewer_array[1]->core_scene_viewer,
 										up,-angle);
-									Scene_viewer_redraw_now(window->scene_viewer_array[1]);
+									Scene_viewer_app_redraw_now(window->scene_viewer_array[1]);
 								} break;
 								case 1:
 								{
-									Scene_viewer_rotate_about_lookat_point(window->scene_viewer_array[0],
+									Scene_viewer_rotate_about_lookat_point(window->scene_viewer_array[0]->core_scene_viewer,
 										up,angle);
-									Scene_viewer_redraw_now(window->scene_viewer_array[0]);
+									Scene_viewer_app_redraw_now(window->scene_viewer_array[0]);
 								} break;
 							}
 						}
@@ -6349,7 +6351,7 @@ Writes the properties of the <window> to the command window.
 ==============================================================================*/
 {
 	char line[80],*name, *opengl_version, *opengl_vendor, *opengl_extensions;
-	double bottom, depth_of_field, eye[3], far_plane, focal_depth, 
+	double bottom, depth_of_field, eye[3], far_plane, focal_depth,
 		horizontal_view_angle, left, lookat[3],
 		max_pixels_per_polygon, modelview_matrix[16],
 		NDC_height, NDC_left, NDC_top, NDC_width,
@@ -6375,7 +6377,7 @@ Writes the properties of the <window> to the command window.
 	if (window && window->scene_viewer_array)
 	{
 		display_message(INFORMATION_MESSAGE,"Graphics window : %s\n",window->name);
-		buffering_mode=Scene_viewer_get_buffering_mode(window->scene_viewer_array[0]);
+		buffering_mode=Scene_viewer_get_buffering_mode(window->scene_viewer_array[0]->core_scene_viewer);
 		if (buffering_mode)
 		{
 			display_message(INFORMATION_MESSAGE,"  %s\n",
@@ -6388,13 +6390,13 @@ Writes the properties of the <window> to the command window.
 			DEALLOCATE(name);
 		}
 		if (GET_NAME(Light_model)(
-			Scene_viewer_get_light_model(window->scene_viewer_array[0]),&name))
+			Scene_viewer_get_light_model(window->scene_viewer_array[0]->core_scene_viewer),&name))
 		{
 			display_message(INFORMATION_MESSAGE,"  light model: %s\n",name);
 			DEALLOCATE(name);
 		}
 		display_message(INFORMATION_MESSAGE,"  lights:\n");
-		for_each_Light_in_Scene_viewer(window->scene_viewer_array[0],list_Light_name,
+		for_each_Light_in_Scene_viewer(window->scene_viewer_array[0]->core_scene_viewer,list_Light_name,
 			(void *)"    ");
 		/* layout */
 		display_message(INFORMATION_MESSAGE,"  layout: %s\n",
@@ -6410,7 +6412,7 @@ Writes the properties of the <window> to the command window.
 		/* background and view in each active pane */
 		for (pane_no=0;pane_no<window->number_of_panes;pane_no++)
 		{
-			scene_viewer=window->scene_viewer_array[pane_no];
+			scene_viewer=window->scene_viewer_array[pane_no]->core_scene_viewer;
 			display_message(INFORMATION_MESSAGE,"  pane: %d\n",pane_no+1);
 			/* background */
 			Scene_viewer_get_background_colour(scene_viewer,&colour);
@@ -6567,14 +6569,14 @@ Writes the properties of the <window> to the command window.
 			(transparency_mode == SCENE_VIEWER_ORDER_INDEPENDENT_TRANSPARENCY))
 		{
 			Scene_viewer_get_transparency_layers(scene_viewer, &transparency_layers);
-			display_message(INFORMATION_MESSAGE,"    transparency_layers: %d\n", 
+			display_message(INFORMATION_MESSAGE,"    transparency_layers: %d\n",
 				transparency_layers);
 		}
 		display_message(INFORMATION_MESSAGE,
 			"  Current pane: %d\n",window->current_pane+1);
 		display_message(INFORMATION_MESSAGE,
 			"  Standard view angle: %g degrees\n",window->std_view_angle);
-		Scene_viewer_get_perturb_lines(window->scene_viewer_array[0],&perturb_lines);
+		Scene_viewer_get_perturb_lines(window->scene_viewer_array[0]->core_scene_viewer,&perturb_lines);
 		if (perturb_lines)
 		{
 			display_message(INFORMATION_MESSAGE,"  perturbed lines: on\n");
@@ -6583,7 +6585,7 @@ Writes the properties of the <window> to the command window.
 		{
 			display_message(INFORMATION_MESSAGE,"  perturbed lines: off\n");
 		}
-		Scene_viewer_get_antialias_mode(window->scene_viewer_array[0],&antialias);
+		Scene_viewer_get_antialias_mode(window->scene_viewer_array[0]->core_scene_viewer,&antialias);
 		if (antialias)
 		{
 			display_message(INFORMATION_MESSAGE,"  anti-aliasing at %d\n",antialias);
@@ -6592,7 +6594,7 @@ Writes the properties of the <window> to the command window.
 		{
 			display_message(INFORMATION_MESSAGE,"  no anti-aliasing\n");
 		}
-		Scene_viewer_get_depth_of_field(window->scene_viewer_array[0],
+		Scene_viewer_get_depth_of_field(window->scene_viewer_array[0]->core_scene_viewer,
 			&depth_of_field, &focal_depth);
 		if (depth_of_field > 0.0)
 		{
@@ -6603,7 +6605,7 @@ Writes the properties of the <window> to the command window.
 		{
 			display_message(INFORMATION_MESSAGE,"  infinite depth of field\n");
 		}
-		Scene_viewer_get_blending_mode(window->scene_viewer_array[0],&blending_mode);
+		Scene_viewer_get_blending_mode(window->scene_viewer_array[0]->core_scene_viewer,&blending_mode);
 		display_message(INFORMATION_MESSAGE,"  blending_mode: %s\n",
 			ENUMERATOR_STRING(Scene_viewer_blending_mode)(blending_mode));
 		/* OpenGL information */
@@ -6614,10 +6616,10 @@ Writes the properties of the <window> to the command window.
 			display_message(INFORMATION_MESSAGE,"  OpenGL Information\n");
 			display_message(INFORMATION_MESSAGE,"    Version %s\n", opengl_version);
 			display_message(INFORMATION_MESSAGE,"    Vendor %s\n", opengl_vendor);
-  			display_message(INFORMATION_MESSAGE,"    Visual ID %d\n",visual_id);
-  			display_message(INFORMATION_MESSAGE,"    Colour buffer depth %d\n",colour_buffer_depth);
-  			display_message(INFORMATION_MESSAGE,"    Depth buffer depth %d\n",depth_buffer_depth);
-  			display_message(INFORMATION_MESSAGE,"    Accumulation buffer depth %d\n",accumulation_buffer_depth);
+			display_message(INFORMATION_MESSAGE,"    Visual ID %d\n",visual_id);
+			display_message(INFORMATION_MESSAGE,"    Colour buffer depth %d\n",colour_buffer_depth);
+			display_message(INFORMATION_MESSAGE,"    Depth buffer depth %d\n",depth_buffer_depth);
+			display_message(INFORMATION_MESSAGE,"    Accumulation buffer depth %d\n",accumulation_buffer_depth);
 		}
 		sprintf(line,"  access count = %i\n",window->access_count);
 		display_message(INFORMATION_MESSAGE,line);
@@ -6641,7 +6643,7 @@ LAST MODIFIED : 15 August 2007
 
 DESCRIPTION :
 Writes the commands for creating the <window> and establishing the views in it
-to the command window. Or writes the commadns for creating the window 
+to the command window. Or writes the commadns for creating the window
 and establishing the views in it to the command window to a com file.
 ==============================================================================*/
 {
@@ -6673,7 +6675,7 @@ and establishing the views in it to the command window to a com file.
 			process_message->process_command(INFORMATION_MESSAGE,"gfx create window %s",name);
 			DEALLOCATE(name);
 		}
-		buffering_mode=Scene_viewer_get_buffering_mode(window->scene_viewer_array[0]);
+		buffering_mode=Scene_viewer_get_buffering_mode(window->scene_viewer_array[0]->core_scene_viewer);
 		if (buffering_mode)
 		{
 			process_message->process_command(INFORMATION_MESSAGE," %s",
@@ -6691,7 +6693,7 @@ and establishing the views in it to the command window to a com file.
 			DEALLOCATE(name);
 		}
 		if (GET_NAME(Light_model)(
-			Scene_viewer_get_light_model(window->scene_viewer_array[0]),&name))
+			Scene_viewer_get_light_model(window->scene_viewer_array[0]->core_scene_viewer),&name))
 		{
 			/* put quotes around name if it contains special characters */
 			make_valid_token(&name);
@@ -6700,7 +6702,7 @@ and establishing the views in it to the command window to a com file.
 		}
 		process_message->process_command(INFORMATION_MESSAGE,";\n");
 		sprintf(prefix,"gfx modify window %s image add_light ",window->name);
-		for_each_Light_in_Scene_viewer(window->scene_viewer_array[0],
+		for_each_Light_in_Scene_viewer(window->scene_viewer_array[0]->core_scene_viewer,
 			list_Light_name_command, (void *)prefix);
 		/* layout */
 		Graphics_window_get_viewing_area_size(window,&width,&height);
@@ -6713,7 +6715,7 @@ and establishing the views in it to the command window to a com file.
 		/* background and view in each active pane */
 		for (pane_no=0;pane_no<window->number_of_panes;pane_no++)
 		{
-			scene_viewer=window->scene_viewer_array[pane_no];
+			scene_viewer=window->scene_viewer_array[pane_no]->core_scene_viewer;
 			process_message->process_command(INFORMATION_MESSAGE,
 				"gfx modify window %s set current_pane %d;\n",
 				window->name,pane_no+1);
@@ -6834,7 +6836,7 @@ and establishing the views in it to the command window to a com file.
 			" current_pane %d",window->current_pane+1);
 		process_message->process_command(INFORMATION_MESSAGE,
 			" std_view_angle %g",window->std_view_angle);
-		Scene_viewer_get_perturb_lines(window->scene_viewer_array[0],&perturb_lines);
+		Scene_viewer_get_perturb_lines(window->scene_viewer_array[0]->core_scene_viewer,&perturb_lines);
 		if (perturb_lines)
 		{
 			process_message->process_command(INFORMATION_MESSAGE," perturb_lines");
@@ -6843,7 +6845,7 @@ and establishing the views in it to the command window to a com file.
 		{
 			process_message->process_command(INFORMATION_MESSAGE," normal_lines");
 		}
-		Scene_viewer_get_antialias_mode(window->scene_viewer_array[0],&antialias);
+		Scene_viewer_get_antialias_mode(window->scene_viewer_array[0]->core_scene_viewer,&antialias);
 		if (antialias)
 		{
 			process_message->process_command(INFORMATION_MESSAGE," antialias %d",antialias);
@@ -6852,7 +6854,7 @@ and establishing the views in it to the command window to a com file.
 		{
 			process_message->process_command(INFORMATION_MESSAGE," no_antialias");
 		}
-		Scene_viewer_get_depth_of_field(window->scene_viewer_array[0],
+		Scene_viewer_get_depth_of_field(window->scene_viewer_array[0]->core_scene_viewer,
 			&depth_of_field, &focal_depth);
 		if (depth_of_field > 0.0)
 		{
@@ -6872,7 +6874,7 @@ and establishing the views in it to the command window to a com file.
 			Scene_viewer_get_transparency_layers(scene_viewer, &transparency_layers);
 			process_message->process_command(INFORMATION_MESSAGE," %d",transparency_layers);
 		}
-		Scene_viewer_get_blending_mode(window->scene_viewer_array[0],&blending_mode);
+		Scene_viewer_get_blending_mode(window->scene_viewer_array[0]->core_scene_viewer,&blending_mode);
 		process_message->process_command(INFORMATION_MESSAGE," %s",
 			ENUMERATOR_STRING(Scene_viewer_blending_mode)(blending_mode));
 		process_message->process_command(INFORMATION_MESSAGE,";\n");
@@ -6897,7 +6899,7 @@ LAST MODIFIED : 15 August 2007
 
 DESCRIPTION :
 Writes the commands for creating the <window> and establishing the views in it
-to the command window. Or writes the commadns for creating the window 
+to the command window. Or writes the commadns for creating the window
 and establishing the views in it to the command window to a com file.
 ==============================================================================*/
 {
@@ -6923,7 +6925,7 @@ int write_Graphics_window_commands_to_comfile(struct Graphics_window *window,
 LAST MODIFIED : 15 August 2007
 
 DESCRIPTION :
-Writes the commadns for creating the window 
+Writes the commadns for creating the window
 and establishing the views in it to the command window to a com file.
 ==============================================================================*/
 {
@@ -6939,7 +6941,7 @@ and establishing the views in it to the command window to a com file.
 		delete write_message;
 	}
 	LEAVE;
-	
+
 	return (return_code);
 }
 
@@ -6982,7 +6984,7 @@ Which tool that is being modified is passed in <node_tool_void>.
 		 return_code=0;
 	}
 	LEAVE;
-	
+
 	return (return_code);
 } /* execute_command_gfx_node_tool */
 #endif /* defined (GTK_USER_INTERFACE) || defined
@@ -7457,4 +7459,4 @@ Returns the panel to embed the interactive tool into.
 	return (panel);
 } /* Graphics_window_get_interactive_tool_panel */
 #endif /* defined (WX_USER_INTERFACE) */
- 
+

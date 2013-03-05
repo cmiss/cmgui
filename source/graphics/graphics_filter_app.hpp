@@ -1,3 +1,6 @@
+
+
+
 /***************************************************************************//**
  * graphics_filter.hpp
  *
@@ -39,36 +42,19 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-#ifndef GRAPHICS_FILTER_HPP
-#define GRAPHICS_FILTER_HPP
+#ifndef GRAPHICS_FILTER_APP_HPP
+#define GRAPHICS_FILTER_APP_HPP
 
-extern "C" {
 #include "api/cmiss_scene.h"
 #include "general/list.h"
 #include "general/manager.h"
 #include "general/mystring.h"
 #include "general/object.h"
-}
 
 struct Cmiss_rendition;
 struct Cmiss_graphic;
 
-enum Cmiss_graphics_filter_type
-{
-	CMISS_GRAPHICS_FILTER_TYPE_INVALID,
-	CMISS_GRAPHICS_FILTER_TYPE_BASE,
-	CMISS_GRAPHICS_FILTER_TYPE_IDENTIFIER ,
-	CMISS_GRAPHICS_FILTER_TYPE_GRAPHIC_NAME,
-	CMISS_GRAPHICS_FILTER_TYPE_VISIBILITY_FLAGS ,
-	CMISS_GRAPHICS_FILTER_TYPE_REGION,
-	CMISS_GRAPHICS_FILTER_TYPE_OPERATOR,
-	CMISS_GRAPHICS_FILTER_TYPE_OPERATOR_AND,
-	CMISS_GRAPHICS_FILTER_TYPE_OPERATOR_OR
-};
-
 DECLARE_LIST_TYPES(Cmiss_graphics_filter);
-
-DECLARE_MANAGER_TYPES(Cmiss_graphics_filter);
 
 PROTOTYPE_OBJECT_FUNCTIONS(Cmiss_graphics_filter);
 PROTOTYPE_GET_OBJECT_NAME_FUNCTION(Cmiss_graphics_filter);
@@ -79,107 +65,6 @@ PROTOTYPE_FIND_BY_IDENTIFIER_IN_LIST_FUNCTION(Cmiss_graphics_filter,name,const c
 PROTOTYPE_MANAGER_FUNCTIONS(Cmiss_graphics_filter);
 PROTOTYPE_MANAGER_IDENTIFIER_FUNCTIONS(Cmiss_graphics_filter,name,const char *);
 
-
-class Cmiss_graphics_filter
-{
-private:
-	bool inverse;
-
-public:
-	enum Cmiss_graphics_filter_type filter_type;
-	char *name;
-	int access_count;
-	struct MANAGER(Cmiss_graphics_filter) *manager;
-	int manager_change_status;
-	bool is_managed_flag;
-
-
-	Cmiss_graphics_filter() :
-		inverse(false),
-		filter_type(CMISS_GRAPHICS_FILTER_TYPE_BASE),
-		name(NULL),
-		access_count(1),
-		manager(NULL),
-		manager_change_status(MANAGER_CHANGE_NONE(Cmiss_graphics_filter)),
-		is_managed_flag(false)
-	{
-	}
-
-	virtual ~Cmiss_graphics_filter()
-	{
-		DEALLOCATE(name);
-	}
-
-	virtual bool match(struct Cmiss_graphic *graphic) = 0;
-
-	bool setName(const char *name_in)
-	{
-		char *new_name = duplicate_string(name_in);
-		if (!new_name)
-			return false;
-		if (name)
-			DEALLOCATE(name);
-		name = new_name;
-		return true;
-	}
-
-	char *getName()
-	{
-		char *name_out = NULL;
-		if (name)
-		{
-			name_out = duplicate_string(name);
-		}
-
-		return name_out;
-	}
-
-	bool isInverse() const
-	{
-		return inverse;
-	}
-
-	bool setInverse(bool newInverse)
-	{
-		inverse = newInverse;
-		return true;
-	}
-
-	inline Cmiss_graphics_filter *access()
-	{
-		++access_count;
-		return this;
-	}
-	
-	enum Cmiss_graphics_filter_type getType()
-	{
-		return filter_type;
-	};
-
-	void list(const char *prefix) const
-	{
-		display_message(INFORMATION_MESSAGE, "%s %s %s", prefix, name, inverse ? "inverse_match " : "normal_match ");
-		list_type_specific();
-		display_message(INFORMATION_MESSAGE, ";\n");
-	}
-
-	virtual void list_type_specific() const = 0;
-
-	/**
-	 * override for filter types with that are functions of other filters to
-	 * prevent circular dependencies / infinite loops.
-	 * @return  true if this filter depends on other_filter, false if not.
-	 */
-	virtual bool depends_on_filter(const Cmiss_graphics_filter *other_filter) const
-	{
-		return (other_filter == this);
-	}
-
-	static inline int deaccess(Cmiss_graphics_filter **graphics_filter_address)
-	{
-		return DEACCESS(Cmiss_graphics_filter)(graphics_filter_address);
-	}
-};
 
 int Cmiss_graphics_filter_manager_set_owner_private(struct MANAGER(Cmiss_graphics_filter) *manager,
 	struct Cmiss_graphics_module *graphics_module);

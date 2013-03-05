@@ -40,11 +40,10 @@
  * the terms of any one of the MPL, the GPL or the LGPL.
  *
  * ***** END LICENSE BLOCK ***** */
-#if defined (BUILD_WITH_CMAKE)
+#if 1
 #include "configure/cmgui_configure.h"
-#endif /* defined (BUILD_WITH_CMAKE) */
+#endif /* defined (1) */
 
-extern "C" {
 #include "api/cmiss_core.h"
 #include "api/cmiss_graphics_module.h"
 #include "api/cmiss_field_finite_element.h"
@@ -61,8 +60,7 @@ extern "C" {
 #include "general/debug.h"
 #include "general/mystring.h"
 #include "node/node_viewer_wx.h"
-#include "user_interface/message.h"
-}
+#include "general/message.h"
 #if defined (WX_USER_INTERFACE)
 #include <wx/collpane.h>
 #include "wx/wx.h"
@@ -155,17 +153,17 @@ Module functions
 */
 
 class wxNodeViewer : public wxFrame
-{	
+{
 	 Node_viewer *node_viewer;
 	 wxPanel *node_text_panel;
 	 wxScrolledWindow *variable_viewer_panel;
 	 DEFINE_FE_region_FE_object_method_class(node);
- 	 FE_object_text_chooser< FE_node, FE_region_FE_object_method_class(node) > *node_text_chooser;
+	 FE_object_text_chooser< FE_node, FE_region_FE_object_method_class(node) > *node_text_chooser;
 	 wxFrame *frame;
 	 wxRegionChooser *region_chooser;
 public:
-	 
-	 wxNodeViewer(Node_viewer *node_viewer): 
+
+	 wxNodeViewer(Node_viewer *node_viewer):
 			node_viewer(node_viewer)
 	 {
 			wxXmlInit_node_viewer_wx();
@@ -177,8 +175,8 @@ public:
 				XRCCTRL(*this, "NodeTextPanel",wxPanel);
 			node_text_chooser =
 				new FE_object_text_chooser< FE_node, FE_region_FE_object_method_class(node) >(node_text_panel, node_viewer->current_node, node_viewer->fe_region, (LIST_CONDITIONAL_FUNCTION(FE_node) *)NULL, NULL);
-			Callback_base< FE_node* > *node_text_callback = 
-				(new Callback_member_callback< FE_node*, 
+			Callback_base< FE_node* > *node_text_callback =
+				(new Callback_member_callback< FE_node*,
 				wxNodeViewer, int (wxNodeViewer::*)(FE_node *) >
 				(this, &wxNodeViewer::node_text_callback));
 			node_text_chooser->set_callback(node_text_callback);
@@ -201,7 +199,7 @@ public:
 			frame->GetSize(&(node_viewer->frame_width), &(node_viewer->frame_height));
 			frame->Layout();
 	 };
-	 
+
 	 wxNodeViewer()
 	 {
 	 };
@@ -271,7 +269,7 @@ Callback from wxChooser<Computed_field> when choice is made.
 	{
 		USE_PARAMETER(event);
 		wxScrolledWindow *VariableViewer = XRCCTRL(*this,"VariableViewerPanel",wxScrolledWindow);
-		VariableViewer->Layout();	
+		VariableViewer->Layout();
 		frame = XRCCTRL(*this, "CmguiNodeViewer", wxFrame);
 		frame->SetMinSize(wxSize(50,100));
 		frame->SetMaxSize(wxSize(2000,2000));
@@ -293,7 +291,7 @@ after a collapsible pane is opened/closed.
 ==============================================================================*/
 	 {
 			int temp_width, temp_height;
-			
+
 	USE_PARAMETER(event);
 			frame = XRCCTRL(*this, "CmguiNodeViewer",wxFrame);
 			frame->Freeze();
@@ -311,7 +309,7 @@ after a collapsible pane is opened/closed.
 				 }
 			}
 			frame->Thaw();
-			frame->Layout();		
+			frame->Layout();
 	 }
 
 	 void Terminate(wxCloseEvent& event)
@@ -326,14 +324,14 @@ after a collapsible pane is opened/closed.
 		if (textctrl && node_viewer && field && node_viewer->current_node)
 		{
 			wxString wxValueString = textctrl->GetValue();
-			const char *value_string = wxValueString.c_str();
+			const char *value_string = wxValueString.mb_str(wxConvUTF8);
 			if (value_string != NULL)
 			{
 				int result = !CMISS_OK;
 				Cmiss_field_module_id field_module = Cmiss_field_get_field_module(field);
 				Cmiss_field_module_begin_change(field_module);
 				Cmiss_field_cache_id field_cache = Cmiss_field_module_create_cache(field_module);
-				double time = Cmiss_time_notifier_get_current_time(node_viewer->time_notifier);			 
+				double time = Cmiss_time_notifier_get_current_time(node_viewer->time_notifier);
 				Cmiss_field_cache_set_time(field_cache, time);
 				Cmiss_field_cache_set_node(field_cache, node_viewer->current_node);
 				enum Cmiss_field_value_type valueType = Cmiss_field_get_value_type(field);
@@ -380,12 +378,12 @@ after a collapsible pane is opened/closed.
 				char *temp_string = node_viewer_get_component_value_string(node_viewer, field, component_number, nodal_value_type, version);
 				if (temp_string != NULL)
 				{
-					textctrl->SetValue(temp_string);
+					textctrl->SetValue(wxString::FromAscii(temp_string));
 				}
 			}
 		}
 	}
-	 
+
 	 struct FE_node  *get_selected_node()
 	 {
 			return node_text_chooser->get_object();
@@ -396,7 +394,7 @@ after a collapsible pane is opened/closed.
 		  return node_text_chooser->set_object(new_node);
 	 }
 
-	 
+
 
   DECLARE_DYNAMIC_CLASS(wxNodeViewer);
   DECLARE_EVENT_TABLE();
@@ -422,7 +420,7 @@ class wxNodeViewerTextCtrl : public wxTextCtrl
 
 public:
 
-  wxNodeViewerTextCtrl(Node_viewer *node_viewer, 
+  wxNodeViewerTextCtrl(Node_viewer *node_viewer,
 		 Cmiss_field_id field,
 		 int component_number,
 		 enum Cmiss_nodal_value_type nodal_value_type,
@@ -454,23 +452,23 @@ static int node_viewer_add_collpane(Node_viewer *node_viewer,
 
 	// identifier is the name of the panel in the collapsible pane
 	// field_name is the name of the CollapsiblePane
-	node_viewer->win = panel->FindWindowByName(field_name);
+	node_viewer->win = panel->FindWindowByName(wxString::FromAscii(field_name));
 	if (node_viewer->win != NULL)
 	{
 		node_viewer->win->DestroyChildren();
 	}
 	else
 	{
-		wxCollapsiblePane *collapsiblepane = new wxCollapsiblePane(panel, /*id*/-1, field_name);
+		wxCollapsiblePane *collapsiblepane = new wxCollapsiblePane(panel, /*id*/-1, wxString::FromAscii(field_name));
 		wxSizer *sizer = panel->GetSizer();
 		sizer->Add(collapsiblepane, 0,wxALL, 5);
 		node_viewer->win = collapsiblepane->GetPane();
-		node_viewer->win->SetName(field_name);
+		node_viewer->win->SetName(wxString::FromAscii(field_name));
 	}
 
 	if (node_viewer->current_node && Cmiss_field_is_defined_at_location(field, field_cache))
 	{
- 		node_viewer_setup_components(node_viewer, node_viewer->current_node, field, time_varying_field);
+		node_viewer_setup_components(node_viewer, node_viewer->current_node, field, time_varying_field);
 		if (node_viewer->grid_field != NULL)
 		{
 			node_viewer->win->SetSizer(node_viewer->grid_field);
@@ -502,7 +500,8 @@ int Node_viewer_remove_unused_collpane(struct Node_viewer *node_viewer)
 		{
 			wxWindow *current = *iter;
 			wxWindow *child = ((wxCollapsiblePane *)current)->GetPane();
-			const char *field_name = child->GetName().GetData();
+			wxString tmpstr = child->GetName().GetData();
+			const char *field_name = tmpstr.mb_str(wxConvUTF8);
 			Cmiss_field_module_id fieldModule = Cmiss_region_get_field_module(node_viewer->region);
 			Cmiss_field_id field = Cmiss_field_module_find_field_by_name(fieldModule, field_name);
 			if (!field)
@@ -528,7 +527,7 @@ DESCRIPTION :
 	struct Node_viewer *node_viewer;
 
 	USE_PARAMETER(current_time);
-	if(time_notifier && (node_viewer = 
+	if(time_notifier && (node_viewer =
 			(struct Node_viewer *)node_viewer_void))
 	{
 // 		node_viewer_widget_update_values(node_viewer);
@@ -719,7 +718,7 @@ struct Node_viewer *Node_viewer_create(
 			node_viewer->init_height=0;
 			wxLogNull logNo;
 			node_viewer->wx_node_viewer = new wxNodeViewer(node_viewer);
-			node_viewer->collpane = 
+			node_viewer->collpane =
 				XRCCTRL(*node_viewer->wx_node_viewer, "VariableViewerPanel", wxScrolledWindow);
 			node_viewer->win=NULL;
 			wxBoxSizer *Collpane_sizer = new wxBoxSizer( wxVERTICAL );
@@ -727,11 +726,11 @@ struct Node_viewer *Node_viewer_create(
 			Node_viewer_update_collpane(node_viewer);
 			node_viewer->frame=
 				XRCCTRL(*node_viewer->wx_node_viewer, "CmguiNodeViewer", wxFrame);
-			node_viewer->frame->SetTitle(dialog_title);
+			node_viewer->frame->SetTitle(wxString::FromAscii(dialog_title));
 			node_viewer->frame->Layout();
 			node_viewer->frame->SetMinSize(wxSize(50,100));
 			node_viewer->collpane->Layout();
-#endif /* defined (WX_USER_INTERFACE) */	
+#endif /* defined (WX_USER_INTERFACE) */
 			if (node_viewer->current_node != 0)
 			{
 				/* select the node to be displayed in dialog; note this is ok
@@ -860,7 +859,7 @@ object cause updates.
 	struct Node_viewer *node_viewer;
 
 	ENTER(Node_viewer_Cmiss_region_change);
-	if (fe_region && changes && 
+	if (fe_region && changes &&
 		(node_viewer = (struct Node_viewer *)node_viewer_void))
 	{
 		 if (node_viewer->wx_node_viewer)
@@ -873,7 +872,7 @@ object cause updates.
 					 {
 							Node_viewer_set_viewer_node(node_viewer);
 					 }
-				}		
+				}
 		 }
 	}
 	else
@@ -949,27 +948,27 @@ Add textctrl box onto the viewer.
 ==============================================================================*/
 {
 	char *temp_string;
-	wxNodeViewerTextCtrl *node_viewer_text = 
+	wxNodeViewerTextCtrl *node_viewer_text =
 		new wxNodeViewerTextCtrl(node_viewer, field, component_number, nodal_value_type, version);
 	temp_string = node_viewer_get_component_value_string(
 		node_viewer, field, component_number, nodal_value_type, version);
 	if (temp_string != NULL)
 	{
-		node_viewer_text ->Create(node_viewer->win, -1, temp_string,wxDefaultPosition,
+		node_viewer_text ->Create(node_viewer->win, -1, wxString::FromAscii(temp_string),wxDefaultPosition,
 			wxDefaultSize,wxTE_PROCESS_ENTER);
 		DEALLOCATE(temp_string);
 	}
 	else
 	{
-		node_viewer_text->Create (node_viewer->win, -1, "ERROR",wxDefaultPosition,
-			wxDefaultSize,wxTE_PROCESS_ENTER);	
+		node_viewer_text->Create (node_viewer->win, -1, wxT("ERROR"),wxDefaultPosition,
+			wxDefaultSize,wxTE_PROCESS_ENTER);
 	}
 	node_viewer_text->Connect(wxEVT_COMMAND_TEXT_ENTER,
 		wxCommandEventHandler(wxNodeViewerTextCtrl::OnNodeViewerTextCtrlEntered));
 	node_viewer_text->Connect(wxEVT_KILL_FOCUS,
 		wxCommandEventHandler(wxNodeViewerTextCtrl::OnNodeViewerTextCtrlEntered));
 	node_viewer->grid_field->Add(node_viewer_text, 0,
-		wxALIGN_CENTER_VERTICAL|wxALIGN_CENTER_HORIZONTAL|wxADJUST_MINSIZE, 0); 
+		wxALIGN_CENTER_VERTICAL|wxALIGN_CENTER_HORIZONTAL|wxADJUST_MINSIZE, 0);
 	return (1);
 }
 
@@ -1035,13 +1034,13 @@ static int node_viewer_setup_components(
 
 		// first row is blank cell followed by nodal value type labels
 		node_viewer->grid_field = new wxGridSizer(
-			number_of_components + 1, number_of_nodal_value_types + 1, 1, 1);		
+			number_of_components + 1, number_of_nodal_value_types + 1, 1, 1);
 		node_viewer->grid_field->Add(new wxStaticText(
-			node_viewer->win, -1, wxT("")), 1, wxEXPAND|wxADJUST_MINSIZE, 0);	
+			node_viewer->win, -1, wxT("")), 1, wxEXPAND|wxADJUST_MINSIZE, 0);
 		for (int nodal_value_no = 0; nodal_value_no < number_of_nodal_value_types; ++nodal_value_no)
 		{
-			tmp_string = nodal_value_labels[nodal_value_no];
-			node_viewer->grid_field->Add(new wxStaticText(node_viewer->win, -1, wxT(tmp_string)),1,
+			tmp_string = wxString::FromAscii(nodal_value_labels[nodal_value_no]);
+			node_viewer->grid_field->Add(new wxStaticText(node_viewer->win, -1, tmp_string),1,
 				wxALIGN_CENTER_VERTICAL|
 				wxALIGN_CENTER_HORIZONTAL|wxADJUST_MINSIZE, 0);
 		}
@@ -1050,8 +1049,8 @@ static int node_viewer_setup_components(
 		{
 			// first column is component label */
 			char *new_string = Cmiss_field_get_component_name(field, comp_no);
-			tmp_string = new_string;
-			node_viewer->grid_field->Add(new wxStaticText(node_viewer->win, -1, wxT(tmp_string)),1,
+			tmp_string = wxString::FromAscii(new_string);
+			node_viewer->grid_field->Add(new wxStaticText(node_viewer->win, -1, tmp_string),1,
 				wxALIGN_CENTER_VERTICAL|
 				wxALIGN_CENTER_HORIZONTAL|wxADJUST_MINSIZE, 0);
 			Cmiss_deallocate(new_string);

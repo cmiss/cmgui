@@ -136,7 +136,7 @@ Sets the <command_string> in the command box of the CMISS command_window, ready
 for editing or entering. If there is no command_window, does nothing.
 ==============================================================================*/
 
-struct Cmiss_command_data *CREATE(Cmiss_command_data)(struct Context *context, 
+struct Cmiss_command_data *CREATE(Cmiss_command_data)(struct Cmiss_context_app *context,
 	struct User_interface_module *UI_module);
 
 /*******************************************************************************
@@ -149,7 +149,7 @@ Initialise all the subcomponents of cmgui and create the Cmiss_command_data
 /*******************************************************************************
  * Returns a new reference to the command data with reference count incremented.
  * Caller is responsible for destroying the new reference.
- * 
+ *
  * @param command_data  The command data to obtain a new reference to.
  * @return  New command data reference with incremented reference count.
  */
@@ -199,7 +199,7 @@ struct Execute_command *Cmiss_command_data_get_execute_command(
 LAST MODIFIED : 28 May 2003
 
 DESCRIPTION :
-Returns the execute command structure from the <command_data>, useful for 
+Returns the execute command structure from the <command_data>, useful for
 executing cmiss commands from C.
 ==============================================================================*/
 
@@ -261,11 +261,11 @@ will be NULL.
  * @param copyright_string  Copyright statement of the current build.
  * @param build_string  Machine information of the current build.
  * @param revision_string  Subversion revision number of the current build.
- * @return  user_interface_module if successfully create the user interface, 
+ * @return  user_interface_module if successfully create the user interface,
  *    otherwise NULL.
  */
-int Cmiss_command_data_set_cmgui_string(struct Cmiss_command_data *command_data, 
-	const char *name_string, const char *version_string,const char *date_string, 
+int Cmiss_command_data_set_cmgui_string(struct Cmiss_command_data *command_data,
+	const char *name_string, const char *version_string,const char *date_string,
 	const char *copyright_string, const char *build_string, const char *revision_string);
 
 /***************************************************************************//**
@@ -276,7 +276,7 @@ int Cmiss_command_data_set_cmgui_string(struct Cmiss_command_data *command_data,
  * @param command_line_options  pointer to command line options object.
  * @return  1 if successfully called otherwise 0.
  */
-int Cmiss_command_data_process_command_line(int argc, const char *argv[], 
+int Cmiss_command_data_process_command_line(int argc, const char *argv[],
 	struct Cmgui_command_line_options *command_line_options);
 
 #endif /* !defined (COMMAND_CMISS_H) */

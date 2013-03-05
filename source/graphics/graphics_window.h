@@ -49,9 +49,9 @@ interest and set scene_viewer values directly.
 #if !defined (GRAPHICS_WINDOW_H)
 #define GRAPHICS_WINDOW_H
 
-#if defined (BUILD_WITH_CMAKE)
+#if 1
 #include "configure/cmgui_configure.h"
-#endif /* defined (BUILD_WITH_CMAKE) */
+#endif /* defined (1) */
 #include "general/image_utilities.h"
 #include "general/list.h"
 #include "general/manager.h"
@@ -177,10 +177,10 @@ Global/Public functions
 */
 struct Graphics_window *CREATE(Graphics_window)(const char *name,
 	enum Graphics_window_buffering_mode buffering_mode,
-	enum Graphics_window_stereo_mode stereo_mode, 
+	enum Graphics_window_stereo_mode stereo_mode,
 	int minimum_colour_buffer_depth, int minimum_depth_buffer_depth,
 	int minimum_accumulation_buffer_depth,
-	struct Graphics_buffer_package *graphics_buffer_package,
+	struct Graphics_buffer_app_package *graphics_buffer_package,
 	struct Colour *background_colour,
 	struct MANAGER(Light) *light_manager,
 	struct Light *default_light,
@@ -200,9 +200,9 @@ manager it is to live in, since users will want to close windows with the
 window manager widgets.
 Each window has a unique <name> that can be used to identify it, and which
 will be printed on the windows title bar.
-If <minimum_colour_buffer_depth>, <minimum_depth_buffer_depth> or 
+If <minimum_colour_buffer_depth>, <minimum_depth_buffer_depth> or
 <minimum_accumulation_buffer_depth> are not zero then they are used to filter
-out the possible visuals selected for graphics_buffers.  If they are zero then 
+out the possible visuals selected for graphics_buffers.  If they are zero then
 the accumulation_buffer_depth are not tested and the maximum colour buffer depth is
 chosen.
 ==============================================================================*/
@@ -368,7 +368,7 @@ DESCRIPTION :
 Returns the Scene for the <graphics_window>.
 ==============================================================================*/
 
-struct Scene_viewer *Graphics_window_get_Scene_viewer(
+struct Scene_viewer_app *Graphics_window_get_Scene_viewer(
 	struct Graphics_window *window,int pane_no);
 /*******************************************************************************
 LAST MODIFIED : 5 October 1998

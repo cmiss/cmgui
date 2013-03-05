@@ -41,10 +41,10 @@ Interactive tool for selecting element/grid points with mouse and other devices.
  * the terms of any one of the MPL, the GPL or the LGPL.
  *
  * ***** END LICENSE BLOCK ***** */
-#if defined (BUILD_WITH_CMAKE)
+#if 1
 #include "configure/cmgui_configure.h"
-#endif /* defined (BUILD_WITH_CMAKE) */
-extern "C"{
+#endif /* defined (1) */
+
 #include "api/cmiss_field_module.h"
 #include "command/command.h"
 #include "computed_field/computed_field.h"
@@ -56,8 +56,7 @@ extern "C"{
 #include "interaction/interaction_graphics.h"
 #include "interaction/interaction_volume.h"
 #include "interaction/interactive_event.h"
-#include "user_interface/message.h"
-}
+#include "general/message.h"
 
 #if defined (WX_USER_INTERFACE)
 #include "wx/wx.h"
@@ -270,10 +269,6 @@ release.
 								picked_element_point);
 							clear_selection = !shift_pressed;
 							if (clear_selection)
-#if defined (OLD_CODE)
-								&&((!picked_element_point)||
-									(element_point_tool->picked_element_point_was_unselected))))
-#endif /*defined (OLD_CODE) */
 							{
 								Element_point_ranges_selection_begin_cache(
 									element_point_tool->element_point_ranges_selection);
@@ -443,10 +438,10 @@ class wxElementPointTool : public wxPanel
 	 *element_point_command_field_chooser;
 public:
 
-  wxElementPointTool(Element_point_tool *element_point_tool,wxPanel *parent ): 
-    element_point_tool(element_point_tool)
-  {	
-		{ 
+  wxElementPointTool(Element_point_tool *element_point_tool,wxPanel *parent ):
+	element_point_tool(element_point_tool)
+  {
+		{
 			wxXmlInit_element_point_tool();
 			wxXmlResource::Get()->LoadPanel(this,parent,_T("CmguiElementPointTool"));
 			elementpointcommandfieldcheckbox = XRCCTRL(*this, "ElementPointCommandFieldCheckBox",wxCheckBox);
@@ -460,8 +455,8 @@ public:
 				 new Managed_object_chooser<Computed_field,MANAGER_CLASS(Computed_field)>
 				 (element_point_command_field_chooser_panel, element_point_tool->command_field, computed_field_manager,
 						Computed_field_has_string_value_type, (void *)NULL, element_point_tool->user_interface);
-			Callback_base< Computed_field* > *element_point_command_field_callback = 
-				 new Callback_member_callback< Computed_field*, 
+			Callback_base< Computed_field* > *element_point_command_field_callback =
+				 new Callback_member_callback< Computed_field*,
 					wxElementPointTool, int (wxElementPointTool::*)(Computed_field *) >
 				 (this, &wxElementPointTool::element_point_command_field_callback);
 			element_point_command_field_chooser->set_callback(element_point_command_field_callback);
@@ -580,7 +575,7 @@ Function to call DESTROY
 
 static int Element_point_tool_copy_function(
 	void *destination_tool_void, void *source_tool_void,
-	struct MANAGER(Interactive_tool) *destination_tool_manager) 
+	struct MANAGER(Interactive_tool) *destination_tool_manager)
 /*******************************************************************************
 LAST MODIFIED : 29 March 2007
 
@@ -681,7 +676,7 @@ Creates an Element_point_tool with Interactive_tool in
 				Element_point_tool_interactive_event_handler,
 				Element_point_tool_bring_up_interactive_tool_dialog,
 				Element_point_tool_reset,
- 				Element_point_tool_destroy_element_point_tool,
+				Element_point_tool_destroy_element_point_tool,
 				Element_point_tool_copy_function,
 				(void *)element_point_tool);
 			ADD_OBJECT_TO_MANAGER(Interactive_tool)(
@@ -693,7 +688,7 @@ Creates an Element_point_tool with Interactive_tool in
 				(struct Interaction_volume *)NULL;
 			element_point_tool->rubber_band=(struct GT_object *)NULL;
 #if defined (WX_USER_INTERFACE) /* switch (USER_INTERFACE) */
- 			element_point_tool->wx_element_point_tool = (wxElementPointTool *)NULL;
+			element_point_tool->wx_element_point_tool = (wxElementPointTool *)NULL;
 #endif /* switch (USER_INTERFACE) */
 		}
 		else
@@ -810,7 +805,7 @@ struct Computed_field *Element_point_tool_get_command_field(
 LAST MODIFIED : 5 July 2002
 
 DESCRIPTION :
-Returns the command_field to be executed when the element is clicked on in the 
+Returns the command_field to be executed when the element is clicked on in the
 <element_point_tool>.
 ==============================================================================*/
 {
@@ -839,7 +834,7 @@ int Element_point_tool_set_command_field(
 LAST MODIFIED : 5 July 2002
 
 DESCRIPTION :
-Sets the command_field to be executed when the element is clicked on in the 
+Sets the command_field to be executed when the element is clicked on in the
 <element_point_tool>.
 ==============================================================================*/
 {
@@ -893,7 +888,7 @@ Returns the generic interactive_tool the represents the <element_point_tool>.
 	return (interactive_tool);
 } /* Element_tool_get_interactive_tool */
 
-int Element_point_tool_set_execute_command(struct Element_point_tool *element_point_tool, 
+int Element_point_tool_set_execute_command(struct Element_point_tool *element_point_tool,
 	struct Execute_command *execute_command)
 {
 	int return_code = 0;
@@ -907,6 +902,6 @@ int Element_point_tool_set_execute_command(struct Element_point_tool *element_po
 		display_message(ERROR_MESSAGE,
 			"Element_point_tool_set_execute_command.  Invalid argument(s)");
 	}
-	
+
 	return return_code;
 }

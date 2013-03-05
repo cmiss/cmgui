@@ -39,13 +39,11 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
+#include <iterator>
 #include "dialog/tessellation_dialog.hpp"
 #include "icon/cmiss_icon.xpm"
-#include <iterator>
-extern "C" {
-#include <graphics/graphics_module.h>
+#include "graphics/graphics_module.h"
 #include "general/debug.h"
-}
 
 TessellationItem::TessellationItem(wxWindow* parent, MANAGER(Cmiss_tessellation) *tessellation_manager_in,
 	Cmiss_tessellation *tessellation_in) :
@@ -57,14 +55,14 @@ TessellationItem::TessellationItem(wxWindow* parent, MANAGER(Cmiss_tessellation)
 	refinementChanged = 0;
 	divisionsChanged = 0;
 	char *name = Cmiss_tessellation_get_name(tessellation);
-	SetName(name);
+	SetName(wxString::FromAscii(name));
 	wxSizer *Sizer = parent->GetSizer();
 
 	Sizer->Add(this, 0, wxEXPAND | wxALL, 5);
 	tessellationLabel = new wxTextCtrl(this, wxID_ANY,
 			wxEmptyString, wxDefaultPosition, wxSize(-1, 25), wxBORDER_NONE
 					|wxTE_CENTRE | wxTE_PROCESS_ENTER | wxTE_PROCESS_TAB);
-	tessellationLabel->ChangeValue(name);
+	tessellationLabel->ChangeValue(wxString::FromAscii(name));
 	divisionsTextCtrl = new wxTextCtrl(this, wxID_ANY,
 		wxEmptyString, wxDefaultPosition, wxSize(-1, 25), wxTE_CENTRE
 		| wxTE_PROCESS_ENTER | wxTE_PROCESS_TAB);
@@ -132,18 +130,18 @@ void TessellationItem::update_divisions_string_for_dialog()
 		int *divisions = new int[number_of_divisions];
 		Cmiss_tessellation_get_minimum_divisions(tessellation,
 				number_of_divisions, divisions);
-		temp.Printf("%d", divisions[0]);
+		temp.Printf(wxString::FromAscii("%d"), divisions[0]);
 		for (i = 1; i < number_of_divisions; i++)
 		{
 			char temp_char[20];
 			sprintf(temp_char, "*%d", divisions[i]);
-			temp.append(temp_char);
+			temp.append(wxString::FromAscii(temp_char));
 		}
 		delete [] divisions;
 	}
 	else
 	{
-		temp.Printf("0");
+		temp.Printf(wxString::FromAscii("0"));
 	}
 	divisionsTextCtrl->ChangeValue(temp);
 }
@@ -159,18 +157,18 @@ void TessellationItem::update_refinement_string_for_dialog()
 		int *refinements = new int[number_of_refinements];
 		Cmiss_tessellation_get_refinement_factors(tessellation,
 				number_of_refinements, refinements);
-		temp.Printf("%d", refinements[0]);
+		temp.Printf(wxString::FromAscii("%d"), refinements[0]);
 		for (i = 1; i < number_of_refinements; i++)
 		{
 			char temp_char[20];
 			sprintf(temp_char, "*%d", refinements[i]);
-			temp.append(temp_char);
+			temp.append(wxString::FromAscii(temp_char));
 		}
 		delete [] refinements;
 	}
 	else
 	{
-		temp.Printf("0");
+		temp.Printf(wxString::FromAscii("0"));
 	}
 	refinementTextCtrl->ChangeValue(temp);
 }
@@ -188,7 +186,7 @@ void TessellationItem::OnTessellationTextEntered(wxCommandEvent& event)
 		{
 			wxString temp = textctrl->GetValue();
 			int size = 0, *values = NULL;
-			if (string_to_divisions(temp.c_str(), &values, &size))
+			if (string_to_divisions(temp.mb_str(wxConvUTF8), &values, &size))
 			{
 				refinementChanged = 1;
 			}
@@ -206,7 +204,7 @@ void TessellationItem::OnTessellationTextEntered(wxCommandEvent& event)
 		{
 			wxString temp = textctrl->GetValue();
 			int size = 0, *values = NULL;
-			if (string_to_divisions(temp.c_str(), &values, &size))
+			if (string_to_divisions(temp.mb_str(wxConvUTF8), &values, &size))
 			{
 				divisionsChanged = 1;
 			}
@@ -240,7 +238,7 @@ void TessellationItem::OnTessellationApplyPressed(wxCommandEvent& event)
 	{
 		wxString temp = refinementTextCtrl->GetValue();
 		int size = 0, *values = NULL;
-		if (string_to_divisions(temp.c_str(), &values, &size))
+		if (string_to_divisions(temp.mb_str(wxConvUTF8), &values, &size))
 		{
 			Cmiss_tessellation_set_refinement_factors(tessellation, size, values);
 		}
@@ -253,10 +251,10 @@ void TessellationItem::OnTessellationApplyPressed(wxCommandEvent& event)
 	if (labelChanged)
 	{
 		wxString temp = tessellationLabel->GetValue();
-		if (!Cmiss_tessellation_set_name(tessellation, temp.c_str()))
+		if (!Cmiss_tessellation_set_name(tessellation, temp.mb_str(wxConvUTF8)))
 		{
 			char *name = Cmiss_tessellation_get_name(tessellation);
-			tessellationLabel->ChangeValue(name);
+			tessellationLabel->ChangeValue(wxString::FromAscii(name));
 			DEALLOCATE(name);
 		}
 		else
@@ -269,7 +267,7 @@ void TessellationItem::OnTessellationApplyPressed(wxCommandEvent& event)
 	{
 		wxString temp = divisionsTextCtrl->GetValue();
 		int size = 0, *values = NULL;
-		if (string_to_divisions(temp.c_str(), &values, &size))
+		if (string_to_divisions(temp.mb_str(wxConvUTF8), &values, &size))
 		{
 			Cmiss_tessellation_set_minimum_divisions(tessellation, size, values);
 		}
@@ -288,8 +286,8 @@ void TessellationItem::update_global()
 	update_refinement_string_for_dialog();
 	update_divisions_string_for_dialog();
 	char *name = Cmiss_tessellation_get_name(tessellation);
-	tessellationLabel->ChangeValue(name);
-	SetName(name);
+	tessellationLabel->ChangeValue(wxString::FromAscii(name));
+	SetName(wxString::FromAscii(name));
 	DEALLOCATE(name);
 	labelChanged = 0;
 	refinementChanged = 0;
@@ -313,33 +311,33 @@ void TessellationManagerCallback(struct MANAGER_MESSAGE(Cmiss_tessellation) *mes
 
 TessellationDialog::TessellationDialog(Cmiss_graphics_module *graphics_module_in, wxWindow* parent,
 		int id, const wxPoint& pos, const wxSize& size):
-    wxDialog(parent, id, "Tessellation Editor", pos, size, wxDEFAULT_FRAME_STYLE|wxDIALOG_NO_PARENT)
+	wxDialog(parent, id, wxString::FromAscii("Tessellation Editor"), pos, size, wxDEFAULT_FRAME_STYLE|wxDIALOG_NO_PARENT)
 {
 		graphics_module = graphics_module_in;
 		tessellation_manager = Cmiss_graphics_module_get_tessellation_manager(graphics_module);
-    sizer_1_staticbox = new wxStaticBox(this, -1, wxEmptyString);
-    label_1 = new wxStaticText(this, wxID_ANY, wxT("Tessellation\n"), wxDefaultPosition,
-    	wxDefaultSize, wxALIGN_CENTRE);
-    label_2 = new wxStaticText(this, wxID_ANY, wxT("Minimum\n Divisions\n#*#*...\n"),
-    	wxDefaultPosition, wxDefaultSize, wxALIGN_CENTRE);
-    label_3 = new wxStaticText(this, wxID_ANY, wxT("Refinement\n Factors\n#*#*...\n"),
-    	wxDefaultPosition, wxDefaultSize, wxALIGN_CENTRE);
-    label_4 = new wxStaticText(this, wxID_ANY, wxT(""),
-    	wxDefaultPosition, wxDefaultSize, wxALIGN_CENTRE);
-    TessellationItemsPanel = new wxScrolledWindow(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxVSCROLL);
-    addNewButton = new wxButton(TessellationItemsPanel, wxID_ANY, wxT("add tessellation"),
-    	wxPoint(-1,-1), wxSize(-1,25), wxBU_EXACTFIT);
+	sizer_1_staticbox = new wxStaticBox(this, -1, wxEmptyString);
+	label_1 = new wxStaticText(this, wxID_ANY, wxT("Tessellation\n"), wxDefaultPosition,
+		wxDefaultSize, wxALIGN_CENTRE);
+	label_2 = new wxStaticText(this, wxID_ANY, wxT("Minimum\n Divisions\n#*#*...\n"),
+		wxDefaultPosition, wxDefaultSize, wxALIGN_CENTRE);
+	label_3 = new wxStaticText(this, wxID_ANY, wxT("Refinement\n Factors\n#*#*...\n"),
+		wxDefaultPosition, wxDefaultSize, wxALIGN_CENTRE);
+	label_4 = new wxStaticText(this, wxID_ANY, wxT(""),
+		wxDefaultPosition, wxDefaultSize, wxALIGN_CENTRE);
+	TessellationItemsPanel = new wxScrolledWindow(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxVSCROLL);
+	addNewButton = new wxButton(TessellationItemsPanel, wxID_ANY, wxT("add tessellation"),
+		wxPoint(-1,-1), wxSize(-1,25), wxBU_EXACTFIT);
 		this->SetIcon(cmiss_icon_xpm);
-    set_properties();
-    do_layout();
-    itemMap.clear();
-    create_managed_objects_table();
-    tessellation_manager_callback_id =
-   	MANAGER_REGISTER(Cmiss_tessellation)(TessellationManagerCallback,
-   	(void *)this, tessellation_manager);
-    addNewButton->Connect(wxEVT_COMMAND_BUTTON_CLICKED,
-   	wxCommandEventHandler(TessellationDialog::OnTessellationDialogAddNewPressed),
-   	NULL, this);
+	set_properties();
+	do_layout();
+	itemMap.clear();
+	create_managed_objects_table();
+	tessellation_manager_callback_id =
+	MANAGER_REGISTER(Cmiss_tessellation)(TessellationManagerCallback,
+	(void *)this, tessellation_manager);
+	addNewButton->Connect(wxEVT_COMMAND_BUTTON_CLICKED,
+	wxCommandEventHandler(TessellationDialog::OnTessellationDialogAddNewPressed),
+	NULL, this);
 }
 
 int TessellationDialog::add_managed_object(Cmiss_tessellation *tessellation)
@@ -371,25 +369,25 @@ void TessellationDialog::create_managed_objects_table()
 
 void TessellationDialog::set_properties()
 {
-    SetTitle(wxT("Tessellation Editor"));
+	SetTitle(wxT("Tessellation Editor"));
 }
 
 void TessellationDialog::do_layout()
 {
-    wxStaticBoxSizer* sizer_1 = new wxStaticBoxSizer(sizer_1_staticbox, wxVERTICAL);
-    wxBoxSizer* sizer_2 = new wxBoxSizer(wxHORIZONTAL);
+	wxStaticBoxSizer* sizer_1 = new wxStaticBoxSizer(sizer_1_staticbox, wxVERTICAL);
+	wxBoxSizer* sizer_2 = new wxBoxSizer(wxHORIZONTAL);
 		wxBoxSizer *panel_sizer = new wxBoxSizer( wxVERTICAL );
-    sizer_2->Add(label_1, 1, wxEXPAND|wxALIGN_CENTER_HORIZONTAL|wxALIGN_BOTTOM, 0);
-    sizer_2->Add(label_2, 1, wxEXPAND|wxALIGN_CENTER_HORIZONTAL|wxALIGN_BOTTOM, 0);
-    sizer_2->Add(label_3, 1, wxEXPAND|wxALIGN_CENTER_HORIZONTAL|wxALIGN_BOTTOM, 0);
-    sizer_2->Add(label_4, 1, wxEXPAND|wxALIGN_CENTER_HORIZONTAL|wxALIGN_BOTTOM, 0);
-    panel_sizer->Add(addNewButton, 0 ,wxALIGN_LEFT|wxALIGN_BOTTOM, 0);
-    TessellationItemsPanel->SetSizer(panel_sizer);
-    sizer_1->Add(sizer_2, 0, wxEXPAND, 0);
-    sizer_1->Add(TessellationItemsPanel, 1, wxEXPAND, 0);
-    SetSizer(sizer_1);
-    sizer_1->Fit(this);
-    Layout();
+	sizer_2->Add(label_1, 1, wxEXPAND|wxALIGN_CENTER_HORIZONTAL|wxALIGN_BOTTOM, 0);
+	sizer_2->Add(label_2, 1, wxEXPAND|wxALIGN_CENTER_HORIZONTAL|wxALIGN_BOTTOM, 0);
+	sizer_2->Add(label_3, 1, wxEXPAND|wxALIGN_CENTER_HORIZONTAL|wxALIGN_BOTTOM, 0);
+	sizer_2->Add(label_4, 1, wxEXPAND|wxALIGN_CENTER_HORIZONTAL|wxALIGN_BOTTOM, 0);
+	panel_sizer->Add(addNewButton, 0 ,wxALIGN_LEFT|wxALIGN_BOTTOM, 0);
+	TessellationItemsPanel->SetSizer(panel_sizer);
+	sizer_1->Add(sizer_2, 0, wxEXPAND, 0);
+	sizer_1->Add(TessellationItemsPanel, 1, wxEXPAND, 0);
+	SetSizer(sizer_1);
+	sizer_1->Fit(this);
+	Layout();
 }
 
 void TessellationDialog::OnTessellationDialogAddNewPressed(wxCommandEvent &event)

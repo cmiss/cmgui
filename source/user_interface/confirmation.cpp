@@ -41,11 +41,10 @@ Routines for waiting for user input.
  * the terms of any one of the MPL, the GPL or the LGPL.
  *
  * ***** END LICENSE BLOCK ***** */
-#if defined (BUILD_WITH_CMAKE)
+#if 1
 #include "configure/cmgui_configure.h"
-#endif /* defined (BUILD_WITH_CMAKE) */
+#endif /* defined (1) */
 
-extern "C" {
 #if defined (UNIX)
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -60,8 +59,7 @@ extern "C" {
 #include "user_interface/user_interface.h"
 #include "user_interface/confirmation.h"
 #include "user_interface/filedir.h"
-#include "user_interface/message.h"
-}
+#include "general/message.h"
 #if defined (WX_USER_INTERFACE)
 #include "wx/wx.h"
 #include <wx/tglbtn.h>
@@ -114,8 +112,8 @@ Module functions
 */
 
 static int confirmation(enum Confirm_type type,const char *title,const char *prompt,
-	 struct User_interface *user_interface 
-#if  defined (WX_USER_INTERFACE) 
+	 struct User_interface *user_interface
+#if  defined (WX_USER_INTERFACE)
 	 , struct Execute_command *execute_command
 #endif /* defined (WX_USER_INTERFACE) */
 												)
@@ -216,7 +214,7 @@ button is clicked.
 	return (return_code);
 } /* confirmation */
 
-static int confirmation_get_filename_callback(char *file_name,void *data_void)
+static int confirmation_get_filename_callback(const char *file_name,void *data_void)
 /*******************************************************************************
 LAST MODIFIED : 7 April 1998
 
@@ -286,7 +284,7 @@ DESCRIPTION :
 
 static char *confirmation_get_filename(enum Confirm_filetype type,
 	const char *extension,struct User_interface *user_interface
-#if defined (WX_USER_INTERFACE) 
+#if defined (WX_USER_INTERFACE)
 	 , struct Execute_command *execute_command
 #endif /* defined (WX_USER_INTERFACE) */
 )
@@ -315,7 +313,7 @@ This routine supplies a file selection dialog window
 				file_open_data=create_File_open_data(extension,REGULAR,
 					confirmation_get_filename_callback,(void *)&confirmation,0,
 					 user_interface
-#if defined (WX_USER_INTERFACE) 
+#if defined (WX_USER_INTERFACE)
 					 , execute_command
 #endif /* defined (WX_USER_INTERFACE) */
 );
@@ -325,7 +323,7 @@ This routine supplies a file selection dialog window
 				file_open_data=create_File_open_data((char *)NULL,DIRECTORY,
 					confirmation_get_filename_callback,(void *)&confirmation,0,
 					 user_interface
-#if defined (WX_USER_INTERFACE) 
+#if defined (WX_USER_INTERFACE)
 					 , execute_command
 #endif /* defined (WX_USER_INTERFACE) */
 																						 );
@@ -425,7 +423,7 @@ Global functions
 */
 int confirmation_warning_ok_cancel(const char *title,const char *prompt,
 	 struct User_interface *user_interface
-#if defined (WX_USER_INTERFACE) 
+#if defined (WX_USER_INTERFACE)
 	 , struct Execute_command *execute_command
 #endif /* defined (WX_USER_INTERFACE) */
 )
@@ -443,7 +441,7 @@ is clicked and 0 if the cancel button is clicked.
 	ENTER(confirmation_warning_ok_cancel);
 	return_code=confirmation(WARNING_OK_CANCEL,title,prompt,
 		 user_interface
-#if defined (WX_USER_INTERFACE) 
+#if defined (WX_USER_INTERFACE)
 		 , execute_command
 #endif /* defined (WX_USER_INTERFACE) */
 );
@@ -454,7 +452,7 @@ is clicked and 0 if the cancel button is clicked.
 
 int confirmation_error_ok(char *title,char *prompt,
 	struct User_interface *user_interface
-#if defined (WX_USER_INTERFACE) 
+#if defined (WX_USER_INTERFACE)
 	 , struct Execute_command *execute_command
 #endif /* defined (WX_USER_INTERFACE) */
 )
@@ -472,7 +470,7 @@ options are supplied.
 	ENTER(confirmation_error_ok);
 	return_code=confirmation(ERROR_OK,title,prompt,
 		user_interface
-#if defined (WX_USER_INTERFACE) 
+#if defined (WX_USER_INTERFACE)
 					 , execute_command
 #endif /* defined (WX_USER_INTERFACE) */
 );
@@ -483,7 +481,7 @@ options are supplied.
 
 int confirmation_information_ok(char *title,char *prompt,
 	struct User_interface *user_interface
-#if defined (WX_USER_INTERFACE) 
+#if defined (WX_USER_INTERFACE)
 	 , struct Execute_command *execute_command
 #endif /* defined (WX_USER_INTERFACE) */
 )
@@ -501,7 +499,7 @@ No other options are supplied.
 	ENTER(confirmation_information_ok);
 	return_code=confirmation(INFORMATION_OK,title,prompt,
 		 user_interface
-#if defined (WX_USER_INTERFACE) 
+#if defined (WX_USER_INTERFACE)
 					 , execute_command
 #endif /* defined (WX_USER_INTERFACE) */
 );
@@ -512,7 +510,7 @@ No other options are supplied.
 
 int confirmation_warning_ok(const char *title,const char *prompt,
 	struct User_interface *user_interface
-#if defined (WX_USER_INTERFACE) 
+#if defined (WX_USER_INTERFACE)
 	 , struct Execute_command *execute_command
 #endif /* defined (WX_USER_INTERFACE) */
 )
@@ -530,7 +528,7 @@ options are supplied.
 	ENTER(confirmation_warning_ok);
 	return_code=confirmation(WARNING_OK,title,prompt,
 		 user_interface
-#if defined (WX_USER_INTERFACE) 
+#if defined (WX_USER_INTERFACE)
 					 , execute_command
 #endif /* defined (WX_USER_INTERFACE) */
 );
@@ -541,7 +539,7 @@ options are supplied.
 
 int confirmation_question_yes_no(char *title,char *prompt,
 	struct User_interface *user_interface
-#if defined (WX_USER_INTERFACE) 
+#if defined (WX_USER_INTERFACE)
 	 , struct Execute_command *execute_command
 #endif /* defined (WX_USER_INTERFACE) */
 )
@@ -559,7 +557,7 @@ is clicked and No if it isn't.
 	ENTER(confirmation_question_yes_no);
 	return_code=confirmation(QUESTION_YES_NO,title,prompt,
 		user_interface
-#if defined (WX_USER_INTERFACE) 
+#if defined (WX_USER_INTERFACE)
 					 , execute_command
 #endif /* defined (WX_USER_INTERFACE) */
 );
@@ -570,7 +568,7 @@ is clicked and No if it isn't.
 
 char *confirmation_get_read_filename(const char *extension,
 	struct User_interface *user_interface
-#if defined (WX_USER_INTERFACE) 
+#if defined (WX_USER_INTERFACE)
 	 , struct Execute_command *execute_command
 #endif /* defined (WX_USER_INTERFACE) */
 )
@@ -585,7 +583,7 @@ This routine supplies a file selection dialog window
 
 	ENTER(confirmation_get_read_filename);
 	filename=confirmation_get_filename(CONFIRM_READ,extension,user_interface
-#if defined (WX_USER_INTERFACE) 
+#if defined (WX_USER_INTERFACE)
 					 , execute_command
 #endif /* defined (WX_USER_INTERFACE) */
 );
@@ -596,7 +594,7 @@ This routine supplies a file selection dialog window
 
 char *confirmation_get_write_filename(const char *extension,
 	struct User_interface *user_interface
-#if defined (WX_USER_INTERFACE) 
+#if defined (WX_USER_INTERFACE)
 	 , struct Execute_command *execute_command
 #endif /* defined (WX_USER_INTERFACE) */
 )
@@ -611,7 +609,7 @@ This routine supplies a file selection dialog window
 
 	ENTER(confirmation_get_write_filename);
 	filename=confirmation_get_filename(CONFIRM_WRITE,extension,user_interface
-#if defined (WX_USER_INTERFACE) 
+#if defined (WX_USER_INTERFACE)
 					 , execute_command
 #endif /* defined (WX_USER_INTERFACE) */
 );
@@ -622,7 +620,7 @@ This routine supplies a file selection dialog window
 
 char *confirmation_change_current_working_directory(
 	struct User_interface *user_interface
-#if defined (WX_USER_INTERFACE) 
+#if defined (WX_USER_INTERFACE)
 	 , struct Execute_command *execute_command
 #endif /* defined (WX_USER_INTERFACE) */
 )
@@ -639,7 +637,7 @@ working directory.  The new directory will be created if necessary.
 	ENTER(confirmation_change_current_working_directory);
 	filename=confirmation_get_filename(CONFIRM_CHANGE_DIRECTORY,(char *)NULL,
 		user_interface
-#if defined (WX_USER_INTERFACE) 
+#if defined (WX_USER_INTERFACE)
 					 , execute_command
 #endif /* defined (WX_USER_INTERFACE) */
 );

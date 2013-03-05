@@ -44,21 +44,20 @@ Create a cpp class that act as a transformation editor for the wx widgets.
 
 #include "transformation_editor_wx.hpp"
 
-extern "C"{
 #include "io_devices/matrix.h"
 #include "general/debug.h"
 #include "graphics/scene.h"
-#include "user_interface/message.h"
+#include "general/message.h"
 #include "user_interface/user_interface.h"
-}
+#include "command/parser.h"
 
-Transformation_editor::Transformation_editor(wxPanel *parent, const char *panel_name, 
+Transformation_editor::Transformation_editor(wxPanel *parent, const char *panel_name,
 	 struct Cmiss_rendition *rendition, int *auto_apply)
 /*******************************************************************************
 LAST MODIFIED : 5 March 2008
 
 DESCRIPTION :
-Initialised the variables and set up the widgets used in the 
+Initialised the variables and set up the widgets used in the
 transformation_editor;
 ==============================================================================*/
 {
@@ -82,7 +81,7 @@ transformation_editor;
 			global_quat[0] = 1;
 			global_quat[1] = 0;
 			global_quat[2] = 0;
-			global_quat[3] = 0;	
+			global_quat[3] = 0;
 	 }
 	 else
 	 {
@@ -112,53 +111,53 @@ transformation_editor;
 	 Transformation_editor_wx_position_lock_data_toggle_button = new wxToggleButton(transformation_editor_panel, wxID_ANY, wxT("Lock Data"), wxPoint(-1,-1), wxSize(-1,25));
 	 Transformation_editor_wx_position_link_resolution_toggle_button = new wxToggleButton(transformation_editor_panel, wxID_ANY, wxT("Link Resolution"), wxPoint(-1,-1), wxSize(-1,25));
 	 Transformation_editor_wx_position_label_1 = new wxStaticText(transformation_editor_panel, wxID_ANY, wxT("Coord System"), wxPoint(-1,-1), wxSize(-1,20));
-    const wxString Transformation_editor_wx_position_coord_system_choice_choices[] = {
+	const wxString Transformation_editor_wx_position_coord_system_choice_choices[] = {
 			 wxT("Rectangular Cartesian"),
 			 wxT("Cylindrical Polar"),
 			 wxT("Spherical Polar")
-    };
-    Transformation_editor_wx_position_coord_system_choice = new wxChoice(transformation_editor_panel, wxID_ANY, wxPoint(-1,-1), wxSize(-1,26), 3, Transformation_editor_wx_position_coord_system_choice_choices, 0);
-    Transformation_editor_wx_position_label_2 = new wxStaticText(transformation_editor_panel, wxID_ANY, wxT("Rate_of_change:"), wxPoint(-1,-1), wxSize(-1,30));
-    Transformation_editor_wx_position_slider_1 = new wxSlider(transformation_editor_panel, wxID_ANY, 0, -10, 10,  wxPoint(-1,-1), wxSize(-1,40), wxSL_HORIZONTAL|wxSL_LABELS);
-    Transformation_editor_wx_position_label_3 = new wxStaticText(transformation_editor_panel, wxID_ANY, wxT("  X Axis"), wxPoint(-1,-1), wxSize(-1,20));
-    Transformation_editor_wx_position_text_ctrl_x = new wxTextCtrl(transformation_editor_panel, wxID_ANY, wxEmptyString, wxPoint(-1,-1), wxSize(-1,20), wxTE_PROCESS_ENTER);
+	};
+	Transformation_editor_wx_position_coord_system_choice = new wxChoice(transformation_editor_panel, wxID_ANY, wxPoint(-1,-1), wxSize(-1,26), 3, Transformation_editor_wx_position_coord_system_choice_choices, 0);
+	Transformation_editor_wx_position_label_2 = new wxStaticText(transformation_editor_panel, wxID_ANY, wxT("Rate_of_change:"), wxPoint(-1,-1), wxSize(-1,30));
+	Transformation_editor_wx_position_slider_1 = new wxSlider(transformation_editor_panel, wxID_ANY, 0, -10, 10,  wxPoint(-1,-1), wxSize(-1,40), wxSL_HORIZONTAL|wxSL_LABELS);
+	Transformation_editor_wx_position_label_3 = new wxStaticText(transformation_editor_panel, wxID_ANY, wxT("  X Axis"), wxPoint(-1,-1), wxSize(-1,20));
+	Transformation_editor_wx_position_text_ctrl_x = new wxTextCtrl(transformation_editor_panel, wxID_ANY, wxEmptyString, wxPoint(-1,-1), wxSize(-1,20), wxTE_PROCESS_ENTER);
 		Transformation_editor_wx_position_spin_button_1 = new wxSpinButton(transformation_editor_panel, wxID_ANY, wxPoint(-1,-1), wxSize(-1,20), wxSP_ARROW_KEYS);
-    Transformation_editor_wx_position_label_4 = new wxStaticText(transformation_editor_panel, wxID_ANY, wxT("  Y Axis"), wxPoint(-1,-1), wxSize(-1,20));
-    Transformation_editor_wx_position_text_ctrl_y = new wxTextCtrl(transformation_editor_panel, wxID_ANY, wxEmptyString, wxPoint(-1,-1), wxSize(-1,20), wxTE_PROCESS_ENTER);
-    Transformation_editor_wx_position_spin_button_2 = new wxSpinButton(transformation_editor_panel, wxID_ANY, wxPoint(-1,-1), wxSize(-1,20), wxSP_ARROW_KEYS);
-    Transformation_editor_wx_position_label_5 = new wxStaticText(transformation_editor_panel, wxID_ANY, wxT("  Z Axis"), wxPoint(-1,-1), wxSize(-1,20));
-    Transformation_editor_wx_position_text_ctrl_z = new wxTextCtrl(transformation_editor_panel, wxID_ANY, wxEmptyString, wxPoint(-1,-1), wxSize(-1,20), wxTE_PROCESS_ENTER);
-    Transformation_editor_wx_position_spin_button_3 = new wxSpinButton(transformation_editor_panel, wxID_ANY, wxPoint(-1,-1), wxSize(-1,20), wxSP_ARROW_KEYS);
-    Transformation_editor_wx_position_label_6 = new wxStaticText(transformation_editor_panel, wxID_ANY, wxT("  Scale Factor"), wxPoint(-1,-1), wxSize(-1,20));
-    Transformation_editor_wx_position_text_ctrl_scale_factor = new wxTextCtrl(transformation_editor_panel, wxID_ANY, wxEmptyString, wxPoint(-1,-1), wxSize(-1,20), wxTE_PROCESS_ENTER);
-    Transformation_editor_wx_position_spin_button_4 = new wxSpinButton(transformation_editor_panel, wxID_ANY, wxPoint(-1,-1), wxSize(-1,20), wxSP_ARROW_KEYS);
-    Transformation_editor_wx_direction_save_button = new wxButton(transformation_editor_panel, wxID_ANY, wxT("Save"), wxPoint(-1,-1), wxSize(-1,25));
-    Transformation_editor_wx_direction_reset_button = new wxButton(transformation_editor_panel, wxID_ANY, wxT("Reset"), wxPoint(-1,-1), wxSize(-1,25));
-    Transformation_editor_wx_direction_lock_data_toggle_button = new wxToggleButton(transformation_editor_panel, wxID_ANY, wxT("Lock Data"), wxPoint(-1,-1), wxSize(-1,25));
-    Transformation_editor_wx_direction_link_resolution_toggle_button = new wxToggleButton(transformation_editor_panel, wxID_ANY, wxT("Link Resolution"), wxPoint(-1,-1), wxSize(-1,25));
-    Transformation_editor_wx_direction_label_1 = new wxStaticText(transformation_editor_panel, wxID_ANY, wxT("Coord System"), wxPoint(-1,-1), wxSize(-1,20));
-    const wxString Transformation_editor_wx_direction_coord_system_choice_choices[] = {
+	Transformation_editor_wx_position_label_4 = new wxStaticText(transformation_editor_panel, wxID_ANY, wxT("  Y Axis"), wxPoint(-1,-1), wxSize(-1,20));
+	Transformation_editor_wx_position_text_ctrl_y = new wxTextCtrl(transformation_editor_panel, wxID_ANY, wxEmptyString, wxPoint(-1,-1), wxSize(-1,20), wxTE_PROCESS_ENTER);
+	Transformation_editor_wx_position_spin_button_2 = new wxSpinButton(transformation_editor_panel, wxID_ANY, wxPoint(-1,-1), wxSize(-1,20), wxSP_ARROW_KEYS);
+	Transformation_editor_wx_position_label_5 = new wxStaticText(transformation_editor_panel, wxID_ANY, wxT("  Z Axis"), wxPoint(-1,-1), wxSize(-1,20));
+	Transformation_editor_wx_position_text_ctrl_z = new wxTextCtrl(transformation_editor_panel, wxID_ANY, wxEmptyString, wxPoint(-1,-1), wxSize(-1,20), wxTE_PROCESS_ENTER);
+	Transformation_editor_wx_position_spin_button_3 = new wxSpinButton(transformation_editor_panel, wxID_ANY, wxPoint(-1,-1), wxSize(-1,20), wxSP_ARROW_KEYS);
+	Transformation_editor_wx_position_label_6 = new wxStaticText(transformation_editor_panel, wxID_ANY, wxT("  Scale Factor"), wxPoint(-1,-1), wxSize(-1,20));
+	Transformation_editor_wx_position_text_ctrl_scale_factor = new wxTextCtrl(transformation_editor_panel, wxID_ANY, wxEmptyString, wxPoint(-1,-1), wxSize(-1,20), wxTE_PROCESS_ENTER);
+	Transformation_editor_wx_position_spin_button_4 = new wxSpinButton(transformation_editor_panel, wxID_ANY, wxPoint(-1,-1), wxSize(-1,20), wxSP_ARROW_KEYS);
+	Transformation_editor_wx_direction_save_button = new wxButton(transformation_editor_panel, wxID_ANY, wxT("Save"), wxPoint(-1,-1), wxSize(-1,25));
+	Transformation_editor_wx_direction_reset_button = new wxButton(transformation_editor_panel, wxID_ANY, wxT("Reset"), wxPoint(-1,-1), wxSize(-1,25));
+	Transformation_editor_wx_direction_lock_data_toggle_button = new wxToggleButton(transformation_editor_panel, wxID_ANY, wxT("Lock Data"), wxPoint(-1,-1), wxSize(-1,25));
+	Transformation_editor_wx_direction_link_resolution_toggle_button = new wxToggleButton(transformation_editor_panel, wxID_ANY, wxT("Link Resolution"), wxPoint(-1,-1), wxSize(-1,25));
+	Transformation_editor_wx_direction_label_1 = new wxStaticText(transformation_editor_panel, wxID_ANY, wxT("Coord System"), wxPoint(-1,-1), wxSize(-1,20));
+	const wxString Transformation_editor_wx_direction_coord_system_choice_choices[] = {
 			 wxT("Euler"),
 			 wxT("Quaternion")
-    };
-    Transformation_editor_wx_direction_coord_system_choice = new wxChoice(transformation_editor_panel, wxID_ANY, wxPoint(-1,-1), wxSize(-1,25), 2, Transformation_editor_wx_direction_coord_system_choice_choices, 0);
-    Transformation_editor_wx_direction_label_3 = new wxStaticText(
+	};
+	Transformation_editor_wx_direction_coord_system_choice = new wxChoice(transformation_editor_panel, wxID_ANY, wxPoint(-1,-1), wxSize(-1,25), 2, Transformation_editor_wx_direction_coord_system_choice_choices, 0);
+	Transformation_editor_wx_direction_label_3 = new wxStaticText(
 			 transformation_editor_panel, wxID_ANY, transformation_editor_direction_text[0][0], wxPoint(-1,-1), wxSize(-1,20));
-    Transformation_editor_wx_direction_text_ctrl_1 = new wxTextCtrl(transformation_editor_panel, wxID_ANY, wxEmptyString, wxPoint(-1,-1), wxSize(-1,20), wxTE_PROCESS_ENTER);
+	Transformation_editor_wx_direction_text_ctrl_1 = new wxTextCtrl(transformation_editor_panel, wxID_ANY, wxEmptyString, wxPoint(-1,-1), wxSize(-1,20), wxTE_PROCESS_ENTER);
 		Transformation_editor_wx_direction_spin_button_1 = new wxSpinButton(transformation_editor_panel, wxID_ANY, wxPoint(-1,-1), wxSize(-1,20), wxSP_ARROW_KEYS);
-    Transformation_editor_wx_direction_label_4 = new wxStaticText(transformation_editor_panel, wxID_ANY, transformation_editor_direction_text[0][1], wxPoint(-1,-1), wxSize(-1,20));
-    Transformation_editor_wx_direction_text_ctrl_2 = new wxTextCtrl(transformation_editor_panel, wxID_ANY, wxEmptyString,wxPoint(-1,-1), wxSize(-1,20), wxTE_PROCESS_ENTER);
+	Transformation_editor_wx_direction_label_4 = new wxStaticText(transformation_editor_panel, wxID_ANY, transformation_editor_direction_text[0][1], wxPoint(-1,-1), wxSize(-1,20));
+	Transformation_editor_wx_direction_text_ctrl_2 = new wxTextCtrl(transformation_editor_panel, wxID_ANY, wxEmptyString,wxPoint(-1,-1), wxSize(-1,20), wxTE_PROCESS_ENTER);
 		Transformation_editor_wx_direction_spin_button_2 = new wxSpinButton(transformation_editor_panel, wxID_ANY, wxPoint(-1,-1), wxSize(-1,20), wxSP_ARROW_KEYS);
-    Transformation_editor_wx_direction_label_5 = new wxStaticText(transformation_editor_panel, wxID_ANY, transformation_editor_direction_text[0][2], wxPoint(-1,-1), wxSize(-1,20));
-    Transformation_editor_wx_direction_text_ctrl_3 = new wxTextCtrl(transformation_editor_panel, wxID_ANY, wxEmptyString, wxPoint(-1,-1), wxSize(-1,20), wxTE_PROCESS_ENTER);
+	Transformation_editor_wx_direction_label_5 = new wxStaticText(transformation_editor_panel, wxID_ANY, transformation_editor_direction_text[0][2], wxPoint(-1,-1), wxSize(-1,20));
+	Transformation_editor_wx_direction_text_ctrl_3 = new wxTextCtrl(transformation_editor_panel, wxID_ANY, wxEmptyString, wxPoint(-1,-1), wxSize(-1,20), wxTE_PROCESS_ENTER);
 		Transformation_editor_wx_direction_spin_button_3 = new wxSpinButton(transformation_editor_panel, wxID_ANY, wxPoint(-1,-1), wxSize(-1,20), wxSP_ARROW_KEYS);
-    Transformation_editor_wx_direction_label_6 = new wxStaticText(transformation_editor_panel, wxID_ANY, wxT("  W"), wxPoint(-1,-1), wxSize(-1,20));
-    Transformation_editor_wx_direction_text_ctrl_4 = new wxTextCtrl(transformation_editor_panel, wxID_ANY, wxEmptyString, wxPoint(-1,-1), wxSize(-1,20), wxTE_PROCESS_ENTER);
+	Transformation_editor_wx_direction_label_6 = new wxStaticText(transformation_editor_panel, wxID_ANY, wxT("  W"), wxPoint(-1,-1), wxSize(-1,20));
+	Transformation_editor_wx_direction_text_ctrl_4 = new wxTextCtrl(transformation_editor_panel, wxID_ANY, wxEmptyString, wxPoint(-1,-1), wxSize(-1,20), wxTE_PROCESS_ENTER);
 		Transformation_editor_wx_direction_spin_button_4 = new wxSpinButton(transformation_editor_panel, wxID_ANY, wxPoint(-1,-1), wxSize(-1,20), wxSP_ARROW_KEYS);
 
 		connect_callback();
-    set_properties();
-    do_layout();
+	set_properties();
+	do_layout();
 }
 
 
@@ -193,12 +192,12 @@ Set properties for some of the widgets component;
 	 Transformation_editor_wx_direction_spin_button_1->SetRange(-100000,100000);
 	 Transformation_editor_wx_direction_spin_button_2->SetRange(-100000,100000);
 	 Transformation_editor_wx_direction_spin_button_3->SetRange(-100000,100000);
- 	 Transformation_editor_wx_direction_label_6->Hide();
- 	 Transformation_editor_wx_direction_text_ctrl_4->Hide();
- 	 Transformation_editor_wx_direction_spin_button_4->Hide();
+	 Transformation_editor_wx_direction_label_6->Hide();
+	 Transformation_editor_wx_direction_text_ctrl_4->Hide();
+	 Transformation_editor_wx_direction_spin_button_4->Hide();
 	 direction_sizer_13_staticbox->Hide();
 	 Transformation_editor_wx_direction_spin_button_4->SetRange(-100000,100000);
- 	 Transformation_editor_wx_position_spin_button_4->Hide();
+	 Transformation_editor_wx_position_spin_button_4->Hide();
 }
 
 void Transformation_editor::connect_callback()
@@ -209,60 +208,60 @@ DESCRIPTION :
 Connect the widgets to a callback function.
 ==============================================================================*/
 {
-		Transformation_editor_wx_position_slider_1->Connect(wxEVT_SCROLL_THUMBTRACK, 
+		Transformation_editor_wx_position_slider_1->Connect(wxEVT_SCROLL_THUMBTRACK,
 			 wxCommandEventHandler(Transformation_editor::OnTransformationEditorRateofChangeSliderChanged),
 			NULL, this);
-		Transformation_editor_wx_position_slider_1->Connect(wxEVT_SCROLL_THUMBRELEASE, 
+		Transformation_editor_wx_position_slider_1->Connect(wxEVT_SCROLL_THUMBRELEASE,
 			wxCommandEventHandler(Transformation_editor::OnTransformationEditorRateofChangeSliderChanged),
 			NULL, this);
 
-		Transformation_editor_wx_position_text_ctrl_x->Connect(wxEVT_COMMAND_TEXT_ENTER, 
+		Transformation_editor_wx_position_text_ctrl_x->Connect(wxEVT_COMMAND_TEXT_ENTER,
 			wxCommandEventHandler(Transformation_editor::OnTransformationEditorTextEntered),
 			NULL, this);
-		Transformation_editor_wx_position_text_ctrl_x->Connect(wxEVT_KILL_FOCUS, 
+		Transformation_editor_wx_position_text_ctrl_x->Connect(wxEVT_KILL_FOCUS,
 			wxCommandEventHandler(Transformation_editor::OnTransformationEditorTextEntered),
 			NULL, this);
-		Transformation_editor_wx_position_text_ctrl_y->Connect(wxEVT_COMMAND_TEXT_ENTER, 
+		Transformation_editor_wx_position_text_ctrl_y->Connect(wxEVT_COMMAND_TEXT_ENTER,
 			wxCommandEventHandler(Transformation_editor::OnTransformationEditorTextEntered),
 			NULL, this);
-		Transformation_editor_wx_position_text_ctrl_y->Connect(wxEVT_KILL_FOCUS, 
+		Transformation_editor_wx_position_text_ctrl_y->Connect(wxEVT_KILL_FOCUS,
 			wxCommandEventHandler(Transformation_editor::OnTransformationEditorTextEntered),
 			NULL, this);
-		Transformation_editor_wx_position_text_ctrl_z->Connect(wxEVT_COMMAND_TEXT_ENTER, 
+		Transformation_editor_wx_position_text_ctrl_z->Connect(wxEVT_COMMAND_TEXT_ENTER,
 			wxCommandEventHandler(Transformation_editor::OnTransformationEditorTextEntered),
 			NULL, this);
-		Transformation_editor_wx_position_text_ctrl_z->Connect(wxEVT_KILL_FOCUS, 
+		Transformation_editor_wx_position_text_ctrl_z->Connect(wxEVT_KILL_FOCUS,
 			wxCommandEventHandler(Transformation_editor::OnTransformationEditorTextEntered),
 			NULL, this);
-		Transformation_editor_wx_position_text_ctrl_scale_factor->Connect(wxEVT_COMMAND_TEXT_ENTER, 
+		Transformation_editor_wx_position_text_ctrl_scale_factor->Connect(wxEVT_COMMAND_TEXT_ENTER,
 			wxCommandEventHandler(Transformation_editor::OnTransformationEditorTextEntered),
 			NULL, this);
-		Transformation_editor_wx_position_text_ctrl_scale_factor->Connect(wxEVT_KILL_FOCUS, 
+		Transformation_editor_wx_position_text_ctrl_scale_factor->Connect(wxEVT_KILL_FOCUS,
 			wxCommandEventHandler(Transformation_editor::OnTransformationEditorTextEntered),
 			NULL, this);
 
-		Transformation_editor_wx_direction_text_ctrl_1->Connect(wxEVT_COMMAND_TEXT_ENTER, 
+		Transformation_editor_wx_direction_text_ctrl_1->Connect(wxEVT_COMMAND_TEXT_ENTER,
 			wxCommandEventHandler(Transformation_editor::OnTransformationEditorTextEntered),
 			NULL, this);
-		Transformation_editor_wx_direction_text_ctrl_1->Connect(wxEVT_KILL_FOCUS, 
+		Transformation_editor_wx_direction_text_ctrl_1->Connect(wxEVT_KILL_FOCUS,
 			wxCommandEventHandler(Transformation_editor::OnTransformationEditorTextEntered),
 			NULL, this);
-		Transformation_editor_wx_direction_text_ctrl_2->Connect(wxEVT_COMMAND_TEXT_ENTER, 
+		Transformation_editor_wx_direction_text_ctrl_2->Connect(wxEVT_COMMAND_TEXT_ENTER,
 			wxCommandEventHandler(Transformation_editor::OnTransformationEditorTextEntered),
 			NULL, this);
-		Transformation_editor_wx_direction_text_ctrl_2->Connect(wxEVT_KILL_FOCUS, 
+		Transformation_editor_wx_direction_text_ctrl_2->Connect(wxEVT_KILL_FOCUS,
 			wxCommandEventHandler(Transformation_editor::OnTransformationEditorTextEntered),
 			NULL, this);
-		Transformation_editor_wx_direction_text_ctrl_3->Connect(wxEVT_COMMAND_TEXT_ENTER, 
+		Transformation_editor_wx_direction_text_ctrl_3->Connect(wxEVT_COMMAND_TEXT_ENTER,
 			wxCommandEventHandler(Transformation_editor::OnTransformationEditorTextEntered),
 			NULL, this);
-		Transformation_editor_wx_direction_text_ctrl_3->Connect(wxEVT_KILL_FOCUS, 
+		Transformation_editor_wx_direction_text_ctrl_3->Connect(wxEVT_KILL_FOCUS,
 			wxCommandEventHandler(Transformation_editor::OnTransformationEditorTextEntered),
 			NULL, this);
-		Transformation_editor_wx_direction_text_ctrl_4->Connect(wxEVT_COMMAND_TEXT_ENTER, 
+		Transformation_editor_wx_direction_text_ctrl_4->Connect(wxEVT_COMMAND_TEXT_ENTER,
 			wxCommandEventHandler(Transformation_editor::OnTransformationEditorTextEntered),
 			NULL, this);
-		Transformation_editor_wx_direction_text_ctrl_4->Connect(wxEVT_KILL_FOCUS, 
+		Transformation_editor_wx_direction_text_ctrl_4->Connect(wxEVT_KILL_FOCUS,
 			wxCommandEventHandler(Transformation_editor::OnTransformationEditorTextEntered),
 			NULL, this);
 
@@ -371,7 +370,7 @@ Setup the layout for transformation editor.
 	 position_sizer_13->Add(Transformation_editor_wx_position_label_6, 0, wxEXPAND|wxALIGN_CENTER_HORIZONTAL, 0);
 	 position_sizer_14->Add(Transformation_editor_wx_position_text_ctrl_scale_factor, 1, 0, 0);
 	 position_sizer_14->Add(Transformation_editor_wx_position_spin_button_4, 0, 0, 0);
- 	 position_sizer_13->Add(position_sizer_14, 1, wxEXPAND, 0);
+	 position_sizer_13->Add(position_sizer_14, 1, wxEXPAND, 0);
 	 position_sizer_5->Add(position_sizer_13, 1, wxEXPAND, 0);
 	 position_sizer_6->Add(Transformation_editor_wx_position_label_3, 0, wxEXPAND|wxALIGN_CENTER_HORIZONTAL, 0);
 	 position_sizer_10->Add(Transformation_editor_wx_position_text_ctrl_x, 1, 0, 0);
@@ -402,7 +401,7 @@ Setup the layout for transformation editor.
 	 direction_sizer_13->Add(Transformation_editor_wx_direction_label_6, 0, wxEXPAND|wxALIGN_CENTER_HORIZONTAL, 0);
 	 direction_sizer_14->Add(Transformation_editor_wx_direction_text_ctrl_4, 1, 0, 0);
 	 direction_sizer_14->Add(Transformation_editor_wx_direction_spin_button_4, 0, 0, 0);
- 	 direction_sizer_13->Add(direction_sizer_14, 1, wxEXPAND, 0);
+	 direction_sizer_13->Add(direction_sizer_14, 1, wxEXPAND, 0);
 	 direction_sizer_5->Add(direction_sizer_13, 1, wxEXPAND, 0);
 	 direction_sizer_6->Add(Transformation_editor_wx_direction_label_3, 0, wxEXPAND|wxALIGN_CENTER_HORIZONTAL, 0);
 	 direction_sizer_10->Add(Transformation_editor_wx_direction_text_ctrl_1, 1, 0, 0);
@@ -437,11 +436,11 @@ Sets the <transformation_editor> to update the value shown in the widgets with t
 transformation encoded in 4x4 <transformation_matrix>.
 ==============================================================================*/
 {
-	 char temp_str[20], temp_string[50];
+	 char temp_str[50];
 	 int i, j, k, return_code;
 	 Gmatrix gmatrix;
 	 double *values;
-	 gtMatrix resolved_transformation_matrix, *matrix; 
+	 gtMatrix resolved_transformation_matrix, *matrix;
 	 gtMatrix default_initial_transformation_matrix =
 		 {
 			 { 1.0, 0.0, 0.0, 0.0 },
@@ -471,9 +470,9 @@ transformation encoded in 4x4 <transformation_matrix>.
 							 (*matrix)[i][j];
 				 }
 			}
-			
+
 			/* 1. convert gtMatrix into position and direction vectors, if possible */
-			
+
 			/* clear direction in case following fails */
 			global_direction.data[0] = 0;
 			global_direction.data[1] = 0;
@@ -493,11 +492,11 @@ transformation encoded in 4x4 <transformation_matrix>.
 				 /* convert the matrix to Euler angles */
 				 matrix_euler(&gmatrix, &global_direction);
 				 sprintf(temp_str, DOF3_NUM_FORMAT, global_direction.data[0]);
-				 Transformation_editor_wx_direction_text_ctrl_1->ChangeValue(temp_str);
+				 Transformation_editor_wx_direction_text_ctrl_1->ChangeValue(wxString::FromAscii(temp_str));
 				 sprintf(temp_str, DOF3_NUM_FORMAT, global_direction.data[1]);
-				 Transformation_editor_wx_direction_text_ctrl_2->ChangeValue(temp_str);
+				 Transformation_editor_wx_direction_text_ctrl_2->ChangeValue(wxString::FromAscii(temp_str));
 				 sprintf(temp_str, DOF3_NUM_FORMAT, global_direction.data[2]);
-				 Transformation_editor_wx_direction_text_ctrl_3->ChangeValue(temp_str);
+				 Transformation_editor_wx_direction_text_ctrl_3->ChangeValue(wxString::FromAscii(temp_str));
 			}
 			else if (direction_system_index == 1)
 			{
@@ -520,13 +519,13 @@ transformation encoded in 4x4 <transformation_matrix>.
 				 }
 				 transformation_editor_quaternion->matrix_to_quaternion(values, global_quat);
 				 sprintf(temp_str, DOF3_NUM_FORMAT, global_quat[0]);
-				 Transformation_editor_wx_direction_text_ctrl_4->ChangeValue(temp_str);
+				 Transformation_editor_wx_direction_text_ctrl_4->ChangeValue(wxString::FromAscii(temp_str));
 				 sprintf(temp_str, DOF3_NUM_FORMAT, global_quat[1]);
-				 Transformation_editor_wx_direction_text_ctrl_1->ChangeValue(temp_str);
+				 Transformation_editor_wx_direction_text_ctrl_1->ChangeValue(wxString::FromAscii(temp_str));
 				 sprintf(temp_str, DOF3_NUM_FORMAT, global_quat[2]);
-				 Transformation_editor_wx_direction_text_ctrl_2->ChangeValue(temp_str);
+				 Transformation_editor_wx_direction_text_ctrl_2->ChangeValue(wxString::FromAscii(temp_str));
 				 sprintf(temp_str, DOF3_NUM_FORMAT, global_quat[3]);
-				 Transformation_editor_wx_direction_text_ctrl_3->ChangeValue(temp_str);
+				 Transformation_editor_wx_direction_text_ctrl_3->ChangeValue(wxString::FromAscii(temp_str));
 				 DEALLOCATE(values);
 
 			}
@@ -535,15 +534,15 @@ transformation encoded in 4x4 <transformation_matrix>.
 			global_position.data[1] = (*matrix)[3][1];
 			global_position.data[2] = (*matrix)[3][2];
 			sprintf(temp_str, DOF3_NUM_FORMAT, global_position.data[0]);
-			Transformation_editor_wx_position_text_ctrl_x->ChangeValue(temp_str);
+			Transformation_editor_wx_position_text_ctrl_x->ChangeValue(wxString::FromAscii(temp_str));
 			sprintf(temp_str, DOF3_NUM_FORMAT, global_position.data[1]);
-			Transformation_editor_wx_position_text_ctrl_y->ChangeValue(temp_str);
+			Transformation_editor_wx_position_text_ctrl_y->ChangeValue(wxString::FromAscii(temp_str));
 			sprintf(temp_str, DOF3_NUM_FORMAT, global_position.data[2]);
-			Transformation_editor_wx_position_text_ctrl_z->ChangeValue(temp_str);
+			Transformation_editor_wx_position_text_ctrl_z->ChangeValue(wxString::FromAscii(temp_str));
 			if (position_direction_to_transformation_matrix(
 						 &global_position, &global_direction, &resolved_transformation_matrix) &&
 				 gtMatrix_match_with_tolerance(matrix,
-						&resolved_transformation_matrix, /*tolerance*/1.0E-6f) && 
+						&resolved_transformation_matrix, /*tolerance*/1.0E-6f) &&
 				 gtMatrix_is_identity(&(resolved_transformation_matrix)))
 			{
 				 Transformation_editor_wx_position_text_ctrl_scale_factor->SetValue(wxT("1*1*1"));
@@ -554,9 +553,9 @@ transformation encoded in 4x4 <transformation_matrix>.
 			else
 			{
 				 matrix_scalefactor(&gmatrix, global_scale_factor);
-				 sprintf(temp_string,"%g*%g*%g",
+				 sprintf(temp_str,"%g*%g*%g",
 						global_scale_factor[0],global_scale_factor[1],global_scale_factor[2]);
-				 Transformation_editor_wx_position_text_ctrl_scale_factor->SetValue(temp_string);	 
+				 Transformation_editor_wx_position_text_ctrl_scale_factor->SetValue(wxString::FromAscii(temp_str));
 			}
 	 }
 	 else
@@ -698,7 +697,7 @@ transformation encoded in 4x4 <transformation_matrix>.
 	Transformation_editor_wx_position_text_ctrl_z->GetValue().ToDouble(&position.data[2]);
 
 	wxString scale_factor_string = Transformation_editor_wx_position_text_ctrl_scale_factor->GetValue();
-	text_entry = scale_factor_string.c_str();
+	text_entry = scale_factor_string.mb_str(wxConvUTF8);
 	if (text_entry)
 	{
 		temp_state = create_Parse_state(text_entry);
@@ -773,7 +772,7 @@ void Transformation_editor::transformation_editor_quaternion_to_gtmatrix()
 LAST MODIFIED : 4 March 2008
 
 DESCRIPTION :
-A function in transformation editor to convert the global quaternion to 
+A function in transformation editor to convert the global quaternion to
 global gtmatrix.
 ==============================================================================*/
 {
@@ -857,7 +856,7 @@ Must only call this function from OnTransformationEditor_spin_button_up function
 	 position_direction_to_transformation_matrix(
 			&global_position, &global_direction,&(transformation_editor_transformation_matrix));
 	 scale_factor_to_transformation_matrix(global_scale_factor,
-			&(transformation_editor_transformation_matrix));	 
+			&(transformation_editor_transformation_matrix));
 	 ApplyTransformation(/*force_apply*/0);
 }
 
@@ -943,7 +942,7 @@ Process choice selected event.
 				 transformation_editor_direction_text[current_choice][1]);
 			Transformation_editor_wx_direction_label_5->SetLabel(
 				 transformation_editor_direction_text[current_choice][2]);
-						
+
 			if (direction_system_index == 0)
 			{
 				 Transformation_editor_wx_direction_label_6->Hide();
@@ -968,7 +967,7 @@ Process choice selected event.
 			transformation_editor_panel->Layout();
 			set_transformation(&(transformation_editor_transformation_matrix));
 	 }
-	 
+
 	 LEAVE;
 }
 

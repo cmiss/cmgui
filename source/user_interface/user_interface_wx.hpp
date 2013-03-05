@@ -42,9 +42,9 @@ wxWidgets c++ definitions for the user interface.
 #if !defined (USER_INTERFACE_WX_H)
 #define USER_INTERFACE_WX_H
 
-#if defined (BUILD_WITH_CMAKE)
+#if 1
 #include "configure/cmgui_configure.h"
-#endif /* defined (BUILD_WITH_CMAKE) */
+#endif /* defined (1) */
 
 #if defined (WX_USER_INTERFACE)
 # include <wx/wx.h>

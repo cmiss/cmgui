@@ -41,7 +41,7 @@ DESCRIPTION :
  *
  * ***** END LICENSE BLOCK ***** */
 
-extern "C" {
+#include "api/cmiss_graphic.h"
 #include "time/time_keeper.h"
 #include "comfile/comfile.h"
 #include "command/command_window.h"
@@ -57,32 +57,35 @@ extern "C" {
 #include "interaction/interactive_tool.h"
 #include "node/node_tool.h"
 #include "three_d_drawing/graphics_buffer.h"
+#include "three_d_drawing/graphics_buffer_app.h"
 #include "user_interface/event_dispatcher.h"
-#include "user_interface/message.h"
-}
+#include "general/message.h"
+#include "context/user_interface_module.h"
 #if defined (USE_OPENCASCADE)
 #include "cad/cad_tool.h"
 #endif /* defined (USE_OPENCASCADE) */
+#include "context/context_app.h"
+#include "graphics/scene_viewer_app.h"
 
 #if defined (WX_USER_INTERFACE) || (!defined (WIN32_USER_INTERFACE) && !defined (_MSC_VER))
 struct User_interface_module *User_interface_module_create(
-	struct Context *context, int in_argc, const char *in_argv[])
+	struct Cmiss_context_app *context, int in_argc, const char *in_argv[])
 #else
 struct User_interface_module *User_interface_module_create(
-	struct Context *context, int in_argc, const char *in_argv[],
-	HINSTANCE current_instance, HINSTANCE previous_instance, 
+	struct Cmiss_context_app *context, int in_argc, const char *in_argv[],
+	HINSTANCE current_instance, HINSTANCE previous_instance,
 	LPSTR command_line,int initial_main_window_state)
 #endif
 {
-	struct User_interface_module  *UI_module = NULL;
+	struct User_interface_module *UI_module = NULL;
 	Cmiss_region *root_region = NULL;;
 	struct Cmiss_graphics_module *graphics_module = NULL;
 	int visual_id = 0;
 
 	if (context && ALLOCATE(UI_module, struct User_interface_module, 1))
 	{
-		root_region = Cmiss_context_get_default_region(context);
-		graphics_module = Cmiss_context_get_default_graphics_module(context);
+		root_region = Cmiss_context_get_default_region(Cmiss_context_app_get_core_context(context));
+		graphics_module = Cmiss_context_get_default_graphics_module(Cmiss_context_app_get_core_context(context));
 		UI_module->event_dispatcher = NULL;
 #if defined (USE_CMGUI_GRAPHICS_WINDOW)
 		UI_module->graphics_window_manager = NULL;
@@ -92,7 +95,7 @@ struct User_interface_module *User_interface_module_create(
 		UI_module->emoter_slider_dialog = NULL;
 #if defined (WX_USER_INTERFACE)
 		UI_module->comfile_window_manager = NULL;
-		UI_module->data_viewer = NULL; 
+		UI_module->data_viewer = NULL;
 		UI_module->node_viewer = NULL;
 		UI_module->element_point_viewer = NULL;
 		UI_module->material_editor_dialog = NULL;
@@ -116,7 +119,7 @@ struct User_interface_module *User_interface_module_create(
 		UI_module->cleanup_argc = in_argc;
 		UI_module->cleanup_argv = NULL;
 		struct Cmgui_command_line_options command_line_options;
-		Cmiss_command_data_process_command_line(in_argc, in_argv, 
+		Cmiss_command_data_process_command_line(in_argc, in_argv,
 			&command_line_options);
 		visual_id = command_line_options.visual_id_number;
 		if (0 < in_argc)
@@ -133,7 +136,7 @@ struct User_interface_module *User_interface_module_create(
 
 		if ((!command_line_options.command_list_flag) && (!command_line_options.write_help_flag))
 		{
-			if (NULL != (UI_module->event_dispatcher = Cmiss_context_get_default_event_dispatcher(
+			if (NULL != (UI_module->event_dispatcher = Cmiss_context_app_get_default_event_dispatcher(
 				context)))
 			{
 				if (!command_line_options.no_display_flag)
@@ -188,9 +191,8 @@ struct User_interface_module *User_interface_module_create(
 #if defined (USE_CMGUI_GRAPHICS_WINDOW)
 		if (UI_module->user_interface)
 		{
-			UI_module->graphics_buffer_package = CREATE(Graphics_buffer_package)(
-				UI_module->user_interface);
-			Graphics_buffer_package_set_override_visual_id(UI_module->graphics_buffer_package,
+			UI_module->graphics_buffer_package = CREATE(Graphics_buffer_app_package)(UI_module->user_interface);
+			Graphics_buffer_package_set_override_visual_id(Graphics_buffer_package_get_core_package(UI_module->graphics_buffer_package),
 				visual_id);
 		}
 		/* graphics window manager.  Note there is no default window. */
@@ -198,12 +200,11 @@ struct User_interface_module *User_interface_module_create(
 #endif /* defined (USE_CMGUI_GRAPHICS_WINDOW) */
 
 		UI_module->default_time_keeper=ACCESS(Time_keeper)(
-			CREATE(Time_keeper)("default", UI_module->event_dispatcher,
-			UI_module->user_interface));
+			CREATE(Time_keeper)("default", UI_module->event_dispatcher));
 		UI_module->interactive_tool_manager=CREATE(MANAGER(Interactive_tool))();
 		if (UI_module->user_interface)
 		{
-			struct Material_package *material_package = 
+			struct Material_package *material_package =
 				Cmiss_graphics_module_get_material_package(graphics_module);
 			UI_module->transform_tool=create_Interactive_tool_transform(
 				UI_module->user_interface);
@@ -224,7 +225,7 @@ struct User_interface_module *User_interface_module_create(
 			UI_module->element_tool=CREATE(Element_tool)(
 				UI_module->interactive_tool_manager,
 				root_region,
-				Cmiss_context_get_element_point_ranges_selection(context),
+				Cmiss_context_get_element_point_ranges_selection(Cmiss_context_app_get_core_context(context)),
 				Material_package_get_default_material(material_package),
 				UI_module->user_interface,
 				UI_module->default_time_keeper);
@@ -240,7 +241,7 @@ struct User_interface_module *User_interface_module_create(
 			UI_module->element_point_tool=CREATE(Element_point_tool)(
 				UI_module->interactive_tool_manager,
 				root_region,
-				Cmiss_context_get_element_point_ranges_selection(context),
+				Cmiss_context_get_element_point_ranges_selection(Cmiss_context_app_get_core_context(context)),
 				Material_package_get_default_material(material_package),
 				UI_module->user_interface,
 				UI_module->default_time_keeper);
@@ -270,20 +271,19 @@ struct User_interface_module *User_interface_module_create(
 		{
 			if (graphics_module)
 			{
-				struct Light *default_light = 
+				struct Light *default_light =
 					Cmiss_graphics_module_get_default_light(graphics_module);
-				struct Light_model *default_light_model = 
+				struct Light_model *default_light_model =
 					Cmiss_graphics_module_get_default_light_model(graphics_module);
 				struct Scene *default_scene =
 					Cmiss_graphics_module_get_default_scene(graphics_module);
-				UI_module->scene_viewer_package = CREATE(Cmiss_scene_viewer_package)
+				UI_module->scene_viewer_package = CREATE(Cmiss_scene_viewer_app_package)
 					(UI_module->graphics_buffer_package,
 						&UI_module->background_colour,
 						UI_module->interactive_tool_manager,
 						Cmiss_graphics_module_get_light_manager(graphics_module), default_light,
 						Cmiss_graphics_module_get_light_model_manager(graphics_module), default_light_model,
-						Cmiss_graphics_module_get_scene_manager(graphics_module), default_scene,
-						UI_module->user_interface);
+						Cmiss_graphics_module_get_scene_manager(graphics_module), default_scene, UI_module->user_interface);
 				DEACCESS(Light_model)(&default_light_model);
 				DEACCESS(Light)(&default_light);
 				DEACCESS(Scene)(&default_scene);
@@ -332,7 +332,7 @@ int User_interface_module_destroy(
 #if defined (USE_CMGUI_GRAPHICS_WINDOW)
 			if (UI_module->scene_viewer_package)
 			{
-				DESTROY(Cmiss_scene_viewer_package)(&UI_module->scene_viewer_package);		
+				//-- DESTROY(Cmiss_scene_viewer_app_package)(&UI_module->scene_viewer_package);
 			}
 #endif /* defined (USE_CMGUI_GRAPHICS_WINDOW) */
 #if defined (USE_CMGUI_GRAPHICS_WINDOW)
@@ -340,7 +340,7 @@ int User_interface_module_destroy(
 			/* Must destroy the graphics_buffer_package after the windows which use it */
 			if (UI_module->graphics_buffer_package)
 			{
-				DESTROY(Graphics_buffer_package)(&UI_module->graphics_buffer_package);
+				DESTROY(Graphics_buffer_app_package)(&UI_module->graphics_buffer_package);
 			}
 #endif /* defined (USE_CMGUI_GRAPHICS_WINDOW) */
 			DESTROY(MANAGER(Interactive_tool))(&(UI_module->interactive_tool_manager));
@@ -384,6 +384,6 @@ int User_interface_module_destroy(
 				"User_interface_module_destroy.  Missing user interface module address");
 		return_code = 0;
 	}
-		
+
 	return return_code;
 }

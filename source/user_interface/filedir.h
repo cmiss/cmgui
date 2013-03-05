@@ -44,9 +44,9 @@ Routines for opening files.
 #if !defined (FILEDIR_H)
 #define FILEDIR_H
 
-#if defined (BUILD_WITH_CMAKE)
+#if 1
 #include "configure/cmgui_configure.h"
-#endif /* defined (BUILD_WITH_CMAKE) */
+#endif /* defined (1) */
 
 #include <stddef.h>
 #include "user_interface/user_interface.h"
@@ -61,7 +61,7 @@ enum File_type
 	DIRECTORY
 }; /* enum File_type */
 
-typedef int (*File_operation)(char *,void *);
+typedef int (*File_operation)(const char *,void *);
 
 typedef int (*File_cancel_operation)(void *);
 
@@ -96,7 +96,7 @@ used to keep track of the widgets involved.
 	OPENFILENAME open_file_name;
 #endif /* defined (WIN32_USER_INTERFACE) */
 	/* file name is used for passing into callbacks */
-	char *file_name;
+	const char *file_name;
 }; /* struct File_open_data */
 
 /*
@@ -105,7 +105,7 @@ Global functions
 */
 struct File_open_data *create_File_open_data(const char *filter_extension,
 	enum File_type type,File_operation operation,void *arguments,
-	 int allow_direct_to_printer,struct User_interface *user_interface 
+	 int allow_direct_to_printer,struct User_interface *user_interface
 #if defined (WX_USER_INTERFACE)
 	 , struct Execute_command *execute_command
 #endif /* defined (WX_USER_INTERFACE) */
@@ -175,8 +175,8 @@ Register a callback that gets called when the file dialog is cancelled.
 ==============================================================================*/
 
 #if defined (WX_USER_INTERFACE)
-int filedir_compressing_process_wx_compress(const char *com_file_name, const char *data_file_name, 
-	 const char *elem_file_name, const char *node_file_name, int data_return_code, int elem_return_code, 
+int filedir_compressing_process_wx_compress(const char *com_file_name, const char *data_file_name,
+	 const char *elem_file_name, const char *node_file_name, int data_return_code, int elem_return_code,
 	 int node_return_code, const char *file_name, const char *temp_data ,const char *temp_elem, const char *temp_node);
 /*******************************************************************************
 LAST MODIFIED : 17 Aug 2007

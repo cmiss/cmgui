@@ -41,14 +41,12 @@ DESCRIPTION :
  *
  * ***** END LICENSE BLOCK ***** */
 #include "region/cmiss_region_chooser_wx.hpp"
-extern "C" {
 #include "general/debug.h"
 #include "general/mystring.h"
 #include "region/cmiss_region.h"
-#include "user_interface/message.h"
-}
+#include "general/message.h"
 
-wxRegionChooser::wxRegionChooser(wxWindow *parent, 
+wxRegionChooser::wxRegionChooser(wxWindow *parent,
 	Cmiss_region *root_region, const char *initial_path) :
 	wxChoice(parent, /*id*/-1, wxPoint(0,0), wxSize(-1,-1)),
 	root_region(ACCESS(Cmiss_region)(root_region))
@@ -60,10 +58,10 @@ DESCRIPTION :
 {
 	callback = NULL;
 	build_main_menu(root_region, initial_path);
-	
+
 	Connect(wxEVT_COMMAND_CHOICE_SELECTED,
 		wxCommandEventHandler(wxRegionChooser::OnChoiceSelected));
-	
+
 	Cmiss_region_add_callback(root_region,
 		wxRegionChooser::RegionChange, this);
 
@@ -71,9 +69,9 @@ DESCRIPTION :
 	sizer->Add(this,
 		wxSizerFlags(1).Align(wxALIGN_CENTER).Expand());
 	parent->SetSizer(sizer);
-	
+
 	Show();
-	
+
 }
 
 wxRegionChooser::~wxRegionChooser()
@@ -100,7 +98,8 @@ Up to the calling function to DEALLOCATE the returned path.
 ==============================================================================*/
 {
 	char *return_name;
-	const char *item_name = GetString(GetSelection());
+	wxString tmpstr = GetString(GetSelection());
+	const char *item_name = tmpstr.mb_str(wxConvUTF8);
 	// Trim the first character which is the root region symbol
 	return_name = duplicate_string(item_name);
 	return (return_name);
@@ -115,8 +114,9 @@ Returns to <region_address> the region chosen in the <chooser>.
 ==============================================================================*/
 {
 	Cmiss_region *child_region = NULL;
+	wxString tmpstr = GetString(GetSelection());
 	Cmiss_region_get_region_from_path_deprecated(root_region,
-		GetString(GetSelection()), &child_region);
+		tmpstr.mb_str(wxConvUTF8), &child_region);
 	return (child_region);
 }
 
@@ -158,7 +158,8 @@ Sets <path> of chosen region in the <chooser>.
 
 	for (i = 0 ; !found && (i < GetCount()) ; i++)
 	{
-		if (!strcmp(path, GetString(i)))
+		wxString tmpstr = GetString(i);
+		if (!strcmp(path, tmpstr.mb_str(wxConvUTF8)))
 		{
 			found = 1;
 			SetSelection(i);
@@ -187,11 +188,11 @@ Sets <path> of chosen region in the <chooser>.
 	while (NULL != child_region)
 	{
 		child_name = Cmiss_region_get_name(child_region);
-		
+
 		ALLOCATE(child_path, char, strlen(current_path) + strlen(child_name) + 2);
 		sprintf(child_path, "%s%c%s", current_path, CMISS_REGION_PATH_SEPARATOR_CHAR,
 			child_name);
-		Append(child_path);
+		Append(wxString::FromAscii(child_path));
 		if (!strcmp(child_path, initial_path))
 		{
 			SetSelection(GetCount() - 1);
@@ -222,7 +223,7 @@ is selected.
 	Clear();
 
 	root_path = Cmiss_region_get_root_region_path();
-	Append(root_path);
+	Append(wxString::FromAscii(root_path));
 	if (!strcmp(root_path, initial_path))
 	{
 		SetSelection(GetCount() - 1);

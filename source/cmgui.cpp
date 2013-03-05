@@ -42,21 +42,18 @@ DESCRIPTION :
  * ***** END LICENSE BLOCK ***** */
 /*SAB I have concatenated the correct version file for each version
   externally in the shell with cat #include "version.h"*/
-#if defined (BUILD_WITH_CMAKE)
+
 #include "configure/cmgui_configure.h"
 #include "configure/version.h"
-#endif /* defined (BUILD_WITH_CMAKE) */
 
-extern "C"
-{
+#include "context/context_app.h"
 #include "api/cmiss_graphics_module.h"
 #include "command/cmiss.h"
-#include "context/context.h"
+#include "context/context_app.h"
 #include "context/user_interface_module.h"
 #include "general/debug.h"
 #include "general/mystring.h"
-#include "user_interface/message.h"
-}
+#include "general/message.h"
 
 #if defined (WX_USER_INTERFACE)
 # include "user_interface/user_interface_wx.hpp"
@@ -140,7 +137,7 @@ Main program for the CMISS Graphical User Interface
 	const char **argv;
 	char *p, *q;
 #endif /* defined (WIN32_USER_INTERFACE) */
-	struct Context *context = NULL;
+	struct Cmiss_context_app *context = NULL;
 	struct User_interface_module *UI_module = NULL;
 	struct Cmiss_command_data *command_data;
 
@@ -174,9 +171,9 @@ Main program for the CMISS Graphical User Interface
 #endif /* !defined (WIN32_USER_INTERFACE)  && !defined (_MSC_VER)*/
 
 	/* display the version */
-	display_message(INFORMATION_MESSAGE, "%s version %s  %s\n%s\n"
-		"Build information: %s %s\n", CMISS_NAME_STRING, CMISS_VERSION_STRING, 
-		CMISS_DATE_STRING, CMISS_COPYRIGHT_STRING, CMISS_BUILD_STRING,
+	display_message(INFORMATION_MESSAGE, "%s version %s\n%s\n"
+		"Build information: %s %s\n", CMISS_NAME_STRING, CMISS_VERSION_STRING,
+		CMISS_COPYRIGHT_STRING, CMISS_BUILD_STRING,
 		CMISS_SVN_REVISION_STRING);
 
 #if defined (CARBON_USER_INTERFACE) || (defined (WX_USER_INTERFACE) && defined (DARWIN))
@@ -184,7 +181,7 @@ Main program for the CMISS Graphical User Interface
 	GetCurrentProcess(&PSN);
 	TransformProcessType(&PSN,kProcessTransformToForegroundApplication);
 #endif
-	context = Cmiss_context_create("default");
+	context = Cmiss_context_app_create("default");
 #if defined (WX_USER_INTERFACE)
 	int wx_entry_started = 0;
 #endif
@@ -244,15 +241,15 @@ Main program for the CMISS Graphical User Interface
 			}
 #endif
 			Cmiss_graphics_module_id graphics_module = NULL;
-			if (NULL != (graphics_module = Cmiss_context_get_default_graphics_module(context)))
+			if (NULL != (graphics_module = Cmiss_context_get_default_graphics_module(Cmiss_context_app_get_core_context(context))))
 			{
 				Cmiss_graphics_module_define_standard_materials(graphics_module);
 				Cmiss_graphics_module_destroy(&graphics_module);
 			}
 			if (NULL != (command_data = Cmiss_context_get_default_command_interpreter(context)))
 			{
-				Cmiss_command_data_set_cmgui_string(command_data, CMISS_NAME_STRING, 
-					CMISS_VERSION_STRING, CMISS_DATE_STRING, CMISS_COPYRIGHT_STRING, CMISS_BUILD_STRING,
+				Cmiss_command_data_set_cmgui_string(command_data, CMISS_NAME_STRING,
+					CMISS_VERSION_STRING, "CMISS_DATE_STRING", CMISS_COPYRIGHT_STRING, CMISS_BUILD_STRING,
 					CMISS_SVN_REVISION_STRING);
 				Cmiss_command_data_main_loop(command_data);
 				Cmiss_command_data_destroy(&command_data);
@@ -268,7 +265,7 @@ Main program for the CMISS Graphical User Interface
 		{
 			return_code = 1;
 		}
-		Cmiss_context_destroy(&context);
+		Cmiss_context_app_destroy(&context);
 		Context_internal_cleanup();
 #if defined (WX_USER_INTERFACE)
 		if (wx_entry_started)
@@ -288,6 +285,6 @@ Main program for the CMISS Graphical User Interface
 	free(argv)
 #endif
 	LEAVE;
-	
+
 	return (return_code);
 } /* main */

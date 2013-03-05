@@ -42,17 +42,16 @@ ranges between 0-1.
  * the terms of any one of the MPL, the GPL or the LGPL.
  *
  * ***** END LICENSE BLOCK ***** */
-extern "C"
-{
+
 #include <float.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <math.h>
 #include "general/debug.h"
 #include "material/material_editor_wx.h"
-#include "user_interface/message.h"
+#include "general/message.h"
 #include "user_interface/user_interface.h"
-}
+#include "graphics/colour_app.h"
 #include "colour/colour_editor_wx.hpp"
 
 COLOUR_PRECISION min(COLOUR_PRECISION *data,int number)
@@ -110,7 +109,7 @@ Colour_editor::Colour_editor(wxPanel* parent, const char *panel_name, enum Colou
 {
 	 colour_editor_panel = parent;
 	 material_editor_void = material_editor_temp;
-	 title = new wxStaticText(colour_editor_panel, -1, wxT(panel_name), 
+	 title = new wxStaticText(colour_editor_panel, -1, wxString::FromAscii(panel_name),
 			 wxDefaultPosition, wxDefaultSize, wxALIGN_CENTRE);
 	 const wxString colour_mode_choices[] = {
 			wxT("RGB"),
@@ -129,23 +128,23 @@ Colour_editor::Colour_editor(wxPanel* parent, const char *panel_name, enum Colou
 	 colour_text_choice[2][1] = wxT("Magenta");
 	 colour_text_choice[2][2] = wxT("Yellow");
 
-    colour_mode_choice = new wxChoice(colour_editor_panel, 
+	colour_mode_choice = new wxChoice(colour_editor_panel,
 			 -1, wxDefaultPosition, wxSize(-1,26), 3, colour_mode_choices, 0);
-    colour_mode_choice->SetSelection(0);
-    colour_palette_panel = new wxPanel(colour_editor_panel, -1);
-    colour_editor_colour_text_1 = new wxStaticText(colour_editor_panel, -1, colour_text_choice[0][0],wxPoint(-1,-1),wxSize(-1,20));
-    colour_editor_text_ctrl_1 = new wxTextCtrl(colour_editor_panel, -1, wxT("0.0000"),wxPoint(-1,-1),wxSize(-1,20), wxTE_PROCESS_ENTER);
-    colour_editor_slider_1 = new wxSlider(colour_editor_panel, -1, 0, 0, 100, wxDefaultPosition, 
+	colour_mode_choice->SetSelection(0);
+	colour_palette_panel = new wxPanel(colour_editor_panel, -1);
+	colour_editor_colour_text_1 = new wxStaticText(colour_editor_panel, -1, colour_text_choice[0][0],wxPoint(-1,-1),wxSize(-1,20));
+	colour_editor_text_ctrl_1 = new wxTextCtrl(colour_editor_panel, -1, wxT("0.0000"),wxPoint(-1,-1),wxSize(-1,20), wxTE_PROCESS_ENTER);
+	colour_editor_slider_1 = new wxSlider(colour_editor_panel, -1, 0, 0, 100, wxDefaultPosition,
 			 wxSize(-1,20), wxSL_HORIZONTAL);
-    colour_editor_colour_text_2 = new wxStaticText(colour_editor_panel, -1, colour_text_choice[0][1],wxPoint(-1,-1),wxSize(-1,20));
-    colour_editor_text_ctrl_2 = new wxTextCtrl(colour_editor_panel, -1, wxT("0.0000"),wxPoint(-1,-1),wxSize(-1,20), wxTE_PROCESS_ENTER);
-    colour_editor_slider_2 = new wxSlider(colour_editor_panel, -1, 0, 0, 100, wxDefaultPosition, 
+	colour_editor_colour_text_2 = new wxStaticText(colour_editor_panel, -1, colour_text_choice[0][1],wxPoint(-1,-1),wxSize(-1,20));
+	colour_editor_text_ctrl_2 = new wxTextCtrl(colour_editor_panel, -1, wxT("0.0000"),wxPoint(-1,-1),wxSize(-1,20), wxTE_PROCESS_ENTER);
+	colour_editor_slider_2 = new wxSlider(colour_editor_panel, -1, 0, 0, 100, wxDefaultPosition,
 			 wxSize(-1,20), wxSL_HORIZONTAL);
-    colour_editor_colour_text_3 = new wxStaticText(colour_editor_panel, -1, colour_text_choice[0][2],wxPoint(-1,-1),wxSize(-1,20));
-    colour_editor_text_ctrl_3 = new wxTextCtrl(colour_editor_panel, -1, wxT("0.0000"),wxPoint(-1,-1),wxSize(-1,20), wxTE_PROCESS_ENTER);
-    colour_editor_slider_3 = new wxSlider(colour_editor_panel, -1, 0, 0, 100, wxDefaultPosition, 
+	colour_editor_colour_text_3 = new wxStaticText(colour_editor_panel, -1, colour_text_choice[0][2],wxPoint(-1,-1),wxSize(-1,20));
+	colour_editor_text_ctrl_3 = new wxTextCtrl(colour_editor_panel, -1, wxT("0.0000"),wxPoint(-1,-1),wxSize(-1,20), wxTE_PROCESS_ENTER);
+	colour_editor_slider_3 = new wxSlider(colour_editor_panel, -1, 0, 0, 100, wxDefaultPosition,
 			 wxSize(-1,20), wxSL_HORIZONTAL);
-    colour_editor_staticbox = new wxStaticBox(colour_editor_panel, -1, wxT(""));
+	colour_editor_staticbox = new wxStaticBox(colour_editor_panel, -1, wxT(""));
 	 current.red = 0;
 	 current.green = 0;
 	 current.blue = 0;
@@ -153,45 +152,45 @@ Colour_editor::Colour_editor(wxPanel* parent, const char *panel_name, enum Colou
 	 return_mode = mode;
 
 	 colour_editor_text_ctrl_1->SetClientData((void *)this);
-	 colour_editor_text_ctrl_1->Connect(wxEVT_COMMAND_TEXT_ENTER, 
+	 colour_editor_text_ctrl_1->Connect(wxEVT_COMMAND_TEXT_ENTER,
 			wxCommandEventHandler(Colour_editor::OnColourEditorTextEntered));
-	 colour_editor_text_ctrl_1->Connect(wxEVT_KILL_FOCUS, 
+	 colour_editor_text_ctrl_1->Connect(wxEVT_KILL_FOCUS,
 			wxCommandEventHandler(Colour_editor::OnColourEditorTextEntered));
 
 	 colour_editor_text_ctrl_2->SetClientData((void *)this);
-	 colour_editor_text_ctrl_2->Connect(wxEVT_COMMAND_TEXT_ENTER, 
+	 colour_editor_text_ctrl_2->Connect(wxEVT_COMMAND_TEXT_ENTER,
 			wxCommandEventHandler(Colour_editor::OnColourEditorTextEntered));
-	 colour_editor_text_ctrl_2->Connect(wxEVT_KILL_FOCUS, 
+	 colour_editor_text_ctrl_2->Connect(wxEVT_KILL_FOCUS,
 			wxCommandEventHandler(Colour_editor::OnColourEditorTextEntered));
 
 	 colour_editor_text_ctrl_3->SetClientData((void *)this);
-	 colour_editor_text_ctrl_3->Connect(wxEVT_COMMAND_TEXT_ENTER, 
+	 colour_editor_text_ctrl_3->Connect(wxEVT_COMMAND_TEXT_ENTER,
 			wxCommandEventHandler(Colour_editor::OnColourEditorTextEntered));
-	 colour_editor_text_ctrl_3->Connect(wxEVT_KILL_FOCUS, 
+	 colour_editor_text_ctrl_3->Connect(wxEVT_KILL_FOCUS,
 			wxCommandEventHandler(Colour_editor::OnColourEditorTextEntered));
 
 	 colour_editor_slider_1->SetClientData((void *)this);
-	 colour_editor_slider_1->Connect(wxEVT_SCROLL_THUMBTRACK, 
+	 colour_editor_slider_1->Connect(wxEVT_SCROLL_THUMBTRACK,
 			wxCommandEventHandler(Colour_editor::OnColourEditorSliderChanged));
-	 colour_editor_slider_1->Connect(wxEVT_SCROLL_PAGEDOWN, 
+	 colour_editor_slider_1->Connect(wxEVT_SCROLL_PAGEDOWN,
 			wxCommandEventHandler(Colour_editor::OnColourEditorSliderChanged));
-	 colour_editor_slider_1->Connect(wxEVT_SCROLL_PAGEUP, 
+	 colour_editor_slider_1->Connect(wxEVT_SCROLL_PAGEUP,
 			wxCommandEventHandler(Colour_editor::OnColourEditorSliderChanged));
 
 	 colour_editor_slider_2->SetClientData((void *)this);
 	 colour_editor_slider_2->Connect(wxEVT_SCROLL_THUMBTRACK,
 			wxCommandEventHandler(Colour_editor::OnColourEditorSliderChanged));
-	 colour_editor_slider_2->Connect(wxEVT_SCROLL_PAGEDOWN, 
+	 colour_editor_slider_2->Connect(wxEVT_SCROLL_PAGEDOWN,
 			wxCommandEventHandler(Colour_editor::OnColourEditorSliderChanged));
-	 colour_editor_slider_2->Connect(wxEVT_SCROLL_PAGEUP, 
+	 colour_editor_slider_2->Connect(wxEVT_SCROLL_PAGEUP,
 			wxCommandEventHandler(Colour_editor::OnColourEditorSliderChanged));
 
 	 colour_editor_slider_3->SetClientData((void *)this);
-	 colour_editor_slider_3->Connect(wxEVT_SCROLL_THUMBTRACK, 
+	 colour_editor_slider_3->Connect(wxEVT_SCROLL_THUMBTRACK,
 			wxCommandEventHandler(Colour_editor::OnColourEditorSliderChanged));
-	 colour_editor_slider_3->Connect(wxEVT_SCROLL_PAGEDOWN, 
+	 colour_editor_slider_3->Connect(wxEVT_SCROLL_PAGEDOWN,
 			wxCommandEventHandler(Colour_editor::OnColourEditorSliderChanged));
-	 colour_editor_slider_3->Connect(wxEVT_SCROLL_PAGEUP, 
+	 colour_editor_slider_3->Connect(wxEVT_SCROLL_PAGEUP,
 			wxCommandEventHandler(Colour_editor::OnColourEditorSliderChanged));
 
 
@@ -199,7 +198,7 @@ Colour_editor::Colour_editor(wxPanel* parent, const char *panel_name, enum Colou
 	 colour_mode_choice->Connect(wxEVT_COMMAND_CHOICE_SELECTED,
 			wxCommandEventHandler(Colour_editor::OnColourEditorColourModeChoiceChanged));
 
-    do_layout();
+	do_layout();
 }
 
 void Colour_editor::do_layout()
@@ -210,52 +209,52 @@ DESCRIPTION :
 Set up the widgets.
 ==============================================================================*/
 {
-    // begin wxGlade: MyFrame::do_layout
-    wxBoxSizer* sizer_1 = new wxBoxSizer(wxVERTICAL);
-    wxBoxSizer* sizer_2 = new wxBoxSizer(wxVERTICAL);
-    wxBoxSizer* sizer_3 = new wxBoxSizer(wxHORIZONTAL);
-    wxBoxSizer* sizer_5 = new wxBoxSizer(wxVERTICAL);
-    wxBoxSizer* sizer_9 = new wxBoxSizer(wxHORIZONTAL);
-    wxBoxSizer* sizer_8 = new wxBoxSizer(wxHORIZONTAL);
-    wxBoxSizer* sizer_7 = new wxBoxSizer(wxHORIZONTAL);
-    wxBoxSizer* sizer_6 = new wxBoxSizer(wxHORIZONTAL);
-    wxBoxSizer* sizer_4 = new wxBoxSizer(wxVERTICAL);
-    wxStaticBoxSizer* sizer_10 = new wxStaticBoxSizer(colour_editor_staticbox, wxHORIZONTAL);
-    sizer_2->Add(title, 0, wxALIGN_CENTER_HORIZONTAL|wxADJUST_MINSIZE, 0);
-    sizer_4->Add(colour_mode_choice, 0, wxALIGN_CENTER_HORIZONTAL|wxADJUST_MINSIZE, 0);
-    sizer_10->Add(colour_palette_panel, 1, wxEXPAND, 0);
-    sizer_4->Add(sizer_10, 1, wxEXPAND, 0);
-    sizer_3->Add(sizer_4, 1, wxEXPAND, 0);
-    sizer_6->Add(colour_editor_colour_text_1, 1, wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL|wxADJUST_MINSIZE, 0);
-    sizer_6->Add(colour_editor_text_ctrl_1, 0, wxRIGHT|wxALIGN_RIGHT|wxALIGN_CENTER_VERTICAL|wxADJUST_MINSIZE, 0);
-    sizer_5->Add(sizer_6, 1, wxEXPAND, 0);
-    sizer_7->Add(colour_editor_slider_1, 1, wxEXPAND|wxADJUST_MINSIZE, 0);
-    sizer_5->Add(sizer_7, 1, wxEXPAND, 0);
-    sizer_8->Add(colour_editor_colour_text_2, 1, wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL|wxADJUST_MINSIZE, 0);
-    sizer_8->Add(colour_editor_text_ctrl_2, 0, wxRIGHT|wxALIGN_RIGHT|wxALIGN_CENTER_VERTICAL|wxADJUST_MINSIZE, 0);
-    sizer_5->Add(sizer_8, 1, wxEXPAND, 0);
-    sizer_5->Add(colour_editor_slider_2, 1, wxEXPAND|wxADJUST_MINSIZE, 0);
-    sizer_9->Add(colour_editor_colour_text_3, 1, wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL|wxADJUST_MINSIZE, 0);
-    sizer_9->Add(colour_editor_text_ctrl_3, 0, wxRIGHT|wxALIGN_RIGHT|wxALIGN_CENTER_VERTICAL|wxADJUST_MINSIZE, 0);
-    sizer_5->Add(sizer_9, 1, wxEXPAND, 0);
-    sizer_5->Add(colour_editor_slider_3, 1, wxEXPAND|wxADJUST_MINSIZE, 0);
-    sizer_3->Add(sizer_5, 1, wxEXPAND, 0);
-    sizer_2->Add(sizer_3, 1, wxEXPAND, 0);
-    colour_editor_panel->SetAutoLayout(true);
-    colour_editor_panel->SetSizer(sizer_2);
-    sizer_2->Fit(colour_editor_panel);
-    sizer_2->SetSizeHints(colour_editor_panel);
-    sizer_1->Add(colour_editor_panel, 1, wxEXPAND, 0);
-    colour_editor_panel->SetAutoLayout(true);
-    colour_editor_panel->SetSizer(sizer_1);
-    sizer_1->Fit(colour_editor_panel);
-    sizer_1->SetSizeHints(colour_editor_panel);
-    colour_editor_panel->Layout();
+	// begin wxGlade: MyFrame::do_layout
+	wxBoxSizer* sizer_1 = new wxBoxSizer(wxVERTICAL);
+	wxBoxSizer* sizer_2 = new wxBoxSizer(wxVERTICAL);
+	wxBoxSizer* sizer_3 = new wxBoxSizer(wxHORIZONTAL);
+	wxBoxSizer* sizer_5 = new wxBoxSizer(wxVERTICAL);
+	wxBoxSizer* sizer_9 = new wxBoxSizer(wxHORIZONTAL);
+	wxBoxSizer* sizer_8 = new wxBoxSizer(wxHORIZONTAL);
+	wxBoxSizer* sizer_7 = new wxBoxSizer(wxHORIZONTAL);
+	wxBoxSizer* sizer_6 = new wxBoxSizer(wxHORIZONTAL);
+	wxBoxSizer* sizer_4 = new wxBoxSizer(wxVERTICAL);
+	wxStaticBoxSizer* sizer_10 = new wxStaticBoxSizer(colour_editor_staticbox, wxHORIZONTAL);
+	sizer_2->Add(title, 0, wxALIGN_CENTER_HORIZONTAL|wxADJUST_MINSIZE, 0);
+	sizer_4->Add(colour_mode_choice, 0, wxALIGN_CENTER_HORIZONTAL|wxADJUST_MINSIZE, 0);
+	sizer_10->Add(colour_palette_panel, 1, wxEXPAND, 0);
+	sizer_4->Add(sizer_10, 1, wxEXPAND, 0);
+	sizer_3->Add(sizer_4, 1, wxEXPAND, 0);
+	sizer_6->Add(colour_editor_colour_text_1, 1, wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL|wxADJUST_MINSIZE, 0);
+	sizer_6->Add(colour_editor_text_ctrl_1, 0, wxRIGHT|wxALIGN_RIGHT|wxALIGN_CENTER_VERTICAL|wxADJUST_MINSIZE, 0);
+	sizer_5->Add(sizer_6, 1, wxEXPAND, 0);
+	sizer_7->Add(colour_editor_slider_1, 1, wxEXPAND|wxADJUST_MINSIZE, 0);
+	sizer_5->Add(sizer_7, 1, wxEXPAND, 0);
+	sizer_8->Add(colour_editor_colour_text_2, 1, wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL|wxADJUST_MINSIZE, 0);
+	sizer_8->Add(colour_editor_text_ctrl_2, 0, wxRIGHT|wxALIGN_RIGHT|wxALIGN_CENTER_VERTICAL|wxADJUST_MINSIZE, 0);
+	sizer_5->Add(sizer_8, 1, wxEXPAND, 0);
+	sizer_5->Add(colour_editor_slider_2, 1, wxEXPAND|wxADJUST_MINSIZE, 0);
+	sizer_9->Add(colour_editor_colour_text_3, 1, wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL|wxADJUST_MINSIZE, 0);
+	sizer_9->Add(colour_editor_text_ctrl_3, 0, wxRIGHT|wxALIGN_RIGHT|wxALIGN_CENTER_VERTICAL|wxADJUST_MINSIZE, 0);
+	sizer_5->Add(sizer_9, 1, wxEXPAND, 0);
+	sizer_5->Add(colour_editor_slider_3, 1, wxEXPAND|wxADJUST_MINSIZE, 0);
+	sizer_3->Add(sizer_5, 1, wxEXPAND, 0);
+	sizer_2->Add(sizer_3, 1, wxEXPAND, 0);
+	colour_editor_panel->SetAutoLayout(true);
+	colour_editor_panel->SetSizer(sizer_2);
+	sizer_2->Fit(colour_editor_panel);
+	sizer_2->SetSizeHints(colour_editor_panel);
+	sizer_1->Add(colour_editor_panel, 1, wxEXPAND, 0);
+	colour_editor_panel->SetAutoLayout(true);
+	colour_editor_panel->SetSizer(sizer_1);
+	sizer_1->Fit(colour_editor_panel);
+	sizer_1->SetSizeHints(colour_editor_panel);
+	colour_editor_panel->Layout();
 }
 
 void Colour_editor::set_properties()
 {
-    colour_mode_choice->SetSelection(0);
+	colour_mode_choice->SetSelection(0);
 }
 
 void Colour_editor::colour_editor_wx_update()
@@ -356,7 +355,7 @@ Get the colour struct from the slider of the interface.
 
 	 int value;
 	 float temp;
-	 
+
 	 value = colour_editor_slider_1->GetValue();
 	 temp = (float)value/(float)100.0;
 	 colour->red = temp;
@@ -397,7 +396,7 @@ provoked then use this colour editor to do the settings.
 void Colour_editor::colour_editor_wx_change_mode_from_choice()
 {
 	 ENTER(Colour_editor::colour_editor_wx_change_mode_from_choice);
-	 
+
 	 int selection;
 	 struct Colour temp_colour;
 
@@ -472,7 +471,7 @@ Foley and van Damm p592.
 	 COLOUR_PRECISION temp_delta,temp_f,temp_old0,temp_p = 0,temp_q = 0,temp_t = 0,temp_max,
 			temp_min;
 	 int temp_i = 0;
-	 
+
 	 if (new_mode==old_mode)
 	 {
 			new_data->red=old_data->red;
@@ -754,13 +753,13 @@ Makes the numeric value and the slider agree for the particular combo.
 	 char temp_str[20];
 	 COLOUR_PRECISION temp;
 	 int slider_value;
-	 
+
 	 switch (item_num)
 	 {
 			case 0:
 			{
 				 sprintf(temp_str,COLOUR_NUM_FORMAT,current.red);
-				 colour_editor_text_ctrl_1->ChangeValue(temp_str);
+				 colour_editor_text_ctrl_1->ChangeValue(wxString::FromAscii(temp_str));
 				 temp = current.red *100;
 				 slider_value = (int)(temp+0.5);
 				 colour_editor_slider_1->SetValue(slider_value);
@@ -768,7 +767,7 @@ Makes the numeric value and the slider agree for the particular combo.
 			case 1:
 			{
 				 sprintf(temp_str,COLOUR_NUM_FORMAT,current.green);
-				 colour_editor_text_ctrl_2->ChangeValue(temp_str);
+				 colour_editor_text_ctrl_2->ChangeValue(wxString::FromAscii(temp_str));
 				 temp = current.green *100;
 				 slider_value = (int)(temp+0.5);
 				 colour_editor_slider_2->SetValue(slider_value);
@@ -776,13 +775,13 @@ Makes the numeric value and the slider agree for the particular combo.
 			case 2:
 			{
 				 sprintf(temp_str,COLOUR_NUM_FORMAT,current.blue);
-				 colour_editor_text_ctrl_3->ChangeValue(temp_str);
+				 colour_editor_text_ctrl_3->ChangeValue(wxString::FromAscii(temp_str));
 				 temp = current.blue *100;
 				 slider_value = (int)(temp+0.5);
 				 colour_editor_slider_3->SetValue(slider_value);
-			} break;	
+			} break;
 	 }
-	 LEAVE;	
+	 LEAVE;
 } /* Colour_editor::colour_editor_wx_update_value */
 
 void Colour_editor::colour_editor_wx_update_panel_colour()
@@ -823,11 +822,11 @@ LAST MODIFIED : 13 November 2007
 DESCRIPTION :
 Copies <colour> into the value in the <colour_editor_widget>.
 ==============================================================================*/
-{	 
+{
 	 ENTER(Colour_editor::colour_editor_wx_set_colour);
 
 	 int i, return_code;
-	 
+
 	 if ((colour_editor_text_ctrl_1) && (colour_editor_text_ctrl_2) &&
 			(colour_editor_text_ctrl_3))
 	 {
@@ -844,7 +843,7 @@ Copies <colour> into the value in the <colour_editor_widget>.
 			colour_editor_panel->Thaw();
 			colour_editor_panel->Update();
 			return_code=1;
-	 } 
+	 }
 	 else
 	 {
 			display_message(ERROR_MESSAGE,
@@ -853,5 +852,5 @@ Copies <colour> into the value in the <colour_editor_widget>.
 	 }
 
 	 LEAVE;
- 	 return (return_code);
+	 return (return_code);
 } /* Colour_editor::colour_editor_wx_set_colour */

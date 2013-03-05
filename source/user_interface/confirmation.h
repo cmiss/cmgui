@@ -44,9 +44,9 @@ Routines for waiting for user input.
 #if !defined (CONFIRMATION_H)
 #define CONFIRMATION_H
 
-#if defined (BUILD_WITH_CMAKE)
+#if 1
 #include "configure/cmgui_configure.h"
-#endif /* defined (BUILD_WITH_CMAKE) */
+#endif /* defined (1) */
 
 #include "user_interface/user_interface.h"
 

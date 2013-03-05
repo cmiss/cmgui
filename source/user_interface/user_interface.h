@@ -46,9 +46,9 @@ Function definitions for the user interface.
 #if !defined (USER_INTERFACE_H)
 #define USER_INTERFACE_H
 
-#if defined (BUILD_WITH_CMAKE)
+#if 1
 #include "configure/cmgui_configure.h"
-#endif /* defined (BUILD_WITH_CMAKE) */
+#endif /* defined (1) */
 
 #if defined (WIN32_USER_INTERFACE) || defined (_MSC_VER)
 //#define WINDOWS_LEAN_AND_MEAN

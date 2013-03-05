@@ -44,9 +44,9 @@ Private interface for internal methods
 #if !defined (GRAPHICS_WINDOW_PRIVATE_HPP)
 #define GRAPHICS_WINDOW_PRIVATE_HPP
 
-#if defined (BUILD_WITH_CMAKE)
+#if 1
 #include "configure/cmgui_configure.h"
-#endif /* defined (BUILD_WITH_CMAKE) */
+#endif /* defined (1) */
 
 #if defined (WX_USER_INTERFACE)
 class wxScrolledWindow;

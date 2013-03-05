@@ -43,14 +43,13 @@ group of nodes
  * the terms of any one of the MPL, the GPL or the LGPL.
  *
  * ***** END LICENSE BLOCK ***** */
-#if defined (BUILD_WITH_CMAKE)
+#if 1
 #include "configure/cmgui_configure.h"
-#endif /* defined (BUILD_WITH_CMAKE) */
+#endif /* defined (1) */
 #include <math.h>
 #include <string.h>
 #include <sys/types.h>
 #include <time.h>
-extern "C" {
 #include "api/cmiss_element.h"
 #include "api/cmiss_field_module.h"
 #include "api/cmiss_field_subobject_group.h"
@@ -70,11 +69,11 @@ extern "C" {
 #include "graphics/rendition.h"
 #include "user_interface/confirmation.h"
 #include "user_interface/event_dispatcher.h"
-#include "user_interface/message.h"
+#include "general/message.h"
 #include "curve/curve.h"
 #include "emoter/emoter_dialog.h"
 #include "region/cmiss_region.h"
-}
+#include "region/cmiss_region_app.h"
 
 /*
 Module constants
@@ -103,7 +102,7 @@ DESCRIPTION :
 	struct Cmiss_region *region;
 	struct Emoter_slider *active_slider, **sliders;
 	struct Execute_command *execute_command;
-	struct Graphics_buffer_package *graphics_buffer_package;
+	struct Graphics_buffer_app_package *graphics_buffer_package;
 	struct IO_stream_package *io_stream_package;
 	struct Light *viewer_light;
 	struct Light_model *viewer_light_model;
@@ -266,7 +265,7 @@ Updates the node locations for the <emoter_slider>
 						{
 							display_message(WARNING_MESSAGE,
 								"Unable to parse node file %s", input_filename);
-							return_code=0;							
+							return_code=0;
 						}
 						DEACCESS(Cmiss_region)(&input_sequence);
 						IO_stream_close(input_file);
@@ -276,12 +275,12 @@ Updates the node locations for the <emoter_slider>
 					{
 						display_message(WARNING_MESSAGE,
 							"emoter_update_nodes.  Unable to import node file %s", input_filename);
-						return_code=0;							
+						return_code=0;
 					}
 				}
 
 				FE_region_begin_change(fe_region);
-				
+
 				/* perform EM reconstruction */
 				if ( solid_body_motion && shared_data->transform_graphics)
 				{
@@ -329,21 +328,21 @@ Updates the node locations for the <emoter_slider>
 								position[1] = temp_sin * position[0] + temp_cos * position[1];
 								position[0] = temp_two;
 								weights--;
-										
+
 								temp_sin = sin( -*weights );
 								temp_cos = cos( -*weights );
 								temp_two = temp_cos * position[2] - temp_sin * position[0];
 								position[0] = temp_sin * position[2] + temp_cos * position[0];
 								position[2] = temp_two;
 								weights--;
-										
+
 								temp_sin = sin( -*weights );
 								temp_cos = cos( -*weights );
 								temp_two = temp_cos * position[1] - temp_sin * position[2];
 								position[2] = temp_sin * position[1] + temp_cos * position[2];
 								position[1] = temp_two;
 								weights--;
-										
+
 								position[2] -= *weights;
 								weights--;
 								position[1] -= *weights;
@@ -433,7 +432,7 @@ DESCRIPTION :
 ==============================================================================*/
 {
 	int i;
-	FE_value data_start_frame, data_end_frame, marker_start_time, marker_end_time, 
+	FE_value data_start_frame, data_end_frame, marker_start_time, marker_end_time,
 		*shape_vector, slider_time;
 
 	ENTER(emoter_add_slider_modes);
@@ -442,7 +441,7 @@ DESCRIPTION :
 	if ( slider->value != 0.0 && slider->mode_curve )
 	{
 		marker_start_time = slider->emoter_markers[0]->value;
-		marker_end_time = 
+		marker_end_time =
 			slider->emoter_markers[slider->number_of_emoter_markers-1]->value;
 		Curve_get_parameter_range( slider->mode_curve, &data_start_frame,
 			&data_end_frame );
@@ -458,7 +457,7 @@ DESCRIPTION :
 		if (ALLOCATE(shape_vector,FE_value,
 			Curve_get_number_of_components(slider->mode_curve)))
 		{
-			if (Curve_get_values_at_parameter( slider->mode_curve, 
+			if (Curve_get_values_at_parameter( slider->mode_curve,
 				slider_time, shape_vector, (FE_value *)NULL))
 			{
 				if ( slider->solid_body_motion )
@@ -861,8 +860,8 @@ slider
 			{
 				/* Check the combine_slider is still active.
 				   Would be preferable to have removed this reference to an invalid slider
- 				   but this is quite expensive. The present fix does not stop the combine
-               slider from attempts to evaluate it. */
+				   but this is quite expensive. The present fix does not stop the combine
+			   slider from attempts to evaluate it. */
 				i = 0;
 				while ((i < emoter_slider->shared->number_of_sliders) &&
 					(combine_slider != emoter_slider->shared->sliders[i]))
@@ -974,7 +973,7 @@ Callback for the emoter dialog - tidies up all details - mem etc
 		destroy_Shell_list_item(&(emoter_dialog->shell_list_item));
 
 		DEALLOCATE(emoter_dialog->shared);
-		
+
 		*(emoter_dialog->dialog_address) = (struct Emoter_dialog *)NULL;
 
 		DEALLOCATE(emoter_dialog);
@@ -1431,171 +1430,6 @@ Reads a weight vector from the <file>.
 	return( 1 );
 } /* read_weights */
 
-#ifdef OLD_CODE
-static int read_emoter_mode_Curve( struct Curve **emoter_curve_addr,
-	struct MANAGER(Curve) *curve_manager,
-	char *filename, struct Shared_emoter_slider_data *shared,
-	FE_value *number_of_frames)
-/*******************************************************************************
-LAST MODIFIED : 17 November 1999
-
-DESCRIPTION :
-Creates a control curve which is read from file values.
-==============================================================================*/
-{
-	char warning[300], *name;
-	const char *filename_base;
-	FE_value time;
-	FE_value *shape_vector, weight;
-	int i, j, k, n_modes, return_code;
-	struct read_file_data *file_data;
-	struct Curve *emoter_curve;
-
-	ENTER(read_emoter_mode_Curve);
-
-	if ( emoter_curve_addr && curve_manager && filename )
-	{
-		if ( file_data = read_file_open( filename ))
-		{
-			if ( filename_base = strrchr( filename, '/'))
-			{
-				filename_base++;
-			}
-			else
-			{
-				filename_base = filename;
-			}
-			/* This reads the marker if it is there and continues even
-				if it isn't */
-			read_file_marker( file_data, "MODE_DATA");
-			read_file_int(file_data, &n_modes);
-			if ( shared->number_of_modes == n_modes )
-			{
-				return_code = 1;
-			}
-			else
-			{
-				sprintf(warning, "The number of modes in file %s is %d which is not the \nsame as the basis file which has %d modes.  Do you want to load this file anyway?",
-					filename, n_modes, shared->number_of_modes );
-				return_code = confirmation_warning_ok_cancel("Emotionator warning",
-					warning, shared->application_shell,
-					shared->user_interface );
-			}
-			if ( return_code )
-			{
-				if ( ALLOCATE( name, char, strlen(filename_base)+1))
-				{
-					strcpy(name, filename_base);
-					if ( ALLOCATE( shape_vector, FE_value, shared->number_of_modes ))
-					{
-						while (FIND_BY_IDENTIFIER_IN_MANAGER(Curve,name)(
-							name, curve_manager))
-						{
-							REALLOCATE(name, name, char, strlen(name)+2);
-							strcat(name,"+");
-						}
-						if (emoter_curve = CREATE(Curve)(name,
-							LINEAR_LAGRANGE, shared->number_of_modes ))
-						{
-							if (ADD_OBJECT_TO_MANAGER(Curve)(
-								emoter_curve, curve_manager))
-							{
-								/* Set the type after the object is added to the
-									manager so that ADD message is ignored */
-								Curve_set_type(emoter_curve,
-									CURVE_TYPE_EMOTER_MODES );
-								ACCESS(Curve)(emoter_curve);
-								/* SAB Do the first and second modes as special case
-									as we need to create the first element, position both
-									nodes and then from then on the current elements can
-									just be appended to */
-								Curve_add_element( emoter_curve, 1 );
-								time = 1.0;
-								Curve_set_parameter( emoter_curve,/*element_no*/1,
-									/*local_node_no*/0,time);
-								time += 1.0;
-								Curve_set_parameter( emoter_curve,/*element_no*/1,
-									/*local_node_no*/1,time);
-								read_weights( n_modes, file_data, shared->number_of_modes, shape_vector );
-								Curve_set_node_values( emoter_curve,
-									1, 0, shape_vector);
-								if ( !read_file_eof_marker(file_data, "END_MODE_DATA"))
-								{
-									read_weights( n_modes, file_data, shared->number_of_modes, shape_vector );
-								}
-								/* else do nothing and make a single constant element */
-								Curve_set_node_values( emoter_curve,
-									1, 1, shape_vector);
-
-								i = 2;
-								while (!read_file_eof_marker(file_data, "END_MODE_DATA"))
-								{
-									Curve_add_element( emoter_curve, i );
-									time += 1.0;
-									Curve_set_parameter(emoter_curve,/*element_no*/i,
-										/*local_node_no*/1,time);
-									read_weights( n_modes, file_data, shared->number_of_modes, shape_vector );
-									Curve_set_node_values( emoter_curve,
-										i, 1, shape_vector);
-									i++;
-								}
-								*emoter_curve_addr = emoter_curve;
-								*number_of_frames = i;
-								return_code = 1;
-							}
-							else
-							{
-								DESTROY(Curve)(&emoter_curve);
-								display_message(ERROR_MESSAGE,
-									"read_emoter_mode_Curve.  Unable to add control curve to manager");
-								return_code=0;
-							}
-						}
-						else
-						{
-							display_message(ERROR_MESSAGE,
-								"read_emoter_mode_Curve.  Unable to create control curve");
-							return_code=0;
-						}
-						DEALLOCATE (shape_vector);
-					}
-					else
-					{
-						display_message(ERROR_MESSAGE,
-							"read_emoter_mode_Curve.  Unable to allocate shape vector");
-						return_code=0;
-					}
-					DEALLOCATE(name);
-				}
-				else
-				{
-					display_message(ERROR_MESSAGE,
-						"read_emoter_mode_Curve.  Unable to allocate name string");
-					return_code=0;
-				}
-			}
-			read_file_close( file_data );
-		}
-		else
-		{
-			display_message(ERROR_MESSAGE,
-				"read_emoter_mode_Curve.  Unable to open file %s", filename);
-			return_code=0;
-		}
-	}
-	else
-	{
-		display_message(ERROR_MESSAGE,
-			"read_emoter_mode_Curve.  Invalid argument(s)");
-		return_code=0;
-	}
-
-	LEAVE;
-
-	return (return_code);
-} /* read_emoter_mode_Curve */
-#endif /* OLD_CODE */
-
 static struct Curve *read_emoter_curve( struct read_file_data *file_data,
 	const char *base_name, struct Shared_emoter_slider_data *shared)
 /*******************************************************************************
@@ -2048,7 +1882,7 @@ Reads stuff from a file.
 					}
 					return_code = 1;
 				}
-				else 
+				else
 				{
 					/* Try version 2 */
 					if (read_file_marker(file_data, "em"))
@@ -2059,11 +1893,11 @@ Reads stuff from a file.
 							/* Read \n off previous line */
 							IO_stream_scan(file_data->stream, "%*[^\n]");
 							IO_stream_scan(file_data->stream, "%*[\n]");
-							
+
 							/* Comment/title line */
 							IO_stream_scan(file_data->stream, "%*[^\n]");
 							IO_stream_scan(file_data->stream, "%*[\n]");
-							
+
 							read_file_next_token(file_data);
 							header = 1;
 							index = 0;
@@ -2103,7 +1937,7 @@ Reads stuff from a file.
 						{
 							display_message(ERROR_MESSAGE,
 								"read_emoter_slider_file.  Unknown em file type");
-							return_code = 0;						
+							return_code = 0;
 						}
 					}
 					else
@@ -2142,7 +1976,7 @@ Reads stuff from a file.
 							sprintf(warning, "The number of modes in file %s is %d which is not the \nsame as the basis file which has %d modes.  Do you want to load this file anyway?",
 								filename, n_modes, shared->number_of_modes );
 							return_code = confirmation_warning_ok_cancel("Emotionator warning",
-								warning, 
+								warning,
 								 shared->user_interface
 #if defined (WX_USER_INTERFACE)
 , shared->execute_command
@@ -2189,8 +2023,8 @@ Reads stuff from a file.
 										*end_time = *start_time;
 										Curve_set_parameter( emoter_curve,
 											/*element_no*/1,/*local_node_no*/0,	*start_time);
-										read_weights( face_index, n_modes, solid_body_index, 
-											slider->solid_body_motion, file_data, 
+										read_weights( face_index, n_modes, solid_body_index,
+											slider->solid_body_motion, file_data,
 											shared->number_of_modes, values, shape_vector);
 										Curve_set_node_values( emoter_curve,
 											1, 0, shape_vector);
@@ -2203,8 +2037,8 @@ Reads stuff from a file.
 												read_file_string(file_data, temp_string);
 												read_file_FE_value(file_data, end_time);
 											}
-											read_weights( face_index, n_modes, solid_body_index, 
-												slider->solid_body_motion, file_data, 
+											read_weights( face_index, n_modes, solid_body_index,
+												slider->solid_body_motion, file_data,
 												shared->number_of_modes, values, shape_vector);
 										}
 										Curve_set_parameter( emoter_curve,
@@ -2229,7 +2063,7 @@ Reads stuff from a file.
 														slider->emoter_markers = new_markers;
 														slider->emoter_markers[*marker_count]
 															= create_emoter_marker(temp_string,
-																*end_time, 
+																*end_time,
 																*marker_count - 1,
 																*marker_count + 1, 0, 0,
 																slider, slider->shared);
@@ -2249,8 +2083,8 @@ Reads stuff from a file.
 											total_time += 1.0;
 											Curve_set_parameter( emoter_curve,
 												/*element_no*/i,/*local_node_no*/1,	total_time );
-											read_weights( face_index, n_modes, solid_body_index, 
-												slider->solid_body_motion, file_data, 
+											read_weights( face_index, n_modes, solid_body_index,
+												slider->solid_body_motion, file_data,
 												shared->number_of_modes, values, shape_vector);
 											Curve_set_node_values( emoter_curve,
 												i, 1, shape_vector);
@@ -2741,7 +2575,7 @@ DESCRIPTION :
 		{
 			number_of_frames = (int)floor( emoter_dialog->time_maximum -
 				emoter_dialog->time_minimum + 1);
-			
+
 			for ( frame = 0 ; frame < number_of_frames ; frame++ )
 			{
 				time = emoter_dialog->time_minimum + frame;
@@ -2789,7 +2623,7 @@ Sets the <emoter_dialog> to autoplay if <play> is true or to stop if <play> is f
 		emoter_set_play_slider_value ( emoter_dialog, time );
 		emoter_update_face( emoter_dialog->shared );
 
-	  	emoter_dialog->autoplay_timeout = 
+		emoter_dialog->autoplay_timeout =
 			Event_dispatcher_add_timeout_callback(
 				User_interface_get_event_dispatcher(
 					emoter_dialog->shared->user_interface), 0, /*ns*/50000000,
@@ -2825,7 +2659,7 @@ Sets the <emoter_dialog> to autoplay if <play> is true or to stop if <play> is f
 		{
 			if (!emoter_dialog->autoplay_timeout)
 			{
-				emoter_dialog->autoplay_timeout = 
+				emoter_dialog->autoplay_timeout =
 					Event_dispatcher_add_timeout_callback(
 						User_interface_get_event_dispatcher(
 							emoter_dialog->shared->user_interface), 0, 1000,
@@ -3404,10 +3238,10 @@ DESCRIPTION :
 	struct Index_list_data *index_list_data;
 
 	ENTER(add_FE_node_number_to_list);
-	if (node && (index_list_data = 
+	if (node && (index_list_data =
 		(struct Index_list_data *)index_list_data_void))
 	{
-		if (index_list_data->number_of_index_nodes < 
+		if (index_list_data->number_of_index_nodes <
 			index_list_data->maximum_index_nodes)
 		{
 			index_list_data->index_nodes[index_list_data->number_of_index_nodes] =
@@ -3428,7 +3262,7 @@ DESCRIPTION :
 			"add_FE_node_number_to_list.  Invalid arguments");
 		return_code=0;
 	}
-	
+
 	LEAVE;
 
 	return (return_code);
@@ -3512,7 +3346,7 @@ int gfx_create_emoter(struct Parse_state *state,void *dummy_to_be_modified,
 						index_list_data.index_nodes = index_nodes;
 						FE_region_for_each_FE_node(fe_region, add_FE_node_number_to_list,
 							(void *)&index_list_data);
-						if (index_list_data.number_of_index_nodes != 
+						if (index_list_data.number_of_index_nodes !=
 							number_of_index_nodes)
 						{
 							display_message(ERROR_MESSAGE,
@@ -3661,8 +3495,8 @@ DESCRIPTION :
 Executes a GFX MODIFY EMOTER command.
 ==============================================================================*/
 {
-	char activate, convert_data, *export_filename, *filename, 
-		*input_sequence, keyframe, maximum_time_flag, minimum_time_flag, 
+	char activate, convert_data, *export_filename, *filename,
+		*input_sequence, keyframe, maximum_time_flag, minimum_time_flag,
 		*movie_filename, new_flag, no_rigid_body_motion, play, rigid_body_motion,
 		*save_filename, *slidername, stop, *temp_filename, time_flag, value_flag;
 	double maximum_time, minimum_time, time, value;
@@ -3713,7 +3547,7 @@ Executes a GFX MODIFY EMOTER command.
 			minimum_time = 0.0;
 			shared = (struct Shared_emoter_slider_data *)NULL;
 			modes = 1;
-		} 
+		}
 
 		/* initialise defaults */
 		activate = 0;
@@ -3782,7 +3616,7 @@ Executes a GFX MODIFY EMOTER command.
 				{
 					display_message(ERROR_MESSAGE,
 						"gfx_modify_emoter.  Slider operations (activate|set_value) require a slider to be named.");
-					return_code=0;					
+					return_code=0;
 				}
 				if (return_code)
 				{
@@ -3882,11 +3716,11 @@ Executes a GFX MODIFY EMOTER command.
 					if (new_flag)
 					{
 						create_emoter_slider((char *)NULL,
-							"new", 
+							"new",
 							1, emoter_dialog->shared,
 							emoter_dialog->shared->number_of_sliders,
 							(struct Curve *)NULL,
-							emoter_dialog, /*no_confirm*/1 ); 
+							emoter_dialog, /*no_confirm*/1 );
 					}
 					if (filename)
 					{
@@ -3900,11 +3734,11 @@ Executes a GFX MODIFY EMOTER command.
 							temp_filename = filename;
 						}
 						create_emoter_slider(filename,
-							temp_filename, 
+							temp_filename,
 							1, emoter_dialog->shared,
 							emoter_dialog->shared->number_of_sliders,
 							(struct Curve *)NULL,
-							emoter_dialog, /*no_confirm*/1 ); 
+							emoter_dialog, /*no_confirm*/1 );
 						DEALLOCATE(filename);
 					}
 					if (save_filename)

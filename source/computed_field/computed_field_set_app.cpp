@@ -1,110 +1,12 @@
-/*******************************************************************************
-FILE : computed_field_set.c
 
-LAST MODIFIED : 7 May 2007
-
-DESCRIPTION :
-==============================================================================*/
-/* ***** BEGIN LICENSE BLOCK *****
- * Version: MPL 1.1/GPL 2.0/LGPL 2.1
- *
- * The contents of this file are subject to the Mozilla Public License Version
- * 1.1 (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- * http://www.mozilla.org/MPL/
- *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
- * for the specific language governing rights and limitations under the
- * License.
- *
- * The Original Code is cmgui.
- *
- * The Initial Developer of the Original Code is
- * Auckland Uniservices Ltd, Auckland, New Zealand.
- * Portions created by the Initial Developer are Copyright (C) 2005
- * the Initial Developer. All Rights Reserved.
- *
- * Contributor(s):
- *
- * Alternatively, the contents of this file may be used under the terms of
- * either the GNU General Public License Version 2 or later (the "GPL"), or
- * the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
- * in which case the provisions of the GPL or the LGPL are applicable instead
- * of those above. If you wish to allow use of your version of this file only
- * under the terms of either the GPL or the LGPL, and not to allow others to
- * use your version of this file under the terms of the MPL, indicate your
- * decision by deleting the provisions above and replace them with the notice
- * and other provisions required by the GPL or the LGPL. If you do not delete
- * the provisions above, a recipient may use your version of this file under
- * the terms of any one of the MPL, the GPL or the LGPL.
- *
- * ***** END LICENSE BLOCK ***** */
-extern "C" {
-#include "api/cmiss_field_module.h"
-#include "computed_field/computed_field.h"
-#include "computed_field/computed_field_composite.h"
-#include "computed_field/computed_field_set.h"
 #include "general/debug.h"
+#include "general/message.h"
 #include "general/mystring.h"
-#include "user_interface/message.h"
-#include <stdio.h>
-}
+#include "command/parser.h"
+#include "computed_field/computed_field_set.h"
+#include "computed_field/computed_field_composite.h"
 #include "computed_field/computed_field_private.hpp"
 
-Cmiss_field_id Computed_field_manager_get_field_or_component(
-	struct MANAGER(Computed_field) *computed_field_manager, const char *name,
-	int *component_number_address)
-{
-	if ((!computed_field_manager) || (!name) || (!component_number_address))
-		return 0;
-	Cmiss_field_id field =
-		FIND_BY_IDENTIFIER_IN_MANAGER(Computed_field,name)(name, computed_field_manager);
-	if (field)
-	{
-		*component_number_address = -1;
-	}
-	else if (0 != strrchr(name, '.'))
-	{
-		char *name_copy = duplicate_string(name);
-		char *field_component_name = strrchr(name_copy,'.');
-		*field_component_name = '\0';
-		++field_component_name;
-		field = FIND_BY_IDENTIFIER_IN_MANAGER(Computed_field,name)(name_copy, computed_field_manager);
-		if (field)
-		{
-			int component_no = -1;
-			const int number_of_components = Cmiss_field_get_number_of_components(field);
-			for (int i = 0; (i < number_of_components) && (component_no < 0); i++)
-			{
-				char *candidate_component_name = Computed_field_get_component_name(field, i);
-				if (candidate_component_name)
-				{
-					if (0 == strcmp(field_component_name, candidate_component_name))
-					{
-						component_no = i;
-					}
-					DEALLOCATE(candidate_component_name);
-				}
-			}
-			if (0 <= component_no)
-			{
-				if (1 == number_of_components)
-				{
-					/* already a single component field */
-					component_no = -1;
-				}
-				*component_number_address = component_no;
-			}
-			else
-			{
-				field = 0;
-			}
-		}
-		DEALLOCATE(name_copy);
-	}
-	return field;
-}
 
 int set_Computed_field_conditional(struct Parse_state *state,
 	void *field_address_void, void *set_field_data_void)
@@ -150,7 +52,7 @@ wrapper for field and add it to the manager.
 					}
 					return_code = 1;
 				}
-				else 
+				else
 				{
 					if (current_token[0] == '[')
 					{
@@ -194,7 +96,7 @@ wrapper for field and add it to the manager.
 						selected_field = Computed_field_create_constant(temp_field_module,
 							number_of_values, values);
 						Cmiss_field_module_destroy(&temp_field_module);
-						
+
 						DEALLOCATE(values);
 						DEALLOCATE(command_string);
 					}
@@ -285,7 +187,7 @@ wrapper for field and add it to the manager.
 
 int Option_table_add_Computed_field_conditional_entry(
 	struct Option_table *option_table, const char *token,
-	struct Computed_field **field_address, 
+	struct Computed_field **field_address,
 	struct Set_Computed_field_conditional_data *set_field_data)
 /*******************************************************************************
 LAST MODIFIED : 24 August 2006
@@ -299,7 +201,7 @@ Adds the given <token> to the <option_table>.
 	ENTER(Option_table_add_Computed_field_conditional_entry);
 	if (option_table && token && field_address && set_field_data)
 	{
-		return_code = Option_table_add_entry(option_table, token, (void *)field_address, 
+		return_code = Option_table_add_entry(option_table, token, (void *)field_address,
 			(void *)set_field_data, set_Computed_field_conditional);
 	}
 	else
@@ -370,136 +272,3 @@ Works by repeatedly calling set_Computed_field_conditional.
 	return (return_code);
 } /* set_Computed_field_array */
 
-#if defined (OLD_CODE)
-int set_Computed_field_component(struct Parse_state *state,
-	void *field_component_void,void *computed_field_manager_void)
-/*******************************************************************************
-LAST MODIFIED : 24 August 2006
-
-DESCRIPTION :
-Used in command parsing to translate a FIELD_NAME.COMPONENT_NAME into a struct
-Computed_field_component.
-???RC.  Does not ACCESS the field (unlike set_Computed_field).
-==============================================================================*/
-{
-	const char *current_token;
-	char *field_component_name,*field_name,*temp_name;
-	int component_no,i,return_code;
-	struct Computed_field *field;
-	struct Computed_field_component *field_component;
-	struct MANAGER(Computed_field) *computed_field_manager;
-
-	ENTER(set_Computed_field_component);
-	if (state&&
-		(field_component=(struct Computed_field_component *)field_component_void)&&
-		(computed_field_manager=
-			(struct MANAGER(Computed_field) *)computed_field_manager_void))
-	{
-		if (current_token=state->current_token)
-		{
-			if (strcmp(PARSER_HELP_STRING,current_token)&&
-				strcmp(PARSER_RECURSIVE_HELP_STRING,current_token))
-			{
-				if (field_component_name=strchr(current_token,'.'))
-				{
-					*field_component_name='\0';
-					field_component_name++;
-				}
-				if (field=FIND_BY_IDENTIFIER_IN_MANAGER(Computed_field,name)(
-					current_token,computed_field_manager))
-				{
-					if (field_component_name)
-					{
-						return_code=1;
-						component_no=-1;
-						for (i=0;(0>component_no)&&(i<field->number_of_components)&&
-							return_code;i++)
-						{
-							if (temp_name=Computed_field_get_component_name(field,i))
-							{
-								if (0==strcmp(field_component_name,temp_name))
-								{
-									component_no=i;
-								}
-								DEALLOCATE(temp_name);
-							}
-							else
-							{
-								display_message(WARNING_MESSAGE,
-									"set_Computed_field_component.  Not enough memory");
-								return_code=0;
-							}
-						}
-						if (return_code)
-						{
-							if (0 <= component_no)
-							{
-								field_component->field=field;
-								field_component->component_no=component_no;
-							}
-							else
-							{
-								display_message(WARNING_MESSAGE,
-									"Unknown field component %s.%s",current_token,
-									field_component_name);
-								return_code=0;
-							}
-						}
-					}
-					else
-					{
-						field_component->field=field;
-						field_component->component_no=0;
-						return_code=1;
-					}
-				}
-				else
-				{
-					display_message(WARNING_MESSAGE,"Unknown field %s",current_token);
-					return_code=1;
-				}
-				shift_Parse_state(state,1);
-			}
-			else
-			{
-				display_message(INFORMATION_MESSAGE," FIELD_NAME.COMPONENT_NAME");
-				if (field_component->field&&
-					GET_NAME(Computed_field)(field_component->field,&field_name))
-				{
-					if (1<field_component->field->number_of_components)
-					{
-						if (field_component_name=Computed_field_get_component_name(
-							field_component->field,field_component->component_no))
-						{
-							display_message(INFORMATION_MESSAGE,"[%s.%s]",field_name,
-								field_component_name);
-							DEALLOCATE(field_component_name);
-						}
-					}
-					else
-					{
-						display_message(INFORMATION_MESSAGE,"[%s]",field_name);
-					}
-					DEALLOCATE(field_name);
-				}
-				return_code=1;
-			}
-		}
-		else
-		{
-			display_message(WARNING_MESSAGE,"Missing field component name");
-			display_parse_state_location(state);
-			return_code=1;
-		}
-	}
-	else
-	{
-		display_message(ERROR_MESSAGE,
-			"set_Computed_field_component.  Invalid argument(s)");
-		return_code=0;
-	}
-	LEAVE;
-
-	return (return_code);
-} /* set_Computed_field_component */
-#endif /* defined (OLD_CODE) */

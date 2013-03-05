@@ -55,8 +55,8 @@ private:
 	 Callback_base< Object > *callback;
 
 public:
-	 wxObjectListBox(wxPanel  *parent, 
-			int number_of_items, Object *items, 
+	 wxObjectListBox(wxPanel  *parent,
+			int number_of_items, Object *items,
 			char **item_names, Object current_object,
 			User_interface *user_interface) :
 			wxListBox(parent, /*id*/-1, wxPoint(0,0), wxSize(-1,-1), 0, NULL, wxLB_SINGLE)
@@ -89,7 +89,7 @@ public:
 			callback->callback_function(get_item());
 		}
    }
-	
+
 	Object get_item()
 	{
 		return (static_cast<Object>(GetClientData(GetSelection())));
@@ -134,8 +134,8 @@ public:
 	 }
 
 
-	int build_main_menu(int number_of_items, 
-		 Object *items, char **item_names, 
+	int build_main_menu(int number_of_items,
+		 Object *items, char **item_names,
 		 Object current_item)
 	{
 		int current_item_index, i;
@@ -143,7 +143,7 @@ public:
 		current_item_index = 0;
 		for (i = 0 ; i < number_of_items ; i++)
 		{
-			Append(item_names[i], items[i]);
+			Append(wxString::FromAscii(item_names[i]), items[i]);
 			if (current_item == items[i])
 			{
 				current_item_index = i;

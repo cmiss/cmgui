@@ -49,7 +49,7 @@ DESCRIPTION :
 #include "graphics/colour.h"
 #include "graphics/graphics_window.h"
 #include "user_interface/event_dispatcher.h"
-#include "user_interface/message.h"
+#include "general/message.h"
 
 struct User_interface_module
 {
@@ -65,7 +65,7 @@ struct User_interface_module
 	struct Interactive_tool *transform_tool;
 	struct Node_tool *data_tool,*node_tool;
 	struct Event_dispatcher *event_dispatcher;
-	struct Cmiss_scene_viewer_package *scene_viewer_package;
+	struct Cmiss_scene_viewer_app_package *scene_viewer_package;
 #if defined (USE_CMGUI_GRAPHICS_WINDOW)
 	struct MANAGER(Graphics_window) *graphics_window_manager;
 #endif /* defined (USE_CMGUI_GRAPHICS_WINDOW) */
@@ -80,7 +80,7 @@ struct User_interface_module
 	struct Region_tree_viewer *region_tree_viewer;
 	struct Spectrum_editor_dialog *spectrum_editor_dialog;
 #endif /* defined (WX_USER_INTERFACE) */
-	struct Graphics_buffer_package *graphics_buffer_package;
+	struct Graphics_buffer_app_package *graphics_buffer_package;
 	struct MANAGER(Interactive_tool) *interactive_tool_manager;
 	int external;
 };
@@ -96,30 +96,30 @@ struct User_interface_module
  */
 #if defined (WX_USER_INTERFACE) || (!defined (WIN32_USER_INTERFACE) && !defined (_MSC_VER))
 struct User_interface_module *User_interface_module_create(
-	struct Context *context, int in_argc, const char *in_argv[]);
+	struct Cmiss_context_app *context, int in_argc, const char *in_argv[]);
 #else
 struct User_interface_module *User_interface_module_create(
-	struct Context *context, int in_argc, const char *in_argv[],
-	HINSTANCE current_instance, HINSTANCE previous_instance, 
+	struct Cmiss_context_app *context, int in_argc, const char *in_argv[],
+	HINSTANCE current_instance, HINSTANCE previous_instance,
 	LPSTR command_line,int initial_main_window_state);
 #endif
 
 /***************************************************************************//**
- * Access the user_interaface_module, increase the access count of the module 
+ * Access the user_interaface_module, increase the access count of the module
  * by one.
  *
  * @param UI_module  pointer to the "to be accessed" user interface module.
- * @return  handle to an user_interface_module if successfully called, 
+ * @return  handle to an user_interface_module if successfully called,
  *   otherwise NULL.
  */
 struct User_interface_module *User_interface_module_access(
 	struct User_interface_module *UI_module);
 
 /***************************************************************************//**
- * Dereference a user_interaface_module, decrease the access count of the module 
+ * Dereference a user_interaface_module, decrease the access count of the module
  * by one.
  *
- * @param UI_module  address to a pointer to the "to be accessed" 
+ * @param UI_module  address to a pointer to the "to be accessed"
  *   User_interface_module.
  * @return  address of the handle of an User_interface_module.
  */

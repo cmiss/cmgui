@@ -51,13 +51,12 @@ Create a cpp class that act as a transformation editor for the wx widgets.
 #include <wx/statline.h>
 #include <wx/spinbutt.h>
 
-extern "C"{
+#include "general/debug.h"
 #include "graphics/auxiliary_graphics_types.h"
 #include "graphics/rendition.h"
 #include "io_devices/conversion.h"
 #include "graphics/graphics_library.h"
 #include "graphics/quaternion.hpp"
-}
 
 class Transformation_editor : public wxPanel
 {
@@ -69,7 +68,7 @@ public:
 	 int set_transformation(gtMatrix *transformation_matrix);
 	 void set_rendition(struct Cmiss_rendition *rendition);
 	 void ApplyTransformation(int force_apply);
-	 
+
 	 ~Transformation_editor()
 	 {
 			if (global_quat)
@@ -101,7 +100,7 @@ private:
 			gtMatrix *transformation_editor_transformation_matrix);
 
 protected:
- 	 int *auto_apply_flag, direction_system_index;
+	 int *auto_apply_flag, direction_system_index;
 	 struct Cmiss_rendition *current_rendition;
 	 gtMatrix transformation_editor_transformation_matrix;
 	 int rate_of_change;

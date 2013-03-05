@@ -60,8 +60,8 @@ private:
 	Callback_base< Object > *callback;
 
 public:
-	wxChooser<Object>(wxPanel *parent, 
-		int number_of_items, Object *items, 
+	wxChooser<Object>(wxPanel *parent,
+		int number_of_items, Object *items,
 		char **item_names, Object current_object,
 		User_interface *user_interface) :
 		wxChoice(parent, /*id*/-1, wxPoint(0,0), wxSize(-1,-1))
@@ -82,12 +82,12 @@ public:
 	}
 
 	~wxChooser()
- 	 {
+	 {
 		if (callback)
 		{
 			delete callback;
 		}
- 	 }
+	 }
 
 	void OnChoiceSelected(wxCommandEvent& event)
 	{
@@ -97,7 +97,7 @@ public:
 			callback->callback_function(get_item());
 		}
    }
-	
+
 	Object get_item()
 	{
 		return (static_cast<Object>(GetClientData(GetSelection())));
@@ -139,16 +139,18 @@ public:
 		return (return_code);
 	}
 
-	int build_main_menu(int number_of_items, 
-		Object *items, char **item_names, 
+	int build_main_menu(int number_of_items,
+		Object *items, char **item_names,
 		Object current_item)
 	{
 		int current_item_index, i;
+		wxString wxname;
 		Clear();
 		current_item_index = 0;
 		for (i = 0 ; i < number_of_items ; i++)
 		{
-			Append(item_names[i], items[i]);
+			wxname = wxString::FromAscii(item_names[i]);
+			Append(wxname, items[i]);
 			if (current_item == items[i])
 			{
 				current_item_index = i;

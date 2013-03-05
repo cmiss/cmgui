@@ -42,9 +42,9 @@ DESCRIPTION :
  * ***** END LICENSE BLOCK ***** */
 #include <stdio.h>
 #include <stdlib.h>
-#if defined (BUILD_WITH_CMAKE)
+#if 1
 #include "configure/cmgui_configure.h"
-#endif /* defined (BUILD_WITH_CMAKE) */
+#endif /* defined (1) */
 
 #if !defined (WIN32_SYSTEM)
 #include <unistd.h>
@@ -58,7 +58,7 @@ DESCRIPTION :
 #include <fcntl.h>
 #endif /* !defined (WIN32_SYSTEM) */
 #include "general/debug.h"
-#include "user_interface/message.h"
+#include "general/message.h"
 #include "command/example_path.h"
 
 /*

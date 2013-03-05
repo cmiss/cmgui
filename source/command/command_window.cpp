@@ -41,11 +41,10 @@ Management routines for the main command window.
  * the terms of any one of the MPL, the GPL or the LGPL.
  *
  * ***** END LICENSE BLOCK ***** */
-#if defined (BUILD_WITH_CMAKE)
+#if 1
 #include "configure/cmgui_configure.h"
-#endif /* defined (BUILD_WITH_CMAKE) */
+#endif /* defined (1) */
 
-extern "C" {
 #include <stdio.h>
 #include "general/debug.h"
 #include "general/mystring.h"
@@ -54,7 +53,6 @@ extern "C" {
 #include "command/command_window.rc"
 #endif /* defined (WIN32_USER_INTERFACE) */
 #include "command/command.h"
-}
 #if defined (WX_USER_INTERFACE)
 #include "wx/wx.h"
 #include "license.h"
@@ -65,10 +63,9 @@ extern "C" {
 #include <wx/fontdlg.h>
 #include <wx/splitter.h>
 #endif /* defined (WX_USER_INTERFACE)*/
-extern "C" {
-#include "user_interface/message.h"
+#include "general/message.h"
 #include "user_interface/user_interface.h"
-}
+#include "command/parser.h"
 
 /*
 Module types
@@ -97,15 +94,15 @@ class wxCommandLineTextCtrl : public wxTextCtrl
 	 Command_window *command_window;
 public:
 	 wxCommandLineTextCtrl(Command_window *command_window, wxPanel *parent) :
-			wxTextCtrl(parent, -1, "",wxPoint(0,0), wxSize(-1,24), wxTE_PROCESS_ENTER),
+			wxTextCtrl(parent, -1, wxT(""),wxPoint(0,0), wxSize(-1,24), wxTE_PROCESS_ENTER),
 			command_window(command_window)
-    {
+	{
 			 wxBoxSizer *sizer = new wxBoxSizer( wxHORIZONTAL );
 			 sizer->Add(this,
 					wxSizerFlags(1).Align(wxALIGN_CENTER).Expand());
 			 parent->SetSizer(sizer);
 			 Show();
-    };
+	};
 
 	 wxCommandLineTextCtrl()
 	 {
@@ -120,7 +117,7 @@ private:
 	 void OnKeyDown(wxKeyEvent& event);
 	 void OnCommandEntered(wxCommandEvent& event);
 
-    DECLARE_EVENT_TABLE()
+	DECLARE_EVENT_TABLE()
 };
 #endif
 
@@ -163,7 +160,7 @@ DESCRIPTION :
 	wxListBox *history_window;
 	char *command_prompt;
 //#	if defined(WIN32_SYSTEM)
-//		wxIcon icon(wxIcon(cmiss_icon));
+	wxIcon icon(wxIcon(cmiss_icon));
 //#	endif
 #endif
 	FILE *out_file;
@@ -204,28 +201,28 @@ DESCRIPTION :
 					char command[2048];
 					int length;
 					struct Command_window *command_window;
-					
+
 					command_window = (struct Command_window *)GetWindowLong(window,
 						GWL_USERDATA);
-					length = (WORD) SendMessage(window, 
-                        EM_LINELENGTH, 
-                        (WPARAM) 0, 
-                        (LPARAM) 0); 
-					*((LPWORD)command) = 2047;
-					length = SendMessage(window, 
-						EM_GETLINE, 
+					length = (WORD) SendMessage(window,
+						EM_LINELENGTH,
 						(WPARAM) 0,
-						(LPARAM) command); 
+						(LPARAM) 0);
+					*((LPWORD)command) = 2047;
+					length = SendMessage(window,
+						EM_GETLINE,
+						(WPARAM) 0,
+						(LPARAM) command);
 					command[length] = 0;
 					Execute_command_execute_string(command_window->execute_command,
 						command);
-					SendMessage(window, 
-						WM_SETTEXT, 
+					SendMessage(window,
+						WM_SETTEXT,
 						(WPARAM) 0,
-						(LPARAM) command_window->command_prompt); 
+						(LPARAM) command_window->command_prompt);
 					length = strlen(command_window->command_prompt);
-					SendMessage(window, 
-					   EM_SETSEL, 
+					SendMessage(window,
+					   EM_SETSEL,
 						(WPARAM) length,
 						(LPARAM) length);
 				} break;
@@ -280,44 +277,44 @@ DESCRIPTION:
 		case WM_SIZE:
 		{
 			if (command_window = (struct Command_window *)GetWindowLong(window,GWL_USERDATA))
-			{				
-				RECT rcClient; 
+			{
+				RECT rcClient;
 				GetClientRect(command_window->dialog, &rcClient);
-				MoveWindow(command_window->command_history, 0, 0, rcClient.right, (rcClient.bottom - 35) / 2, true); 
-				MoveWindow(command_window->command_entry, 0, (rcClient.bottom - 35) / 2, rcClient.right, 35, true); 
+				MoveWindow(command_window->command_history, 0, 0, rcClient.right, (rcClient.bottom - 35) / 2, true);
+				MoveWindow(command_window->command_entry, 0, (rcClient.bottom - 35) / 2, rcClient.right, 35, true);
 				MoveWindow(command_window->command_output_pane, 0, (rcClient.bottom - 35) / 2 + 35, rcClient.right, (rcClient.bottom - 35) / 2, true);
 			}
 		} break;
 		case WM_COMMAND:
 		{
 			if (command_window = (struct Command_window *)GetWindowLong(window,GWL_USERDATA))
-			{				
+			{
 				switch (HIWORD(first_message))
 				{
 				case LBN_SELCHANGE:
 				{
 					char command[2048];
-					WORD selectionIndex = (WORD) SendMessage(command_window->command_history, 
-                        LB_GETCURSEL, 
-                        (WPARAM) 0, 
-                        (LPARAM) 0); 
-					WORD length = (WORD) SendMessage(command_window->command_history, 
-                        LB_GETTEXTLEN, 
-                        (WPARAM) selectionIndex, 
-                        (LPARAM) 0);
+					WORD selectionIndex = (WORD) SendMessage(command_window->command_history,
+						LB_GETCURSEL,
+						(WPARAM) 0,
+						(LPARAM) 0);
+					WORD length = (WORD) SendMessage(command_window->command_history,
+						LB_GETTEXTLEN,
+						(WPARAM) selectionIndex,
+						(LPARAM) 0);
 					if (length < 2048 - 1)
 					{
-						length = SendMessage(command_window->command_history, 
-								LB_GETTEXT, 
+						length = SendMessage(command_window->command_history,
+								LB_GETTEXT,
 								(WPARAM) selectionIndex,
 								(LPARAM) command);
-						command[length] = 0;	
-						SendMessage(command_window->command_entry, 
-							WM_SETTEXT, 
+						command[length] = 0;
+						SendMessage(command_window->command_entry,
+							WM_SETTEXT,
 							(WPARAM) 0,
-							(LPARAM) command); 
-						SendMessage(command_window->command_entry, 
-						   EM_SETSEL, 
+							(LPARAM) command);
+						SendMessage(command_window->command_entry,
+						   EM_SETSEL,
 							(WPARAM) length,
 							(LPARAM) length);
 					}
@@ -362,34 +359,12 @@ DESCRIPTION:
 				{
 					if (0x1000 & GetKeyState(VK_RETURN))
 					{
-						SendMessage(window, 
-							IDOK, 
+						SendMessage(window,
+							IDOK,
 							(WPARAM) 0,  /* line 0 */
-							(LPARAM) 0); 						
+							(LPARAM) 0);
 					}
 				}
-#if defined (OLD_CODE)
-				case EN_CHANGE:
-				{
-					char buffer[1000];
-					int length;
-					
-					length = (WORD) SendMessage(control_window, 
-						EM_LINELENGTH, 
-						(WPARAM) 0, 
-						(LPARAM) 0); 
-					*((LPWORD)buffer) = 999;
-					SendMessage(control_window, 
-						EM_GETLINE, 
-						(WPARAM) 0,   /* line 0 */
-						(LPARAM) buffer); 
-					buffer[length] = 0;
-					MessageBox(window, 
-						buffer, 
-						"Did it work?", 
-						MB_OK); 
-				} break;
-#endif /* defined (OLD_CODE) */
 			}
 		} break;
 	}
@@ -499,16 +474,16 @@ Called when a command is entered in the command entry area.
 
 				end = start;
 				if (gtk_text_view_starts_display_line (history_view, &start))
-            {
+			{
 					gtk_text_view_backward_display_line_start (history_view, &start);
-            }
+			}
 				else
-            {
+			{
 					gtk_text_view_backward_display_line_start (history_view, &start);
 					if (!gtk_text_view_starts_display_line (history_view, &end))
 						gtk_text_view_forward_display_line_end (history_view, &end);
-            }
-				
+			}
+
 				gtk_text_buffer_move_mark_by_name (command_window->history_buffer,
 					"selection_bound", &start);
 				gtk_text_buffer_move_mark_by_name (command_window->history_buffer,
@@ -794,8 +769,8 @@ class wxCommandWindow : public wxFrame
 
 public:
 
-  wxCommandWindow(Command_window *command_window): 
-    command_window(command_window)
+  wxCommandWindow(Command_window *command_window):
+	command_window(command_window)
   {
 		 wxXmlInit_command_window();
 		 command_window->wx_command_window = NULL;
@@ -817,11 +792,11 @@ public:
 				wxMouseEventHandler(wxCommandWindow::OnOutputLeftClick), NULL, this);
 		 output_list->Connect(wxEVT_LEFT_DCLICK,
 				wxMouseEventHandler(wxCommandWindow::OnOutputDClick), NULL, this);
-  };
+  }
 
   wxCommandWindow()
   {
-  };
+  }
 
 
   ~wxCommandWindow()
@@ -850,7 +825,7 @@ public:
 		{
 			DEALLOCATE(revision_string);
 		}
-  }; 
+	}
 
 	 void OutputListTripleClickEvent()
 	 {
@@ -859,7 +834,7 @@ public:
 			output_list->PositionToXY(from, &colume_no, &line_no);
 			line_length = output_list->GetLineLength(line_no);
 			output_list->SetSelection(
-				 output_list->XYToPosition(0, line_no), 
+				 output_list->XYToPosition(0, line_no),
 				 output_list->XYToPosition(line_length, line_no));
 			mouse_event_data.left = 0;
 			mouse_event_data.d_click = 0;
@@ -867,7 +842,7 @@ public:
 
 	 void OnOutputLeftClick(wxMouseEvent &event)
 	 {
-			if (event.GetX() == mouse_event_data.x && 
+			if (event.GetX() == mouse_event_data.x &&
 				 event.GetY() == mouse_event_data.y)
 			{
 				 mouse_event_data.left++;
@@ -881,7 +856,7 @@ public:
 				 event.Skip();
 			}
 #if defined (__WXMSW__)
-			if (mouse_event_data.left == 2 && mouse_event_data.d_click == 1)	
+			if (mouse_event_data.left == 2 && mouse_event_data.d_click == 1)
 #else
 			if (mouse_event_data.left == 3 && mouse_event_data.d_click == 1)
 #endif
@@ -889,7 +864,7 @@ public:
 				 OutputListTripleClickEvent();
 			}
 #if defined (__WXMSW__)
-			else if (mouse_event_data.left > 2)	
+			else if (mouse_event_data.left > 2)
 #else
 			else if (mouse_event_data.left > 3)
 #endif
@@ -906,7 +881,7 @@ public:
 
 	 void OnOutputDClick(wxMouseEvent &event)
 	 {
-			if (!(event.GetX() == mouse_event_data.x && 
+			if (!(event.GetX() == mouse_event_data.x &&
 						event.GetY() == mouse_event_data.y))
 			{
 				 mouse_event_data.left = 0;
@@ -921,7 +896,7 @@ public:
 			}
 			event.Skip();
 	 }
-        
+
 	 void wx_Add_to_command_list(wxString command)
 	 {
 			history_list = XRCCTRL(*this, "CommandHistory", wxListBox);
@@ -930,10 +905,10 @@ public:
 				 history_list->Append(command);
 			else
 				 history_list->SetString(history_list->GetCount()-1, command);
-			history_list->Append("");	
+			history_list->Append(wxT(""));
 			// make item visible
 			history_list->SetSelection(history_list->GetCount()-1);
-			history_list->Thaw(); 
+			history_list->Thaw();
 	 }
 
 	void SetCmguiStrings(const char *name_string_in, const char *version_string_in,
@@ -949,79 +924,72 @@ public:
 	}
 
 private:
-	 
+
 	 void SingleClick(wxCommandEvent& event)
 	 {
 		USE_PARAMETER(event);
 			history_list = XRCCTRL(*this, "CommandHistory", wxListBox);
 			SelectedCommand = history_list->GetStringSelection();
 			command_window->wx_command_line_text_ctrl->Clear();
- 			command_window->wx_command_line_text_ctrl->WriteText(SelectedCommand);
+			command_window->wx_command_line_text_ctrl->WriteText(SelectedCommand);
 	 }
-	 
+
 	 void DoubleClick(wxCommandEvent& event)
 	 {
 		USE_PARAMETER(event);
 			history_list = XRCCTRL(*this, "CommandHistory", wxListBox);
-			SelectedCommand = history_list->GetStringSelection();  
+			SelectedCommand = history_list->GetStringSelection();
 			number = history_list->GetCount();
 			Execute_command_execute_string(command_window->execute_command,
-				 const_cast<char *>(SelectedCommand.c_str()));
-			history_list->SetSelection ( history_list->GetCount() - 1 ); 	 
+				SelectedCommand.mb_str(wxConvUTF8));
+			history_list->SetSelection ( history_list->GetCount() - 1 );
 			history_list->Deselect( history_list->GetCount() - 1 );
 	 }
-	 
+
 	 void threeDwindow(wxCommandEvent& event)
 	 {
 		USE_PARAMETER(event);
-			SelectedCommand = "gfx cre win";
 			Execute_command_execute_string(command_window->execute_command,
 				 "gfx cre win");
 	 }
-	 
+
 	 void materialeditor(wxCommandEvent &event)
 	 {
 		USE_PARAMETER(event);
-			SelectedCommand = "gfx create graphical_material_editor";
 			Execute_command_execute_string(command_window->execute_command,
 				 "gfx create graphical_material_editor");
 	 }
 	 void sceneeditorwindow(wxCommandEvent& event)
 	 {
 		USE_PARAMETER(event);
-			SelectedCommand = "gfx edit scene";
 			Execute_command_execute_string(command_window->execute_command,
 				 "gfx edit scene");
 	 }
-	 
+
 	 void opencom(wxCommandEvent& event)
 	 {
 		USE_PARAMETER(event);
-			SelectedCommand = "open comfile";
 			Execute_command_execute_string(command_window->execute_command,
 				 "open comfile");
 	 }
-	 
+
 	 void readcurve(wxCommandEvent& event)
 	 {
 		USE_PARAMETER(event);
-			SelectedCommand = "gfx read curve";
 			Execute_command_execute_string(command_window->execute_command,
 				 "gfx read curve");
 	 }
-	 
+
 	 void readdata(wxCommandEvent& event)
 	 {
 		USE_PARAMETER(event);
-			SelectedCommand = "gfx read data";
 			Execute_command_execute_string(command_window->execute_command,
 				 "gfx read data");
 	 }
-	 
+
 	 void readelements(wxCommandEvent& event)
 	 {
 		USE_PARAMETER(event);
-			SelectedCommand = "gfx read elements";
 			Execute_command_execute_string(command_window->execute_command,
 				 "gfx read elements");
 	 }
@@ -1029,7 +997,6 @@ private:
 	 void readnodes(wxCommandEvent& event)
 	 {
 		USE_PARAMETER(event);
-			SelectedCommand = "gfx read nodes";
 			Execute_command_execute_string(command_window->execute_command,
 				 "gfx read nodes");
 	 }
@@ -1037,39 +1004,34 @@ private:
 	 void writeall(wxCommandEvent& event)
 	 {
 		USE_PARAMETER(event);
-			SelectedCommand = "gfx write all";
 			Execute_command_execute_string(command_window->execute_command,
 				 "gfx write all");
 	 }
-	 
+
 	 void writecurve(wxCommandEvent& event)
 	 {
 		USE_PARAMETER(event);
-			SelectedCommand = "gfx write curve all";
 			Execute_command_execute_string(command_window->execute_command,
 				 "gfx write curve all");
 	 }
-	 
+
 	 void writedata(wxCommandEvent& event)
 	 {
 		USE_PARAMETER(event);
-			SelectedCommand = "gfx write data";
 			Execute_command_execute_string(command_window->execute_command,
 				 "gfx write data");
 	 }
-	 
+
 	 void writeelements(wxCommandEvent& event)
 	 {
 		USE_PARAMETER(event);
-			SelectedCommand = "gfx write elements";
 			Execute_command_execute_string(command_window->execute_command,
 				 "gfx write elements");
 	 }
-	 
+
 	 void writenodes(wxCommandEvent& event)
 	 {
 		USE_PARAMETER(event);
-			SelectedCommand = "gfx write nodes";
 			Execute_command_execute_string(command_window->execute_command,
 				 "gfx write nodes");
 	 }
@@ -1094,11 +1056,10 @@ private:
 			Execute_command_execute_string(command_window->execute_command,
 				 "gfx create element_point_viewer");
 	 }
-	 
+
 	 void sceneeditor(wxCommandEvent& event)
 	 {
 		USE_PARAMETER(event);
-			SelectedCommand = "gfx edit scene";
 			Execute_command_execute_string(command_window->execute_command,
 				 "gfx edit scene");
 	 }
@@ -1106,7 +1067,6 @@ private:
 	 void spectrumeditor(wxCommandEvent& event)
 	 {
 		USE_PARAMETER(event);
-			SelectedCommand = "gfx edit spectrum";
 			Execute_command_execute_string(command_window->execute_command,
 				 "gfx edit spectrum");
 	 }
@@ -1131,12 +1091,12 @@ private:
 				 output_list->SetFont(font);
 				 command_window->wx_command_line_text_ctrl->SetFont(font);
 				 history_list->SetFont(font);
-				 output_list->SetForegroundColour(fdata.GetColour()); 
-				 command_window->wx_command_line_text_ctrl->SetForegroundColour(fdata.GetColour()); 
-				 history_list->SetForegroundColour(fdata.GetColour()); 
+				 output_list->SetForegroundColour(fdata.GetColour());
+				 command_window->wx_command_line_text_ctrl->SetForegroundColour(fdata.GetColour());
+				 history_list->SetForegroundColour(fdata.GetColour());
 			}
-	 } 
-	 
+	 }
+
 	 void ShowSimpleAboutDialog(wxCommandEvent& event)
 	 {
 		 char *temp_string;
@@ -1149,12 +1109,12 @@ private:
 		 {
 			 strcpy(temp_string, copyright_string);
 			 strcat(temp_string, license_string);
-			 info.SetDescription(_T(temp_string));
+			 info.SetDescription(wxString::FromAscii(temp_string));
 			 DEALLOCATE(temp_string);
 		 }
 		 else
 		 {
-			 info.SetDescription(_T(license_string));
+			 info.SetDescription(wxString::FromAscii(license_string));
 		 }
 		 if (build_string && revision_string && date_string &&
 			 ALLOCATE(temp_string, char, strlen(build_string) + strlen(revision_string) + strlen(date_string) + 23))
@@ -1165,15 +1125,15 @@ private:
 			 strcat(temp_string, revision_string);
 			 strcat(temp_string, "\n");
 			 strcat(temp_string, date_string);
-			 info.SetCopyright(_T(temp_string));
+			 info.SetCopyright(wxString::FromAscii(temp_string));
 			 DEALLOCATE(temp_string);
 		 }
 		 if (version_string)
 		 {
-			 info.SetVersion(_T(version_string));
+			 info.SetVersion(wxString::FromAscii(version_string));
 		 }
-		 info.SetWebSite(_T("http://www.cmiss.org/cmgui"));
-		 info.SetLicense(CMISS_LICENSE_STRING);
+		 info.SetWebSite(wxT("http://www.cmiss.org/cmgui"));
+		 info.SetLicense(wxString::FromAscii(CMISS_LICENSE_STRING));
 		 wxAboutBox(info);
 	 }
 
@@ -1181,25 +1141,25 @@ private:
 	{
 		USE_PARAMETER(event);
 		wxLaunchDefaultBrowser(
- 			_T("https://tracker.physiomeproject.org/enter_bug.cgi?product=cmgui&format=software"));
+			_T("https://tracker.physiomeproject.org/enter_bug.cgi?product=cmgui&format=software"));
 	}
 
 void Terminate(wxCloseEvent& event)
 {
 	USE_PARAMETER(event);
-	wxMessageDialog *dlg = new wxMessageDialog(NULL,"Are you sure you want to quit cmgui?", 
-		"Exit Confirmation", wxYES_NO|wxICON_QUESTION|wxSTAY_ON_TOP);
+	wxMessageDialog *dlg = new wxMessageDialog(NULL,wxT("Are you sure you want to quit cmgui?"),
+		wxT("Exit Confirmation"), wxYES_NO|wxICON_QUESTION|wxSTAY_ON_TOP);
 	if ( dlg->ShowModal() == wxID_YES)
-		Execute_command_execute_string(command_window->execute_command, "QUIT"); 
+		Execute_command_execute_string(command_window->execute_command, "QUIT");
 	//else: dialog was cancelled or some another button pressed
 	dlg->Destroy();
-} 
+}
 
 void Exit(wxCommandEvent& event)
 {
 	USE_PARAMETER(event);
 	Execute_command_execute_string(command_window->execute_command, "QUIT");
-} 
+}
 
    DECLARE_EVENT_TABLE();
 };
@@ -1234,8 +1194,8 @@ END_EVENT_TABLE()
 
 void wxCommandLineTextCtrl::Reset(const char *command_prompt)
 {
-	 this->ChangeValue(command_prompt);
-	 this->SetInsertionPointEnd(); 
+	 this->ChangeValue(wxString::FromAscii(command_prompt));
+	 this->SetInsertionPointEnd();
 }
 
 void wxCommandLineTextCtrl::OnKeyDown(wxKeyEvent& event)
@@ -1283,7 +1243,7 @@ void wxCommandLineTextCtrl::OnKeyDown(wxKeyEvent& event)
 				 if (event.ControlDown())
 				 {
 						history_list->SetFocus();
-						history_list->SetSelection(0);	
+						history_list->SetSelection(0);
 						SelectedCommand = history_list->GetStringSelection();
 						this->ChangeValue(SelectedCommand);
 						this->SetFocus();
@@ -1307,14 +1267,14 @@ void wxCommandLineTextCtrl::OnKeyDown(wxKeyEvent& event)
 			default:
 				 event.Skip();
 	 }
-	 
+
 }
 
 void wxCommandLineTextCtrl::OnCommandEntered(wxCommandEvent& event)
 {
 	USE_PARAMETER(event);
 	wxString command_string = this->GetValue();
-	Execute_command_execute_string(command_window->execute_command, command_string.c_str());
+	Execute_command_execute_string(command_window->execute_command, command_string.mb_str(wxConvUTF8));
 }
 
 BEGIN_EVENT_TABLE(wxCommandLineTextCtrl, wxTextCtrl)
@@ -1412,21 +1372,21 @@ Create the structures and retrieve the command window from the uil file.
 						(LPARAM)command_window))
 					{
 						command_window->command_history = GetDlgItem(command_window->dialog,
-							IDC_COMMAND_HISTORY); 
+							IDC_COMMAND_HISTORY);
 						command_window->command_entry = GetDlgItem(command_window->dialog,
-							IDC_COMMAND_ENTRY); 
+							IDC_COMMAND_ENTRY);
 						command_window->command_output_pane = GetDlgItem(command_window->dialog,
-							IDC_COMMAND_OUTPUT_PANE); 
+							IDC_COMMAND_OUTPUT_PANE);
 						ShowWindow(command_window->dialog,SW_SHOW);
 					}
 					else
 					{
-						TCHAR szBuf[80]; 
+						TCHAR szBuf[80];
 						LPVOID lpMsgBuf;
-						DWORD dw = GetLastError(); 
+						DWORD dw = GetLastError();
 
 						FormatMessage(
-							FORMAT_MESSAGE_ALLOCATE_BUFFER | 
+							FORMAT_MESSAGE_ALLOCATE_BUFFER |
 							FORMAT_MESSAGE_FROM_SYSTEM,
 							NULL,
 							dw,
@@ -1434,19 +1394,11 @@ Create the structures and retrieve the command window from the uil file.
 							(LPTSTR) &lpMsgBuf,
 							0, NULL );
 
-						wsprintf(szBuf, 
-							"failed with error %d: %s", 
-							dw, lpMsgBuf); 
- 
-						MessageBox(NULL, szBuf, "Error", MB_OK); 
+						wsprintf(szBuf,
+							"failed with error %d: %s",
+							dw, lpMsgBuf);
 
-#if defined (OLD_CODE)
-						LocalFree(lpMsgBuf);
-						ExitProcess(dw); 
-						display_message(ERROR_MESSAGE,
-							"CREATE(Command_window).  Could not create dialog");
-						DEALLOCATE(command_window);
-#endif /* defined (OLD_CODE) */
+						MessageBox(NULL, szBuf, "Error", MB_OK);
 					}
 				}
 				else
@@ -1481,12 +1433,12 @@ Create the structures and retrieve the command window from the uil file.
 				{
 					gtk_window_set_title(GTK_WINDOW(command_window->shell), "CMISS Command Window");
 					gtk_widget_set_name(command_window->shell, "command_window");
-				
+
 					/* create a vpaned widget and add it to our toplevel window */
 					vpaned = gtk_vpaned_new ();
 					gtk_container_add (GTK_CONTAINER (command_window->shell), vpaned);
 					gtk_widget_show (vpaned);
-				
+
 					vbox = gtk_vbox_new(FALSE, 3);
 
 #if GTK_MAJOR_VERSION >= 2
@@ -1535,7 +1487,7 @@ Create the structures and retrieve the command window from the uil file.
 					gtk_widget_set_name(command_window->entry, "command_entry");
 					gtk_widget_show (command_window->entry);
 					gtk_box_pack_end (GTK_BOX (vbox), command_window->entry, FALSE, TRUE, 0);
-				
+
 					gtk_widget_show (vbox);
 					gtk_paned_pack1 (GTK_PANED (vpaned), vbox, TRUE, TRUE);
 
@@ -1566,7 +1518,7 @@ Create the structures and retrieve the command window from the uil file.
 					gtk_widget_show (output_scroll);
 
 					gtk_paned_pack2 (GTK_PANED (vpaned), output_scroll, TRUE, TRUE);
-					
+
 					gtk_widget_show (vpaned);
 
 #if GTK_MAJOR_VERSION >= 2
@@ -1596,7 +1548,7 @@ Create the structures and retrieve the command window from the uil file.
 					"CREATE(Command_window).  Insufficient memory for command_window prompt");
 			}
 #elif defined (WX_USER_INTERFACE) /* switch (USER_INTERFACE) */
-			command_window->wx_command_window = new 
+			command_window->wx_command_window = new
 			  wxCommandWindow(command_window);
 			if (ALLOCATE(command_window->command_prompt, char , 1))
 			{
@@ -1605,27 +1557,27 @@ Create the structures and retrieve the command window from the uil file.
 			else
 			{
 				 display_message(ERROR_MESSAGE,
-						"CREATE(Command_window).  Insufficient memory for command_window prompt");		 
+						"CREATE(Command_window).  Insufficient memory for command_window prompt");
 			}
 			command_window->wx_command_window->Show();
-			command_window->output_window = 
+			command_window->output_window =
 			  XRCCTRL(*command_window->wx_command_window, "OutputWindow", wxTextCtrl);
 			command_window->output_window->SetSize(wxSize(400,-1));
 			command_window->output_window->SetDefaultStyle(wxTextAttr(wxNullColour, wxNullColour,
 					wxFont(10, wxDEFAULT, wxNORMAL, wxNORMAL, false)));
-			command_window->history_window = 
+			command_window->history_window =
 				 XRCCTRL(*command_window->wx_command_window, "CommandHistory", wxListBox);
-			command_window->output_window->SetSize(wxSize(400,-1)); 
+			command_window->output_window->SetSize(wxSize(400,-1));
 			command_window->output_window->Layout();
-			command_window->lower_panel = 
+			command_window->lower_panel =
 			  XRCCTRL(*command_window->wx_command_window, "LowerPanel", wxPanel);
 			command_window->lower_panel->Layout();
-			command_window->frame = 
+			command_window->frame =
 			  XRCCTRL(*command_window->wx_command_window, "CmguiCommandWindow", wxFrame);
-			command_window->frame->SetSize(wxSize(400,600)); 
+			command_window->frame->SetSize(wxSize(400,600));
 			command_window->frame->SetMinSize(wxSize(1,1));
 			wxSplitterWindow *splitter_window =
-				 XRCCTRL(*command_window->wx_command_window, "CommandSplitterWindow", 
+				 XRCCTRL(*command_window->wx_command_window, "CommandSplitterWindow",
 						wxSplitterWindow);
 			splitter_window->SetSashPosition(220);
 			wxPanel *new_panel = XRCCTRL(*command_window->wx_command_window, "CommandLinePanel", wxPanel);
@@ -1674,15 +1626,15 @@ DESCRIPTION:
 #elif defined (WIN32_USER_INTERFACE) /* switch (USER_INTERFACE) */
 		if (command_window->command_prompt)
 			 DEALLOCATE(command_window->command_prompt);
-		/* Set the window proc back to the default so that we don't 
+		/* Set the window proc back to the default so that we don't
 			get any more messages, particularly the close message, we
 			do not necessarily want to quit the whole program */
-		SetWindowLong(command_window->dialog, 
+		SetWindowLong(command_window->dialog,
 			GWL_WNDPROC, (long)DefWindowProc);
 		DestroyWindow(command_window->dialog);
 #elif defined (GTK_USER_INTERFACE) /* switch (USER_INTERFACE) */
 #if GTK_MAJOR_VERSION >= 2
-		g_signal_handler_disconnect (G_OBJECT(command_window->shell), 
+		g_signal_handler_disconnect (G_OBJECT(command_window->shell),
 			command_window->close_handler_id);
 #endif /* GTK_MAJOR_VERSION >= 2 */
 		gtk_widget_destroy (command_window->shell);
@@ -1729,10 +1681,10 @@ Adds the <command> to the bottom of the list for the <command_window>.
 	if (command_window)
 	{
 #if defined (WIN32_USER_INTERFACE) /* switch (USER_INTERFACE) */
-		SendMessage(command_window->command_history, LB_ADDSTRING, 0, 
+		SendMessage(command_window->command_history, LB_ADDSTRING, 0,
 			(LPARAM)command);
 #elif defined (WX_USER_INTERFACE)
-		command_window->wx_command_window->wx_Add_to_command_list(command);
+		command_window->wx_command_window->wx_Add_to_command_list(wxString::FromAscii(command));
 		return_code = 1;
 #elif defined (GTK_USER_INTERFACE) /* switch (USER_INTERFACE) */
 #if GTK_MAJOR_VERSION >= 2
@@ -1883,7 +1835,7 @@ Does not override the command prompt.
 #if defined (WX_USER_INTERFACE)
 		if (command_window->wx_command_line_text_ctrl)
 		{
-			 
+
 			 command_window->wx_command_line_text_ctrl->Reset(command_string);
 		}
 #endif /* defined (WX_USER_INTERFACE) */
@@ -1920,7 +1872,7 @@ Writes the <message> to the <command_window>.
 	guint text_length;
 #endif /* GTK_MAJOR_VERSION >= 2 */
 #endif /* switch (USER_INTERFACE) */
-	
+
 	ENTER(write_command_window);
 	return_code=0;
 
@@ -1968,7 +1920,7 @@ Writes the <message> to the <command_window>.
 #elif defined (WX_USER_INTERFACE)
 		if (command_window->output_window)
 		{
-			 command_window->output_window->AppendText(message);
+			 command_window->output_window->AppendText(wxString::FromAscii(message));
 			 command_window->output_window->SetInsertionPointEnd();
 			 return_code = 1;
 		}

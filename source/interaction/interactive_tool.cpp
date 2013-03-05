@@ -46,6 +46,7 @@ content of the global selections and objects with text input.
  * the terms of any one of the MPL, the GPL or the LGPL.
  *
  * ***** END LICENSE BLOCK ***** */
+#include "api/cmiss_graphic.h"
 #include "api/cmiss_interactive_tool.h"
 #include "general/debug.h"
 #include "general/list_private.h"
@@ -55,7 +56,7 @@ content of the global selections and objects with text input.
 #include "interaction/interactive_tool.h"
 #include "interaction/interactive_tool_private.h"
 #include "node/node_tool.h"
-#include "user_interface/message.h"
+#include "general/message.h"
 
 /*
 Module types
@@ -112,7 +113,7 @@ struct Interactive_tool *CREATE(Interactive_tool)(const char *name,const char *d
 	Interactive_tool_bring_up_dialog_function *bring_up_dialog_function,
 	Interactive_tool_reset_function *reset_function,
 	Interactive_tool_destroy_tool_data_function *destroy_tool_data_function,
-	Interactive_tool_copy_function *copy_function,	
+	Interactive_tool_copy_function *copy_function,
 	void *tool_data)
 /*******************************************************************************
 LAST MODIFIED : 25 February 2008
@@ -135,7 +136,7 @@ type.
 			(interactive_tool->name=duplicate_string(name))&&
 			(interactive_tool->display_name=duplicate_string(display_name)))
 		{
-			/* We don't duplicate this string as it is the pointer to the 
+			/* We don't duplicate this string as it is the pointer to the
 				string which identifies its type */
 			interactive_tool->tool_type_name=tool_type_name;
 			interactive_tool->bring_up_dialog_function=bring_up_dialog_function;
@@ -538,7 +539,7 @@ pointed to by <interactive_tool_manager_void>.
 	struct MANAGER(Interactive_tool) *new_interactive_tool_manager;
 
 	ENTER(Interactive_tool_create_copy_iterator);
-	if (interactive_tool && (new_interactive_tool_manager = 
+	if (interactive_tool && (new_interactive_tool_manager =
 			(struct MANAGER(Interactive_tool) *)interactive_tool_manager_void))
 	{
 		return_code = Interactive_tool_copy(

@@ -44,9 +44,9 @@ Definitions for command window structure, and associated functions
 #if !defined (COMMAND_WINDOW_H)
 #define COMMAND_WINDOW_H
 
-#if defined (BUILD_WITH_CMAKE)
+#if 1
 #include "configure/cmgui_configure.h"
-#endif /* defined (BUILD_WITH_CMAKE) */
+#endif /* defined (1) */
 
 #include "command/command.h"
 #include "general/object.h"

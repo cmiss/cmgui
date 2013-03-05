@@ -40,7 +40,7 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-#if defined (BUILD_WITH_CMAKE)
+#if 1
 #include "configure/cmgui_configure.h"
 #endif /* defined (BUILD_WITH_CMAKE) */
 
@@ -55,7 +55,6 @@
 #endif /* !defined (WIN32_SYSTEM) */
 #include <math.h>
 #include <time.h>
-extern "C" {
 #include "api/cmiss_context.h"
 #include "api/cmiss_element.h"
 #include "api/cmiss_field_module.h"
@@ -95,12 +94,10 @@ extern "C" {
 #include "computed_field/computed_field_integration.h"
 #include "computed_field/computed_field_logical_operators.h"
 #include "computed_field/computed_field_lookup.h"
-}
 #include "computed_field/computed_field_matrix_operators.hpp"
 #include "computed_field/computed_field_nodeset_operators.hpp"
 #include "computed_field/computed_field_subobject_group_internal.hpp"
 #include "computed_field/computed_field_vector_operators.hpp"
-extern "C" {
 #include "computed_field/computed_field_set.h"
 #include "computed_field/computed_field_string_constant.h"
 #include "computed_field/computed_field_time.h"
@@ -146,7 +143,6 @@ extern "C" {
 #include "graphics/glyph.h"
 #include "graphics/graphics_object.h"
 #include "graphics/graphics_window.h"
-#include "graphics/import_graphics_object.h"
 #include "graphics/iso_field_calculation.h"
 #include "graphics/light.h"
 #include "graphics/light_model.h"
@@ -155,18 +151,17 @@ extern "C" {
 #include "graphics/graphics_module.h"
 #include "graphics/rendition.h"
 #include "graphics/render_to_finite_elements.h"
-#include "graphics/renderstl.h"
-#include "graphics/rendervrml.h"
-#include "graphics/renderwavefront.h"
+#include "graphics/render_stl.h"
+#include "graphics/render_vrml.h"
+#include "graphics/render_wavefront.h"
 #include "graphics/scene.h"
 #include "finite_element/finite_element_helper.h"
-}
 #include "graphics/triangle_mesh.hpp"
 #include "graphics/render_triangularisation.hpp"
+#include "graphics/import_graphics_object.h"
 #include "graphics/scene.hpp"
 #include "graphics/graphics_filter.hpp"
 #include "graphics/tessellation.hpp"
-extern "C" {
 #if defined (WX_USER_INTERFACE)
 #include "graphics/region_tree_viewer_wx.h"
 #endif /* switch(USER_INTERFACE)*/
@@ -187,13 +182,13 @@ extern "C" {
 #if defined (USE_ITK)
 #include "image_processing/computed_field_threshold_image_filter.h"
 #include "image_processing/computed_field_binary_threshold_image_filter.h"
-#include "image_processing/computed_field_cannyEdgeDetectionFilter.h"
-#include "image_processing/computed_field_meanImageFilter.h"
-#include "image_processing/computed_field_sigmoidImageFilter.h"
+#include "image_processing/computed_field_canny_edge_detection_filter.h"
+#include "image_processing/computed_field_mean_image_filter.h"
+#include "image_processing/computed_field_sigmoid_image_filter.h"
 #include "image_processing/computed_field_discrete_gaussian_image_filter.h"
-#include "image_processing/computed_field_curvatureAnisotropicDiffusionImageFilter.h"
-#include "image_processing/computed_field_derivativeImageFilter.h"
-#include "image_processing/computed_field_rescaleIntensityImageFilter.h"
+#include "image_processing/computed_field_curvature_anisotropic_diffusion_image_filter.h"
+#include "image_processing/computed_field_derivative_image_filter.h"
+#include "image_processing/computed_field_rescale_intensity_image_filter.h"
 #include "image_processing/computed_field_connected_threshold_image_filter.h"
 #include "image_processing/computed_field_gradient_magnitude_recursive_gaussian_image_filter.h"
 #include "image_processing/computed_field_histogram_image_filter.h"
@@ -214,13 +209,14 @@ extern "C" {
 #include "node/node_viewer_wx.h"
 #endif /* defined (WX_USER_INTERFACE) */
 #include "region/cmiss_region.h"
+#include "region/cmiss_region_app.h"
 #include "selection/any_object_selection.h"
 #include "three_d_drawing/graphics_buffer.h"
 #include "graphics/font.h"
 #include "time/time_keeper.h"
 #include "user_interface/filedir.h"
 #include "user_interface/confirmation.h"
-#include "user_interface/message.h"
+#include "general/message.h"
 #include "user_interface/user_interface.h"
 #include "curve/curve.h"
 #if defined (USE_PERL_INTERPRETER)
@@ -229,7 +225,6 @@ extern "C" {
 #include "user_interface/fd_io.h"
 #include "user_interface/idle.h"
 #include "command/cmiss.h"
-}
 #include "mesh/cmiss_element_private.hpp"
 #include "mesh/cmiss_node_private.hpp"
 #if defined (USE_OPENCASCADE)
@@ -244,6 +239,76 @@ extern "C" {
 #include "cad/computed_field_cad_topology.h"
 #endif /* defined (USE_OPENCASCADE) */
 
+// insert app headers here
+#include "computed_field/computed_field_image_app.h"
+#include "computed_field/computed_field_integration_app.h"
+#include "computed_field/computed_field_alias_app.h"
+#include "computed_field/computed_field_coordinate_app.h"
+#include "graphics/rendition_app.h"
+#include "image_processing/computed_field_sigmoid_image_filter_app.h"
+#include "image_processing/computed_field_mean_image_filter_app.h"
+#include "image_processing/computed_field_rescale_intensity_image_filter_app.h"
+#include "image_processing/computed_field_derivative_image_filter_app.h"
+#include "image_processing/computed_field_canny_edge_detection_filter_app.h"
+#include "image_processing/computed_field_curvature_anisotropic_diffusion_image_filter_app.h"
+#include "image_processing/computed_field_histogram_image_filter_app.h"
+#include "image_processing/computed_field_discrete_gaussian_image_filter_app.h"
+#include "image_processing/computed_field_connected_threshold_image_filter_app.h"
+#include "image_processing/computed_field_gradient_magnitude_recursive_gaussian_image_filter_app.h"
+#include "image_processing/computed_field_fast_marching_image_filter_app.h"
+#include "image_processing/computed_field_binary_erode_image_filter_app.h"
+#include "image_processing/computed_field_binary_dilate_image_filter_app.h"
+#include "computed_field/computed_field_time_app.h"
+#include "image_processing/computed_field_binary_threshold_image_filter_app.h"
+#include "image_processing/computed_field_threshold_image_filter_app.h"
+#include "image_processing/computed_field_image_resample_app.h"
+#include "computed_field/computed_field_string_constant_app.h"
+#include "computed_field/computed_field_deformation_app.h"
+#include "computed_field/computed_field_finite_element_app.h"
+#include "computed_field/computed_field_vector_operators_app.hpp"
+#include "computed_field/computed_field_matrix_operators_app.hpp"
+#include "computed_field/computed_field_nodeset_operators_app.hpp"
+#include "computed_field/computed_field_lookup_app.h"
+#include "computed_field/computed_field_logical_operators_app.h"
+#include "computed_field/computed_field_function_app.h"
+#include "computed_field/computed_field_fibres_app.h"
+#include "computed_field/computed_field_derivatives_app.h"
+#include "computed_field/computed_field_curve_app.h"
+#include "computed_field/computed_field_conditional_app.h"
+#include "computed_field/computed_field_composite_app.h"
+#include "computed_field/computed_field_compose_app.h"
+#include "computed_field/computed_field_format_output_app.h"
+#include "computed_field/computed_field_trigonometry_app.h"
+#include "computed_field/computed_field_arithmetic_operators_app.h"
+#include "minimise/minimise_app.h"
+#include "finite_element/export_finite_element_app.h"
+#include "graphics/element_point_ranges_app.h"
+#include "graphics/environment_map_app.h"
+#include "graphics/rendition_app.h"
+#include "finite_element/finite_element_region_app.h"
+#include "graphics/scene_viewer_app.h"
+#include "graphics/graphics_object_app.h"
+#include "graphics/tessellation_app.hpp"
+#include "graphics/tessellation_app.hpp"
+#include "graphics/graphics_filter_app.hpp"
+#include "computed_field/computed_field_app.h"
+#include "curve/curve_app.h"
+#include "general/enumerator_app.h"
+#include "graphics/render_to_finite_elements_app.h"
+#include "graphics/auxiliary_graphics_types_app.h"
+#include "finite_element/finite_element_conversion_app.h"
+#include "graphics/texture_app.h"
+#include "graphics/colour_app.h"
+#include "graphics/scene_app.h"
+#include "graphics/spectrum_settings_app.h"
+#include "graphics/light_model_app.h"
+#include "graphics/light_app.h"
+#include "graphics/material_app.h"
+#include "graphics/spectrum_app.h"
+#include "general/multi_range_app.h"
+#include "computed_field/computed_field_set_app.h"
+#include "context/context_app.h"
+#include "three_d_drawing/graphics_buffer_app.h"
 /*
 Module types
 ------------
@@ -293,8 +358,8 @@ DESCRIPTION :
 	struct LIST(FE_element_shape) *element_shape_list;
 	/* Always want the entry for graphics_buffer_package even if it will
 		not be available on this implementation */
-	struct Graphics_buffer_package *graphics_buffer_package;
-	struct Cmiss_scene_viewer_package *scene_viewer_package;
+	struct Graphics_buffer_app_package *graphics_buffer_package;
+	struct Cmiss_scene_viewer_app_package *scene_viewer_package;
 	struct Graphics_font_package *graphics_font_package;
 #if defined (USE_CMGUI_GRAPHICS_WINDOW)
 	struct MANAGER(Graphics_window) *graphics_window_manager;
@@ -372,7 +437,7 @@ to change the interactive tool settings.
 		Interactive_tool_copy(wx_interactive_tool,
 			global_interactive_tool, (struct MANAGER(Interactive_tool) *)NULL);
 	}
-    DEALLOCATE(tool_name);
+	DEALLOCATE(tool_name);
 	return 1;
 }
 #endif /*(WX_USER_INTERFACE)*/
@@ -400,7 +465,7 @@ to change the interactive tool settings.
 	 if ((length>0))
 	 {
 			if (ALLOCATE(drive_name,char,length))
-			{		 
+			{
 				 strncpy(drive_name,file_name,length);
 				 drive_name[length-1]='\0';
 				 if (ALLOCATE(temp_string,char,length+8))
@@ -1273,18 +1338,18 @@ static int gfx_create_group(struct Parse_state *state,
 								Cmiss_field_node_group_id node_group = Cmiss_field_group_create_node_group(group, master_nodeset);
 								Cmiss_nodeset_group_id modify_nodeset_group = Cmiss_field_node_group_get_nodeset(node_group);
 								Cmiss_node_iterator_id iter = Cmiss_nodeset_create_node_iterator(master_nodeset);
-				  				Cmiss_node_id node = 0;
-				  				while (NULL != (node = Cmiss_node_iterator_next_non_access(iter)))
-				  				{
-				  					if (Multi_range_is_value_in_range(add_ranges, Cmiss_node_get_identifier(node)))
-				  					{
+								Cmiss_node_id node = 0;
+								while (NULL != (node = Cmiss_node_iterator_next_non_access(iter)))
+								{
+									if (Multi_range_is_value_in_range(add_ranges, Cmiss_node_get_identifier(node)))
+									{
 										if (!Cmiss_nodeset_group_add_node(modify_nodeset_group, node))
 										{
 											return_code = 0;
 											break;
 										}
 									}
-				  				}
+								}
 								Cmiss_node_iterator_destroy(&iter);
 								Cmiss_nodeset_group_destroy(&modify_nodeset_group);
 								Cmiss_field_node_group_destroy(&node_group);
@@ -1415,43 +1480,43 @@ Executes a GFX CREATE FLOW_PARTICLES command.
 			{
 				if (coordinate_field_name)
 				{
-	  			Cmiss_field_module_id field_module = Cmiss_region_get_field_module(region);
-	  			coordinate_field = Cmiss_field_module_find_field_by_name(field_module, coordinate_field_name);
-	  			if (stream_vector_field_name)
-	  			{
-	  				stream_vector_field = Cmiss_field_module_find_field_by_name(field_module, stream_vector_field_name);
-	  				if (!stream_vector_field)
-	  				{
-	  					display_message(ERROR_MESSAGE,
-	  						"gfx_create_flow_particles:  stream vector field cannot be found");
-	  					return_code = 0;
-	  				}
-	  				else
-	  				{
-	  					if (!Computed_field_is_stream_vector_capable(stream_vector_field, NULL))
-	  					{
-	  						display_message(ERROR_MESSAGE,
-	  							"gfx_create_flow_particles: field specifiedis not a valid vector field");
-	  						return_code = 0;
-	  					}
-	  				}
-	  			}
-	  			if (!coordinate_field)
-	  			{
-	  				display_message(ERROR_MESSAGE,
-	  					"gfx_create_flow_particles:  coordinates field cannot be found");
-	  				return_code = 0;
-	  			}
-	  			else
-	  			{
-		  			if (!Computed_field_has_up_to_3_numerical_components(coordinate_field, NULL))
-		  			{
-		  				display_message(ERROR_MESSAGE,
-		  					"gfx_create_flow_particles: field specifiedis not a valid coordinates field");
-		  				return_code = 0;
-		  			}
-	  			}
-	  			Cmiss_field_module_destroy(&field_module);
+				Cmiss_field_module_id field_module = Cmiss_region_get_field_module(region);
+				coordinate_field = Cmiss_field_module_find_field_by_name(field_module, coordinate_field_name);
+				if (stream_vector_field_name)
+				{
+					stream_vector_field = Cmiss_field_module_find_field_by_name(field_module, stream_vector_field_name);
+					if (!stream_vector_field)
+					{
+						display_message(ERROR_MESSAGE,
+							"gfx_create_flow_particles:  stream vector field cannot be found");
+						return_code = 0;
+					}
+					else
+					{
+						if (!Computed_field_is_stream_vector_capable(stream_vector_field, NULL))
+						{
+							display_message(ERROR_MESSAGE,
+								"gfx_create_flow_particles: field specifiedis not a valid vector field");
+							return_code = 0;
+						}
+					}
+				}
+				if (!coordinate_field)
+				{
+					display_message(ERROR_MESSAGE,
+						"gfx_create_flow_particles:  coordinates field cannot be found");
+					return_code = 0;
+				}
+				else
+				{
+					if (!Computed_field_has_up_to_3_numerical_components(coordinate_field, NULL))
+					{
+						display_message(ERROR_MESSAGE,
+							"gfx_create_flow_particles: field specifiedis not a valid coordinates field");
+						return_code = 0;
+					}
+				}
+				Cmiss_field_module_destroy(&field_module);
 				}
 				else
 				{
@@ -1538,7 +1603,7 @@ Executes a GFX CREATE FLOW_PARTICLES command.
 					if (ALLOCATE(new_particle_positions,Triple,number_of_particles) &&
 						(pointset=CREATE(GT_pointset)(number_of_particles,
 							new_particle_positions,(char **)NULL,	g_POINT_MARKER,
-							1,g_NO_DATA,(GTDATA *) NULL,(int *)NULL,command_data->default_font)))
+							1,g_NO_DATA,(GLfloat *) NULL,(int *)NULL,command_data->default_font)))
 					{
 						element_to_particle_data.pointlist= &new_particle_positions;
 						element_to_particle_data.index=0;
@@ -1616,8 +1681,8 @@ Executes a GFX CREATE FLOW_PARTICLES command.
 								"gfx_create_flow_particles.  Error creating particles");
 						}
 					}
-		  			Cmiss_field_cache_destroy(&element_to_particle_data.field_cache);
-		  			Cmiss_field_module_destroy(&field_module);
+					Cmiss_field_cache_destroy(&element_to_particle_data.field_cache);
+					Cmiss_field_module_destroy(&field_module);
 				}
 			}
 		} /* parse error,help */
@@ -2393,7 +2458,7 @@ Executes a GFX CREATE ELEMENT_POINT_VIEWER command.
 						display_message(ERROR_MESSAGE,
 							"gfx_create_element_point_viewer.  Unable to make time object.");
 						return_code=0;
-					}						
+					}
 				}
 			}
 			else
@@ -2494,7 +2559,7 @@ Executes a GFX CREATE SNAKE command.
 {
 	char *source_region_path;
 	float density_factor, stiffness;
-	int i, number_of_elements, number_of_fitting_fields, 
+	int i, number_of_elements, number_of_fitting_fields,
 		previous_state_index, return_code;
 	struct Cmiss_command_data *command_data;
 	struct Cmiss_region *region, *source_region;
@@ -2550,10 +2615,10 @@ Executes a GFX CREATE SNAKE command.
 		{
 			fitting_fields = (struct Computed_field **)NULL;
 		}
-		
+
 		option_table = CREATE(Option_table)();
 		/* coordinate */
-		set_coordinate_field_data.conditional_function = 
+		set_coordinate_field_data.conditional_function =
 			Computed_field_has_numerical_components;
 		set_coordinate_field_data.conditional_function_user_data = (void *)NULL;
 		set_coordinate_field_data.computed_field_manager =
@@ -2592,7 +2657,7 @@ Executes a GFX CREATE SNAKE command.
 		Option_table_add_entry(option_table, "stiffness",
 			&stiffness, NULL, set_float_non_negative);
 		/* weight_field */
-		set_weight_field_data.conditional_function = 
+		set_weight_field_data.conditional_function =
 			Computed_field_is_scalar;
 		set_weight_field_data.conditional_function_user_data = (void *)NULL;
 		set_weight_field_data.computed_field_manager =
@@ -2621,58 +2686,58 @@ Executes a GFX CREATE SNAKE command.
 		}
 		if (return_code)
 		{
-	  		Cmiss_rendition *rendition = Cmiss_graphics_module_get_rendition(command_data->graphics_module, source_region);
-	  		Cmiss_field_group_id selection_group = NULL;
-	  		if (rendition)
-	  		{
-	  			selection_group = Cmiss_rendition_get_selection_group(rendition);
+			Cmiss_rendition *rendition = Cmiss_graphics_module_get_rendition(command_data->graphics_module, source_region);
+			Cmiss_field_group_id selection_group = NULL;
+			if (rendition)
+			{
+				selection_group = Cmiss_rendition_get_selection_group(rendition);
 				Cmiss_rendition_destroy(&rendition);
-	  		}
-	  		if (selection_group)
-	  		{
-	  			Cmiss_field_module_id field_module = Cmiss_region_get_field_module(region);
-	  			Cmiss_field_module_begin_change(field_module);
-	  			struct LIST(FE_node) *data_list = FE_node_list_from_region_and_selection_group(
-	  				source_region, NULL,	Cmiss_field_group_base_cast(selection_group), NULL, 0, /*use_data*/1);
-	  			FE_region *fe_region = Cmiss_region_get_FE_region(region);
-	  			Cmiss_nodeset_group_id nodeset_group = 0;
-	  			Cmiss_mesh_group_id mesh_group = 0;
-	  			if (group)
-	  			{
-	  				Cmiss_nodeset_id master_nodeset = Cmiss_field_module_find_nodeset_by_name(field_module, "cmiss_nodes");
-	  				Cmiss_field_node_group_id node_group = Cmiss_field_group_get_node_group(group, master_nodeset);
-	  				if (!node_group)
-	  					node_group = Cmiss_field_group_create_node_group(group, master_nodeset);
-	  				nodeset_group = Cmiss_field_node_group_get_nodeset(node_group);
-	  				Cmiss_field_node_group_destroy(&node_group);
-	  				Cmiss_nodeset_destroy(&master_nodeset);
+			}
+			if (selection_group)
+			{
+				Cmiss_field_module_id field_module = Cmiss_region_get_field_module(region);
+				Cmiss_field_module_begin_change(field_module);
+				struct LIST(FE_node) *data_list = FE_node_list_from_region_and_selection_group(
+					source_region, NULL,	Cmiss_field_group_base_cast(selection_group), NULL, 0, /*use_data*/1);
+				FE_region *fe_region = Cmiss_region_get_FE_region(region);
+				Cmiss_nodeset_group_id nodeset_group = 0;
+				Cmiss_mesh_group_id mesh_group = 0;
+				if (group)
+				{
+					Cmiss_nodeset_id master_nodeset = Cmiss_field_module_find_nodeset_by_name(field_module, "cmiss_nodes");
+					Cmiss_field_node_group_id node_group = Cmiss_field_group_get_node_group(group, master_nodeset);
+					if (!node_group)
+						node_group = Cmiss_field_group_create_node_group(group, master_nodeset);
+					nodeset_group = Cmiss_field_node_group_get_nodeset(node_group);
+					Cmiss_field_node_group_destroy(&node_group);
+					Cmiss_nodeset_destroy(&master_nodeset);
 
-	  				Cmiss_mesh_id master_mesh = Cmiss_field_module_find_mesh_by_dimension(field_module, 1);
-	  				Cmiss_field_element_group_id element_group = Cmiss_field_group_get_element_group(group, master_mesh);
-	  				if (!element_group)
-	  					element_group = Cmiss_field_group_create_element_group(group, master_mesh);
-	  				mesh_group = Cmiss_field_element_group_get_mesh(element_group);
-	  				Cmiss_field_element_group_destroy(&element_group);
-	  				Cmiss_mesh_destroy(&master_mesh);
-	  			}
-	  			return_code = create_FE_element_snake_from_data_points(
-	  				fe_region, coordinate_field, weight_field,
-	  				number_of_fitting_fields, fitting_fields,
-	  				data_list,
-	  				number_of_elements,
-	  				density_factor,
-	  				stiffness, nodeset_group, mesh_group);
-	  			Cmiss_mesh_group_destroy(&mesh_group);
-	  			Cmiss_nodeset_group_destroy(&nodeset_group);
-	  			Cmiss_field_group_destroy(&selection_group);
-	  			DESTROY(LIST(FE_node))(&data_list);
-	  			Cmiss_field_module_end_change(field_module);
-	  			Cmiss_field_module_destroy(&field_module);
-	  		}
-	  		else
-	  		{
-	  			return_code = 0;
-	  		}
+					Cmiss_mesh_id master_mesh = Cmiss_field_module_find_mesh_by_dimension(field_module, 1);
+					Cmiss_field_element_group_id element_group = Cmiss_field_group_get_element_group(group, master_mesh);
+					if (!element_group)
+						element_group = Cmiss_field_group_create_element_group(group, master_mesh);
+					mesh_group = Cmiss_field_element_group_get_mesh(element_group);
+					Cmiss_field_element_group_destroy(&element_group);
+					Cmiss_mesh_destroy(&master_mesh);
+				}
+				return_code = create_FE_element_snake_from_data_points(
+					fe_region, coordinate_field, weight_field,
+					number_of_fitting_fields, fitting_fields,
+					data_list,
+					number_of_elements,
+					density_factor,
+					stiffness, nodeset_group, mesh_group);
+				Cmiss_mesh_group_destroy(&mesh_group);
+				Cmiss_nodeset_group_destroy(&nodeset_group);
+				Cmiss_field_group_destroy(&selection_group);
+				DESTROY(LIST(FE_node))(&data_list);
+				Cmiss_field_module_end_change(field_module);
+				Cmiss_field_module_destroy(&field_module);
+			}
+			else
+			{
+				return_code = 0;
+			}
 		}
 		if (coordinate_field)
 		{
@@ -2683,7 +2748,7 @@ Executes a GFX CREATE SNAKE command.
 			DEACCESS(Computed_field)(&weight_field);
 		}
 		if (fitting_fields)
-		{				
+		{
 			for (i = 0; i < number_of_fitting_fields; i++)
 			{
 				if (fitting_fields[i])
@@ -2844,14 +2909,14 @@ static and referred to by gfx_create_Spectrum
 						spectrum_to_be_modified_copy);
 					modify_spectrum_data.spectrum_maximum = get_Spectrum_maximum(
 						spectrum_to_be_modified_copy);
-					modify_spectrum_data.computed_field_manager 
+					modify_spectrum_data.computed_field_manager
 						= Computed_field_package_get_computed_field_manager(
 							command_data->computed_field_package);
-					spectrum_command_data.spectrum_manager 
+					spectrum_command_data.spectrum_manager
 						= command_data->spectrum_manager;
 					option_table=CREATE(Option_table)();
 					Option_table_add_entry(option_table,"autorange",&autorange,NULL,
-						set_char_flag);					
+						set_char_flag);
 					Option_table_add_entry(option_table,"blue_to_red",&blue_to_red,NULL,
 						set_char_flag);
 					Option_table_add_entry(option_table,"blue_white_red",&blue_white_red,NULL,
@@ -2879,7 +2944,7 @@ static and referred to by gfx_create_Spectrum
 					Option_table_add_entry(option_table,"scene_for_autorange",&autorange_scene,
 						command_data->scene_manager,set_Scene);
 					Option_table_add_entry(option_table,"red_to_blue",&red_to_blue,
-						NULL,set_char_flag);									
+						NULL,set_char_flag);
 					if (0 != (return_code = Option_table_multi_parse(option_table, state)))
 					{
 						if (return_code)
@@ -2888,7 +2953,7 @@ static and referred to by gfx_create_Spectrum
 							{
 								Spectrum_remove_all_settings(spectrum_to_be_modified_copy);
 							}
-							if (blue_to_red + blue_white_red +red_to_blue + lg_red_to_blue + 
+							if (blue_to_red + blue_white_red +red_to_blue + lg_red_to_blue +
 								lg_blue_to_red > 1 )
 							{
 								display_message(ERROR_MESSAGE,
@@ -2950,7 +3015,7 @@ static and referred to by gfx_create_Spectrum
 								range_set = 0;
 								Scene_get_data_range_for_spectrum(autorange_scene,
 									spectrum_to_be_modified
-									/* Not spectrum_to_be_modified_copy as this ptr 
+									/* Not spectrum_to_be_modified_copy as this ptr
 										identifies the valid graphics objects */,
 									&minimum, &maximum, &range_set);
 								if ( range_set )
@@ -3122,9 +3187,9 @@ static int set_Texture_image_from_field(struct Texture *texture,
 	struct Spectrum *spectrum,
 	Cmiss_mesh_id search_mesh,
 	enum Texture_storage_type storage,
-	int image_width, int image_height, int image_depth, 
+	int image_width, int image_height, int image_depth,
 	int number_of_bytes_per_component,
-	struct Graphics_buffer_package *graphics_buffer_package,
+	struct Graphics_buffer_app_package *graphics_buffer_package,
 	struct Graphical_material *fail_material)
 /*******************************************************************************
 LAST MODIFIED : 30 June 2006
@@ -3154,7 +3219,7 @@ Currently limited to 1 byte per component.
 		{
 			if (!texture_coordinate_field)
 			{
-				texture_coordinate_field = 
+				texture_coordinate_field =
 					source_texture_coordinate_field;
 			}
 			if (image_width == 0)
@@ -3229,7 +3294,7 @@ Currently limited to 1 byte per component.
 			Set_cmiss_field_value_to_texture(field, texture_coordinate_field,
 				texture, spectrum,	fail_material, image_height, image_width, image_depth,
 				bytes_per_pixel, number_of_bytes_per_component, use_pixel_location,
-				storage,propagate_field,	graphics_buffer_package, search_mesh);
+				storage,propagate_field, Graphics_buffer_package_get_core_package(graphics_buffer_package), search_mesh);
 		}
 		else
 		{
@@ -3368,7 +3433,7 @@ Modifies the properties of a texture.
 			Option_table_add_region_or_group_entry(option_table, "element_group",
 				&data->region, &data->group);
 			/* fail_material */
-			Option_table_add_set_Material_entry(option_table, "fail_material", 
+			Option_table_add_set_Material_entry(option_table, "fail_material",
 				&data->fail_material, command_data->material_package);
 			/* field */
 			Option_table_add_entry(option_table, "field", &data->field_name,
@@ -3377,7 +3442,7 @@ Modifies the properties of a texture.
 			Option_table_add_switch(option_table, "propagate_field",
 				"no_propagate_field", &data->propagate_field);
 			/* spectrum */
-			Option_table_add_entry(option_table, "spectrum", &data->spectrum, 
+			Option_table_add_entry(option_table, "spectrum", &data->spectrum,
 				command_data->spectrum_manager, set_Spectrum);
 			/* texture_coordinates */
 			Option_table_add_entry(option_table, "texture_coordinates",
@@ -3598,8 +3663,9 @@ Modifies the properties of a texture.
 	enum Texture_resize_filter_mode resize_filter_mode;
 	enum Texture_storage_type specify_format;
 	enum Texture_wrap_mode wrap_mode;
-	float alpha, depth, distortion_centre_x, distortion_centre_y,
-		distortion_factor_k1, height, mipmap_level_of_detail_bias, width;
+	double alpha, depth, distortion_centre_x, distortion_centre_y,
+		distortion_factor_k1, height, width, mipmap_level_of_detail_bias;
+	float mipmap_level_of_detail_bias_flt;
 	int file_number, i, number_of_file_names, number_of_valid_strings, process,
 		return_code, specify_depth, specify_height,
 		specify_number_of_bytes_per_component, specify_width, texture_is_managed = 0;
@@ -3775,7 +3841,7 @@ Modifies the properties of a texture.
 					evaluate_data.field_name = (char *)NULL;
 					evaluate_data.texture_coordinates_field_name = (char *)NULL;
 					/* Try for the special transparent gray material first */
-					if (!(evaluate_data.fail_material = 
+					if (!(evaluate_data.fail_material =
 						FIND_BY_IDENTIFIER_IN_MANAGER(Graphical_material, name)(
 						"transparent_gray50", Material_package_get_material_manager(
 							command_data->material_package))))
@@ -3859,8 +3925,9 @@ Modifies the properties of a texture.
 					  command_data->movie_graphics_manager, set_Movie_graphics);
 #endif /* defined (SGI_MOVIE_FILE) */
 					/* mipmap_level_of_detail_bias */
+					mipmap_level_of_detail_bias_flt = mipmap_level_of_detail_bias;
 					Option_table_add_float_entry(option_table, "mipmap_level_of_detail_bias",
-						&mipmap_level_of_detail_bias);
+						&mipmap_level_of_detail_bias_flt);
 					/* number_pattern */
 					Option_table_add_entry(option_table, "number_pattern",
 						&file_number_pattern, (void *)1, set_name);
@@ -4099,7 +4166,7 @@ Modifies the properties of a texture.
 									Cmgui_image_get_property(cmgui_image,"exif:*");
 									Cmgui_image_reset_property_iterator(cmgui_image);
 									while ((property = Cmgui_image_get_next_property(
-										cmgui_image)) && 
+										cmgui_image)) &&
 										(value = Cmgui_image_get_property(cmgui_image,
 										property)))
 									{
@@ -4120,7 +4187,7 @@ Modifies the properties of a texture.
 									number_of_file_names = 1 + (file_number_series_data.stop -
 										file_number_series_data.start) /
 										file_number_series_data.increment;
-									file_number = file_number_series_data.start + 
+									file_number = file_number_series_data.start +
 										file_number_series_data.increment;
 									for (i = 1 ; return_code && (i < number_of_file_names) ; i++)
 									{
@@ -4181,7 +4248,7 @@ Modifies the properties of a texture.
 							{
 								texture_copy = texture;
 							}
-							
+
 							Cmiss_field_module_id field_module = Cmiss_region_get_field_module(evaluate_data.region);
 							int element_dimension = evaluate_data.element_dimension;
 							if (element_dimension == 0)
@@ -4192,22 +4259,22 @@ Modifies the properties of a texture.
 							Cmiss_mesh_id search_mesh = Cmiss_field_module_find_mesh_by_dimension(field_module, element_dimension);
 							if (evaluate_data.group)
 							{
-				  				Cmiss_field_element_group_id element_group =
-				  					Cmiss_field_group_get_element_group(evaluate_data.group, search_mesh);
-				  				Cmiss_mesh_destroy(&search_mesh);
-				  				if (element_group)
-				  				{
-				  					search_mesh = Cmiss_mesh_group_base_cast(Cmiss_field_element_group_get_mesh(element_group));
-				  					Cmiss_field_element_group_destroy(&element_group);
-				  				}
+								Cmiss_field_element_group_id element_group =
+									Cmiss_field_group_get_element_group(evaluate_data.group, search_mesh);
+								Cmiss_mesh_destroy(&search_mesh);
+								if (element_group)
+								{
+									search_mesh = Cmiss_mesh_group_base_cast(Cmiss_field_element_group_get_mesh(element_group));
+									Cmiss_field_element_group_destroy(&element_group);
+								}
 							}
-							set_Texture_image_from_field(texture_copy, 
+							set_Texture_image_from_field(texture_copy,
 								evaluate_data.field,
 								evaluate_data.texture_coordinates_field,
-								evaluate_data.propagate_field, 
+								evaluate_data.propagate_field,
 								evaluate_data.spectrum,
 								search_mesh,
-								specify_format, specify_width, 
+								specify_format, specify_width,
 								specify_height, specify_depth,
 								specify_number_of_bytes_per_component,
 								command_data->graphics_buffer_package,
@@ -4311,7 +4378,7 @@ LAST MODIFIED : 14 June 1999
 
 DESCRIPTION :
 Executes a GFX CREATE TEXTURE command.
-==============================================================================*/ 
+==============================================================================*/
 {
 	const char *current_token;
 	int return_code = 0;
@@ -4643,8 +4710,8 @@ Executes a GFX CREATE WINDOW command.
 						struct MANAGER(Interactive_tool) *interactive_tool_manager;
 						struct Interactive_tool *transform_tool;
 						interactive_tool_manager = CREATE(MANAGER(Interactive_tool))();
-					    transform_tool=create_Interactive_tool_transform(
-				             command_data->user_interface);
+						transform_tool=create_Interactive_tool_transform(
+							 command_data->user_interface);
 						ADD_OBJECT_TO_MANAGER(Interactive_tool)(transform_tool,
 							 interactive_tool_manager);
 						Node_tool_set_execute_command(CREATE(Node_tool)(
@@ -4704,7 +4771,7 @@ Executes a GFX CREATE WINDOW command.
 							{
 							   DESTROY(Graphics_window)(&window);
 								 DESTROY(MANAGER(Interactive_tool))(&interactive_tool_manager);
- 							   return_code=0;
+							   return_code=0;
 							}
 						}
 						else
@@ -4789,7 +4856,7 @@ Executes an ATTACH command.
 	struct Io_device *device;
 	static struct Option_table *option_table;
 	struct Cmiss_command_data *command_data;
-	
+
 	ENTER(execute_command_attach);
 	USE_PARAMETER(prompt_void);
 	/* check argument */
@@ -4851,9 +4918,9 @@ Executes an ATTACH command.
 			end_detection = 0;
 			perl_action = (char *)NULL;
 			start_detection = 0;
-			
+
 			option_table = CREATE(Option_table)();
-			Option_table_add_entry(option_table,"end_detection", &end_detection, 
+			Option_table_add_entry(option_table,"end_detection", &end_detection,
 				NULL, set_char_flag);
 			Option_table_add_entry(option_table,"perl_action", &perl_action, (void *)1,
 				set_name);
@@ -4917,7 +4984,7 @@ Executes a DETACH command.
 	int return_code;
 	struct Io_device *device;
 	struct Cmiss_command_data *command_data;
-	
+
 	ENTER(execute_command_detach);
 	USE_PARAMETER(prompt_void);
 	/* check argument */
@@ -5067,7 +5134,7 @@ Executes a GFX CONVERT ELEMENTS command.
 			Convert_finite_elements_mode conversion_mode = CONVERT_TO_FINITE_ELEMENTS_MODE_UNSPECIFIED;
 			double tolerance = 1.0E-6;
 			Element_discretization element_refinement = { 1, 1, 1 };
-			
+
 			if ((state->current_token) &&
 				strcmp(PARSER_HELP_STRING,state->current_token) &&
 				strcmp(PARSER_RECURSIVE_HELP_STRING,state->current_token))
@@ -5075,7 +5142,7 @@ Executes a GFX CONVERT ELEMENTS command.
 				/* Skip this preprocessing if we are just getting the help */
 				number_of_fields = 1;
 				previous_state_index = state->current_index;
-				
+
 				option_table = CREATE(Option_table)();
 				/* number_of_fields */
 				Option_table_add_entry(option_table, "number_of_fields",
@@ -5087,7 +5154,7 @@ Executes a GFX CONVERT ELEMENTS command.
 				/* Return back to where we were */
 				shift_Parse_state(state, previous_state_index - state->current_index);
 			}
-			
+
 			if (number_of_fields)
 			{
 				ALLOCATE(fields, struct Computed_field *, number_of_fields);
@@ -5203,7 +5270,7 @@ Executes a GFX CONVERT ELEMENTS command.
 				}
 			}
 			if (fields)
-			{				
+			{
 				for (i = 0; i < number_of_fields; i++)
 				{
 					if (fields[i])
@@ -5528,8 +5595,8 @@ Executes a GFX CREATE command.
 					command_data_void, gfx_create_snake);
 				Option_table_add_entry(option_table,"spectrum",NULL,
 					command_data_void,gfx_create_spectrum);
-				Option_table_add_entry(option_table,"texture",NULL, 
-					command_data_void,gfx_create_texture); 
+				Option_table_add_entry(option_table,"texture",NULL,
+					command_data_void,gfx_create_texture);
 #if defined (WX_USER_INTERFACE)
 				Option_table_add_entry(option_table,"time_editor",NULL,
 					command_data_void,gfx_create_time_editor);
@@ -5755,9 +5822,9 @@ Executes a GFX DEFINE command.
 			{
 				option_table = CREATE(Option_table)();
 				/* curve */
-				curve_command_data.curve_manager = 
+				curve_command_data.curve_manager =
 					command_data->curve_manager;
-				curve_command_data.io_stream_package = 
+				curve_command_data.io_stream_package =
 					command_data->io_stream_package;
 				Option_table_add_entry(option_table, "curve", NULL,
 					&curve_command_data, gfx_define_Curve);
@@ -5776,7 +5843,7 @@ Executes a GFX DEFINE command.
 				define_scene_data.scene_manager=command_data->scene_manager;
 				define_scene_data.root_region = command_data->root_region;
 				define_scene_data.graphics_module = command_data->graphics_module;
-				Option_table_add_entry(option_table, "scene", NULL, 
+				Option_table_add_entry(option_table, "scene", NULL,
 					(void *)(&define_scene_data), define_Scene);
 				/* graphics_filter */
 				Option_table_add_entry(option_table, "graphics_filter", command_data->root_region,
@@ -6827,7 +6894,7 @@ static int apply_transformation_to_node(struct FE_node *node,
 LAST MODIFIED : 3 March 2003
 
 DESCRIPTION :
-Iterator that modifies the position of each node according to the 
+Iterator that modifies the position of each node according to the
 transformation in the transformation data.
 Should enclose multiple calls in FE_region_begin_change/end_change wrappers.
 ==============================================================================*/
@@ -6889,7 +6956,7 @@ Should enclose multiple calls in FE_region_begin_change/end_change wrappers.
 } /* apply_transformation_to_node */
 
 static int gfx_edit_graphics_object(struct Parse_state *state,
-    void *dummy_to_be_modified,void *command_data_void)
+	void *dummy_to_be_modified,void *command_data_void)
 /*******************************************************************************
 LAST MODIFIED : 3 March 2003
 
@@ -7568,7 +7635,7 @@ Executes a GFX EXPORT CM command.
 ==============================================================================*/
 {
 	char *ipbase_filename, *ipcoor_filename, *ipelem_filename, *ipnode_filename,
-		*ipmap_filename, *region_path; 
+		*ipmap_filename, *region_path;
 	FILE *ipbase_file, *ipcoor_file, *ipelem_file, *ipmap_file, *ipnode_file;
 	int return_code;
 	struct Cmiss_command_data *command_data;
@@ -7976,7 +8043,7 @@ Executes a GFX EXPORT VRML command.
 					return_code = 0;
 				}
 			} /* parse error,help */
-	
+
 			DEACCESS(Scene)(&scene);
 			if (file_name)
 				DEALLOCATE(file_name);
@@ -8016,9 +8083,9 @@ Executes a GFX EXPORT WAVEFRONT command.
 		{"file",NULL,(void *)1,set_name},
 		{"frame_number",NULL,NULL,set_int_non_negative},
 		{"full_comments",NULL,NULL,set_char_flag},
- 		{"number_of_frames",NULL,NULL,set_int_positive},
+		{"number_of_frames",NULL,NULL,set_int_positive},
 		{"scene",NULL,NULL,set_Scene},
- 		{"version",NULL,NULL,set_int_positive},
+		{"version",NULL,NULL,set_int_positive},
 		{NULL,NULL,NULL,NULL}
 	};
 	ENTER(gfx_export_wavefront);
@@ -8032,16 +8099,16 @@ Executes a GFX EXPORT WAVEFRONT command.
 			file_name=(char *)NULL;
 			frame_number = 0;
 			full_comments=0;
- 			number_of_frames=100;
+			number_of_frames=100;
 			scene=ACCESS(Scene)(command_data->default_scene);
- 			version=3;
+			version=3;
 			(option_table[0]).to_be_modified= &file_name;
 			(option_table[1]).to_be_modified= &frame_number;
 			(option_table[2]).to_be_modified= &full_comments;
- 			(option_table[3]).to_be_modified= &number_of_frames;
+			(option_table[3]).to_be_modified= &number_of_frames;
 			(option_table[4]).to_be_modified= &scene;
 			(option_table[4]).user_data=command_data->scene_manager;
- 			(option_table[5]).to_be_modified= &version;
+			(option_table[5]).to_be_modified= &version;
 			return_code=process_multiple_options(state,option_table);
 			/* no errors, not asking for help */
 
@@ -8312,10 +8379,6 @@ Executes a GFX EXPORT command.
 			command_data_void, gfx_export_cm);
 		Option_table_add_entry(option_table,"iges",NULL,
 			command_data_void, gfx_export_iges);
-#if defined (OLD_CODE)
-		Option_table_add_entry(option_table,"node",NULL,
-			command_data_void, gfx_export_node);
-#endif /* defined (OLD_CODE) */
 		Option_table_add_entry(option_table,"stl",NULL,
 			command_data_void, gfx_export_stl);
 		Option_table_add_entry(option_table,"vrml",NULL,
@@ -8355,7 +8418,7 @@ void create_triangle_mesh(struct Cmiss_region *region, Triangle_mesh *trimesh)
 	struct FE_node *node;
 	int number_of_values_confirmed;
 	FE_value coordinates[3];
-	float coord1, coord2, coord3;
+	double coord1, coord2, coord3;
 	int initial_identifier = FE_region_get_last_FE_node_identifier(fe_region);
 	int i = 0;
 	for (vertex_iter = vertex_set.begin(); vertex_iter!=vertex_set.end(); ++vertex_iter)
@@ -8407,7 +8470,7 @@ void create_triangle_mesh(struct Cmiss_region *region, Triangle_mesh *trimesh)
 
 		DEACCESS(FE_element)(&element);
 
-   	DEACCESS(FE_element)(&template_element);
+	DEACCESS(FE_element)(&template_element);
 	}
 	// must remember to end define faces mode
 	FE_region_end_define_faces(fe_region);
@@ -8710,7 +8773,7 @@ int gfx_evaluate(struct Parse_state *state, void *dummy_to_be_modified,
 		char *source_field_name = 0;
 		char *destination_field_name = 0;
 		FE_value time = 0;
-		
+
 		Option_table *option_table = CREATE(Option_table)();
 		Option_table_add_string_entry(option_table, "destination", &destination_field_name, " FIELD_NAME");
 		Option_table_add_string_entry(option_table, "dgroup", &data_region_path, " REGION_PATH/GROUP_NAME");
@@ -8866,52 +8929,6 @@ int gfx_evaluate(struct Parse_state *state, void *dummy_to_be_modified,
 
 	return (return_code);
 }
-
-#if defined (OLD_CODE)
-static int execute_command_gfx_filter(struct Parse_state *state,
-	void *dummy_to_be_modified,void *command_data_void)
-/*******************************************************************************
-LAST MODIFIED : 26 June 1997
-
-DESCRIPTION :
-Executes a GFX FILTER command.
-==============================================================================*/
-{
-	int return_code;
-	static struct Modifier_entry option_table[]=
-	{
-		{"node",NULL,NULL,gfx_filter_node},
-		{NULL,NULL,NULL,NULL}
-	};
-	struct Cmiss_command_data *command_data;
-
-	ENTER(execute_command_gfx_filter);
-	USE_PARAMETER(dummy_to_be_modified);
-	/* check argument */
-	if (state)
-	{
-		if (NULL != (command_data = (struct Cmiss_command_data *)command_data_void))
-		{
-			(option_table[0]).user_data=(void *)(command_data->node_group_manager);
-			return_code=process_option(state,option_table);
-		}
-		else
-		{
-			display_message(ERROR_MESSAGE,
-				"execute_command_gfx_filter.  Missing command_data");
-			return_code=0;
-		}
-	}
-	else
-	{
-		display_message(ERROR_MESSAGE,"execute_command_gfx_filter.  Missing state");
-		return_code=0;
-	}
-	LEAVE;
-
-	return (return_code);
-} /* execute_command_gfx_filter */
-#endif /* defined (OLD_CODE) */
 
 static int gfx_list_all_commands(struct Parse_state *state,
 	void *dummy_to_be_modified,void *command_data_void)
@@ -9347,33 +9364,33 @@ Executes a GFX LIST ELEMENT.
 				{
 					iteration_mesh = Cmiss_mesh_group_base_cast(selection_mesh_group);
 				}
-  				const bool use_element_ranges = Multi_range_get_number_of_ranges(element_ranges) > 0;
-  				if (Multi_range_get_total_number_in_ranges(element_ranges) == 1)
-  					verbose_flag = 1;
-  				Multi_range *output_element_ranges = CREATE(Multi_range)();
+				const bool use_element_ranges = Multi_range_get_number_of_ranges(element_ranges) > 0;
+				if (Multi_range_get_total_number_in_ranges(element_ranges) == 1)
+					verbose_flag = 1;
+				Multi_range *output_element_ranges = CREATE(Multi_range)();
 				Cmiss_element_iterator_id iter = Cmiss_mesh_create_element_iterator(iteration_mesh);
-  				Cmiss_element_id element = 0;
-  				while (NULL != (element = Cmiss_element_iterator_next_non_access(iter)))
-  				{
-  					if (use_element_ranges && !Multi_range_is_value_in_range(element_ranges, Cmiss_element_get_identifier(element)))
-  						continue;
-  					if (conditional_field)
-  					{
-  						Cmiss_field_cache_set_element(cache, element);
-  						if (!Cmiss_field_evaluate_boolean(conditional_field, cache))
-  							continue;
-  					}
-  					if (verbose_flag)
-  					{
-  						list_FE_element(element);
-  					}
-  					else
-  					{
-  						int element_identifier = Cmiss_element_get_identifier(element);
-  						Multi_range_add_range(output_element_ranges, element_identifier, element_identifier);
-  					}
-  					++number_of_elements_listed;
-  				}
+				Cmiss_element_id element = 0;
+				while (NULL != (element = Cmiss_element_iterator_next_non_access(iter)))
+				{
+					if (use_element_ranges && !Multi_range_is_value_in_range(element_ranges, Cmiss_element_get_identifier(element)))
+						continue;
+					if (conditional_field)
+					{
+						Cmiss_field_cache_set_element(cache, element);
+						if (!Cmiss_field_evaluate_boolean(conditional_field, cache))
+							continue;
+					}
+					if (verbose_flag)
+					{
+						list_FE_element(element);
+					}
+					else
+					{
+						int element_identifier = Cmiss_element_get_identifier(element);
+						Multi_range_add_range(output_element_ranges, element_identifier, element_identifier);
+					}
+					++number_of_elements_listed;
+				}
 				Cmiss_element_iterator_destroy(&iter);
 				if ((!verbose_flag) && number_of_elements_listed)
 				{
@@ -9517,33 +9534,33 @@ use node_manager and node_selection.
 				{
 					iteration_nodeset = Cmiss_nodeset_group_base_cast(selection_nodeset_group);
 				}
-  				const bool use_node_ranges = Multi_range_get_number_of_ranges(node_ranges) > 0;
-  				if (Multi_range_get_total_number_in_ranges(node_ranges) == 1)
-  					verbose_flag = 1;
-  				Multi_range *output_node_ranges = CREATE(Multi_range)();
+				const bool use_node_ranges = Multi_range_get_number_of_ranges(node_ranges) > 0;
+				if (Multi_range_get_total_number_in_ranges(node_ranges) == 1)
+					verbose_flag = 1;
+				Multi_range *output_node_ranges = CREATE(Multi_range)();
 				Cmiss_node_iterator_id iter = Cmiss_nodeset_create_node_iterator(iteration_nodeset);
-  				Cmiss_node_id node = 0;
-  				while (NULL != (node = Cmiss_node_iterator_next_non_access(iter)))
-  				{
-  					if (use_node_ranges && !Multi_range_is_value_in_range(node_ranges, Cmiss_node_get_identifier(node)))
-  						continue;
-  					if (conditional_field)
-  					{
-  						Cmiss_field_cache_set_node(cache, node);
-  						if (!Cmiss_field_evaluate_boolean(conditional_field, cache))
-  							continue;
-  					}
-  					if (verbose_flag)
-  					{
-  						list_FE_node(node);
-  					}
-  					else
-  					{
-  						int node_identifier = Cmiss_node_get_identifier(node);
-  						Multi_range_add_range(output_node_ranges, node_identifier, node_identifier);
-  					}
-  					++number_of_nodes_listed;
-  				}
+				Cmiss_node_id node = 0;
+				while (NULL != (node = Cmiss_node_iterator_next_non_access(iter)))
+				{
+					if (use_node_ranges && !Multi_range_is_value_in_range(node_ranges, Cmiss_node_get_identifier(node)))
+						continue;
+					if (conditional_field)
+					{
+						Cmiss_field_cache_set_node(cache, node);
+						if (!Cmiss_field_evaluate_boolean(conditional_field, cache))
+							continue;
+					}
+					if (verbose_flag)
+					{
+						list_FE_node(node);
+					}
+					else
+					{
+						int node_identifier = Cmiss_node_get_identifier(node);
+						Multi_range_add_range(output_node_ranges, node_identifier, node_identifier);
+					}
+					++number_of_nodes_listed;
+				}
 				Cmiss_node_iterator_destroy(&iter);
 				if ((!verbose_flag) && number_of_nodes_listed)
 				{
@@ -11470,23 +11487,23 @@ static int gfx_modify_node_group(struct Parse_state *state,
 					}
 
 					Cmiss_node_iterator_id iter = Cmiss_nodeset_create_node_iterator(iteration_nodeset);
-	  				const bool use_node_ranges = Multi_range_get_number_of_ranges(node_ranges) > 0;
-	  				Cmiss_node_id node = 0;
-	  				while (NULL != (node = Cmiss_node_iterator_next_non_access(iter)))
-	  				{
-	  					if (use_node_ranges && !Multi_range_is_value_in_range(node_ranges, Cmiss_node_get_identifier(node)))
-	  						continue;
-	  					if (selection_nodeset && (selection_nodeset != iteration_nodeset) && !Cmiss_nodeset_contains_node(selection_nodeset, node))
-	  						continue;
-	  					if (from_nodeset && (from_nodeset != iteration_nodeset) && !Cmiss_nodeset_contains_node(from_nodeset, node))
-	  						continue;
-	  					if (conditional_field)
-	  					{
-	  						Cmiss_field_cache_set_node(cache, node);
-	  						if (!Cmiss_field_evaluate_boolean(conditional_field, cache))
-	  							continue;
-	  					}
-	  					++nodes_processed;
+					const bool use_node_ranges = Multi_range_get_number_of_ranges(node_ranges) > 0;
+					Cmiss_node_id node = 0;
+					while (NULL != (node = Cmiss_node_iterator_next_non_access(iter)))
+					{
+						if (use_node_ranges && !Multi_range_is_value_in_range(node_ranges, Cmiss_node_get_identifier(node)))
+							continue;
+						if (selection_nodeset && (selection_nodeset != iteration_nodeset) && !Cmiss_nodeset_contains_node(selection_nodeset, node))
+							continue;
+						if (from_nodeset && (from_nodeset != iteration_nodeset) && !Cmiss_nodeset_contains_node(from_nodeset, node))
+							continue;
+						if (conditional_field)
+						{
+							Cmiss_field_cache_set_node(cache, node);
+							if (!Cmiss_field_evaluate_boolean(conditional_field, cache))
+								continue;
+						}
+						++nodes_processed;
 						if (add_flag)
 						{
 							if (!Cmiss_nodeset_contains_node(Cmiss_nodeset_group_base_cast(modify_nodeset_group), node))
@@ -11513,7 +11530,7 @@ static int gfx_modify_node_group(struct Parse_state *state,
 								}
 							}
 						}
-	  				}
+					}
 					Cmiss_node_iterator_destroy(&iter);
 					Cmiss_field_cache_destroy(&cache);
 					Cmiss_nodeset_group_destroy(&modify_nodeset_group);
@@ -11803,28 +11820,28 @@ static int gfx_modify_nodes(struct Parse_state *state,
 				Cmiss_field_cache_id cache = Cmiss_field_module_create_cache(field_module);
 				Cmiss_field_cache_set_time(cache, time);
 				Cmiss_node_iterator_id iter = Cmiss_nodeset_create_node_iterator(nodeset);
-  				const bool use_node_ranges = Multi_range_get_number_of_ranges(node_ranges) > 0;
-  				Cmiss_node_id node = 0;
-  				while (NULL != (node = Cmiss_node_iterator_next_non_access(iter)))
-  				{
-  					if (use_node_ranges && !Multi_range_is_value_in_range(node_ranges, Cmiss_node_get_identifier(node)))
-  						continue;
-  					if (conditional_field || selection_group)
-  					{
-  						Cmiss_field_cache_set_node(cache, node);
-  					}
-  					if (conditional_field && !Cmiss_field_evaluate_boolean(conditional_field, cache))
-  						continue;
-  					if (selection_group && !Cmiss_field_evaluate_boolean(Cmiss_field_group_base_cast(selection_group), cache))
-  						continue;
-  					if (!Cmiss_node_merge(node, node_template))
-  					{
-  						display_message(WARNING_MESSAGE, "gfx modify nodes:  Failed to merge node");
- 						return_code = 0;
-  						break;
-  					}
-  					++nodes_processed;
-  				}
+				const bool use_node_ranges = Multi_range_get_number_of_ranges(node_ranges) > 0;
+				Cmiss_node_id node = 0;
+				while (NULL != (node = Cmiss_node_iterator_next_non_access(iter)))
+				{
+					if (use_node_ranges && !Multi_range_is_value_in_range(node_ranges, Cmiss_node_get_identifier(node)))
+						continue;
+					if (conditional_field || selection_group)
+					{
+						Cmiss_field_cache_set_node(cache, node);
+					}
+					if (conditional_field && !Cmiss_field_evaluate_boolean(conditional_field, cache))
+						continue;
+					if (selection_group && !Cmiss_field_evaluate_boolean(Cmiss_field_group_base_cast(selection_group), cache))
+						continue;
+					if (!Cmiss_node_merge(node, node_template))
+					{
+						display_message(WARNING_MESSAGE, "gfx modify nodes:  Failed to merge node");
+						return_code = 0;
+						break;
+					}
+					++nodes_processed;
+				}
 				Cmiss_node_iterator_destroy(&iter);
 				Cmiss_field_cache_destroy(&cache);
 				Cmiss_field_module_end_change(field_module);
@@ -11911,16 +11928,16 @@ Executes a GFX MODIFY command.
 			{
 				option_table=CREATE(Option_table)();
 				/* data */
-				Option_table_add_entry(option_table, "data", /*use_data*/(void *)1, 
+				Option_table_add_entry(option_table, "data", /*use_data*/(void *)1,
 					(void *)command_data, gfx_modify_nodes);
 				/* dgroup */
-				Option_table_add_entry(option_table,"dgroup",(void *)1/*data*/, 
+				Option_table_add_entry(option_table,"dgroup",(void *)1/*data*/,
 					(void *)command_data, gfx_modify_node_group);
 				/* egroup */
-				Option_table_add_entry(option_table,"egroup",NULL, 
+				Option_table_add_entry(option_table,"egroup",NULL,
 					(void *)command_data, gfx_modify_element_group);
 				/* emoter */
-				Option_table_add_entry(option_table,"emoter",NULL, 
+				Option_table_add_entry(option_table,"emoter",NULL,
 					(void *)command_data->emoter_slider_dialog,
 					gfx_modify_emoter);
 				/* environment_map */
@@ -11928,43 +11945,43 @@ Executes a GFX MODIFY command.
 					Material_package_get_material_manager(command_data->material_package);
 				modify_environment_map_data.environment_map_manager=
 					command_data->environment_map_manager;
-				Option_table_add_entry(option_table,"environment_map",NULL, 
+				Option_table_add_entry(option_table,"environment_map",NULL,
 					(&modify_environment_map_data),modify_Environment_map);
 				/* field */
 				Option_table_add_entry(option_table,"field",NULL,
 					(void *)command_data, gfx_modify_field);
 				/* flow_particles */
-				Option_table_add_entry(option_table,"flow_particles",NULL, 
+				Option_table_add_entry(option_table,"flow_particles",NULL,
 					(void *)command_data, gfx_modify_flow_particles);
 				/* g_element */
-				Option_table_add_entry(option_table,"g_element",NULL, 
+				Option_table_add_entry(option_table,"g_element",NULL,
 					(void *)command_data, gfx_modify_g_element);
 				/* glyph */
 				Option_table_add_entry(option_table,"glyph",NULL,
 					(void *)command_data, gfx_modify_glyph);
 				/* graphics_object */
-				Option_table_add_entry(option_table,"graphics_object",NULL, 
+				Option_table_add_entry(option_table,"graphics_object",NULL,
 					(void *)command_data, gfx_modify_graphics_object);
 				/* light */
 				modify_light_data.default_light=command_data->default_light;
 				modify_light_data.light_manager=command_data->light_manager;
-				Option_table_add_entry(option_table,"light",NULL, 
+				Option_table_add_entry(option_table,"light",NULL,
 					(void *)(&modify_light_data), modify_Light);
 				/* lmodel */
 				modify_light_model_data.default_light_model=
 					command_data->default_light_model;
 				modify_light_model_data.light_model_manager=
 					command_data->light_model_manager;
-				Option_table_add_entry(option_table,"lmodel",NULL, 
+				Option_table_add_entry(option_table,"lmodel",NULL,
 					(void *)(&modify_light_model_data), modify_Light_model);
 				/* material */
-				Option_table_add_entry(option_table,"material",NULL, 
+				Option_table_add_entry(option_table,"material",NULL,
 					(void *)command_data->material_package, modify_Graphical_material);
 				/* ngroup */
-				Option_table_add_entry(option_table,"ngroup",NULL, 
+				Option_table_add_entry(option_table,"ngroup",NULL,
 					(void *)command_data, gfx_modify_node_group);
 				/* nodes */
-				Option_table_add_entry(option_table, "nodes", /*use_data*/(void *)0, 
+				Option_table_add_entry(option_table, "nodes", /*use_data*/(void *)0,
 					(void *)command_data, gfx_modify_nodes);
 				/* scene */
 				Define_scene_data define_scene_data;
@@ -11972,13 +11989,13 @@ Executes a GFX MODIFY command.
 				define_scene_data.scene_manager=command_data->scene_manager;
 				define_scene_data.root_region = command_data->root_region;
 				define_scene_data.graphics_module = command_data->graphics_module;
-				Option_table_add_entry(option_table, "scene", NULL, 
+				Option_table_add_entry(option_table, "scene", NULL,
 					(void *)(&define_scene_data), define_Scene);
 				/* spectrum */
-				Option_table_add_entry(option_table,"spectrum",NULL, 
+				Option_table_add_entry(option_table,"spectrum",NULL,
 					(void *)command_data, gfx_modify_Spectrum);
 				/* texture */
-				Option_table_add_entry(option_table,"texture",NULL, 
+				Option_table_add_entry(option_table,"texture",NULL,
 					(void *)command_data, gfx_modify_Texture);
 #if defined (USE_CMGUI_GRAPHICS_WINDOW)
 				/* window */
@@ -11993,7 +12010,7 @@ Executes a GFX MODIFY command.
 					command_data->light_model_manager;
 				modify_graphics_window_data.scene_manager=command_data->scene_manager;
 				modify_graphics_window_data.root_region=command_data->root_region;
-				Option_table_add_entry(option_table,"window",NULL, 
+				Option_table_add_entry(option_table,"window",NULL,
 					(void *)(&modify_graphics_window_data), modify_Graphics_window);
 #endif /* defined (USE_CMGUI_GRAPHICS_WINDOW) */
 
@@ -12092,7 +12109,7 @@ Executes a GFX PRINT command.
 	const char*image_file_format_string, **valid_strings;
 	enum Image_file_format image_file_format;
 	enum Texture_storage_type storage;
-	int antialias, height, number_of_valid_strings, return_code, 
+	int antialias, height, number_of_valid_strings, return_code,
 		transparency_layers, width;
 	struct Cmgui_image *cmgui_image;
 	struct Cmgui_image_information *cmgui_image_information;
@@ -12174,7 +12191,7 @@ Executes a GFX PRINT command.
 				{
 					display_message(ERROR_MESSAGE, "gfx print:  No file name specified");
 					return_code = 0;
-				}					
+				}
 			}
 			if (!window)
 			{
@@ -12293,8 +12310,8 @@ instruction to read in the mesh.
 #if defined (WX_USER_INTERFACE) && defined (WIN32_SYSTEM)
 			if (file_name)
 			{
-				 file_name = CMISS_set_directory_and_filename_WIN32(file_name, 
-						command_data); 
+				 file_name = CMISS_set_directory_and_filename_WIN32(file_name,
+						command_data);
 			}
 #endif /* defined (WIN32_SYSTEM)*/
 				if (return_code)
@@ -12470,8 +12487,8 @@ user, otherwise the elements file is read.
 								 command_data->user_interface
 #if defined(WX_USER_INTERFACE)
 								 , command_data->execute_command
-#endif /*defined (WX_USER_INTERFACE) */				
-		 )))	 
+#endif /*defined (WX_USER_INTERFACE) */
+		 )))
 				{
 					return_code = 0;
 				}
@@ -12480,7 +12497,7 @@ user, otherwise the elements file is read.
 			if (file_name)
 			{
 				 file_name = CMISS_set_directory_and_filename_WIN32(file_name,
-						command_data); 
+						command_data);
 			}
 #endif /* defined (WIN32_SYSTEM)*/
 
@@ -12569,7 +12586,7 @@ user, otherwise the elements file is read.
 		DESTROY(Option_table)(&option_table);
 #if defined (WX_USER_INTERFACE)
 		if (input_file)
-			 DESTROY(IO_stream)(&input_file); 
+			 DESTROY(IO_stream)(&input_file);
 #endif /*defined (WX_USER_INTERFACE)*/
 		if (file_name)
 		{
@@ -12689,7 +12706,7 @@ If the <use_data> flag is set, then read data, otherwise nodes.
 			if (file_name)
 			{
 				 file_name = CMISS_set_directory_and_filename_WIN32(file_name,
-						command_data); 
+						command_data);
 			}
 #endif /* defined (WIN32_SYSTEM)*/
 					/* open the file */
@@ -13083,7 +13100,7 @@ otherwise the wavefront obj file is read.
 					{
 						return_code=file_read_voltex_graphics_object_from_obj(file_name,
 							command_data->io_stream_package,
-							graphics_object_name, render_type, time, 
+							graphics_object_name, render_type, time,
 							Material_package_get_material_manager(command_data->material_package),
 							command_data->glyph_manager);
 					}
@@ -13308,19 +13325,19 @@ Executes a GFX SELECT command.
 				}
 				else
 				{
-		  		if (conditional_field_name)
-		  		{
-		  			Cmiss_field_module_id field_module = Cmiss_region_get_field_module(region);
-		  			conditional_field = Cmiss_field_module_find_field_by_name(field_module,
-		  				conditional_field_name);
-		  			Cmiss_field_module_destroy(&field_module);
-		  			if (!conditional_field)
-		  			{
-		  				display_message(ERROR_MESSAGE,
-		  					"gfx_select:  conditional field cannot be found");
-		  				return_code = 0;
-		  			}
-		  		}
+				if (conditional_field_name)
+				{
+					Cmiss_field_module_id field_module = Cmiss_region_get_field_module(region);
+					conditional_field = Cmiss_field_module_find_field_by_name(field_module,
+						conditional_field_name);
+					Cmiss_field_module_destroy(&field_module);
+					if (!conditional_field)
+					{
+						display_message(ERROR_MESSAGE,
+							"gfx_select:  conditional field cannot be found");
+						return_code = 0;
+					}
+				}
 				}
 			}
 			if (return_code)
@@ -13359,7 +13376,7 @@ Executes a GFX SELECT command.
 				{
 					if (region)
 					{
-				  		int dimension = FE_region_get_highest_dimension(Cmiss_region_get_FE_region(region));
+						int dimension = FE_region_get_highest_dimension(Cmiss_region_get_FE_region(region));
 						if (NULL != (element_list =
 								FE_element_list_from_region_and_selection_group(
 									region, dimension, multi_range, NULL, conditional_field, time)))
@@ -13674,19 +13691,19 @@ Executes a GFX UNSELECT command.
 				}
 				else
 				{
-		  		if (conditional_field_name)
-		  		{
-		  			Cmiss_field_module_id field_module = Cmiss_region_get_field_module(region);
-		  			conditional_field = Cmiss_field_module_find_field_by_name(field_module,
-		  				conditional_field_name);
-		  			Cmiss_field_module_destroy(&field_module);
-		  			if (!conditional_field)
-		  			{
-		  				display_message(ERROR_MESSAGE,
-		  					"gfx_unselect:  conditional field cannot be found");
-		  				return_code = 0;
-		  			}
-		  		}
+				if (conditional_field_name)
+				{
+					Cmiss_field_module_id field_module = Cmiss_region_get_field_module(region);
+					conditional_field = Cmiss_field_module_find_field_by_name(field_module,
+						conditional_field_name);
+					Cmiss_field_module_destroy(&field_module);
+					if (!conditional_field)
+					{
+						display_message(ERROR_MESSAGE,
+							"gfx_unselect:  conditional field cannot be found");
+						return_code = 0;
+					}
+				}
 				}
 			}
 			if (return_code)
@@ -13725,7 +13742,7 @@ Executes a GFX UNSELECT command.
 				{
 					if (region)
 					{
-				  		int dimension = FE_region_get_highest_dimension(Cmiss_region_get_FE_region(region));
+						int dimension = FE_region_get_highest_dimension(Cmiss_region_get_FE_region(region));
 						if (NULL != (element_list =
 								FE_element_list_from_region_and_selection_group(
 									region, dimension, multi_range, NULL, conditional_field, time)))
@@ -13982,7 +13999,7 @@ Sets nodal field values from a command.
 						if (1 == sscanf(current_token, FE_VALUE_INPUT_STRING, &value))
 						{
 							if (!(set_FE_nodal_FE_value_value(node,
-								component.field, component.number, 
+								component.field, component.number,
 								/*version*/0, value_type, /*time*/0,value)))
 							{
 								return_code = 0;
@@ -14508,9 +14525,9 @@ Executes a GFX SET command.
 			option_table=CREATE(Option_table)();
 			Option_table_add_entry(option_table, "node_value", NULL,
 				command_data_void, gfx_set_FE_nodal_value);
-         Option_table_add_entry(option_table, "order", NULL,
-         	(void *)command_data->root_region, gfx_set_region_order);
-         Option_table_add_entry(option_table, "point_size", &global_point_size,
+		 Option_table_add_entry(option_table, "order", NULL,
+			(void *)command_data->root_region, gfx_set_region_order);
+		 Option_table_add_entry(option_table, "point_size", &global_point_size,
 				NULL, set_float_positive);
 			Option_table_add_entry(option_table, "transformation", NULL,
 				command_data_void, gfx_set_transformation);
@@ -14593,8 +14610,8 @@ Executes a GFX SMOOTH command.
 			{
 				if (fe_field)
 				{
-                                        ////////////////////////////////////
-					return_code = FE_region_smooth_FE_field(fe_region, fe_field, time);                                        
+										////////////////////////////////////
+					return_code = FE_region_smooth_FE_field(fe_region, fe_field, time);
 				}
 				else
 				{
@@ -14729,7 +14746,7 @@ DESCRIPTION :
 				(option_table[1]).to_be_modified = &loop;
 				(option_table[2]).to_be_modified = &maximum;
 				(option_table[2]).user_data = &maximum_flag;
-				(option_table[3]).to_be_modified = &minimum;				
+				(option_table[3]).to_be_modified = &minimum;
 				(option_table[3]).user_data = &minimum_flag;
 				(option_table[4]).to_be_modified = &once;
 				(option_table[5]).to_be_modified = &play;
@@ -14965,7 +14982,7 @@ Can also write individual groups with the <group> option.
 		 *node_file_name;
 	 enum FE_write_criterion write_criterion;
 	 enum FE_write_recursion write_recursion;
-	 int data_return_code, elem_return_code, 
+	 int data_return_code, elem_return_code,
 			node_return_code, return_code, data_fd,
 			elem_fd, node_fd, com_return_code;
 	 struct Cmiss_command_data *command_data;
@@ -15004,12 +15021,12 @@ Can also write individual groups with the <group> option.
 			elem_return_code = 1;
 			node_return_code = 1;
 			com_return_code = 1;
-			return_code = 1; 
+			return_code = 1;
 
 			Cmiss_region_id root_region = Cmiss_region_access(command_data->root_region);
 			char *region_or_group_path = 0;
 			file_name = (char *)NULL;
-			com_file_name = (char *)NULL;		
+			com_file_name = (char *)NULL;
 			data_file_name = (char *)NULL;
 			elem_file_name = (char *)NULL;
 			node_file_name = (char *)NULL;
@@ -15018,9 +15035,9 @@ Can also write individual groups with the <group> option.
 			field_names.strings = (char **)NULL;
 			write_criterion = FE_WRITE_COMPLETE_GROUP;
 			write_recursion = FE_WRITE_RECURSIVE;
-			
+
 			option_table = CREATE(Option_table)();
-			/* complete_group|with_all_listed_fields|with_any_listed_fields */ 
+			/* complete_group|with_all_listed_fields|with_any_listed_fields */
 			OPTION_TABLE_ADD_ENUMERATOR(FE_write_criterion)(option_table, &write_criterion);
 			/* fields */
 			Option_table_add_multiple_strings_entry(option_table, "fields",
@@ -15098,7 +15115,7 @@ Can also write individual groups with the <group> option.
 					return_code = 0;
 					data_return_code = 0;
 					elem_return_code = 0;
-					node_return_code = 0;		
+					node_return_code = 0;
 				}
 				Cmiss_region_id region = Cmiss_region_access(root_region);
 				Cmiss_field_group_id group = 0;
@@ -15140,7 +15157,7 @@ Can also write individual groups with the <group> option.
 						{
 							 elem_return_code = 0;
 						}
-	
+
 						if (!(node_file_name = confirmation_get_write_filename(".exnode",
 										 command_data->user_interface
 #if defined(WX_USER_INTERFACE)
@@ -15150,7 +15167,7 @@ Can also write individual groups with the <group> option.
 						{
 							 node_return_code = 0;
 						}
-#if defined(WX_USER_INTERFACE)		
+#if defined(WX_USER_INTERFACE)
 						file_name = confirmation_get_write_filename(".zip",
 							 command_data->user_interface
 							 , command_data->execute_command);
@@ -15195,7 +15212,7 @@ Can also write individual groups with the <group> option.
 				{
 					node_return_code = check_suffix(&node_file_name,".exnode");
 				}
-#if defined (WX_USER_INTERFACE) 
+#if defined (WX_USER_INTERFACE)
 #if defined (WIN32_SYSTEM)
 				 /* 	Non MS-windows platform does not have mkstemp implemented,
 						therefore tmpnam is used.*/
@@ -15216,7 +15233,7 @@ Can also write individual groups with the <group> option.
 							 }
 				 }
 				 if (node_return_code)
-				 {		
+				 {
 						tmpnam(temp_node);
 						if (temp_node == NULL)
 						{
@@ -15234,7 +15251,7 @@ Can also write individual groups with the <group> option.
 							 elem_fd = mkstemp((char *)temp_elem);
 				 }
 				 if (node_return_code)
-				 {		
+				 {
 							 node_fd = mkstemp((char *)temp_node);
 				 }
 #endif /* (WIN32_SYSTEM) */
@@ -15250,7 +15267,7 @@ Can also write individual groups with the <group> option.
 							 temp_elem = elem_file_name;
 				 }
 				 if (node_return_code)
-				 {		
+				 {
 							 temp_node = node_file_name;
 				 }
 #endif /* (WX_USER_INTERFACE) */
@@ -15261,7 +15278,7 @@ Can also write individual groups with the <group> option.
 				 }
 				 else
 				 {
-						if (!(data_return_code = write_exregion_file_of_name(temp_data, 
+						if (!(data_return_code = write_exregion_file_of_name(temp_data,
 							region, group, root_region,
 							/*write_elements*/0, /*write_nodes*/0, /*write_data*/1,
 							write_fields_mode, field_names.number_of_strings, field_names.strings,
@@ -15279,7 +15296,7 @@ Can also write individual groups with the <group> option.
 				 }
 				 else
 				 {
-						if (!(elem_return_code = write_exregion_file_of_name(temp_elem, 
+						if (!(elem_return_code = write_exregion_file_of_name(temp_elem,
 							region, group, root_region,
 							/*write_elements*/1, /*write_nodes*/0, /*write_data*/0,
 							write_fields_mode, field_names.number_of_strings, field_names.strings,
@@ -15296,8 +15313,8 @@ Can also write individual groups with the <group> option.
 							 "gfx_write_All.  Could not open temporary node file");
 				 }
 				 else
-				 {			
-						if (!(node_return_code = write_exregion_file_of_name(temp_node, 
+				 {
+						if (!(node_return_code = write_exregion_file_of_name(temp_node,
 							region, group, root_region,
 							/*write_elements*/0, /*write_nodes*/1, /*write_data*/0,
 							write_fields_mode, field_names.number_of_strings, field_names.strings,
@@ -15308,19 +15325,19 @@ Can also write individual groups with the <group> option.
 						}
 				 }
 				 if (com_return_code)
-				 {		 
+				 {
 						if (NULL != (com_file = fopen("temp_file_com.com", "w")))
 						{
 							 if (data_file_name)
-							 {		
+							 {
 									fprintf(com_file, "gfx read data %s\n",data_file_name);
 							 }
 							 if (node_file_name)
-							 {		
+							 {
 									fprintf(com_file, "gfx read nodes %s\n",node_file_name);
 							 }
 							 if (elem_file_name)
-							 {		
+							 {
 									fprintf(com_file, "gfx read elements %s\n",elem_file_name);
 							 }
 							 fclose(com_file);
@@ -15342,9 +15359,9 @@ Can also write individual groups with the <group> option.
 												(0 != list_commands_data.listed_fields))
 										 {
 												list_commands_data.listed_fields = 0;
-										 }			 
+										 }
 										 DESTROY(LIST(Computed_field))(&list_of_fields);
-									} 
+									}
 									else
 									{
 										 return_code=0;
@@ -15359,14 +15376,14 @@ Can also write individual groups with the <group> option.
 							 if (command_data->spectrum_manager)
 							 {
 									FOR_EACH_OBJECT_IN_MANAGER(Spectrum)(
-										 for_each_spectrum_list_or_write_commands, (void *)"true", command_data->spectrum_manager);			
+										 for_each_spectrum_list_or_write_commands, (void *)"true", command_data->spectrum_manager);
 							 }
 							 if (NULL != (graphical_material_manager =
 									Material_package_get_material_manager(command_data->material_package)))
 							 {
 									command_prefix="gfx create material ";
 									return_code=FOR_EACH_OBJECT_IN_MANAGER(Graphical_material)(
-										 write_Graphical_material_commands_to_comfile,(void *)command_prefix, 
+										 write_Graphical_material_commands_to_comfile,(void *)command_prefix,
 										 graphical_material_manager);
 							 }
 							 return_code =1;
@@ -15382,26 +15399,26 @@ Can also write individual groups with the <group> option.
 				 if (data_file_name && elem_file_name && node_file_name)
 				 {
 						filedir_compressing_process_wx_compress(com_file_name, data_file_name,
-							 elem_file_name, node_file_name, data_return_code, elem_return_code, 
+							 elem_file_name, node_file_name, data_return_code, elem_return_code,
 							 node_return_code, file_name, temp_data, temp_elem, temp_node);
 				 }
 #if !defined (WIN32_SYSTEM)
-				 if (unlink(temp_data) == -1) 
+				 if (unlink(temp_data) == -1)
 				 {
 						display_message(ERROR_MESSAGE,
 							 "gfx_write_All.  Could not unlink temporary data file");
 				 }
-				 if (unlink(temp_elem) == -1) 
+				 if (unlink(temp_elem) == -1)
 				 {
 						display_message(ERROR_MESSAGE,
 							 "gfx_write_All.  Could not unlink temporary elem file");
 				 }
-				 if (unlink(temp_node) == -1) 
+				 if (unlink(temp_node) == -1)
 				 {
 						display_message(ERROR_MESSAGE,
 							 "gfx_write_All.  Could not unlink temporary node file");
 				 }
-				 if (unlink(com_file_name) == -1) 
+				 if (unlink(com_file_name) == -1)
 				 {
 						display_message(ERROR_MESSAGE,
 							 "compressing_process_wx_compress.  Could not unlink temporary com file");
@@ -15452,7 +15469,7 @@ Can also write individual groups with the <group> option.
 			return_code = 0;
 	 }
 	 LEAVE;
-	 
+
 	 return (return_code);
 } /* gfx_write_elements */
 
@@ -15613,7 +15630,7 @@ Can also write individual element groups with the <group> option.
 	USE_PARAMETER(dummy_to_be_modified);
 	if (state && (command_data=(struct Cmiss_command_data *)command_data_void))
 	{
-		return_code = 1; 
+		return_code = 1;
 		Cmiss_region_id root_region = Cmiss_region_access(command_data->root_region);
 		char *region_or_group_path = 0;
 		field_names.number_of_strings = 0;
@@ -15639,7 +15656,7 @@ Can also write individual element groups with the <group> option.
 			"or node fields are time dependent. If time is out of range then the nodal "
 			"values at the nearest valid time will be output. Time is ignored if node "
 			"is not time dependent. ");
-		/* complete_group|with_all_listed_fields|with_any_listed_fields */ 
+		/* complete_group|with_all_listed_fields|with_any_listed_fields */
 		OPTION_TABLE_ADD_ENUMERATOR(FE_write_criterion)(option_table, &write_criterion);
 		/* fields */
 		Option_table_add_multiple_strings_entry(option_table, "fields",
@@ -15688,7 +15705,7 @@ Can also write individual element groups with the <group> option.
 					"gfx write elements:  Must list fields to use %s",
 					ENUMERATOR_STRING(FE_write_criterion)(write_criterion));
 				return_code = 0;
-				
+
 			}
 			Cmiss_region_id region = Cmiss_region_access(root_region);
 			Cmiss_field_group_id group = 0;
@@ -15830,7 +15847,7 @@ If <use_data> is set, writing data, otherwise writing nodes.
 			"of range then the nodal values at the nearest valid time will be output. "
 			"Time is ignored if node is not time dependent. ");
 
-		/* complete_group|with_all_listed_fields|with_any_listed_fields */ 
+		/* complete_group|with_all_listed_fields|with_any_listed_fields */
 		OPTION_TABLE_ADD_ENUMERATOR(FE_write_criterion)(option_table, &write_criterion);
 		/* fields */
 		Option_table_add_multiple_strings_entry(option_table, "fields",
@@ -16008,7 +16025,7 @@ If <use_data> is set, writing data, otherwise writing nodes.
 			if (file_name)
 			{
 				 file_name = CMISS_set_directory_and_filename_WIN32(file_name,
-						command_data); 
+						command_data);
 			}
 #endif /* defined (WX_USER_INTERFACE) && defined (WIN32_SYSTEM) */
 			if (return_code)
@@ -16194,7 +16211,7 @@ Executes a GFX WRITE TEXTURE command.
 						display_message(ERROR_MESSAGE,
 							"gfx write texture:  No file name specified");
 						return_code = 0;
-					}					
+					}
 				}
 				if ((1 != number_of_bytes_per_component) &&
 					(2 != number_of_bytes_per_component))
@@ -16307,7 +16324,7 @@ Executes a GFX WRITE command.
 	{
 		if (state->current_token)
 		{
-			 //#if defined (NEW_CODE) 
+			 //#if defined (NEW_CODE)
 			option_table = CREATE(Option_table)();
 			Option_table_add_entry(option_table, "all", NULL,
 				command_data_void, gfx_write_All);
@@ -16398,10 +16415,6 @@ Executes a GFX command.
 				command_data_void, gfx_evaluate);
 			Option_table_add_entry(option_table, "export", NULL,
 				command_data_void, execute_command_gfx_export);
-#if defined (OLD_CODE)
-			Option_table_add_entry(option_table, "filter", NULL,
-				command_data_void, execute_command_gfx_filter);
-#endif /* defined (OLD_CODE) */
 #if defined (USE_OPENCASCADE)
 			Option_table_add_entry(option_table, "import", NULL,
 				command_data_void, execute_command_gfx_import);
@@ -16574,7 +16587,7 @@ Executes a READ command.
 #endif /* defined (WX_USER_INTERFACE)*/
 /* #if defined (WX_USER_INTERFACE) */
 /* 				change_dir(state,NULL,command_data); */
-/* #endif  (WX_USER_INTERFACE)*/ 
+/* #endif  (WX_USER_INTERFACE)*/
 				open_comfile_data.user_interface=command_data->user_interface;
 				Option_table_add_entry(option_table, "comfile", NULL,
 					(void *)&open_comfile_data, open_comfile);
@@ -16656,13 +16669,13 @@ Opens an example.
 				strcat(temp_string," ");
 				strcat(temp_string,example);
 				Execute_command_execute_string(command_data->execute_command,temp_string);
-				/* The example_comfile and example_requirements strings are 
+				/* The example_comfile and example_requirements strings are
 					currently set as a sideeffect of "set dir" */
 				if (command_data->example_requirements)
 				{
 					if (NULL != (found_cm = strstr(command_data->example_requirements, "cm")))
 					{
-						if ((found_cm[2] == 0) || (found_cm[2] == ':') || 
+						if ((found_cm[2] == 0) || (found_cm[2] == ':') ||
 							(found_cm[2] == ','))
 						{
 							sprintf(temp_string,"create cm");
@@ -16758,7 +16771,7 @@ Executes a OPEN command.
 				return_code=Option_table_parse(option_table, state);
 /* #if defined (WX_USER_INTERFACE)  */
 /*  				change_dir(state,NULL,command_data); */
-/* #endif (WX_USER_INTERFACE)*/ 
+/* #endif (WX_USER_INTERFACE)*/
 				DESTROY(Option_table)(&option_table);
 			}
 			else
@@ -16843,7 +16856,7 @@ DESCRIPTION :
 Executes a SET DIR command.
 ==============================================================================*/
 {
-	char *comfile_name, *directory_name, *example_directory, example_flag, 
+	char *comfile_name, *directory_name, *example_directory, example_flag,
 		*example_requirements;
 	int file_name_length, return_code;
 	struct Cmiss_command_data *command_data;
@@ -16873,10 +16886,10 @@ Executes a SET DIR command.
 					if (example_flag)
 					{
 						if (directory_name)
-						{							
+						{
 							/* Lookup the example path */
 							if (NULL != (example_directory =
-								resolve_example_path(command_data->examples_directory, 
+								resolve_example_path(command_data->examples_directory,
 								directory_name, &comfile_name, &example_requirements)))
 							{
 								if (command_data->example_directory)
@@ -16902,7 +16915,7 @@ Executes a SET DIR command.
 								}
 								if (example_requirements)
 								{
-									command_data->example_requirements = 
+									command_data->example_requirements =
 										example_requirements;
 								}
 								else
@@ -17132,11 +17145,6 @@ DESCRIPTION:
 			/* check for comment */
 			if (i>0)
 			{
-#if defined (OLD_CODE)
-				/* add command to command history */			  
-				display_message(INFORMATION_MESSAGE,
-					"%s\n", command_string);
-#endif /* defined (OLD_CODE) */
 				/* check for a "<" as one of the of the tokens */
 					/*???DB.  Include for backward compatability.  Remove ? */
 				token=state->tokens;
@@ -17200,7 +17208,7 @@ DESCRIPTION:
 				{
 					return_code = 1;
 				}
-		
+
 			}
 			destroy_Parse_state(&state);
 		}
@@ -17340,7 +17348,7 @@ Execute a <command_string>. If there is a command
 					Option_table_add_entry(option_table, "gfx", NULL, command_data_void,
 						execute_command_gfx);
 					/* open */
- 					Option_table_add_entry(option_table, "open", NULL, command_data_void,
+					Option_table_add_entry(option_table, "open", NULL, command_data_void,
 						execute_command_open);
 					/* quit */
 					Option_table_add_entry(option_table, "quit", NULL, command_data_void,
@@ -17787,7 +17795,7 @@ Parses command line options from <state>.
 	return (return_code);
 } /* read_cmgui_command_line_options */
 
-int Cmiss_command_data_process_command_line(int argc, const char *argv[], 
+int Cmiss_command_data_process_command_line(int argc, const char *argv[],
 	struct Cmgui_command_line_options *command_line_options)
 {
 	int return_code = 1;
@@ -17812,7 +17820,7 @@ int Cmiss_command_data_process_command_line(int argc, const char *argv[],
 	command_line_options->server_mode_flag = (char)0;
 	command_line_options->visual_id_number = 0;
 	command_line_options->command_file_name = NULL;
-	
+
 	if (argc >  0 && argv != NULL)
 	{
 		if (NULL != (state = create_Parse_state_from_tokens(argc, argv)))
@@ -17837,7 +17845,7 @@ int Cmiss_command_data_process_command_line(int argc, const char *argv[],
 	return return_code;
 }
 
-struct Cmiss_command_data *CREATE(Cmiss_command_data)(struct Context *context, 
+struct Cmiss_command_data *CREATE(Cmiss_command_data)(struct Cmiss_context_app *context,
 	struct User_interface_module *UI_module)
 /*******************************************************************************
 LAST MODIFIED : 3 April 2003
@@ -17904,8 +17912,8 @@ Initialise all the subcomponents of cmgui and create the Cmiss_command_data
 		command_data->volume_texture_manager=(struct MANAGER(VT_volume_texture) *)NULL;
 		command_data->default_spectrum=(struct Spectrum *)NULL;
 		command_data->spectrum_manager=(struct MANAGER(Spectrum) *)NULL;
-		command_data->graphics_buffer_package=(struct Graphics_buffer_package *)NULL;
-		command_data->scene_viewer_package=(struct Cmiss_scene_viewer_package *)NULL;
+		command_data->graphics_buffer_package=(struct Graphics_buffer_app_package *)NULL;
+		command_data->scene_viewer_package=(struct Cmiss_scene_viewer_app_package *)NULL;
 		command_data->graphics_module = (struct Cmiss_graphics_module *)NULL;
 #if defined (USE_CMGUI_GRAPHICS_WINDOW)
 		command_data->graphics_window_manager=(struct MANAGER(Graphics_window) *)NULL;
@@ -18062,7 +18070,7 @@ Initialise all the subcomponents of cmgui and create the Cmiss_command_data
 			destroy_Parse_state(&state);
 		}
 
-		command_data->io_stream_package = Cmiss_context_get_default_IO_stream_package(context);
+		command_data->io_stream_package = Cmiss_context_get_default_IO_stream_package(Cmiss_context_app_get_core_context(context));
 
 #if defined (F90_INTERPRETER) || defined (USE_PERL_INTERPRETER)
 		/* SAB I want to do this before CREATEing the User_interface
@@ -18073,12 +18081,12 @@ Initialise all the subcomponents of cmgui and create the Cmiss_command_data
 
 		if (!status)
 		{
-			return_code=0;			
+			return_code=0;
 		}
 
 		interpreter_set_display_message_function(command_data->interpreter, display_message, &status);
 
-		/* SAB Set a useful default for the interpreter variable, need to 
+		/* SAB Set a useful default for the interpreter variable, need to
 			specify full name as this function does not run embedded by
 			a package directive */
 		interpreter_set_string(command_data->interpreter, "cmiss::example", ".", &status);
@@ -18087,15 +18095,15 @@ Initialise all the subcomponents of cmgui and create the Cmiss_command_data
 			is then able to export this when it is called from inside cmgui or
 			when called directly from perl to load the appropriate libraries to
 			create a cmgui externally. */
-	 	interpreter_set_pointer(command_data->interpreter, "Cmiss::Cmiss_context",
+		interpreter_set_pointer(command_data->interpreter, "Cmiss::Cmiss_context",
 			"Cmiss::Cmiss_context", context, &status);
 
 #endif /* defined (F90_INTERPRETER) || defined (USE_PERL_INTERPRETER) */
 
 		if ((!command_list) && (!write_help))
 		{
-			if (NULL != (command_data->event_dispatcher = 
-					Cmiss_context_get_default_event_dispatcher(context)))
+			if (NULL != (command_data->event_dispatcher =
+					Cmiss_context_app_get_default_event_dispatcher(context)))
 			{
 				if (!no_display)
 				{
@@ -18130,8 +18138,8 @@ Initialise all the subcomponents of cmgui and create the Cmiss_command_data
 		   but try and interpret the variable anyway.  We can't handle
 			other cygwin paths unless we call out to cygpath. */
 		if (command_data->examples_directory
-		    && (strlen(command_data->examples_directory) > 11)
-		    && (!strncmp(command_data->examples_directory, "/cygdrive", 9)))
+			&& (strlen(command_data->examples_directory) > 11)
+			&& (!strncmp(command_data->examples_directory, "/cygdrive", 9)))
 		{
 			char *new_examples_string;
 			ALLOCATE(new_examples_string, char,
@@ -18140,17 +18148,6 @@ Initialise all the subcomponents of cmgui and create the Cmiss_command_data
 		   new_examples_string[1] = ':';
 		   new_examples_string[2] = '\\';
 		   strcpy(new_examples_string + 3, command_data->examples_directory + 12);
-#if defined (OLD_CODE)
-		   /* Replace all / with \,
-		      actually it doesn't seem to be necessary, left in case we need it */
-		   char* dirchar;
-		   dirchar=strchr(new_examples_string,'/');
-		   while (dirchar!=NULL)
-		   {
-		   	*dirchar = '\\';
-		   	dirchar=strchr(dirchar+1,'/');
-		   }
-#endif /* defined (OLD_CODE) */
 		   DEALLOCATE(command_data->examples_directory);
 		   command_data->examples_directory = new_examples_string;
 		}
@@ -18166,18 +18163,18 @@ Initialise all the subcomponents of cmgui and create the Cmiss_command_data
 		/* comfile window manager */
 		command_data->comfile_window_manager = UI_module->comfile_window_manager;
 #endif /* defined (WX_USER_INTERFACE) */
-		command_data->graphics_module = 
-			Cmiss_context_get_default_graphics_module(context);
+		command_data->graphics_module =
+			Cmiss_context_get_default_graphics_module(Cmiss_context_app_get_core_context(context));
 		/* light manager */
 		if (NULL != (command_data->light_manager=Cmiss_graphics_module_get_light_manager(
-				        command_data->graphics_module)))
+						command_data->graphics_module)))
 		{
 			command_data->default_light=Cmiss_graphics_module_get_default_light(
 				command_data->graphics_module);
 		}
 		command_data->light_model_manager=
 			Cmiss_graphics_module_get_light_model_manager(command_data->graphics_module);
-		
+
 		command_data->default_light_model=
 			Cmiss_graphics_module_get_default_light_model(command_data->graphics_module);
 		// ensure we have a default tessellation
@@ -18197,7 +18194,7 @@ Initialise all the subcomponents of cmgui and create the Cmiss_command_data
 				Cmiss_graphics_module_get_default_spectrum(command_data->graphics_module);
 		}
 		/* create Material package and CMGUI default materials */
-		if (NULL != (command_data->material_package = 
+		if (NULL != (command_data->material_package =
 				Cmiss_graphics_module_get_material_package(command_data->graphics_module)))
 		{
 			if (NULL != (material = Material_package_get_default_material(command_data->material_package)))
@@ -18219,11 +18216,11 @@ Initialise all the subcomponents of cmgui and create the Cmiss_command_data
 		/*???DB.  To be done */
 		command_data->element_shape_list=CREATE(LIST(FE_element_shape))();
 
-		command_data->curve_manager=Cmiss_context_get_default_curve_manager(context);
+		command_data->curve_manager=Cmiss_context_get_default_curve_manager(Cmiss_context_app_get_core_context(context));
 
 		command_data->basis_manager=CREATE(MANAGER(FE_basis))();
 
-		command_data->root_region = Cmiss_context_get_default_region(context);
+		command_data->root_region = Cmiss_context_get_default_region(Cmiss_context_app_get_core_context(context));
 
 #if defined (SELECT_DESCRIPTORS)
 		/* create device list */
@@ -18235,9 +18232,9 @@ Initialise all the subcomponents of cmgui and create the Cmiss_command_data
 			command_data->graphics_module);
 
 		/* global list of selected objects */
-		command_data->any_object_selection = Cmiss_context_get_any_object_selection(context);
-		command_data->element_point_ranges_selection = 
-			Cmiss_context_get_element_point_ranges_selection(context);
+		command_data->any_object_selection = Cmiss_context_get_any_object_selection(Cmiss_context_app_get_core_context(context));
+		command_data->element_point_ranges_selection =
+			Cmiss_context_get_element_point_ranges_selection(Cmiss_context_app_get_core_context(context));
 
 		/* interactive_tool manager */
 		command_data->interactive_tool_manager=UI_module->interactive_tool_manager;
@@ -18251,7 +18248,7 @@ Initialise all the subcomponents of cmgui and create the Cmiss_command_data
 		  Temporarily passing it to package to keep existing code running */
 		struct MANAGER(Computed_field) *computed_field_manager=
 			Cmiss_region_get_Computed_field_manager(command_data->root_region);
-		command_data->computed_field_package = 
+		command_data->computed_field_package =
 			CREATE(Computed_field_package)(computed_field_manager);
 		/* Add Computed_fields to the Computed_field_package */
 		if (command_data->computed_field_package)
@@ -18261,7 +18258,7 @@ Initialise all the subcomponents of cmgui and create the Cmiss_command_data
 			if (command_data->root_region)
 			{
 				Computed_field_register_type_alias(
-					command_data->computed_field_package, 
+					command_data->computed_field_package,
 					command_data->root_region);
 			}
 			Computed_field_register_types_arithmetic_operators(
@@ -18273,17 +18270,17 @@ Initialise all the subcomponents of cmgui and create the Cmiss_command_data
 			if (command_data->root_region)
 			{
 				Computed_field_register_types_compose(
-					command_data->computed_field_package, 
+					command_data->computed_field_package,
 					command_data->root_region);
 			}
 			Computed_field_register_types_composite(
-				command_data->computed_field_package);		
+				command_data->computed_field_package);
 			Computed_field_register_types_conditional(
-				command_data->computed_field_package);		
+				command_data->computed_field_package);
 			if (command_data->curve_manager)
 			{
 				Computed_field_register_types_curve(
-					command_data->computed_field_package, 
+					command_data->computed_field_package,
 					command_data->curve_manager);
 			}
 #if defined (USE_ITK)
@@ -18299,7 +18296,7 @@ Initialise all the subcomponents of cmgui and create the Cmiss_command_data
 			if (command_data->root_region)
 			{
 				Computed_field_register_types_lookup(
-					command_data->computed_field_package, 
+					command_data->computed_field_package,
 					command_data->root_region);
 			}
 			Computed_field_register_types_matrix_operators(
@@ -18311,17 +18308,17 @@ Initialise all the subcomponents of cmgui and create the Cmiss_command_data
 #if defined (USE_CMGUI_GRAPHICS_WINDOW)
 			if (command_data->graphics_window_manager)
 			{
-				Computed_field_register_type_scene_viewer_projection(
+				Computed_field_register_types_scene_viewer_projection(
 					command_data->computed_field_package,
 					command_data->graphics_window_manager);
 			}
 #endif /* defined (USE_CMGUI_GRAPHICS_WINDOW) */
-			Computed_field_register_type_image(
+			Computed_field_register_types_image(
 				command_data->computed_field_package);
 			if (command_data->root_region)
 			{
-				Computed_field_register_type_integration(
-					command_data->computed_field_package, 
+				Computed_field_register_types_integration(
+					command_data->computed_field_package,
 					command_data->root_region);
 			}
 			Computed_field_register_types_finite_element(
@@ -18370,7 +18367,7 @@ Initialise all the subcomponents of cmgui and create the Cmiss_command_data
 		command_data->default_time_keeper=ACCESS(Time_keeper)(UI_module->default_time_keeper);
 
 		/* scene manager */
-		/*???RC & SAB.   LOTS of managers need to be created before this 
+		/*???RC & SAB.   LOTS of managers need to be created before this
 		  and the User_interface too */
 		if (NULL != (command_data->scene_manager=Cmiss_graphics_module_get_scene_manager(
 									 command_data->graphics_module)))
@@ -18386,13 +18383,6 @@ Initialise all the subcomponents of cmgui and create the Cmiss_command_data
 			}
 		}
 
-#if defined (OLD_CODE)
-		if(command_data->default_scene)
-		{
-			Scene_enable_time_behaviour(command_data->default_scene,
-				command_data->default_time_keeper);
-		}
-#endif /* defined (OLD_CODE) */
 		if (command_data->computed_field_package && command_data->default_time_keeper)
 		{
 			Computed_field_register_types_time(command_data->computed_field_package,
@@ -18407,7 +18397,7 @@ Initialise all the subcomponents of cmgui and create the Cmiss_command_data
 			command_data->data_tool=UI_module->data_tool;
 			Node_tool_set_execute_command(command_data->data_tool, command_data->execute_command);
 			command_data->element_tool=UI_module->element_tool;
-			Element_tool_set_execute_command(command_data->element_tool, 
+			Element_tool_set_execute_command(command_data->element_tool,
 				command_data->execute_command);
 #if defined (USE_OPENCASCADE)
 			command_data->cad_tool = UI_module->cad_tool;
@@ -18415,7 +18405,7 @@ Initialise all the subcomponents of cmgui and create the Cmiss_command_data
 				command_data->execute_command);
 #endif /* defined (USE_OPENCASCADE) */
 			command_data->element_point_tool=UI_module->element_point_tool;
-			Element_point_tool_set_execute_command(command_data->element_point_tool, 
+			Element_point_tool_set_execute_command(command_data->element_point_tool,
 				command_data->execute_command);
 		}
 #if defined (USE_CMGUI_GRAPHICS_WINDOW)
@@ -18682,7 +18672,7 @@ NOTE: Do not call this directly: call Cmiss_command_data_destroy() to deaccess.
 		DEACCESS(Material_package)(&command_data->material_package);
 		DEACCESS(Graphics_font)(&command_data->default_font);
 		DESTROY(MANAGER(VT_volume_texture))(&command_data->volume_texture_manager);
-		DESTROY(MANAGER(Environment_map))(&command_data->environment_map_manager);				
+		DESTROY(MANAGER(Environment_map))(&command_data->environment_map_manager);
 		DEACCESS(Light_model)(&(command_data->default_light_model));
 		DEACCESS(Light)(&(command_data->default_light));
 		command_data->light_manager = NULL;
@@ -18747,10 +18737,10 @@ NOTE: Do not call this directly: call Cmiss_command_data_destroy() to deaccess.
 		display_message(ERROR_MESSAGE,"DESTROY(Cmiss_command_data).  "
 			"Invalid arguments");
 	}
-	
-	
+
+
 	LEAVE;
-	
+
 	return (return_code);
 } /* DESTROY(Cmiss_command_data) */
 
@@ -18805,7 +18795,7 @@ Process events until some events request the program to finish.
 	/* main processing / loop */
 	if (command_data && command_data->event_dispatcher)
 	{
-		/* user interface loop */						
+		/* user interface loop */
 		return_code=Event_dispatcher_main_loop(command_data->event_dispatcher);
 	}
 	LEAVE;
@@ -18858,7 +18848,7 @@ struct Execute_command *Cmiss_command_data_get_execute_command(
 LAST MODIFIED : 28 May 2003
 
 DESCRIPTION :
-Returns the execute command structure from the <command_data>, useful for 
+Returns the execute command structure from the <command_data>, useful for
 executing cmiss commands from C.
 ==============================================================================*/
 {
@@ -18987,7 +18977,7 @@ Gets the user_interface for this <command_data>
 	return (user_interface);
 } /* Cmiss_command_data_get_user_interface */
 
-struct Cmiss_scene_viewer_package *Cmiss_command_data_get_scene_viewer_package(
+struct Cmiss_scene_viewer_app_package *Cmiss_command_data_get_scene_viewer_package(
 	struct Cmiss_command_data *command_data)
 /*******************************************************************************
 LAST MODIFIED : 19 January 2007
@@ -18996,10 +18986,10 @@ DESCRIPTION :
 Returns the scene viewer data from the <command_data>.
 ==============================================================================*/
 {
-	struct Cmiss_scene_viewer_package *cmiss_scene_viewer_package;
+	struct Cmiss_scene_viewer_app_package *cmiss_scene_viewer_package;
 
 	ENTER(Cmiss_command_package_get_scene_viewer_package);
-	cmiss_scene_viewer_package=(struct Cmiss_scene_viewer_package *)NULL;
+	cmiss_scene_viewer_package=(struct Cmiss_scene_viewer_app_package *)NULL;
 	if (command_data)
 	{
 		cmiss_scene_viewer_package = command_data->scene_viewer_package;
@@ -19051,8 +19041,8 @@ Returns the graphics_window manager from the <command_data>.
 	return (graphics_window_manager);
 } /* Cmiss_command_data_get_graphics_window_manager */
 
-int Cmiss_command_data_set_cmgui_string(Cmiss_command_data *command_data, const char *name_string, 
-	const char *version_string,const char *date_string, const char *copyright_string, 
+int Cmiss_command_data_set_cmgui_string(Cmiss_command_data *command_data, const char *name_string,
+	const char *version_string,const char *date_string, const char *copyright_string,
 	const char *build_string, const char *revision_string)
 {
 	int return_code = 1;

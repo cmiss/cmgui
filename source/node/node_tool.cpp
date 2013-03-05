@@ -41,12 +41,12 @@ Scene input.
  * the terms of any one of the MPL, the GPL or the LGPL.
  *
  * ***** END LICENSE BLOCK ***** */
-#if defined (BUILD_WITH_CMAKE)
+#if 1
 #include "configure/cmgui_configure.h"
-#endif /* defined (BUILD_WITH_CMAKE) */
+#endif /* defined (1) */
 
-extern "C" {
 #include <math.h>
+
 #include "api/cmiss_rendition.h"
 #include "time/time_keeper.h"
 #include "computed_field/computed_field.h"
@@ -71,8 +71,10 @@ extern "C" {
 #include "graphics/graphic.h"
 #include "graphics/scene.h"
 #include "region/cmiss_region.h"
-#include "user_interface/message.h"
-}
+#include "general/message.h"
+#include "command/parser.h"
+#include "region/cmiss_region_app.h"
+
 #if defined (WX_USER_INTERFACE)
 #include "wx/wx.h"
 #include <wx/tglbtn.h>
@@ -623,7 +625,7 @@ static int FE_node_calculate_delta_position(struct FE_node *node,
 						&constraint_data);
 					coordinates[0] = placement_coordinates[0];
 					coordinates[1] = placement_coordinates[1];
-					coordinates[2] = placement_coordinates[2];		
+					coordinates[2] = placement_coordinates[2];
 					Cmiss_field_cache_destroy(&constraint_data.field_cache);
 					Cmiss_field_module_destroy(&constraint_field_module);
 				}
@@ -1173,8 +1175,8 @@ Returns a new node in the position indicated by <interaction_volume>, in the
 <scene> if suppled. If any of the remaining address arguments
 are not NULL, they are filled with the appropriate information pertaining to
 the new node.
-If <nearest_element> and <coordinate_field> are supplied then 
-the interaction volume will be supplied a constraint function which will 
+If <nearest_element> and <coordinate_field> are supplied then
+the interaction volume will be supplied a constraint function which will
 try to enforce that the node is created on that element.
 ==============================================================================*/
 {
@@ -1519,7 +1521,7 @@ release.
 							{
 								nearest_element=Scene_picked_object_list_get_nearest_element(
 									scene_picked_object_list,(struct Cmiss_region *)NULL,
-									/*select_elements_enabled*/0, /*select_faces_enabled*/1, 
+									/*select_elements_enabled*/0, /*select_faces_enabled*/1,
 									/*select_lines_enabled*/0, &scene_picked_object2,
 									&rendition_element,&graphic_element);
 								/* Reject the previously picked node if the element is nearer */
@@ -1530,7 +1532,7 @@ release.
 									{
 										picked_node = (struct FE_node *)NULL;
 									}
-								}				
+								}
 							}
 							if (picked_node)
 							{
@@ -1584,7 +1586,7 @@ release.
 									{
 										nearest_element_coordinate_field = Cmiss_graphic_get_coordinate_field(graphic_element);
 									}
-									/* If we are creating on elements and no element was selected then 
+									/* If we are creating on elements and no element was selected then
 										don't create */
 									if (!node_tool->constrain_to_surface || nearest_element)
 									{
@@ -1667,7 +1669,7 @@ release.
 								{
 									if ( 0 != (nearest_element=Scene_picked_object_list_get_nearest_element(
 										scene_picked_object_list,(struct Cmiss_region *)NULL,
-										/*select_elements_enabled*/0, /*select_faces_enabled*/1, 
+										/*select_elements_enabled*/0, /*select_faces_enabled*/1,
 										/*select_lines_enabled*/0, &scene_picked_object2,
 										&rendition_element,&graphic_element)))
 									{
@@ -1719,7 +1721,7 @@ release.
 								edit_info.constrain_to_surface = node_tool->constrain_to_surface;
 								edit_info.element_xi_field = node_tool->element_xi_field;
 								edit_info.nearest_element = nearest_element;
-								edit_info.nearest_element_coordinate_field = 
+								edit_info.nearest_element_coordinate_field =
 									nearest_element_coordinate_field;
 								Cmiss_field_cache_set_time(field_cache, edit_info.time);
 								/* get coordinate field to edit */
@@ -1919,7 +1921,7 @@ release.
 										Scene_pick_objects(scene,temp_interaction_volume,graphics_buffer);
 									if (scene_picked_object_list != 0)
 									{
-										Region_node_map *node_map = 
+										Region_node_map *node_map =
 											(Region_node_map *)Scene_picked_object_list_get_picked_region_sorted_nodes(
 												scene_picked_object_list, node_tool->use_data);
 										if (node_map)
@@ -2133,18 +2135,18 @@ class wxNodeTool : public wxPanel
 	 Managed_object_chooser<Computed_field, MANAGER_CLASS(Computed_field)>
 	 *computed_field_chooser;
 	 Managed_object_chooser<Computed_field,MANAGER_CLASS(Computed_field)>
-	 	*node_command_field_chooser;
+		*node_command_field_chooser;
 	 Managed_object_chooser<Computed_field,MANAGER_CLASS(Computed_field)>
-	 	*subgroup_field_chooser;
+		*subgroup_field_chooser;
 	 Managed_object_chooser<Computed_field,MANAGER_CLASS(Computed_field)>
-	 	*element_xi_field_chooser;
+		*element_xi_field_chooser;
 
 public:
 
-  wxNodeTool(Node_tool *node_tool, wxPanel *parent): 
-    node_tool(node_tool)
+  wxNodeTool(Node_tool *node_tool, wxPanel *parent):
+	node_tool(node_tool)
   {
-  	struct Computed_field *command_field, *element_xi_field;
+	struct Computed_field *command_field, *element_xi_field;
 	  { // Suppress the error message if we have already initialised this xrc
 		  wxLogNull logNo;
 		  wxXmlInit_node_tool();
@@ -2156,7 +2158,7 @@ public:
 		button_motion_update=XRCCTRL(*this, "ButtonMotionUpdate", wxCheckBox);
 		button_define = XRCCTRL(*this, "ButtonDefine", wxCheckBox);
 		button_create = XRCCTRL(*this, "ButtonCreate", wxCheckBox);
-		button_streaming = XRCCTRL(*this, "ButtonStreaming", wxCheckBox);  
+		button_streaming = XRCCTRL(*this, "ButtonStreaming", wxCheckBox);
 		button_constrain = XRCCTRL(*this, "ButtonConstrain", wxCheckBox );
 		button_select->SetValue(node_tool->select_enabled);
 		button_edit->SetValue(node_tool->edit_enabled);
@@ -2174,10 +2176,10 @@ public:
 		first_element_staticbox = XRCCTRL(*this, "FirstElementStaticBox",wxWindow);
 		second_element_staticbox = XRCCTRL(*this, "SecondElementStaticBox",wxWindow);
 
-		Title = XRCCTRL(*this,"NodeSizer",wxWindow); 
+		Title = XRCCTRL(*this,"NodeSizer",wxWindow);
 		if (node_tool->use_data)
 		{
-			 Title->SetLabel("Data Tool");
+			 Title->SetLabel(wxT("Data Tool"));
 			 create_elements_checkbox->Hide();
 			 dimension_textctrl->Hide();
 			 clear_button->Hide();
@@ -2189,7 +2191,7 @@ public:
 		}
 		else
 		{
-			 Title->SetLabel("Node Tool");
+			 Title->SetLabel(wxT("Node Tool"));
 			 create_elements_checkbox->Show();
 			 dimension_textctrl->Show();
 			 clear_button->Show();
@@ -2198,7 +2200,7 @@ public:
 			 dimension_statictext->Show();
 			 create_elements_checkbox->SetValue(node_tool->element_create_enabled);
 			 sprintf(temp_string,"%d",node_tool->element_dimension);
-			 dimension_textctrl->ChangeValue(temp_string);
+			 dimension_textctrl->ChangeValue(wxString::FromAscii(temp_string));
 			 first_element_staticbox->Show();
 			 second_element_staticbox->Show();
 		}
@@ -2223,29 +2225,29 @@ public:
 		subgroup_field_chooser->set_object(subgroup_field);
 		subgroup_field_chooser_panel->Show();
 
-	 wxPanel *coordinate_field_chooser_panel = 
+	 wxPanel *coordinate_field_chooser_panel =
 		 XRCCTRL(*this, "CoordinateFieldChooserPanel", wxPanel);
-	  computed_field_chooser = 
+	  computed_field_chooser =
 		  new Managed_object_chooser<Computed_field, MANAGER_CLASS(Computed_field)>
 		  (coordinate_field_chooser_panel, node_tool->coordinate_field,
-			  node_tool->computed_field_manager, 
+			  node_tool->computed_field_manager,
 			  Computed_field_has_up_to_3_numerical_components,
 			  (void *)NULL, node_tool->user_interface);
-	  Callback_base<Computed_field* > *coordinate_field_callback = 
-		  new Callback_member_callback< Computed_field*, 
+	  Callback_base<Computed_field* > *coordinate_field_callback =
+		  new Callback_member_callback< Computed_field*,
 		  wxNodeTool, int (wxNodeTool::*)(Computed_field *) >
 		  (this, &wxNodeTool::coordinate_field_callback);
 	  computed_field_chooser->set_callback(coordinate_field_callback);
 
-	  wxPanel *region_chooser_panel = 
+	  wxPanel *region_chooser_panel =
 		 XRCCTRL(*this, "RegionChooserPanel", wxPanel);
 	  char *initial_path;
 	  initial_path = Cmiss_region_get_root_region_path();
 	  region_chooser = new wxRegionChooser(region_chooser_panel,
-		  node_tool->root_region, initial_path); 
+		  node_tool->root_region, initial_path);
 	  DEALLOCATE(initial_path);
-	  Callback_base<Cmiss_region* > *Node_tool_wx_region_callback = 
-		  new Callback_member_callback< Cmiss_region*, 
+	  Callback_base<Cmiss_region* > *Node_tool_wx_region_callback =
+		  new Callback_member_callback< Cmiss_region*,
 		  wxNodeTool, int (wxNodeTool::*)(Cmiss_region *) >
 		  (this, &wxNodeTool::Node_tool_wx_region_callback);
 	  region_chooser->set_callback(Node_tool_wx_region_callback);
@@ -2261,8 +2263,8 @@ public:
 			 new Managed_object_chooser<Computed_field,MANAGER_CLASS(Computed_field)>
 			 (node_command_field_chooser_panel, command_field, node_tool->computed_field_manager,
 					Computed_field_has_string_value_type, (void *)NULL, node_tool->user_interface);
-		Callback_base< Computed_field* > *node_command_field_callback = 
-			 new Callback_member_callback< Computed_field*, 
+		Callback_base< Computed_field* > *node_command_field_callback =
+			 new Callback_member_callback< Computed_field*,
 				wxNodeTool, int (wxNodeTool::*)(Computed_field *) >
 			 (this, &wxNodeTool::node_command_field_callback);
 		node_command_field_chooser->set_callback(node_command_field_callback);
@@ -2284,8 +2286,8 @@ public:
 			 new Managed_object_chooser<Computed_field,MANAGER_CLASS(Computed_field)>
 			 (element_xi_field_chooser_panel, element_xi_field, node_tool->computed_field_manager,
 					 Computed_field_has_element_xi_fe_field, (void *)NULL, node_tool->user_interface);
-		Callback_base< Computed_field* > *element_xi_field_callback = 
-			 new Callback_member_callback< Computed_field*, 
+		Callback_base< Computed_field* > *element_xi_field_callback =
+			 new Callback_member_callback< Computed_field*,
 				wxNodeTool, int (wxNodeTool::*)(Computed_field *) >
 			 (this, &wxNodeTool::element_xi_field_callback);
 		element_xi_field_chooser->set_callback(element_xi_field_callback);
@@ -2389,28 +2391,28 @@ Set the selected option in the Coordinate Field chooser.
 	}
 
 	void OnButtonSelectpressed(wxCommandEvent& event)
-	{    
+	{
 	USE_PARAMETER(event);
 		button_select = XRCCTRL(*this, "ButtonSelect", wxCheckBox);
 		Node_tool_set_select_enabled(node_tool,button_select->IsChecked());
 	}
 
 	void OnButtonEditpressed(wxCommandEvent& event)
-	{ 
+	{
 	USE_PARAMETER(event);
 		button_edit = XRCCTRL(*this, "ButtonEdit", wxCheckBox);
 		Node_tool_set_edit_enabled(node_tool,button_edit->IsChecked());
 	}
 
 	void OnButtonMotionUpdatepressed(wxCommandEvent& event)
-	{    
+	{
 	USE_PARAMETER(event);
 		 button_motion_update = XRCCTRL(*this, "ButtonMotionUpdate", wxCheckBox);
 		 Node_tool_set_motion_update_enabled(node_tool,button_motion_update->IsChecked());
 	}
 
 	void OnButtonDefinepressed(wxCommandEvent& event)
-	{    
+	{
 	USE_PARAMETER(event);
 		button_define = XRCCTRL(*this, "ButtonDefine", wxCheckBox);
 		Node_tool_set_define_enabled(node_tool,button_define->IsChecked());
@@ -2419,49 +2421,49 @@ Set the selected option in the Coordinate Field chooser.
 			button_create = XRCCTRL(*this, "ButtonCreate", wxCheckBox);
 			button_create->SetValue(0);
 			Node_tool_set_create_enabled(node_tool,button_create->IsChecked());
-		} 
+		}
 	}
 
 	void OnButtonCreatepressed(wxCommandEvent& event)
-	{    	 
+	{
 	USE_PARAMETER(event);
 		button_create = XRCCTRL(*this, "ButtonCreate", wxCheckBox);
 		Node_tool_set_create_enabled(node_tool,button_create->IsChecked());
 
-    if (button_create->IsChecked())
+	if (button_create->IsChecked())
 		{
-	  	button_define = XRCCTRL(*this, "ButtonDefine", wxCheckBox);	
+		button_define = XRCCTRL(*this, "ButtonDefine", wxCheckBox);
 			button_define->SetValue(1);
 		  Node_tool_set_define_enabled(node_tool,button_define->IsChecked());
 		}
 	}
 
 	void OnButtonStreamingpressed(wxCommandEvent& event)
-	{    
+	{
 	USE_PARAMETER(event);
-		button_streaming = XRCCTRL(*this, "ButtonStreaming", wxCheckBox);  
+		button_streaming = XRCCTRL(*this, "ButtonStreaming", wxCheckBox);
 		Node_tool_set_streaming_create_enabled(node_tool,button_streaming->IsChecked());
 	}
 
 	void OnButtonConstrainpressed(wxCommandEvent& event)
-	{    
+	{
 	USE_PARAMETER(event);
-		button_constrain = XRCCTRL(*this, "ButtonConstrain", wxCheckBox ); 	 
+		button_constrain = XRCCTRL(*this, "ButtonConstrain", wxCheckBox );
 		Node_tool_set_constrain_to_surface(node_tool,button_constrain->IsChecked());
 	}
 
 	void OnButtonDestroypressed(wxCommandEvent& event)
-	{    
+	{
 		USE_PARAMETER(event);
 		Node_tool_destroy_selected_nodes(node_tool);
 	}
 
 	void OnButtonUndefinepressed(wxCommandEvent& event)
-	{    
+	{
 	int number_in_elements;
 	struct LIST(FE_field) *fe_field_list;
 	struct LIST(FE_node) *node_list;
-	button_undefine = XRCCTRL(*this, "ButtonUndefine", wxButton);  
+	button_undefine = XRCCTRL(*this, "ButtonUndefine", wxButton);
 
 	USE_PARAMETER(event);
 	if (node_tool->coordinate_field && (fe_field_list=
@@ -2541,7 +2543,7 @@ void OnDimensionEntered(wxCommandEvent &event)
 	if (node_tool)
 	{
 		wxString wxTextEntry = dimension_textctrl->GetValue();
-		const char *value_string = wxTextEntry.c_str();
+		const char *value_string = wxTextEntry.mb_str(wxConvUTF8);
 		if (value_string != 0)
 		{
 			if (1==sscanf(value_string,"%d",&element_dimension))
@@ -2582,7 +2584,7 @@ void NodeToolInterfaceRenew(Node_tool *destination_node_tool)
 	button_motion_update=XRCCTRL(*this, "ButtonMotionUpdate", wxCheckBox);
 	button_define = XRCCTRL(*this, "ButtonDefine", wxCheckBox);
 	button_create = XRCCTRL(*this, "ButtonCreate", wxCheckBox);
-	button_streaming = XRCCTRL(*this, "ButtonStreaming", wxCheckBox);  
+	button_streaming = XRCCTRL(*this, "ButtonStreaming", wxCheckBox);
 	button_constrain = XRCCTRL(*this, "ButtonConstrain", wxCheckBox );
 	create_elements_checkbox = XRCCTRL(*this, "CreateElementsCheckBox", wxCheckBox );
 	dimension_textctrl = XRCCTRL(*this, "DimensionTextCtrl", wxTextCtrl);
@@ -2758,14 +2760,14 @@ LAST MODIFIED : 13 April 2007
 
 DESCRIPTION :
 Set the wx_interface for new settings.
-==============================================================================*/	 
+==============================================================================*/
 {
 	 struct Node_tool *node_tool =(struct Node_tool *)node_tool_void;
-	 if (node_tool != 0) 
+	 if (node_tool != 0)
 	 {
 			if (node_tool->wx_node_tool != (wxNodeTool *) NULL)
-			{	
-				 node_tool->wx_node_tool->NodeToolInterfaceRenew(node_tool);	
+			{
+				 node_tool->wx_node_tool->NodeToolInterfaceRenew(node_tool);
 			}
 	 }
 }
@@ -2773,7 +2775,7 @@ Set the wx_interface for new settings.
 
 static int Node_tool_copy_function(
 	void *destination_tool_void, void *source_tool_void,
-	struct MANAGER(Interactive_tool) *destination_tool_manager) 
+	struct MANAGER(Interactive_tool) *destination_tool_manager)
 /*******************************************************************************
 LAST MODIFIED : 29 March 2007
 
@@ -2796,7 +2798,7 @@ Copies the state of one node tool to another.
 		{
 			destination_node_tool = CREATE(Node_tool)(
 				destination_tool_manager,
-				source_node_tool->root_region, 
+				source_node_tool->root_region,
 				source_node_tool->use_data,
 				source_node_tool->rubber_band_material,
 				source_node_tool->user_interface,
@@ -2821,7 +2823,7 @@ Copies the state of one node tool to another.
 			Node_tool_set_region(destination_node_tool, source_node_tool->region, source_node_tool->group_field);
 #if defined (WX_USER_INTERFACE)
 			if (destination_node_tool->wx_node_tool != (wxNodeTool *) NULL)
-			{	
+			{
 				destination_node_tool->wx_node_tool->NodeToolInterfaceRenew(destination_node_tool);
 			}
 			return_code=1;
@@ -3024,7 +3026,7 @@ static void Node_tool_Computed_field_change(
 										node_tool->element = CREATE(FE_element)(
 												&element_identifier, (struct FE_element_shape *) NULL,
 												(struct FE_region *) NULL, node_tool->template_element);
-										if (node_tool->element != 0) 
+										if (node_tool->element != 0)
 										{
 											ACCESS(FE_element)(node_tool->element);
 											node_tool->number_of_clicked_nodes = 0;
@@ -3308,8 +3310,8 @@ used to represent them. <element_manager> should be NULL if <use_data> is true.
 			node_tool->motion_update_enabled=1;
 			node_tool->define_enabled=0;
 			node_tool->create_enabled=0;
- 			node_tool->streaming_create_enabled=0;
- 			node_tool->constrain_to_surface=0;
+			node_tool->streaming_create_enabled=0;
+			node_tool->constrain_to_surface=0;
 			/* settings of the element creator */
 			node_tool->FE_coordinate_field = (struct FE_field *)NULL;
 			node_tool->element_dimension = 2;
@@ -3349,7 +3351,7 @@ used to represent them. <element_manager> should be NULL if <use_data> is true.
 				Node_tool_interactive_event_handler,
 				Node_tool_bring_up_interactive_tool_dialog,
 				Node_tool_reset,
- 				Node_tool_destroy_node_tool,
+				Node_tool_destroy_node_tool,
 				Node_tool_copy_function,
 				(void *)node_tool);
 			ADD_OBJECT_TO_MANAGER(Interactive_tool)(
@@ -4125,7 +4127,7 @@ and node is constrained to surface.
 		if (element_xi_field != node_tool->element_xi_field)
 		{
 			node_tool->element_xi_field = element_xi_field;
-		}	
+		}
 		return_code = 1;
 	}
 	else
@@ -4342,7 +4344,7 @@ Updates what is shown on the dimension text field.
 	{
 		return_code=1;
 		wxString wxTextEntry = dimension_textctrl->GetValue();
-		const char *value_string = wxTextEntry.c_str();
+		const char *value_string = wxTextEntry.mb_str(wxConvUTF8);
 		if (value_string != 0)
 		{
 			char temp_string[20];
@@ -4425,7 +4427,7 @@ Returns the dimension of elements to be created by the <node_tool>.
 } /* node_tool_get_element_dimension */
 #endif /* defined (WX_USER_INTERFACE)*/
 
-int Node_tool_set_execute_command(struct Node_tool *node_tool, 
+int Node_tool_set_execute_command(struct Node_tool *node_tool,
 	struct Execute_command *execute_command)
 {
 	int return_code = 0;
@@ -4439,7 +4441,7 @@ int Node_tool_set_execute_command(struct Node_tool *node_tool,
 		display_message(ERROR_MESSAGE,
 			"Node_tool_set_execute_command.  Invalid argument(s)");
 	}
-	
+
 	return return_code;
 }
 

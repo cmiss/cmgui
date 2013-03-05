@@ -43,7 +43,6 @@ This module creates a spectrum_editor_dialog.
  *
  * ***** END LICENSE BLOCK ***** */
 
-extern "C" {
 #include <stdio.h>
 #include "three_d_drawing/graphics_buffer.h"
 #include "general/debug.h"
@@ -54,8 +53,7 @@ extern "C" {
 #include "graphics/spectrum.h"
 #include "graphics/spectrum_editor_wx.h"
 #include "graphics/spectrum_editor_dialog_wx.h"
-#include "user_interface/message.h"
-}
+#include "general/message.h"
 
 struct Spectrum_editor_dialog
 /*******************************************************************************
@@ -79,9 +77,9 @@ and deaccess it.
 static struct Spectrum_editor_dialog *CREATE(Spectrum_editor_dialog)(
 	 struct Spectrum_editor_dialog **spectrum_editor_dialog_address,
 	 struct MANAGER(Spectrum) *spectrum_manager,
-	 struct Spectrum *init_data, 
-	 struct Graphics_font *font, 
-	 struct Graphics_buffer_package *graphics_buffer_package,
+	 struct Spectrum *init_data,
+	 struct Graphics_font *font,
+	 struct Graphics_buffer_app_package *graphics_buffer_package,
 	 struct User_interface *user_interface,
 	 struct Cmiss_graphics_module *graphics_module,
 	 struct MANAGER(Scene) *scene_manager,
@@ -133,10 +131,6 @@ the spectrums contained in the global list.
 											"CREATE(Spectrum_editor_dialog).  "
 											"Could not create spectrum editor");
 				}
-#if defined (OLD_CODE)
-				spectrum_editor_dialog_set_spectrum(
-					 spectrum_editor_dialog,init_data);
-#endif /* defined (OLD_CODE) */
 			}
 			else
 			{
@@ -154,7 +148,7 @@ the spectrums contained in the global list.
 		 *spectrum_editor_dialog_address = spectrum_editor_dialog;
 	}
 	LEAVE;
-	
+
 	return (spectrum_editor_dialog);
 } /* CREATE(Spectrum_editor_dialog) */
 
@@ -185,64 +179,12 @@ Returns the spectrum edited by the <spectrum_editor_dialog>.
 	return (spectrum);
 } /* spectrum_editor_dialog_get_spectrum */
 
-#if defined (OLD_CODE)
-int spectrum_editor_dialog_set_spectrum(
-	struct Spectrum_editor_dialog *spectrum_editor_dialog,
-	struct Spectrum *spectrum)
-/*******************************************************************************
-LAST MODIFIED : 23 August 2007
-
-DESCRIPTION :
-Set the <spectrum> for the <spectrum_editor_dialog>.
-==============================================================================*/
-{
-	int return_code;
-
-	ENTER(spectrum_editor_dialog_set_spectrum);
-	return_code=0;
-	/* check arguments */
-	if (spectrum_editor_dialog)
-	{
-		return_code=1;
-		if (spectrum)
-		{
-			if (!IS_MANAGED(Spectrum)(spectrum,
-				spectrum_editor_dialog->spectrum_manager))
-			{
-				display_message(ERROR_MESSAGE,
-					"spectrum_editor_dialog_set_spectrum.  Spectrum not managed");
-				spectrum=(struct Spectrum *)NULL;
-				return_code=0;
-			}
-		}
-		if (!spectrum)
-		{
-			spectrum=FIRST_OBJECT_IN_MANAGER_THAT(Spectrum)(
-				(MANAGER_CONDITIONAL_FUNCTION(Spectrum) *)NULL,
-				(void *)NULL,
-				spectrum_editor_dialog->spectrum_manager);
-		}
-		spectrum_editor_dialog->current_value=spectrum;
-		spectrum_editor_wx_bring_up_editor(spectrum_editor_dialog->spectrum_editor);
-	}
-	else
-	{
-		display_message(ERROR_MESSAGE,
-			"spectrum_editor_dialog_set_spectrum.  Invalid argument(s)");
-		return_code=0;
-	}
-	LEAVE;
-
-	return (return_code);
-} /* spectrum_editor_dialog_set_spectrum */
-#endif /* defined (OLD_CODE) */
-
 int bring_up_spectrum_editor_dialog(
 	struct Spectrum_editor_dialog **spectrum_editor_dialog_address,
 	struct MANAGER(Spectrum) *spectrum_manager,
-	struct Spectrum *spectrum, 
+	struct Spectrum *spectrum,
 	struct Graphics_font *font,
-	struct Graphics_buffer_package *graphics_buffer_package,
+	struct Graphics_buffer_app_package *graphics_buffer_package,
 	struct User_interface *user_interface,
 	struct Cmiss_graphics_module *graphics_module,
 	struct MANAGER(Scene) *scene_manager,
@@ -255,7 +197,7 @@ If there is a spectrum_editor dialog in existence, then de-iconify it and
 bring it to the front, otherwise create a new one.
 ==============================================================================*/
 {
-	int return_code;
+	int return_code = 0;
 	struct Spectrum_editor_dialog *spectrum_editor_dialog;
 
 	ENTER(bring_up_spectrum_editor_dialog);
@@ -263,7 +205,7 @@ bring it to the front, otherwise create a new one.
 	{
 		spectrum_editor_dialog = *spectrum_editor_dialog_address;
 		if (spectrum_editor_dialog != 0)
-		{		
+		{
 			spectrum_editor_wx_bring_up_editor(spectrum_editor_dialog->spectrum_editor);
 			return_code = 1;
 		}
