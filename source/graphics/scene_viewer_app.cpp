@@ -203,6 +203,12 @@ int DESTROY(Scene_viewer_app)(struct Scene_viewer_app **scene_viewer_app_address
 	if (scene_viewer_app_address && (scene_viewer = *scene_viewer_app_address))
 	{
 		return_code = 1;
+		if (scene_viewer->idle_update_callback_id)
+		{
+			Event_dispatcher_remove_idle_callback(
+				User_interface_get_event_dispatcher(scene_viewer->user_interface),
+				scene_viewer->idle_update_callback_id);
+		}
 		DESTROY(Scene_viewer)(&(scene_viewer->core_scene_viewer));
 		/* send the destroy callbacks */
 		if (scene_viewer->destroy_callback_list)
