@@ -26,7 +26,8 @@ int set_Cmiss_region(struct Parse_state *state, void *region_address_void,
 				region = Cmiss_region_find_subregion_at_path(root_region, current_token);
 				if (region)
 				{
-					//-- REACCESS(Cmiss_region)(region_address, region);
+					Cmiss_region_destroy(region_address);
+					*region_address = region;
 					return_code = shift_Parse_state(state, 1);
 				}
 				else
@@ -328,7 +329,9 @@ int set_Cmiss_region_or_group(struct Parse_state *state,
 		if (Cmiss_region_get_partial_region_path(*region_address, current_token,
 			&output_region, &region_path, &field_name) && output_region)
 		{
-			REACCESS(Cmiss_region)(region_address, output_region);
+			Cmiss_region_access(output_region);
+			Cmiss_region_destroy(region_address);
+			*region_address = output_region;
 			if (field_name)
 			{
 				Cmiss_field *field = FIND_BY_IDENTIFIER_IN_MANAGER(Computed_field,name)(
