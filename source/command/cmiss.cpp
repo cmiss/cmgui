@@ -12872,7 +12872,7 @@ otherwise the file of graphics objects is read.
 } /* gfx_read_objects */
 
 /***************************************************************************//**
- * Read regions and fields in FieldML 0.1, 0.4 and EX format.
+ * Read regions and fields in FieldML 0.5 and EX format.
  * If filename is not specified a file selection box is presented to the user.
  */
 static int gfx_read_region(struct Parse_state *state,

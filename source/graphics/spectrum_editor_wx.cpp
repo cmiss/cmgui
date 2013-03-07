@@ -289,7 +289,7 @@ current settings in spectrum_editor_settings.
 ==============================================================================*/
 {
 	enum Spectrum_settings_type current_type;
-	int return_code;
+	int return_code = 1;
 
 	ENTER(spectrum_editor_settings_set_type);
 	if (spectrum_editor &&
