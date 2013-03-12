@@ -113,7 +113,6 @@
 #endif /* defined (WX_USER_INTERFACE) */
 #include "element/element_tool.h"
 #include "emoter/emoter_dialog.h"
-#include "field_io/read_fieldml.h"
 #include "finite_element/export_cm_files.h"
 #if defined (USE_NETGEN)
 #include "finite_element/generate_mesh_netgen.h"
@@ -127,9 +126,7 @@
 #include "finite_element/finite_element_to_iso_lines.h"
 #include "finite_element/finite_element_to_streamlines.h"
 #include "finite_element/import_finite_element.h"
-#include "finite_element/read_fieldml_01.h"
 #include "finite_element/snake.h"
-#include "finite_element/write_fieldml_01.h"
 #include "general/debug.h"
 #include "general/error_handler.h"
 #include "general/image_utilities.h"
@@ -12872,7 +12869,7 @@ otherwise the file of graphics objects is read.
 } /* gfx_read_objects */
 
 /***************************************************************************//**
- * Read regions and fields in FieldML 0.5 and EX format.
+ * Read regions and fields in formats supported by zinc (EX, FieldML).
  * If filename is not specified a file selection box is presented to the user.
  */
 static int gfx_read_region(struct Parse_state *state,
@@ -15895,99 +15892,6 @@ If <use_data> is set, writing data, otherwise writing nodes.
 	return (return_code);
 } /* gfx_write_nodes */
 
-static int gfx_write_region(struct Parse_state *state,
-	void *dummy, void *command_data_void)
-/*******************************************************************************
-LAST MODIFIED : 15 May 2003
-
-DESCRIPTION :
-If a nodes file is not specified a file selection box is presented to the user,
-otherwise the nodes file is written.
-Can now specify individual node groups to write with the <group> option.
-If <use_data> is set, writing data, otherwise writing nodes.
-==============================================================================*/
-{
-	char file_ext[] = ".fml", *file_name, *region_path;
-	FILE *file;
-	int return_code;
-	struct Cmiss_command_data *command_data;
-	struct FE_field_order_info *field_order_info;
-	struct Option_table *option_table;
-
-	ENTER(gfx_write_region);
-	USE_PARAMETER(dummy);
-	if (state && (command_data = (struct Cmiss_command_data *)command_data_void))
-	{
-		return_code = 1;
-		region_path = Cmiss_region_get_root_region_path();
-		field_order_info = (struct FE_field_order_info *)NULL;
-		file_name = (char *)NULL;
-
-		option_table = CREATE(Option_table)();
-		/* fields */
-		Option_table_add_entry(option_table, "fields", &field_order_info,
-			Cmiss_region_get_FE_region(command_data->root_region),
-			set_FE_fields_FE_region);
-		/* group */
-		Option_table_add_entry(option_table, "group", &region_path,
-			command_data->root_region, set_Cmiss_region_path);
-		/* default option: file name */
-		Option_table_add_default_string_entry(option_table, &file_name, "FILE_NAME");
-
-		if (0 != (return_code = Option_table_multi_parse(option_table, state)))
-		{
-			if (!file_name)
-			{
-				if (!(file_name = confirmation_get_write_filename(file_ext,
-					command_data->user_interface
-#if defined (WX_USER_INTERFACE)
-								 , command_data->execute_command
-#endif /* defined (WX_USER_INTERFACE) */
-																													)))
-				{
-					return_code = 0;
-				}
-			}
-#if defined (WX_USER_INTERFACE) && defined (WIN32_SYSTEM)
-			if (file_name)
-			{
-				 file_name = CMISS_set_directory_and_filename_WIN32(file_name,
-						command_data);
-			}
-#endif /* defined (WX_USER_INTERFACE) && defined (WIN32_SYSTEM) */
-			if (return_code)
-			{
-				/* open the file */
-				if (0 != (return_code = check_suffix(&file_name, file_ext)))
-				{
-					file = fopen(file_name, "w");
-					return_code =
-						write_fieldml_01_file(file, command_data->root_region, region_path, 1, 1, field_order_info);
-					fclose(file);
-				}
-			}
-		}
-		DESTROY(Option_table)(&option_table);
-		if (field_order_info)
-		{
-			DESTROY(FE_field_order_info)(&field_order_info);
-		}
-		DEALLOCATE(region_path);
-		if (file_name)
-		{
-			DEALLOCATE(file_name);
-		}
-	}
-	else
-	{
-		display_message(ERROR_MESSAGE, "gfx_write_region.  Invalid argument(s)");
-		return_code = 0;
-	}
-	LEAVE;
-
-	return (return_code);
-} /* gfx_write_region */
-
 static int gfx_write_texture(struct Parse_state *state,
 	void *dummy_to_be_modified,void *command_data_void)
 /*******************************************************************************
@@ -16264,8 +16168,6 @@ Executes a GFX WRITE command.
 				command_data_void, gfx_write_elements);
 			Option_table_add_entry(option_table, "nodes", /*use_data*/(void *)0,
 				command_data_void, gfx_write_nodes);
-			Option_table_add_entry(option_table, "region", NULL,
-				command_data_void, gfx_write_region);
 			Option_table_add_entry(option_table, "texture", NULL,
 				command_data_void, gfx_write_texture);
 			return_code = Option_table_parse(option_table, state);

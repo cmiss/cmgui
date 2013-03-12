@@ -84,8 +84,6 @@ SET(APP_SRCS
     source/element/element_tool.cpp
     source/element/element_point_viewer_wx.cpp
     source/emoter/emoter_dialog.cpp
-    source/finite_element/read_fieldml_01.cpp
-    source/finite_element/write_fieldml_01.cpp
     source/graphics/transform_tool.cpp
     source/dialog/tessellation_dialog.cpp
     source/graphics/region_tree_viewer_wx.cpp

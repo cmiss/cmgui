@@ -98,8 +98,6 @@ SET(APP_HDRS
     source/element/element_tool.h
     source/element/element_point_viewer_wx.h
     source/emoter/emoter_dialog.h
-    source/finite_element/read_fieldml_01.h
-    source/finite_element/write_fieldml_01.h
     source/graphics/graphics_window.h
     source/graphics/graphics_window_private.hpp
     source/graphics/texturemap.h
