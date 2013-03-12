@@ -61,9 +61,6 @@ DESCRIPTION :
 #  include <ApplicationServices/ApplicationServices.h>
 # endif
 #endif
-#include <libxml/catalog.h>
-#include <libxml/parser.h>
-#include <libxml/xmlschemastypes.h>
 
 #if defined (WX_USER_INTERFACE)
 #include <wx/wx.h>
@@ -271,11 +268,6 @@ Main program for the CMISS Graphical User Interface
 		if (wx_entry_started)
 			wxEntryCleanup();
 #endif
-		/* FieldML does not cleanup the global varaibles xmlParser, xmlSchematypes and
-		 * xmlCatalog at this moment, so we clean it up here instead*/
-		xmlCatalogCleanup();
-		xmlSchemaCleanupTypes();
-		xmlCleanupParser();
 	}
 	else
 	{
