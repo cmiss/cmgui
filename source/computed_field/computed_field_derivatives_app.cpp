@@ -5,7 +5,6 @@
 #include "configure/cmgui_configure.h"
 #endif
 
-#include "image_processing/computed_field_image_filter.h"
 #include "general/debug.h"
 #include "general/message.h"
 #include "command/parser.h"
