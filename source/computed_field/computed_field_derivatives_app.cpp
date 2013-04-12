@@ -112,7 +112,7 @@ already) and allows its contents to be modified.
 			{
 				return_code = field_modify->update_field_and_deaccess(
 					Computed_field_create_derivative(field_modify->get_field_module(),
-						source_field, xi_index - 1));
+						source_field, xi_index));
 			}
 			if (!return_code)
 			{

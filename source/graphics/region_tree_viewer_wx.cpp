@@ -1323,7 +1323,7 @@ DESCRIPTION :
 Callback from wxChooser<Use Element Type> when choice is made.
 ==============================================================================*/
  {
-	int face;
+	Cmiss_graphic_face_type face;
 
 	Cmiss_graphic_set_use_element_type(
 		region_tree_viewer->current_graphic,use_element_type);
@@ -1352,12 +1352,12 @@ Callback from wxChooser<Use Element Type> when choice is made.
 		if (facecheckbox->IsChecked())
 		{
 			facechoice->Enable();
-			face = facechoice->GetSelection();
+			face = static_cast<Cmiss_graphic_face_type>(facechoice->GetSelection());
 		}
 		else
 		{
 			facechoice->Disable();
-			face= -1;
+			face= CMISS_GRAPHIC_FACE_ALL;
 		}
 		Cmiss_graphic_set_face(region_tree_viewer->current_graphic,face);
 	}
@@ -1367,7 +1367,7 @@ Callback from wxChooser<Use Element Type> when choice is made.
 		facecheckbox->Disable();
 		facechoice->Disable();
 		Cmiss_graphic_set_exterior(region_tree_viewer->current_graphic,0);
-		Cmiss_graphic_set_face(region_tree_viewer->current_graphic,-1);
+		Cmiss_graphic_set_face(region_tree_viewer->current_graphic, CMISS_GRAPHIC_FACE_ALL);
 	}
 
 	Region_tree_viewer_autoapply(region_tree_viewer->rendition,
@@ -3089,19 +3089,19 @@ void ExteriorChecked(wxCommandEvent &event)
 
 void FaceChecked(wxCommandEvent &event)
 {
-	int face;
+	Cmiss_graphic_face_type face;
 	USE_PARAMETER(event);
 	facecheckbox=XRCCTRL(*this, "FaceCheckBox",wxCheckBox);
 	facechoice=XRCCTRL(*this, "FaceChoice",wxChoice);
 	if (facecheckbox->IsChecked())
 	{
 		facechoice->Enable();
-		face = facechoice->GetSelection();
+		face = static_cast<Cmiss_graphic_face_type>(facechoice->GetSelection());
 	}
 	else
 	{
 		facechoice->Disable();
-		face= -1;
+		face= CMISS_GRAPHIC_FACE_ALL;
 	}
 	Cmiss_graphic_set_face(region_tree_viewer->current_graphic,face);
 	Region_tree_viewer_autoapply(region_tree_viewer->rendition,
@@ -3111,10 +3111,10 @@ void FaceChecked(wxCommandEvent &event)
 
 void FaceChosen(wxCommandEvent &event)
 {
-	int face;
+	Cmiss_graphic_face_type face;
 	USE_PARAMETER(event);
 	facechoice=XRCCTRL(*this, "FaceChoice",wxChoice);
-	face = facechoice->GetSelection();
+	face = static_cast<Cmiss_graphic_face_type>(facechoice->GetSelection());
 	Cmiss_graphic_set_face(region_tree_viewer->current_graphic,face);
 	Region_tree_viewer_autoapply(region_tree_viewer->rendition,
 		region_tree_viewer->edit_rendition);
@@ -3131,7 +3131,8 @@ void SetBothMaterialChooser(Cmiss_graphic *graphic)
 
 void SetGraphic(Cmiss_graphic *graphic)
 {
-	int error,number_of_iso_values, i,reverse_track,line_width, face;
+	int error,number_of_iso_values, i,reverse_track,line_width;
+	Cmiss_graphic_face_type face = CMISS_GRAPHIC_FACE_INVALID;
 	double decimation_threshold, *iso_values, first_iso_value,
 		last_iso_value;
 	char temp_string[50], *vector_temp_string;
@@ -4206,11 +4207,12 @@ void SetGraphic(Cmiss_graphic *graphic)
 			{
 				exteriorcheckbox->SetValue(0);
 			}
-			if (Cmiss_graphic_get_face(graphic,&face))
+			face = Cmiss_graphic_get_face(graphic);
+			if (face != CMISS_GRAPHIC_FACE_INVALID)
 			{
 				facecheckbox->SetValue(1);
 				facechoice->Enable();
-				facechoice->SetSelection(face);
+				facechoice->SetSelection(static_cast<int>(face));
 			}
 			else
 			{

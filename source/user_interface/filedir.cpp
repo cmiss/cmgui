@@ -342,14 +342,14 @@ name the <file_operation> is performed on the file with the <arguments>.
 					strcat(allocated_shell_title," file");
 					shell_title=allocated_shell_title;
 				}
-				const char *wildcard_extension = "All files (*.*)|*.*|";
+				const char *wildcard_extension = wxT("All files (*.*)|*.*|");
 				if (ALLOCATE(extension,char,
 						strlen(file_open_data->filter_extension)*2+strlen(wildcard_extension)+4))
 				{
 					strcpy(extension,wildcard_extension);
-					strcat(extension,"*");
+					strcat(extension,wxT("*"));
 					strcat(extension,file_open_data->filter_extension);
-					strcat(extension,"|*");
+					strcat(extension,wxT("|*"));
 					strcat(extension,file_open_data->filter_extension);
 				}
 			}
@@ -363,8 +363,10 @@ name the <file_operation> is performed on the file with the <arguments>.
 			shell_title=(char *)NULL;
 		} break;
 	}
+	//	wxFileDialog *ReadData = new wxFileDialog ((wxWindow *)NULL,wxString::FromAscii(shell_title),wxT(""),wxT(""),
+	//											   wxT("*.com;*.exnode"),wxOPEN|wxFILE_MUST_EXIST,wxDefaultPosition);
 	wxFileDialog *ReadData = new wxFileDialog ((wxWindow *)NULL,wxString::FromAscii(shell_title),wxT(""),wxT(""),
-											   wxT("*.com"),wxOPEN|wxFILE_MUST_EXIST,wxDefaultPosition);
+											   extension,wxOPEN|wxFILE_MUST_EXIST,wxDefaultPosition);
 	if (ReadData->ShowModal() == wxID_OK)
 	{
 		 wxString file_name=ReadData->GetPath();

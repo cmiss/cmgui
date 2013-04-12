@@ -4701,7 +4701,7 @@ Executes a GFX CREATE WINDOW command.
 				}
 				else
 				{
-				   if (command_data->user_interface)
+					if (command_data->user_interface)
 					{
 #if defined (WX_USER_INTERFACE)
 						struct MANAGER(Interactive_tool) *interactive_tool_manager;
