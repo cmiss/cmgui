@@ -120,7 +120,7 @@ interest and set scene_viewer values directly.
 /* for writing bitmap to file: */
 #include "general/image_utilities.h"
 #include "three_d_drawing/graphics_buffer.h"
-#include "time/time_keeper.h"
+#include "time/time_keeper_app.hpp"
 #include "user_interface/confirmation.h"
 #if defined (WIN32_USER_INTERFACE)
 //#define WINDOWS_LEAN_AND_MEAN
@@ -250,7 +250,7 @@ Contains information for a graphics window.
 	struct Interactive_tool *interactive_tool;
 	/* the time_slider is attached to the default_time_keeper,
 		the reference is kept so that the callbacks can be undone */
-	struct Time_keeper *time_keeper;
+	struct Time_keeper_app *time_keeper_app;
 	struct User_interface *user_interface;
 	/* the number of objects accessing this window. The window cannot be removed
 		from manager unless it is 1 (ie. only the manager is accessing it) */
@@ -506,8 +506,8 @@ toolbar to match the selection.
 } /* Graphics_window_set_interactive_tool */
 
 #if defined (WX_USER_INTERFACE)
-static int Graphics_window_time_keeper_callback(struct Time_keeper *time_keeper,
-	enum Time_keeper_event event, void *graphics_window_void)
+static int Graphics_window_time_keeper_app_callback(struct Time_keeper_app *time_keeper_app,
+	enum Time_keeper_app_event event, void *graphics_window_void)
 /*******************************************************************************
 LAST MODIFIED : 18 February 1999
 
@@ -525,27 +525,27 @@ Updates the time display of the time_slider
 	ENTER(Graphics_window_time_keeper_callback);
 	USE_PARAMETER(event);
 
-	if (time_keeper && (window = (struct Graphics_window *)graphics_window_void))
+	if (time_keeper_app && (window = (struct Graphics_window *)graphics_window_void))
 	{
 		if (window->time_slider && window->time_text_ctrl)
 		{
 			 switch(event)
 			 {
-					case TIME_KEEPER_NEW_TIME:
+					case TIME_KEEPER_APP_NEW_TIME:
 					{
-						 window->current_time = Time_keeper_get_time(window->time_keeper);
+						 window->current_time = window->time_keeper_app->getTimeKeeper()->getTime();
 						 time_string.Printf(_T("%f"),window->current_time);
 						 window->time_text_ctrl->ChangeValue(time_string);
 						 return_code = 1;
 					} break;
-					case TIME_KEEPER_NEW_MINIMUM:
+					case TIME_KEEPER_APP_NEW_MINIMUM:
 					{
-						 window->minimum_time = Time_keeper_get_minimum(window->time_keeper);
+						 window->minimum_time = window->time_keeper_app->getTimeKeeper()->getMinimum();
 						 return_code = 1;
 					} break;
-					case TIME_KEEPER_NEW_MAXIMUM:
+					case TIME_KEEPER_APP_NEW_MAXIMUM:
 					{
-						 window->maximum_time = Time_keeper_get_maximum(window->time_keeper);
+						 window->maximum_time = window->time_keeper_app->getTimeKeeper()->getMaximum();
 						 return_code = 1;
 					} break;
 					default:
@@ -1080,7 +1080,7 @@ Change the values on the wx interface if different.
 	 if (window->wx_graphics_window)
 	 {
 			return_code = 1;
-			time=Time_keeper_get_speed(window->time_keeper);
+			time=window->time_keeper_app->getSpeed();
 			text_entry.Printf(_T("%f"),time);
 			window->time_framerate_text_ctrl->ChangeValue(text_entry);
 
@@ -1089,7 +1089,7 @@ Change the values on the wx interface if different.
 
 			window->time_step_size_text_ctrl->ChangeValue(text_entry);
 			window->time_play_every_frame_checkbox->SetValue(
-				 Time_keeper_get_play_every_frame(window->time_keeper));
+				window->time_keeper_app->getPlayEveryFrame());
 			return_code = 1;
 	 }
 	 LEAVE;
@@ -1157,9 +1157,9 @@ public:
 	 ~wxGraphicsWindow()
 	 {
 			int pane_no;
-			if (graphics_window->time_keeper)
-				 Time_keeper_remove_callback(graphics_window->time_keeper,
-						Graphics_window_time_keeper_callback, (void *)graphics_window);
+			if (graphics_window->time_keeper_app)
+				graphics_window->time_keeper_app->removeCallback(Graphics_window_time_keeper_app_callback,
+					(void *)graphics_window);
 			if (graphics_window->scene_viewer_array)
 			{
 				 /* close the Scene_viewer(s) */
@@ -1569,10 +1569,9 @@ void OnTimeSliderChanged( wxScrollEvent& event)
 	 time = (double)(((graphics_window->maximum_time - graphics_window->minimum_time) * (double)value)/ (double)1000) + graphics_window->minimum_time;
 	 time_string.Printf(_T("%f"), time);
 	 graphics_window->time_text_ctrl->ChangeValue(time_string);
-	 if(graphics_window->time_keeper)
+	 if(graphics_window->time_keeper_app)
 	 {
-			Time_keeper_request_new_time(graphics_window->time_keeper,
-				 time);
+		 graphics_window->time_keeper_app->requestNewTime(time);
 	 }
 
 	 LEAVE;
@@ -1587,91 +1586,83 @@ void OnTimeTextEntered(wxCommandEvent& event)
 	{
 		double time;
 		sscanf(text_entry, "%lg", &time);
-		Time_keeper_request_new_time(graphics_window->time_keeper, time);
+		graphics_window->time_keeper_app->requestNewTime(time);
 	}
-	Graphics_window_time_keeper_callback(graphics_window->time_keeper,
-		TIME_KEEPER_NEW_TIME,(void *)graphics_window);
+	Graphics_window_time_keeper_app_callback(graphics_window->time_keeper_app,
+		TIME_KEEPER_APP_NEW_TIME,(void *)graphics_window);
 }
 
 void OnTimeForwardPressed(wxCommandEvent& event)
 {
 	USE_PARAMETER(event);
-	Time_keeper_play(graphics_window->time_keeper,TIME_KEEPER_PLAY_FORWARD);
+	graphics_window->time_keeper_app->play(TIME_KEEPER_PLAY_FORWARD);
 }
 
 void OnTimeStopPressed(wxCommandEvent& event)
 {
 	USE_PARAMETER(event);
-	Time_keeper_stop(graphics_window->time_keeper);
+	graphics_window->time_keeper_app->stop();
 }
 
 void OnTimeBackwardPressed(wxCommandEvent& event)
 {
 	USE_PARAMETER(event);
-	Time_keeper_play(graphics_window->time_keeper, TIME_KEEPER_PLAY_BACKWARD);
+	graphics_window->time_keeper_app->play(TIME_KEEPER_PLAY_BACKWARD);
 }
 
 void OnTimeForwardByStepPressed(wxCommandEvent& event)
 {
 	USE_PARAMETER(event);
-	double time = Time_keeper_get_time(graphics_window->time_keeper);
+	double time = graphics_window->time_keeper_app->getTimeKeeper()->getTime();
 	if ((time + graphics_window->time_step) < graphics_window->maximum_time)
 	{
-		Time_keeper_request_new_time(graphics_window->time_keeper,
-			time + graphics_window->time_step);
+		graphics_window->time_keeper_app->requestNewTime(time + graphics_window->time_step);
 	}
 	else
 	{
-		Time_keeper_request_new_time(graphics_window->time_keeper,
-			graphics_window->maximum_time);
+		graphics_window->time_keeper_app->requestNewTime(graphics_window->maximum_time);
 	}
 }
 
 void OnTimeBackwardByStepPressed(wxCommandEvent& event)
 {
 	USE_PARAMETER(event);
-	double time = Time_keeper_get_time(graphics_window->time_keeper);
+	double time = graphics_window->time_keeper_app->getTimeKeeper()->getTime();
 	if ((time - graphics_window->time_step) > graphics_window->minimum_time)
 	{
-		Time_keeper_request_new_time(graphics_window->time_keeper,
-			time - graphics_window->time_step);
+		graphics_window->time_keeper_app->requestNewTime(time - graphics_window->time_step);
 	}
 	else
 	{
-		Time_keeper_request_new_time(graphics_window->time_keeper,
-			 graphics_window->minimum_time);
+		graphics_window->time_keeper_app->requestNewTime(graphics_window->minimum_time);
 	}
 }
 
 void OnTimeFastForwardPressed(wxCommandEvent& event)
 {
 	USE_PARAMETER(event);
-	double time = Time_keeper_get_time(graphics_window->time_keeper);
+	double time = graphics_window->time_keeper_app->getTimeKeeper()->getTime();
 	if ((time + 2.0*graphics_window->time_step) < graphics_window->maximum_time)
 	{
-		Time_keeper_request_new_time(graphics_window->time_keeper,
-			time + 2.0*graphics_window->time_step);
+		graphics_window->time_keeper_app->requestNewTime(time + 2.0*graphics_window->time_step);
 	}
 	else
 	{
-		Time_keeper_request_new_time(graphics_window->time_keeper,
-			graphics_window->maximum_time);
+		graphics_window->time_keeper_app->requestNewTime(graphics_window->maximum_time);
 	}
 }
 
 void OnTimeFastBackwardPressed(wxCommandEvent& event)
 {
 	USE_PARAMETER(event);
-	double time = Time_keeper_get_time(graphics_window->time_keeper);
+	double time = graphics_window->time_keeper_app->getTimeKeeper()->getTime();
 	if ((time - 2.0*graphics_window->time_step) > graphics_window->minimum_time)
 	{
-		Time_keeper_request_new_time(graphics_window->time_keeper,
-			time - 2.0*graphics_window->time_step);
+		graphics_window->time_keeper_app->requestNewTime(time - 2.0*graphics_window->time_step);
 	}
 	else
 	{
-		Time_keeper_request_new_time(graphics_window->time_keeper,
-			graphics_window->minimum_time);
+		graphics_window->time_keeper_app->requestNewTime(graphics_window->minimum_time);
 	}
 }
 
@@ -1697,7 +1688,7 @@ void OnTimeFramerateTextEntered(wxCommandEvent& event)
 	{
 		double framerate;
 		sscanf(text_entry, "%lg", &framerate);
-		Time_keeper_set_speed(graphics_window->time_keeper, framerate);
+		graphics_window->time_keeper_app->setSpeed(framerate);
 	}
 	Graphics_window_update_time_settings_wx(graphics_window, (void *)NULL);
 }
@@ -1721,11 +1712,11 @@ void OnEveryFrameChecked(wxCommandEvent& event)
 	USE_PARAMETER(event);
 	if (graphics_window->time_play_every_frame_checkbox->GetValue())
 	{
-		Time_keeper_set_play_every_frame(graphics_window->time_keeper);
+		graphics_window->time_keeper_app->setPlayEveryFrame();
 	}
 	else
 	{
-		Time_keeper_set_play_skip_frames(graphics_window->time_keeper);
+		graphics_window->time_keeper_app->setPlaySkipFrames();
 	}
 	Graphics_window_update_time_settings_wx(graphics_window, (void *)NULL);
 }
@@ -3120,7 +3111,7 @@ struct Graphics_window *CREATE(Graphics_window)(const char *name,
 	struct Light_model *default_light_model,
 	struct MANAGER(Scene) *scene_manager,struct Scene *scene,
 	struct MANAGER(Interactive_tool) *interactive_tool_manager,
-	struct Time_keeper *default_time_keeper,
+	struct Time_keeper_app *default_time_keeper_app,
 	struct User_interface *user_interface)
 /*******************************************************************************
 LAST MODIFIED : 6 May 2004
@@ -3177,7 +3168,7 @@ it.
 			window->default_light_model=ACCESS(Light_model)(default_light_model);
 			window->scene_manager=scene_manager;
 			window->scene=ACCESS(Scene)(scene);
-			window->time_keeper = ACCESS(Time_keeper)(default_time_keeper);
+			window->time_keeper_app = ACCESS(Time_keeper_app)(default_time_keeper_app);
 			window->interactive_tool_manager=interactive_tool_manager;
 			window->interactive_tool=
 				FIND_BY_IDENTIFIER_IN_MANAGER(Interactive_tool,name)(
@@ -3584,20 +3575,20 @@ it.
 			window->time_play_every_frame_checkbox = XRCCTRL(*window->wx_graphics_window,
 				 "GraphcisWindowTimePlayEveryFrameCheckBox", wxCheckBox);
 
-			window->minimum_time = Time_keeper_get_minimum(window->time_keeper);
-			window->maximum_time =  Time_keeper_get_maximum(window->time_keeper);
+			window->minimum_time = window->time_keeper_app->getTimeKeeper()->getMinimum();
+			window->maximum_time = window->time_keeper_app->getTimeKeeper()->getMaximum();
 			window->time_step = 0.1;
-			if (Time_keeper_has_time_object(window->time_keeper))
+			if (window->time_keeper_app->getTimeKeeper()->hasTimeObject())
 			{
 				 window->time_editor_panel->Show(1);
 				 window->time_editor_togglebutton->SetValue(1);
 			}
-			Time_keeper_add_callback(window->time_keeper,
-				 Graphics_window_time_keeper_callback,
+			window->time_keeper_app->addCallback(
+				 Graphics_window_time_keeper_app_callback,
 				 (void *)window,
-				 (enum Time_keeper_event) (TIME_KEEPER_NEW_TIME |
-						TIME_KEEPER_NEW_MINIMUM | TIME_KEEPER_NEW_MAXIMUM ));
-			Graphics_window_time_keeper_callback(window->time_keeper, TIME_KEEPER_NEW_TIME,
+				 (enum Time_keeper_app_event) (TIME_KEEPER_APP_NEW_TIME |
+						TIME_KEEPER_APP_NEW_MINIMUM | TIME_KEEPER_APP_NEW_MAXIMUM ));
+			Graphics_window_time_keeper_app_callback(window->time_keeper_app, TIME_KEEPER_APP_NEW_TIME,
 				 (void *)window);
 			Graphics_window_update_time_settings_wx(window, (void *)NULL);
 
@@ -3943,9 +3934,9 @@ Graphics_window_destroy_CB.
 			 callback try to draw something to the already destroyed
 			 wxGLCanvas in the scene viewer before terminating the program
 			 and have a already closed graphics window. */
-		if(window->time_keeper)
+		if(window->time_keeper_app)
 		{
-			DEACCESS(Time_keeper)(&(window->time_keeper));
+			DEACCESS(Time_keeper_app)(&(window->time_keeper_app));
 		}
 #if defined (WX_USER_INTERFACE)
 		if (window->wx_graphics_window)

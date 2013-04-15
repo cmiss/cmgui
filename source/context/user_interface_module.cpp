@@ -42,7 +42,7 @@ DESCRIPTION :
  * ***** END LICENSE BLOCK ***** */
 
 #include "zinc/graphic.h"
-#include "time/time_keeper.h"
+#include "time/time_keeper_app.hpp"
 #include "comfile/comfile.h"
 #include "command/command_window.h"
 #include "command/cmiss.h"
@@ -90,7 +90,7 @@ struct User_interface_module *User_interface_module_create(
 #if defined (USE_CMGUI_GRAPHICS_WINDOW)
 		UI_module->graphics_window_manager = NULL;
 #endif /* defined (USE_CMGUI_GRAPHICS_WINDOW) */
-		UI_module->default_time_keeper = NULL;
+		UI_module->default_time_keeper_app = NULL;
 		UI_module->user_interface = NULL;
 		UI_module->emoter_slider_dialog = NULL;
 #if defined (WX_USER_INTERFACE)
@@ -198,9 +198,10 @@ struct User_interface_module *User_interface_module_create(
 		/* graphics window manager.  Note there is no default window. */
 		UI_module->graphics_window_manager=CREATE(MANAGER(Graphics_window))();
 #endif /* defined (USE_CMGUI_GRAPHICS_WINDOW) */
-
-		UI_module->default_time_keeper=ACCESS(Time_keeper)(
-			CREATE(Time_keeper)("default", UI_module->event_dispatcher));
+		Cmiss_time_keeper *time_keeper = Cmiss_context_get_default_time_keeper(Cmiss_context_app_get_core_context(context));
+		UI_module->default_time_keeper_app=ACCESS(Time_keeper_app)(
+			new Time_keeper_app(time_keeper, UI_module->event_dispatcher));
+		Cmiss_time_keeper_destroy(&time_keeper);
 		UI_module->interactive_tool_manager=CREATE(MANAGER(Interactive_tool))();
 		if (UI_module->user_interface)
 		{
@@ -215,20 +216,20 @@ struct User_interface_module *User_interface_module_create(
 				root_region, /*use_data*/0,
 				Material_package_get_default_material(material_package),
 				UI_module->user_interface,
-				UI_module->default_time_keeper);
+				UI_module->default_time_keeper_app);
 			UI_module->data_tool=CREATE(Node_tool)(
 				UI_module->interactive_tool_manager,
 				root_region, /*use_data*/1,
 				Material_package_get_default_material(material_package),
 				UI_module->user_interface,
-				UI_module->default_time_keeper);
+				UI_module->default_time_keeper_app);
 			UI_module->element_tool=CREATE(Element_tool)(
 				UI_module->interactive_tool_manager,
 				root_region,
 				Cmiss_context_get_element_point_ranges_selection(Cmiss_context_app_get_core_context(context)),
 				Material_package_get_default_material(material_package),
 				UI_module->user_interface,
-				UI_module->default_time_keeper);
+				UI_module->default_time_keeper_app);
 #if defined (USE_OPENCASCADE)
 			UI_module->cad_tool=CREATE(Cad_tool)(
 				UI_module->interactive_tool_manager,
@@ -236,7 +237,7 @@ struct User_interface_module *User_interface_module_create(
 				Cmiss_context_get_element_point_ranges_selection(context),
 				Material_package_get_default_material(material_package),
 				UI_module->user_interface,
-				UI_module->default_time_keeper);
+				UI_module->default_time_keeper_app);
 #endif /* defined (USE_OPENCASCADE) */
 			UI_module->element_point_tool=CREATE(Element_point_tool)(
 				UI_module->interactive_tool_manager,
@@ -244,7 +245,7 @@ struct User_interface_module *User_interface_module_create(
 				Cmiss_context_get_element_point_ranges_selection(Cmiss_context_app_get_core_context(context)),
 				Material_package_get_default_material(material_package),
 				UI_module->user_interface,
-				UI_module->default_time_keeper);
+				UI_module->default_time_keeper_app);
 			DEACCESS(Material_package)(&material_package);
 		}
 		if (UI_module->user_interface)
@@ -348,8 +349,8 @@ int User_interface_module_destroy(
 #if defined (WX_USER_INTERFACE)
 			DESTROY(MANAGER(Comfile_window))(&UI_module->comfile_window_manager);
 #endif /* defined (WX_USER_INTERFACE) */
-			if (UI_module->default_time_keeper)
-				DEACCESS(Time_keeper)(&UI_module->default_time_keeper);
+			if (UI_module->default_time_keeper_app)
+				DEACCESS(Time_keeper_app)(&UI_module->default_time_keeper_app);
 			if (UI_module->user_interface)
 			{
 				/* reset up messages */

@@ -83,7 +83,7 @@ struct Node_tool *CREATE(Node_tool)(
 	struct Cmiss_region *root_region, int use_data,
 	struct Graphical_material *rubber_band_material,
 	struct User_interface *user_interface,
-	struct Time_keeper *time_keeper);
+	struct Time_keeper_app *time_keeper_app);
 /*******************************************************************************
 LAST MODIFIED : 15 January 2003
 

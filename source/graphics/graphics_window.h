@@ -188,7 +188,7 @@ struct Graphics_window *CREATE(Graphics_window)(const char *name,
 	struct Light_model *default_light_model,
 	struct MANAGER(Scene) *scene_manager,struct Scene *scene,
 	struct MANAGER(Interactive_tool) *interactive_tool_manager,
-	struct Time_keeper *default_time_keeper,
+	struct Time_keeper_app *default_time_keeper_app,
 	struct User_interface *user_interface);
 /*******************************************************************************
 LAST MODIFIED : 5 May 2004

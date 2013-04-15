@@ -106,6 +106,7 @@ SET(APP_SRCS
     source/node/node_viewer_wx.cpp
     source/region/cmiss_region_chooser_wx.cpp
     source/region/cmiss_region_app.cpp
+    source/time/time_keeper_app.cpp
     source/transformation/transformation_editor_wx.cpp
     source/user_interface/idle.cpp)
 

@@ -120,6 +120,7 @@ SET(APP_HDRS
     source/command/command_window.h
     source/material/material_editor_wx.h
     source/node/node_viewer_wx.h
+    source/time/time_keeper_app.hpp
     source/transformation/transformation_editor_wx.hpp
     source/user_interface/confirmation.h
     source/user_interface/event_dispatcher.h

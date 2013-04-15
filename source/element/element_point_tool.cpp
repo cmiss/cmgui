@@ -100,7 +100,7 @@ Object storing all the parameters for interactively selecting element points.
 	struct Interactive_tool *interactive_tool;
 	struct Element_point_ranges_selection *element_point_ranges_selection;
 	struct Graphical_material *rubber_band_material;
-	struct Time_keeper *time_keeper;
+	struct Time_keeper_app *time_keeper_app;
 	struct User_interface *user_interface;
 	/* user settings */
 	struct Computed_field *command_field;
@@ -215,10 +215,9 @@ release.
 									if (Element_point_ranges_get_identifier(
 											 picked_element_point, &element_point_ranges_identifier))
 									{
-										if (element_point_tool->time_keeper)
+										if (element_point_tool->time_keeper_app)
 										{
-											time =
-												Time_keeper_get_time(element_point_tool->time_keeper);
+											time = element_point_tool->time_keeper_app->getTimeKeeper()->getTime();
 										}
 										else
 										{
@@ -597,7 +596,7 @@ Copies the state of one element_point tool to another.
 				source_element_point_tool->element_point_ranges_selection,
 				source_element_point_tool->rubber_band_material,
 				source_element_point_tool->user_interface,
-				source_element_point_tool->time_keeper);
+				source_element_point_tool->time_keeper_app);
 			Element_point_tool_set_execute_command(destination_element_point_tool,
 				source_element_point_tool->execute_command);
 		}
@@ -628,7 +627,7 @@ struct Element_point_tool *CREATE(Element_point_tool)(
 	struct Element_point_ranges_selection *element_point_ranges_selection,
 	struct Graphical_material *rubber_band_material,
 	struct User_interface *user_interface,
-	struct Time_keeper *time_keeper)
+	struct Time_keeper_app *time_keeper_app)
 /*******************************************************************************
 LAST MODIFIED : 5 July 2002
 
@@ -657,10 +656,10 @@ Creates an Element_point_tool with Interactive_tool in
 			element_point_tool->rubber_band_material=
 				ACCESS(Graphical_material)(rubber_band_material);
 			element_point_tool->user_interface=user_interface;
-			element_point_tool->time_keeper = (struct Time_keeper *)NULL;
-			if (time_keeper)
+			element_point_tool->time_keeper_app = (struct Time_keeper_app *)NULL;
+			if (time_keeper_app)
 			{
-				element_point_tool->time_keeper = ACCESS(Time_keeper)(time_keeper);
+				element_point_tool->time_keeper_app = ACCESS(Time_keeper_app)(time_keeper_app);
 			}
 			/* user settings */
 			element_point_tool->command_field = (struct Computed_field *)NULL;
@@ -729,9 +728,9 @@ structure itself.
 		REACCESS(GT_object)(&(element_point_tool->rubber_band),
 			(struct GT_object *)NULL);
 		DEACCESS(Graphical_material)(&(element_point_tool->rubber_band_material));
-		if (element_point_tool->time_keeper)
+		if (element_point_tool->time_keeper_app)
 		{
-			DEACCESS(Time_keeper)(&(element_point_tool->time_keeper));
+			DEACCESS(Time_keeper_app)(&(element_point_tool->time_keeper_app));
 		}
 		DEALLOCATE(*element_point_tool_address);
 		return_code=1;

@@ -13,7 +13,7 @@
 class Computed_field_time_package : public Computed_field_type_package
 {
 public:
-	struct Time_keeper *time_keeper;
+	Cmiss_time_keeper *time_keeper;
 };
 
 char computed_field_time_value_type_string[] = "time_value";
@@ -183,7 +183,7 @@ already) and allows its contents to be modified.
 
 int Computed_field_register_types_time(
 	struct Computed_field_package *computed_field_package,
-	struct Time_keeper *time_keeper)
+	struct Cmiss_time_keeper *time_keeper)
 /*******************************************************************************
 LAST MODIFIED : 25 August 2006
 
@@ -198,8 +198,7 @@ DESCRIPTION :
 	ENTER(Computed_field_register_types_time);
 	if (computed_field_package)
 	{
-		computed_field_time_package->time_keeper =
-			time_keeper;
+		computed_field_time_package->time_keeper = time_keeper;
 		return_code = Computed_field_package_add_type(computed_field_package,
 			computed_field_time_lookup_type_string,
 			define_Computed_field_type_time_lookup,

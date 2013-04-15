@@ -70,7 +70,7 @@ struct Node_viewer *Node_viewer_create(
 	const char *dialog_title,
 	Cmiss_region_id root_region, int use_data,
 	Cmiss_graphics_module_id graphics_module,
-	Cmiss_time_keeper_id time_keeper);
+	struct Time_keeper_app *time_keeper_app);
 
 /***************************************************************************//**
  * Closes and destroys the Node_viewer.

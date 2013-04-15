@@ -62,7 +62,7 @@ Interactive tool for selecting elements with mouse and other devices.
 #include "graphics/rendition.h"
 #include "graphics/graphic.h"
 #include "region/cmiss_region.h"
-#include "time/time_keeper.h"
+#include "time/time_keeper_app.hpp"
 #include "general/message.h"
 #if defined (WX_USER_INTERFACE)
 #include "wx/wx.h"
@@ -106,7 +106,7 @@ struct Element_tool
 	struct Cmiss_region *region;
 	struct Element_point_ranges_selection *element_point_ranges_selection;
 	struct Graphical_material *rubber_band_material;
-	struct Time_keeper *time_keeper;
+	struct Time_keeper_app *time_keeper_app;
 	struct User_interface *user_interface;
 	/* user-settable flags */
 	int select_elements_enabled,select_faces_enabled,select_lines_enabled;
@@ -274,9 +274,9 @@ release.
 								/* Open command_field of picked_element in browser */
 								if (element_tool->command_field)
 								{
-									if (element_tool->time_keeper)
+									if (element_tool->time_keeper_app)
 									{
-										time = Time_keeper_get_time(element_tool->time_keeper);
+										time = element_tool->time_keeper_app->getTimeKeeper()->getTime();
 									}
 									else
 									{
@@ -852,7 +852,7 @@ Copies the state of one element tool to another.WX only
 				source_element_tool->element_point_ranges_selection,
 				source_element_tool->rubber_band_material,
 				source_element_tool->user_interface,
-				source_element_tool->time_keeper);
+				source_element_tool->time_keeper_app);
 			Element_tool_set_execute_command(destination_element_tool,
 				source_element_tool->execute_command);
 		}
@@ -892,7 +892,7 @@ struct Element_tool *CREATE(Element_tool)(
 	struct Element_point_ranges_selection *element_point_ranges_selection,
 	struct Graphical_material *rubber_band_material,
 	struct User_interface *user_interface,
-	struct Time_keeper *time_keeper)
+	struct Time_keeper_app *time_keeper_app)
 /*******************************************************************************
 LAST MODIFIED : 20 March 2003
 
@@ -920,11 +920,11 @@ Selects elements in <element_selection> in response to interactive_events.
 			element_tool->rubber_band_material=
 				ACCESS(Graphical_material)(rubber_band_material);
 			element_tool->user_interface=user_interface;
-			element_tool->time_keeper = (struct Time_keeper *)NULL;
+			element_tool->time_keeper_app = (struct Time_keeper_app *)NULL;
 			element_tool->rendition=(struct Cmiss_rendition *)NULL;
-			if (time_keeper)
+			if (time_keeper_app)
 			{
-				element_tool->time_keeper = ACCESS(Time_keeper)(time_keeper);
+				element_tool->time_keeper_app = ACCESS(Time_keeper_app)(time_keeper_app);
 			}
 			/* user-settable flags */
 			element_tool->select_elements_enabled=1;
@@ -1000,9 +1000,9 @@ structure itself.
 			(struct Interaction_volume *)NULL);
 		REACCESS(GT_object)(&(element_tool->rubber_band),(struct GT_object *)NULL);
 		DEACCESS(Graphical_material)(&(element_tool->rubber_band_material));
-		if (element_tool->time_keeper)
+		if (element_tool->time_keeper_app)
 		{
-			DEACCESS(Time_keeper)(&(element_tool->time_keeper));
+			DEACCESS(Time_keeper_app)(&(element_tool->time_keeper_app));
 		}
 #if defined (WX_USER_INTERFACE)
 		if (element_tool->wx_element_tool)

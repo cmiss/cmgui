@@ -210,7 +210,7 @@
 #include "selection/any_object_selection.h"
 #include "three_d_drawing/graphics_buffer.h"
 #include "graphics/font.h"
-#include "time/time_keeper.h"
+#include "time/time_keeper_app.hpp"
 #include "user_interface/filedir.h"
 #include "user_interface/confirmation.h"
 #include "general/message.h"
@@ -379,7 +379,7 @@ DESCRIPTION :
 	struct Element_point_ranges_selection *element_point_ranges_selection;
 	struct Spectrum *default_spectrum;
 	struct Streampoint *streampoint_list;
-	struct Time_keeper *default_time_keeper;
+	struct Time_keeper_app *default_time_keeper_app;
 	struct User_interface *user_interface;
 	struct Emoter_dialog *emoter_slider_dialog;
 #if defined (WX_USER_INTERFACE)
@@ -584,9 +584,9 @@ DESCRIPTION :
 		node_offset = 0;
 		sort_by_field_name = NULL;
 		sort_by_field = (struct Computed_field *)NULL;
-		if (command_data->default_time_keeper)
+		if (command_data->default_time_keeper_app)
 		{
-			time = Time_keeper_get_time(command_data->default_time_keeper);
+			time = command_data->default_time_keeper_app->getTimeKeeper()->getTime();
 		}
 		else
 		{
@@ -2278,7 +2278,7 @@ Executes a GFX CREATE NODE_VIEWER command.
 						"Node Viewer",
 						command_data->root_region, /*use_data*/0,
 						command_data->graphics_module,
-						command_data->default_time_keeper)))
+						command_data->default_time_keeper_app)))
 					{
 						return_code=1;
 					}
@@ -2355,7 +2355,7 @@ Executes a GFX CREATE DATA_VIEWER command.
 						"Data Viewer",
 						command_data->root_region, /*use_data*/1,
 						command_data->graphics_module,
-						command_data->default_time_keeper)))
+						command_data->default_time_keeper_app)))
 					{
 						return_code=1;
 					}
@@ -2430,8 +2430,7 @@ Executes a GFX CREATE ELEMENT_POINT_VIEWER command.
 				{
 					if ((time_object = Time_object_create_regular(
 								 /*update_frequency*/10.0, /*time_offset*/0.0))
-						&&(Time_keeper_add_time_object(command_data->default_time_keeper,
-								time_object)))
+						&&(command_data->default_time_keeper_app->getTimeKeeper()->addTimeObject(time_object)))
 					{
 						Time_object_set_name(time_object, "element_point_viewer_time");
 						if (NULL != (command_data->element_point_viewer=CREATE(Element_point_viewer)(
@@ -4716,14 +4715,14 @@ Executes a GFX CREATE WINDOW command.
 								command_data->root_region, /*use_data*/0,
 								Material_package_get_default_material(command_data->material_package),
 								command_data->user_interface,
-								command_data->default_time_keeper),
+								command_data->default_time_keeper_app),
 								command_data->execute_command);
 						Node_tool_set_execute_command(CREATE(Node_tool)(
 								interactive_tool_manager,
 								command_data->root_region, /*use_data*/1,
 								Material_package_get_default_material(command_data->material_package),
 								command_data->user_interface,
-								command_data->default_time_keeper),
+								command_data->default_time_keeper_app),
 								command_data->execute_command);
 						Element_tool_set_execute_command(CREATE(Element_tool)(
 								interactive_tool_manager,
@@ -4731,7 +4730,7 @@ Executes a GFX CREATE WINDOW command.
 								command_data->element_point_ranges_selection,
 								Material_package_get_default_material(command_data->material_package),
 								command_data->user_interface,
-								command_data->default_time_keeper),
+								command_data->default_time_keeper_app),
 								command_data->execute_command);
 #if defined (USE_OPENCASCADE)
 						Cad_tool_set_execute_command(CREATE(Cad_tool)(
@@ -4740,7 +4739,7 @@ Executes a GFX CREATE WINDOW command.
 								command_data->element_point_ranges_selection,
 								Material_package_get_default_material(command_data->material_package),
 								command_data->user_interface,
-								command_data->default_time_keeper),
+								command_data->default_time_keeper_app),
 								command_data->execute_command);
 #endif /* defined (USE_OPENCASCADE) */
 						Element_point_tool_set_execute_command(CREATE(Element_point_tool)(
@@ -4749,7 +4748,7 @@ Executes a GFX CREATE WINDOW command.
 								command_data->element_point_ranges_selection,
 								Material_package_get_default_material(command_data->material_package),
 								command_data->user_interface,
-								command_data->default_time_keeper),
+								command_data->default_time_keeper_app),
 								command_data->execute_command);
 						if (NULL != (window=CREATE(Graphics_window)(name,buffer_mode,stereo_mode,
 							minimum_colour_buffer_depth, minimum_depth_buffer_depth,
@@ -4760,7 +4759,7 @@ Executes a GFX CREATE WINDOW command.
 							command_data->light_model_manager,command_data->default_light_model,
 							command_data->scene_manager,command_data->default_scene,
 							interactive_tool_manager,
-							command_data->default_time_keeper,
+							command_data->default_time_keeper_app,
 							command_data->user_interface)))
 						{
 							if (!ADD_OBJECT_TO_MANAGER(Graphics_window)(window,
@@ -4787,7 +4786,7 @@ Executes a GFX CREATE WINDOW command.
 							command_data->light_model_manager,command_data->default_light_model,
 							command_data->scene_manager,command_data->default_scene,
 							command_data->interactive_tool_manager,
-							command_data->default_time_keeper,
+							command_data->default_time_keeper_app,
 							command_data->user_interface);
 					  if (window)
 						{
@@ -5939,9 +5938,9 @@ static int gfx_destroy_elements(struct Parse_state *state,
 		char selected_flag = 0;
 		Multi_range *element_ranges = CREATE(Multi_range)();
 		FE_value time;
-		if (command_data->default_time_keeper)
+		if (command_data->default_time_keeper_app)
 		{
-			time = Time_keeper_get_time(command_data->default_time_keeper);
+			time = command_data->default_time_keeper_app->getTimeKeeper()->getTime();
 		}
 		else
 		{
@@ -6332,9 +6331,9 @@ static int gfx_destroy_nodes(struct Parse_state *state,
 		char selected_flag = 0;
 		Multi_range *node_ranges = CREATE(Multi_range)();
 		FE_value time;
-		if (command_data->default_time_keeper)
+		if (command_data->default_time_keeper_app)
 		{
-			time = Time_keeper_get_time(command_data->default_time_keeper);
+			time = command_data->default_time_keeper_app->getTimeKeeper()->getTime();
 		}
 		else
 		{
@@ -10828,9 +10827,9 @@ static int gfx_modify_element_group(struct Parse_state *state,
 			Multi_range *element_ranges = CREATE(Multi_range)();
 			char *from_group_name = 0;
 			double time = 0;
-			if (command_data->default_time_keeper)
+			if (command_data->default_time_keeper_app)
 			{
-				time = Time_keeper_get_time(command_data->default_time_keeper);
+				time = command_data->default_time_keeper_app->getTimeKeeper()->getTime();
 			}
 			int manage_subobjects = 1; // add faces, lines and nodes with elements, remove if solely in use by removed elements
 
@@ -11294,9 +11293,9 @@ static int gfx_modify_node_group(struct Parse_state *state,
 			Multi_range *node_ranges = CREATE(Multi_range)();
 			char *from_group_name = 0;
 			double time = 0;
-			if (command_data->default_time_keeper)
+			if (command_data->default_time_keeper_app)
 			{
-				time = Time_keeper_get_time(command_data->default_time_keeper);
+				time = command_data->default_time_keeper_app->getTimeKeeper()->getTime();
 			}
 
 			Option_table *option_table = CREATE(Option_table)();
@@ -11608,9 +11607,9 @@ static int gfx_modify_nodes(struct Parse_state *state,
 		derivatives_data.derivatives = 0;
 		int number_of_versions = 1;
 		FE_value time = 0.0;
-		if (command_data->default_time_keeper)
+		if (command_data->default_time_keeper_app)
 		{
-			time = Time_keeper_get_time(command_data->default_time_keeper);
+			time = command_data->default_time_keeper_app->getTimeKeeper()->getTime();
 		}
 
 		Option_table *option_table = CREATE(Option_table)();
@@ -12741,23 +12740,17 @@ If the <use_data> flag is set, then read data, otherwise nodes.
 					{
 						/* Increase the range of the default time keepeer and set the
 						   minimum and maximum if we set anything */
-						maximum = Time_keeper_get_maximum(
-							command_data->default_time_keeper);
-						minimum = Time_keeper_get_minimum(
-							command_data->default_time_keeper);
+						maximum = command_data->default_time_keeper_app->getTimeKeeper()->getMaximum();
+						minimum = command_data->default_time_keeper_app->getTimeKeeper()->getMinimum();
 						if (time < minimum)
 						{
-							Time_keeper_set_minimum(
-								command_data->default_time_keeper, time);
-							Time_keeper_set_maximum(
-								command_data->default_time_keeper, maximum);
+							command_data->default_time_keeper_app->getTimeKeeper()->setMinimum(time);
+							command_data->default_time_keeper_app->getTimeKeeper()->setMaximum(maximum);
 						}
 						if (time > maximum)
 						{
-							Time_keeper_set_minimum(
-								command_data->default_time_keeper, minimum);
-							Time_keeper_set_maximum(
-								command_data->default_time_keeper, time);
+							command_data->default_time_keeper_app->getTimeKeeper()->setMinimum(minimum);
+							command_data->default_time_keeper_app->getTimeKeeper()->setMaximum(time);
 						}
 					}
 				}
@@ -13175,9 +13168,9 @@ Executes a GFX SELECT command.
 			{
 				grid_field = (struct FE_field *)NULL;
 			}
-			if (command_data->default_time_keeper)
+			if (command_data->default_time_keeper_app)
 			{
-				time = Time_keeper_get_time(command_data->default_time_keeper);
+				time = command_data->default_time_keeper_app->getTimeKeeper()->getTime();
 			}
 			else
 			{
@@ -13541,9 +13534,9 @@ Executes a GFX UNSELECT command.
 			{
 				grid_field = (struct FE_field *)NULL;
 			}
-			if (command_data->default_time_keeper)
+			if (command_data->default_time_keeper_app)
 			{
-				time = Time_keeper_get_time(command_data->default_time_keeper);
+				time = command_data->default_time_keeper_app->getTimeKeeper()->getTime();
 			}
 			else
 			{
@@ -14090,9 +14083,9 @@ Sets the time from the command line.
 			/* there is only a default timekeeper at the moment but I am making the
 				commands with a timekeeper manager in mind */
 			strcpy(timekeeper_name,"default");
-			if (command_data->default_time_keeper)
+			if (command_data->default_time_keeper_app)
 			{
-				time=Time_keeper_get_time(command_data->default_time_keeper);
+				time=command_data->default_time_keeper_app->getTimeKeeper()->getTime();
 			}
 			else
 			{
@@ -14108,7 +14101,7 @@ Sets the time from the command line.
 				/* the old routine only use to call this if the time wasn't the
 					same as the default time, but the timekeeper might not be the
 					default */
-				Time_keeper_request_new_time(command_data->default_time_keeper,time);
+				command_data->default_time_keeper_app->requestNewTime(time);
 			} /* parse error, help */
 			DEALLOCATE(timekeeper_name);
 		}
@@ -14506,9 +14499,9 @@ Executes a GFX SMOOTH command.
 	{
 		region_path = Cmiss_region_get_root_region_path();
 		fe_field = (struct FE_field *)NULL;
-		if (command_data->default_time_keeper)
+		if (command_data->default_time_keeper_app)
 		{
-			time = Time_keeper_get_time(command_data->default_time_keeper);
+			time = command_data->default_time_keeper_app->getTimeKeeper()->getTime();
 		}
 		else
 		{
@@ -14598,7 +14591,7 @@ DESCRIPTION :
 		{NULL,NULL,NULL,NULL}
 	};
 	struct Cmiss_command_data *command_data;
-	struct Time_keeper *time_keeper;
+	struct Time_keeper_app *time_keeper_app;
 
 	ENTER(gfx_timekeeper);
 	USE_PARAMETER(dummy_to_be_modified);
@@ -14640,12 +14633,12 @@ DESCRIPTION :
 			if (return_code)
 			{
 				/* initialise defaults */
-				if (NULL != (time_keeper = command_data->default_time_keeper))
+				if (NULL != (time_keeper_app = command_data->default_time_keeper_app))
 				{
-					maximum = Time_keeper_get_maximum(time_keeper);
-					minimum = Time_keeper_get_minimum(time_keeper);
-					set_time = Time_keeper_get_time(time_keeper);
-					speed = Time_keeper_get_speed(time_keeper);
+					maximum = time_keeper_app->getTimeKeeper()->getMaximum();
+					minimum = time_keeper_app->getTimeKeeper()->getMinimum();
+					set_time = time_keeper_app->getTimeKeeper()->getTime();
+					speed = time_keeper_app->getSpeed();
 				}
 				else
 				{
@@ -14706,51 +14699,51 @@ DESCRIPTION :
 				}
 				if (return_code)
 				{
-					if ( time_keeper )
+					if ( time_keeper_app )
 					{
 						if ( set_time_flag )
 						{
-							Time_keeper_request_new_time(time_keeper, set_time);
+							time_keeper_app->requestNewTime(set_time);
 						}
 						if ( speed_flag )
 						{
-							Time_keeper_set_speed(time_keeper, speed);
+							time_keeper_app->setSpeed(speed);
 						}
 						if ( maximum_flag )
 						{
-							Time_keeper_set_maximum(time_keeper, maximum);
+							time_keeper_app->getTimeKeeper()->setMaximum(maximum);
 						}
 						if ( minimum_flag )
 						{
-							Time_keeper_set_minimum(time_keeper, minimum);
+							time_keeper_app->getTimeKeeper()->setMinimum(minimum);
 						}
 						if ( loop )
 						{
-							Time_keeper_set_play_loop(time_keeper);
+							time_keeper_app->setPlayLoop();
 						}
 						if ( swing )
 						{
-							Time_keeper_set_play_swing(time_keeper);
+							time_keeper_app->setPlaySwing();
 						}
 						if ( once )
 						{
-							Time_keeper_set_play_once(time_keeper);
+							time_keeper_app->setPlayOnce();
 						}
 						if ( every )
 						{
-							Time_keeper_set_play_every_frame(time_keeper);
+							time_keeper_app->setPlayEveryFrame();
 						}
 						if ( skip )
 						{
-							Time_keeper_set_play_skip_frames(time_keeper);
+							time_keeper_app->setPlaySkipFrames();
 						}
 						if ( play )
 						{
-							Time_keeper_play(time_keeper, TIME_KEEPER_PLAY_FORWARD);
+							time_keeper_app->play(TIME_KEEPER_PLAY_FORWARD);
 						}
 						if ( stop )
 						{
-							Time_keeper_stop(time_keeper);
+							time_keeper_app->stop();
 						}
 #if defined (WX_USER_INTERFACE)
 						if (command_data->graphics_window_manager)
@@ -17778,7 +17771,7 @@ Initialise all the subcomponents of cmgui and create the Cmiss_command_data
 		command_data->example_requirements=(char *)NULL;
 		command_data->cm_examples_directory=(char *)NULL;
 		command_data->cm_parameters_file_name=(char *)NULL;
-		command_data->default_time_keeper = (struct Time_keeper *)NULL;
+		command_data->default_time_keeper_app = (struct Time_keeper_app *)NULL;
 		command_data->background_colour.red=(float)0;
 		command_data->background_colour.green=(float)0;
 		command_data->background_colour.blue=(float)0;
@@ -18191,7 +18184,7 @@ Initialise all the subcomponents of cmgui and create the Cmiss_command_data
 #endif /* defined (USE_ITK) */
 		}
 		/* graphics_module */
-		command_data->default_time_keeper=ACCESS(Time_keeper)(UI_module->default_time_keeper);
+		command_data->default_time_keeper_app=ACCESS(Time_keeper_app)(UI_module->default_time_keeper_app);
 
 		/* scene manager */
 		/*???RC & SAB.   LOTS of managers need to be created before this
@@ -18210,10 +18203,10 @@ Initialise all the subcomponents of cmgui and create the Cmiss_command_data
 			}
 		}
 
-		if (command_data->computed_field_package && command_data->default_time_keeper)
+		if (command_data->computed_field_package && command_data->default_time_keeper_app)
 		{
 			Computed_field_register_types_time(command_data->computed_field_package,
-				command_data->default_time_keeper);
+				command_data->default_time_keeper_app->getTimeKeeper());
 		}
 
 		if (command_data->user_interface)
@@ -18477,7 +18470,7 @@ NOTE: Do not call this directly: call Cmiss_command_data_destroy() to deaccess.
 		{
 			Cmiss_graphics_module_destroy(&command_data->graphics_module);
 		}
-		DEACCESS(Time_keeper)(&command_data->default_time_keeper);
+		DEACCESS(Time_keeper_app)(&command_data->default_time_keeper_app);
 		if (command_data->computed_field_package)
 		{
 			Computed_field_package_remove_types(command_data->computed_field_package);
@@ -18652,22 +18645,6 @@ Returns the root region from the <command_data>.
 
 	return (root_region);
 } /* Cmiss_command_data_get_root_region */
-
-struct Cmiss_time_keeper *Cmiss_command_data_get_default_time_keeper(
-	struct Cmiss_command_data *command_data)
-{
-	struct Cmiss_time_keeper *default_time_keeper;
-
-	ENTER(Cmiss_command_data_get_default_time_keeper);
-	default_time_keeper=(struct Cmiss_time_keeper *)NULL;
-	if (command_data)
-	{
-		default_time_keeper=command_data->default_time_keeper;
-	}
-	LEAVE;
-
-	return (default_time_keeper);
-} /* Cmiss_command_data_get_default_time_keeper */
 
 struct Execute_command *Cmiss_command_data_get_execute_command(
 	struct Cmiss_command_data *command_data)

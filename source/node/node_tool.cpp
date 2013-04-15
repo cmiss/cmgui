@@ -49,7 +49,7 @@ Scene input.
 
 #include "zinc/graphic.h"
 #include "zinc/rendition.h"
-#include "time/time_keeper.h"
+#include "time/time_keeper_app.hpp"
 #include "computed_field/computed_field.h"
 #include "computed_field/computed_field_composite.h"
 #include "computed_field/computed_field_finite_element.h"
@@ -132,7 +132,7 @@ changes in node position and derivatives etc.
 	/* needed for destroy button */
 	struct MANAGER(FE_element) *element_manager;
 	struct Graphical_material *rubber_band_material;
-	struct Cmiss_time_keeper *time_keeper;
+	struct Time_keeper_app *time_keeper_app;
 	struct User_interface *user_interface;
 	/* user-settable flags */
 	/* indicates whether node edits can occur with motion_notify events: slower */
@@ -1097,9 +1097,9 @@ object's coordinate field.
 	ENTER(Node_tool_define_field_at_node_from_picked_coordinates);
 	if (node_tool && node && field_cache)
 	{
-		if (node_tool->time_keeper)
+		if (node_tool->time_keeper_app)
 		{
-			time = Time_keeper_get_time(node_tool->time_keeper);
+			time = node_tool->time_keeper_app->getTimeKeeper()->getTime();
 		}
 		else
 		{
@@ -1716,7 +1716,7 @@ release.
 									node_tool->last_interaction_volume;
 								edit_info.final_interaction_volume=interaction_volume;
 								edit_info.fe_region=node_tool->fe_region;
-								edit_info.time=Time_keeper_get_time(node_tool->time_keeper);
+								edit_info.time=node_tool->time_keeper_app->getTimeKeeper()->getTime();
 								edit_info.constrain_to_surface = node_tool->constrain_to_surface;
 								edit_info.element_xi_field = node_tool->element_xi_field;
 								edit_info.nearest_element = nearest_element;
@@ -2000,9 +2000,9 @@ release.
 							 * invoked by it may modify this tool, or change to another tool before returning */
 							if (node_tool->last_picked_node && node_tool->command_field)
 							{
-								if (node_tool->time_keeper)
+								if (node_tool->time_keeper_app)
 								{
-									time = Time_keeper_get_time(node_tool->time_keeper);
+									time = node_tool->time_keeper_app->getTimeKeeper()->getTime();
 								}
 								else
 								{
@@ -2799,7 +2799,7 @@ Copies the state of one node tool to another.
 				source_node_tool->use_data,
 				source_node_tool->rubber_band_material,
 				source_node_tool->user_interface,
-				source_node_tool->time_keeper);
+				source_node_tool->time_keeper_app);
 			Node_tool_set_execute_command(destination_node_tool,
 				source_node_tool->execute_command);
 		}
@@ -3259,7 +3259,7 @@ struct Node_tool *CREATE(Node_tool)(
 	struct Cmiss_region *root_region, int use_data,
 	struct Graphical_material *rubber_band_material,
 	struct User_interface *user_interface,
-	struct Time_keeper *time_keeper)
+	struct Time_keeper_app *time_keeper_app)
 /*******************************************************************************
 LAST MODIFIED : 17 May 2003
 
@@ -3295,11 +3295,11 @@ used to represent them. <element_manager> should be NULL if <use_data> is true.
 			node_tool->rubber_band_material=
 				ACCESS(Graphical_material)(rubber_band_material);
 			node_tool->user_interface=user_interface;
-			node_tool->time_keeper = (struct Time_keeper *)NULL;
+			node_tool->time_keeper_app = (struct Time_keeper_app *)NULL;
 			node_tool->computed_field_manager_callback_id = NULL;
-			if (time_keeper)
+			if (time_keeper_app)
 			{
-				node_tool->time_keeper = ACCESS(Time_keeper)(time_keeper);
+				node_tool->time_keeper_app = ACCESS(Time_keeper_app)(time_keeper_app);
 			}
 			/* user-settable flags */
 			node_tool->select_enabled=1;
@@ -3410,9 +3410,9 @@ structure itself.
 		}
 		REACCESS(GT_object)(&(node_tool->rubber_band),(struct GT_object *)NULL);
 		DEACCESS(Graphical_material)(&(node_tool->rubber_band_material));
-		if (node_tool->time_keeper)
+		if (node_tool->time_keeper_app)
 		{
-			DEACCESS(Time_keeper)(&(node_tool->time_keeper));
+			DEACCESS(Time_keeper_app)(&(node_tool->time_keeper_app));
 		}
 #if defined (WX_USER_INTERFACE)
 		if (node_tool->wx_node_tool)

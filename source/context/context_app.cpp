@@ -39,7 +39,7 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-#include "time/time_keeper.h"
+#include "time/time_keeper_app.hpp"
 #include "zinc/fieldgroup.h"
 #include "zinc/graphicsmodule.h"
 #include "command/cmiss.h"
@@ -199,12 +199,6 @@ struct Cmiss_graphics_module *Cmiss_context_app_create_graphics_module(struct Cm
 	if (context)
 	{
 		graphics_module = Cmiss_graphics_module_create(context->context);
-		if (graphics_module && context->UI_module &&
-			context->UI_module->default_time_keeper)
-		{
-			Cmiss_graphics_module_set_time_keeper_internal(graphics_module,
-				context->UI_module->default_time_keeper );
-		}
 	}
 	else
 	{
@@ -270,17 +264,6 @@ struct User_interface_module *Cmiss_context_create_user_interface(
 				context, in_argc, in_argv, current_instance,
 				previous_instance, command_line, initial_main_window_state);
 #endif
-			struct Cmiss_graphics_module *graphics_module = Cmiss_context_get_default_graphics_module(context->context);
-			if (graphics_module)
-			{
-				if (context->UI_module && context->UI_module->default_time_keeper &&
-					graphics_module)
-				{
-					Cmiss_graphics_module_set_time_keeper_internal(graphics_module,
-						context->UI_module->default_time_keeper );
-				}
-				Cmiss_graphics_module_destroy(&graphics_module);
-			}
 		}
 		if (context->UI_module)
 		{
@@ -353,22 +336,6 @@ int Cmiss_context_run_main_loop(Cmiss_context_app *context)
 	}
 
 	return return_code;
-}
-
-Cmiss_time_keeper_id Cmiss_context_app_get_default_time_keeper(
-	Cmiss_context_app *context)
-{
-	Cmiss_time_keeper *time_keeper = NULL;
-	if (context && context->UI_module && context->UI_module->default_time_keeper)
-	{
-		time_keeper = Cmiss_time_keeper_access(context->UI_module->default_time_keeper);
-	}
-	else
-	{
-		display_message(ERROR_MESSAGE,
-			"Cmiss_context_get_default_time_keeper.  Missing context or user interface");
-	}
-	return time_keeper;
 }
 
 //-- Cmiss_scene_viewer_package_id Cmiss_context_app_get_default_scene_viewer_package(

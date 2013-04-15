@@ -61,6 +61,7 @@
 #include "general/mystring.h"
 #include "node/node_viewer_wx.h"
 #include "general/message.h"
+#include "time/time_keeper_app.hpp"
 #if defined (WX_USER_INTERFACE)
 #include <wx/collpane.h>
 #include "wx/wx.h"
@@ -93,7 +94,7 @@ struct Node_viewer
 	struct FE_region *fe_region;
 	struct MANAGER(Computed_field) *computed_field_manager;
 	void *computed_field_manager_callback_id;
-	Cmiss_time_keeper_id time_keeper;
+	struct Time_keeper_app *time_keeper_app;
 	Cmiss_time_notifier_id time_notifier;
 	int time_notifier_callback;
 #if defined (WX_USER_INTERFACE)
@@ -673,7 +674,7 @@ struct Node_viewer *Node_viewer_create(
 	const char *dialog_title,
 	Cmiss_region_id root_region, int use_data,
 	Cmiss_graphics_module_id graphics_module,
-	Cmiss_time_keeper_id time_keeper)
+	struct Time_keeper_app *time_keeper_app)
 {
 	struct Node_viewer *node_viewer;
 	ENTER(CREATE(Node_viewer));
@@ -695,9 +696,9 @@ struct Node_viewer *Node_viewer_create(
 				node_viewer->fe_region = FE_region_get_data_FE_region(node_viewer->fe_region);
 			}
 			node_viewer->collpane = NULL;
-			node_viewer->time_keeper = Cmiss_time_keeper_access(time_keeper);
+			node_viewer->time_keeper_app = time_keeper_app->access();
 			node_viewer->time_notifier = Cmiss_time_keeper_create_notifier_regular(
-				time_keeper, /*update_frequency*/10.0, /*time_offset*/0.0);
+				time_keeper_app->getTimeKeeper(), /*update_frequency*/10.0, /*time_offset*/0.0);
 			node_viewer->time_notifier_callback = 0;
 			node_viewer->grid_field = NULL;
 #if defined (WX_USER_INTERFACE)
@@ -784,7 +785,7 @@ int Node_viewer_destroy(struct Node_viewer **node_viewer_address)
 			 delete node_viewer->wx_node_viewer;
 		}
 		Cmiss_time_notifier_destroy(&(node_viewer->time_notifier));
-		Cmiss_time_keeper_destroy(&(node_viewer->time_keeper));
+		DEACCESS(Time_keeper_app)(&(node_viewer->time_keeper_app));
 		Cmiss_graphics_module_destroy(&(node_viewer->graphics_module));
 		DEALLOCATE(*node_viewer_address);
 		return_code=1;

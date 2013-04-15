@@ -45,7 +45,7 @@ Interactive tool for selecting elements with mouse and other devices.
 #define ELEMENT_TOOL_H
 
 #include "interaction/interactive_tool.h"
-#include "time/time_keeper.h"
+#include "time/time_keeper_app.hpp"
 
 /*
 Global types
@@ -71,7 +71,7 @@ struct Element_tool *CREATE(Element_tool)(
 	struct Element_point_ranges_selection *element_point_ranges_selection,
 	struct Graphical_material *rubber_band_material,
 	struct User_interface *user_interface,
-	struct Time_keeper *time_keeper);
+	struct Time_keeper_app *time_keeper_app);
 /*******************************************************************************
 LAST MODIFIED : 20 March 2003
 
