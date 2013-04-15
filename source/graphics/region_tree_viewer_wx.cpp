@@ -1106,28 +1106,15 @@ Callback from wxChooser<Radius Scalar> when choice is made.
 	return 1;
 }
 
-
+/**
+ * Callback from wxChooser<Iso Scalar> when choice is made.
+ */
 int iso_scalar_callback(Computed_field *iso_scalar_field)
-/*******************************************************************************
-LAST MODIFIED : 21 March 2007
-
-DESCRIPTION :
-Callback from wxChooser<Iso Scalar> when choice is made.
-==============================================================================*/
 {
-	double decimation_threshold, *iso_values,
-	first_iso_value, last_iso_value;
-	int number_of_iso_values;
-	struct Computed_field *scalar_field;
-
-	Cmiss_graphic_get_iso_surface_parameters(
-		region_tree_viewer->current_graphic,&scalar_field,&number_of_iso_values,
-		&iso_values,&first_iso_value,&last_iso_value,
-		&decimation_threshold);
-	Cmiss_graphic_set_iso_surface_parameters(
-		region_tree_viewer->current_graphic,iso_scalar_field,number_of_iso_values,
-		iso_values,first_iso_value,last_iso_value,
-		decimation_threshold);
+	Cmiss_graphic_iso_surface_id iso_surface_graphic =
+		Cmiss_graphic_cast_iso_surface(region_tree_viewer->current_graphic);
+	Cmiss_graphic_iso_surface_set_iso_scalar_field(iso_surface_graphic, iso_scalar_field);
+	Cmiss_graphic_iso_surface_destroy(&iso_surface_graphic);
 	Region_tree_viewer_autoapply(region_tree_viewer->rendition,
 		region_tree_viewer->edit_rendition);
 	//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphic);
@@ -3160,10 +3147,10 @@ void SetGraphic(Cmiss_graphic *graphic)
 		XRCCTRL(*this, "CoordinateFieldStaticText",wxStaticText);
 	if (CMISS_GRAPHIC_POINT != region_tree_viewer->current_graphic_type)
 	{
-		struct Computed_field *temp_coordinate_field = NULL;
-		if (region_tree_viewer->current_graphic != NULL)
+		Cmiss_field_id temp_coordinate_field = 0;
+		if (0 != region_tree_viewer->current_graphic)
 		{
-			temp_coordinate_field=
+			temp_coordinate_field =
 				Cmiss_graphic_get_coordinate_field(region_tree_viewer->current_graphic);
 		}
 		if (coordinate_field_chooser ==NULL)
@@ -3183,6 +3170,7 @@ void SetGraphic(Cmiss_graphic *graphic)
 		coordinate_field_chooser->set_object(temp_coordinate_field);
 		coordinate_field_chooser_panel->Show();
 		coordinatefieldstatictext->Show();
+		Cmiss_field_destroy(&temp_coordinate_field);
 	}
 	else
 	{

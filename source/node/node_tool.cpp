@@ -47,6 +47,7 @@ Scene input.
 
 #include <math.h>
 
+#include "zinc/graphic.h"
 #include "zinc/rendition.h"
 #include "time/time_keeper.h"
 #include "computed_field/computed_field.h"
@@ -1092,13 +1093,10 @@ object's coordinate field.
 {
 	FE_value coordinates[3], time;
 	int return_code;
-	struct Computed_field *coordinate_field, *picked_coordinate_field,
-		*rc_coordinate_field, *rc_picked_coordinate_field;
 
 	ENTER(Node_tool_define_field_at_node_from_picked_coordinates);
 	if (node_tool && node && field_cache)
 	{
-		coordinate_field=node_tool->coordinate_field;
 		if (node_tool->time_keeper)
 		{
 			time = Time_keeper_get_time(node_tool->time_keeper);
@@ -1107,13 +1105,13 @@ object's coordinate field.
 		{
 			time = 0;
 		}
-		rc_coordinate_field=
-			Computed_field_begin_wrap_coordinate_field(coordinate_field);
+		Cmiss_field_id rc_coordinate_field =
+			Computed_field_begin_wrap_coordinate_field(node_tool->coordinate_field);
 		if (rc_coordinate_field != 0)
 		{
-			picked_coordinate_field = Cmiss_graphic_get_coordinate_field(
-				node_tool->graphic);
-			rc_picked_coordinate_field = Computed_field_begin_wrap_coordinate_field(
+			Cmiss_field_id picked_coordinate_field =
+				Cmiss_graphic_get_coordinate_field(node_tool->graphic);
+			Cmiss_field_id rc_picked_coordinate_field = Computed_field_begin_wrap_coordinate_field(
 				picked_coordinate_field);
 
 			Cmiss_field_cache_set_node(field_cache, node);
@@ -1141,6 +1139,7 @@ object's coordinate field.
 				return_code=0;
 			}
 			Computed_field_end_wrap(&rc_picked_coordinate_field);
+			Cmiss_field_destroy(&picked_coordinate_field);
 			Computed_field_end_wrap(&rc_coordinate_field);
 		}
 		else
@@ -1471,7 +1470,6 @@ release.
 	enum Interactive_event_type event_type;
 	FE_value time;
 	int clear_selection,input_modifier,return_code,shift_pressed;
-	struct Computed_field *coordinate_field, *nearest_element_coordinate_field;
 	struct FE_element *nearest_element;
 	struct FE_node *picked_node;
 	struct Cmiss_rendition *rendition = NULL, *rendition_element = NULL;
@@ -1581,7 +1579,7 @@ release.
 								if (node_tool->create_enabled)
 								{
 									/* Find the intersection of the element and the interaction volume */
-									nearest_element_coordinate_field = (struct Computed_field *)NULL;
+									Cmiss_field_id nearest_element_coordinate_field = 0;
 									if (nearest_element)
 									{
 										nearest_element_coordinate_field = Cmiss_graphic_get_coordinate_field(graphic_element);
@@ -1606,6 +1604,7 @@ release.
 									{
 										node_tool->picked_node_was_unselected=0;
 									}
+									Cmiss_field_destroy(&nearest_element_coordinate_field);
 								}
 								else
 								{
@@ -1654,7 +1653,7 @@ release.
 							(1==Interactive_event_get_button_number(event))))
 					{
 						nearest_element = (struct FE_element *)NULL;
-						nearest_element_coordinate_field = (struct Computed_field *)NULL;
+						Cmiss_field_id nearest_element_coordinate_field = 0;
 						if (INTERACTIVE_EVENT_MOTION_NOTIFY==event_type)
 						{
 							node_tool->motion_detected=1;
@@ -1725,9 +1724,10 @@ release.
 									nearest_element_coordinate_field;
 								Cmiss_field_cache_set_time(field_cache, edit_info.time);
 								/* get coordinate field to edit */
+								Cmiss_field_id coordinate_field = 0;
 								if (node_tool->define_enabled)
 								{
-									coordinate_field = node_tool->coordinate_field;
+									coordinate_field = Cmiss_field_access(node_tool->coordinate_field);
 								}
 								else
 								{
@@ -1862,6 +1862,7 @@ release.
 										&(edit_info.wrapper_orientation_scale_field));
 								}
 								Computed_field_end_wrap(&(edit_info.rc_coordinate_field));
+								Cmiss_field_destroy(&coordinate_field);
 							}
 							else
 							{
@@ -2028,6 +2029,7 @@ release.
 							REACCESS(Interaction_volume)(
 								&(node_tool->last_interaction_volume),interaction_volume);
 						}
+						Cmiss_field_destroy(&nearest_element_coordinate_field);
 					}
 				} break;
 				default:
