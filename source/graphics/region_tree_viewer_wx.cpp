@@ -51,6 +51,7 @@ codes used to build scene editor with wxWidgets.
 #include "zinc/rendition.h"
 #include "zinc/graphic.h"
 #include "zinc/graphicsmodule.h"
+#include "zinc/spectrum.h"
 #include "general/debug.h"
 #include "general/indexed_list_private.h"
 #include "general/mystring.h"
@@ -366,7 +367,6 @@ DESCRIPTION :
 	enum Streamline_data_type streamline_data_type;
 	float constant_radius,radius_scale_factor;
 	struct MANAGER(Spectrum) *spectrum_manager;
-	struct Spectrum *spectrum;
 	enum Cmiss_graphics_render_type render_type;
 	struct FE_element *fe_element;
 #if defined (WX_USER_INTERFACE)
@@ -670,22 +670,13 @@ public:
 	graphic_type_chooser->set_callback(graphic_type_callback);
 	graphic_type_chooser->set_value(region_tree_viewer->current_graphic_type);
 
-	/* Set the data_chooser*/
-	Spectrum *temp_spectrum = (Spectrum *)NULL;
-	Computed_field *temp_data_field = (Computed_field *)NULL;
-	if (region_tree_viewer->current_graphic != NULL)
-	{
-		Cmiss_graphic_get_data_spectrum_parameters(region_tree_viewer->current_graphic,
-			&temp_data_field,&temp_spectrum);
-	}
-
 	data_field_chooser = NULL;
 	/* Set the spectrum_chooser*/
 	wxPanel *spectrum_chooser_panel =
 		XRCCTRL(*this,"SpectrumChooserPanel", wxPanel);
 	spectrum_chooser =
 		new Managed_object_chooser<Spectrum,MANAGER_CLASS(Spectrum)>
-		(spectrum_chooser_panel, region_tree_viewer->spectrum, region_tree_viewer->spectrum_manager,
+		(spectrum_chooser_panel, /*initial*/static_cast<Cmiss_spectrum*>(0), region_tree_viewer->spectrum_manager,
 				(MANAGER_CONDITIONAL_FUNCTION(Spectrum) *)NULL, (void *)NULL, region_tree_viewer->user_interface);
 	Callback_base< Spectrum* > *spectrum_callback =
 		new Callback_member_callback< Spectrum*,
@@ -699,7 +690,7 @@ public:
 		 XRCCTRL(*this,"TessellationChooserPanel", wxPanel);
 	tessellation_chooser =
 		new Managed_object_chooser<Cmiss_tessellation,MANAGER_CLASS(Cmiss_tessellation)>(
-			tessellation_chooser_panel, /*initial*/NULL,
+			tessellation_chooser_panel, /*initial*/static_cast<Cmiss_tessellation*>(0),
 			Cmiss_graphics_module_get_tessellation_manager(region_tree_viewer->graphics_module),
 			(MANAGER_CONDITIONAL_FUNCTION(Cmiss_tessellation) *)NULL, (void *)NULL,
 			region_tree_viewer->user_interface);
@@ -1581,109 +1572,65 @@ Callback from wxChooser<Stream Vector> when choice is made.
 	return 1;
 }
 
+/**
+ * Callback from wxChooser<Stream Data Type> when choice is made.
+ */
 int streamline_data_type_callback(enum Streamline_data_type streamline_data_type)
-/*******************************************************************************
-LAST MODIFIED : 26 March 2007
-
-DESCRIPTION :
-Callback from wxChooser<Stream Data Type> when choice is made.
-==============================================================================*/
 {
-	enum Streamline_data_type old_streamline_data_type;
-	struct Computed_field *data_field;
-	struct Spectrum *spectrum;
-	data_chooser_panel=XRCCTRL(*this,"DataChooserPanel",wxPanel);
-	spectrumtext=XRCCTRL(*this, "SpectrumText", wxStaticText);
-	spectrum_chooser_panel=XRCCTRL(*this,"SpectrumChooserPanel", wxPanel);
-
-	if (Cmiss_graphic_get_data_spectrum_parameters_streamlines(
-		region_tree_viewer->current_graphic,&old_streamline_data_type,
-		&data_field,&spectrum))
+	enum Streamline_data_type old_streamline_data_type =
+		Cmiss_graphic_get_streamline_data_type(region_tree_viewer->current_graphic);
+	if (streamline_data_type != old_streamline_data_type)
+	{
+		Cmiss_graphic_set_streamline_data_type(region_tree_viewer->current_graphic, streamline_data_type);
+		Cmiss_spectrum_id spectrum = 0;
+		if (STREAM_NO_DATA != streamline_data_type)
 		{
-			if (streamline_data_type != old_streamline_data_type)
-			{
-				if (STREAM_FIELD_SCALAR==old_streamline_data_type)
-				{
-					data_field=(struct Computed_field *)NULL;
-				}
-				old_streamline_data_type=streamline_data_type;
-				if (STREAM_FIELD_SCALAR==streamline_data_type)
-				{
-					/* get data_field from widget */
-					data_field=data_field_chooser->get_object();
-				}
-				if ((STREAM_NO_DATA != streamline_data_type)&&!spectrum)
-				{
-					/* get spectrum from widget */
-					spectrum=spectrum_chooser->get_object();
-				}
-				Cmiss_graphic_set_data_spectrum_parameters_streamlines(
-					region_tree_viewer->current_graphic,streamline_data_type,
-					data_field,spectrum);
-				if (streamline_data_type != old_streamline_data_type)
-				{
-					/* update the choose_enumerator for streamline_data_type */
-					streamline_data_type_chooser->set_value(streamline_data_type);
-				}
-				if (STREAM_NO_DATA != streamline_data_type)
-				{
-					spectrumtext->Enable();
-					spectrum_chooser_panel->Enable();
-				}
-				else
-				{
-					spectrumtext->Disable();
-					spectrum_chooser_panel->Disable();
-				}
-				if (STREAM_FIELD_SCALAR==streamline_data_type)
-				{
-					data_chooser_panel->Enable();
-				}
-				else
-				{
-					data_chooser_panel->Disable();
-				}
-				/* inform the client of the change */
-				Region_tree_viewer_autoapply(region_tree_viewer->rendition,
-					region_tree_viewer->edit_rendition);
-				//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphic);
-			}
+			spectrum = spectrum_chooser->get_object();
 		}
-	return 1;
-}
-
-	int data_field_callback(Computed_field *data_field)
-/*******************************************************************************
-LAST MODIFIED : 26 March 2007
-
-DESCRIPTION :
-Callback from wxChooser<Data Field> when choice is made.
-==============================================================================*/
-{
-	enum Streamline_data_type streamline_data_type;
-	struct Computed_field *temp_data_field;
-	struct Spectrum *spectrum;
-	spectrumtext=XRCCTRL(*this, "SpectrumText", wxStaticText);
-	spectrum_chooser_panel=XRCCTRL(*this,"SpectrumChooserPanel", wxPanel);
-
-	if (CMISS_GRAPHIC_STREAMLINES==Cmiss_graphic_get_graphic_type
-			(region_tree_viewer->current_graphic))
+		Cmiss_graphic_set_spectrum(region_tree_viewer->current_graphic, spectrum);
+		data_chooser_panel=XRCCTRL(*this,"DataChooserPanel",wxPanel);
+		spectrumtext=XRCCTRL(*this, "SpectrumText", wxStaticText);
+		spectrum_chooser_panel=XRCCTRL(*this,"SpectrumChooserPanel", wxPanel);
+		if (STREAM_NO_DATA != streamline_data_type)
 		{
-			Cmiss_graphic_get_data_spectrum_parameters_streamlines(
-				region_tree_viewer->current_graphic,&streamline_data_type,
-				&temp_data_field,&spectrum);
-			Cmiss_graphic_set_data_spectrum_parameters_streamlines(
-				region_tree_viewer->current_graphic,streamline_data_type,
-				data_field,spectrum);
+			spectrumtext->Enable();
+			spectrum_chooser_panel->Enable();
 		}
 		else
 		{
-			Cmiss_graphic_get_data_spectrum_parameters(
-				region_tree_viewer->current_graphic,&temp_data_field,&spectrum);
-			spectrum = spectrum_chooser->get_object();
-			Cmiss_graphic_set_data_spectrum_parameters(
-				region_tree_viewer->current_graphic,data_field,spectrum);
+			spectrumtext->Disable();
+			spectrum_chooser_panel->Disable();
 		}
+		if (STREAM_FIELD_SCALAR == streamline_data_type)
+		{
+			data_chooser_panel->Enable();
+		}
+		else
+		{
+			data_chooser_panel->Disable();
+		}
+		/* inform the client of the change */
+		Region_tree_viewer_autoapply(region_tree_viewer->rendition,
+			region_tree_viewer->edit_rendition);
+		//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphic);
+	}
+	return 1;
+}
+
+/**
+ * Callback from wxChooser<Data Field> when choice is made.
+ */
+int data_field_callback(Computed_field *data_field)
+{
+	Cmiss_graphic_set_data_field(region_tree_viewer->current_graphic, data_field);
+	Cmiss_spectrum_id spectrum = 0;
+	if (data_field)
+	{
+		spectrum = spectrum_chooser->get_object();
+	}
+	Cmiss_graphic_set_spectrum(region_tree_viewer->current_graphic, spectrum);
+	spectrumtext=XRCCTRL(*this, "SpectrumText", wxStaticText);
+	spectrum_chooser_panel=XRCCTRL(*this,"SpectrumChooserPanel", wxPanel);
 	if (data_field)
 	{
 		spectrumtext->Enable();
@@ -1701,36 +1648,12 @@ Callback from wxChooser<Data Field> when choice is made.
 	return 1;
 }
 
-
-	int spectrum_callback(Spectrum *spectrum)
-/*******************************************************************************
-LAST MODIFIED : 26 March 2007
-
-DESCRIPTION :
-Callback from wxChooser<Spectrum> when choice is made.
-==============================================================================*/
+/**
+ * Callback from wxChooser<Spectrum> when choice is made.
+ */
+int spectrum_callback(Spectrum *spectrum)
 {
-	enum Streamline_data_type streamline_data_type;
-	struct Computed_field *data_field;
-	struct Spectrum *temp_spectrum;
-
-	if (CMISS_GRAPHIC_STREAMLINES==Cmiss_graphic_get_graphic_type
-			(region_tree_viewer->current_graphic))
-	{
-		Cmiss_graphic_get_data_spectrum_parameters_streamlines(
-			region_tree_viewer->current_graphic,&streamline_data_type,
-			&data_field,&temp_spectrum);
-		Cmiss_graphic_set_data_spectrum_parameters_streamlines(
-			region_tree_viewer->current_graphic,streamline_data_type,
-			data_field,spectrum);
-	}
-	else
-	{
-		Cmiss_graphic_get_data_spectrum_parameters(
-			region_tree_viewer->current_graphic,&data_field,&temp_spectrum);
-		Cmiss_graphic_set_data_spectrum_parameters(
-			region_tree_viewer->current_graphic,data_field,spectrum);
-	}
+	Cmiss_graphic_set_spectrum(region_tree_viewer->current_graphic, spectrum);
 	Region_tree_viewer_autoapply(region_tree_viewer->rendition,
 		region_tree_viewer->edit_rendition);
 	//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphic);
@@ -3126,7 +3049,7 @@ void SetGraphic(Cmiss_graphic *graphic)
 	struct Computed_field *radius_scalar_field, *iso_scalar_field,
 		*orientation_scale_field, *variable_scale_field,	*label_field,
 		*xi_point_density_field, *stream_vector_field,
-		*data_field, *texture_coord_field;
+		*texture_coord_field;
 	float constant_radius,scale_factor,streamline_length,streamline_width;
 	struct GT_object *glyph;
 	enum Graphic_glyph_scaling_mode glyph_scaling_mode;
@@ -3135,8 +3058,6 @@ void SetGraphic(Cmiss_graphic *graphic)
 	struct Cmiss_graphics_font *font;
 	struct Element_discretization discretization;
 	enum Streamline_type streamline_type;
-	enum Streamline_data_type streamline_data_type;
-	struct Spectrum *spectrum;
 	enum Cmiss_graphics_render_type render_type;
 	struct FE_element *seed_element;
 	struct FE_region *fe_region;
@@ -4003,12 +3924,10 @@ void SetGraphic(Cmiss_graphic *graphic)
 		{
 			if (data_field_chooser == NULL)
 			{
-				Spectrum *temp_spectrum = (Spectrum *)NULL;
-				Computed_field *temp_data_field = (Computed_field *)NULL;
+				Cmiss_field_id temp_data_field = 0;
 				if (region_tree_viewer->current_graphic != NULL)
 				{
-					Cmiss_graphic_get_data_spectrum_parameters(region_tree_viewer->current_graphic,
-						&temp_data_field,&temp_spectrum);
+					temp_data_field = Cmiss_graphic_get_data_field(region_tree_viewer->current_graphic);
 				}
 				data_field_chooser =
 					new Managed_object_chooser<Computed_field,MANAGER_CLASS(Computed_field)>
@@ -4021,6 +3940,7 @@ void SetGraphic(Cmiss_graphic *graphic)
 				data_field_chooser->set_callback(data_field_callback);
 				data_chooser_panel->Fit();
 				data_field_chooser->include_null_item(true);
+				Cmiss_field_destroy(&temp_data_field);
 			}
 			datatext->Show();
 			data_chooser_panel->Show();
@@ -4031,12 +3951,33 @@ void SetGraphic(Cmiss_graphic *graphic)
 			data_chooser_panel->Hide();
 		}
 
+		if (CMISS_GRAPHIC_POINT != region_tree_viewer->current_graphic_type)
+		{
+			Cmiss_field_id data_field = Cmiss_graphic_get_data_field(graphic);
+			data_field_chooser->set_object(data_field);
+			if (data_field)
+			{
+				Cmiss_spectrum_id spectrum = Cmiss_graphic_get_spectrum(graphic);
+				spectrum_chooser->set_object(spectrum);
+				data_chooser_panel->Enable();
+				spectrumtext->Enable();
+				spectrum_chooser_panel->Enable();
+				Cmiss_spectrum_destroy(&spectrum);
+			}
+			else
+			{
+				spectrumtext->Disable();
+				spectrum_chooser_panel->Disable();
+			}
+			Cmiss_field_destroy(&data_field);
+		}
+
 		if (CMISS_GRAPHIC_STREAMLINES==region_tree_viewer->current_graphic_type)
 		{
 			streamlinedatatypetext->Show();
 			streamline_data_type_chooser_panel->Show();
-			Cmiss_graphic_get_data_spectrum_parameters_streamlines(
-				graphic,&streamline_data_type,&data_field,&spectrum);
+			enum Streamline_data_type streamline_data_type =
+				Cmiss_graphic_get_streamline_data_type(graphic);
 			if (streamline_data_type_chooser == NULL)
 			{
 				streamline_data_type_chooser=
@@ -4051,17 +3992,6 @@ void SetGraphic(Cmiss_graphic *graphic)
 				streamline_data_type_chooser->set_callback(streamline_data_type_callback);
 				streamline_data_type_chooser_panel->Fit();
 			}
-			if (data_field)
-			{
-				data_chooser_panel->Enable();
-				spectrumtext->Enable();
-				spectrum_chooser_panel->Enable();
-			}
-			else
-			{
-				spectrumtext->Disable();
-				spectrum_chooser_panel->Disable();
-			}
 			streamline_data_type_chooser->set_value(streamline_data_type);
 		}
 		else
@@ -4069,24 +3999,6 @@ void SetGraphic(Cmiss_graphic *graphic)
 			/* set scalar data field & spectrum */
 			streamlinedatatypetext->Hide();
 			streamline_data_type_chooser_panel->Hide();
-			if (CMISS_GRAPHIC_POINT!=region_tree_viewer->current_graphic_type)
-			{
-				Cmiss_graphic_get_data_spectrum_parameters(graphic,
-					&data_field,&spectrum);
-				data_field_chooser->set_object(data_field);
-				if(data_field)
-				{
-					spectrum_chooser->set_object(spectrum);
-					data_chooser_panel->Enable();
-					spectrumtext->Enable();
-					spectrum_chooser_panel->Enable();
-				}
-				else
-				{
-					spectrumtext->Disable();
-					spectrum_chooser_panel->Disable();
-				}
-			}
 		}
 
 		wxStaticText *texturecoordinatestext = XRCCTRL(*this, "TextureCoordinatesText", wxStaticText);
@@ -4883,7 +4795,6 @@ struct Region_tree_viewer *CREATE(Region_tree_viewer)(
 	struct Cmiss_graphics_font *default_font,
 	struct MANAGER(GT_object) *glyph_manager,
 	struct MANAGER(Spectrum) *spectrum_manager,
-	struct Spectrum *default_spectrum,
 	struct MANAGER(VT_volume_texture) *volume_texture_manager,
 	struct User_interface *user_interface)
 /*******************************************************************************
@@ -4898,7 +4809,7 @@ DESCRIPTION :
 	region_tree_viewer = (struct Region_tree_viewer *)NULL;
 	if (graphics_module && scene_manager && scene && root_region &&
 		graphical_material_manager && default_material &&
-		glyph_manager && spectrum_manager && default_spectrum &&
+		glyph_manager && spectrum_manager &&
 		volume_texture_manager && user_interface)
 	{
 		if (ALLOCATE(region_tree_viewer,struct Region_tree_viewer,1))
@@ -4934,7 +4845,6 @@ DESCRIPTION :
 			region_tree_viewer->streamline_type=(Streamline_type)NULL;
 			region_tree_viewer->streamline_data_type=(Streamline_data_type)NULL;
 			region_tree_viewer->spectrum_manager=spectrum_manager;
-			region_tree_viewer->spectrum = default_spectrum;
 			region_tree_viewer->render_type =(Cmiss_graphics_render_type)NULL;
 			region_tree_viewer->fe_element =(FE_element *)NULL;
 			region_tree_viewer->root_region = root_region;

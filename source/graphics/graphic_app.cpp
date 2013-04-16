@@ -796,17 +796,15 @@ int gfx_modify_rendition_graphic(struct Parse_state *state,
 						streamline_data_type=STREAM_NO_DATA;
 					}
 				}
-				if ((STREAM_NO_DATA!=streamline_data_type)&&!graphic->spectrum)
+				if ((STREAM_NO_DATA != streamline_data_type) && !graphic->spectrum)
 				{
-					graphic->spectrum=ACCESS(Spectrum)(
+					graphic->spectrum = ACCESS(Spectrum)(
 						rendition_command_data->default_spectrum);
 				}
 				Cmiss_graphic_set_streamline_parameters(
 					graphic,streamline_type,stream_vector_field,(int)reverse_track,
 					length,width);
-				Cmiss_graphic_set_data_spectrum_parameters_streamlines(
-					graphic,streamline_data_type,graphic->data_field,
-					graphic->spectrum);
+				graphic->streamline_data_type = streamline_data_type;
 			}
 		}
 	}

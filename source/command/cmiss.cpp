@@ -7064,7 +7064,6 @@ Executes a GFX EDIT_SCENE command.  Brings up the Region_tree_viewer.
 						command_data->default_font,
 						command_data->glyph_manager,
 						command_data->spectrum_manager,
-						command_data->default_spectrum,
 						command_data->volume_texture_manager,
 						command_data->user_interface)))
 				{
