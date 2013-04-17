@@ -3659,8 +3659,10 @@ Modifies the properties of a texture.
 	enum Texture_resize_filter_mode resize_filter_mode;
 	enum Texture_storage_type specify_format;
 	enum Texture_wrap_mode wrap_mode;
-	double alpha, depth, distortion_centre_x, distortion_centre_y,
-		distortion_factor_k1, height, width, mipmap_level_of_detail_bias;
+	double alpha, distortion_centre_x, distortion_centre_y,
+		distortion_factor_k1, mipmap_level_of_detail_bias;
+	ZnReal depth_ZnReal = 0.0, height_ZnReal = 0.0, width_ZnReal = 0.0;
+	float depth = 0.0, height = 0.0, width = 0.0;
 	float mipmap_level_of_detail_bias_flt;
 	int file_number, i, number_of_file_names, number_of_valid_strings, process,
 		return_code, specify_depth, specify_height,
@@ -3805,7 +3807,10 @@ Modifies the properties of a texture.
 					Texture_get_combine_alpha(texture, &alpha);
 					Texture_get_combine_colour(texture, &colour);
 					Texture_get_physical_size(texture,
-						&width, &height, &depth);
+						&width_ZnReal, &height_ZnReal, &depth_ZnReal);
+					width = (float)width_ZnReal;
+					height = (float)height_ZnReal;
+					depth = (float)depth_ZnReal;
 					Texture_get_distortion_info(texture,
 						&distortion_centre_x,&distortion_centre_y,&distortion_factor_k1);
 					Texture_get_mipmap_level_of_detail_bias(texture, &mipmap_level_of_detail_bias);
@@ -4026,8 +4031,8 @@ Modifies the properties of a texture.
 							 some of them will apply immediately to the new images */
 						Texture_set_combine_alpha(texture, alpha);
 						Texture_set_combine_colour(texture, &colour);
-						Texture_set_physical_size(texture, width,
-							height, depth);
+						Texture_set_physical_size(texture, (ZnReal)width,
+							(ZnReal)height, (ZnReal)depth);
 						Texture_set_texture_tiling_enabled(texture, texture_tiling_enabled);
 						Texture_set_mipmap_level_of_detail_bias(texture, mipmap_level_of_detail_bias);
 
