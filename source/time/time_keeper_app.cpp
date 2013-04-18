@@ -221,7 +221,7 @@ int Time_keeper_app::playPrivate()
 			}
 			if (current_time  >= maximum)
 			{
-				current_time = maximum;
+				current_time = minimum;
 				looping =1;
 			}
 		} break;
