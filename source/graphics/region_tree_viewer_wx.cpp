@@ -1242,20 +1242,15 @@ Callback from wxChooser<Variable Scale> when choice is made.
 	return 1;
 }
 
+/**
+ * Callback from wxChooser<label> when choice is made.
+ */
 int label_callback(Computed_field *label_field)
-/*******************************************************************************
-LAST MODIFIED : 22 March 2007
-
-DESCRIPTION :
-Callback from wxChooser<label> when choice is made.
-==============================================================================*/
 {
-	struct Computed_field *temp_label_field;
-	struct Cmiss_graphics_font *font;
-	Cmiss_graphic_get_label_field(region_tree_viewer->current_graphic,
-		&temp_label_field, &font);
-	Cmiss_graphic_set_label_field(region_tree_viewer->current_graphic,
-		label_field, font);
+	Cmiss_graphic_point_attributes_id point_attributes =
+		Cmiss_graphic_get_point_attributes(region_tree_viewer->current_graphic);
+	Cmiss_graphic_point_attributes_set_label_field(point_attributes, label_field);
+	Cmiss_graphic_point_attributes_destroy(&point_attributes);
 	Region_tree_viewer_autoapply(region_tree_viewer->rendition,
 	   region_tree_viewer->edit_rendition);
 	//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphic);
@@ -1273,20 +1268,15 @@ int subgroup_field_callback(Computed_field *subgroup_field)
 	return 1;
 }
 
+/**
+ * Callback from wxChooser<font> when choice is made.
+ */
 int font_callback(Cmiss_graphics_font *graphics_font)
-/*******************************************************************************
-LAST MODIFIED : 22 May 2007
-
-DESCRIPTION :
-Callback from wxChooser<font> when choice is made.
-==============================================================================*/
 {
-	struct Computed_field *temp_label_field;
-	struct Cmiss_graphics_font *font;
-	Cmiss_graphic_get_label_field(region_tree_viewer->current_graphic,
-		&temp_label_field, &font);
-	Cmiss_graphic_set_label_field(region_tree_viewer->current_graphic,
-		temp_label_field, graphics_font);
+	Cmiss_graphic_point_attributes_id point_attributes =
+		Cmiss_graphic_get_point_attributes(region_tree_viewer->current_graphic);
+	Cmiss_graphic_point_attributes_set_font(point_attributes, graphics_font);
+	Cmiss_graphic_point_attributes_destroy(&point_attributes);
 	Region_tree_viewer_autoapply(region_tree_viewer->rendition,
 	 region_tree_viewer->edit_rendition);
 	//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphic);
@@ -1984,7 +1974,6 @@ void AddGraphic(Cmiss_graphic *graphic_to_copy, enum Cmiss_graphic_type graphic_
 		else
 		{
 			Cmiss_rendition_set_graphic_defaults(region_tree_viewer->edit_rendition, graphic);
-			/* set iso_scalar_field for iso_surfaces */
 		}
 		if (return_code && Cmiss_rendition_add_graphic(
 					region_tree_viewer->edit_rendition, graphic, 0))
@@ -3047,7 +3036,7 @@ void SetGraphic(Cmiss_graphic *graphic)
 		last_iso_value;
 	char temp_string[50], *vector_temp_string;
 	struct Computed_field *radius_scalar_field, *iso_scalar_field,
-		*orientation_scale_field, *variable_scale_field,	*label_field,
+		*orientation_scale_field, *variable_scale_field,
 		*xi_point_density_field, *stream_vector_field,
 		*texture_coord_field;
 	float constant_radius,scale_factor,streamline_length,streamline_width;
@@ -3055,7 +3044,6 @@ void SetGraphic(Cmiss_graphic *graphic)
 	enum Graphic_glyph_scaling_mode glyph_scaling_mode;
 	enum Xi_discretization_mode xi_discretization_mode;
 	Triple glyph_offset, glyph_size, glyph_scale_factors, seed_xi;
-	struct Cmiss_graphics_font *font;
 	struct Element_discretization discretization;
 	enum Streamline_type streamline_type;
 	enum Cmiss_graphics_render_type render_type;
@@ -3412,58 +3400,60 @@ void SetGraphic(Cmiss_graphic *graphic)
 		fonttext=XRCCTRL(*this,"FontText",wxStaticText);
 		font_chooser_panel = XRCCTRL(*this,"FontChooserPanel",wxPanel);
 		wxStaticText *labeltext = XRCCTRL(*this,"LabelText",wxStaticText);
-		if (((CMISS_GRAPHIC_NODE_POINTS==region_tree_viewer->current_graphic_type)||
-			(CMISS_GRAPHIC_DATA_POINTS==region_tree_viewer->current_graphic_type)||
-			(CMISS_GRAPHIC_ELEMENT_POINTS==region_tree_viewer->current_graphic_type)||
-				(CMISS_GRAPHIC_POINT==region_tree_viewer->current_graphic_type)) &&
-				Cmiss_graphic_get_label_field(graphic,&label_field, &font))
+		Cmiss_graphic_point_attributes_id point_attributes =
+			Cmiss_graphic_get_point_attributes(graphic);
+		if (point_attributes)
+		{
+			Cmiss_field_id label_field = Cmiss_graphic_point_attributes_get_label_field(point_attributes);
+			if (label_field_chooser == NULL)
 			{
-				if (label_field_chooser == NULL)
-				{
-						label_field_chooser =
-							new Managed_object_chooser<Computed_field,MANAGER_CLASS(Computed_field)>
-							(label_chooser_panel, label_field, region_tree_viewer->field_manager,
-									(MANAGER_CONDITIONAL_FUNCTION(Computed_field) *)NULL , (void *)NULL,
-									region_tree_viewer->user_interface);
-						Callback_base< Computed_field* > *label_callback =
-							new Callback_member_callback< Computed_field*,
-							wxRegionTreeViewer, int (wxRegionTreeViewer::*)(Computed_field *) >
-							(this, &wxRegionTreeViewer::label_callback);
-						label_field_chooser->set_callback(label_callback);
-						label_chooser_panel->Fit();
-						label_field_chooser->include_null_item(true);
-				}
-				if (font_chooser == NULL)
-				{
-						font_chooser =
-							new Managed_object_chooser<Cmiss_graphics_font,MANAGER_CLASS(Cmiss_graphics_font)>
-							(font_chooser_panel, font, region_tree_viewer->font_manager,
-									(MANAGER_CONDITIONAL_FUNCTION(Cmiss_graphics_font) *)NULL , (void *)NULL,
-									region_tree_viewer->user_interface);
-						Callback_base< Cmiss_graphics_font* > *font_callback =
-							new Callback_member_callback< Cmiss_graphics_font*,
-							wxRegionTreeViewer, int (wxRegionTreeViewer::*)(Cmiss_graphics_font *) >
-							(this, &wxRegionTreeViewer::font_callback);
-						font_chooser->set_callback(font_callback);
-						font_chooser_panel->Fit();
-				}
-				label_field_chooser->set_object(label_field);
-				label_chooser_panel->Show();
-				labeltext->Show();
-				fonttext->Show();
-				font_chooser_panel->Show();
-
-				if ((struct Cmiss_graphics_font *)NULL!=font)
-				{
-						font_chooser->set_object(font);
-						font_chooser_panel->Enable();
-				}
-				else
-				{
-						font_chooser_panel->Disable();
-				}
-
+					label_field_chooser =
+						new Managed_object_chooser<Computed_field,MANAGER_CLASS(Computed_field)>
+						(label_chooser_panel, label_field, region_tree_viewer->field_manager,
+								(MANAGER_CONDITIONAL_FUNCTION(Computed_field) *)NULL , (void *)NULL,
+								region_tree_viewer->user_interface);
+					Callback_base< Computed_field* > *label_callback =
+						new Callback_member_callback< Computed_field*,
+						wxRegionTreeViewer, int (wxRegionTreeViewer::*)(Computed_field *) >
+						(this, &wxRegionTreeViewer::label_callback);
+					label_field_chooser->set_callback(label_callback);
+					label_chooser_panel->Fit();
+					label_field_chooser->include_null_item(true);
 			}
+			label_field_chooser->set_object(label_field);
+			label_chooser_panel->Show();
+			labeltext->Show();
+			Cmiss_field_destroy(&label_field);
+
+			Cmiss_graphics_font_id font = Cmiss_graphic_point_attributes_get_font(point_attributes);
+			if (font_chooser == NULL)
+			{
+					font_chooser =
+						new Managed_object_chooser<Cmiss_graphics_font,MANAGER_CLASS(Cmiss_graphics_font)>
+						(font_chooser_panel, font, region_tree_viewer->font_manager,
+								(MANAGER_CONDITIONAL_FUNCTION(Cmiss_graphics_font) *)NULL , (void *)NULL,
+								region_tree_viewer->user_interface);
+					Callback_base< Cmiss_graphics_font* > *font_callback =
+						new Callback_member_callback< Cmiss_graphics_font*,
+						wxRegionTreeViewer, int (wxRegionTreeViewer::*)(Cmiss_graphics_font *) >
+						(this, &wxRegionTreeViewer::font_callback);
+					font_chooser->set_callback(font_callback);
+					font_chooser_panel->Fit();
+			}
+			fonttext->Show();
+			font_chooser_panel->Show();
+			if (0 != font)
+			{
+					font_chooser->set_object(font);
+					font_chooser_panel->Enable();
+			}
+			else
+			{
+					font_chooser_panel->Disable();
+			}
+			Cmiss_graphics_font_destroy(&font);
+			Cmiss_graphic_point_attributes_destroy(&point_attributes);
+		}
 		else
 		{
 			label_chooser_panel->Hide();
@@ -3476,8 +3466,7 @@ void SetGraphic(Cmiss_graphic *graphic)
 		wxStaticText *subgroup_field_text=XRCCTRL(*this,"SubgroupFieldText",wxStaticText);
 		subgroup_field_chooser_panel = XRCCTRL(*this,"SubgroupFieldChooserPanel",wxPanel);
 
-		Cmiss_field_id subgroup_field = 0;
-		Cmiss_graphic_get_subgroup_field(graphic, &subgroup_field);
+		Cmiss_field_id subgroup_field = Cmiss_graphic_get_subgroup_field(graphic);
 		if (subgroup_field_chooser == NULL)
 		{
 			subgroup_field_chooser =
@@ -3496,6 +3485,7 @@ void SetGraphic(Cmiss_graphic *graphic)
 		subgroup_field_text->Show();
 		subgroup_field_chooser->set_object(subgroup_field);
 		subgroup_field_chooser_panel->Show();
+		Cmiss_field_destroy(&subgroup_field);
 
 		/* Set the select_mode_chooser_panel*/
 		select_mode_chooser_panel =

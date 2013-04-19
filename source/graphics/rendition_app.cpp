@@ -90,12 +90,12 @@ int gfx_modify_rendition_general(struct Parse_state *state,
 						{
 							Cmiss_graphic_id this_graphic = graphic;
 							graphic = Cmiss_rendition_get_next_graphic(rendition, this_graphic);
-							Cmiss_field_id subgroup_field = 0;
-							Cmiss_graphic_get_subgroup_field(this_graphic, &subgroup_field);
+							Cmiss_field_id subgroup_field = Cmiss_graphic_get_subgroup_field(this_graphic);
 							if (subgroup_field == group_field)
 							{
 								Cmiss_rendition_remove_graphic(rendition, this_graphic);
 							}
+							Cmiss_field_destroy(&subgroup_field);
 							Cmiss_graphic_destroy(&this_graphic);
 						}
 						Cmiss_rendition_end_change(rendition);
