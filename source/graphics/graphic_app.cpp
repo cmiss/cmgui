@@ -51,6 +51,14 @@ Cmiss_graphic* get_graphic_for_gfx_modify(Cmiss_rendition *rendition,
 	else
 	{
 		Cmiss_rendition_set_graphic_defaults(rendition, graphic);
+		if (graphic_type == CMISS_GRAPHIC_CYLINDERS)
+		{
+			Cmiss_graphic_line_attributes_id line_attributes = Cmiss_graphic_get_line_attributes(graphic);
+			const double two = 2;
+			// default scale factor is 2.0 for radius to diameter conversion
+			Cmiss_graphic_line_attributes_set_scale_factors(line_attributes, 1, &two);
+			Cmiss_graphic_line_attributes_destroy(&line_attributes);
+		}
 	}
 	return (graphic);
 }
@@ -161,6 +169,8 @@ int gfx_modify_rendition_graphic(struct Parse_state *state,
 		seed_nodeset_name = Cmiss_nodeset_get_name(graphic->seed_nodeset);
 	}
 	Cmiss_graphic_iso_surface_id iso_surface = Cmiss_graphic_cast_iso_surface(graphic);
+	Cmiss_graphic_line_attributes_id line_attributes = Cmiss_graphic_get_line_attributes(graphic);
+	Cmiss_field_id line_orientation_scale_field = 0;
 	Cmiss_graphic_point_attributes_id point_attributes = Cmiss_graphic_get_point_attributes(graphic);
 
 	Option_table *option_table = CREATE(Option_table)();
@@ -202,10 +212,13 @@ int gfx_modify_rendition_graphic(struct Parse_state *state,
 	}
 
 	/* constant_radius */
+	double constant_radius = 0;
 	if (graphic_type == CMISS_GRAPHIC_CYLINDERS)
 	{
+		Cmiss_graphic_line_attributes_get_base_size(line_attributes, 1, &constant_radius);
+		constant_radius *= 0.5; // convert from diameter
 		Option_table_add_entry(option_table,"constant_radius",
-			&(graphic->constant_radius),NULL,set_float);
+			&constant_radius, NULL, set_double);
 	}
 
 	/* coordinate */
@@ -443,8 +456,10 @@ int gfx_modify_rendition_graphic(struct Parse_state *state,
 	set_radius_scalar_field_data.conditional_function_user_data = (void *)NULL;
 	if (graphic_type == CMISS_GRAPHIC_CYLINDERS)
 	{
+		line_orientation_scale_field =
+			Cmiss_graphic_line_attributes_get_orientation_scale_field(line_attributes);
 		Option_table_add_Computed_field_conditional_entry(option_table, "radius_scalar",
-			&(graphic->radius_scalar_field), &set_radius_scalar_field_data);
+			&line_orientation_scale_field, &set_radius_scalar_field_data);
 	}
 
 	/* range_number_of_iso_values */
@@ -477,10 +492,13 @@ int gfx_modify_rendition_graphic(struct Parse_state *state,
 	}
 
 	/* scale_factor */
+	double radius_scale_factor = 0;
 	if (graphic_type == CMISS_GRAPHIC_CYLINDERS)
 	{
+		Cmiss_graphic_line_attributes_get_scale_factors(line_attributes, 1, &radius_scale_factor);
+		radius_scale_factor *= 0.5; // convert from diameter
 		Option_table_add_entry(option_table, "scale_factor",
-			&(graphic->radius_scale_factor), NULL, set_float);
+			&radius_scale_factor, NULL, set_double);
 	}
 
 	/* scale_factors */
@@ -620,10 +638,12 @@ int gfx_modify_rendition_graphic(struct Parse_state *state,
 	Option_table_add_switch(option_table, "visible", "invisible", &visibility);
 
 	/* width */
+	double streamline_width = 0;
 	if (graphic_type == CMISS_GRAPHIC_STREAMLINES)
 	{
+		Cmiss_graphic_line_attributes_get_base_size(line_attributes, 1, &streamline_width);
 		Option_table_add_entry(option_table,"width",
-			&(graphic->streamline_width),NULL,set_float);
+			&streamline_width, NULL, set_double);
 	}
 
 	/* xi */
@@ -748,6 +768,15 @@ int gfx_modify_rendition_graphic(struct Parse_state *state,
 		STRING_TO_ENUMERATOR(Graphics_select_mode)(select_mode_string, &select_mode);
 		Cmiss_graphic_set_select_mode(graphic, select_mode);
 
+		if (graphic_type == CMISS_GRAPHIC_CYLINDERS)
+		{
+			const double line_base_size = 2.0*constant_radius; // convert to diameter
+			Cmiss_graphic_line_attributes_set_base_size(line_attributes, 1, &line_base_size);
+			Cmiss_graphic_line_attributes_set_orientation_scale_field(line_attributes, line_orientation_scale_field);
+			const double line_scale_factor = 2.0*radius_scale_factor; // convert to diameter
+			Cmiss_graphic_line_attributes_set_scale_factors(line_attributes, 1, &line_scale_factor);
+		}
+
 		if (graphic_type == CMISS_GRAPHIC_STREAMLINES)
 		{
 			if (!(graphic->stream_vector_field))
@@ -786,11 +815,11 @@ int gfx_modify_rendition_graphic(struct Parse_state *state,
 			if (return_code)
 			{
 				Cmiss_field *stream_vector_field = 0;
-				float length = 0.0, width = 0.0;
+				float length = 0.0;
 				int reverse_track_int;
 				Cmiss_graphic_get_streamline_parameters(graphic,
 					&streamline_type,&stream_vector_field,&reverse_track_int,
-					&length,&width);
+					&length);
 				STRING_TO_ENUMERATOR(Streamline_type)(streamline_type_string,
 					&streamline_type);
 				STRING_TO_ENUMERATOR(Streamline_data_type)(
@@ -816,8 +845,9 @@ int gfx_modify_rendition_graphic(struct Parse_state *state,
 				use_spectrum = (STREAM_NO_DATA != streamline_data_type);
 				Cmiss_graphic_set_streamline_parameters(
 					graphic,streamline_type,stream_vector_field,(int)reverse_track,
-					length,width);
+					length);
 				Cmiss_graphic_set_streamline_data_type(graphic, streamline_data_type);
+				Cmiss_graphic_line_attributes_set_base_size(line_attributes, 1, &streamline_width);
 			}
 		}
 		if (use_spectrum)
@@ -849,6 +879,7 @@ int gfx_modify_rendition_graphic(struct Parse_state *state,
 	Cmiss_field_destroy(&coordinate_field);
 	Cmiss_field_destroy(&data_field);
 	Cmiss_field_destroy(&iso_scalar_field);
+	Cmiss_field_destroy(&line_orientation_scale_field);
 	Cmiss_field_destroy(&label_field);
 	Cmiss_field_destroy(&orientation_scale_field);
 	Cmiss_field_destroy(&subgroup_field);
@@ -864,6 +895,7 @@ int gfx_modify_rendition_graphic(struct Parse_state *state,
 	}
 	Cmiss_graphic_destroy(&graphic);
 	Cmiss_graphic_iso_surface_destroy(&iso_surface);
+	Cmiss_graphic_line_attributes_destroy(&line_attributes);
 	Cmiss_graphic_point_attributes_destroy(&point_attributes);
 	Cmiss_spectrum_destroy(&spectrum);
 	Cmiss_tessellation_destroy(&tessellation);

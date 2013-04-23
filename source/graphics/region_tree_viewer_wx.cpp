@@ -744,10 +744,10 @@ public:
 		wxCommandEventHandler(wxRegionTreeViewer::GraphicEditorNameText),
 		NULL, this);
 	XRCCTRL(*this,"ConstantRadiusTextCtrl", wxTextCtrl)->Connect(wxEVT_KILL_FOCUS,
-		wxCommandEventHandler(wxRegionTreeViewer::EnterRadius),
+		wxCommandEventHandler(wxRegionTreeViewer::EnterRadiusBaseSize),
 		NULL, this);
 	XRCCTRL(*this,"ScaleFactorsTextCtrl", wxTextCtrl)->Connect(wxEVT_KILL_FOCUS,
-		wxCommandEventHandler(wxRegionTreeViewer::EnterRadius),
+		wxCommandEventHandler(wxRegionTreeViewer::EnterRadiusScaleFactor),
 		NULL, this);
 	XRCCTRL(*this,"IsoScalarTextCtrl", wxTextCtrl)->Connect(wxEVT_KILL_FOCUS,
 		wxCommandEventHandler(wxRegionTreeViewer::EnterIsoScalar),
@@ -777,10 +777,10 @@ public:
 		wxCommandEventHandler(wxRegionTreeViewer::EnterSeedXi),
 		NULL, this);
 	XRCCTRL(*this,"LengthTextCtrl", wxTextCtrl)->Connect(wxEVT_KILL_FOCUS,
-		wxCommandEventHandler(wxRegionTreeViewer::EnterLength),
+		wxCommandEventHandler(wxRegionTreeViewer::EnterStreamlineLength),
 		NULL, this);
 	XRCCTRL(*this,"WidthTextCtrl", wxTextCtrl)->Connect(wxEVT_KILL_FOCUS,
-		wxCommandEventHandler(wxRegionTreeViewer::EnterWidth),
+		wxCommandEventHandler(wxRegionTreeViewer::EnterStreamlineWidth),
 		NULL, this);
 	XRCCTRL(*this,"LineWidthTextCtrl", wxTextCtrl)->Connect(wxEVT_KILL_FOCUS,
 		wxCommandEventHandler(wxRegionTreeViewer::EnterLineWidth),
@@ -1064,25 +1064,16 @@ Set the selected option in the Scene Object chooser.
 		}
 		return 1;
 	}
+
+/**
+ * Callback from wxChooser<Radius Scalar> when choice is made.
+ */
 int radius_scalar_callback(Computed_field *radius_scalar_field)
-/*******************************************************************************
-LAST MODIFIED : 20 March 2007
-
-DESCRIPTION :
-Callback from wxChooser<Radius Scalar> when choice is made.
-==============================================================================*/
 {
-	float constant_radius,scale_factor;
-	double temp;
-
-	constantradiustextctrl=XRCCTRL(*this, "ConstantRadiusTextCtrl",wxTextCtrl);
-	(constantradiustextctrl->GetValue()).ToDouble(&temp);
-	constant_radius=(float)temp;
-	scalefactorstextctrl=XRCCTRL(*this,"ScaleFactorsTextCtrl",wxTextCtrl);
-	(scalefactorstextctrl->GetValue()).ToDouble(&temp);
-	scale_factor=(float)temp;
-	Cmiss_graphic_set_radius_parameters(region_tree_viewer->current_graphic,constant_radius,
-		scale_factor,radius_scalar_field);
+	Cmiss_graphic_line_attributes_id line_attributes =
+		Cmiss_graphic_get_line_attributes(region_tree_viewer->current_graphic);
+	Cmiss_graphic_line_attributes_set_orientation_scale_field(line_attributes, radius_scalar_field);
+	Cmiss_graphic_line_attributes_destroy(&line_attributes);
 	if (radius_scalar_field)
 	{
 		scalefactorstextctrl->Enable();
@@ -1504,25 +1495,22 @@ Callback from wxChooser<Seed Element> when choice is made.
 	return 1;
 }
 
+/**
+ * Callback from wxChooser<Streamline Type> when choice is made.
+ */
 int streamline_type_callback(enum Streamline_type streamline_type)
-/*******************************************************************************
-LAST MODIFIED : 23 March 2007
-
-DESCRIPTION :
-Callback from wxChooser<Streamline Type> when choice is made.
-==============================================================================*/
 {
 	enum Streamline_type temp_streamline_type;
-	float streamline_length,streamline_width;
+	float streamline_length;
 	int reverse_track;
 	struct Computed_field *stream_vector_field;
 
 	if (Cmiss_graphic_get_streamline_parameters(
 				region_tree_viewer->current_graphic, &temp_streamline_type, &stream_vector_field,
-				&reverse_track, &streamline_length, &streamline_width) &&
+				&reverse_track, &streamline_length) &&
 		Cmiss_graphic_set_streamline_parameters(
 		 region_tree_viewer->current_graphic, streamline_type, stream_vector_field,
-		 reverse_track, streamline_length, streamline_width))
+		 reverse_track, streamline_length))
 	{
 		Region_tree_viewer_autoapply(region_tree_viewer->rendition,
 			region_tree_viewer->edit_rendition);
@@ -1531,27 +1519,24 @@ Callback from wxChooser<Streamline Type> when choice is made.
 	return 1;
 }
 
-	int stream_vector_callback(Computed_field *stream_vector_field)
-/*******************************************************************************
-LAST MODIFIED : 23 March 2007
-
-DESCRIPTION :
-Callback from wxChooser<Stream Vector> when choice is made.
-==============================================================================*/
+/**
+ * Callback from wxChooser<Stream Vector> when choice is made.
+ */
+int stream_vector_callback(Computed_field *stream_vector_field)
 {
 	enum Streamline_type streamline_type;
-	float streamline_length,streamline_width;
+	float streamline_length;
 	int reverse_track;
 	struct Computed_field *temp_stream_vector_field;
 
 	if (Cmiss_graphic_get_streamline_parameters(
 		   region_tree_viewer->current_graphic,&streamline_type,
 			&temp_stream_vector_field,&reverse_track,
-			&streamline_length,&streamline_width)&&
+			&streamline_length)&&
 		Cmiss_graphic_set_streamline_parameters(
 			region_tree_viewer->current_graphic,streamline_type,
 			stream_vector_field,reverse_track,
-		   streamline_length,streamline_width))
+		   streamline_length))
 	{
 		/* inform the client of the change */
 		Region_tree_viewer_autoapply(region_tree_viewer->rendition,
@@ -1784,10 +1769,9 @@ void Region_tree_viewer_wx_set_list_string(Cmiss_graphic *graphic)
 {
 	unsigned int selection;
 	char *graphic_string;
-	unsigned int check;
 	graphicalitemschecklist=XRCCTRL(*this,"CmissGraphicListBox",wxCheckListBox);
 	selection=graphicalitemschecklist->GetSelection();
-	check = graphicalitemschecklist->IsChecked(selection);
+	bool check = graphicalitemschecklist->IsChecked(selection);
 	graphic_string = Cmiss_graphic_get_summary_string(graphic);
 	graphicalitemschecklist->SetString(selection, wxString::FromAscii(graphic_string));
 	graphicalitemschecklist->Check(selection,check);
@@ -1799,15 +1783,11 @@ void Region_tree_viewer_wx_set_list_string(Cmiss_graphic *graphic)
  */
 void Region_tree_viewer_renew_label_on_list(Cmiss_graphic *graphic)
 {
-	int position, check;
-	char *graphic_string;
-
 	graphicalitemschecklist=XRCCTRL(*this,"CmissGraphicListBox",wxCheckListBox);
-
-	position = Cmiss_rendition_get_graphic_position(
+	int position = Cmiss_rendition_get_graphic_position(
 		region_tree_viewer->edit_rendition, graphic);
-	check=graphicalitemschecklist->IsChecked(position - 1);
-	graphic_string = Cmiss_graphic_get_summary_string(region_tree_viewer->current_graphic);
+	bool check = graphicalitemschecklist->IsChecked(position - 1);
+	char *graphic_string = Cmiss_graphic_get_summary_string(region_tree_viewer->current_graphic);
 	graphicalitemschecklist->SetString(position-1, wxString::FromAscii(graphic_string));
 	graphicalitemschecklist->Check(position-1, check);
 	DEALLOCATE(graphic_string);
@@ -1974,6 +1954,14 @@ void AddGraphic(Cmiss_graphic *graphic_to_copy, enum Cmiss_graphic_type graphic_
 		else
 		{
 			Cmiss_rendition_set_graphic_defaults(region_tree_viewer->edit_rendition, graphic);
+			if (graphic_type == CMISS_GRAPHIC_CYLINDERS)
+			{
+				Cmiss_graphic_line_attributes_id line_attributes = Cmiss_graphic_get_line_attributes(graphic);
+				const double two = 2;
+				// default scale factor is 2.0 for radius to diameter conversion
+				Cmiss_graphic_line_attributes_set_scale_factors(line_attributes, 1, &two);
+				Cmiss_graphic_line_attributes_destroy(&line_attributes);
+			}
 		}
 		if (return_code && Cmiss_rendition_add_graphic(
 					region_tree_viewer->edit_rendition, graphic, 0))
@@ -2250,33 +2238,33 @@ void MoveUpInGraphicList(wxCommandEvent &event)
 		}
 	}
 
-	void EnterRadius(wxCommandEvent &event)
+	void EnterRadiusBaseSize(wxCommandEvent &event)
 	{
-		float constant_radius, scale_factor;
-		double temp;
-		struct Computed_field *radius_scalar_field;
-
 		USE_PARAMETER(event);
-
+		double radiusBaseSize = 0;
 		constantradiustextctrl=XRCCTRL(*this, "ConstantRadiusTextCtrl",wxTextCtrl);
-		(constantradiustextctrl->GetValue()).ToDouble(&temp);
-		constant_radius=(float)temp;
+		(constantradiustextctrl->GetValue()).ToDouble(&radiusBaseSize);
+		const double baseSize = 2.0*radiusBaseSize;
+		Cmiss_graphic_line_attributes_id line_attributes =
+			Cmiss_graphic_get_line_attributes(region_tree_viewer->current_graphic);
+		Cmiss_graphic_line_attributes_set_base_size(line_attributes, 1, &baseSize);
+		Cmiss_graphic_line_attributes_destroy(&line_attributes);
+		Region_tree_viewer_autoapply(region_tree_viewer->rendition,
+			region_tree_viewer->edit_rendition);
+		//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphic);
+	}
+
+	void EnterRadiusScaleFactor(wxCommandEvent &event)
+	{
+		USE_PARAMETER(event);
+		double radiusScaleFactor;
 		scalefactorstextctrl=XRCCTRL(*this,"ScaleFactorsTextCtrl",wxTextCtrl);
-		(scalefactorstextctrl->GetValue()).ToDouble(&temp);
-		scale_factor=(float)temp;
-		radius_scalar_chooser_panel=XRCCTRL(*this, "RadiusScalarChooserPanel",wxPanel);
-		scalefactor = XRCCTRL(*this,"ScaleFactorLabel", wxStaticText);
-		radius_scalar_field=radius_scalar_chooser->get_object();
-		if (radius_scalar_field)
-		{
-			scalefactorstextctrl->Enable();
-		}
-		else
-		{
-			scalefactorstextctrl->Disable();
-		}
-		Cmiss_graphic_set_radius_parameters(region_tree_viewer->current_graphic,constant_radius,
-																							scale_factor,radius_scalar_field);
+		(scalefactorstextctrl->GetValue()).ToDouble(&radiusScaleFactor);
+		const double scaleFactor = 2.0*radiusScaleFactor;
+		Cmiss_graphic_line_attributes_id line_attributes =
+			Cmiss_graphic_get_line_attributes(region_tree_viewer->current_graphic);
+		Cmiss_graphic_line_attributes_set_scale_factors(line_attributes, 1, &scaleFactor);
+		Cmiss_graphic_line_attributes_destroy(&line_attributes);
 		Region_tree_viewer_autoapply(region_tree_viewer->rendition,
 			region_tree_viewer->edit_rendition);
 		//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphic);
@@ -2408,7 +2396,7 @@ void MoveUpInGraphicList(wxCommandEvent &event)
 				else
 				{
 					display_message(ERROR_MESSAGE,
-						"graphic_editor_streamline_width_text_CB.  Missing text");
+						"EnterIsoScalar.  Missing text");
 				}
 
 				wxTextEntry = isovaluesequencefirsttextctrl->GetValue();
@@ -2420,7 +2408,7 @@ void MoveUpInGraphicList(wxCommandEvent &event)
 				else
 				{
 					display_message(ERROR_MESSAGE,
-						"graphic_editor_streamline_width_text_CB.  Missing text");
+						"EnterIsoScalar.  Missing text");
 				}
 
 				wxTextEntry = isovaluesequencelasttextctrl->GetValue();
@@ -2432,7 +2420,7 @@ void MoveUpInGraphicList(wxCommandEvent &event)
 				else
 				{
 					display_message(ERROR_MESSAGE,
-						"graphic_editor_streamline_width_text_CB.  Missing text");
+						"EnterIsoScalar.  Missing text");
 				}
 
 				if ((changed_value != number_of_iso_values) ||
@@ -2464,7 +2452,7 @@ void MoveUpInGraphicList(wxCommandEvent &event)
 			else
 			{
 				display_message(ERROR_MESSAGE,
-					"wx_graphic_editor_enter_iso_scalar.  Missing iso value option.");
+					"EnterIsoScalar.  Missing iso value option.");
 
 			}
 		}
@@ -2840,11 +2828,11 @@ void EnterSeedXi(wxCommandEvent &event)
 	}
 }
 
-void EnterLength(wxCommandEvent &event)
+void EnterStreamlineLength(wxCommandEvent &event)
 {
 	char temp_string[50];
 	enum Streamline_type streamline_type;
-	float streamline_length,streamline_width;
+	float streamline_length;
 	int reverse_track;
 	struct Computed_field *stream_vector_field;
 
@@ -2852,8 +2840,7 @@ void EnterLength(wxCommandEvent &event)
 	lengthtextctrl=XRCCTRL(*this,"LengthTextCtrl",wxTextCtrl);
 	Cmiss_graphic_get_streamline_parameters(
 		region_tree_viewer->current_graphic,&streamline_type,
-		&stream_vector_field,&reverse_track,&streamline_length,
-		&streamline_width);
+		&stream_vector_field,&reverse_track,&streamline_length);
 	wxString wxTextEntry = lengthtextctrl->GetValue();
 	const char *text_entry = wxTextEntry.mb_str(wxConvUTF8);
 	if (text_entry)
@@ -2861,8 +2848,7 @@ void EnterLength(wxCommandEvent &event)
 		sscanf(text_entry,"%g",&streamline_length);
 		Cmiss_graphic_set_streamline_parameters(
 			region_tree_viewer->current_graphic,streamline_type,
-			stream_vector_field,reverse_track,streamline_length,
-			streamline_width);
+			stream_vector_field,reverse_track,streamline_length);
 		/* inform the client of the change */
 		Region_tree_viewer_autoapply(region_tree_viewer->rendition,
 			region_tree_viewer->edit_rendition);
@@ -2877,29 +2863,19 @@ void EnterLength(wxCommandEvent &event)
 	lengthtextctrl->SetValue(wxString::FromAscii(temp_string));
 }
 
-void EnterWidth(wxCommandEvent &event)
+void EnterStreamlineWidth(wxCommandEvent &event)
 {
-	char temp_string[50];
-	enum Streamline_type streamline_type;
-	float streamline_length,streamline_width;
-	int reverse_track;
-	struct Computed_field *stream_vector_field;
-
-	USE_PARAMETER(event);
 	widthtextctrl=XRCCTRL(*this,"WidthTextCtrl",wxTextCtrl);
-	Cmiss_graphic_get_streamline_parameters(
-		region_tree_viewer->current_graphic,&streamline_type,
-		&stream_vector_field,&reverse_track,&streamline_length,
-		&streamline_width);
-	/* Get the text string */
 	wxString wxTextEntry = widthtextctrl->GetValue();
 	const char *text_entry = wxTextEntry.mb_str(wxConvUTF8);
+	double baseSize = 0;
 	if (text_entry)
 	{
-		sscanf(text_entry,"%g",&streamline_width);
-		Cmiss_graphic_set_streamline_parameters(
-			region_tree_viewer->current_graphic,streamline_type,
-			stream_vector_field,reverse_track,streamline_length,streamline_width);
+		sscanf(text_entry, "%lg", &baseSize);
+		Cmiss_graphic_line_attributes_id line_attributes =
+			Cmiss_graphic_get_line_attributes(region_tree_viewer->current_graphic);
+		Cmiss_graphic_line_attributes_set_base_size(line_attributes, 1, &baseSize);
+		Cmiss_graphic_line_attributes_destroy(&line_attributes);
 		/* inform the client of the change */
 		Region_tree_viewer_autoapply(region_tree_viewer->rendition,
 			region_tree_viewer->edit_rendition);
@@ -2911,32 +2887,31 @@ void EnterWidth(wxCommandEvent &event)
 		  "settings_editor_streamline_width_text_CB.  Missing text");
 	}
 	/* always restore streamline_width to actual value in use */
-	sprintf(temp_string,"%g",streamline_width);
+	char temp_string[50];
+	sprintf(temp_string,"%g",baseSize);
 	widthtextctrl->SetValue(wxString::FromAscii(temp_string));
 }
 
 void ReverseChecked(wxCommandEvent &event)
 {
 	enum Streamline_type streamline_type;
-	float streamline_length,streamline_width;
+	float streamline_length;
 	int reverse_track;
 	struct Computed_field *stream_vector_field;
 	USE_PARAMETER(event);
 	reversecheckbox=XRCCTRL(*this,"ReverseCheckBox",wxCheckBox);
 	Cmiss_graphic_get_streamline_parameters(
 		region_tree_viewer->current_graphic,&streamline_type,
-		&stream_vector_field,&reverse_track,&streamline_length,
-		&streamline_width);
+		&stream_vector_field,&reverse_track,&streamline_length);
 	reverse_track = !reverse_track;
 	Cmiss_graphic_set_streamline_parameters(
 		region_tree_viewer->current_graphic,streamline_type,
-		stream_vector_field,reverse_track,streamline_length,
-		streamline_width);
+		stream_vector_field,reverse_track,streamline_length);
 	/* inform the client of the change */
 	Region_tree_viewer_autoapply(region_tree_viewer->rendition,
 		region_tree_viewer->edit_rendition);
 	//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphic);
-	reversecheckbox->SetValue(reverse_track);
+	reversecheckbox->SetValue(0 != reverse_track);
 }
 
 void EnterLineWidth(wxCommandEvent &event)
@@ -3035,11 +3010,10 @@ void SetGraphic(Cmiss_graphic *graphic)
 	double decimation_threshold, *iso_values, first_iso_value,
 		last_iso_value;
 	char temp_string[50], *vector_temp_string;
-	struct Computed_field *radius_scalar_field, *iso_scalar_field,
+	struct Computed_field *iso_scalar_field,
 		*orientation_scale_field, *variable_scale_field,
 		*xi_point_density_field, *stream_vector_field,
 		*texture_coord_field;
-	float constant_radius,scale_factor,streamline_length,streamline_width;
 	struct GT_object *glyph;
 	enum Graphic_glyph_scaling_mode glyph_scaling_mode;
 	enum Xi_discretization_mode xi_discretization_mode;
@@ -3049,6 +3023,11 @@ void SetGraphic(Cmiss_graphic *graphic)
 	enum Cmiss_graphics_render_type render_type;
 	struct FE_element *seed_element;
 	struct FE_region *fe_region;
+
+	Cmiss_graphic_line_attributes_id line_attributes =
+		Cmiss_graphic_get_line_attributes(graphic);
+	Cmiss_graphic_point_attributes_id point_attributes =
+		Cmiss_graphic_get_point_attributes(graphic);
 
 	coordinate_field_chooser_panel =
 		XRCCTRL(*this, "CoordinateFieldChooserPanel",wxPanel);
@@ -3091,28 +3070,31 @@ void SetGraphic(Cmiss_graphic *graphic)
 		region_tree_viewer->current_graphic);
 	coordinate_system_chooser->set_value(coordinate_system);
 
-
 	constantradiustextctrl=XRCCTRL(*this, "ConstantRadiusTextCtrl",wxTextCtrl);
 	wxStaticText *radiusscalartext=XRCCTRL(*this, "RadiusScalarText",wxStaticText);
 	scalefactorstextctrl=XRCCTRL(*this,"ScaleFactorsTextCtrl",wxTextCtrl);
 	radius_scalar_chooser_panel=XRCCTRL(*this, "RadiusScalarChooserPanel",wxPanel);
 	constantradius = XRCCTRL(*this,"ConstantRadiusText",wxStaticText);
 	scalefactor = XRCCTRL(*this,"ScaleFactorLabel", wxStaticText);
-	if ((CMISS_GRAPHIC_CYLINDERS==region_tree_viewer->current_graphic_type)&&
-		Cmiss_graphic_get_radius_parameters(graphic,
-		&constant_radius,&scale_factor,&radius_scalar_field))
+	if (CMISS_GRAPHIC_CYLINDERS==region_tree_viewer->current_graphic_type)
 	{
+		double baseSize, scaleFactor;
+		Cmiss_graphic_line_attributes_get_base_size(line_attributes, 1, &baseSize);
+		Cmiss_graphic_line_attributes_get_scale_factors(line_attributes, 1, &scaleFactor);
+		const double radiusBaseSize = 0.5*baseSize;
+		const double radiusScaleFactor = 0.5*scaleFactor;
+		Cmiss_field_id orientationScaleField =
+			Cmiss_graphic_line_attributes_get_orientation_scale_field(line_attributes);
 		constantradiustextctrl->Show();
 		radiusscalartext->Show();
 		scalefactorstextctrl->Show();
 		constantradius->Show();
 		radius_scalar_chooser_panel->Show();
 		scalefactor->Show();
-		sprintf(temp_string,"%g",constant_radius);
+		sprintf(temp_string,"%g",radiusBaseSize);
 		constantradiustextctrl->SetValue(wxString::FromAscii(temp_string));
-		sprintf(temp_string,"%g",scale_factor);
+		sprintf(temp_string,"%g",radiusScaleFactor);
 		scalefactorstextctrl->SetValue(wxString::FromAscii(temp_string));
-
 		if (radius_scalar_chooser == NULL)
 		{
 			radius_scalar_chooser =
@@ -3127,8 +3109,8 @@ void SetGraphic(Cmiss_graphic *graphic)
 			radius_scalar_chooser_panel->Fit();
 			radius_scalar_chooser->include_null_item(true);
 		}
-		radius_scalar_chooser->set_object(radius_scalar_field);
-		if ((struct Computed_field *)NULL!=radius_scalar_field)
+		radius_scalar_chooser->set_object(orientationScaleField);
+		if (0 != orientationScaleField)
 		{
 			scalefactorstextctrl->Enable();
 		}
@@ -3136,6 +3118,7 @@ void SetGraphic(Cmiss_graphic *graphic)
 		{
 			scalefactorstextctrl->Disable();
 		}
+		Cmiss_field_destroy(&orientationScaleField);
 	}
 	else
 	{
@@ -3400,8 +3383,6 @@ void SetGraphic(Cmiss_graphic *graphic)
 		fonttext=XRCCTRL(*this,"FontText",wxStaticText);
 		font_chooser_panel = XRCCTRL(*this,"FontChooserPanel",wxPanel);
 		wxStaticText *labeltext = XRCCTRL(*this,"LabelText",wxStaticText);
-		Cmiss_graphic_point_attributes_id point_attributes =
-			Cmiss_graphic_get_point_attributes(graphic);
 		if (point_attributes)
 		{
 			Cmiss_field_id label_field = Cmiss_graphic_point_attributes_get_label_field(point_attributes);
@@ -3452,7 +3433,6 @@ void SetGraphic(Cmiss_graphic *graphic)
 					font_chooser_panel->Disable();
 			}
 			Cmiss_graphics_font_destroy(&font);
-			Cmiss_graphic_point_attributes_destroy(&point_attributes);
 		}
 		else
 		{
@@ -3817,68 +3797,71 @@ void SetGraphic(Cmiss_graphic *graphic)
 		reversecheckbox=XRCCTRL(*this,"ReverseCheckBox",wxCheckBox);
 
 		if (CMISS_GRAPHIC_STREAMLINES==region_tree_viewer->current_graphic_type)
+		{
+			float streamline_length;
+			streamtypetext->Show();
+			streamline_type_chooser_panel->Show();
+			streamlengthtext->Show();
+			lengthtextctrl->Show();
+			streamwidthtext->Show();
+			widthtextctrl->Show();
+			streamvectortext->Show();
+			stream_vector_chooser_panel->Show();
+			reversecheckbox->Show();
+			Cmiss_graphic_get_streamline_parameters(graphic,
+				&streamline_type,&stream_vector_field,&reverse_track,
+				&streamline_length);
+			if (streamline_type_chooser == NULL)
 			{
-				streamtypetext->Show();
-				streamline_type_chooser_panel->Show();
-				streamlengthtext->Show();
-				lengthtextctrl->Show();
-				streamwidthtext->Show();
-				widthtextctrl->Show();
-				streamvectortext->Show();
-				stream_vector_chooser_panel->Show();
-				reversecheckbox->Show();
-				Cmiss_graphic_get_streamline_parameters(graphic,
-					&streamline_type,&stream_vector_field,&reverse_track,
-					&streamline_length,&streamline_width);
-				if (streamline_type_chooser == NULL)
-				{
-					streamline_type_chooser =
-							new Enumerator_chooser<ENUMERATOR_TYPE_CLASS(Streamline_type)>
-							(streamline_type_chooser_panel, streamline_type,
-								(ENUMERATOR_CONDITIONAL_FUNCTION(Streamline_type) *)NULL,
-								(void *)NULL, region_tree_viewer->user_interface);
-					streamline_type_chooser_panel->Fit();
-					Callback_base< enum Streamline_type > *streamline_type_callback =
-							new Callback_member_callback< enum Streamline_type,
-							wxRegionTreeViewer, int (wxRegionTreeViewer::*)(enum Streamline_type) >
-							(this, &wxRegionTreeViewer::streamline_type_callback);
-					streamline_type_chooser->set_callback(streamline_type_callback);
-				}
-				streamline_type_chooser->set_value(streamline_type);
-				sprintf(temp_string,"%g",streamline_length);
-				lengthtextctrl->SetValue(wxString::FromAscii(temp_string));
-				sprintf(temp_string,"%g",streamline_width);
-				widthtextctrl->SetValue(wxString::FromAscii(temp_string));
-				if (stream_vector_chooser == NULL)
-				{
-					stream_vector_chooser =
-							new Managed_object_chooser<Computed_field,MANAGER_CLASS(Computed_field)>
-							(stream_vector_chooser_panel, stream_vector_field, region_tree_viewer->field_manager,
-								Computed_field_is_stream_vector_capable, (void *)NULL,
-								region_tree_viewer->user_interface);
-					Callback_base< Computed_field* > *stream_vector_callback =
-							new Callback_member_callback< Computed_field*,
-							wxRegionTreeViewer, int (wxRegionTreeViewer::*)(Computed_field *) >
-							(this, &wxRegionTreeViewer::stream_vector_callback);
-					stream_vector_chooser->set_callback(stream_vector_callback);
-					stream_vector_chooser_panel->Fit();
-					stream_vector_chooser->include_null_item(true);
-				}
-				stream_vector_chooser->set_object(stream_vector_field);
-				reversecheckbox->SetValue(reverse_track);
+				streamline_type_chooser =
+						new Enumerator_chooser<ENUMERATOR_TYPE_CLASS(Streamline_type)>
+						(streamline_type_chooser_panel, streamline_type,
+							(ENUMERATOR_CONDITIONAL_FUNCTION(Streamline_type) *)NULL,
+							(void *)NULL, region_tree_viewer->user_interface);
+				streamline_type_chooser_panel->Fit();
+				Callback_base< enum Streamline_type > *streamline_type_callback =
+						new Callback_member_callback< enum Streamline_type,
+						wxRegionTreeViewer, int (wxRegionTreeViewer::*)(enum Streamline_type) >
+						(this, &wxRegionTreeViewer::streamline_type_callback);
+				streamline_type_chooser->set_callback(streamline_type_callback);
 			}
-			else
+			streamline_type_chooser->set_value(streamline_type);
+			sprintf(temp_string,"%g",streamline_length);
+			lengthtextctrl->SetValue(wxString::FromAscii(temp_string));
+			double baseSize = 0;
+			Cmiss_graphic_line_attributes_get_base_size(line_attributes, 1, &baseSize);
+			sprintf(temp_string, "%g", baseSize);
+			widthtextctrl->SetValue(wxString::FromAscii(temp_string));
+			if (stream_vector_chooser == NULL)
 			{
-				streamtypetext->Hide();
-				streamline_type_chooser_panel->Hide();
-				streamlengthtext->Hide();
-				lengthtextctrl->Hide();
-				streamwidthtext->Hide();
-				widthtextctrl->Hide();
-				streamvectortext->Hide();
-				stream_vector_chooser_panel->Hide();
-				reversecheckbox->Hide();
-		   }
+				stream_vector_chooser =
+						new Managed_object_chooser<Computed_field,MANAGER_CLASS(Computed_field)>
+						(stream_vector_chooser_panel, stream_vector_field, region_tree_viewer->field_manager,
+							Computed_field_is_stream_vector_capable, (void *)NULL,
+							region_tree_viewer->user_interface);
+				Callback_base< Computed_field* > *stream_vector_callback =
+						new Callback_member_callback< Computed_field*,
+						wxRegionTreeViewer, int (wxRegionTreeViewer::*)(Computed_field *) >
+						(this, &wxRegionTreeViewer::stream_vector_callback);
+				stream_vector_chooser->set_callback(stream_vector_callback);
+				stream_vector_chooser_panel->Fit();
+				stream_vector_chooser->include_null_item(true);
+			}
+			stream_vector_chooser->set_object(stream_vector_field);
+			reversecheckbox->SetValue(0 != reverse_track);
+		}
+		else
+		{
+			streamtypetext->Hide();
+			streamline_type_chooser_panel->Hide();
+			streamlengthtext->Hide();
+			lengthtextctrl->Hide();
+			streamwidthtext->Hide();
+			widthtextctrl->Hide();
+			streamvectortext->Hide();
+			stream_vector_chooser_panel->Hide();
+			reversecheckbox->Hide();
+		}
 		/* line_width */
 		linewidthtext=XRCCTRL(*this,"LineWidthText",wxStaticText);
 		linewidthtextctrl=XRCCTRL(*this,"LineWidthTextCtrl",wxTextCtrl);
@@ -4116,7 +4099,9 @@ void SetGraphic(Cmiss_graphic *graphic)
 			facecheckbox->Hide();
 			facechoice->Hide();
 		}
-	} /*SetGraphic*/
+		Cmiss_graphic_line_attributes_destroy(&line_attributes);
+		Cmiss_graphic_point_attributes_destroy(&point_attributes);
+} /*SetGraphic*/
 
 const char *GetRegionPathFromTreeItemId(wxTreeItemId current_item_id)
 {
@@ -4386,8 +4371,8 @@ BEGIN_EVENT_TABLE(wxRegionTreeViewer, wxFrame)
 	EVT_BUTTON(XRCID("DelButton"),wxRegionTreeViewer::RemoveFromGraphicList)
 	EVT_BUTTON(XRCID("UpButton"),wxRegionTreeViewer::MoveUpInGraphicList)
 	EVT_BUTTON(XRCID("DownButton"),wxRegionTreeViewer::MoveDownInGraphicList)
-	EVT_TEXT_ENTER(XRCID("ConstantRadiusTextCtrl"), wxRegionTreeViewer::EnterRadius)
-	EVT_TEXT_ENTER(XRCID("ScaleFactorsTextCtrl"), wxRegionTreeViewer::EnterRadius)
+	EVT_TEXT_ENTER(XRCID("ConstantRadiusTextCtrl"), wxRegionTreeViewer::EnterRadiusBaseSize)
+	EVT_TEXT_ENTER(XRCID("ScaleFactorsTextCtrl"), wxRegionTreeViewer::EnterRadiusScaleFactor)
 	EVT_RADIOBUTTON(XRCID("IsoValueListRadioButton"), wxRegionTreeViewer::EnterIsoScalar)
 	EVT_RADIOBUTTON(XRCID("IsoValueSequenceRadioButton"), wxRegionTreeViewer::EnterIsoScalar)
 	EVT_TEXT_ENTER(XRCID("IsoScalarTextCtrl"),wxRegionTreeViewer::EnterIsoScalar)
@@ -4406,8 +4391,8 @@ BEGIN_EVENT_TABLE(wxRegionTreeViewer, wxFrame)
 	EVT_TEXT_ENTER(XRCID("CircleDiscretizationTextCtrl"),wxRegionTreeViewer::EnterCircleDiscretization)
 	EVT_CHECKBOX(XRCID("SeedElementCheckBox"),wxRegionTreeViewer::SeedElementChecked)
 	EVT_TEXT_ENTER(XRCID("XiTextCtrl"),wxRegionTreeViewer::EnterSeedXi)
-	EVT_TEXT_ENTER(XRCID("LengthTextCtrl"),wxRegionTreeViewer::EnterLength)
-	EVT_TEXT_ENTER(XRCID("WidthTextCtrl"),wxRegionTreeViewer::EnterWidth)
+	EVT_TEXT_ENTER(XRCID("LengthTextCtrl"),wxRegionTreeViewer::EnterStreamlineLength)
+	EVT_TEXT_ENTER(XRCID("WidthTextCtrl"),wxRegionTreeViewer::EnterStreamlineWidth)
 	EVT_CHECKBOX(XRCID("ReverseCheckBox"),wxRegionTreeViewer::ReverseChecked)
 	EVT_TEXT_ENTER(XRCID("LineWidthTextCtrl"),wxRegionTreeViewer::EnterLineWidth)
 	EVT_CHECKBOX(XRCID("ExteriorCheckBox"),wxRegionTreeViewer::ExteriorChecked)
