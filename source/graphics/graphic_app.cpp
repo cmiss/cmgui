@@ -111,31 +111,8 @@ int gfx_modify_rendition_graphic(struct Parse_state *state,
 	int return_code = 1;
 	Cmiss_graphics_coordinate_system coordinate_system = Cmiss_graphic_get_coordinate_system(graphic);
 	char *font_name = (char *)NULL;
-	Cmiss_field_id orientation_scale_field = 0;
-	Cmiss_field_id variable_scale_field = 0;
 	Cmiss_field_id xi_point_density_field = 0;
-	GT_object *glyph = 0;
-	Triple glyph_offset, glyph_scale_factors, glyph_size;
-	enum Graphic_glyph_scaling_mode glyph_scaling_mode = GRAPHIC_GLYPH_SCALING_GENERAL;
-	const char *glyph_scaling_mode_string = 0;
-	if (Cmiss_graphic_type_uses_attribute(graphic_type, CMISS_GRAPHIC_ATTRIBUTE_GLYPH))
-	{
-		Cmiss_graphic_get_glyph_parameters(graphic,
-			&glyph, &glyph_scaling_mode, glyph_offset, glyph_size,
-			&orientation_scale_field, glyph_scale_factors,
-			&variable_scale_field);
-		if (glyph)
-			ACCESS(GT_object)(glyph);
-		if (orientation_scale_field)
-		{
-			ACCESS(Computed_field)(orientation_scale_field);
-		}
-		if (variable_scale_field)
-		{
-			ACCESS(Computed_field)(variable_scale_field);
-		}
-		glyph_scaling_mode_string = ENUMERATOR_STRING(Graphic_glyph_scaling_mode)(glyph_scaling_mode);
-	}
+
 	enum Use_element_type use_element_type;
 	const char *use_element_type_string = 0;
 	if (Cmiss_graphic_type_uses_attribute(graphic_type, CMISS_GRAPHIC_ATTRIBUTE_USE_ELEMENT_TYPE))
@@ -196,11 +173,20 @@ int gfx_modify_rendition_graphic(struct Parse_state *state,
 		DEALLOCATE(valid_strings);
 	}
 
-	/* centre */
-	if (Cmiss_graphic_type_uses_attribute(graphic_type, CMISS_GRAPHIC_ATTRIBUTE_GLYPH))
+	/* glyph centre: note equal to negative of point_offset! */
+	int three = 3;
+	double glyph_centre[3];
+	if (point_attributes)
 	{
-		Option_table_add_entry(option_table,"centre",glyph_offset,
-			&(number_of_components),set_reversed_float_vector);
+		Cmiss_graphic_point_attributes_get_offset(point_attributes, 3, glyph_centre);
+		for (int i = 0; i < 3; i++)
+		{
+			if (glyph_centre[i] != 0.0)
+			{
+				glyph_centre[i] = -glyph_centre[i];
+			}
+		}
+		Option_table_add_double_vector_entry(option_table, "centre", glyph_centre, &three);
 	}
 
 	/* circle_discretization */
@@ -323,22 +309,21 @@ int gfx_modify_rendition_graphic(struct Parse_state *state,
 	}
 
 	/* glyph */
-	if (Cmiss_graphic_type_uses_attribute(graphic_type, CMISS_GRAPHIC_ATTRIBUTE_GLYPH))
+	GT_object *glyph = 0;
+	if (point_attributes)
 	{
+		glyph = Cmiss_graphic_point_attributes_get_glyph(point_attributes);
 		Option_table_add_entry(option_table,"glyph",&glyph,
 			rendition_command_data->glyph_manager,set_Graphics_object);
 	}
 
-	/* glyph scaling mode constant/scalar/vector/axes/general */
+	/* deprecated: glyph scaling mode constant/scalar/vector/axes/general */
+	const char *deprecated_glyph_scaling_mode_strings[] = { "constant", "scalar", "vector", "axes", "general" };
+	const char *glyph_scaling_mode_string = 0;
 	if (Cmiss_graphic_type_uses_attribute(graphic_type, CMISS_GRAPHIC_ATTRIBUTE_GLYPH))
 	{
-		valid_strings = ENUMERATOR_GET_VALID_STRINGS(Graphic_glyph_scaling_mode)(
-			&number_of_valid_strings,
-			(ENUMERATOR_CONDITIONAL_FUNCTION(Graphic_glyph_scaling_mode) *)NULL,
-			(void *)NULL);
-		Option_table_add_enumerator(option_table, number_of_valid_strings,
-			valid_strings, &glyph_scaling_mode_string);
-		DEALLOCATE(valid_strings);
+		Option_table_add_enumerator(option_table, /*number_of_valid_strings*/5,
+			deprecated_glyph_scaling_mode_strings, &glyph_scaling_mode_string);
 	}
 
 	/* iso_scalar */
@@ -435,12 +420,14 @@ int gfx_modify_rendition_graphic(struct Parse_state *state,
 	}
 
 	/* orientation */
+	Cmiss_field_id orientation_scale_field = 0;
 	Set_Computed_field_conditional_data set_orientation_scale_field_data;
 	set_orientation_scale_field_data.computed_field_manager = rendition_command_data->computed_field_manager;
 	set_orientation_scale_field_data.conditional_function = Computed_field_is_orientation_scale_capable;
 	set_orientation_scale_field_data.conditional_function_user_data = (void *)NULL;
-	if (Cmiss_graphic_type_uses_attribute(graphic_type, CMISS_GRAPHIC_ATTRIBUTE_GLYPH))
+	if (point_attributes)
 	{
+		orientation_scale_field = Cmiss_graphic_point_attributes_get_orientation_scale_field(point_attributes);
 		Option_table_add_Computed_field_conditional_entry(option_table, "orientation",
 			&orientation_scale_field, &set_orientation_scale_field_data);
 	}
@@ -501,11 +488,13 @@ int gfx_modify_rendition_graphic(struct Parse_state *state,
 			&radius_scale_factor, NULL, set_double);
 	}
 
-	/* scale_factors */
-	if (Cmiss_graphic_type_uses_attribute(graphic_type, CMISS_GRAPHIC_ATTRIBUTE_GLYPH))
+	/* glyph scale_factors */
+	double glyph_scale_factors[3];
+	if (point_attributes)
 	{
-		Option_table_add_special_float3_entry(option_table,"scale_factors",
-			glyph_scale_factors,"*");
+		Cmiss_graphic_point_attributes_get_scale_factors(point_attributes, 3, glyph_scale_factors);
+		Option_table_add_special_double3_entry(option_table, "scale_factors",
+			glyph_scale_factors, "*");
 	}
 
 	/* secondary_material (was: multipass_pass1_material) */
@@ -559,11 +548,13 @@ int gfx_modify_rendition_graphic(struct Parse_state *state,
 		rendition_command_data->graphical_material_manager,
 		set_Graphical_material);
 
-	/* size */
-	if (Cmiss_graphic_type_uses_attribute(graphic_type, CMISS_GRAPHIC_ATTRIBUTE_GLYPH))
+	/* glyph base size */
+	double glyph_base_size[3];
+	if (point_attributes)
 	{
-		Option_table_add_special_float3_entry(option_table,"size",
-			glyph_size,"*");
+		Cmiss_graphic_point_attributes_get_base_size(point_attributes, 3, glyph_base_size);
+		Option_table_add_special_double3_entry(option_table, "size",
+			glyph_base_size, "*");
 	}
 
 	/* spectrum */
@@ -613,14 +604,16 @@ int gfx_modify_rendition_graphic(struct Parse_state *state,
 	}
 
 	/* variable_scale */
-	Set_Computed_field_conditional_data set_variable_scale_field_data;
-	set_variable_scale_field_data.computed_field_manager = rendition_command_data->computed_field_manager;
-	set_variable_scale_field_data.conditional_function = Computed_field_has_up_to_3_numerical_components;
-	set_variable_scale_field_data.conditional_function_user_data = (void *)NULL;
-	if (Cmiss_graphic_type_uses_attribute(graphic_type, CMISS_GRAPHIC_ATTRIBUTE_GLYPH))
+	Cmiss_field_id signed_scale_field = 0;
+	Set_Computed_field_conditional_data set_signed_scale_field_data;
+	set_signed_scale_field_data.computed_field_manager = rendition_command_data->computed_field_manager;
+	set_signed_scale_field_data.conditional_function = Computed_field_has_up_to_3_numerical_components;
+	set_signed_scale_field_data.conditional_function_user_data = (void *)NULL;
+	if (point_attributes)
 	{
+		signed_scale_field = Cmiss_graphic_point_attributes_get_signed_scale_field(point_attributes);
 		Option_table_add_Computed_field_conditional_entry(option_table, "variable_scale",
-			&variable_scale_field, &set_variable_scale_field_data);
+			&signed_scale_field, &set_signed_scale_field_data);
 	}
 
 	/* vector */
@@ -743,16 +736,22 @@ int gfx_modify_rendition_graphic(struct Parse_state *state,
 					display_message(WARNING_MESSAGE, "Unknown font: %s", font_name);
 				}
 			}
-		}
 
-		if (Cmiss_graphic_type_uses_attribute(graphic_type, CMISS_GRAPHIC_ATTRIBUTE_GLYPH))
-		{
-			STRING_TO_ENUMERATOR(Graphic_glyph_scaling_mode)(
-				glyph_scaling_mode_string, &glyph_scaling_mode);
-			Cmiss_graphic_set_glyph_parameters(graphic,
-				glyph, glyph_scaling_mode, glyph_offset, glyph_size,
-				orientation_scale_field,glyph_scale_factors,
-				variable_scale_field);
+			// ignoring glyph_scaling_mode_string
+			Cmiss_graphic_point_attributes_set_glyph(point_attributes, glyph);
+			Cmiss_graphic_point_attributes_set_orientation_scale_field(point_attributes, orientation_scale_field);
+			// reverse centre to get offset:
+			for (int i = 0; i < 3; i++)
+			{
+				if (glyph_centre[i] != 0.0)
+				{
+					glyph_centre[i] = -glyph_centre[i];
+				}
+			}
+			Cmiss_graphic_point_attributes_set_offset(point_attributes, 3, glyph_centre);
+			Cmiss_graphic_point_attributes_set_base_size(point_attributes, 3, glyph_base_size);
+			Cmiss_graphic_point_attributes_set_scale_factors(point_attributes, 3, glyph_scale_factors);
+			Cmiss_graphic_point_attributes_set_signed_scale_field(point_attributes, signed_scale_field);
 		}
 
 		STRING_TO_ENUMERATOR(Cmiss_graphics_coordinate_system)(
@@ -883,7 +882,7 @@ int gfx_modify_rendition_graphic(struct Parse_state *state,
 	Cmiss_field_destroy(&label_field);
 	Cmiss_field_destroy(&orientation_scale_field);
 	Cmiss_field_destroy(&subgroup_field);
-	Cmiss_field_destroy(&variable_scale_field);
+	Cmiss_field_destroy(&signed_scale_field);
 	Cmiss_field_destroy(&xi_point_density_field);
 	if (font_name)
 	{

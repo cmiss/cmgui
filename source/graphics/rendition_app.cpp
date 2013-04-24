@@ -1,7 +1,9 @@
 
+#include "zinc/graphicsmaterial.h"
 #include "general/debug.h"
 #include "general/message.h"
 #include "command/parser.h"
+#include "graphics/graphics_module.h"
 #include "graphics/scene.h"
 #include "graphics/render_gl.h"
 #include "graphics/auxiliary_graphics_types_app.h"
@@ -479,3 +481,40 @@ int Cmiss_rendition_execute_command(Cmiss_rendition_id rendition, const char *co
 	return return_code;
 }
 
+int Cmiss_rendition_add_glyph(struct Cmiss_rendition *rendition,
+	struct GT_object *glyph, const char *cmiss_graphic_name)
+{
+	int return_code = 0;
+
+	ENTER(Cmiss_rendition_add_glyph);
+	if (rendition && glyph)
+	{
+		if (!FIRST_OBJECT_IN_LIST_THAT(Cmiss_graphic)(Cmiss_graphic_has_name,
+				(void *)cmiss_graphic_name, rendition->list_of_graphics))
+		{
+			Cmiss_rendition_begin_change(rendition);
+			Cmiss_graphic *graphic = Cmiss_rendition_create_graphic(rendition, CMISS_GRAPHIC_POINT);
+			Cmiss_graphic_set_name(graphic, cmiss_graphic_name);
+			Cmiss_graphic_point_attributes_id point_attributes = Cmiss_graphic_get_point_attributes(graphic);
+			Cmiss_graphic_point_attributes_set_glyph(point_attributes, glyph);
+			Cmiss_graphic_point_attributes_destroy(&point_attributes);
+			Cmiss_graphics_material_id material = Cmiss_graphics_material_access(get_GT_object_default_material(glyph));
+			if (material)
+			{
+				Cmiss_graphic_set_material(graphic, material);
+				Cmiss_graphics_material_destroy(&material);
+			}
+			Cmiss_graphic_destroy(&graphic);
+			Cmiss_rendition_end_change(rendition);
+			return_code = 1;
+		}
+		else
+		{
+			display_message(ERROR_MESSAGE,
+				"Cmiss_rendition_add_glyph.  Graphic with the same name alreadu exists");
+		}
+	}
+	LEAVE;
+
+	return return_code;
+}

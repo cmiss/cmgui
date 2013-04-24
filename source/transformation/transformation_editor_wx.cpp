@@ -703,7 +703,16 @@ transformation encoded in 4x4 <transformation_matrix>.
 		temp_state = create_Parse_state(text_entry);
 		if (temp_state != NULL)
 		{
-			set_special_float3(temp_state,scale_factor, const_cast<char *>("*"));
+			double dscale_factor[3];
+			for (int i = 0; i < 3; i++)
+			{
+				dscale_factor[i] = static_cast<double>(scale_factor[i]);
+			}
+			set_special_double3(temp_state, dscale_factor, const_cast<char *>("*"));
+			for (int i = 0; i < 3; i++)
+			{
+				scale_factor[i] = static_cast<GLfloat>(dscale_factor[i]);
+			}
 		}
 		DEALLOCATE(text_entry);
 	}

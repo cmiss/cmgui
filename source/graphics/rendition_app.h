@@ -25,4 +25,11 @@ int Cmiss_rendition_list_contents(struct Cmiss_rendition *rendition);
 int Cmiss_rendition_execute_command_internal(Cmiss_rendition_id rendition,
 	Cmiss_field_group_id group, struct Parse_state *state);
 
+/**
+ * Convenience function for drawing a glyph as a point graphic with the
+ * given name using all other defaults.
+ */
+int Cmiss_rendition_add_glyph(struct Cmiss_rendition *rendition,
+	struct GT_object *glyph, const char *cmiss_graphic_name);
+
 #endif

@@ -19,7 +19,7 @@ Provides the wxWidgets interface to manipulate spectrum settings.
 #include "zinc/rendition.h"
 #include "command/parser.h"
 #include "general/debug.h"
-#include "graphics/rendition.h"
+#include "graphics/rendition_app.h"
 #include "graphics/graphic.h"
 #include "graphics/graphics_module.h"
 #include "graphics/scene.h"

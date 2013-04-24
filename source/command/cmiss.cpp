@@ -6723,22 +6723,18 @@ DESCRIPTION :
 Executes a GFX DRAW command.
 ==============================================================================*/
 {
-	const char *graphic_name;
-	struct GT_object *graphics_object;
 	int return_code;
 	struct Cmiss_command_data *command_data;
 	struct Option_table *option_table;
-	struct Scene *scene;
-	char *region_path = NULL;
 
 	ENTER(execute_command_gfx_draw);
 	USE_PARAMETER(dummy_to_be_modified);
 	if (state && (command_data=(struct Cmiss_command_data *)command_data_void))
 	{
-		/* initialize defaults */
-		graphics_object = (struct GT_object *)NULL;
-		scene = ACCESS(Scene)(command_data->default_scene);
-		graphic_name = NULL;
+		GT_object *graphics_object = 0;
+		Cmiss_scene_id scene = Cmiss_scene_access(command_data->default_scene);
+		char *graphic_name = 0;
+		char *region_path = 0;
 		option_table=CREATE(Option_table)();
 		/* as */
 		Option_table_add_entry(option_table,"as",&graphic_name,
@@ -6761,11 +6757,16 @@ Executes a GFX DRAW command.
 		{
 			if (graphics_object)
 			{
-				if (scene)
+				if (!graphic_name)
 				{
-					return_code = Scene_add_graphics_object(scene, graphics_object,
-						graphic_name);
+					GET_NAME(GT_object)(graphics_object, &graphic_name);
 				}
+				Cmiss_region_id region = Cmiss_scene_get_region(scene);
+				Cmiss_rendition_id rendition =
+					Cmiss_graphics_module_get_rendition(command_data->graphics_module, region);
+				return_code = Cmiss_rendition_add_glyph(rendition, graphics_object, graphic_name);
+				Cmiss_rendition_destroy(&rendition);
+				Cmiss_region_destroy(&region);
 			}
 			else if (region_path)
 			{
@@ -6775,10 +6776,7 @@ Executes a GFX DRAW command.
 			}
 		} /* parse error,help */
 		DESTROY(Option_table)(&option_table);
-		if (scene)
-		{
-			DEACCESS(Scene)(&scene);
-		}
+		Cmiss_scene_destroy(&scene);
 		if (region_path)
 		{
 			DEALLOCATE(region_path);

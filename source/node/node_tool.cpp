@@ -1466,7 +1466,6 @@ release.
 ==============================================================================*/
 {
 	double d;
-	enum Graphic_glyph_scaling_mode glyph_scaling_mode;
 	enum Interactive_event_type event_type;
 	FE_value time;
 	int clear_selection,input_modifier,return_code,shift_pressed;
@@ -1474,7 +1473,6 @@ release.
 	struct FE_node *picked_node;
 	struct Cmiss_rendition *rendition = NULL, *rendition_element = NULL;
 	struct Cmiss_graphic *graphic = NULL, *graphic_element = NULL;
-	struct GT_object *glyph;
 	struct Interaction_volume *interaction_volume,*temp_interaction_volume;
 	struct LIST(Scene_picked_object) *scene_picked_object_list;
 	struct Node_tool *node_tool;
@@ -1749,24 +1747,40 @@ release.
 									edit_info.glyph_size[1] = 1.0;
 									edit_info.glyph_size[2] = 1.0;
 								}
-								else if (Cmiss_graphic_get_glyph_parameters(
-									node_tool->graphic, &glyph, &glyph_scaling_mode,
-									edit_info.glyph_centre,edit_info.glyph_size,
-									&(edit_info.orientation_scale_field),
-									edit_info.glyph_scale_factors,
-									&(edit_info.variable_scale_field)))
-								{
-									if (edit_info.orientation_scale_field)
-									{
-										edit_info.wrapper_orientation_scale_field=
-											Computed_field_begin_wrap_orientation_scale_field(
-												edit_info.orientation_scale_field,
-												edit_info.rc_coordinate_field);
-									}
-								}
 								else
 								{
-									return_code=0;
+									Cmiss_graphic_point_attributes_id point_attributes =
+										Cmiss_graphic_get_point_attributes(node_tool->graphic);
+									if (!point_attributes)
+									{
+										return_code = 0;
+									}
+									Cmiss_field_id orientation_scale_field =
+										Cmiss_graphic_point_attributes_get_orientation_scale_field(point_attributes);
+									if (orientation_scale_field)
+									{
+										edit_info.wrapper_orientation_scale_field = orientation_scale_field;
+										edit_info.wrapper_orientation_scale_field =
+											Computed_field_begin_wrap_orientation_scale_field(
+												orientation_scale_field, edit_info.rc_coordinate_field);
+									}
+									Cmiss_field_id signed_scale_field =
+										Cmiss_graphic_point_attributes_get_signed_scale_field(point_attributes);
+									edit_info.variable_scale_field = signed_scale_field;
+
+									double point_base_size[3], point_offset[3], point_scale_factors[3];
+									Cmiss_graphic_point_attributes_get_base_size(point_attributes, 3, point_base_size);
+									Cmiss_graphic_point_attributes_get_offset(point_attributes, 3, point_offset);
+									Cmiss_graphic_point_attributes_get_scale_factors(point_attributes, 3, point_scale_factors);
+									for (int i = 0; i < 3; ++i)
+									{
+										edit_info.glyph_centre[i] = static_cast<GLfloat>(point_offset[i]);
+										edit_info.glyph_size[i] = static_cast<GLfloat>(point_base_size[i]);
+										edit_info.glyph_scale_factors[i] = static_cast<GLfloat>(point_scale_factors[i]);
+									}
+									Cmiss_field_destroy(&orientation_scale_field);
+									Cmiss_field_destroy(&signed_scale_field);
+									Cmiss_graphic_point_attributes_destroy(&point_attributes);
 								}
 								/* work out scene_object transformation information */
 								if (!node_tool->scene_picked_object)
