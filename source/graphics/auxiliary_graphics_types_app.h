@@ -11,15 +11,11 @@ typedef GLfloat Triple[3];
 
 typedef float Triple[3];
 
-
-int set_exterior(struct Parse_state *state,void *value_address_void,
+/**
+ * A modifier function for setting graphic face type XI1_0, XI1_1 etc.
+ */
+int set_graphic_face_type(struct Parse_state *state, void *face_type_address_void,
 	void *dummy_user_data);
-/*******************************************************************************
-LAST MODIFIED : 29 June 1996
-
-DESCRIPTION :
-A modifier function for setting exterior flag and face number.
-==============================================================================*/
 
 int set_Circle_discretization(struct Parse_state *state,
 	void *circle_discretization_void,void *user_interface_void);

@@ -134,7 +134,6 @@
 #include "general/matrix_vector.h"
 #include "general/multi_range.h"
 #include "general/mystring.h"
-#include "graphics/auxiliary_graphics_types.h"
 #include "graphics/defined_graphics_objects.h"
 #include "graphics/environment_map.h"
 #include "graphics/glyph.h"

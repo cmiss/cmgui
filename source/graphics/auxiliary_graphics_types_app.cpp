@@ -1,5 +1,6 @@
 
 
+#include "zinc/types/graphicid.h"
 
 #include "command/parser.h"
 
@@ -13,121 +14,77 @@
 #include "user_interface/user_interface.h"
 #include "graphics/auxiliary_graphics_types.h"
 
-int set_exterior(struct Parse_state *state,void *value_address_void,
+int set_graphic_face_type(struct Parse_state *state, void *face_type_address_void,
 	void *dummy_user_data)
-/*******************************************************************************
-LAST MODIFIED : 8 June 2004
-
-DESCRIPTION :
-A modifier function for setting exterior flag and face number.
-==============================================================================*/
 {
-	const char *current_token;
-	int return_code,*value_address;
-
-	ENTER(set_exterior);
+	int return_code = 1;
 	USE_PARAMETER(dummy_user_data);
-	if (state)
+	enum Cmiss_graphic_face_type *face_type_address =
+		static_cast<Cmiss_graphic_face_type*>(face_type_address_void);
+	if (state && face_type_address)
 	{
-		current_token=state->current_token;
+		const char *current_token = state->current_token;
 		if (current_token)
 		{
 			if (strcmp(PARSER_HELP_STRING,current_token)&&
 				strcmp(PARSER_RECURSIVE_HELP_STRING,current_token))
 			{
-				value_address=(int *)value_address_void;
-				if (value_address)
+				/*???DB.  Only valid for cubes (not polygons) */
+				if (fuzzy_string_compare(current_token,"XI1_0"))
 				{
-					return_code=1;
-					/*???DB.  Only valid for cubes (not polygons) */
-					if (fuzzy_string_compare(current_token,"XI1_0"))
-					{
-						*value_address=0;
-						shift_Parse_state(state,1);
-					}
-					else
-					{
-						if (fuzzy_string_compare(current_token,"XI1_1"))
-						{
-							*value_address=1;
-							shift_Parse_state(state,1);
-						}
-						else
-						{
-							if (fuzzy_string_compare(current_token,"XI2_0"))
-							{
-								*value_address=2;
-								shift_Parse_state(state,1);
-							}
-							else
-							{
-								if (fuzzy_string_compare(current_token,"XI2_1"))
-								{
-									*value_address=3;
-									shift_Parse_state(state,1);
-								}
-								else
-								{
-									if (fuzzy_string_compare(current_token,"XI3_0"))
-									{
-										*value_address=4;
-										shift_Parse_state(state,1);
-									}
-									else
-									{
-										if (fuzzy_string_compare(current_token,"XI3_1"))
-										{
-											*value_address=5;
-											shift_Parse_state(state,1);
-										}
-										else
-										{
-											*value_address=-1;
-										}
-									}
-								}
-							}
-						}
-					}
+					*face_type_address = CMISS_GRAPHIC_FACE_XI1_0;
+					shift_Parse_state(state,1);
+				}
+				else if (fuzzy_string_compare(current_token,"XI1_1"))
+				{
+					*face_type_address = CMISS_GRAPHIC_FACE_XI1_1;
+					shift_Parse_state(state,1);
+				}
+				else if (fuzzy_string_compare(current_token,"XI2_0"))
+				{
+					*face_type_address = CMISS_GRAPHIC_FACE_XI2_0;
+					shift_Parse_state(state,1);
+				}
+				else if (fuzzy_string_compare(current_token,"XI2_1"))
+				{
+					*face_type_address = CMISS_GRAPHIC_FACE_XI2_1;
+					shift_Parse_state(state,1);
+				}
+				else if (fuzzy_string_compare(current_token,"XI3_0"))
+				{
+					*face_type_address = CMISS_GRAPHIC_FACE_XI3_0;
+					shift_Parse_state(state,1);
+				}
+				else if (fuzzy_string_compare(current_token,"XI3_1"))
+				{
+					*face_type_address = CMISS_GRAPHIC_FACE_XI3_1;
+					shift_Parse_state(state,1);
 				}
 				else
 				{
-					display_message(ERROR_MESSAGE,"set_exterior.  Missing value_address");
-					return_code=0;
+					display_message(ERROR_MESSAGE, "set_graphic_face_type.  Invalid face type %s", current_token);
+					return_code = 0;
 				}
 			}
 			else
 			{
 				display_message(INFORMATION_MESSAGE,
 					" <xi1_0|xi1_1|xi2_0|xi2_1|xi3_0|xi3_1>");
-				return_code=1;
 			}
 		}
 		else
 		{
-			value_address=(int *)value_address_void;
-			if (value_address)
-			{
-				*value_address=1;
-				return_code=1;
-			}
-			else
-			{
-				display_message(ERROR_MESSAGE,"set_exterior.  Missing value_address");
-				return_code=0;
-			}
+			display_message(ERROR_MESSAGE, "set_graphic_face_type.  Missing face type");
+			return_code = 0;
 		}
 	}
 	else
 	{
-		display_message(ERROR_MESSAGE,"set_exterior.  Missing state");
-		return_code=0;
+		display_message(ERROR_MESSAGE,"set_graphic_face_type.  Invalid argument(s)");
+		return_code = 0;
 	}
-	LEAVE;
-
 	return (return_code);
-} /* set_exterior */
-
+}
 
 int set_Circle_discretization(struct Parse_state *state,
 	void *circle_discretization_void,void *user_interface_void)

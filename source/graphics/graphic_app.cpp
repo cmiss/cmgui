@@ -252,10 +252,12 @@ int gfx_modify_rendition_graphic(struct Parse_state *state,
 	}
 
 	/* face */
+	enum Cmiss_graphic_face_type face_type = CMISS_GRAPHIC_FACE_ALL;
 	if (Cmiss_graphic_type_uses_attribute(graphic_type, CMISS_GRAPHIC_ATTRIBUTE_FACE))
 	{
-		Option_table_add_entry(option_table,"face",&(graphic->face),
-			NULL,set_exterior);
+		face_type = Cmiss_graphic_get_face(graphic);
+		Option_table_add_entry(option_table,"face", &face_type,
+			NULL, set_graphic_face_type);
 	}
 
 	/* first_iso_value */
@@ -621,6 +623,10 @@ int gfx_modify_rendition_graphic(struct Parse_state *state,
 		Cmiss_graphic_set_data_field(graphic, data_field);
 		bool use_spectrum = (0 != data_field);
 		Cmiss_graphic_set_exterior(graphic, static_cast<int>(exterior_flag));
+		if (Cmiss_graphic_type_uses_attribute(graphic_type, CMISS_GRAPHIC_ATTRIBUTE_FACE))
+		{
+			 Cmiss_graphic_set_face(graphic, face_type);
+		}
 		Cmiss_graphic_set_tessellation(graphic, tessellation);
 
 		if (iso_surface)
