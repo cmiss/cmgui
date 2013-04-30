@@ -45,8 +45,9 @@ codes used to build scene editor with wxWidgets.
 #if 1
 #include "configure/cmgui_configure.h"
 #endif
+#include <cstdio>
 #include <string>
-#include <stdio.h>
+#include <vector>
 
 #include "zinc/rendition.h"
 #include "zinc/graphic.h"
@@ -754,13 +755,13 @@ public:
 		wxCommandEventHandler(wxRegionTreeViewer::EnterIsoScalar),
 		NULL, this);
 	XRCCTRL(*this,"IsoValueSequenceNumberTextCtrl", wxTextCtrl)->Connect(wxEVT_KILL_FOCUS,
-		wxCommandEventHandler(wxRegionTreeViewer::EnterIsoScalar),
+		wxCommandEventHandler(wxRegionTreeViewer::EnterIsoRange),
 		NULL, this);
 	XRCCTRL(*this,"IsoValueSequenceFirstTextCtrl", wxTextCtrl)->Connect(wxEVT_KILL_FOCUS,
-		wxCommandEventHandler(wxRegionTreeViewer::EnterIsoScalar),
+		wxCommandEventHandler(wxRegionTreeViewer::EnterIsoRange),
 		NULL, this);
 	XRCCTRL(*this,"IsoValueSequenceLastTextCtrl", wxTextCtrl)->Connect(wxEVT_KILL_FOCUS,
-		wxCommandEventHandler(wxRegionTreeViewer::EnterIsoScalar),
+		wxCommandEventHandler(wxRegionTreeViewer::EnterIsoRange),
 		NULL, this);
 	XRCCTRL(*this,"OffsetTextCtrl", wxTextCtrl)->Connect(wxEVT_KILL_FOCUS,
 		wxCommandEventHandler(wxRegionTreeViewer::EnterGlyphOffset),
@@ -1094,10 +1095,10 @@ int radius_scalar_callback(Computed_field *radius_scalar_field)
  */
 int iso_scalar_callback(Computed_field *iso_scalar_field)
 {
-	Cmiss_graphic_iso_surface_id iso_surface_graphic =
+	Cmiss_graphic_iso_surface_id iso_surfaces =
 		Cmiss_graphic_cast_iso_surface(region_tree_viewer->current_graphic);
-	Cmiss_graphic_iso_surface_set_iso_scalar_field(iso_surface_graphic, iso_scalar_field);
-	Cmiss_graphic_iso_surface_destroy(&iso_surface_graphic);
+	Cmiss_graphic_iso_surface_set_iso_scalar_field(iso_surfaces, iso_scalar_field);
+	Cmiss_graphic_iso_surface_destroy(&iso_surfaces);
 	Region_tree_viewer_autoapply(region_tree_viewer->rendition,
 		region_tree_viewer->edit_rendition);
 	//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphic);
@@ -2179,193 +2180,161 @@ void MoveUpInGraphicList(wxCommandEvent &event)
 		//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphic);
 	}
 
-	void EnterIsoScalar(wxCommandEvent &event)
+void EnterIsoScalar(wxCommandEvent &event)
+{
+	USE_PARAMETER(event);
+	if (!(region_tree_viewer && region_tree_viewer->current_graphic))
+		return;
+
+	Cmiss_graphic_iso_surface_id iso_surfaces =
+		Cmiss_graphic_cast_iso_surface(region_tree_viewer->current_graphic);
+
+	isovaluelistradiobutton=XRCCTRL(*this,"IsoValueListRadioButton",wxRadioButton);
+	isoscalartextctrl=XRCCTRL(*this,"IsoScalarTextCtrl",wxTextCtrl);
+
+	if (isovaluelistradiobutton->GetValue())
 	{
-		double *current_iso_values = NULL,decimation_threshold, *iso_values = NULL,
-			current_first_iso_value, current_last_iso_value, first_iso_value = 0.0,
-			last_iso_value = 0.0;
-		char temp_string[50], *vector_temp_string = NULL;
-		int allocated_length, changed_value = 0, error, i, length,
-			new_number_of_iso_values, number_of_iso_values,
-			offset, valid_value;
-		struct Computed_field *scalar_field = NULL;
-#define VARIABLE_LENGTH_ALLOCATION_STEP (10)
+		isoscalartextctrl->Enable();
+		isovaluesequencenumbertextctrl->Disable();
+		isovaluesequencefirsttextctrl->Disable();
+		isovaluesequencelasttextctrl->Disable();
 
-	 USE_PARAMETER(event);
-
-		if (region_tree_viewer && region_tree_viewer->current_graphic)
+		wxString wxTextEntry = isoscalartextctrl->GetValue();
+		const char *text_entry = wxTextEntry.mb_str(wxConvUTF8);
+		if (text_entry)
 		{
-			Cmiss_graphic_get_iso_surface_parameters(
-				region_tree_viewer->current_graphic,&scalar_field,&number_of_iso_values,
-				&current_iso_values,
-				&current_first_iso_value, &current_last_iso_value,
-				&decimation_threshold);
-			isovaluelistradiobutton=XRCCTRL(*this,"IsoValueListRadioButton",wxRadioButton);
-			isovaluesequenceradiobutton=XRCCTRL(*this,"IsoValueSequenceRadioButton",wxRadioButton);
-
-			isoscalartextctrl=XRCCTRL(*this,"IsoScalarTextCtrl",wxTextCtrl);
-			isovaluesequencenumbertextctrl=XRCCTRL(*this,"IsoValueSequenceNumberTextCtrl",wxTextCtrl);
-			isovaluesequencefirsttextctrl=XRCCTRL(*this,"IsoValueSequenceFirstTextCtrl",wxTextCtrl);
-			isovaluesequencelasttextctrl=XRCCTRL(*this,"IsoValueSequenceLastTextCtrl",wxTextCtrl);
-
-			if (isovaluelistradiobutton->GetValue())
+			double iso_value;
+			std::vector<double> iso_values;
+			int valid_value = 1;
+			int offset = 0;
+			int length = 0;
+			while (valid_value)
 			{
-				isoscalartextctrl->Enable();
-				isovaluesequencenumbertextctrl->Disable();
-				isovaluesequencefirsttextctrl->Disable();
-				isovaluesequencelasttextctrl->Disable();
-				wxString wxTextEntry = isoscalartextctrl->GetValue();
-				const char *text_entry = wxTextEntry.mb_str(wxConvUTF8);
-				if (text_entry)
+				if (0 < sscanf(text_entry + offset, "%lg%n", &iso_value, &length))
 				{
-					i = 0;
-					valid_value = 1;
-					changed_value = 0;
-					offset = 0;
-					iso_values = (double *)NULL;
-					allocated_length = 0;
-					while (valid_value)
-					{
-						if (i >= allocated_length)
-						{
-							REALLOCATE(iso_values, iso_values, double,
-								allocated_length + VARIABLE_LENGTH_ALLOCATION_STEP);
-							allocated_length += VARIABLE_LENGTH_ALLOCATION_STEP;
-						}
-						if (0 < sscanf(text_entry+offset,"%lg%n",&iso_values[i], &length))
-						{
-							offset += length;
-							if ((i >= number_of_iso_values) || (!current_iso_values) ||
-								(iso_values[i] != current_iso_values[i]))
-							{
-								changed_value = 1;
-							}
-							i++;
-						}
-						else
-						{
-							valid_value = 0;
-						}
-					}
-					if (changed_value || (number_of_iso_values != i))
-					{
-						number_of_iso_values = i;
-						Cmiss_graphic_set_iso_surface_parameters(
-							region_tree_viewer->current_graphic,scalar_field,
-							number_of_iso_values, iso_values,
-							first_iso_value, last_iso_value, decimation_threshold);
-						Region_tree_viewer_autoapply(region_tree_viewer->rendition,
-							region_tree_viewer->edit_rendition);
-						//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphic);		/* inform the client of the change */
-					}
+					offset += length;
+					iso_values.push_back(iso_value);
 				}
 				else
 				{
-					display_message(ERROR_MESSAGE,
-						"EnterIsoScalar.  Missing text");
-				}
-				if (current_iso_values)
-				{
-					DEALLOCATE(current_iso_values);
-				}
-
-				vector_temp_string = (char *)NULL;
-				error = 0;
-				for (i = 0 ; !error && (i < number_of_iso_values) ; i++)
-				{
-					sprintf(temp_string,"%g ",iso_values[i]);
-					append_string(&vector_temp_string, temp_string, &error);
-				}
-				if (vector_temp_string)
-				{
-					isoscalartextctrl->SetValue(wxString::FromAscii(vector_temp_string));
-					DEALLOCATE(vector_temp_string);
-				}
-				if (iso_values)
-				{
-					DEALLOCATE(iso_values);
+					valid_value = 0;
 				}
 			}
-			else if (isovaluesequenceradiobutton->GetValue())
+			Cmiss_graphic_iso_surface_set_iso_values(iso_surfaces, static_cast<int>(iso_values.size()), iso_values.data());
+			Region_tree_viewer_autoapply(region_tree_viewer->rendition,
+				region_tree_viewer->edit_rendition);
+			//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphic);		/* inform the client of the change */
+		}
+		else
+		{
+			display_message(ERROR_MESSAGE, "EnterIsoScalar.  Missing text");
+		}
+
+		// always redisplay current values
+		int number_of_iso_values = Cmiss_graphic_iso_surface_get_iso_values(iso_surfaces, 0, 0);
+		if (number_of_iso_values)
+		{
+			char *vector_temp_string = 0;
+			char temp_string[50];
+			double *iso_values = new double[number_of_iso_values];
+			Cmiss_graphic_iso_surface_get_iso_values(iso_surfaces, number_of_iso_values, iso_values);
+			int error = 0;
+			for (int i = 0 ; !error && (i < number_of_iso_values) ; i++)
 			{
-				if (current_iso_values)
-				{
-					DEALLOCATE(current_iso_values);
-				}
-				isoscalartextctrl->Disable();
-				isovaluesequencenumbertextctrl->Enable();
-				isovaluesequencefirsttextctrl->Enable();
-				isovaluesequencelasttextctrl->Enable();
-				wxString wxTextEntry = isovaluesequencenumbertextctrl->GetValue();
-				const char *text_entry = wxTextEntry.mb_str(wxConvUTF8);
-				if (text_entry)
-				{
-					sscanf(text_entry,"%d",&new_number_of_iso_values);
-				}
-				else
-				{
-					display_message(ERROR_MESSAGE,
-						"EnterIsoScalar.  Missing text");
-				}
-
-				wxTextEntry = isovaluesequencefirsttextctrl->GetValue();
-				text_entry = wxTextEntry.mb_str(wxConvUTF8);
-				if (text_entry)
-				{
-					sscanf(text_entry,"%lg",&first_iso_value);
-				}
-				else
-				{
-					display_message(ERROR_MESSAGE,
-						"EnterIsoScalar.  Missing text");
-				}
-
-				wxTextEntry = isovaluesequencelasttextctrl->GetValue();
-				text_entry = wxTextEntry.mb_str(wxConvUTF8);
-				if (text_entry)
-				{
-					sscanf(text_entry,"%lg",&last_iso_value);
-				}
-				else
-				{
-					display_message(ERROR_MESSAGE,
-						"EnterIsoScalar.  Missing text");
-				}
-
-				if ((changed_value != number_of_iso_values) ||
-					(current_first_iso_value != first_iso_value) ||
-					(current_last_iso_value != last_iso_value))
-				{
-					Cmiss_graphic_set_iso_surface_parameters(
-						region_tree_viewer->current_graphic,scalar_field,
-						new_number_of_iso_values, /*iso value list*/(double *)NULL,
-					first_iso_value, last_iso_value, decimation_threshold);
-
-					/* inform the client of the change */
-					Region_tree_viewer_autoapply(region_tree_viewer->rendition,
-						region_tree_viewer->edit_rendition);
-					//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphic);
-				}
-
-				/* always restore strings to actual value in use */
-				sprintf(temp_string,"%d",new_number_of_iso_values);
-				isovaluesequencenumbertextctrl->SetValue(wxString::FromAscii(temp_string));
-
-				sprintf(temp_string,"%g",first_iso_value);
-				isovaluesequencefirsttextctrl->SetValue(wxString::FromAscii(temp_string));
-
-				sprintf(temp_string,"%g",last_iso_value);
-				isovaluesequencelasttextctrl->SetValue(wxString::FromAscii(temp_string));
-
+				sprintf(temp_string, "%g ", iso_values[i]);
+				append_string(&vector_temp_string, temp_string, &error);
 			}
-			else
+			if (vector_temp_string)
 			{
-				display_message(ERROR_MESSAGE,
-					"EnterIsoScalar.  Missing iso value option.");
-
+				isoscalartextctrl->SetValue(wxString::FromAscii(vector_temp_string));
+				DEALLOCATE(vector_temp_string);
 			}
+			delete[] iso_values;
+		}
+		else
+		{
+			isoscalartextctrl->SetValue(wxString());
 		}
 	}
+	Cmiss_graphic_iso_surface_destroy(&iso_surfaces);
+}
+
+void EnterIsoRange(wxCommandEvent &event)
+{
+	USE_PARAMETER(event);
+	if (!(region_tree_viewer && region_tree_viewer->current_graphic))
+		return;
+
+	Cmiss_graphic_iso_surface_id iso_surfaces =
+		Cmiss_graphic_cast_iso_surface(region_tree_viewer->current_graphic);
+
+	isovaluesequenceradiobutton=XRCCTRL(*this,"IsoValueSequenceRadioButton",wxRadioButton);
+	isovaluesequencenumbertextctrl=XRCCTRL(*this,"IsoValueSequenceNumberTextCtrl",wxTextCtrl);
+	isovaluesequencefirsttextctrl=XRCCTRL(*this,"IsoValueSequenceFirstTextCtrl",wxTextCtrl);
+	isovaluesequencelasttextctrl=XRCCTRL(*this,"IsoValueSequenceLastTextCtrl",wxTextCtrl);
+
+	if (isovaluesequenceradiobutton->GetValue())
+	{
+		int number_of_iso_values = 0;
+		double first_iso_value = 0.0;
+		double last_iso_value = 0.0;
+
+		isoscalartextctrl->Disable();
+		isovaluesequencenumbertextctrl->Enable();
+		isovaluesequencefirsttextctrl->Enable();
+		isovaluesequencelasttextctrl->Enable();
+		wxString wxTextEntry = isovaluesequencenumbertextctrl->GetValue();
+		const char *text_entry = wxTextEntry.mb_str(wxConvUTF8);
+		if (text_entry)
+		{
+			sscanf(text_entry, "%d", &number_of_iso_values);
+		}
+		else
+		{
+			display_message(ERROR_MESSAGE, "EnterIsoRange.  Missing text");
+		}
+
+		wxTextEntry = isovaluesequencefirsttextctrl->GetValue();
+		text_entry = wxTextEntry.mb_str(wxConvUTF8);
+		if (text_entry)
+		{
+			sscanf(text_entry, "%lg", &first_iso_value);
+		}
+		else
+		{
+			display_message(ERROR_MESSAGE, "EnterIsoRange.  Missing text");
+		}
+
+		wxTextEntry = isovaluesequencelasttextctrl->GetValue();
+		text_entry = wxTextEntry.mb_str(wxConvUTF8);
+		if (text_entry)
+		{
+			sscanf(text_entry, "%lg", &last_iso_value);
+		}
+		else
+		{
+			display_message(ERROR_MESSAGE, "EnterIsoRange.  Missing text");
+		}
+
+		Cmiss_graphic_iso_surface_set_iso_range(iso_surfaces,
+			number_of_iso_values, first_iso_value, last_iso_value);
+
+		/* always restore strings to actual value in use */
+		char temp_string[50];
+		sprintf(temp_string, "%d", number_of_iso_values);
+		isovaluesequencenumbertextctrl->SetValue(wxString::FromAscii(temp_string));
+		sprintf(temp_string, "%g", first_iso_value);
+		isovaluesequencefirsttextctrl->SetValue(wxString::FromAscii(temp_string));
+		sprintf(temp_string, "%g", last_iso_value);
+		isovaluesequencelasttextctrl->SetValue(wxString::FromAscii(temp_string));
+
+		/* inform the client of the change */
+		Region_tree_viewer_autoapply(region_tree_viewer->rendition,
+			region_tree_viewer->edit_rendition);
+		//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphic);
+	}
+	Cmiss_graphic_iso_surface_destroy(&iso_surfaces);
+}
 
 void EnterGlyphOffset(wxCommandEvent &event)
 {
@@ -2831,13 +2800,10 @@ void SetBothMaterialChooser(Cmiss_graphic *graphic)
 
 void SetGraphic(Cmiss_graphic *graphic)
 {
-	int error,number_of_iso_values, i,reverse_track,line_width;
+	int error, reverse_track,line_width;
 	Cmiss_graphic_face_type face = CMISS_GRAPHIC_FACE_INVALID;
-	double decimation_threshold, *iso_values, first_iso_value,
-		last_iso_value;
 	char temp_string[50], *vector_temp_string;
-	struct Computed_field *iso_scalar_field,
-		*xi_point_density_field, *stream_vector_field,
+	struct Computed_field *xi_point_density_field, *stream_vector_field,
 		*texture_coord_field;
 	enum Xi_discretization_mode xi_discretization_mode;
 	Triple seed_xi;
@@ -2851,6 +2817,8 @@ void SetGraphic(Cmiss_graphic *graphic)
 		Cmiss_graphic_get_line_attributes(graphic);
 	Cmiss_graphic_point_attributes_id point_attributes =
 		Cmiss_graphic_get_point_attributes(graphic);
+	Cmiss_graphic_iso_surface_id iso_surfaces = 
+		Cmiss_graphic_cast_iso_surface(graphic);
 
 	coordinate_field_chooser_panel =
 		XRCCTRL(*this, "CoordinateFieldChooserPanel",wxPanel);
@@ -2953,7 +2921,7 @@ void SetGraphic(Cmiss_graphic *graphic)
 		constantradius->Hide();
 	}
 
-	//iso-surface
+	// iso-surface
 	iso_scalar_chooser_panel=XRCCTRL(*this, "IsoScalarChooserPanel",wxPanel);
 	isoscalartextctrl = XRCCTRL(*this, "IsoScalarTextCtrl",wxTextCtrl);
 	isoscalartext=XRCCTRL(*this,"IsoScalarText",wxStaticText);
@@ -2967,74 +2935,87 @@ void SetGraphic(Cmiss_graphic *graphic)
 	isovaluesequencefirsttextctrl=XRCCTRL(*this,"IsoValueSequenceFirstTextCtrl",wxTextCtrl);
 	isovaluesequencelasttextctrl=XRCCTRL(*this,"IsoValueSequenceLastTextCtrl",wxTextCtrl);
 
-		if ((CMISS_GRAPHIC_ISO_SURFACES==region_tree_viewer->current_graphic_type)&&
-				Cmiss_graphic_get_iso_surface_parameters(graphic,
-					&iso_scalar_field,&number_of_iso_values,&iso_values,
-					&first_iso_value,&last_iso_value,
-					&decimation_threshold))
-			{
-				iso_scalar_chooser_panel->Show();
-				isoscalartextctrl->Show();
-				isoscalartext->Show();
-				isovalueoptionspane->Show();
-				if (iso_scalar_chooser == NULL)
-				{
-					iso_scalar_chooser =
-							new Managed_object_chooser<Computed_field,MANAGER_CLASS(Computed_field)>
-							(iso_scalar_chooser_panel, iso_scalar_field, region_tree_viewer->field_manager,
-								Computed_field_is_scalar, (void *)NULL, region_tree_viewer->user_interface);
-					Callback_base< Computed_field* > *iso_scalar_callback =
-							new Callback_member_callback< Computed_field*,
-							wxRegionTreeViewer, int (wxRegionTreeViewer::*)(Computed_field *) >
-							(this, &wxRegionTreeViewer::iso_scalar_callback);
-					iso_scalar_chooser->set_callback(iso_scalar_callback);
-					iso_scalar_chooser_panel->Fit();
-					iso_scalar_chooser->include_null_item(true);
-				}
-				if (iso_values)
-				{
-					isovaluelistradiobutton->SetValue(true);
-					isoscalartextctrl->Enable();
-					isovaluesequencenumbertextctrl->Disable();
-					isovaluesequencefirsttextctrl->Disable();
-					isovaluesequencelasttextctrl->Disable();
-					vector_temp_string = (char *)NULL;
-					error = 0;
-					for (i = 0 ; !error && (i < number_of_iso_values) ; i++)
-					{
-						sprintf(temp_string,"%g ",iso_values[i]);
-						append_string(&vector_temp_string, temp_string, &error);
-					}
-					if (vector_temp_string)
-					{
-						isoscalartextctrl ->SetValue(wxString::FromAscii(vector_temp_string));
-						DEALLOCATE(vector_temp_string);
-					}
-					DEALLOCATE(iso_values);
-				}
-				else
-				{
-					isoscalartextctrl->Disable();
-					isovaluesequencenumbertextctrl->Enable();
-					isovaluesequencefirsttextctrl->Enable();
-					isovaluesequencelasttextctrl->Enable();
-					isovaluesequenceradiobutton->SetValue(true);
-					sprintf(temp_string,"%d", number_of_iso_values);
-					isovaluesequencenumbertextctrl->SetValue(wxString::FromAscii(temp_string));
-					sprintf(temp_string,"%g", first_iso_value);
-					isovaluesequencefirsttextctrl->SetValue(wxString::FromAscii(temp_string));
-					sprintf(temp_string,"%g", last_iso_value);
-					isovaluesequencelasttextctrl->SetValue(wxString::FromAscii(temp_string));
-				}
-				iso_scalar_chooser->set_object(iso_scalar_field);
-			}
+	if (iso_surfaces)
+	{
+		Cmiss_field_id iso_scalar_field =
+			Cmiss_graphic_iso_surface_get_iso_scalar_field(iso_surfaces);
+		int number_of_iso_values = Cmiss_graphic_iso_surface_get_iso_values(iso_surfaces, 0, 0);
+		double *iso_values = 0;
+		double first_iso_value, last_iso_value;
+		if (number_of_iso_values)
+		{
+			iso_values = new double[number_of_iso_values];
+			Cmiss_graphic_iso_surface_get_iso_values(iso_surfaces, number_of_iso_values, iso_values);
+		}
 		else
+		{
+			number_of_iso_values = Cmiss_graphic_iso_surface_get_iso_range(iso_surfaces, &first_iso_value, &last_iso_value);
+		}
+		double decimation_threshold = Cmiss_graphic_iso_surface_get_decimation_threshold(iso_surfaces);
+
+		iso_scalar_chooser_panel->Show();
+		isoscalartextctrl->Show();
+		isoscalartext->Show();
+		isovalueoptionspane->Show();
+		if (0 == iso_scalar_chooser)
+		{
+			iso_scalar_chooser =
+					new Managed_object_chooser<Computed_field,MANAGER_CLASS(Computed_field)>
+					(iso_scalar_chooser_panel, iso_scalar_field, region_tree_viewer->field_manager,
+						Computed_field_is_scalar, (void *)NULL, region_tree_viewer->user_interface);
+			Callback_base< Computed_field* > *iso_scalar_callback =
+					new Callback_member_callback< Computed_field*,
+					wxRegionTreeViewer, int (wxRegionTreeViewer::*)(Computed_field *) >
+					(this, &wxRegionTreeViewer::iso_scalar_callback);
+			iso_scalar_chooser->set_callback(iso_scalar_callback);
+			iso_scalar_chooser_panel->Fit();
+			iso_scalar_chooser->include_null_item(true);
+		}
+		if (iso_values)
+		{
+			isovaluelistradiobutton->SetValue(true);
+			isoscalartextctrl->Enable();
+			isovaluesequencenumbertextctrl->Disable();
+			isovaluesequencefirsttextctrl->Disable();
+			isovaluesequencelasttextctrl->Disable();
+			vector_temp_string = (char *)NULL;
+			error = 0;
+			for (int i = 0 ; !error && (i < number_of_iso_values) ; i++)
 			{
-				iso_scalar_chooser_panel->Hide();
-				isoscalartextctrl->Hide();
-				isoscalartext->Hide();
-				isovalueoptionspane->Hide();
+				sprintf(temp_string,"%g ",iso_values[i]);
+				append_string(&vector_temp_string, temp_string, &error);
 			}
+			if (vector_temp_string)
+			{
+				isoscalartextctrl ->SetValue(wxString::FromAscii(vector_temp_string));
+				DEALLOCATE(vector_temp_string);
+			}
+		}
+		else
+		{
+			isoscalartextctrl->Disable();
+			isovaluesequencenumbertextctrl->Enable();
+			isovaluesequencefirsttextctrl->Enable();
+			isovaluesequencelasttextctrl->Enable();
+			isovaluesequenceradiobutton->SetValue(true);
+			sprintf(temp_string,"%d", number_of_iso_values);
+			isovaluesequencenumbertextctrl->SetValue(wxString::FromAscii(temp_string));
+			sprintf(temp_string,"%g", first_iso_value);
+			isovaluesequencefirsttextctrl->SetValue(wxString::FromAscii(temp_string));
+			sprintf(temp_string,"%g", last_iso_value);
+			isovaluesequencelasttextctrl->SetValue(wxString::FromAscii(temp_string));
+		}
+		iso_scalar_chooser->set_object(iso_scalar_field);
+		delete[] iso_values;
+		Cmiss_field_destroy(&iso_scalar_field);
+	}
+	else
+	{
+		iso_scalar_chooser_panel->Hide();
+		isoscalartextctrl->Hide();
+		isoscalartext->Hide();
+		isovalueoptionspane->Hide();
+	}
 
 		/* node_points, data_points, element_points */
 		/* glyphs */
@@ -3930,6 +3911,7 @@ void SetGraphic(Cmiss_graphic *graphic)
 			facecheckbox->Hide();
 			facechoice->Hide();
 		}
+		Cmiss_graphic_iso_surface_destroy(&iso_surfaces);
 		Cmiss_graphic_line_attributes_destroy(&line_attributes);
 		Cmiss_graphic_point_attributes_destroy(&point_attributes);
 } /*SetGraphic*/
@@ -4205,11 +4187,11 @@ BEGIN_EVENT_TABLE(wxRegionTreeViewer, wxFrame)
 	EVT_TEXT_ENTER(XRCID("ConstantRadiusTextCtrl"), wxRegionTreeViewer::EnterRadiusBaseSize)
 	EVT_TEXT_ENTER(XRCID("ScaleFactorsTextCtrl"), wxRegionTreeViewer::EnterRadiusScaleFactor)
 	EVT_RADIOBUTTON(XRCID("IsoValueListRadioButton"), wxRegionTreeViewer::EnterIsoScalar)
-	EVT_RADIOBUTTON(XRCID("IsoValueSequenceRadioButton"), wxRegionTreeViewer::EnterIsoScalar)
+	EVT_RADIOBUTTON(XRCID("IsoValueSequenceRadioButton"), wxRegionTreeViewer::EnterIsoRange)
 	EVT_TEXT_ENTER(XRCID("IsoScalarTextCtrl"),wxRegionTreeViewer::EnterIsoScalar)
-	EVT_TEXT_ENTER(XRCID("IsoValueSequenceNumberTextCtrl"),wxRegionTreeViewer::EnterIsoScalar)
-	EVT_TEXT_ENTER(XRCID("IsoValueSequenceFirstTextCtrl"),wxRegionTreeViewer::EnterIsoScalar)
-	EVT_TEXT_ENTER(XRCID("IsoValueSequenceLastTextCtrl"),wxRegionTreeViewer::EnterIsoScalar)
+	EVT_TEXT_ENTER(XRCID("IsoValueSequenceNumberTextCtrl"),wxRegionTreeViewer::EnterIsoRange)
+	EVT_TEXT_ENTER(XRCID("IsoValueSequenceFirstTextCtrl"),wxRegionTreeViewer::EnterIsoRange)
+	EVT_TEXT_ENTER(XRCID("IsoValueSequenceLastTextCtrl"),wxRegionTreeViewer::EnterIsoRange)
 	EVT_TEXT_ENTER(XRCID("OffsetTextCtrl"),wxRegionTreeViewer::EnterGlyphOffset)
 	EVT_TEXT_ENTER(XRCID("BaseGlyphSizeTextCtrl"),wxRegionTreeViewer::EnterGlyphSize)
 	EVT_TEXT_ENTER(XRCID("GlyphScaleFactorsTextCtrl"),wxRegionTreeViewer::EnterGlyphScale)

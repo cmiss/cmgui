@@ -109,10 +109,30 @@ int gfx_modify_rendition_graphic(struct Parse_state *state,
 	{
 		seed_nodeset_name = Cmiss_nodeset_get_name(graphic->seed_nodeset);
 	}
-	Cmiss_graphic_iso_surface_id iso_surface = Cmiss_graphic_cast_iso_surface(graphic);
+	Cmiss_graphic_iso_surface_id iso_surfaces = Cmiss_graphic_cast_iso_surface(graphic);
 	Cmiss_graphic_line_attributes_id line_attributes = Cmiss_graphic_get_line_attributes(graphic);
 	Cmiss_field_id line_orientation_scale_field = 0;
 	Cmiss_graphic_point_attributes_id point_attributes = Cmiss_graphic_get_point_attributes(graphic);
+
+	Cmiss_field_id iso_scalar_field = 0;
+	int number_of_iso_values = 0;
+	double *iso_values = 0;
+	double last_iso_value = 0;
+	double first_iso_value = 0;
+	int range_number_of_iso_values = 0;
+	double decimation_threshold = 0;
+	if (iso_surfaces)
+	{
+		iso_scalar_field = Cmiss_graphic_iso_surface_get_iso_scalar_field(iso_surfaces);
+		number_of_iso_values = Cmiss_graphic_iso_surface_get_iso_values(iso_surfaces, 0, 0);
+		if (number_of_iso_values)
+		{
+			ALLOCATE(iso_values, double, number_of_iso_values);
+			Cmiss_graphic_iso_surface_get_iso_values(iso_surfaces, number_of_iso_values, iso_values);
+		}
+		range_number_of_iso_values = Cmiss_graphic_iso_surface_get_iso_range(iso_surfaces, &first_iso_value, &last_iso_value);
+		decimation_threshold = Cmiss_graphic_iso_surface_get_decimation_threshold(iso_surfaces);
+	}
 
 	Option_table *option_table = CREATE(Option_table)();
 	if (help_text)
@@ -201,10 +221,10 @@ int gfx_modify_rendition_graphic(struct Parse_state *state,
 		&data_field, &set_data_field_data);
 
 	/* decimation_threshold */
-	if (graphic_type == CMISS_GRAPHIC_ISO_SURFACES)
+	if (iso_surfaces)
 	{
 		Option_table_add_double_entry(option_table, "decimation_threshold",
-			&(graphic->decimation_threshold));
+			&decimation_threshold);
 	}
 
 	/* delete */
@@ -261,10 +281,10 @@ int gfx_modify_rendition_graphic(struct Parse_state *state,
 	}
 
 	/* first_iso_value */
-	if (graphic_type == CMISS_GRAPHIC_ISO_SURFACES)
+	if (iso_surfaces)
 	{
 		Option_table_add_double_entry(option_table,"first_iso_value",
-			&(graphic->first_iso_value));
+			&first_iso_value);
 	}
 
 	/* font */
@@ -293,30 +313,28 @@ int gfx_modify_rendition_graphic(struct Parse_state *state,
 	}
 
 	/* iso_scalar */
-	Cmiss_field_id iso_scalar_field = 0;
 	Set_Computed_field_conditional_data set_iso_scalar_field_data;
 	set_iso_scalar_field_data.computed_field_manager = rendition_command_data->computed_field_manager;
 	set_iso_scalar_field_data.conditional_function = Computed_field_is_scalar;
 	set_iso_scalar_field_data.conditional_function_user_data = (void *)NULL;
-	if (iso_surface)
+	if (iso_surfaces)
 	{
-		iso_scalar_field = Cmiss_graphic_iso_surface_get_iso_scalar_field(iso_surface);
 		Option_table_add_Computed_field_conditional_entry(option_table, "iso_scalar",
 			&iso_scalar_field, &set_iso_scalar_field_data);
 	}
 
 	/* iso_values */
-	if (graphic_type == CMISS_GRAPHIC_ISO_SURFACES)
+	if (iso_surfaces)
 	{
 		Option_table_add_variable_length_double_vector_entry(option_table,
-			"iso_values", &(graphic->number_of_iso_values), &(graphic->iso_values));
+			"iso_values", &number_of_iso_values, &iso_values);
 	}
 
 	/* last_iso_value */
-	if (graphic_type == CMISS_GRAPHIC_ISO_SURFACES)
+	if (iso_surfaces)
 	{
 		Option_table_add_double_entry(option_table,"last_iso_value",
-			&(graphic->last_iso_value));
+			&last_iso_value);
 	}
 
 	/* label */
@@ -416,11 +434,7 @@ int gfx_modify_rendition_graphic(struct Parse_state *state,
 	}
 
 	/* range_number_of_iso_values */
-	/* Use a different temporary storage for this value so we
-		can tell it from the original variable_length array
-		"iso_values" above. */
-	int range_number_of_iso_values = 0;
-	if (graphic_type == CMISS_GRAPHIC_ISO_SURFACES)
+	if (iso_surfaces)
 	{
 		Option_table_add_int_positive_entry(option_table,
 			"range_number_of_iso_values", &range_number_of_iso_values);
@@ -629,7 +643,7 @@ int gfx_modify_rendition_graphic(struct Parse_state *state,
 		}
 		Cmiss_graphic_set_tessellation(graphic, tessellation);
 
-		if (iso_surface)
+		if (iso_surfaces)
 		{
 			if (!iso_scalar_field)
 			{
@@ -637,29 +651,23 @@ int gfx_modify_rendition_graphic(struct Parse_state *state,
 					"gfx_modify_rendition_iso_surfaces.  Missing iso_scalar field");
 				return_code=0;
 			}
-			Cmiss_graphic_iso_surface_set_iso_scalar_field(iso_surface, iso_scalar_field);
-			if (graphic->iso_values)
+			Cmiss_graphic_iso_surface_set_iso_scalar_field(iso_surfaces, iso_scalar_field);
+			if (((0 < range_number_of_iso_values) && iso_values) ||
+				((0 >= range_number_of_iso_values) && (0 == iso_values)))
 			{
-				if (range_number_of_iso_values || graphic->first_iso_value || graphic->last_iso_value)
-				{
-					display_message(ERROR_MESSAGE,
-						"When specifying a list of <iso_values> do not specify <range_number_of_iso_values>, <first_iso_value> or <last_iso_value>.");
-					return_code=0;
-				}
+				display_message(ERROR_MESSAGE,
+					"Must specify either <iso_values> OR <range_number_of_iso_values>, <first_iso_value> and <last_iso_value>.");
+				return_code = 0;
 			}
-			else
+			else if (range_number_of_iso_values)
 			{
-				if (range_number_of_iso_values)
-				{
-					graphic->number_of_iso_values = range_number_of_iso_values;
-				}
-				else
-				{
-					display_message(ERROR_MESSAGE,
-						"You must either specify a list of <iso_values> or a range with <range_number_of_iso_values>, <first_iso_value> or <last_iso_value>.");
-					return_code = 0;
-				}
+				Cmiss_graphic_iso_surface_set_iso_range(iso_surfaces, range_number_of_iso_values, first_iso_value, last_iso_value);
 			}
+			else // if (graphic->iso_values)
+			{
+				Cmiss_graphic_iso_surface_set_iso_values(iso_surfaces, number_of_iso_values, iso_values);
+			}
+			Cmiss_graphic_iso_surface_set_decimation_threshold(iso_surfaces, decimation_threshold);
 		}
 
 		Cmiss_graphic_set_visibility_flag(graphic, visibility);
@@ -863,7 +871,9 @@ int gfx_modify_rendition_graphic(struct Parse_state *state,
 		DEALLOCATE(seed_nodeset_name);
 	}
 	Cmiss_graphic_destroy(&graphic);
-	Cmiss_graphic_iso_surface_destroy(&iso_surface);
+	if (iso_values)
+		DEALLOCATE(iso_values);
+	Cmiss_graphic_iso_surface_destroy(&iso_surfaces);
 	Cmiss_graphic_line_attributes_destroy(&line_attributes);
 	Cmiss_graphic_point_attributes_destroy(&point_attributes);
 	Cmiss_spectrum_destroy(&spectrum);
