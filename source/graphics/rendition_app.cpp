@@ -518,3 +518,41 @@ int Cmiss_rendition_add_glyph(struct Cmiss_rendition *rendition,
 
 	return return_code;
 }
+
+Cmiss_graphic* Cmiss_rendition_create_graphic_app(Cmiss_rendition *rendition,
+	Cmiss_graphic_type graphic_type, Cmiss_graphic *graphic_to_copy)
+{
+	Cmiss_graphic *graphic = CREATE(Cmiss_graphic)(graphic_type);
+	if (graphic_to_copy &&
+		(graphic_type == Cmiss_graphic_get_graphic_type(graphic_to_copy)))
+	{
+		Cmiss_graphic_copy_without_graphics_object(graphic, graphic_to_copy);
+	}
+	else
+	{
+		Cmiss_rendition_set_minimum_graphic_defaults(rendition, graphic);
+		Cmiss_graphic_line_attributes_id line_attributes = Cmiss_graphic_get_line_attributes(graphic);
+		Cmiss_graphic_point_attributes_id point_attributes = Cmiss_graphic_get_point_attributes(graphic);
+		if (graphic_type == CMISS_GRAPHIC_CYLINDERS)
+		{
+			const double two = 2;
+			// default scale factor is 2.0 for radius to diameter conversion
+			Cmiss_graphic_line_attributes_set_scale_factors(line_attributes, 1, &two);
+		}
+		else if (graphic_type == CMISS_GRAPHIC_STREAMLINES)
+		{
+			// use previous default of 1.0 for streamline width
+			const double one = 1.0;
+			Cmiss_graphic_line_attributes_set_base_size(line_attributes, 1, &one);
+		}
+		if (point_attributes)
+		{
+			// use previous default of 1.0 for base size
+			const double one = 1.0;
+			Cmiss_graphic_point_attributes_set_base_size(point_attributes, 1, &one);
+		}
+		Cmiss_graphic_line_attributes_destroy(&line_attributes);
+		Cmiss_graphic_point_attributes_destroy(&point_attributes);
+	}
+	return (graphic);
+}

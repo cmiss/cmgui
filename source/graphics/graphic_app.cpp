@@ -15,6 +15,7 @@
 #include "graphics/graphic.h"
 #include "graphics/render_gl.h"
 #include "graphics/rendition.h"
+#include "graphics/rendition_app.h"
 #include "computed_field/computed_field_finite_element.h"
 #include "graphics/auxiliary_graphics_types_app.h"
 #include "computed_field/computed_field_set.h"
@@ -26,44 +27,6 @@
 #include "graphics/material_app.h"
 #include "finite_element/finite_element_region_app.h"
 #include "graphics/tessellation_app.hpp"
-
-namespace {
-
-/**
- * Makes a new graphic of the supplied graphic_type, optionally a copy of an
- * existing_graphic.
- *
- * @param rendition  Source of graphics defaults if creating a new graphic.
- * @param graphic_type  The type of the new graphic.
- * @param existing_graphic  An existing graphic to copy settings from if of
- * same graphic_type.
- * @return  1 on success, 0 on failure.
- */
-Cmiss_graphic* get_graphic_for_gfx_modify(Cmiss_rendition *rendition,
-	Cmiss_graphic_type graphic_type, Cmiss_graphic *existing_graphic)
-{
-	Cmiss_graphic *graphic = CREATE(Cmiss_graphic)(graphic_type);
-	if (existing_graphic &&
-		(graphic_type == Cmiss_graphic_get_graphic_type(existing_graphic)))
-	{
-		Cmiss_graphic_copy_without_graphics_object(graphic, existing_graphic);
-	}
-	else
-	{
-		Cmiss_rendition_set_graphic_defaults(rendition, graphic);
-		if (graphic_type == CMISS_GRAPHIC_CYLINDERS)
-		{
-			Cmiss_graphic_line_attributes_id line_attributes = Cmiss_graphic_get_line_attributes(graphic);
-			const double two = 2;
-			// default scale factor is 2.0 for radius to diameter conversion
-			Cmiss_graphic_line_attributes_set_scale_factors(line_attributes, 1, &two);
-			Cmiss_graphic_line_attributes_destroy(&line_attributes);
-		}
-	}
-	return (graphic);
-}
-
-} // namespace anonymous
 
 int gfx_modify_rendition_graphic(struct Parse_state *state,
 	enum Cmiss_graphic_type graphic_type, const char *help_text,
@@ -84,8 +47,9 @@ int gfx_modify_rendition_graphic(struct Parse_state *state,
 	}
 	else
 	{
-		graphic = get_graphic_for_gfx_modify(rendition_command_data->rendition,
+		graphic = Cmiss_rendition_create_graphic_app(rendition_command_data->rendition,
 			graphic_type, modify_rendition_data->graphic);
+		Cmiss_rendition_set_graphics_defaults_gfx_modify(rendition_command_data->rendition, graphic);
 		if (modify_rendition_data->group)
 		{
 			Cmiss_field_id subgroup_field = Cmiss_graphic_get_subgroup_field(graphic);

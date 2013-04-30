@@ -32,4 +32,17 @@ int Cmiss_rendition_execute_command_internal(Cmiss_rendition_id rendition,
 int Cmiss_rendition_add_glyph(struct Cmiss_rendition *rendition,
 	struct GT_object *glyph, const char *cmiss_graphic_name);
 
+/**
+ * Makes a new graphic of the supplied graphic_type, optionally a copy of an
+ * existing graphic.
+ *
+ * @param rendition  Source of graphics defaults if creating a new graphic.
+ * @param graphic_type  The type of the new graphic.
+ * @param graphic_to_copy  Optional graphic to copy settings from if of
+ * same graphic_type.
+ * @return  1 on success, 0 on failure.
+ */
+Cmiss_graphic* Cmiss_rendition_create_graphic_app(Cmiss_rendition *rendition,
+	Cmiss_graphic_type graphic_type, Cmiss_graphic *graphic_to_copy);
+
 #endif

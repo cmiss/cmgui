@@ -57,6 +57,7 @@ codes used to build scene editor with wxWidgets.
 #include "general/mystring.h"
 #include "general/object.h"
 #include "graphics/graphics_object.h"
+#include "graphics/rendition_app.h"
 #include "graphics/scene.h"
 #include "general/message.h"
 #include "user_interface/user_interface.h"
@@ -1861,7 +1862,6 @@ void GraphicListBoxChecked(wxCommandEvent &event)
 	Cmiss_graphic_destroy(&temp_graphic);
 }
 
-
 void GraphicListBoxClicked(wxCommandEvent &event)
 {
 	GraphicListBoxProcessSelection(event.GetInt());
@@ -1869,55 +1869,32 @@ void GraphicListBoxClicked(wxCommandEvent &event)
 
 void AddGraphic(Cmiss_graphic *graphic_to_copy, enum Cmiss_graphic_type graphic_type)
 {
-	Cmiss_graphic *graphic;
-	int return_code;
-	graphic = CREATE(Cmiss_graphic)(graphic_type);
+	Cmiss_graphic *graphic = Cmiss_rendition_create_graphic_app(
+		region_tree_viewer->edit_rendition, graphic_type, graphic_to_copy);
 	if (graphic)
 	{
-		return_code = 1;
-		if (graphic_to_copy)
-		{
-			/* copy current graphic into new graphic */
-			return_code = Cmiss_graphic_copy_without_graphics_object(graphic,
-				graphic_to_copy);
-			/* make sure new graphic is visible */
-			Cmiss_graphic_set_visibility_flag(graphic,1);
-		}
-		else
-		{
-			Cmiss_rendition_set_graphic_defaults(region_tree_viewer->edit_rendition, graphic);
-			if (graphic_type == CMISS_GRAPHIC_CYLINDERS)
-			{
-				Cmiss_graphic_line_attributes_id line_attributes = Cmiss_graphic_get_line_attributes(graphic);
-				const double two = 2;
-				// default scale factor is 2.0 for radius to diameter conversion
-				Cmiss_graphic_line_attributes_set_scale_factors(line_attributes, 1, &two);
-				Cmiss_graphic_line_attributes_destroy(&line_attributes);
-			}
-		}
-		if (return_code && Cmiss_rendition_add_graphic(
-					region_tree_viewer->edit_rendition, graphic, 0))
-		{
-			//Update the list of graphic
-			wxCheckListBox *graphicalitemschecklist =  XRCCTRL(*this, "CmissGraphicListBox",wxCheckListBox);
-			graphicalitemschecklist->SetSelection(wxNOT_FOUND);
-			graphicalitemschecklist->Clear();
-			for_each_graphic_in_Cmiss_rendition(region_tree_viewer->edit_rendition,
-				Region_tree_viewer_add_graphic_item, (void *)region_tree_viewer);
-			graphicalitemschecklist->SetSelection((graphicalitemschecklist->GetCount()-1));
-			sceneediting =
-				XRCCTRL(*this, "SceneEditing", wxScrolledWindow);
-			sceneediting->Freeze();
-			Cmiss_graphic *temp_graphic = Cmiss_rendition_get_graphic_at_position(
-				region_tree_viewer->edit_rendition, graphicalitemschecklist->GetCount());
-			Region_tree_viewer_wx_update_graphic_type(temp_graphic);
-			Cmiss_graphic_destroy(&temp_graphic);
-			Region_tree_viewer_wx_update_graphic_widgets();
-			Region_tree_viewer_autoapply(region_tree_viewer->rendition,
-				region_tree_viewer->edit_rendition);
-			sceneediting->Thaw();
-			sceneediting->Layout();
-		}
+		/* make sure new graphic is visible */
+		Cmiss_graphic_set_visibility_flag(graphic,1);
+		Cmiss_rendition_add_graphic(region_tree_viewer->edit_rendition, graphic, 0);
+		//Update the list of graphic
+		wxCheckListBox *graphicalitemschecklist =  XRCCTRL(*this, "CmissGraphicListBox",wxCheckListBox);
+		graphicalitemschecklist->SetSelection(wxNOT_FOUND);
+		graphicalitemschecklist->Clear();
+		for_each_graphic_in_Cmiss_rendition(region_tree_viewer->edit_rendition,
+			Region_tree_viewer_add_graphic_item, (void *)region_tree_viewer);
+		graphicalitemschecklist->SetSelection((graphicalitemschecklist->GetCount()-1));
+		sceneediting =
+			XRCCTRL(*this, "SceneEditing", wxScrolledWindow);
+		sceneediting->Freeze();
+		Cmiss_graphic *temp_graphic = Cmiss_rendition_get_graphic_at_position(
+			region_tree_viewer->edit_rendition, graphicalitemschecklist->GetCount());
+		Region_tree_viewer_wx_update_graphic_type(temp_graphic);
+		Cmiss_graphic_destroy(&temp_graphic);
+		Region_tree_viewer_wx_update_graphic_widgets();
+		Region_tree_viewer_autoapply(region_tree_viewer->rendition,
+			region_tree_viewer->edit_rendition);
+		sceneediting->Thaw();
+		sceneediting->Layout();
 		DEACCESS(Cmiss_graphic)(&graphic);
 	}
 }
