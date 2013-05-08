@@ -259,7 +259,7 @@ release.
 					if (1==Interactive_event_get_button_number(event))
 					{
 						scene_picked_object_list=
-							Scene_pick_objects(scene,interaction_volume,graphics_buffer);
+							Scene_pick_objects(scene,interaction_volume);
 						if (scene_picked_object_list != 0)
 						{
 							element_tool->picked_element_was_unselected=1;
@@ -458,8 +458,7 @@ release.
 								if (INTERACTIVE_EVENT_BUTTON_RELEASE==event_type)
 								{
 									scene_picked_object_list=
-										Scene_pick_objects(scene,temp_interaction_volume,
-										graphics_buffer);
+										Scene_pick_objects(scene,temp_interaction_volume);
 									if (scene_picked_object_list != 0)
 									{
 										Region_element_map *element_map =

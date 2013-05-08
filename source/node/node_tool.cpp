@@ -1501,7 +1501,7 @@ release.
 						REACCESS(Interaction_volume)(&(node_tool->last_interaction_volume),
 							interaction_volume);
 						scene_picked_object_list=
-							Scene_pick_objects(scene,interaction_volume,graphics_buffer);
+							Scene_pick_objects(scene,interaction_volume);
 						if (scene_picked_object_list != 0)
 						{
 							picked_node=(struct FE_node *)NULL;
@@ -1661,7 +1661,7 @@ release.
 							if (node_tool->constrain_to_surface)
 							{
 								scene_picked_object_list=
-									Scene_pick_objects(scene,interaction_volume,graphics_buffer);
+									Scene_pick_objects(scene,interaction_volume);
 								if (scene_picked_object_list != 0)
 								{
 									if ( 0 != (nearest_element=Scene_picked_object_list_get_nearest_element(
@@ -1928,7 +1928,7 @@ release.
 								if (INTERACTIVE_EVENT_BUTTON_RELEASE==event_type)
 								{
 									scene_picked_object_list=
-										Scene_pick_objects(scene,temp_interaction_volume,graphics_buffer);
+										Scene_pick_objects(scene,temp_interaction_volume);
 									if (scene_picked_object_list != 0)
 									{
 										Region_node_map *node_map =

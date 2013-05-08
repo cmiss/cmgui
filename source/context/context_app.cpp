@@ -163,7 +163,9 @@ int Cmiss_context_app_destroy(struct Cmiss_context_app **context_address)
 				DESTROY(Event_dispatcher)(&context->event_dispatcher);
 			}
 			if (context->context)
+			{
 				Cmiss_context_destroy(&context->context);
+			}
 			DEALLOCATE(*context_address);
 		}
 		*context_address = NULL;

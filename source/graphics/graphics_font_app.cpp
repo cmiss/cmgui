@@ -45,8 +45,8 @@ Executes a GFX DEFINE FONT command.
 					}
 					Cmiss_graphics_font_type font_type = Cmiss_graphics_font_get_type(font);
 					Cmiss_graphics_font_true_type true_type = Cmiss_graphics_font_get_true_type(font);
-					char *font_type_string = 0;
-					char *true_type_string = 0;
+					char *font_type_string = Cmiss_graphics_font_type_enum_to_string(font_type);
+					char *true_type_string = Cmiss_graphics_font_true_type_enum_to_string(true_type);
 					int number_of_valid_strings_font_type = 0;
 					int number_of_valid_strings_true_type = 0;
 					const char **valid_font_type_strings = ENUMERATOR_GET_VALID_STRINGS(Cmiss_graphics_font_type)(

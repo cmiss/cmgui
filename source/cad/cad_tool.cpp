@@ -195,7 +195,7 @@ static void Cad_tool_interactive_event_handler(void *device_id,
 					if (1==Interactive_event_get_button_number(event))
 					{
 						if (NULL != (scene_picked_object_list=
-							Scene_pick_objects(scene,interaction_volume,graphics_buffer)))
+							Scene_pick_objects(scene,interaction_volume)))
 						{
 							clear_selection = !shift_pressed;
 							if (clear_selection)
@@ -320,8 +320,7 @@ static void Cad_tool_interactive_event_handler(void *device_id,
 								if (INTERACTIVE_EVENT_BUTTON_RELEASE==event_type)
 								{
 									if (NULL != (scene_picked_object_list=
-										Scene_pick_objects(scene,temp_interaction_volume,
-										graphics_buffer)))
+										Scene_pick_objects(scene,temp_interaction_volume)))
 									{
 										Region_cad_primitive_map *cad_primitive_map = 
 											(Region_cad_primitive_map *)Scene_picked_object_list_get_picked_region_cad_primitives(

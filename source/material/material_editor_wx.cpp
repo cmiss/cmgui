@@ -160,7 +160,7 @@ Uses gl to draw a sphere with a lighting source.
 #if defined (OPENGL_API)
 
 		Render_graphics_opengl *renderer =
-			Render_graphics_opengl_create_glbeginend_renderer(Graphics_buffer_app_get_core_buffer(material_editor->graphics_buffer));
+			Render_graphics_opengl_create_glbeginend_renderer();
 
 		width = Graphics_buffer_get_width(Graphics_buffer_app_get_core_buffer(material_editor->graphics_buffer));
 		height = Graphics_buffer_get_height(Graphics_buffer_app_get_core_buffer(material_editor->graphics_buffer));
