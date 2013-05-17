@@ -38,6 +38,12 @@ IF(WIN32)
 	SET( WIN32_SYSTEM TRUE )
 ENDIF()
 
+IF(APPLE)
+	# Must set the osx architecture to i386 because of the 
+	# version of wxWidgets that we use.
+	SET( CMAKE_OSX_ARCHITECTURES i386 )
+ENDIF()
+
 IF( WX_USER_INTERFACE )
 	SET( CMAKE_PREFIX_PATH ${WXWIDGETS_INSTALL_PREFIX} )
 	FIND_PACKAGE( wxWidgets QUIET COMPONENTS xrc adv html gl xml core base )

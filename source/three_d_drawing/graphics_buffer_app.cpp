@@ -1032,7 +1032,7 @@ void Graphics_buffer_create_buffer_wx(
 				buffer->core_buffer->attrib_list[18] = WX_GL_MIN_ACCUM_ALPHA;
 				buffer->core_buffer->attrib_list[19] = 1;
 				buffer->core_buffer->attrib_list[20] = WX_GL_DEPTH_SIZE;
-				buffer->core_bufferffer->attrib_list[21] = 1;
+				buffer->core_buffer->attrib_list[21] = 1;
 				buffer->core_buffer->attrib_list[22] = WX_GL_STENCIL_SIZE;
 				buffer->core_buffer->attrib_list[23] = 1;
 				buffer->core_buffer->attrib_list[24] = 0;
