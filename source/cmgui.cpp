@@ -109,8 +109,20 @@ IMPLEMENT_APP_NO_MAIN(wxCmguiApp)
 
 #endif /*defined (WX_USER_INTERFACE)*/
 
+void ShortenPSN(int argc, char *argv[])
+{
+	int arg_count = argc;
+	for(int i = 0; i < arg_count; i++)
+	{
+		if (strncmp(argv[i], "-psn", 4) == 0)
+		{
+			argv[i][4] = '\0';
+		}
+	}
+}
+
 #if !defined (WIN32_USER_INTERFACE) && !defined (_MSC_VER)
-int main(int argc,const char *argv[])
+int main(int argc, char *argv[])
 #else /* !defined (WIN32_USER_INTERFACE)  && !defined (_MSC_VER)*/
 int WINAPI WinMain(HINSTANCE current_instance,HINSTANCE previous_instance,
 	LPSTR command_line,int initial_main_window_state)
@@ -174,6 +186,7 @@ Main program for the CMISS Graphical User Interface
 		CMISS_SVN_REVISION_STRING);
 
 #if defined (CARBON_USER_INTERFACE) || (defined (WX_USER_INTERFACE) && defined (DARWIN))
+	ShortenPSN(argc, argv);  // shorten the psn command line argument when launching from finder on os x to just -psn
 	ProcessSerialNumber PSN;
 	GetCurrentProcess(&PSN);
 	TransformProcessType(&PSN,kProcessTransformToForegroundApplication);

@@ -315,7 +315,7 @@ NB
 ==============================================================================*/
 
 struct Parse_state *create_Parse_state_from_tokens(
-	int number_of_tokens, const char **tokens);
+	int number_of_tokens, char **tokens);
 /*******************************************************************************
 LAST MODIFIED : 31 July 2002
 
@@ -656,6 +656,18 @@ Modifier function to parse a variable number of double values with appropriate
 help text.
 ==============================================================================*/
 
+/**
+ * @brief ignore_entry
+ * Ignore this entry.
+ *
+ * @param state
+ * @param dummy_to_be_modified
+ * @param dummy_user_data_void
+ * @return 1 if state not null, 0 otherwise.
+ */
+int ignore_entry(struct Parse_state *state,void *dummy_to_be_modified,
+				 void *dummy_user_data_void);
+
 int set_char_flag(struct Parse_state *state,void *to_be_modified,
 	void *user_data);
 /*******************************************************************************
@@ -683,7 +695,7 @@ DESCRIPTION :
 A modifier function for setting an integer switch to 1.
 If the value is currently set, this is indicated in the help, with the <token>
 if supplied, otherwise the word CURRENT.
-If the option's <token> is supplied and its value is currently set, it 
+If the option's <token> is supplied and its value is currently set, it
 ==============================================================================*/
 
 int unset_int_switch(struct Parse_state *state,void *value_address_void,
@@ -695,7 +707,7 @@ DESCRIPTION :
 A modifier function for setting an integer switch to 0.
 If the value is currently unset, this is indicated in the help, with the <token>
 if supplied, otherwise the word CURRENT.
-If the option's <token> is supplied and its value is currently set, it 
+If the option's <token> is supplied and its value is currently set, it
 ==============================================================================*/
 
 int unset_int_switch(struct Parse_state *state,void *value_address_void,
@@ -752,14 +764,14 @@ int Option_table_add_char_flag_entry(struct Option_table *option_table,
 LAST MODIFIED : 8 October 2003
 
 DESCRIPTION :
-Adds the given <token> to the <option_table>.  If the <token> is specified 
+Adds the given <token> to the <option_table>.  If the <token> is specified
 then the <flag> will be set.
 ==============================================================================*/
 
 int Option_table_add_unset_char_flag_entry(struct Option_table *option_table,
 	const char *token, char *flag);
 /*******************************************************************************
-Adds the given <token> to the <option_table>.  If the <token> is specified 
+Adds the given <token> to the <option_table>.  If the <token> is specified
 then the <flag> will be unset (cleared).
 ==============================================================================*/
 
@@ -851,7 +863,7 @@ Adds the given <token> to the <option_table>.  The <vector> is filled in with th
 ==============================================================================*/
 
 int Option_table_add_variable_length_double_vector_entry(
-	struct Option_table *option_table, const char *token, int *number_of_components, 
+	struct Option_table *option_table, const char *token, int *number_of_components,
 	double **vector);
 /*******************************************************************************
 LAST MODIFIED : 18 February 2005
@@ -862,7 +874,7 @@ Adds the given <token> to the <option_table>.  The <vector> is filled in with th
 ==============================================================================*/
 
 int Option_table_add_double_vector_with_help_entry(
-	struct Option_table *option_table, const char *token, double *vector, 
+	struct Option_table *option_table, const char *token, double *vector,
 	struct Set_vector_with_help_data *data);
 /*******************************************************************************
 LAST MODIFIED : 8 October 2003
@@ -902,7 +914,7 @@ struct Set_names_from_list_token
 LAST MODIFIED : 7 July 2004
 
 DESCRIPTION :
-An individual token for the Option_table_add_set_names_from_list_entry option 
+An individual token for the Option_table_add_set_names_from_list_entry option
 table entry.
 ==============================================================================*/
 {
@@ -930,7 +942,7 @@ LAST MODIFIED : 7 July 2004
 
 DESCRIPTION :
 Adds the given <token> to the <option_table>.  The <data> contains an array
-of size <data->number_of_tokens> tokens.  Each of these tokens points to a 
+of size <data->number_of_tokens> tokens.  Each of these tokens points to a
 string <data->tokens[i].string>.  Input will be read from the parse state until
 a token not in the list of strings.  As each string is encountered the
 corresponding <data->tokens[i].index> is set.  When set these start from one,
@@ -945,7 +957,7 @@ LAST MODIFIED : 21 September 2006
 
 DESCRIPTION :
 Specifies that the given <token> will be ignored when parsing the option_table.
-The specified number of <expected_parameters> will also be ignored following 
+The specified number of <expected_parameters> will also be ignored following
 the <token>.
 ==============================================================================*/
 
@@ -961,7 +973,7 @@ that do not match other options.  This option must be added last.
 /***************************************************************************//**
  * Adds a token to the option_table which if matched reads the following token
  * as a string value.
- * 
+ *
  * @param option_table  The command option table to add the entry to.
  * @param token  The required token for this option.
  * @param string_address  Address of string to be modified. Prior to calling,
@@ -977,7 +989,7 @@ int Option_table_add_string_entry(struct Option_table *option_table,
  * a string. To prevent other tokens from being silently ignored the string
  * must initially be NULL and may not be read a second time otherwise an error
  * is reported.
- * 
+ *
  * @param option_table  The command option table to add the entry to.
  * @param string_address  Address of string to be modified. Prior to calling,
  *   pointed-to string must be NULL.
@@ -1000,7 +1012,7 @@ struct Multiple_strings
 /***************************************************************************//**
  * Adds a token to the option_table which if matched reads the following string
  * or multiple strings if separated by single ampersand & tokens.
- * 
+ *
  * @param option_table  The command option table to add the entry to.
  * @param token  The required token for this option.
  * @param multiple_strings_address  Address of structure for holding a list of

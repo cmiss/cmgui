@@ -69,10 +69,10 @@ DESCRIPTION :
 
 #if defined (WX_USER_INTERFACE) || (!defined (WIN32_USER_INTERFACE) && !defined (_MSC_VER))
 struct User_interface_module *User_interface_module_create(
-	struct Cmiss_context_app *context, int in_argc, const char *in_argv[])
+	struct Cmiss_context_app *context, int in_argc, char *in_argv[])
 #else
 struct User_interface_module *User_interface_module_create(
-	struct Cmiss_context_app *context, int in_argc, const char *in_argv[],
+	struct Cmiss_context_app *context, int in_argc, char *in_argv[],
 	HINSTANCE current_instance, HINSTANCE previous_instance,
 	LPSTR command_line,int initial_main_window_state)
 #endif

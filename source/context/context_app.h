@@ -90,10 +90,10 @@ struct Event_dispatcher *Cmiss_context_app_get_default_event_dispatcher(
  */
 #if defined (WX_USER_INTERFACE) || (!defined (WIN32_USER_INTERFACE) && !defined (_MSC_VER))
 struct User_interface_module *Cmiss_context_create_user_interface(
-	struct Cmiss_context_app *context, int in_argc, const char *in_argv[], void *user_interface_instance);
+	struct Cmiss_context_app *context, int in_argc, char *in_argv[], void *user_interface_instance);
 #else
 struct User_interface_module *Cmiss_context_create_user_interface(
-	struct Cmiss_context_app *context, int in_argc, const char *in_argv[],
+	struct Cmiss_context_app *context, int in_argc, char *in_argv[],
 	HINSTANCE current_instance, HINSTANCE previous_instance,
 	LPSTR command_line,int initial_main_window_state, void *user_interface_instance);
 #endif

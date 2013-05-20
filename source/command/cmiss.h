@@ -266,7 +266,7 @@ int Cmiss_command_data_set_cmgui_string(struct Cmiss_command_data *command_data,
  * @param command_line_options  pointer to command line options object.
  * @return  1 if successfully called otherwise 0.
  */
-int Cmiss_command_data_process_command_line(int argc, const char *argv[],
+int Cmiss_command_data_process_command_line(int argc, char *argv[],
 	struct Cmgui_command_line_options *command_line_options);
 
 #endif /* !defined (COMMAND_CMISS_H) */

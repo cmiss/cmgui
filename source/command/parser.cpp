@@ -1894,7 +1894,7 @@ NB
 } /* create_Parse_state */
 
 struct Parse_state *create_Parse_state_from_tokens(
-	int number_of_tokens, const char **tokens)
+	int number_of_tokens, char **tokens)
 /*******************************************************************************
 LAST MODIFIED : 31 July 2002
 
@@ -5908,6 +5908,25 @@ DESCRIPTION :
 
 	return (return_code);
 } /* set_nothing */
+
+int ignore_entry(struct Parse_state *state,void *dummy_to_be_modified,
+				 void *dummy_user_data_void)
+{
+	int return_code = 0;
+
+	USE_PARAMETER(dummy_to_be_modified);
+	USE_PARAMETER(dummy_user_data_void);
+	if (state)
+	{
+		return_code = 1;
+	}
+	else
+	{
+		display_message(ERROR_MESSAGE, "ignore_entry, no state.");
+	}
+
+	return return_code;
+}
 
 int Option_table_add_ignore_token_entry(struct Option_table *option_table,
 	const char *token, int *expected_parameters)

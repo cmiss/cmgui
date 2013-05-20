@@ -17596,6 +17596,10 @@ Parses command line options from <state>.
 		/* -server */
 		Option_table_add_entry(option_table, "-server",
 			&(command_line_options->server_mode_flag), NULL, set_char_flag);
+#if defined (CARBON_USER_INTERFACE) || (defined (WX_USER_INTERFACE) && defined (DARWIN))
+		/* -psn */
+		Option_table_add_entry(option_table, "-psn", NULL, NULL, ignore_entry);
+#endif
 		/* -visual */
 		Option_table_add_entry(option_table, "-visual",
 			&(command_line_options->visual_id_number),
@@ -17618,7 +17622,7 @@ Parses command line options from <state>.
 	return (return_code);
 } /* read_cmgui_command_line_options */
 
-int Cmiss_command_data_process_command_line(int argc, const char *argv[],
+int Cmiss_command_data_process_command_line(int argc, char *argv[],
 	struct Cmgui_command_line_options *command_line_options)
 {
 	int return_code = 1;
@@ -17843,7 +17847,7 @@ Initialise all the subcomponents of cmgui and create the Cmiss_command_data
 
 		if (UI_module->argc > 0 && UI_module->argv)
 		{
-			if (NULL != (state = create_Parse_state_from_tokens(UI_module->argc, (const char **)(UI_module->argv))))
+			if (NULL != (state = create_Parse_state_from_tokens(UI_module->argc, UI_module->argv)))
 			{
 				option_table = CREATE(Option_table)();
 				Option_table_add_entry(option_table, UI_module->argv[0], NULL,
@@ -17881,7 +17885,9 @@ Initialise all the subcomponents of cmgui and create the Cmiss_command_data
 		comfile_name = command_line_options.command_file_name;
 		if (write_help)
 		{
-			const char *double_question_mark = "??";
+			char *double_question_mark = new char[3];
+			strncpy(double_question_mark, "??", 2);
+			double_question_mark[2] = '\0';
 
 			/* write question mark help for command line options */
 			state = create_Parse_state_from_tokens(1, &double_question_mark);
@@ -17891,6 +17897,7 @@ Initialise all the subcomponents of cmgui and create the Cmiss_command_data
 			Option_table_parse(option_table, state);
 			DESTROY(Option_table)(&option_table);
 			destroy_Parse_state(&state);
+			delete double_question_mark;
 		}
 
 		command_data->io_stream_package = Cmiss_context_get_default_IO_stream_package(Cmiss_context_app_get_core_context(context));
