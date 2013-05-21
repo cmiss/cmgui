@@ -181,9 +181,9 @@ Main program for the CMISS Graphical User Interface
 
 	/* display the version */
 	display_message(INFORMATION_MESSAGE, "%s version %s\n%s\n"
-		"Build information: %s %s\n", CMISS_NAME_STRING, CMISS_VERSION_STRING,
-		CMISS_COPYRIGHT_STRING, CMISS_BUILD_STRING,
-		CMISS_SVN_REVISION_STRING);
+		"Build information: %s %s\n", CMGUI_NAME_STRING, CMGUI_VERSION_STRING,
+		CMGUI_COPYRIGHT_STRING, CMGUI_BUILD_STRING,
+		CMGUI_SVN_REVISION_STRING);
 
 #if defined (CARBON_USER_INTERFACE) || (defined (WX_USER_INTERFACE) && defined (DARWIN))
 	ShortenPSN(argc, argv);  // shorten the psn command line argument when launching from finder on os x to just -psn
@@ -258,9 +258,9 @@ Main program for the CMISS Graphical User Interface
 			}
 			if (NULL != (command_data = Cmiss_context_get_default_command_interpreter(context)))
 			{
-				Cmiss_command_data_set_cmgui_string(command_data, CMISS_NAME_STRING,
-					CMISS_VERSION_STRING, "CMISS_DATE_STRING", CMISS_COPYRIGHT_STRING, CMISS_BUILD_STRING,
-					CMISS_SVN_REVISION_STRING);
+				Cmiss_command_data_set_cmgui_string(command_data, CMGUI_NAME_STRING,
+					CMGUI_VERSION_STRING, "CMGUI_DATE_STRING", CMGUI_COPYRIGHT_STRING, CMGUI_BUILD_STRING,
+					CMGUI_SVN_REVISION_STRING);
 				Cmiss_command_data_main_loop(command_data);
 				Cmiss_command_data_destroy(&command_data);
 				return_code = 0;
