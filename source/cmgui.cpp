@@ -121,6 +121,9 @@ void ShortenPSN(int argc, char *argv[])
 	}
 }
 
+/**
+ * Main program for the CMISS Graphical User Interface
+ */
 #if !defined (WIN32_USER_INTERFACE) && !defined (_MSC_VER)
 int main(int argc, char *argv[])
 #else /* !defined (WIN32_USER_INTERFACE)  && !defined (_MSC_VER)*/
@@ -133,19 +136,8 @@ int WINAPI WinMain(HINSTANCE current_instance,HINSTANCE previous_instance,
 		failure code be #define'd ? */
 	/*???DB. Win32 SDK says that don't have to call it WinMain */
 #endif /* !defined (WIN32_USER_INTERFACE)  && !defined (_MSC_VER)*/
-/*******************************************************************************
-LAST MODIFIED : 7 January 2003
-
-DESCRIPTION :
-Main program for the CMISS Graphical User Interface
-==============================================================================*/
 {
 	int return_code = 0;
-#if defined (WIN32_USER_INTERFACE) || defined (_MSC_VER)
-	int argc = 1, i;
-	const char **argv;
-	char *p, *q;
-#endif /* defined (WIN32_USER_INTERFACE) */
 	struct Cmiss_context_app *context = NULL;
 	struct User_interface_module *UI_module = NULL;
 	struct Cmiss_command_data *command_data;
@@ -156,6 +148,8 @@ Main program for the CMISS Graphical User Interface
 	ENTER(WinMain);
 
 	//_CrtSetBreakAlloc(28336);
+	int argc = 1;
+	char *p, *q;
 	for (p = command_line; p != NULL && *p != 0;)
 	{
 		p = strchr(p, ' ');
@@ -163,18 +157,17 @@ Main program for the CMISS Graphical User Interface
 			p++;
 		argc++;
 	}
-
-	argv = (const char **)malloc(sizeof(*argv) * argc);
-
-	argv[0] = "cmgui";
-
-	for (i = 1, p = command_line; p != NULL && *p != 0;)
+	char **argv = 0;
+	ALLOCATE(argv, char *, argc);
+	argv[0] = duplicate_string("cmgui");
+	int i = 1;
+	for (p = command_line; p != NULL && *p != 0;)
 	{
 		q = strchr(p, ' ');
 		if (q != NULL)
 			*q++ = 0;
 		if (p != NULL)
-			argv[i++] = p;
+			argv[i++] = duplicate_string(p);
 		p = q;
 	}
 #endif /* !defined (WIN32_USER_INTERFACE)  && !defined (_MSC_VER)*/
@@ -208,18 +201,7 @@ Main program for the CMISS Graphical User Interface
 #if defined (WX_USER_INTERFACE)
 			if (UI_module->user_interface)
 			{
-				char **temp_argv = NULL, **cleanup_argv = NULL;
-				int temp_argc = argc, cleanup_argc = argc;
-				if (cleanup_argc > 0)
-				{
-					ALLOCATE(temp_argv, char *, cleanup_argc);
-					ALLOCATE(cleanup_argv, char *, cleanup_argc);
-					for (int i = 0; i < cleanup_argc; i++)
-					{
-						cleanup_argv[i] = temp_argv[i] = duplicate_string(argv[i]);
-					}
-				}
-				if (wxEntryStart(temp_argc, temp_argv))
+				if (wxEntryStart(argc, argv))
 				{
 					wx_entry_started = 1;
 					wxXmlResource::Get()->InitAllHandlers();
@@ -238,15 +220,6 @@ Main program for the CMISS Graphical User Interface
 				{
 					display_message(ERROR_MESSAGE,
 						"initialiseWxApp.  Invalid arguments.");
-				}
-				if (cleanup_argv)
-				{
-					for (int i = 0; i < cleanup_argc; i++)
-					{
-						DEALLOCATE(cleanup_argv[i]);
-					}
-					DEALLOCATE(temp_argv);
-					DEALLOCATE(cleanup_argv);
 				}
 			}
 #endif
@@ -287,7 +260,14 @@ Main program for the CMISS Graphical User Interface
 		return_code = 1;
 	}
 #if defined (WIN32_USER_INTERFACE) || defined (_MSC_VER)
-	free(argv)
+	if (argv)
+	{
+		for (int i = 0; i < argc; i++)
+		{
+			DEALLOCATE(argv[i]);
+		}
+		DEALLOCATE(argv);
+	}
 #endif
 	LEAVE;
 
