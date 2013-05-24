@@ -38,8 +38,6 @@ const char computed_field_log_type_string[] = "log";
 
 const char computed_field_edit_mask_type_string[] = "edit_mask";
 
-const char computed_field_sum_components_type_string[] = "sum_components";
-
 const char computed_field_offset_type_string[] = "offset";
 
 int Computed_field_get_type_abs(struct Computed_field *field,
@@ -59,9 +57,6 @@ Computed_field *Computed_field_create_edit_mask(Cmiss_field_module *field_module
 
 int Computed_field_get_type_edit_mask(struct Computed_field *field,
 	struct Computed_field **source_field, double **edit_mask);
-
-int Computed_field_get_type_sum_components(struct Computed_field *field,
-	struct Computed_field **source_field, double **weights);
 
 Computed_field *Computed_field_create_offset(Cmiss_field_module *field_module,
 	struct Computed_field *source_field, double *offsets);
@@ -1165,159 +1160,6 @@ already) and allows its contents to be modified.
 	return (return_code);
 } /* define_Computed_field_type_offset */
 
-
-int define_Computed_field_type_sum_components(struct Parse_state *state,
-	void *field_modify_void,void *computed_field_arithmetic_operators_package_void)
-/*******************************************************************************
-LAST MODIFIED : 15 May 2008
-
-DESCRIPTION :
-Converts <field> into type COMPUTED_FIELD_SUM_COMPONENTS (if it is not
-already) and allows its contents to be modified.
-==============================================================================*/
-{
-	const char *current_token;
-	double *weights, *temp_weights;
-	int i, number_of_weights, previous_number_of_weights, return_code;
-	struct Computed_field *source_field;
-	Computed_field_modify_data *field_modify;
-	struct Option_table *option_table;
-	struct Set_Computed_field_conditional_data set_source_field_data;
-
-	ENTER(define_Computed_field_type_sum_components);
-	USE_PARAMETER(computed_field_arithmetic_operators_package_void);
-	if (state&&(field_modify=(Computed_field_modify_data *)field_modify_void))
-	{
-		return_code = 1;
-		/* get valid parameters for projection field */
-		set_source_field_data.computed_field_manager =
-			field_modify->get_field_manager();
-		set_source_field_data.conditional_function =
-			Computed_field_has_numerical_components;
-		set_source_field_data.conditional_function_user_data = (void *)NULL;
-		source_field = (struct Computed_field *)NULL;
-		weights = (double *)NULL;
-		previous_number_of_weights = 0;
-		if ((NULL != field_modify->get_field()) &&
-			(computed_field_sum_components_type_string ==
-				Computed_field_get_type_string(field_modify->get_field())))
-		{
-			return_code =
-				Computed_field_get_type_sum_components(field_modify->get_field(), &source_field, &weights);
-		}
-		if (return_code)
-		{
-			if (source_field)
-			{
-				previous_number_of_weights = source_field->number_of_components;
-				ACCESS(Computed_field)(source_field);
-			}
-			if ((current_token = state->current_token) &&
-				(!(strcmp(PARSER_HELP_STRING, current_token) &&
-					strcmp(PARSER_RECURSIVE_HELP_STRING, current_token))))
-			{
-				option_table = CREATE(Option_table)();
-				Option_table_add_entry(option_table, "field", &source_field,
-					&set_source_field_data, set_Computed_field_conditional);
-				Option_table_add_double_vector_entry(option_table,
-					"weights", weights, &previous_number_of_weights);
-				return_code = Option_table_multi_parse(option_table, state);
-				DESTROY(Option_table)(&option_table);
-			}
-			/* parse the field ... */
-			if (return_code && (current_token = state->current_token))
-			{
-				/* ... only if the "field" token is next */
-				if (fuzzy_string_compare(current_token, "field"))
-				{
-					option_table = CREATE(Option_table)();
-					/* field */
-					Option_table_add_entry(option_table, "field", &source_field,
-						&set_source_field_data, set_Computed_field_conditional);
-					if (0 != (return_code = Option_table_parse(option_table, state)))
-					{
-						if (source_field)
-						{
-							number_of_weights = source_field->number_of_components;
-							if (REALLOCATE(temp_weights, weights, double,
-								number_of_weights))
-							{
-								weights = temp_weights;
-								/* make any new weights equal to 1.0 */
-								for (i = previous_number_of_weights; i < number_of_weights; i++)
-								{
-									weights[i] = 1.0;
-								}
-							}
-							else
-							{
-								return_code = 0;
-							}
-						}
-						else
-						{
-							display_message(ERROR_MESSAGE,
-								"define_Computed_field_type_sum_components.  Invalid field");
-							return_code = 0;
-						}
-					}
-					DESTROY(Option_table)(&option_table);
-				}
-			}
-			if (return_code && !source_field)
-			{
-				display_message(ERROR_MESSAGE,
-					"define_Computed_field_type_sum_components.  "
-					"You must specify the source field before the offsets.");
-				return_code = 0;
-			}
-			/* parse the weights */
-			if (return_code && state->current_token)
-			{
-				option_table = CREATE(Option_table)();
-				number_of_weights = source_field->number_of_components;
-				Option_table_add_double_vector_entry(option_table,
-					"weights", weights, &number_of_weights);
-				return_code = Option_table_multi_parse(option_table, state);
-				DESTROY(Option_table)(&option_table);
-			}
-			/* no errors,not asking for help */
-			if (return_code)
-			{
-				return_code = field_modify->update_field_and_deaccess(
-					Computed_field_create_sum_components(field_modify->get_field_module(),
-						source_field, weights));
-			}
-			if (!return_code)
-			{
-				if ((!state->current_token) ||
-					(strcmp(PARSER_HELP_STRING, state->current_token) &&
-						strcmp(PARSER_RECURSIVE_HELP_STRING, state->current_token)))
-				{
-					/* error */
-					display_message(ERROR_MESSAGE,
-						"define_Computed_field_type_sum_components.  Failed");
-				}
-			}
-			if (source_field)
-			{
-				DEACCESS(Computed_field)(&source_field);
-			}
-		}
-		DEALLOCATE(weights);
-	}
-	else
-	{
-		display_message(ERROR_MESSAGE,
-			"define_Computed_field_type_sum_components.  Invalid argument(s)");
-		return_code = 0;
-	}
-	LEAVE;
-
-	return (return_code);
-} /* define_Computed_field_type_sum_components */
-
-
 int define_Computed_field_type_edit_mask(struct Parse_state *state,
 	void *field_modify_void, void *computed_field_arithmetic_operators_package_void)
 /*******************************************************************************
@@ -1911,10 +1753,6 @@ DESCRIPTION :
 		return_code = Computed_field_package_add_type(computed_field_package,
 			computed_field_offset_type_string,
 			define_Computed_field_type_offset,
-			computed_field_arithmetic_operators_package);
-		return_code = Computed_field_package_add_type(computed_field_package,
-			computed_field_sum_components_type_string,
-			define_Computed_field_type_sum_components,
 			computed_field_arithmetic_operators_package);
 		return_code = Computed_field_package_add_type(computed_field_package,
 			computed_field_edit_mask_type_string,
