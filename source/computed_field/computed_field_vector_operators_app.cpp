@@ -266,7 +266,7 @@ already) and allows its contents to be modified.
 						{
 							return_code = field_modify->update_field_and_deaccess(
 								Cmiss_field_module_create_cross_product(field_modify->get_field_module(),
-									dimension, source_fields));
+									number_of_source_fields, source_fields));
 						}
 						for (i = 0; i < number_of_source_fields; i++)
 						{
