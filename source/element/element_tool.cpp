@@ -44,6 +44,7 @@ Interactive tool for selecting elements with mouse and other devices.
 #if 1
 #include "configure/cmgui_configure.h"
 #endif /* defined (1) */
+#include "zinc/graphicsfilter.h"
 #include "zinc/rendition.h"
 #include "command/command.h"
 #include "computed_field/computed_field.h"
@@ -61,6 +62,7 @@ Interactive tool for selecting elements with mouse and other devices.
 #include "interaction/interactive_event.h"
 #include "graphics/rendition.h"
 #include "graphics/graphic.h"
+#include "graphics/scene_picker.hpp"
 #include "region/cmiss_region.h"
 #include "time/time_keeper_app.hpp"
 #include "general/message.h"
@@ -234,10 +236,10 @@ release.
 	struct FE_element_shape *element_shape;
 	struct Element_tool *element_tool;
 	struct Interaction_volume *interaction_volume,*temp_interaction_volume;
-	struct LIST(Scene_picked_object) *scene_picked_object_list;
 	struct Scene *scene;
 	struct Cmiss_rendition *rendition = NULL;
 	FE_value_triple *xi_points;
+	Cmiss_scene_picker_id scene_picker = 0;
 
 	ENTER(Element_tool_interactive_event_handler);
 	if (device_id&&event&&(element_tool=
@@ -248,9 +250,56 @@ release.
 		scene=Interactive_event_get_scene(event);
 		if (scene != 0)
 		{
+			scene_picker = Cmiss_scene_create_picker(scene);
 			event_type=Interactive_event_get_type(event);
 			input_modifier=Interactive_event_get_input_modifier(event);
 			shift_pressed=(INTERACTIVE_EVENT_MODIFIER_SHIFT & input_modifier);
+			Cmiss_graphics_module *graphics_module = Cmiss_scene_get_graphics_module(scene);
+			Cmiss_graphics_filter_id combined_filter = Cmiss_graphics_module_create_filter_operator_or(
+				graphics_module);
+			if ((element_tool->select_elements_enabled)||(element_tool->select_faces_enabled)||
+				(element_tool->select_lines_enabled))
+			{
+				Cmiss_graphics_filter_id element_filter = 0;
+				Cmiss_graphics_filter_operator_id or_filter = Cmiss_graphics_filter_cast_operator(
+					combined_filter);
+				if (element_tool->select_faces_enabled)
+				{
+					element_filter = Cmiss_graphics_module_create_filter_graphic_type(
+						graphics_module, CMISS_GRAPHIC_SURFACES);
+					Cmiss_graphics_filter_operator_append_operand(or_filter, element_filter);
+					Cmiss_graphics_filter_destroy(&element_filter);
+				}
+				if (element_tool->select_lines_enabled)
+				{
+					element_filter = Cmiss_graphics_module_create_filter_graphic_type(
+						graphics_module, CMISS_GRAPHIC_LINES);
+					Cmiss_graphics_filter_operator_append_operand(or_filter, element_filter);
+					Cmiss_graphics_filter_destroy(&element_filter);
+					element_filter = Cmiss_graphics_module_create_filter_graphic_type(
+						graphics_module, CMISS_GRAPHIC_CYLINDERS);
+					Cmiss_graphics_filter_operator_append_operand(or_filter, element_filter);
+					Cmiss_graphics_filter_destroy(&element_filter);
+				}
+				if (element_tool->select_elements_enabled)
+				{
+					element_filter = Cmiss_graphics_module_create_filter_graphic_type(
+						graphics_module, CMISS_GRAPHIC_STREAMLINES);
+					Cmiss_graphics_filter_operator_append_operand(or_filter, element_filter);
+					Cmiss_graphics_filter_destroy(&element_filter);
+					element_filter = Cmiss_graphics_module_create_filter_graphic_type(
+						graphics_module, CMISS_GRAPHIC_ISO_SURFACES);
+					Cmiss_graphics_filter_operator_append_operand(or_filter, element_filter);
+					Cmiss_graphics_filter_destroy(&element_filter);
+					element_filter = Cmiss_graphics_module_create_filter_graphic_type(
+						graphics_module, CMISS_GRAPHIC_ELEMENT_POINTS);
+					Cmiss_graphics_filter_operator_append_operand(or_filter, element_filter);
+					Cmiss_graphics_filter_destroy(&element_filter);
+				}
+				Cmiss_graphics_filter_operator_destroy(&or_filter);
+			}
+			Cmiss_graphics_module_destroy(&graphics_module);
+			Cmiss_scene_picker_set_graphics_filter(scene_picker, combined_filter);
 			switch (event_type)
 			{
 			case INTERACTIVE_EVENT_BUTTON_PRESS:
@@ -258,18 +307,20 @@ release.
 					/* interaction only works with first mouse button */
 					if (1==Interactive_event_get_button_number(event))
 					{
-						scene_picked_object_list=
-							Scene_pick_objects(scene,interaction_volume);
-						if (scene_picked_object_list != 0)
+						Cmiss_scene_picker_set_interaction_volume(scene_picker,
+							interaction_volume);
+						if (scene_picker != 0)
 						{
 							element_tool->picked_element_was_unselected=1;
-							if (0 != (picked_element=Scene_picked_object_list_get_nearest_element(
-								scene_picked_object_list,(struct Cmiss_region *)NULL,
-								element_tool->select_elements_enabled,
-								element_tool->select_faces_enabled,
-								element_tool->select_lines_enabled,
-								(struct Scene_picked_object **)NULL,
-								&rendition,	(struct Cmiss_graphic **)NULL)))
+							picked_element = Cmiss_scene_picker_get_nearest_element(scene_picker);
+						/*	picked_element=Scene_picked_object_list_get_nearest_element(
+															scene_picked_object_list,(struct Cmiss_region *)NULL,
+															element_tool->select_elements_enabled,
+															element_tool->select_faces_enabled,
+															element_tool->select_lines_enabled,
+															(struct Scene_picked_object **)NULL,
+															&rendition,	(struct Cmiss_graphic **)NULL);*/
+							if (0 != picked_element)
 							{
 								/* Open command_field of picked_element in browser */
 								if (element_tool->command_field)
@@ -362,8 +413,12 @@ release.
 							}
 							if (picked_element)
 							{
+								Cmiss_region_id temp_region = FE_region_get_Cmiss_region(
+									FE_element_get_FE_region(picked_element));
+								rendition = Cmiss_region_get_rendition_internal(temp_region);
 								REACCESS(Cmiss_rendition)(&(element_tool->rendition),
 									rendition);
+								Cmiss_rendition_destroy(&rendition);
 								Cmiss_region *sub_region = NULL;
 								Cmiss_field_group_id sub_group = NULL;
 								Cmiss_mesh_group_id mesh_group = 0;
@@ -396,7 +451,6 @@ release.
 									Cmiss_field_group_destroy(&sub_group);
 								}
 							}
-							DESTROY(LIST(Scene_picked_object))(&(scene_picked_object_list));
 						}
 						element_tool->motion_detected=0;
 						REACCESS(Interaction_volume)(
@@ -457,101 +511,24 @@ release.
 								}
 								if (INTERACTIVE_EVENT_BUTTON_RELEASE==event_type)
 								{
-									scene_picked_object_list=
-										Scene_pick_objects(scene,temp_interaction_volume);
-									if (scene_picked_object_list != 0)
+									Cmiss_scene_picker_set_interaction_volume(scene_picker,
+										temp_interaction_volume);
+									if (element_tool->region)
 									{
-										Region_element_map *element_map =
-											(Region_element_map *)Scene_picked_object_list_get_picked_region_sorted_elements(
-											scene_picked_object_list,
-											element_tool->select_elements_enabled,
-											element_tool->select_faces_enabled,
-											element_tool->select_lines_enabled);
-										if (element_map)
+										Cmiss_rendition_id region_rendition = Cmiss_region_get_rendition_internal(
+											element_tool->region);
+										Cmiss_field_group_id selection_group =
+											Cmiss_rendition_get_or_create_selection_group(region_rendition);
+										if (selection_group)
 										{
-											Cmiss_region *sub_region = NULL;
-											Cmiss_field_group_id sub_group = NULL;
-											Cmiss_rendition *region_rendition = NULL;
-											Cmiss_mesh_group_id mesh_group[MAXIMUM_ELEMENT_XI_DIMENSIONS];
-											int iter = 0;
-											for (iter = 0; iter < MAXIMUM_ELEMENT_XI_DIMENSIONS; iter++)
-											{
-												mesh_group[iter] = 0;
-											}
-											Region_element_map::iterator pos;
-											for (pos = element_map->begin(); pos != element_map->end(); ++pos)
-											{
-												if (pos->first != sub_region)
-												{
-													if (sub_group)
-													{
-														Cmiss_field_group_destroy(&sub_group);
-													}
-													for (iter = 0; iter < MAXIMUM_ELEMENT_XI_DIMENSIONS; iter++)
-													{
-														if (mesh_group[iter])
-														{
-															Cmiss_mesh_group_destroy(&(mesh_group[iter]));
-														}
-													}
-													if (region_rendition)
-													{
-														Cmiss_rendition_destroy(&region_rendition);
-													}
-													sub_region = pos->first;
-													if (sub_region)
-													{
-														region_rendition= Cmiss_region_get_rendition_internal(sub_region);
-														sub_group = Cmiss_rendition_get_or_create_selection_group(region_rendition);
-													}
-												}
-												if (sub_region && sub_group)
-												{
-													Cmiss_field_module_id field_module = Cmiss_region_get_field_module(sub_region);
-													int dimension = Cmiss_element_get_dimension(pos->second);
-													if (dimension <= MAXIMUM_ELEMENT_XI_DIMENSIONS)
-													{
-														if (!mesh_group[dimension - 1])
-														{
-															Cmiss_mesh_id temp_mesh =
-																Cmiss_field_module_find_mesh_by_dimension(field_module, dimension);
-															Cmiss_field_element_group_id element_group =
-																Cmiss_field_group_get_element_group(sub_group, temp_mesh);
-															if (!element_group)
-															{
-																element_group = Cmiss_field_group_create_element_group(sub_group, temp_mesh);
-															}
-															mesh_group[dimension - 1] = Cmiss_field_element_group_get_mesh(element_group);
-															Cmiss_field_element_group_destroy(&element_group);
-															Cmiss_mesh_destroy(&temp_mesh);
-														}
-														Cmiss_mesh_group_add_element(mesh_group[dimension - 1], pos->second);
-													}
-													Cmiss_field_module_destroy(&field_module);
-												}
-											}
-											if (sub_group)
-											{
-												Cmiss_field_group_destroy(&sub_group);
-											}
-											for (iter = 0; iter < MAXIMUM_ELEMENT_XI_DIMENSIONS; iter++)
-											{
-												if (mesh_group[iter])
-												{
-													Cmiss_mesh_group_destroy(&(mesh_group[iter]));
-												}
-											}
-											if (region_rendition)
-											{
-												Cmiss_rendition_destroy(&region_rendition);
-											}
-											delete element_map;
+											Cmiss_scene_picker_add_picked_elements_to_group(scene_picker,
+												selection_group);
+											Cmiss_field_group_destroy(&selection_group);
 										}
-										DESTROY(LIST(Scene_picked_object))(
-											&(scene_picked_object_list));
+										Cmiss_rendition_destroy(&region_rendition);
 									}
 								}
-								DESTROY(Interaction_volume)(&temp_interaction_volume);
+								DEACCESS(Interaction_volume)(&temp_interaction_volume);
 							}
 						}
 						if (INTERACTIVE_EVENT_BUTTON_RELEASE==event_type)
@@ -566,6 +543,8 @@ release.
 						"Element_tool_interactive_event_handler.  Unknown event type");
 				} break;
 			}
+			Cmiss_graphics_filter_destroy(&combined_filter);
+			Cmiss_scene_picker_destroy(&scene_picker);
 		}
 		if (element_tool->region)
 		{

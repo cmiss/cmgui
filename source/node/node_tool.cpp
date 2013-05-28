@@ -49,6 +49,7 @@ Scene input.
 
 #include "zinc/graphic.h"
 #include "zinc/rendition.h"
+#include "zinc/scenepicker.h"
 #include "time/time_keeper_app.hpp"
 #include "computed_field/computed_field.h"
 #include "computed_field/computed_field_composite.h"
@@ -71,6 +72,7 @@ Scene input.
 #include "graphics/rendition.h"
 #include "graphics/graphic.h"
 #include "graphics/scene.h"
+#include "graphics/scene_picker.hpp"
 #include "region/cmiss_region.h"
 #include "general/message.h"
 #include "command/parser.h"
@@ -85,8 +87,7 @@ Scene input.
 #include "node/node_tool.xrch"
 #include "region/cmiss_region_chooser_wx.hpp"
 #endif /* defined (WX_USER_INTERFACE)*/
-#include <map>
-typedef std::multimap<Cmiss_region *, Cmiss_node_id> Region_node_map;
+
 #include "mesh/cmiss_element_private.hpp"
 
 /*
@@ -153,8 +154,6 @@ changes in node position and derivatives etc.
 	int constrain_to_surface;
 	enum Node_tool_edit_mode edit_mode;
 	struct Computed_field *coordinate_field, *command_field, *element_xi_field;
-	/* information about picked nodes the editor knows about */
-	struct Scene_picked_object *scene_picked_object;
 	struct FE_node *last_picked_node;
 	int picked_node_was_unselected;
 	int motion_detected;
@@ -1235,8 +1234,6 @@ try to enforce that the node is created on that element.
 				if (scene_picked_object != 0)
 				{
 					Scene_picked_object_add_rendition(scene_picked_object, rendition);
-					REACCESS(Scene_picked_object)(&(node_tool->scene_picked_object),
-						scene_picked_object);
 				}
 			}
 			else
@@ -1283,7 +1280,7 @@ try to enforce that the node is created on that element.
 				}
 				if (scene_picked_object&&
 					Scene_picked_object_get_total_transformation_matrix(
-						node_tool->scene_picked_object,&transformation_required,
+						scene_picked_object,&transformation_required,
 						LU_transformation_matrix)&&transformation_required&&
 					LU_decompose(4,LU_transformation_matrix,LU_indx,&d,/*singular_tolerance*/1.0e-12))
 				{
@@ -1362,9 +1359,6 @@ try to enforce that the node is created on that element.
 			}
 			graphic=(struct Cmiss_graphic *)NULL;
 		}
-		/* make sure node_tool point at following as found out above */
-		REACCESS(Scene_picked_object)(&(node_tool->scene_picked_object),
-			scene_picked_object);
 		REACCESS(Cmiss_rendition)(&(node_tool->rendition),
 			rendition);
 		REACCESS(Cmiss_graphic)(&(node_tool->graphic),
@@ -1397,8 +1391,6 @@ Resets current edit. Called on button release or when tool deactivated.
 		REACCESS(Interaction_volume)(
 			&(node_tool->last_interaction_volume),
 			(struct Interaction_volume *)NULL);
-		REACCESS(Scene_picked_object)(&(node_tool->scene_picked_object),
-			(struct Scene_picked_object *)NULL);
 		REACCESS(Cmiss_rendition)(&(node_tool->rendition),
 			(struct Cmiss_rendition *)NULL);
 		REACCESS(Cmiss_graphic)(&(node_tool->graphic),
@@ -1474,12 +1466,10 @@ release.
 	struct Cmiss_rendition *rendition = NULL, *rendition_element = NULL;
 	struct Cmiss_graphic *graphic = NULL, *graphic_element = NULL;
 	struct Interaction_volume *interaction_volume,*temp_interaction_volume;
-	struct LIST(Scene_picked_object) *scene_picked_object_list;
 	struct Node_tool *node_tool;
 	struct Scene *scene;
-	struct Scene_picked_object *scene_picked_object, *scene_picked_object2;
+	Cmiss_scene_picker_id scene_picker = 0;
 
-	ENTER(Node_tool_interactive_event_handler);
 	if (device_id&&event&&(node_tool=
 		(struct Node_tool *)node_tool_void))
 	{
@@ -1488,6 +1478,7 @@ release.
 		scene = Interactive_event_get_scene(event);
 		if (scene != 0)
 		{
+			scene_picker = Cmiss_scene_create_picker(scene);
 			event_type=Interactive_event_get_type(event);
 			input_modifier=Interactive_event_get_input_modifier(event);
 			shift_pressed=(INTERACTIVE_EVENT_MODIFIER_SHIFT & input_modifier);
@@ -1498,148 +1489,157 @@ release.
 					/* interaction only works with first mouse button */
 					if (1==Interactive_event_get_button_number(event))
 					{
+						Cmiss_graphic *nearest_graphic = NULL, *nearest_node_graphic = NULL;
+						Cmiss_scene_picker_set_interaction_volume(scene_picker,
+							interaction_volume);
 						REACCESS(Interaction_volume)(&(node_tool->last_interaction_volume),
 							interaction_volume);
-						scene_picked_object_list=
-							Scene_pick_objects(scene,interaction_volume);
-						if (scene_picked_object_list != 0)
+						picked_node=(struct FE_node *)NULL;
+						nearest_element = (struct FE_element *)NULL;
+						if (node_tool->select_enabled)
 						{
-							picked_node=(struct FE_node *)NULL;
-							nearest_element = (struct FE_element *)NULL;
-							if (node_tool->select_enabled)
+							if (node_tool->use_data)
 							{
-								picked_node=Scene_picked_object_list_get_nearest_node(
-									scene_picked_object_list,node_tool->use_data,
-									(struct Cmiss_region *)NULL,&scene_picked_object,
-									&rendition,&graphic);
-							}
-							if (node_tool->constrain_to_surface)
-							{
-								nearest_element=Scene_picked_object_list_get_nearest_element(
-									scene_picked_object_list,(struct Cmiss_region *)NULL,
-									/*select_elements_enabled*/0, /*select_faces_enabled*/1,
-									/*select_lines_enabled*/0, &scene_picked_object2,
-									&rendition_element,&graphic_element);
-								/* Reject the previously picked node if the element is nearer */
-								if (picked_node && nearest_element)
-								{
-									if (Scene_picked_object_get_nearest(scene_picked_object) >
-										Scene_picked_object_get_nearest(scene_picked_object2))
-									{
-										picked_node = (struct FE_node *)NULL;
-									}
-								}
-							}
-							if (picked_node)
-							{
-								Cmiss_region_id temp_region = FE_region_get_Cmiss_region(FE_node_get_FE_region(picked_node));
-								Cmiss_field_module_id field_module = Cmiss_region_get_field_module(temp_region);
-								Cmiss_field_module_begin_change(field_module);
-								Cmiss_field_cache_id field_cache = Cmiss_field_module_create_cache(field_module);
-								node_tool->picked_node_was_unselected=1;
-								Cmiss_field_group_id selection_group = Cmiss_rendition_get_selection_group(rendition);
-								if (selection_group)
-								{
-									Cmiss_nodeset_id master_nodeset = Cmiss_field_module_find_nodeset_by_name(
-										field_module, node_tool->use_data ? "cmiss_data" : "cmiss_nodes");
-									Cmiss_field_node_group_id node_group = Cmiss_field_group_get_node_group(selection_group, master_nodeset);
-									Cmiss_nodeset_destroy(&master_nodeset);
-									if (node_group)
-									{
-										Cmiss_nodeset_group_id nodeset_group = Cmiss_field_node_group_get_nodeset(node_group);
-										node_tool->picked_node_was_unselected =
-											!Cmiss_nodeset_contains_node(Cmiss_nodeset_group_base_cast(nodeset_group), picked_node);
-										Cmiss_nodeset_group_destroy(&nodeset_group);
-										Cmiss_field_node_group_destroy(&node_group);
-									}
-									Cmiss_field_group_destroy(&selection_group);
-								}
-								REACCESS(Scene_picked_object)(
-									&(node_tool->scene_picked_object),scene_picked_object);
-								REACCESS(Cmiss_rendition)(&(node_tool->rendition),
-									rendition);
-								REACCESS(Cmiss_graphic)(&(node_tool->graphic),graphic);
-								if (node_tool->define_enabled)
-								{
-									Cmiss_field_cache_set_node(field_cache, picked_node);
-									if (!Cmiss_field_is_defined_at_location(node_tool->coordinate_field, field_cache))
-									{
-										Node_tool_define_field_at_node_from_picked_coordinates(
-											node_tool, picked_node, field_cache);
-									}
-								}
-								Cmiss_field_cache_destroy(&field_cache);
-								Cmiss_field_module_end_change(field_module);
-								Cmiss_field_module_destroy(&field_module);
+								picked_node = Cmiss_scene_picker_get_nearest_data(scene_picker);
+								nearest_node_graphic = Cmiss_scene_picker_get_nearest_data_graphic(scene_picker);
 							}
 							else
 							{
-								if (node_tool->create_enabled)
+								picked_node = Cmiss_scene_picker_get_nearest_node(scene_picker);
+								nearest_node_graphic = Cmiss_scene_picker_get_nearest_node_graphic(scene_picker);
+							}
+						}
+
+						if (node_tool->constrain_to_surface)
+						{
+							nearest_graphic = Cmiss_scene_picker_get_nearest_graphic(scene_picker);
+							if (nearest_graphic && CMISS_GRAPHIC_SURFACES == Cmiss_graphic_get_graphic_type(nearest_graphic))
+							{
+								nearest_element = Cmiss_scene_picker_get_nearest_element(scene_picker);
+								Cmiss_node_destroy(&picked_node);
+							}
+							if (picked_node && nearest_element)
+							{
+								Cmiss_node_destroy(&picked_node);
+							}
+						}
+
+						if (picked_node)
+						{
+							Cmiss_region_id temp_region = FE_region_get_Cmiss_region(FE_node_get_FE_region(picked_node));
+							rendition = Cmiss_region_get_rendition_internal(temp_region);
+							Cmiss_field_module_id field_module = Cmiss_region_get_field_module(temp_region);
+							Cmiss_field_module_begin_change(field_module);
+							Cmiss_field_cache_id field_cache = Cmiss_field_module_create_cache(field_module);
+							node_tool->picked_node_was_unselected=1;
+							Cmiss_field_group_id selection_group = Cmiss_rendition_get_selection_group(rendition);
+							if (selection_group)
+							{
+								Cmiss_nodeset_id master_nodeset = Cmiss_field_module_find_nodeset_by_name(
+									field_module, node_tool->use_data ? "cmiss_data" : "cmiss_nodes");
+								Cmiss_field_node_group_id node_group = Cmiss_field_group_get_node_group(selection_group, master_nodeset);
+								Cmiss_nodeset_destroy(&master_nodeset);
+								if (node_group)
 								{
-									/* Find the intersection of the element and the interaction volume */
-									Cmiss_field_id nearest_element_coordinate_field = 0;
-									if (nearest_element)
-									{
-										nearest_element_coordinate_field = Cmiss_graphic_get_coordinate_field(graphic_element);
-									}
-									/* If we are creating on elements and no element was selected then
+									Cmiss_nodeset_group_id nodeset_group = Cmiss_field_node_group_get_nodeset(node_group);
+									node_tool->picked_node_was_unselected =
+										!Cmiss_nodeset_contains_node(Cmiss_nodeset_group_base_cast(nodeset_group), picked_node);
+									Cmiss_nodeset_group_destroy(&nodeset_group);
+									Cmiss_field_node_group_destroy(&node_group);
+								}
+								Cmiss_field_group_destroy(&selection_group);
+							}
+							REACCESS(Cmiss_rendition)(&(node_tool->rendition),
+								rendition);
+							REACCESS(Cmiss_graphic)(&(node_tool->graphic),nearest_node_graphic);
+							if (node_tool->define_enabled)
+							{
+								Cmiss_field_cache_set_node(field_cache, picked_node);
+								if (!Cmiss_field_is_defined_at_location(node_tool->coordinate_field, field_cache))
+								{
+									Node_tool_define_field_at_node_from_picked_coordinates(
+										node_tool, picked_node, field_cache);
+								}
+							}
+							Cmiss_field_cache_destroy(&field_cache);
+							Cmiss_field_module_end_change(field_module);
+							Cmiss_field_module_destroy(&field_module);
+							Cmiss_rendition_destroy(&rendition);
+						}
+						else
+						{
+							if (node_tool->create_enabled)
+							{
+								/* Find the intersection of the element and the interaction volume */
+								Cmiss_field_id nearest_element_coordinate_field = 0;
+								if (nearest_element)
+								{
+									nearest_element_coordinate_field = Cmiss_graphic_get_coordinate_field(nearest_graphic);
+								}
+								/* If we are creating on elements and no element was selected then
 										don't create */
-									if (!node_tool->constrain_to_surface || nearest_element)
+								if (!node_tool->constrain_to_surface || nearest_element)
+								{
+									picked_node=Node_tool_create_node_at_interaction_volume(
+										node_tool,scene,interaction_volume,nearest_element,
+										nearest_element_coordinate_field);
+									if (picked_node != 0)
 									{
-										picked_node=Node_tool_create_node_at_interaction_volume(
-											node_tool,scene,interaction_volume,nearest_element,
-											nearest_element_coordinate_field);
-										if (picked_node != 0)
-										{
-											node_tool->picked_node_was_unselected=1;
-										}
-										else
-										{
-											node_tool->picked_node_was_unselected=0;
-										}
+										node_tool->picked_node_was_unselected=1;
 									}
 									else
 									{
 										node_tool->picked_node_was_unselected=0;
 									}
-									Cmiss_field_destroy(&nearest_element_coordinate_field);
 								}
 								else
 								{
 									node_tool->picked_node_was_unselected=0;
 								}
+								Cmiss_field_destroy(&nearest_element_coordinate_field);
 							}
-							REACCESS(FE_node)(&(node_tool->last_picked_node),picked_node);
-							DESTROY(LIST(Scene_picked_object))(&(scene_picked_object_list));
-							/*
-							 * NOTE: make selection the last step so node_tool is in good state before
-							 * receiving code gets to run: consider it capable of changing the current tool!
-							 */
-							clear_selection = !shift_pressed;
-							if (clear_selection)
+							else
 							{
-								if (node_tool->root_region)
-								{
-									Cmiss_rendition *root_rendition = Cmiss_region_get_rendition_internal(
-										node_tool->root_region);
-									Cmiss_field_group_id root_group = Cmiss_rendition_get_selection_group(root_rendition);
-									if (root_group)
-									{
-										if (!node_tool->use_data)
-											Cmiss_field_group_clear_region_tree_node(root_group);
-										else
-											Cmiss_field_group_clear_region_tree_data(root_group);
-										Cmiss_field_group_destroy(&root_group);
-									}
-									//Cmiss_rendition_flush_tree_selections(root_rendition);
-									Cmiss_rendition_destroy(&root_rendition);
-								}
-							}
-							if (picked_node)
-							{
-								Node_tool_set_picked_node(node_tool, picked_node);
+								node_tool->picked_node_was_unselected=0;
 							}
 						}
+						REACCESS(FE_node)(&(node_tool->last_picked_node),picked_node);
+						/*
+						 * NOTE: make selection the last step so node_tool is in good state before
+						 * receiving code gets to run: consider it capable of changing the current tool!
+						 */
+						clear_selection = !shift_pressed;
+						if (clear_selection)
+						{
+							if (node_tool->root_region)
+							{
+								Cmiss_rendition *root_rendition = Cmiss_region_get_rendition_internal(
+									node_tool->root_region);
+								Cmiss_field_group_id root_group = Cmiss_rendition_get_selection_group(root_rendition);
+								if (root_group)
+								{
+									if (!node_tool->use_data)
+										Cmiss_field_group_clear_region_tree_node(root_group);
+									else
+										Cmiss_field_group_clear_region_tree_data(root_group);
+									Cmiss_field_group_destroy(&root_group);
+								}
+								//Cmiss_rendition_flush_tree_selections(root_rendition);
+								Cmiss_rendition_destroy(&root_rendition);
+							}
+						}
+						if (picked_node)
+						{
+							Node_tool_set_picked_node(node_tool, picked_node);
+						}
+						if (picked_node)
+							Cmiss_node_destroy(&picked_node);
+						if (nearest_graphic)
+							Cmiss_graphic_destroy(&nearest_graphic);
+						if (nearest_node_graphic)
+							Cmiss_graphic_destroy(&nearest_node_graphic);
+						if (nearest_element)
+							Cmiss_element_destroy(&nearest_element);
 					}
 					node_tool->motion_detected=0;
 				} break;
@@ -1660,19 +1660,13 @@ release.
 						{
 							if (node_tool->constrain_to_surface)
 							{
-								scene_picked_object_list=
-									Scene_pick_objects(scene,interaction_volume);
-								if (scene_picked_object_list != 0)
+								if ( 0 != (nearest_element=Cmiss_scene_picker_get_nearest_element(scene_picker)))
 								{
-									if ( 0 != (nearest_element=Scene_picked_object_list_get_nearest_element(
-										scene_picked_object_list,(struct Cmiss_region *)NULL,
-										/*select_elements_enabled*/0, /*select_faces_enabled*/1,
-										/*select_lines_enabled*/0, &scene_picked_object2,
-										&rendition_element,&graphic_element)))
-									{
-										nearest_element_coordinate_field = Cmiss_graphic_get_coordinate_field(graphic_element);
-									}
-									DESTROY(LIST(Scene_picked_object))(&(scene_picked_object_list));
+									Cmiss_graphic *nearest_element_graphic =
+										Cmiss_scene_picker_get_nearest_element_graphic(scene_picker);
+									nearest_element_coordinate_field =
+										Cmiss_graphic_get_coordinate_field(nearest_element_graphic);
+									Cmiss_graphic_destroy(&nearest_element_graphic);
 								}
 							}
 							Cmiss_region_id temp_region = Cmiss_rendition_get_region(node_tool->rendition);
@@ -1783,12 +1777,12 @@ release.
 									Cmiss_graphic_point_attributes_destroy(&point_attributes);
 								}
 								/* work out scene_object transformation information */
-								if (!node_tool->scene_picked_object)
-								{
-									/* best we can do is use world coordinates;
-									 * will look wrong if nodes drawn with a transformation */
-									edit_info.transformation_required=0;
-								}
+								/* best we can do is use world coordinates;
+								 * will look wrong if nodes drawn with a transformation */
+								edit_info.transformation_required=0;
+
+
+								/* not using this
 								else if (!(Scene_picked_object_get_total_transformation_matrix(
 									node_tool->scene_picked_object,
 									&(edit_info.transformation_required),
@@ -1797,10 +1791,10 @@ release.
 										edit_info.LU_transformation_matrix)&&
 									((!edit_info.transformation_required)||
 										LU_decompose(4,edit_info.LU_transformation_matrix,
-											edit_info.LU_indx,&d,/*singular_tolerance*/1.0e-12))))
+											edit_info.LU_indx,&d,1.0e-12))))
 								{
 									return_code=0;
-								}
+								}*/
 								if (return_code)
 								{
 									Cmiss_field_group_id selection_group = Cmiss_rendition_get_selection_group(node_tool->rendition);
@@ -1927,85 +1921,26 @@ release.
 								}
 								if (INTERACTIVE_EVENT_BUTTON_RELEASE==event_type)
 								{
-									scene_picked_object_list=
-										Scene_pick_objects(scene,temp_interaction_volume);
-									if (scene_picked_object_list != 0)
+									Cmiss_scene_picker_set_interaction_volume(scene_picker,
+										temp_interaction_volume);
+									if (node_tool->root_region)
 									{
-										Region_node_map *node_map =
-											(Region_node_map *)Scene_picked_object_list_get_picked_region_sorted_nodes(
-												scene_picked_object_list, node_tool->use_data);
-										if (node_map)
+										Cmiss_rendition_id region_rendition = Cmiss_region_get_rendition_internal(
+											node_tool->root_region);
+										Cmiss_field_group_id selection_group =
+											Cmiss_rendition_get_or_create_selection_group(region_rendition);
+										if (selection_group)
 										{
-											Cmiss_region *sub_region = NULL;
-											Cmiss_field_group_id selection_group = NULL;
-											Cmiss_rendition *region_rendition = NULL;
-											Cmiss_nodeset_group_id nodeset_group = NULL;
-											Region_node_map::iterator pos;
-											for (pos = node_map->begin(); pos != node_map->end(); ++pos)
-											{
-												if (pos->first != sub_region)
-												{
-													if (sub_region && selection_group)
-													{
-														Cmiss_field_group_destroy(&selection_group);
-													}
-													if (nodeset_group)
-													{
-														Cmiss_nodeset_group_destroy(&nodeset_group);
-													}
-													if (region_rendition)
-													{
-														Cmiss_rendition_destroy(&region_rendition);
-													}
-													sub_region = pos->first;
-													if (sub_region)
-													{
-														region_rendition= Cmiss_region_get_rendition_internal(sub_region);
-														selection_group = Cmiss_rendition_get_or_create_selection_group(region_rendition);
-													}
-													if (selection_group)
-													{
-														Cmiss_field_module_id field_module = Cmiss_region_get_field_module(sub_region);
-														Cmiss_nodeset_id master_nodeset = Cmiss_field_module_find_nodeset_by_name(
-															field_module, node_tool->use_data ? "cmiss_data" : "cmiss_nodes");
-														if (master_nodeset)
-														{
-															Cmiss_field_node_group_id node_group = Cmiss_field_group_get_node_group(selection_group, master_nodeset);
-															if (!node_group)
-															{
-																node_group = Cmiss_field_group_create_node_group(selection_group, master_nodeset);
-															}
-															nodeset_group = Cmiss_field_node_group_get_nodeset(node_group);
-															Cmiss_field_node_group_destroy(&node_group);
-															Cmiss_nodeset_destroy(&master_nodeset);
-														}
-														Cmiss_field_module_destroy(&field_module);
-													}
-												}
-												if (nodeset_group)
-												{
-													Cmiss_nodeset_group_add_node(nodeset_group, pos->second);
-												}
-											}
-											if (selection_group)
-											{
-												Cmiss_field_group_destroy(&selection_group);
-											}
-											if (nodeset_group)
-											{
-												Cmiss_nodeset_group_destroy(&nodeset_group);
-											}
-											if (region_rendition)
-											{
-												Cmiss_rendition_destroy(&region_rendition);
-											}
-											delete node_map;
+											if (node_tool->use_data)
+												Cmiss_scene_picker_add_picked_data_to_group(scene_picker, selection_group);
+											else
+												Cmiss_scene_picker_add_picked_nodes_to_group(scene_picker, selection_group);
+											Cmiss_field_group_destroy(&selection_group);
 										}
-										DESTROY(LIST(Scene_picked_object))(
-											&(scene_picked_object_list));
+										Cmiss_rendition_destroy(&region_rendition);
 									}
 								}
-								DESTROY(Interaction_volume)(&temp_interaction_volume);
+								DEACCESS(Interaction_volume)(&temp_interaction_volume);
 							}
 						}
 						if (INTERACTIVE_EVENT_BUTTON_RELEASE==event_type)
@@ -2044,6 +1979,8 @@ release.
 								&(node_tool->last_interaction_volume),interaction_volume);
 						}
 						Cmiss_field_destroy(&nearest_element_coordinate_field);
+						if (nearest_element)
+							Cmiss_element_destroy(&nearest_element);
 					}
 				} break;
 				default:
@@ -2062,13 +1999,14 @@ release.
 			Cmiss_rendition_destroy(&root_rendition);
 		}
 		Cmiss_region_end_hierarchical_change(node_tool->root_region);
+		if (scene_picker)
+			Cmiss_scene_picker_destroy(&scene_picker);
 	}
 	else
 	{
 		display_message(ERROR_MESSAGE,
 			"Node_tool_interactive_event_handler.  Invalid argument(s)");
 	}
-	LEAVE;
 } /* Node_tool_interactive_event_handler */
 
 static int Node_tool_destroy_node_tool(void **node_tool_void)
@@ -3368,7 +3306,6 @@ used to represent them. <element_manager> should be NULL if <use_data> is true.
 			ADD_OBJECT_TO_MANAGER(Interactive_tool)(
 				node_tool->interactive_tool,
 				node_tool->interactive_tool_manager);
-			node_tool->scene_picked_object=(struct Scene_picked_object *)NULL;
 			node_tool->last_picked_node=(struct FE_node *)NULL;
 
 			node_tool->rendition=(struct Cmiss_rendition *)NULL;
@@ -3424,9 +3361,23 @@ structure itself.
 		}
 		REACCESS(GT_object)(&(node_tool->rubber_band),(struct GT_object *)NULL);
 		DEACCESS(Graphical_material)(&(node_tool->rubber_band_material));
+		if (node_tool->last_picked_node)
+			Cmiss_node_destroy(&(node_tool->last_picked_node));
 		if (node_tool->time_keeper_app)
 		{
 			DEACCESS(Time_keeper_app)(&(node_tool->time_keeper_app));
+		}
+		if (node_tool->last_interaction_volume)
+		{
+			DEACCESS(Interaction_volume)(&(node_tool->last_interaction_volume));
+		}
+		if (node_tool->graphic)
+		{
+			Cmiss_graphic_destroy(&(node_tool->graphic));
+		}
+		if (node_tool->rendition)
+		{
+			Cmiss_rendition_destroy(&(node_tool->rendition));
 		}
 #if defined (WX_USER_INTERFACE)
 		if (node_tool->wx_node_tool)

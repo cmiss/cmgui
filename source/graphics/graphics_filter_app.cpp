@@ -4,6 +4,7 @@
 #include "general/debug.h"
 #include "general/message.h"
 #include "command/parser.h"
+#include "graphics/graphic.h"
 #include "graphics/graphics_filter.hpp"
 #include "graphics/graphics_module.h"
 
@@ -222,11 +223,12 @@ int gfx_define_graphics_filter_operator_and(struct Parse_state *state, void *gra
 int gfx_define_graphics_filter_contents(struct Parse_state *state, void *graphics_filter_handle_void,
 	void *filter_data_void)
 {
-	int return_code = 1;
+	int return_code = 1, number_of_valid_strings = 0;
 	struct Define_graphics_filter_data *filter_data = (struct Define_graphics_filter_data *)filter_data_void;
 	char *match_graphic_name, match_visibility_flags, *match_region_path;
+	enum Cmiss_graphic_type graphic_type;
 	int inverse;
-
+	const char **valid_strings = NULL, *graphic_type_string = NULL;
 	if (state && filter_data)
 	{
 		Cmiss_graphics_filter_id *graphics_filter_handle = (Cmiss_graphics_filter_id *)graphics_filter_handle_void; // can be null
@@ -234,11 +236,15 @@ int gfx_define_graphics_filter_contents(struct Parse_state *state, void *graphic
 		match_graphic_name = NULL;
 		match_visibility_flags = 0;
 		match_region_path = NULL;
+		graphic_type = CMISS_GRAPHIC_TYPE_INVALID;
 		inverse = 0;
 		if (graphics_filter)
 		{
 			inverse = graphics_filter->isInverse();
 		}
+		valid_strings = ENUMERATOR_GET_VALID_STRINGS(Cmiss_graphic_type)(
+			&number_of_valid_strings,
+			(ENUMERATOR_CONDITIONAL_FUNCTION(Cmiss_graphic_type) *)NULL, (void *)NULL);
 
 		struct Option_table *option_table = CREATE(Option_table)();
 		Option_table_add_help(option_table," Filter to set up what will be and "
@@ -255,6 +261,9 @@ int gfx_define_graphics_filter_contents(struct Parse_state *state, void *graphic
 			gfx_define_graphics_filter_operator_or);
 		Option_table_add_entry(option_table, "operator_and", graphics_filter_handle_void, filter_data_void,
 			gfx_define_graphics_filter_operator_and);
+		Option_table_add_enumerator(option_table,number_of_valid_strings,
+			valid_strings,&(graphic_type_string));
+		DEALLOCATE(valid_strings);
 		Option_table_add_string_entry(option_table, "match_graphic_name",
 			&(match_graphic_name), " MATCH_NAME");
 		Option_table_add_char_flag_entry(option_table, "match_visibility_flags",
@@ -308,6 +317,12 @@ int gfx_define_graphics_filter_contents(struct Parse_state *state, void *graphic
 							match_region_path);
 					}
 				}
+				else if (graphic_type_string)
+				{
+					STRING_TO_ENUMERATOR(Cmiss_graphic_type)(graphic_type_string, &graphic_type);
+					graphics_filter = Cmiss_graphics_module_create_filter_graphic_type(
+						filter_data->graphics_module, graphic_type);
+				}
 			}
 
 			if (graphics_filter)
@@ -320,6 +335,8 @@ int gfx_define_graphics_filter_contents(struct Parse_state *state, void *graphic
 		if (match_graphic_name)
 			DEALLOCATE(match_graphic_name);
 		if (match_region_path)
+			DEALLOCATE(match_region_path);
+		if (graphic_type_string)
 			DEALLOCATE(match_region_path);
 	}
 	else

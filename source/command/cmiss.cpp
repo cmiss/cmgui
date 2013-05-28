@@ -8460,7 +8460,8 @@ static int gfx_mesh_graphics_tetrahedral(struct Parse_state *state,
 							size_x*size_x + size_y*size_y + size_z*size_z);
 					}
 					Render_graphics_triangularisation renderer(NULL, tolerance);
-					if (renderer.Scene_compile(scene))
+					Cmiss_graphics_filter_id filter = Cmiss_scene_get_filter(scene);
+					if (renderer.Scene_compile(scene, filter))
 					{
 						return_code = renderer.Scene_execute(scene);
 						trimesh = renderer.get_triangle_mesh();
@@ -8491,6 +8492,8 @@ static int gfx_mesh_graphics_tetrahedral(struct Parse_state *state,
 						}
 						Cmiss_region_destroy(&region);
 					}
+					if (filter)
+						Cmiss_graphics_filter_destroy(&filter);
 				}
 #else
 				USE_PARAMETER(scene);
@@ -8567,7 +8570,8 @@ static int gfx_mesh_graphics_triangle(struct Parse_state *state,
 							size_x*size_x + size_y*size_y + size_z*size_z);
 					}
 					Render_graphics_triangularisation renderer(NULL, tolerance);
-					if (renderer.Scene_compile(scene))
+					Cmiss_graphics_filter_id filter = Cmiss_scene_get_filter(scene);
+					if (renderer.Scene_compile(scene, filter))
 					{
 						return_code = renderer.Scene_execute(scene);
 						trimesh = renderer.get_triangle_mesh();
@@ -8587,6 +8591,8 @@ static int gfx_mesh_graphics_triangle(struct Parse_state *state,
 						}
 						Cmiss_region_destroy(&region);
 					}
+					if (filter)
+						Cmiss_graphics_filter_destroy(&filter);
 				}
 			}
 			DEALLOCATE(region_path);

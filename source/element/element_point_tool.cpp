@@ -53,6 +53,7 @@ Interactive tool for selecting element/grid points with mouse and other devices.
 #include "finite_element/finite_element_discretization.h"
 #include "general/debug.h"
 #include "graphics/scene.h"
+#include "graphics/scene_picker.hpp"
 #include "interaction/interaction_graphics.h"
 #include "interaction/interaction_volume.h"
 #include "interaction/interactive_event.h"
@@ -178,6 +179,7 @@ release.
 	struct LIST(Scene_picked_object) *scene_picked_object_list;
 	struct Multi_range *multi_range;
 	struct Scene *scene;
+	Cmiss_scene_picker_id scene_picker = 0;
 
 	ENTER(Element_point_tool_interactive_event_handler);
 	if (device_id&&event&&(element_point_tool=
@@ -372,7 +374,7 @@ release.
 											&(scene_picked_object_list));
 									}
 								}
-								DESTROY(Interaction_volume)(&temp_interaction_volume);
+								DEACCESS(Interaction_volume)(&temp_interaction_volume);
 							}
 						}
 						if (INTERACTIVE_EVENT_BUTTON_RELEASE==event_type)

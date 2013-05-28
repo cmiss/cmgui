@@ -666,7 +666,6 @@ Rotates the scene_viewer when the tumble is active.
 					temp_modelview_matrix,temp_projection_matrix,
 					viewport_left,viewport_bottom,viewport_width,viewport_height,
 					centre_x,centre_y,size_x,size_y);
-				ACCESS(Interaction_volume)(interaction_volume);
 				interactive_event=CREATE(Interactive_event)(interactive_event_type,
 					/*button_number*/-1,/*input_modifier*/0,interaction_volume,
 					scene_viewer->core_scene_viewer->scene);
@@ -1698,7 +1697,6 @@ scene_viewer.
 				temp_modelview_matrix,temp_projection_matrix,
 				viewport_left,viewport_bottom,viewport_width,viewport_height,
 				centre_x,centre_y,size_x,size_y);
-			ACCESS(Interaction_volume)(interaction_volume);
 			interactive_event=CREATE(Interactive_event)(interactive_event_type,
 				button_number,input_modifier,interaction_volume,scene_viewer->core_scene_viewer->scene);
 			ACCESS(Interactive_event)(interactive_event);
