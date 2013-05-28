@@ -297,12 +297,14 @@ int gfx_modify_rendition_graphic(struct Parse_state *state,
 	}
 
 	/* glyph */
-	GT_object *glyph = 0;
+	char *glyph_name = 0;
 	if (point_attributes)
 	{
-		glyph = Cmiss_graphic_point_attributes_get_glyph(point_attributes);
-		Option_table_add_entry(option_table,"glyph",&glyph,
-			rendition_command_data->glyph_manager,set_Graphics_object);
+		if (graphic->glyph)
+		{
+			GET_NAME(GT_object)(graphic->glyph, &glyph_name);
+		}
+		Option_table_add_string_entry(option_table, "glyph", &glyph_name, " GLYPH_NAME|none");
 	}
 
 	/* deprecated: glyph scaling mode constant/scalar/vector/axes/general */
@@ -381,6 +383,14 @@ int gfx_modify_rendition_graphic(struct Parse_state *state,
 	Option_table_add_entry(option_table,"material",&(graphic->material),
 		rendition_command_data->graphical_material_manager,
 		set_Graphical_material);
+
+	/* mirror_glyph|no_mirror_glyph */
+	int mirror_glyph_flag = 0;
+	if (point_attributes)
+	{
+		mirror_glyph_flag = Cmiss_graphic_point_attributes_get_mirror_glyph_flag(point_attributes);
+		Option_table_add_switch(option_table, "mirror_glyph", "no_mirror_glyph", &mirror_glyph_flag);
+	}
 
 	/* native_discretization */
 	if (Cmiss_graphic_type_uses_attribute(graphic_type, CMISS_GRAPHIC_ATTRIBUTE_NATIVE_DISCRETIZATION_FIELD))
@@ -718,7 +728,29 @@ int gfx_modify_rendition_graphic(struct Parse_state *state,
 			}
 
 			// ignoring glyph_scaling_mode_string
+			GT_object *glyph =  0;
+			if (glyph_name && (!fuzzy_string_compare_same_length(glyph_name, "none")))
+			{
+				if ((fuzzy_string_compare_same_length(glyph_name, "mirror_arrow_line")) ||
+					(fuzzy_string_compare_same_length(glyph_name, "mirror_arrow_solid")) ||
+					(fuzzy_string_compare_same_length(glyph_name, "mirror_cone")) ||
+					(fuzzy_string_compare_same_length(glyph_name, "mirror_line")))
+				{
+					glyph = FIND_BY_IDENTIFIER_IN_MANAGER(GT_object,name)(glyph_name + 7, rendition_command_data->glyph_manager);
+					mirror_glyph_flag = 1;
+				}
+				else
+				{
+					glyph = FIND_BY_IDENTIFIER_IN_MANAGER(GT_object,name)(glyph_name, rendition_command_data->glyph_manager);
+				}
+				if (!glyph)
+				{
+					display_message(ERROR_MESSAGE, "Unknown glyph: ", glyph_name);
+					return_code = 0;
+				}
+			}
 			Cmiss_graphic_point_attributes_set_glyph(point_attributes, glyph);
+			Cmiss_graphic_point_attributes_set_mirror_glyph_flag(point_attributes, mirror_glyph_flag);
 			Cmiss_graphic_point_attributes_set_orientation_scale_field(point_attributes, orientation_scale_field);
 			// reverse centre to get offset:
 			for (int i = 0; i < 3; i++)
@@ -851,9 +883,9 @@ int gfx_modify_rendition_graphic(struct Parse_state *state,
 		/* parse error, help */
 		Cmiss_graphic_destroy(&(modify_rendition_data->graphic));
 	}
-	if (glyph)
+	if (glyph_name)
 	{
-		DEACCESS(GT_object)(&glyph);
+		DEALLOCATE(glyph_name);
 	}
 	Cmiss_field_destroy(&coordinate_field);
 	Cmiss_field_destroy(&data_field);

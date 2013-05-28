@@ -514,7 +514,7 @@ class wxRegionTreeViewer : public wxFrame
 		*streamtypetext, *streamlengthtext, *streamwidthtext, *streamvectortext,
 		*linewidthtext, *streamlinedatatypetext, *spectrumtext, *rendertypetext, *fonttext;
 	wxButton *sceneupbutton, scenedownbutton, *applybutton, *revertbutton, *tessellationbutton;
-	wxCheckBox *nativediscretizationcheckbox,*autocheckbox,
+	wxCheckBox *nativediscretizationcheckbox,*autocheckbox, *mirrorglyph_checkbox,
 	 *reversecheckbox,*exteriorcheckbox,	*facecheckbox, *seedelementcheckbox;
 	wxRadioButton *isovaluelistradiobutton, *isovaluesequenceradiobutton;
 	wxPanel *isovalueoptionspane;
@@ -1120,6 +1120,21 @@ int glyph_callback(GT_object *glyph)
 		region_tree_viewer->edit_rendition);
 	//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphic);
 	return 1;
+}
+
+void MirrorGlyphChecked(wxCommandEvent &event)
+{
+	USE_PARAMETER(event);
+	mirrorglyph_checkbox = XRCCTRL(*this, "MirrorGlyphCheckBox", wxCheckBox);
+	Cmiss_graphic_point_attributes_id point_attributes =
+		Cmiss_graphic_get_point_attributes(region_tree_viewer->current_graphic);
+	Cmiss_graphic_point_attributes_set_mirror_glyph_flag(point_attributes,
+		mirrorglyph_checkbox->IsChecked());
+	Cmiss_graphic_point_attributes_destroy(&point_attributes);
+	// inform the client of the change
+	Region_tree_viewer_autoapply(region_tree_viewer->rendition,
+		region_tree_viewer->edit_rendition);
+	//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphic);
 }
 
 /**
@@ -3021,6 +3036,7 @@ void SetGraphic(Cmiss_graphic *graphic)
 		/* node_points, data_points, element_points */
 		/* glyphs */
 		glyph_chooser_panel=XRCCTRL(*this,"GlyphChooserPanel",wxPanel);
+		mirrorglyph_checkbox = XRCCTRL(*this, "MirrorGlyphCheckBox", wxCheckBox);
 		orientation_scale_field_chooser_panel=XRCCTRL(*this,	"OrientationScaleChooserPanel",wxPanel);
 		variable_scale_field_chooser_panel=XRCCTRL(*this,"VariableScaleChooserPanel",wxPanel);
 		glyphtext=XRCCTRL(*this,"GlyphText",wxStaticText);
@@ -3075,6 +3091,7 @@ void SetGraphic(Cmiss_graphic *graphic)
 
 			/* turn on callbacks */
 			glyph_chooser_panel->Show();
+			mirrorglyph_checkbox->Show();
 			orientation_scale_field_chooser_panel->Show();
 			variable_scale_field_chooser_panel->Show();
 			glyphtext->Show();
@@ -3145,6 +3162,7 @@ void SetGraphic(Cmiss_graphic *graphic)
 			}
 
 			glyph_chooser->set_object(glyph);
+			mirrorglyph_checkbox->SetValue(Cmiss_graphic_point_attributes_get_mirror_glyph_flag(point_attributes));
 
 			sprintf(temp_string,"%g,%g,%g",
 				point_offset[0], point_offset[1], point_offset[2]);
@@ -3176,6 +3194,7 @@ void SetGraphic(Cmiss_graphic *graphic)
 		else
 		{
 			glyph_chooser_panel->Hide();
+			mirrorglyph_checkbox->Hide();
 			orientation_scale_field_chooser_panel->Hide();
 			variable_scale_field_chooser_panel->Hide();
 			glyphtext->Hide();
@@ -4193,6 +4212,7 @@ BEGIN_EVENT_TABLE(wxRegionTreeViewer, wxFrame)
 	EVT_TEXT_ENTER(XRCID("IsoValueSequenceNumberTextCtrl"),wxRegionTreeViewer::EnterIsoRange)
 	EVT_TEXT_ENTER(XRCID("IsoValueSequenceFirstTextCtrl"),wxRegionTreeViewer::EnterIsoRange)
 	EVT_TEXT_ENTER(XRCID("IsoValueSequenceLastTextCtrl"),wxRegionTreeViewer::EnterIsoRange)
+	EVT_CHECKBOX(XRCID("MirrorGlyphCheckBox"),wxRegionTreeViewer::MirrorGlyphChecked)
 	EVT_TEXT_ENTER(XRCID("OffsetTextCtrl"),wxRegionTreeViewer::EnterGlyphOffset)
 	EVT_TEXT_ENTER(XRCID("BaseGlyphSizeTextCtrl"),wxRegionTreeViewer::EnterGlyphSize)
 	EVT_TEXT_ENTER(XRCID("GlyphScaleFactorsTextCtrl"),wxRegionTreeViewer::EnterGlyphScale)

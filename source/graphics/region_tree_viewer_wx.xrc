@@ -614,7 +614,7 @@
 											</object>
 									
 											<object class="sizeritem">
-				   								<object class = "wxStaticBoxSizer" name="GlyphBox">	
+				   							<object class = "wxStaticBoxSizer" name="GlyphBox">	
 													<orient>wxVERTICAL</orient>
 													<object class="sizeritem">
 														<object class = "wxBoxSizer">	
@@ -629,20 +629,32 @@
 																<object class	="wxPanel"  name="GlyphChooserPanel">
 																	<size>200,30</size>
 																</object>
-															</object>	
+															</object>
+														</object>
+													</object>
+
+													<object class="sizeritem">
+														<object class = "wxBoxSizer">
+															<orient>wxHORIZONTAL</orient>
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTRE_VERTICAL</flag>
+																<object class	="wxCheckBox" name="MirrorGlyphCheckBox">
+																	<label>Mirror</label>
+																</object>
+															</object>
 															<object class="sizeritem">
 																<flag>wxALIGN_CENTRE_VERTICAL</flag>
 																<object class	="wxStaticText" name="OffsetText">
-																	<label>   Offset:</label> 
+																	<label>   Offset:</label>
 																</object>
-															</object>	
+															</object>
 															<object class="sizeritem">
 																<object class	="wxTextCtrl" name="OffsetTextCtrl">
-          														  	<style>wxTE_PROCESS_ENTER</style>
+																	<style>wxTE_PROCESS_ENTER</style>
 																</object>
-															</object>														
+															</object>
 														</object>
-													</object>	
+													</object>
 
 													<object class="sizeritem">			
 														<object class="wxStaticLine" name="GlyphLine" >
