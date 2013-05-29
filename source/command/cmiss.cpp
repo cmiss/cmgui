@@ -439,74 +439,44 @@ to change the interactive tool settings.
 #endif /*(WX_USER_INTERFACE)*/
 
 #if defined (WX_USER_INTERFACE) && defined (WIN32_SYSTEM)
-char *CMISS_set_directory_and_filename_WIN32(char *file_name,
+/**
+ * Set directory for windows drive letter and path separately.
+ *
+ * @param filename_address  Pointer to filename from which drive letter
+ * and path are extracted, and replaced with filename only.
+ */
+void CMISS_set_directory_and_filename_WIN32(char **filename_address,
 	struct Cmiss_command_data *command_data)
-/*******************************************************************************
-LAST MODIFIED : 27 March 2007
-
-DESCRIPTION :
-WX_USER_INTERFACE_ONLY, get the interactive_tool_manager and pass it
-to change the interactive tool settings.
-==============================================================================*/
 {
-	 char *drive_name = NULL;
-	 char *first = NULL;
-	 char *last = NULL;
-	 char *temp_directory_name,*directory_name, *temp_name, *temp_string;
-	 int lastlength, length;
-	 first = strchr(file_name, '\\');
-	 last = strrchr(file_name, '\\');
-	 lastlength = last - file_name +1;
-	 length = first - file_name +1;
-	 if ((length>0))
-	 {
-			if (ALLOCATE(drive_name,char,length))
-			{
-				 strncpy(drive_name,file_name,length);
-				 drive_name[length-1]='\0';
-				 if (ALLOCATE(temp_string,char,length+8))
-				 {
-						strcpy(temp_string, "set dir ");
-						strcat(temp_string, drive_name);
-						temp_string[length+7]='\0';
-						Execute_command_execute_string(command_data->execute_command,temp_string);
-						DEALLOCATE(temp_string);
-				 }
-				 DEALLOCATE(drive_name);
-			}
-	 }
-	 if (lastlength>length)
-	 {
-			if (ALLOCATE(temp_directory_name,char,lastlength+1))
-			{
-				 strncpy(temp_directory_name,file_name,lastlength);
-				 temp_directory_name[lastlength]='\0';
-				 if (ALLOCATE(directory_name,char,lastlength-length+2))
-				 {
-						directory_name = &temp_directory_name[length-1];
-						directory_name[lastlength-length+1]='\0';
-						if (ALLOCATE(temp_string,char,lastlength-length+10))
-						{
-							 strcpy(temp_string, "set dir ");
-							 strcat(temp_string, directory_name);
-							 temp_string[lastlength-length+9]='\0';
-							 Execute_command_execute_string(command_data->execute_command,temp_string);
-							 DEALLOCATE(temp_string);
-						}
-						DEALLOCATE(directory_name);
-				 }
-				 DEALLOCATE(temp_directory_name);
-			}
-	 }
-	 if (lastlength>0)
-	 {
-			temp_name = &file_name[lastlength];
-	 }
-	 else
-	 {
-			temp_name = file_name;
-	 }
-	 return (temp_name);
+	if ((!filename_address) || (!(*filename_address)) || (!command_data))
+	{
+		return;
+	}
+	char *filename_copy = duplicate_string(*filename_address);
+	const int total_length = strlen(filename_copy);
+	char *path = filename_copy;
+	if ((total_length >= 2) && isalpha(path[0]) && (path[1] == ':'))
+	{
+		char command_string[] = "set dir ?:";
+		command_string[8] = path[0];
+		Execute_command_execute_string(command_data->execute_command, command_string);
+		path += 2;
+	}
+	char *filename_only = path;
+	char *last_backslash = strrchr(path, '\\');
+	if (last_backslash)
+	{
+		filename_only = last_backslash + 1;
+		*last_backslash = '\0';
+		char *command_string = new char[total_length + 10];
+		strcpy(command_string, "set dir ");
+		strcat(command_string, path);
+		Execute_command_execute_string(command_data->execute_command, command_string);
+		delete[] command_string;
+	}
+	strcpy(*filename_address, filename_only);
+	DEALLOCATE(filename_copy);
+	return;
 }
 
 #endif /*(WX_USER_INTERFACE)*/
@@ -12240,8 +12210,7 @@ instruction to read in the mesh.
 #if defined (WX_USER_INTERFACE) && defined (WIN32_SYSTEM)
 			if (file_name)
 			{
-				 file_name = CMISS_set_directory_and_filename_WIN32(file_name,
-						command_data);
+				 CMISS_set_directory_and_filename_WIN32(&file_name, command_data);
 			}
 #endif /* defined (WIN32_SYSTEM)*/
 				if (return_code)
@@ -12426,8 +12395,7 @@ user, otherwise the elements file is read.
 #if defined (WX_USER_INTERFACE) && defined (WIN32_SYSTEM)
 			if (file_name)
 			{
-				 file_name = CMISS_set_directory_and_filename_WIN32(file_name,
-						command_data);
+				 CMISS_set_directory_and_filename_WIN32(&file_name, command_data);
 			}
 #endif /* defined (WIN32_SYSTEM)*/
 
@@ -12635,8 +12603,7 @@ If the <use_data> flag is set, then read data, otherwise nodes.
 #if defined (WX_USER_INTERFACE) && defined (WIN32_SYSTEM)
 			if (file_name)
 			{
-				 file_name = CMISS_set_directory_and_filename_WIN32(file_name,
-						command_data);
+				 CMISS_set_directory_and_filename_WIN32(&file_name, command_data);
 			}
 #endif /* defined (WIN32_SYSTEM)*/
 					/* open the file */
@@ -15100,23 +15067,19 @@ Can also write individual groups with the <group> option.
 #if defined (WX_USER_INTERFACE) && defined (WIN32_SYSTEM)
 					if (com_file_name)
 					{
-						com_file_name = CMISS_set_directory_and_filename_WIN32(com_file_name,
-							command_data);
+						CMISS_set_directory_and_filename_WIN32(&com_file_name, command_data);
 					}
 					if (data_file_name)
 					{
-						data_file_name = CMISS_set_directory_and_filename_WIN32(data_file_name,
-							command_data);
+						CMISS_set_directory_and_filename_WIN32(&data_file_name, command_data);
 					}
 					if (elem_file_name)
 					{
-						elem_file_name = CMISS_set_directory_and_filename_WIN32(elem_file_name,
-							command_data);
+						CMISS_set_directory_and_filename_WIN32(&elem_file_name, command_data);
 					}
 					if (node_file_name)
 					{
-						node_file_name = CMISS_set_directory_and_filename_WIN32(node_file_name,
-							 command_data);
+						CMISS_set_directory_and_filename_WIN32(&node_file_name, command_data);
 					}
 #endif /* defined (WX_USER_INTERFACE) && defined (WIN32_SYSTEM) */
 				}
@@ -15656,8 +15619,7 @@ Can also write individual element groups with the <group> option.
 #if defined (WX_USER_INTERFACE) && defined (WIN32_SYSTEM)
 				if (file_name)
 				{
-					file_name = CMISS_set_directory_and_filename_WIN32(file_name,
-						command_data);
+					CMISS_set_directory_and_filename_WIN32(&file_name, command_data);
 				}
 #endif /* defined (WX_USER_INTERFACE) && (WIN32_SYSTEM) */
 			}
@@ -15844,8 +15806,7 @@ If <use_data> is set, writing data, otherwise writing nodes.
 #if defined (WX_USER_INTERFACE) && defined (WIN32_SYSTEM)
 				if (file_name)
 				{
-					 file_name = CMISS_set_directory_and_filename_WIN32(file_name,
-							command_data);
+					 CMISS_set_directory_and_filename_WIN32(&file_name, command_data);
 				}
 #endif /* defined (WX_USER_INTERFACE) && defined (WIN32_SYSTEM) */
 			}
