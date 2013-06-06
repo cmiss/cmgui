@@ -351,7 +351,7 @@ DESCRIPTION :
 	struct Region_tree_viewer **region_tree_viewer_address;
 	struct MANAGER(Graphical_material) *graphical_material_manager;
 	struct Graphical_material *default_material, *selected_material;
-	struct Cmiss_graphics_font *default_font;
+	struct Cmiss_font *default_font;
 	struct MANAGER(Scene) *scene_manager;
 	struct User_interface *user_interface;
 	enum Cmiss_graphic_type current_graphic_type;
@@ -359,7 +359,7 @@ DESCRIPTION :
 	struct MANAGER(GT_object) *glyph_manager;
 	struct MANAGER(VT_volume_texture) *volume_texture_manager;
 	struct MANAGER(Computed_field) *field_manager;
-	struct MANAGER(Cmiss_graphics_font) *font_manager;
+	struct MANAGER(Cmiss_font) *font_manager;
 	struct Computed_field *radius_scalar_field ;
 	struct Cmiss_region *root_region, *current_region;
 	enum Graphics_select_mode select_mode;
@@ -574,8 +574,8 @@ class wxRegionTreeViewer : public wxFrame
 	*label_field_chooser;
 	Managed_object_chooser<Computed_field,MANAGER_CLASS(Computed_field)>
 	*subgroup_field_chooser;
-	DEFINE_MANAGER_CLASS(Cmiss_graphics_font);
-		 Managed_object_chooser<Cmiss_graphics_font,MANAGER_CLASS(Cmiss_graphics_font)>
+	DEFINE_MANAGER_CLASS(Cmiss_font);
+		 Managed_object_chooser<Cmiss_font,MANAGER_CLASS(Cmiss_font)>
 	*font_chooser;
 	DEFINE_ENUMERATOR_TYPE_CLASS(Use_element_type);
 	Enumerator_chooser<ENUMERATOR_TYPE_CLASS(Use_element_type)>
@@ -1211,11 +1211,11 @@ int subgroup_field_callback(Computed_field *subgroup_field)
 /**
  * Callback from wxChooser<font> when choice is made.
  */
-int font_callback(Cmiss_graphics_font *graphics_font)
+int font_callback(Cmiss_font *font)
 {
 	Cmiss_graphic_point_attributes_id point_attributes =
 		Cmiss_graphic_get_point_attributes(region_tree_viewer->current_graphic);
-	Cmiss_graphic_point_attributes_set_font(point_attributes, graphics_font);
+	Cmiss_graphic_point_attributes_set_font(point_attributes, font);
 	Cmiss_graphic_point_attributes_destroy(&point_attributes);
 	Region_tree_viewer_autoapply(region_tree_viewer->rendition,
 	 region_tree_viewer->edit_rendition);
@@ -3238,17 +3238,17 @@ void SetGraphic(Cmiss_graphic *graphic)
 			labeltext->Show();
 			Cmiss_field_destroy(&label_field);
 
-			Cmiss_graphics_font_id font = Cmiss_graphic_point_attributes_get_font(point_attributes);
+			Cmiss_font_id font = Cmiss_graphic_point_attributes_get_font(point_attributes);
 			if (font_chooser == NULL)
 			{
 					font_chooser =
-						new Managed_object_chooser<Cmiss_graphics_font,MANAGER_CLASS(Cmiss_graphics_font)>
+						new Managed_object_chooser<Cmiss_font,MANAGER_CLASS(Cmiss_font)>
 						(font_chooser_panel, font, region_tree_viewer->font_manager,
-								(MANAGER_CONDITIONAL_FUNCTION(Cmiss_graphics_font) *)NULL , (void *)NULL,
+								(MANAGER_CONDITIONAL_FUNCTION(Cmiss_font) *)NULL , (void *)NULL,
 								region_tree_viewer->user_interface);
-					Callback_base< Cmiss_graphics_font* > *font_callback =
-						new Callback_member_callback< Cmiss_graphics_font*,
-						wxRegionTreeViewer, int (wxRegionTreeViewer::*)(Cmiss_graphics_font *) >
+					Callback_base< Cmiss_font* > *font_callback =
+						new Callback_member_callback< Cmiss_font*,
+						wxRegionTreeViewer, int (wxRegionTreeViewer::*)(Cmiss_font *) >
 						(this, &wxRegionTreeViewer::font_callback);
 					font_chooser->set_callback(font_callback);
 					font_chooser_panel->Fit();
@@ -3264,7 +3264,7 @@ void SetGraphic(Cmiss_graphic *graphic)
 			{
 					font_chooser_panel->Disable();
 			}
-			Cmiss_graphics_font_destroy(&font);
+			Cmiss_font_destroy(&font);
 		}
 		else
 		{
@@ -4601,7 +4601,7 @@ struct Region_tree_viewer *CREATE(Region_tree_viewer)(
 	struct Cmiss_region *root_region,
 	struct MANAGER(Graphical_material) *graphical_material_manager,
 	struct Graphical_material *default_material,
-	struct Cmiss_graphics_font *default_font,
+	struct Cmiss_font *default_font,
 	struct MANAGER(GT_object) *glyph_manager,
 	struct MANAGER(Spectrum) *spectrum_manager,
 	struct MANAGER(VT_volume_texture) *volume_texture_manager,

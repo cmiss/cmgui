@@ -5,7 +5,7 @@
 
 #include "zinc/graphic.h"
 #include "zinc/graphicsmodule.h"
-#include "zinc/graphicsfont.h"
+#include "zinc/font.h"
 #include "zinc/spectrum.h"
 #include "zinc/tessellation.h"
 #include "general/enumerator.h"
@@ -714,12 +714,12 @@ int gfx_modify_rendition_graphic(struct Parse_state *state,
 			Cmiss_graphic_point_attributes_set_label_field(point_attributes, label_field);
 			if (font_name)
 			{
-				Cmiss_graphics_font *new_font = Cmiss_graphics_module_find_font_by_name(
+				Cmiss_font *new_font = Cmiss_graphics_module_find_font_by_name(
 					rendition_command_data->graphics_module, font_name);
 				if (new_font)
 				{
 					Cmiss_graphic_point_attributes_set_font(point_attributes, new_font);
-					Cmiss_graphics_font_destroy(&new_font);
+					Cmiss_font_destroy(&new_font);
 				}
 				else
 				{

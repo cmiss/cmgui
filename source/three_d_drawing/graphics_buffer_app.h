@@ -367,7 +367,7 @@ int Graphics_buffer_win32_use_font_bitmaps(struct Graphics_buffer *buffer,
 LAST MODIFIED : 17 November 2005
 
 DESCRIPTION :
-Function provided for compiling graphics_fonts as a graphics context is
+Function provided for compiling fonts as a graphics context is
 required in the win32 case.
 ==============================================================================*/
 #endif /* defined (WIN32_USER_INTERFACE) */

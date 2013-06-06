@@ -283,7 +283,7 @@
 #include "graphics/rendition_app.h"
 #include "finite_element/finite_element_region_app.h"
 #include "graphics/scene_viewer_app.h"
-#include "graphics/graphics_font_app.h"
+#include "graphics/font_app.h"
 #include "graphics/graphics_object_app.h"
 #include "graphics/tessellation_app.hpp"
 #include "graphics/tessellation_app.hpp"
@@ -367,7 +367,7 @@ DESCRIPTION :
 	struct MANAGER(Light_model) *light_model_manager;
 	struct Light_model *default_light_model;
 	struct Material_package *material_package;
-	struct Cmiss_graphics_font *default_font;
+	struct Cmiss_font *default_font;
 	struct MANAGER(Curve) *curve_manager;
 	struct MANAGER(Scene) *scene_manager;
 	struct Scene *default_scene;
@@ -746,7 +746,7 @@ with tick marks and labels for showing the scale of a spectrum.
 	int number_of_components,return_code,tick_divisions;
 	struct Cmiss_command_data *command_data;
 	struct Graphical_material *label_material,*material;
-	struct Cmiss_graphics_font *font;
+	struct Cmiss_font *font;
 	struct GT_object *graphics_object = NULL;
 	struct Option_table *option_table;
 	struct Spectrum *spectrum;
@@ -837,7 +837,7 @@ with tick marks and labels for showing the scale of a spectrum.
 				if (!(font_name && (0 != (font = Cmiss_graphics_module_find_font_by_name(
 					command_data->graphics_module, font_name)))))
 				{
-					font = ACCESS(Cmiss_graphics_font)(command_data->default_font);
+					font = ACCESS(Cmiss_font)(command_data->default_font);
 				}
 				/* try to find existing colour_bar for updating */
 				graphics_object=FIND_BY_IDENTIFIER_IN_MANAGER(GT_object,name)(
@@ -870,7 +870,7 @@ with tick marks and labels for showing the scale of a spectrum.
 						"gfx_create_colour_bar.  Could not create colour bar");
 					return_code=0;
 				}
-				DEACCESS(Cmiss_graphics_font)(&font);
+				DEACCESS(Cmiss_font)(&font);
 			} /* parse error, help */
 			DESTROY(Option_table)(&option_table);
 			DEACCESS(Graphical_material)(&label_material);
@@ -18465,7 +18465,7 @@ NOTE: Do not call this directly: call Cmiss_command_data_destroy() to deaccess.
 		DEACCESS(Spectrum)(&(command_data->default_spectrum));
 		command_data->spectrum_manager=NULL;
 		DEACCESS(Material_package)(&command_data->material_package);
-		DEACCESS(Cmiss_graphics_font)(&command_data->default_font);
+		DEACCESS(Cmiss_font)(&command_data->default_font);
 		DESTROY(MANAGER(VT_volume_texture))(&command_data->volume_texture_manager);
 		DESTROY(MANAGER(Environment_map))(&command_data->environment_map_manager);
 		DEACCESS(Light_model)(&(command_data->default_light_model));

@@ -34,7 +34,7 @@ struct Region_tree_viewer *CREATE(Region_tree_viewer)(
 	struct Cmiss_region *root_region,
 	struct MANAGER(Graphical_material) *graphical_material_manager,
 	struct Graphical_material *default_material,
-	struct Cmiss_graphics_font *default_font,
+	struct Cmiss_font *default_font,
 	struct MANAGER(GT_object) *glyph_manager,
 	struct MANAGER(Spectrum) *spectrum_manager,
 	struct MANAGER(VT_volume_texture) *volume_texture_manager,
