@@ -133,7 +133,8 @@ a complete copy of <Spectrum>.
 			DEACCESS(Spectrum)(&(spectrum_editor->edit_spectrum));
 		}
 		/* make an empty spectrum */
-		spectrum_editor->edit_spectrum=CREATE(Spectrum)("copy");
+		spectrum_editor->edit_spectrum = Cmiss_spectrum_create_private();
+		Cmiss_spectrum_set_name(spectrum_editor->edit_spectrum, "copy");
 		if (spectrum_editor->edit_spectrum)
 		{
 			/* copy general settings into new object */
@@ -1691,7 +1692,8 @@ void OnSpectrumEditorCreateNewSpectrum(wxCommandEvent& event)
 	if (NewSpectrumDialog->ShowModal() == wxID_OK)
 	{
 		wxString text = NewSpectrumDialog->GetValue();
-		spectrum = CREATE(Spectrum)(text.mb_str(wxConvUTF8));
+		spectrum = Cmiss_spectrum_create_private();
+		Cmiss_spectrum_set_name(spectrum, text.mb_str(wxConvUTF8));
 		if (spectrum)
 		{
 			if(MANAGER_COPY_WITHOUT_IDENTIFIER(Spectrum,name)

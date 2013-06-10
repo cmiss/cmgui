@@ -2777,8 +2777,8 @@ static and referred to by gfx_create_Spectrum
 					if (IS_MANAGED(Spectrum)(spectrum_to_be_modified,
 						command_data->spectrum_manager))
 					{
-						spectrum_to_be_modified_copy=CREATE(Spectrum)(
-							"spectrum_modify_temp");
+						spectrum_to_be_modified_copy=Cmiss_spectrum_create_private();
+						Cmiss_spectrum_set_name(spectrum_to_be_modified_copy, "spectrum_modify_temp");
 						if (spectrum_to_be_modified_copy)
 						{
 							MANAGER_COPY_WITHOUT_IDENTIFIER(Spectrum,name)(
@@ -2811,8 +2811,8 @@ static and referred to by gfx_create_Spectrum
 							return_code = shift_Parse_state(state, 1);
 							if (return_code)
 							{
-								spectrum_to_be_modified_copy=CREATE(Spectrum)(
-									"spectrum_modify_temp");
+								spectrum_to_be_modified_copy=Cmiss_spectrum_create_private();
+								Cmiss_spectrum_set_name(spectrum_to_be_modified_copy, "spectrum_modify_temp");
 								if (spectrum_to_be_modified_copy)
 								{
 									MANAGER_COPY_WITH_IDENTIFIER(Spectrum,name)(
@@ -2837,7 +2837,8 @@ static and referred to by gfx_create_Spectrum
 					}
 					else
 					{
-						spectrum_to_be_modified=CREATE(Spectrum)("dummy");
+						spectrum_to_be_modified_copy=Cmiss_spectrum_create_private();
+						Cmiss_spectrum_set_name(spectrum_to_be_modified_copy, "dummy");
 						if (spectrum_to_be_modified)
 						{
 							option_table=CREATE(Option_table)();
@@ -3077,7 +3078,8 @@ Executes a GFX CREATE SPECTRUM command.
 					if (!FIND_BY_IDENTIFIER_IN_MANAGER(Spectrum,name)(
 						current_token,command_data->spectrum_manager))
 					{
-						spectrum=CREATE(Spectrum)(current_token);
+						spectrum=Cmiss_spectrum_create_private();
+						Cmiss_spectrum_set_name(spectrum, current_token);
 						if (spectrum)
 						{
 							/*???DB.  Temporary */
@@ -8094,7 +8096,8 @@ static int create_RGB_spectrum( struct Spectrum **spectrum, void *command_data_v
 	struct Spectrum_settings *blue_settings;
 	struct Cmiss_command_data *command_data = (struct Cmiss_command_data *)command_data_void;
 
-	if ( command_data && ( (*spectrum) = CREATE(Spectrum)("RGB") ) )
+	if ( command_data && (NULL != ((*spectrum) = Cmiss_spectrum_create_private())) &&
+		Cmiss_spectrum_set_name(spectrum, "RGB"))
 	{
 		spectrum_settings_list = get_Spectrum_settings_list( (*spectrum) );
 		number_in_list = NUMBER_IN_LIST(Spectrum_settings)(spectrum_settings_list);
