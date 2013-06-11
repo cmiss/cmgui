@@ -34,8 +34,8 @@ void Scene_viewer_app_graphics_buffer_input_callback(
 FULL_DECLARE_LIST_TYPE(Scene_viewer_app);
 
 // Callback functions:
-FULL_DECLARE_CMISS_CALLBACK_TYPES(Cmiss_scene_viewer_app_package_callback, \
-	struct Cmiss_scene_viewer_app_package *, void *);
+FULL_DECLARE_CMISS_CALLBACK_TYPES(Cmiss_scene_viewer_app_module_callback, \
+	struct Cmiss_scene_viewer_app_module *, void *);
 
 FULL_DECLARE_CMISS_CALLBACK_TYPES(Scene_viewer_app_callback, \
 	struct Scene_viewer_app *, void *);
@@ -43,14 +43,14 @@ FULL_DECLARE_CMISS_CALLBACK_TYPES(Scene_viewer_app_callback, \
 FULL_DECLARE_CMISS_CALLBACK_TYPES(Scene_viewer_app_input_callback,
 	struct Scene_viewer_app *, struct Graphics_buffer_input *);
 
-DEFINE_CMISS_CALLBACK_MODULE_FUNCTIONS(Cmiss_scene_viewer_app_package_callback, void);
+DEFINE_CMISS_CALLBACK_MODULE_FUNCTIONS(Cmiss_scene_viewer_app_module_callback, void);
 
 DEFINE_CMISS_CALLBACK_MODULE_FUNCTIONS(Scene_viewer_app_callback, void);
 
 DEFINE_CMISS_CALLBACK_MODULE_FUNCTIONS(Scene_viewer_app_input_callback, int);
 
-DEFINE_CMISS_CALLBACK_FUNCTIONS(Cmiss_scene_viewer_app_package_callback, \
-	struct Cmiss_scene_viewer_app_package *,void *);
+DEFINE_CMISS_CALLBACK_FUNCTIONS(Cmiss_scene_viewer_app_module_callback, \
+	struct Cmiss_scene_viewer_app_module *,void *);
 
 DEFINE_CMISS_CALLBACK_FUNCTIONS(Scene_viewer_app_callback, \
 	struct Scene_viewer_app *,void *)
@@ -58,7 +58,7 @@ DEFINE_CMISS_CALLBACK_FUNCTIONS(Scene_viewer_app_callback, \
 DEFINE_CMISS_CALLBACK_FUNCTIONS(Scene_viewer_app_input_callback,
 	struct Scene_viewer_app *,struct Graphics_buffer_input *);
 
-struct Cmiss_scene_viewer_app_package *CREATE(Cmiss_scene_viewer_app_package)(
+struct Cmiss_scene_viewer_app_module *CREATE(Cmiss_scene_viewer_app_module)(
 	struct Graphics_buffer_app_package *graphics_buffer_package,
 	struct Colour *background_colour,
 	struct MANAGER(Interactive_tool) *interactive_tool_manager,
@@ -68,43 +68,43 @@ struct Cmiss_scene_viewer_app_package *CREATE(Cmiss_scene_viewer_app_package)(
 	struct MANAGER(Scene) *scene_manager,struct Scene *scene,
 	struct User_interface *user_interface)
 {
-	struct Cmiss_scene_viewer_app_package *scene_viewer_package;
+	struct Cmiss_scene_viewer_app_module *scene_viewer_module;
 	if (graphics_buffer_package&&background_colour&&default_light_model&&scene&&
 		user_interface&&graphics_buffer_package&&interactive_tool_manager)
 	{
 		/* allocate memory for the scene_viewer structure */
-		if (ALLOCATE(scene_viewer_package,struct Cmiss_scene_viewer_app_package,1))
+		if (ALLOCATE(scene_viewer_module,struct Cmiss_scene_viewer_app_module,1))
 		{
-			scene_viewer_package->access_count = 1;
-			scene_viewer_package->graphics_buffer_package = graphics_buffer_package;
-			scene_viewer_package->core_scene_viewer_package = CREATE(Cmiss_scene_viewer_package)(background_colour,
+			scene_viewer_module->access_count = 1;
+			scene_viewer_module->graphics_buffer_package = graphics_buffer_package;
+			scene_viewer_module->core_scene_viewer_module = CREATE(Cmiss_scene_viewer_module)(background_colour,
 				interactive_tool_manager, light_manager, default_light, light_model_manager, default_light_model, scene_manager, scene);
-			scene_viewer_package->user_interface = user_interface;
-			scene_viewer_package->scene_viewer_app_list = CREATE(LIST(Scene_viewer_app))();
-			scene_viewer_package->destroy_callback_list=
-					CREATE(LIST(CMISS_CALLBACK_ITEM(Cmiss_scene_viewer_app_package_callback)))();
+			scene_viewer_module->user_interface = user_interface;
+			scene_viewer_module->scene_viewer_app_list = CREATE(LIST(Scene_viewer_app))();
+			scene_viewer_module->destroy_callback_list=
+					CREATE(LIST(CMISS_CALLBACK_ITEM(Cmiss_scene_viewer_app_module_callback)))();
 		}
 		else
 		{
 			display_message(ERROR_MESSAGE,
-				"CREATE(Scene_viewer_package).  Not enough memory for scene_viewer");
+				"CREATE(Scene_viewer_module).  Not enough memory for scene_viewer");
 		}
 	}
 	else
 	{
-		display_message(ERROR_MESSAGE,"CREATE(Scene_viewer_package).  Invalid argument(s)");
-		scene_viewer_package = 0;
+		display_message(ERROR_MESSAGE,"CREATE(Scene_viewer_module).  Invalid argument(s)");
+		scene_viewer_module = 0;
 	}
 	LEAVE;
 
-	return (scene_viewer_package);
-} /* CREATE(Cmiss_scene_viewer_package) */
+	return (scene_viewer_module);
+} /* CREATE(Cmiss_scene_viewer_module) */
 
-int DESTROY(Cmiss_scene_viewer_app_package)(
-	struct Cmiss_scene_viewer_app_package **scene_viewer_app_package_address)
+int DESTROY(Cmiss_scene_viewer_app_module)(
+	struct Cmiss_scene_viewer_app_module **scene_viewer_app_package_address)
 {
 	int return_code = 0;
-	struct Cmiss_scene_viewer_app_package *scene_viewer_app_package = 0;
+	struct Cmiss_scene_viewer_app_module *scene_viewer_app_package = 0;
 	if (scene_viewer_app_package_address &&
 		( 0 != (scene_viewer_app_package = *scene_viewer_app_package_address)))
 	{
@@ -112,14 +112,14 @@ int DESTROY(Cmiss_scene_viewer_app_package)(
 		/* send the destroy callbacks */
 		if (scene_viewer_app_package->destroy_callback_list)
 		{
-			CMISS_CALLBACK_LIST_CALL(Cmiss_scene_viewer_app_package_callback)(
+			CMISS_CALLBACK_LIST_CALL(Cmiss_scene_viewer_app_module_callback)(
 				scene_viewer_app_package->destroy_callback_list,scene_viewer_app_package,NULL);
-			DESTROY( LIST(CMISS_CALLBACK_ITEM(Cmiss_scene_viewer_app_package_callback)))(
+			DESTROY( LIST(CMISS_CALLBACK_ITEM(Cmiss_scene_viewer_app_module_callback)))(
 				&scene_viewer_app_package->destroy_callback_list);
 		}
-		if (scene_viewer_app_package->core_scene_viewer_package)
+		if (scene_viewer_app_package->core_scene_viewer_module)
 		{
-			Cmiss_scene_viewer_package_destroy(&scene_viewer_app_package->core_scene_viewer_package);
+			Cmiss_scene_viewer_module_destroy(&scene_viewer_app_package->core_scene_viewer_module);
 		}
 		if (scene_viewer_app_package->scene_viewer_app_list)
 		{
@@ -164,7 +164,7 @@ struct Scene_viewer_app *CREATE(Scene_viewer_app)(struct Graphics_buffer_app *gr
 			scene_viewer->idle_update_callback_id = (struct Event_dispatcher_idle_callback *)NULL;
 			/* no current interactive_tool */
 			scene_viewer->interactive_tool=(struct Interactive_tool *)NULL;
-			/* Currently only set when created from a Cmiss_scene_viewer_package
+			/* Currently only set when created from a Cmiss_scene_viewer_module
 				to avoid changing the interface */
 			scene_viewer->interactive_tool_manager = 0;
 			scene_viewer->input_callback_list=
@@ -281,7 +281,7 @@ LAST MODIFIED : 19 April 2007
 DESCRIPTION :
 ==============================================================================*/
 {
-	struct Cmiss_scene_viewer_app_package *package = (struct Cmiss_scene_viewer_app_package *)package_void;
+	struct Cmiss_scene_viewer_app_module *package = (struct Cmiss_scene_viewer_app_module *)package_void;
 
 	USE_PARAMETER(dummy_void);
 	if (scene_viewer && package)
@@ -307,7 +307,7 @@ DESCRIPTION :
 ==============================================================================*/
 {
 	int return_code;
-	struct Cmiss_scene_viewer_app_package *package = (struct Cmiss_scene_viewer_app_package *)package_void;
+	struct Cmiss_scene_viewer_app_module *package = (struct Cmiss_scene_viewer_app_module *)package_void;
 
 	if (scene_viewer && package)
 	{
@@ -323,27 +323,27 @@ DESCRIPTION :
 
 struct Scene_viewer_app *create_Scene_viewer_app_from_package(
 	struct Graphics_buffer_app *graphics_buffer,
-	struct Cmiss_scene_viewer_app_package *cmiss_scene_viewer_package,
+	struct Cmiss_scene_viewer_app_module *cmiss_scene_viewer_module,
 	struct Scene *scene)
 {
 	struct MANAGER(Interactive_tool) *new_interactive_tool_manager;
 	struct Scene_viewer_app *scene_viewer = 0;
 
-	if (graphics_buffer && cmiss_scene_viewer_package && scene)
+	if (graphics_buffer && cmiss_scene_viewer_module && scene)
 	{
 		scene_viewer = CREATE(Scene_viewer_app)(graphics_buffer,
-			cmiss_scene_viewer_package->core_scene_viewer_package->background_colour,
-			cmiss_scene_viewer_package->core_scene_viewer_package->light_manager,
-			cmiss_scene_viewer_package->core_scene_viewer_package->default_light,
-			cmiss_scene_viewer_package->core_scene_viewer_package->light_model_manager,
-			cmiss_scene_viewer_package->core_scene_viewer_package->default_light_model,
-			cmiss_scene_viewer_package->core_scene_viewer_package->scene_manager,
-			scene, cmiss_scene_viewer_package->user_interface);
+			cmiss_scene_viewer_module->core_scene_viewer_module->background_colour,
+			cmiss_scene_viewer_module->core_scene_viewer_module->light_manager,
+			cmiss_scene_viewer_module->core_scene_viewer_module->default_light,
+			cmiss_scene_viewer_module->core_scene_viewer_module->light_model_manager,
+			cmiss_scene_viewer_module->core_scene_viewer_module->default_light_model,
+			cmiss_scene_viewer_module->core_scene_viewer_module->scene_manager,
+			scene, cmiss_scene_viewer_module->user_interface);
 
 		new_interactive_tool_manager = 0;//--CREATE(MANAGER(Interactive_tool))();
 		//--FOR_EACH_OBJECT_IN_MANAGER(Interactive_tool)(
 		//--	Interactive_tool_create_copy_iterator, new_interactive_tool_manager,
-		//--	cmiss_scene_viewer_package->interactive_tool_manager);
+		//--	cmiss_scene_viewer_module->interactive_tool_manager);
 
 		//--Scene_viewer_set_interactive_tool(scene_viewer,
 		//--	FIND_BY_IDENTIFIER_IN_MANAGER(Interactive_tool,name)
@@ -352,13 +352,13 @@ struct Scene_viewer_app *create_Scene_viewer_app_from_package(
 
 		/* Add this scene_viewer to the package list */
 		ADD_OBJECT_TO_LIST(Scene_viewer_app)(scene_viewer,
-			cmiss_scene_viewer_package->scene_viewer_app_list);
+			cmiss_scene_viewer_module->scene_viewer_app_list);
 
 		/* Register a callback so that if the scene_viewer is destroyed
 			then it is removed from the list */
 		Scene_viewer_app_add_destroy_callback(scene_viewer,
 			Scene_viewer_app_destroy_remove_from_package,
-			cmiss_scene_viewer_package);
+			cmiss_scene_viewer_module);
 	}
 
 	return scene_viewer;
@@ -570,15 +570,15 @@ from this.
 	return (return_code);
 }
 
-int Cmiss_scene_viewer_package_update_Interactive_tool(
-	struct Cmiss_scene_viewer_app_package *cmiss_scene_viewer_package,
+int Cmiss_scene_viewer_module_update_Interactive_tool(
+	struct Cmiss_scene_viewer_app_module *cmiss_scene_viewer_module,
 	struct Interactive_tool *interactive_tool)
 /*******************************************************************************
 LAST MODIFIED : 26 April 2007
 
 DESCRIPTION :
 Updates the interactive tools in each of the scene_viewers created with the
-<cmiss_scene_viewer_package> to have the same settings as the <interactive_tool>.
+<cmiss_scene_viewer_module> to have the same settings as the <interactive_tool>.
 This enables the old global commands to continue to work for all scene_viewers,
 however new code should probably modify the particular tools for the
 particular scene_viewer intended.
@@ -586,23 +586,23 @@ particular scene_viewer intended.
 {
 	int return_code;
 
-	ENTER(Cmiss_scene_viewer_package_update_Interactive_tool);
-	if (cmiss_scene_viewer_package)
+	ENTER(Cmiss_scene_viewer_module_update_Interactive_tool);
+	if (cmiss_scene_viewer_module)
 	{
 		return_code = FOR_EACH_OBJECT_IN_LIST(Scene_viewer_app)(
 			Scene_viewer_app_update_Interactive_tool, (void *)interactive_tool,
-			cmiss_scene_viewer_package->scene_viewer_app_list);
+			cmiss_scene_viewer_module->scene_viewer_app_list);
 	}
 	else
 	{
 		display_message(ERROR_MESSAGE,
-			"Cmiss_scene_viewer_package_update_Interactive_tool.  Missing scene_viewer");
+			"Cmiss_scene_viewer_module_update_Interactive_tool.  Missing scene_viewer");
 		return_code = 0;
 	}
 	LEAVE;
 
 	return (return_code);
-} /* Cmiss_scene_viewer_package_update_Interactive_tool */
+} /* Cmiss_scene_viewer_module_update_Interactive_tool */
 
 int Scene_viewer_automatic_tumble(struct Scene_viewer_app *scene_viewer)
 /*******************************************************************************

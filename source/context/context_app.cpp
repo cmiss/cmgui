@@ -340,21 +340,21 @@ int Cmiss_context_run_main_loop(Cmiss_context_app *context)
 	return return_code;
 }
 
-//-- Cmiss_scene_viewer_package_id Cmiss_context_app_get_default_scene_viewer_package(
+//-- Cmiss_scene_viewer_module_id Cmiss_context_app_get_default_scene_viewer_module(
 //-- 	Cmiss_context_app *context)
 //-- {
-//-- 	Cmiss_scene_viewer_package *scene_viewer_package = NULL;
-//-- 	if (context && context->UI_module && context->UI_module->scene_viewer_package)
+//-- 	Cmiss_scene_viewer_module *scene_viewer_module = NULL;
+//-- 	if (context && context->UI_module && context->UI_module->scene_viewer_module)
 //-- 	{
-//-- 		scene_viewer_package = context->UI_module->scene_viewer_package;
+//-- 		scene_viewer_module = context->UI_module->scene_viewer_module;
 //-- 	}
 //-- 	else
 //-- 	{
 //-- 		display_message(ERROR_MESSAGE,
-//-- 			"Cmiss_context_get_default_scene_viewer_package.  "
+//-- 			"Cmiss_context_get_default_scene_viewer_module.  "
 //-- 			"Missing context or user interface");
 //-- 	}
-//-- 	return scene_viewer_package;
+//-- 	return scene_viewer_module;
 //-- }
 
 #if defined (WX_USER_INTERFACE) || (!defined (WIN32_USER_INTERFACE) && !defined (_MSC_VER))
