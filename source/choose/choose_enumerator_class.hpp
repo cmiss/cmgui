@@ -56,13 +56,16 @@ DESCRIPTION :
 {
 private:
 	Callback_base< typename Enumerator::Enumerator_type > *callback;
+	int first_value;
 
 public:
 	wxEnumeratorChooser<Enumerator>(wxPanel *parent,
-		int number_of_items,
-		const char **item_names, typename Enumerator::Enumerator_type current_value,
+		int number_of_items, const char **item_names,
+		int first_value,
+		typename Enumerator::Enumerator_type current_value,
 		User_interface *user_interface) :
-		wxChoice(parent, /*id*/-1, wxPoint(0,0), wxSize(-1,-1))
+		wxChoice(parent, /*id*/-1, wxPoint(0,0), wxSize(-1,-1)),
+		first_value(first_value)
 	{
 		USE_PARAMETER(user_interface);
 		callback = NULL;
@@ -97,7 +100,7 @@ public:
 	typename Enumerator::Enumerator_type get_item()
 	{
 		return (static_cast<typename Enumerator::Enumerator_type>
-			(GetSelection()+1));
+			(GetSelection() + first_value));
 	}
 
 	int set_callback(Callback_base< typename Enumerator::Enumerator_type >
@@ -113,7 +116,7 @@ public:
 	{
 		unsigned int return_code;
 
-		SetSelection(new_value-1);
+		SetSelection(new_value - first_value);
 
 		// Could check to see that the value was actually set
 		return_code = 1;
@@ -137,11 +140,6 @@ public:
 };
 
 template < class Enumerator > class Enumerator_chooser
-/*****************************************************************************
-LAST MODIFIED : 10 March 2007
-
-DESCRIPTION :
-============================================================================*/
 {
 private:
 	Enumerator *enumerator;
@@ -150,8 +148,9 @@ private:
 	void *conditional_function_user_data;
 	wxEnumeratorChooser<Enumerator> *chooser;
 	Callback_base< typename Enumerator::Enumerator_type > *update_callback;
-   int number_of_items;
-   const char **item_names;
+  int number_of_items;
+  const char **item_names;
+	int first_value;
 
 public:
 	Enumerator_chooser(wxPanel *parent,
@@ -162,21 +161,16 @@ public:
 		enumerator(new Enumerator()), parent(parent),
 		conditional_function(conditional_function),
 		conditional_function_user_data(conditional_function_user_data)
-/*****************************************************************************
-LAST MODIFIED : 10 March 2007
-
-DESCRIPTION :
-============================================================================*/
 	{
 		chooser = (wxEnumeratorChooser<Enumerator> *)NULL;
 		update_callback = (Callback_base< typename Enumerator::Enumerator_type > *)NULL;
 		number_of_items = 0;
 		item_names = (const char **)NULL;
+		first_value = 0;
 		if (build_items())
 		{
-			chooser = new wxEnumeratorChooser<Enumerator>
-				(parent, number_of_items,
-				item_names, current_value,
+			chooser = new wxEnumeratorChooser<Enumerator>(parent,
+				number_of_items, item_names, first_value, current_value,
 				user_interface);
 			typedef int (Enumerator_chooser::*Member_function)(typename Enumerator::Enumerator_type);
 			Callback_base<typename Enumerator::Enumerator_type> *callback =
@@ -361,6 +355,14 @@ Updates the arrays of all the choosable objects and their names.
 
 		item_names = enumerator->get_valid_strings(&number_of_items,
 			conditional_function, conditional_function_user_data);
+		if (enumerator->value_to_string((Enumerator::Enumerator_type(0))))
+		{
+			first_value = 0;
+		}
+		else
+		{
+			first_value = 1;
+		}
 		return_code = 1;
 
 		return (return_code);

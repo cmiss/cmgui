@@ -43,7 +43,7 @@ public:
 			va_list ap;
 			va_start(ap, format);
 			vsprintf(message_string,format,ap);
-			return_code = display_message(message_type, message_string, "");
+			return_code = display_message(message_type, "%s", message_string);
 			va_end(ap);
 			return (return_code);
 	 }

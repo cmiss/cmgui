@@ -3,17 +3,19 @@
 #include "configure/cmgui_configure.h"
 #endif /* defined (BUILD_WITH_CMAKE) */
 
+#include "zinc/fieldmodule.h"
 #include "zinc/graphic.h"
 #include "zinc/graphicsmodule.h"
 #include "zinc/font.h"
 #include "zinc/spectrum.h"
 #include "zinc/tessellation.h"
+#include "general/debug.h"
 #include "general/enumerator.h"
 #include "general/enumerator_private.hpp"
 #include "general/message.h"
 #include "command/parser.h"
+#include "graphics/glyph.hpp"
 #include "graphics/graphic.h"
-#include "graphics/render_gl.h"
 #include "graphics/rendition.h"
 #include "graphics/rendition_app.h"
 #include "computed_field/computed_field_finite_element.h"
@@ -347,11 +349,27 @@ int gfx_modify_rendition_graphic(struct Parse_state *state,
 	set_label_field_data.computed_field_manager = rendition_command_data->computed_field_manager;
 	set_label_field_data.conditional_function = (MANAGER_CONDITIONAL_FUNCTION(Computed_field) *)NULL;
 	set_label_field_data.conditional_function_user_data = (void *)NULL;
-	if (Cmiss_graphic_type_uses_attribute(graphic_type, CMISS_GRAPHIC_ATTRIBUTE_LABEL_FIELD))
+	if (point_attributes)
 	{
 		label_field = Cmiss_graphic_point_attributes_get_label_field(point_attributes);
 		Option_table_add_Computed_field_conditional_entry(option_table, "label",
 			&label_field, &set_label_field_data);
+	}
+
+	/* label_offset */
+	double label_offset[3];
+	if (point_attributes)
+	{
+		Cmiss_graphic_point_attributes_get_label_offset(point_attributes, 3, label_offset);
+		Option_table_add_double_vector_entry(option_table, "label_offset", label_offset, &three);
+	}
+
+	/* label_text */
+	struct Multiple_strings label_strings = { /*number_of_strings*/0, (char **)0 };
+	if (point_attributes)
+	{
+		Option_table_add_multiple_strings_entry(option_table, "label_text",
+			&label_strings, " LABEL_STRING [& LABEL_STRING [& ...]]");
 	}
 
 	/* ldensity */
@@ -384,12 +402,19 @@ int gfx_modify_rendition_graphic(struct Parse_state *state,
 		rendition_command_data->graphical_material_manager,
 		set_Graphical_material);
 
-	/* mirror_glyph|no_mirror_glyph */
-	int mirror_glyph_flag = 0;
+	/* glyph repeat mode REPEAT_NONE|REPEAT_AXES_2D|REPEAT_AXES_3D|REPEAT_MIRROR */
+	const char *glyph_repeat_mode_string = 0;
 	if (point_attributes)
 	{
-		mirror_glyph_flag = Cmiss_graphic_point_attributes_get_mirror_glyph_flag(point_attributes);
-		Option_table_add_switch(option_table, "mirror_glyph", "no_mirror_glyph", &mirror_glyph_flag);
+		glyph_repeat_mode_string = ENUMERATOR_STRING(Cmiss_glyph_repeat_mode)(
+			Cmiss_graphic_point_attributes_get_glyph_repeat_mode(point_attributes));
+		valid_strings = ENUMERATOR_GET_VALID_STRINGS(Cmiss_glyph_repeat_mode)(
+			&number_of_valid_strings,
+			(ENUMERATOR_CONDITIONAL_FUNCTION(Cmiss_glyph_repeat_mode) *)NULL,
+			(void *)NULL);
+		Option_table_add_enumerator(option_table, number_of_valid_strings,
+			valid_strings, &glyph_repeat_mode_string);
+		DEALLOCATE(valid_strings);
 	}
 
 	/* native_discretization */
@@ -711,7 +736,131 @@ int gfx_modify_rendition_graphic(struct Parse_state *state,
 
 		if (point_attributes)
 		{
+			Cmiss_glyph_repeat_mode glyph_repeat_mode = CMISS_GLYPH_REPEAT_NONE;
+			STRING_TO_ENUMERATOR(Cmiss_glyph_repeat_mode)(glyph_repeat_mode_string, &glyph_repeat_mode);
+			Cmiss_glyph_id glyph = 0;
+			if (glyph_name && (0 != strcmp(glyph_name, "none")))
+			{
+				if ((0 == strcmp(glyph_name, "mirror_arrow_solid")) ||
+					(0 == strcmp(glyph_name, "mirror_cone")) ||
+					(0 == strcmp(glyph_name, "mirror_line")))
+				{
+					glyph = Cmiss_glyph_module_find_glyph_by_name(rendition_command_data->glyph_module, glyph_name + 7);
+					glyph_repeat_mode = CMISS_GLYPH_REPEAT_MIRROR;
+				}
+				else if ((0 == strcmp(glyph_name, "arrow_line")) ||
+					(0 == strcmp(glyph_name, "mirror_arrow_line")))
+				{
+					glyph = Cmiss_glyph_module_find_glyph_by_name(rendition_command_data->glyph_module, "arrow");
+					if (glyph_name[0] == 'm')
+					{
+						glyph_repeat_mode = CMISS_GLYPH_REPEAT_MIRROR;
+					}
+					// fix lateral scaling of old arrow_line glyph; now unit width arrow
+					glyph_base_size[1] *= 0.25;
+					glyph_base_size[2] *= 0.25;
+					glyph_scale_factors[1] *= 0.25;
+					glyph_scale_factors[2] *= 0.25;
+				}
+				else if (0 == strncmp("axes", glyph_name, 4))
+				{
+					const char *axes_labels_xyz[] = {"x","y","z"};
+					const char *axes_labels_fsn[] = {"f","s","n"};
+					const char *axes_labels_123[] = {"1","2","3"};
+					const char **axes_labels = 0;
+					const char *arrow_glyph_name = 0;
+					double head_diameter = 0.05;
+					if (0 == strcmp(glyph_name, "axes"))
+					{
+						arrow_glyph_name = "axis";
+					}
+					else if (0 == strcmp(glyph_name, "axes_123"))
+					{
+						arrow_glyph_name = "axis";
+						axes_labels = axes_labels_123;
+					}
+					else if (0 == strcmp(glyph_name, "axes_fsn"))
+					{
+						arrow_glyph_name = "axis";
+						axes_labels = axes_labels_fsn;
+					}
+					else if (0 == strcmp(glyph_name, "axes_xyz"))
+					{
+						arrow_glyph_name = "axis";
+						axes_labels = axes_labels_xyz;
+					}
+					else if (0 == strcmp(glyph_name, "axes_solid"))
+					{
+						arrow_glyph_name = "arrow_solid";
+						head_diameter = 0.25;
+					}
+					else if (0 == strcmp(glyph_name, "axes_solid_xyz"))
+					{
+						arrow_glyph_name = "arrow_solid";
+						axes_labels = axes_labels_xyz;
+						head_diameter = 0.25;
+					}
+					if (arrow_glyph_name)
+					{
+						glyph = Cmiss_glyph_module_find_glyph_by_name(rendition_command_data->glyph_module, arrow_glyph_name);
+						if ((glyph_base_size[1] != glyph_base_size[0]) || (glyph_base_size[2] != glyph_base_size[0]))
+						{
+							display_message(WARNING_MESSAGE, "Overriding lateral size for axes glyph");
+						}
+						glyph_base_size[2] = glyph_base_size[1] = glyph_base_size[0]*head_diameter;
+						if ((glyph_scale_factors[1] != glyph_scale_factors[0]) || (glyph_scale_factors[2] != glyph_scale_factors[0]))
+						{
+							display_message(WARNING_MESSAGE, "Overriding lateral scale_factors for axes glyph");
+						}
+						glyph_scale_factors[2] = glyph_scale_factors[1] = 0.0;
+						label_offset[0] = 1.1;
+						if (axes_labels)
+						{
+							for (int labelNumber = 1; labelNumber <= 3; labelNumber++)
+							{
+								Cmiss_graphic_point_attributes_set_label_text(point_attributes,
+									labelNumber, axes_labels[labelNumber - 1]);
+							}
+						}
+						glyph_repeat_mode = CMISS_GLYPH_REPEAT_AXES_3D;
+					}
+				}
+				else
+				{
+					glyph = Cmiss_glyph_module_find_glyph_by_name(rendition_command_data->glyph_module, glyph_name);
+				}
+				if (!glyph)
+				{
+					display_message(ERROR_MESSAGE, "Unknown glyph: ", glyph_name);
+					return_code = 0;
+				}
+			}
+			Cmiss_graphic_point_attributes_set_glyph(point_attributes, glyph);
+			Cmiss_glyph_destroy(&glyph);
+			Cmiss_graphic_point_attributes_set_glyph_repeat_mode(point_attributes, glyph_repeat_mode);
+			Cmiss_graphic_point_attributes_set_orientation_scale_field(point_attributes, orientation_scale_field);
+			// reverse centre to get offset:
+			for (int i = 0; i < 3; i++)
+			{
+				if (glyph_centre[i] != 0.0)
+				{
+					glyph_centre[i] = -glyph_centre[i];
+				}
+			}
+			Cmiss_graphic_point_attributes_set_offset(point_attributes, 3, glyph_centre);
+			Cmiss_graphic_point_attributes_set_base_size(point_attributes, 3, glyph_base_size);
+			Cmiss_graphic_point_attributes_set_scale_factors(point_attributes, 3, glyph_scale_factors);
+			Cmiss_graphic_point_attributes_set_signed_scale_field(point_attributes, signed_scale_field);
 			Cmiss_graphic_point_attributes_set_label_field(point_attributes, label_field);
+			Cmiss_graphic_point_attributes_set_label_offset(point_attributes, 3, label_offset);
+			if (0 < label_strings.number_of_strings)
+			{
+				int number_of_labels = label_strings.number_of_strings;
+				for (int i = 0; i < label_strings.number_of_strings; ++i)
+				{
+					Cmiss_graphic_point_attributes_set_label_text(point_attributes, i + 1, label_strings.strings[i]);
+				}
+			}
 			if (font_name)
 			{
 				Cmiss_font *new_font = Cmiss_graphics_module_find_font_by_name(
@@ -726,44 +875,6 @@ int gfx_modify_rendition_graphic(struct Parse_state *state,
 					display_message(WARNING_MESSAGE, "Unknown font: %s", font_name);
 				}
 			}
-
-			// ignoring glyph_scaling_mode_string
-			GT_object *glyph =  0;
-			if (glyph_name && (!fuzzy_string_compare_same_length(glyph_name, "none")))
-			{
-				if ((fuzzy_string_compare_same_length(glyph_name, "mirror_arrow_line")) ||
-					(fuzzy_string_compare_same_length(glyph_name, "mirror_arrow_solid")) ||
-					(fuzzy_string_compare_same_length(glyph_name, "mirror_cone")) ||
-					(fuzzy_string_compare_same_length(glyph_name, "mirror_line")))
-				{
-					glyph = FIND_BY_IDENTIFIER_IN_MANAGER(GT_object,name)(glyph_name + 7, rendition_command_data->glyph_manager);
-					mirror_glyph_flag = 1;
-				}
-				else
-				{
-					glyph = FIND_BY_IDENTIFIER_IN_MANAGER(GT_object,name)(glyph_name, rendition_command_data->glyph_manager);
-				}
-				if (!glyph)
-				{
-					display_message(ERROR_MESSAGE, "Unknown glyph: ", glyph_name);
-					return_code = 0;
-				}
-			}
-			Cmiss_graphic_point_attributes_set_glyph(point_attributes, glyph);
-			Cmiss_graphic_point_attributes_set_mirror_glyph_flag(point_attributes, mirror_glyph_flag);
-			Cmiss_graphic_point_attributes_set_orientation_scale_field(point_attributes, orientation_scale_field);
-			// reverse centre to get offset:
-			for (int i = 0; i < 3; i++)
-			{
-				if (glyph_centre[i] != 0.0)
-				{
-					glyph_centre[i] = -glyph_centre[i];
-				}
-			}
-			Cmiss_graphic_point_attributes_set_offset(point_attributes, 3, glyph_centre);
-			Cmiss_graphic_point_attributes_set_base_size(point_attributes, 3, glyph_base_size);
-			Cmiss_graphic_point_attributes_set_scale_factors(point_attributes, 3, glyph_scale_factors);
-			Cmiss_graphic_point_attributes_set_signed_scale_field(point_attributes, signed_scale_field);
 		}
 
 		STRING_TO_ENUMERATOR(Cmiss_graphics_coordinate_system)(
@@ -892,6 +1003,14 @@ int gfx_modify_rendition_graphic(struct Parse_state *state,
 	Cmiss_field_destroy(&isoscalar_field);
 	Cmiss_field_destroy(&line_orientation_scale_field);
 	Cmiss_field_destroy(&label_field);
+	if (label_strings.strings)
+	{
+		for (int i = 0; i < label_strings.number_of_strings; ++i)
+		{
+			DEALLOCATE(label_strings.strings[i]);
+		}
+		DEALLOCATE(label_strings.strings);
+	}
 	Cmiss_field_destroy(&orientation_scale_field);
 	Cmiss_field_destroy(&subgroup_field);
 	Cmiss_field_destroy(&signed_scale_field);

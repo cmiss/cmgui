@@ -630,18 +630,6 @@
 																	<size>200,30</size>
 																</object>
 															</object>
-														</object>
-													</object>
-
-													<object class="sizeritem">
-														<object class = "wxBoxSizer">
-															<orient>wxHORIZONTAL</orient>
-															<object class="sizeritem">
-																<flag>wxALIGN_CENTRE_VERTICAL</flag>
-																<object class	="wxCheckBox" name="MirrorGlyphCheckBox">
-																	<label>Mirror</label>
-																</object>
-															</object>
 															<object class="sizeritem">
 																<flag>wxALIGN_CENTRE_VERTICAL</flag>
 																<object class	="wxStaticText" name="OffsetText">
@@ -653,6 +641,24 @@
 																	<style>wxTE_PROCESS_ENTER</style>
 																</object>
 															</object>
+														</object>
+													</object>
+
+													<object class="sizeritem">
+														<object class = "wxBoxSizer">
+															<orient>wxHORIZONTAL</orient>
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTRE_VERTICAL</flag>
+																<object class	="wxStaticText" name="GlyphRepeatModeText">
+																	<label>Repeat Mode:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<object class	="wxPanel"  name="GlyphRepeatModeChooserPanel">
+																	<size>200,30</size>
+																</object>
+															</object>
+
 														</object>
 													</object>
 
@@ -738,7 +744,7 @@
 															<object class="sizeritem">
 																<flag>wxALIGN_CENTRE_VERTICAL</flag>
 																<object class	="wxStaticText" name="VariableScaleText">
-																	<label>Variable Scale:</label> 
+																	<label>Signed Scale:</label> 
 																</object>
 															</object>	
 															<object class="sizeritem">
@@ -766,11 +772,48 @@
 															<size>300,30</size>
  														</object>
 													</object>
- 												</object>
+													<object class="sizeritem">
+														<flag>wxALIGN_CENTRE_VERTICAL</flag>
+														<object class	="wxStaticText" name="LabelOffsetText">
+															<label>   Offset:</label>
+														</object>
+													</object>
+													<object class="sizeritem">
+														<object class	="wxTextCtrl" name="LabelOffsetTextCtrl">
+															<style>wxTE_PROCESS_ENTER</style>
+														</object>
+													</object>
+												</object>
 											</object>
 
+												<object class="sizeritem">
+													<object class = "wxBoxSizer">
+														<orient>wxHORIZONTAL</orient>
+														<object class="sizeritem">
+															<flag>wxALIGN_CENTRE_VERTICAL</flag>
+															<object class	="wxStaticText" name="StaticLabelText">
+																<label>Label Text:</label>
+															</object>
+														</object>
+														<object class="sizeritem">
+															<object class	="wxTextCtrl"  name="StaticLabelTextCtrl1">
+																<style>wxTE_PROCESS_ENTER</style>
+															</object>
+														</object>
+														<object class="sizeritem">
+															<object class	="wxTextCtrl"  name="StaticLabelTextCtrl2">
+																<style>wxTE_PROCESS_ENTER</style>
+															</object>
+														</object>
+														<object class="sizeritem">
+															<object class	="wxTextCtrl"  name="StaticLabelTextCtrl3">
+																<style>wxTE_PROCESS_ENTER</style>
+															</object>
+														</object>
+													</object>
+												</object>
 
-											<object class="sizeritem">
+												<object class="sizeritem">
 												<object class = "wxBoxSizer">	
 													<orient>wxHORIZONTAL</orient>
 													<object class="sizeritem">

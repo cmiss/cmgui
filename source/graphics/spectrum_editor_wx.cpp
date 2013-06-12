@@ -14,14 +14,16 @@ Provides the wxWidgets interface to manipulate spectrum settings.
 #include <stdio.h>
 #include <math.h>
 
+#include "zinc/glyph.h"
 #include "zinc/scene.h"
 #include "zinc/graphicsmodule.h"
 #include "zinc/rendition.h"
 #include "command/parser.h"
 #include "general/debug.h"
-#include "graphics/rendition_app.h"
+#include "graphics/glyph.hpp"
 #include "graphics/graphic.h"
 #include "graphics/graphics_module.h"
+#include "graphics/rendition_app.h"
 #include "graphics/scene.h"
 #include "graphics/scene_viewer.h"
 #include "graphics/spectrum.h"
@@ -999,7 +1001,7 @@ Callback for Spectrum settings.
 				 spectrum_editor->current_settings = temp_settings;
 			}
 			if (spectrum_editor->spectrum_settings_checklist->IsChecked(selection) !=
-				 Spectrum_settings_get_active(temp_settings))
+				 static_cast<bool>(Spectrum_settings_get_active(temp_settings)))
 			{
 				 Spectrum_settings_set_active(temp_settings,
 						spectrum_editor->spectrum_settings_checklist->IsChecked(selection));
@@ -2415,15 +2417,18 @@ Creates a spectrum_editor widget.
 								/*minimum_accumulation_buffer_depth*/0, (struct Graphics_buffer_app *)NULL);
 							if (graphics_buffer)
 							{
-								 spectrum_editor->spectrum_editor_scene_viewer =
-										CREATE(Scene_viewer_app)(graphics_buffer,
-											&background_colour,
-											(struct MANAGER(Light) *)NULL,viewer_light,
-											 (struct MANAGER(Light_model) *)NULL,viewer_light_model,
-											(struct MANAGER(Scene) *)NULL,
-											spectrum_editor->spectrum_editor_scene, spectrum_editor->user_interface);
-								 ADD_OBJECT_TO_MANAGER(GT_object)(spectrum_editor->graphics_object,
-									 Cmiss_graphics_module_get_default_glyph_manager(graphics_module));
+								spectrum_editor->spectrum_editor_scene_viewer =
+									CREATE(Scene_viewer_app)(graphics_buffer,
+										&background_colour,
+										(struct MANAGER(Light) *)NULL,viewer_light,
+										(struct MANAGER(Light_model) *)NULL,viewer_light_model,
+										(struct MANAGER(Scene) *)NULL,
+										spectrum_editor->spectrum_editor_scene, spectrum_editor->user_interface);
+								Cmiss_glyph_module_id glyph_module = Cmiss_graphics_module_get_glyph_module(graphics_module);
+								Cmiss_glyph_set_managed(reinterpret_cast<Cmiss_glyph_id>(spectrum_editor->graphics_object), 1);
+								MANAGER(GT_object) *glyph_manager = Cmiss_glyph_module_get_glyph_manager(glyph_module);
+								ADD_OBJECT_TO_MANAGER(GT_object)(spectrum_editor->graphics_object, glyph_manager);
+								Cmiss_glyph_module_destroy(&glyph_module);
 								 if (spectrum_editor->rendition && spectrum_editor->graphics_object)
 								 {
 									 return_code = Cmiss_rendition_add_glyph(spectrum_editor->rendition,

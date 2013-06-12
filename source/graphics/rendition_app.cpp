@@ -1,4 +1,5 @@
 
+#include "zinc/glyph.h"
 #include "zinc/graphicsmaterial.h"
 #include "general/debug.h"
 #include "general/message.h"
@@ -178,7 +179,7 @@ int Cmiss_rendition_process_Cmiss_graphic_list_contents(
 					 {
 							process_message->process_command(INFORMATION_MESSAGE,list_data->line_prefix);
 					 }
-					 process_message->process_command(INFORMATION_MESSAGE,graphic_string);
+					 process_message->process_command(INFORMATION_MESSAGE,"%s",graphic_string);
 					 if (list_data->line_suffix)
 					 {
 							process_message->process_command(INFORMATION_MESSAGE,list_data->line_suffix);
@@ -496,7 +497,7 @@ int Cmiss_rendition_add_glyph(struct Cmiss_rendition *rendition,
 			Cmiss_graphic *graphic = Cmiss_rendition_create_graphic(rendition, CMISS_GRAPHIC_POINT);
 			Cmiss_graphic_set_name(graphic, cmiss_graphic_name);
 			Cmiss_graphic_point_attributes_id point_attributes = Cmiss_graphic_get_point_attributes(graphic);
-			Cmiss_graphic_point_attributes_set_glyph(point_attributes, glyph);
+			Cmiss_graphic_point_attributes_set_glyph(point_attributes, reinterpret_cast<Cmiss_glyph_id>(glyph));
 			Cmiss_graphic_point_attributes_destroy(&point_attributes);
 			Cmiss_graphics_material_id material = Cmiss_graphics_material_access(get_GT_object_default_material(glyph));
 			if (material)
@@ -511,7 +512,7 @@ int Cmiss_rendition_add_glyph(struct Cmiss_rendition *rendition,
 		else
 		{
 			display_message(ERROR_MESSAGE,
-				"Cmiss_rendition_add_glyph.  Graphic with the same name alreadu exists");
+				"Cmiss_rendition_add_glyph.  Graphic with the same name already exists");
 		}
 	}
 	LEAVE;

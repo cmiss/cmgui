@@ -6096,9 +6096,7 @@ int set_multiple_strings(struct Parse_state *state,void *multiple_strings_addres
 	void *strings_description_void)
 {
 	const char *separator = "&";
-	const char *current_token;
-	char **new_strings;
-	int finished, last_separator, return_code;
+	int return_code;
 	struct Multiple_strings *multiple_strings;
 
 	ENTER(set_multiple_strings);
@@ -6107,61 +6105,50 @@ int set_multiple_strings(struct Parse_state *state,void *multiple_strings_addres
 			(0 < multiple_strings->number_of_strings && multiple_strings->strings)) &&
 		strings_description_void)
 	{
-		last_separator = 1;
+		char **new_strings;
 		return_code = 1;
-		finished = 0;
-		while (!finished && (NULL != (current_token = state->current_token)) && return_code)
+		if (Parse_state_help_mode(state))
 		{
-			if ((0 == strcmp(PARSER_HELP_STRING, current_token)) ||
-				(0 == strcmp(PARSER_RECURSIVE_HELP_STRING, current_token)))
+			display_message(INFORMATION_MESSAGE, " %s", (char *)strings_description_void);
+		}
+		while (true)
+		{
+			if (0 == state->current_token)
 			{
-				display_message(INFORMATION_MESSAGE, " %s", (char *)strings_description_void);
-				finished = 1;
+				display_message(ERROR_MESSAGE, "Missing string");
+				display_parse_state_location(state);
+				return_code = 0;
+				break;
 			}
-			else if (0 == strcmp(current_token, separator))
+			if (REALLOCATE(new_strings, multiple_strings->strings, char *, multiple_strings->number_of_strings + 1))
 			{
-				if (last_separator)
+				multiple_strings->strings = new_strings;
+				new_strings[multiple_strings->number_of_strings] = duplicate_string(state->current_token);
+				if (new_strings[multiple_strings->number_of_strings] != NULL)
 				{
-					display_message(ERROR_MESSAGE, "Missing string");
-					display_parse_state_location(state);
-					return_code = 0;
-				}
-				else
-				{
+					multiple_strings->number_of_strings++;
 					return_code = shift_Parse_state(state, 1);
-				}
-				last_separator = 1;
-			}
-			else if (!last_separator)
-			{
-				finished = 1;
-			}
-			else
-			{
-				if (REALLOCATE(new_strings, multiple_strings->strings, char *, multiple_strings->number_of_strings + 1))
-				{
-					multiple_strings->strings = new_strings;
-					new_strings[multiple_strings->number_of_strings] = duplicate_string(current_token);
-					if (new_strings[multiple_strings->number_of_strings] != NULL)
-					{
-						multiple_strings->number_of_strings++;
-						return_code = shift_Parse_state(state, 1);
-					}
-					else
-					{
-						display_message(ERROR_MESSAGE,
-							"set_multiple_strings.  Could not allocate memory for string");
-						return_code = 0;
-					}
 				}
 				else
 				{
 					display_message(ERROR_MESSAGE,
-						"set_multiple_strings.  Could not reallocate string array");
+						"set_multiple_strings.  Could not allocate memory for string");
 					return_code = 0;
+					break;
 				}
-				last_separator = 0;
 			}
+			else
+			{
+				display_message(ERROR_MESSAGE,
+					"set_multiple_strings.  Could not reallocate string array");
+				return_code = 0;
+				break;
+			}
+			if ((0 == state->current_token) || (0 != strcmp(state->current_token, separator)))
+			{
+				break;
+			}
+			return_code = shift_Parse_state(state, 1);
 		}
 	}
 	else

@@ -59,6 +59,7 @@
 #include "zinc/element.h"
 #include "zinc/fieldmodule.h"
 #include "zinc/fieldsubobjectgroup.h"
+#include "zinc/glyph.h"
 #include "zinc/graphicsmodule.h"
 #include "zinc/region.h"
 #include "zinc/rendition.h"
@@ -136,13 +137,13 @@
 #include "general/mystring.h"
 #include "graphics/defined_graphics_objects.h"
 #include "graphics/environment_map.h"
-#include "graphics/glyph.h"
 #include "graphics/graphics_object.h"
 #include "graphics/graphics_window.h"
 #include "graphics/iso_field_calculation.h"
 #include "graphics/light.h"
 #include "graphics/light_model.h"
 #include "graphics/material.h"
+#include "graphics/glyph.hpp"
 #include "graphics/graphic.h"
 #include "graphics/graphics_module.h"
 #include "graphics/rendition.h"
@@ -344,6 +345,7 @@ DESCRIPTION :
 	struct LIST(Io_device) *device_list;
 #endif /* defined (SELECT_DESCRIPTORS) */
 	/* list of glyphs = simple graphics objects with only geometry */
+	Cmiss_glyph_module_id glyph_module;
 	struct MANAGER(GT_object) *glyph_manager;
 #if defined (WX_USER_INTERFACE)
 	struct MANAGER(Comfile_window) *comfile_window_manager;
@@ -17722,7 +17724,8 @@ Initialise all the subcomponents of cmgui and create the Cmiss_command_data
 #if defined (SELECT_DESCRIPTORS)
 		command_data->device_list=(struct LIST(Io_device) *)NULL;
 #endif /* defined (SELECT_DESCRIPTORS) */
-		command_data->glyph_manager=(struct MANAGER(GT_object) *)NULL;
+		command_data->glyph_module=(Cmiss_glyph_module_id)0;
+		command_data->glyph_manager=(struct MANAGER(GT_object) *)0;
 		command_data->any_object_selection=(struct Any_object_selection *)NULL;
 		command_data->element_point_ranges_selection=(struct Element_point_ranges_selection *)NULL;
 		command_data->interactive_tool_manager=(struct MANAGER(Interactive_tool) *)NULL;
@@ -18026,8 +18029,10 @@ Initialise all the subcomponents of cmgui and create the Cmiss_command_data
 		command_data->device_list=CREATE(LIST(Io_device))();
 #endif /* defined (SELECT_DESCRIPTORS) */
 
-		command_data->glyph_manager = Cmiss_graphics_module_get_default_glyph_manager(
-			command_data->graphics_module);
+		command_data->glyph_module = Cmiss_graphics_module_get_glyph_module(command_data->graphics_module);
+		Cmiss_glyph_module_create_standard_glyphs(command_data->glyph_module);
+		Cmiss_glyph_module_create_standard_cmgui_glyphs(command_data->glyph_module);
+		command_data->glyph_manager = Cmiss_glyph_module_get_glyph_manager(command_data->glyph_module);
 
 		/* global list of selected objects */
 		command_data->any_object_selection = Cmiss_context_get_any_object_selection(Cmiss_context_app_get_core_context(context));
@@ -18444,10 +18449,8 @@ NOTE: Do not call this directly: call Cmiss_command_data_destroy() to deaccess.
 #endif /* defined (WX_USER_INTERFACE) */
 
 		DEACCESS(Scene)(&command_data->default_scene);
-		if (command_data->graphics_module)
-		{
-			Cmiss_graphics_module_destroy(&command_data->graphics_module);
-		}
+		Cmiss_glyph_module_destroy(&command_data->glyph_module);
+		Cmiss_graphics_module_destroy(&command_data->graphics_module);
 		DEACCESS(Time_keeper_app)(&command_data->default_time_keeper_app);
 		if (command_data->computed_field_package)
 		{
