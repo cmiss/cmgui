@@ -502,6 +502,8 @@ int Cmiss_rendition_add_glyph(struct Cmiss_rendition *rendition,
 			Cmiss_graphic_set_name(graphic, cmiss_graphic_name);
 			Cmiss_graphic_point_attributes_id point_attributes = Cmiss_graphic_get_point_attributes(graphic);
 			Cmiss_graphic_point_attributes_set_glyph(point_attributes, reinterpret_cast<Cmiss_glyph_id>(glyph));
+			const double one = 1.0;
+			Cmiss_graphic_point_attributes_set_base_size(point_attributes, 1, &one);
 			Cmiss_graphic_point_attributes_destroy(&point_attributes);
 			Cmiss_graphics_material_id material = Cmiss_graphics_material_access(get_GT_object_default_material(glyph));
 			if (material)

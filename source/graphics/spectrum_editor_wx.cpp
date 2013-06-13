@@ -2425,7 +2425,6 @@ Creates a spectrum_editor widget.
 										(struct MANAGER(Scene) *)NULL,
 										spectrum_editor->spectrum_editor_scene, spectrum_editor->user_interface);
 								Cmiss_glyph_module_id glyph_module = Cmiss_graphics_module_get_glyph_module(graphics_module);
-								Cmiss_glyph_set_managed(reinterpret_cast<Cmiss_glyph_id>(spectrum_editor->graphics_object), 1);
 								MANAGER(GT_object) *glyph_manager = Cmiss_glyph_module_get_glyph_manager(glyph_module);
 								ADD_OBJECT_TO_MANAGER(GT_object)(spectrum_editor->graphics_object, glyph_manager);
 								Cmiss_glyph_module_destroy(&glyph_module);
