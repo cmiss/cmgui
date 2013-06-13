@@ -9,6 +9,7 @@
 #include "three_d_drawing/graphics_buffer.h"
 #include "general/message.h"
 #include "computed_field/computed_field_image.h"
+#include "graphics/graphics_module.h"
 #include "graphics/render_gl.h"
 #include "graphics/material.h"
 #include "graphics/material_app.h"
@@ -19,19 +20,19 @@
 //static struct Material_program_uniform *CREATE(Material_program_uniform)(char *name)
 
 int gfx_create_material(struct Parse_state *state,
-	void *dummy_to_be_modified, void *material_package_void)
+	void *dummy_to_be_modified, void *material_module_void)
 /*******************************************************************************
 LAST MODIFIED : 20 November 2003
 
 DESCRIPTION :
-Shifted from command/cmiss.c now that there is a material package.
+Shifted from command/cmiss.c now that there is a material module.
 If the material already exists, then behaves like gfx modify material.
 ==============================================================================*/
 {
 	const char *current_token;
 	int material_is_new,return_code;
 	struct Graphical_material *material;
-	struct Material_package *material_package;
+	struct Cmiss_graphics_material_module *material_module;
 
 	ENTER(gfx_create_material);
 	USE_PARAMETER(dummy_to_be_modified);
@@ -40,23 +41,27 @@ If the material already exists, then behaves like gfx modify material.
 		current_token=state->current_token;
 		if (current_token)
 		{
-			material_package=(struct Material_package *)material_package_void;
-			if (material_package)
+			material_module=(struct Cmiss_graphics_material_module *)material_module_void;
+			if (material_module)
 			{
 				if (strcmp(PARSER_HELP_STRING,current_token)&&
 					strcmp(PARSER_RECURSIVE_HELP_STRING,current_token))
 				{
 					/* if there is an existing material of that name, just modify it */
-					material=FIND_BY_IDENTIFIER_IN_MANAGER(Graphical_material,name)(
-						current_token,Material_package_get_material_manager(material_package));
+					material=Cmiss_graphics_material_module_find_material_by_name(material_module, current_token);
 					if (!material)
 					{
-						material=CREATE(Graphical_material)(current_token);
+						material = Cmiss_graphics_material_create_private();
+						Cmiss_graphics_material_set_name(material, current_token);
 						if (material)
 						{
 							/*???DB.  Temporary */
+							Cmiss_graphics_material_id defaultMaterial =
+								Cmiss_graphics_material_module_get_default_material(material_module);
 							MANAGER_COPY_WITHOUT_IDENTIFIER(Graphical_material,name)(material,
-								Material_package_get_default_material(material_package));
+								defaultMaterial);
+							if (defaultMaterial)
+								Cmiss_graphics_material_destroy(&defaultMaterial);
 						}
 						material_is_new=1;
 					}
@@ -70,7 +75,7 @@ If the material already exists, then behaves like gfx modify material.
 						if (state->current_token)
 						{
 							return_code=modify_Graphical_material(state,(void *)material,
-								material_package_void);
+								material_module_void);
 						}
 						else
 						{
@@ -80,8 +85,9 @@ If the material already exists, then behaves like gfx modify material.
 						{
 							Cmiss_graphics_material_set_attribute_integer(material, CMISS_GRAPHICS_MATERIAL_ATTRIBUTE_IS_MANAGED, 1);
 							ADD_OBJECT_TO_MANAGER(Graphical_material)(material,
-								Material_package_get_material_manager(material_package));
+								Cmiss_graphics_material_module_get_manager(material_module));
 						}
+						Cmiss_graphics_material_destroy(&material);
 					}
 					else
 					{
@@ -93,14 +99,14 @@ If the material already exists, then behaves like gfx modify material.
 				else
 				{
 					return_code=modify_Graphical_material(state,(void *)NULL,
-						material_package_void);
+						material_module_void);
 					return_code=1;
 				}
 			}
 			else
 			{
 				display_message(ERROR_MESSAGE,
-					"gfx_create_material.  Missing material_package_void");
+					"gfx_create_material.  Missing material_module_void");
 				return_code=0;
 			}
 		}
@@ -270,7 +276,7 @@ int Material_program_uniform_set_float_vector(struct Material_program_uniform *u
 	unsigned int number_of_values, double *values);
 
 int modify_Graphical_material(struct Parse_state *state,void *material_void,
-	void *material_package_void)
+	void *material_module_void)
 /*******************************************************************************
 LAST MODIFIED : 4 July 2007
 
@@ -291,15 +297,15 @@ DESCRIPTION :
 		process, return_code;
 	struct Graphical_material *material_to_be_modified,
 		*material_to_be_modified_copy;
-	struct Material_package *material_package;
+	struct Cmiss_graphics_material_module *material_module;
 	struct Option_table *help_option_table, *option_table, *mode_option_table;
 	double *uniform_values;
 
 	ENTER(modify_Graphical_material);
 	if (state)
 	{
-		material_package = (struct Material_package *)material_package_void;
-		if (material_package)
+		material_module = (struct Cmiss_graphics_material_module *)material_module_void;
+		if (material_module)
 		{
 			current_token=state->current_token;
 			if (current_token)
@@ -309,9 +315,10 @@ DESCRIPTION :
 				if (material_to_be_modified)
 				{
 					if (IS_MANAGED(Graphical_material)(material_to_be_modified,
-						material_package->material_manager))
+						Cmiss_graphics_material_module_get_manager(material_module)))
 					{
-						material_to_be_modified_copy=CREATE(Graphical_material)("copy");
+						material_to_be_modified_copy = Cmiss_graphics_material_create_private();
+						Cmiss_graphics_material_set_name(material_to_be_modified_copy, "copy");
 						if (material_to_be_modified_copy)
 						{
 							MANAGER_COPY_WITHOUT_IDENTIFIER(Graphical_material,name)(
@@ -338,13 +345,14 @@ DESCRIPTION :
 						strcmp(PARSER_RECURSIVE_HELP_STRING,current_token))
 					{
 						material_to_be_modified=FIND_BY_IDENTIFIER_IN_MANAGER(Graphical_material,name)(current_token,
-							material_package->material_manager);
+							Cmiss_graphics_material_module_get_manager(material_module));
 						if (material_to_be_modified)
 						{
 							return_code=shift_Parse_state(state,1);
 							if (return_code)
 							{
-								material_to_be_modified_copy=CREATE(Graphical_material)("copy");
+								material_to_be_modified_copy = Cmiss_graphics_material_create_private();
+								Cmiss_graphics_material_set_name(material_to_be_modified_copy, "copy");
 								if (material_to_be_modified_copy)
 								{
 									MANAGER_COPY_WITHOUT_IDENTIFIER(Graphical_material,name)(
@@ -369,21 +377,25 @@ DESCRIPTION :
 					}
 					else
 					{
-						material_to_be_modified=CREATE(Graphical_material)("help");
+						material_to_be_modified = Cmiss_graphics_material_create_private();
+						Cmiss_graphics_material_set_name(material_to_be_modified, "help");
 						if (material_to_be_modified)
 						{
-							if (material_package->default_material)
+							Cmiss_graphics_material *default_material =
+								Cmiss_graphics_material_module_get_default_material(material_module);
+							if (default_material)
 							{
 								MANAGER_COPY_WITHOUT_IDENTIFIER(Graphical_material,name)(
-									material_to_be_modified,material_package->default_material);
+									material_to_be_modified,default_material);
+								Cmiss_graphics_material_destroy(&default_material);
 							}
 							help_option_table = CREATE(Option_table)();
 							Option_table_add_entry(help_option_table, "MATERIAL_NAME",
-								material_to_be_modified, material_package_void,
+								material_to_be_modified, material_module_void,
 								modify_Graphical_material);
 							return_code=Option_table_parse(help_option_table, state);
 							DESTROY(Option_table)(&help_option_table);
-							DESTROY(Graphical_material)(&material_to_be_modified);
+							Cmiss_graphics_material_destroy(&material_to_be_modified);
 						}
 						else
 						{
@@ -509,7 +521,7 @@ DESCRIPTION :
 						"colour_lookup_red", &colour_lookup_red_flag);
 					Option_table_add_entry(option_table, "colour_lookup_spectrum",
 						&(material_to_be_modified_copy->spectrum),
-						material_package->spectrum_manager,
+						Cmiss_graphics_material_module_get_spectrum_manager(material_module),
 						set_Spectrum);
 					Option_table_add_entry(option_table, "diffuse",
 						&(material_to_be_modified_copy->diffuse), NULL,
@@ -519,7 +531,7 @@ DESCRIPTION :
 						set_Colour);
 					Option_table_add_entry(option_table, "fourth_texture",
 						&(material_to_be_modified_copy->fourth_image_texture),
-						material_package->root_region,
+						Cmiss_graphics_material_module_get_region_non_access(material_module),
 						set_Material_image_texture);
 					Option_table_add_name_entry(option_table, "fragment_program_string",
 						&fragment_program_string);
@@ -545,7 +557,7 @@ DESCRIPTION :
 					Option_table_add_suboption_table(option_table, mode_option_table);
 					Option_table_add_entry(option_table, "secondary_texture",
 						&(material_to_be_modified_copy->second_image_texture),
-						material_package->root_region,
+						Cmiss_graphics_material_module_get_region_non_access(material_module),
 						set_Material_image_texture);
 					Option_table_add_entry(option_table, "shininess",
 						&(material_shininess), NULL,
@@ -555,11 +567,11 @@ DESCRIPTION :
 						set_Colour);
 					Option_table_add_entry(option_table, "texture",
 						&(material_to_be_modified_copy->image_texture),
-						material_package->root_region,
+						Cmiss_graphics_material_module_get_region_non_access(material_module),
 						set_Material_image_texture);
 					Option_table_add_entry(option_table, "third_texture",
 						&(material_to_be_modified_copy->third_image_texture),
-						material_package->root_region,
+						Cmiss_graphics_material_module_get_region_non_access(material_module),
 						set_Material_image_texture);
 					Option_table_add_name_entry(option_table, "vertex_program_string",
 						&vertex_program_string);
@@ -777,10 +789,10 @@ DESCRIPTION :
 							{
 								MANAGER_MODIFY_NOT_IDENTIFIER(Graphical_material,name)(
 									material_to_be_modified,material_to_be_modified_copy,
-									material_package->material_manager);
+									Cmiss_graphics_material_module_get_manager(material_module));
 								material_copy_bump_mapping_and_per_pixel_lighting_flag(
 									 material_to_be_modified_copy, material_to_be_modified);
-								DESTROY(Graphical_material)(&material_to_be_modified_copy);
+								Cmiss_graphics_material_destroy(&material_to_be_modified_copy);
 							}
 							else
 							{
@@ -791,7 +803,7 @@ DESCRIPTION :
 						{
 							if (material_to_be_modified)
 							{
-								DESTROY(Graphical_material)(&material_to_be_modified_copy);
+								Cmiss_graphics_material_destroy(&material_to_be_modified_copy);
 							}
 						}
 					}
@@ -878,7 +890,7 @@ Modifier function to set the material from a command.
 					{
 						if (*material_address)
 						{
-							DEACCESS(Graphical_material)(material_address);
+							Cmiss_graphics_material_destroy(material_address);
 							*material_address=(struct Graphical_material *)NULL;
 						}
 						return_code=1;
@@ -891,8 +903,8 @@ Modifier function to set the material from a command.
 						{
 							if (*material_address!=temp_material)
 							{
-								DEACCESS(Graphical_material)(material_address);
-								*material_address=ACCESS(Graphical_material)(temp_material);
+								Cmiss_graphics_material_destroy(material_address);
+								*material_address=Cmiss_graphics_material_access(temp_material);
 							}
 							return_code=1;
 						}
@@ -952,13 +964,13 @@ Modifier function to set the material from a command.
 
 int Option_table_add_set_Material_entry(
 	struct Option_table *option_table, const char *token,
-	struct Graphical_material **material, struct Material_package *material_package)
+	struct Graphical_material **material, struct Cmiss_graphics_material_module *material_module)
 /*******************************************************************************
 LAST MODIFIED : 20 November 2003
 
 DESCRIPTION :
 Adds the given <token> to the <option_table>.  The <material> is selected from
-the <material_package> by name.
+the <material_module> by name.
 ==============================================================================*/
 {
 	int return_code;
@@ -967,7 +979,7 @@ the <material_package> by name.
 	if (option_table && token)
 	{
 		return_code = Option_table_add_entry(option_table, token, (void *)material,
-			(void *)Material_package_get_material_manager(material_package), set_Graphical_material);
+			(void *)Cmiss_graphics_material_module_get_manager(material_module), set_Graphical_material);
 	}
 	else
 	{
@@ -986,24 +998,16 @@ the <material_package> by name.
 int Cmiss_graphics_material_execute_command(struct Graphical_material *material, const char *command_string)
 {
 	int return_code = 0;
-	ENTER(Cmiss_graphics_material_execute_command);
 	if (material && command_string)
 	{
 		struct Parse_state *state = create_Parse_state(command_string);
 		if (state)
 		{
-			struct Cmiss_graphics_module *graphics_module =
-				MANAGER_GET_OWNER(Graphical_material)(material->manager);
-			if(graphics_module)
+			struct Cmiss_graphics_material_module *material_module = material->module;
+			if(material_module)
 			{
-				struct Material_package *package =
-					Cmiss_graphics_module_get_material_package(graphics_module);
-				if (package)
-				{
-					return_code=modify_Graphical_material(state,(void *)material,
-						(void *)package);
-					DEACCESS(Material_package)(&package);
-				}
+				return_code=modify_Graphical_material(state,(void *)material,
+						(void *)material_module);
 			}
 			destroy_Parse_state(&state);
 		}

@@ -458,6 +458,10 @@ int Cmiss_rendition_execute_command_internal(Cmiss_rendition_id rendition,
 			{
 				DEACCESS(Spectrum)(&rendition_command_data.default_spectrum);
 			}
+			if (rendition_command_data.default_material)
+			{
+				Cmiss_graphics_material_destroy(&rendition_command_data.default_material);
+			}
 			Cmiss_region_destroy(&(rendition_command_data.root_region));
 		}
 	}

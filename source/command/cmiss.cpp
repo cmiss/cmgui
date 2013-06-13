@@ -60,6 +60,7 @@
 #include "zinc/fieldmodule.h"
 #include "zinc/fieldsubobjectgroup.h"
 #include "zinc/glyph.h"
+#include "zinc/graphicsmaterial.h"
 #include "zinc/graphicsmodule.h"
 #include "zinc/region.h"
 #include "zinc/rendition.h"
@@ -368,7 +369,7 @@ DESCRIPTION :
 	struct Light *default_light;
 	struct MANAGER(Light_model) *light_model_manager;
 	struct Light_model *default_light_model;
-	struct Material_package *material_package;
+	struct Cmiss_graphics_material_module *material_module;
 	struct Cmiss_font *default_font;
 	struct MANAGER(Curve) *curve_manager;
 	struct MANAGER(Scene) *scene_manager;
@@ -764,10 +765,8 @@ with tick marks and labels for showing the scale of a spectrum.
 			graphics_object_name = duplicate_string("colour_bar");
 			number_format = duplicate_string("%+.4e");
 			/* must access it now, because we deaccess it later */
-			label_material=
-				ACCESS(Graphical_material)(Material_package_get_default_material(command_data->material_package));
-			material=
-				ACCESS(Graphical_material)(Material_package_get_default_material(command_data->material_package));
+			label_material= Cmiss_graphics_material_module_get_default_material(command_data->material_module);
+			material= Cmiss_graphics_material_module_get_default_material(command_data->material_module);
 			spectrum=ACCESS(Spectrum)(command_data->default_spectrum);
 			number_of_components=3;
 			bar_centre[0]=-0.9;
@@ -807,7 +806,7 @@ with tick marks and labels for showing the scale of a spectrum.
 				&font_name);
 			/* label_material */
 			Option_table_add_set_Material_entry(option_table, "label_material", &label_material,
-				command_data->material_package);
+				command_data->material_module);
 			/* length */
 			Option_table_add_entry(option_table,"length",&bar_length,
 				NULL,set_float_positive);
@@ -816,7 +815,7 @@ with tick marks and labels for showing the scale of a spectrum.
 				(void *)1,set_name);
 			/* material */
 			Option_table_add_set_Material_entry(option_table, "material", &material,
-				command_data->material_package);
+				command_data->material_module);
 			/* radius */
 			Option_table_add_entry(option_table,"radius",&bar_radius,
 				NULL,set_float_positive);
@@ -875,8 +874,8 @@ with tick marks and labels for showing the scale of a spectrum.
 				DEACCESS(Cmiss_font)(&font);
 			} /* parse error, help */
 			DESTROY(Option_table)(&option_table);
-			DEACCESS(Graphical_material)(&label_material);
-			DEACCESS(Graphical_material)(&material);
+			Cmiss_graphics_material_destroy(&label_material);
+			Cmiss_graphics_material_destroy(&material);
 			DEACCESS(Spectrum)(&spectrum);
 			DEALLOCATE(graphics_object_name);
 			DEALLOCATE(number_format);
@@ -1400,8 +1399,7 @@ Executes a GFX CREATE FLOW_PARTICLES command.
 		xi[2]=0.5;
 		time=0;
 		/* must access it now,because we deaccess it later */
-		material=
-			ACCESS(Graphical_material)(Material_package_get_default_material(command_data->material_package));
+		material= Cmiss_graphics_material_module_get_default_material(command_data->material_module);
 		spectrum=
 			ACCESS(Spectrum)(command_data->default_spectrum);
 
@@ -1423,7 +1421,7 @@ Executes a GFX CREATE FLOW_PARTICLES command.
 			&(vector_components), set_FE_value_array);
 		/* material */
 		Option_table_add_set_Material_entry(option_table, "material", &material,
-			command_data->material_package);
+			command_data->material_module);
 		/* spectrum */
 		Option_table_add_entry(option_table,"spectrum",&spectrum,
 			command_data->spectrum_manager,set_Spectrum);
@@ -1669,7 +1667,7 @@ Executes a GFX CREATE FLOW_PARTICLES command.
 			DEALLOCATE(stream_vector_field);
 		DEALLOCATE(region_path);
 		DEACCESS(Spectrum)(&spectrum);
-		DEACCESS(Graphical_material)(&material);
+		Cmiss_graphics_material_destroy(&material);
 		DEALLOCATE(graphics_object_name);
 	}
 	else
@@ -3403,7 +3401,7 @@ Modifies the properties of a texture.
 				&data->region, &data->group);
 			/* fail_material */
 			Option_table_add_set_Material_entry(option_table, "fail_material",
-				&data->fail_material, command_data->material_package);
+				&data->fail_material, command_data->material_module);
 			/* field */
 			Option_table_add_entry(option_table, "field", &data->field_name,
 				(void *)1, set_name);
@@ -3817,14 +3815,13 @@ Modifies the properties of a texture.
 					/* Try for the special transparent gray material first */
 					if (!(evaluate_data.fail_material =
 						FIND_BY_IDENTIFIER_IN_MANAGER(Graphical_material, name)(
-						"transparent_gray50", Material_package_get_material_manager(
-							command_data->material_package))))
+						"transparent_gray50", Cmiss_graphics_material_module_get_manager(
+							command_data->material_module))))
 					{
 						/* Just use the default material */
-						evaluate_data.fail_material = Material_package_get_default_material(
-							command_data->material_package);
+						evaluate_data.fail_material = Cmiss_graphics_material_module_get_default_material(
+							command_data->material_module);
 					}
-					ACCESS(Graphical_material)(evaluate_data.fail_material);
 					evaluate_data.spectrum = (struct Spectrum *)NULL;
 
 					file_number_pattern = (char *)NULL;
@@ -4286,7 +4283,7 @@ Modifies the properties of a texture.
 						Cmiss_field_group_destroy(&evaluate_data.group);
 					if (evaluate_data.fail_material)
 					{
-						DEACCESS(Graphical_material)(&evaluate_data.fail_material);
+						Cmiss_graphics_material_destroy(&evaluate_data.fail_material);
 					}
 					if (evaluate_data.spectrum)
 					{
@@ -4688,17 +4685,19 @@ Executes a GFX CREATE WINDOW command.
 							 command_data->user_interface);
 						ADD_OBJECT_TO_MANAGER(Interactive_tool)(transform_tool,
 							 interactive_tool_manager);
+						Cmiss_graphics_material_id defaultMaterial =
+							Cmiss_graphics_material_module_get_default_material(command_data->material_module);
 						Node_tool_set_execute_command(CREATE(Node_tool)(
 								interactive_tool_manager,
 								command_data->root_region, /*use_data*/0,
-								Material_package_get_default_material(command_data->material_package),
+								defaultMaterial,
 								command_data->user_interface,
 								command_data->default_time_keeper_app),
 								command_data->execute_command);
 						Node_tool_set_execute_command(CREATE(Node_tool)(
 								interactive_tool_manager,
 								command_data->root_region, /*use_data*/1,
-								Material_package_get_default_material(command_data->material_package),
+								defaultMaterial,
 								command_data->user_interface,
 								command_data->default_time_keeper_app),
 								command_data->execute_command);
@@ -4706,7 +4705,7 @@ Executes a GFX CREATE WINDOW command.
 								interactive_tool_manager,
 								command_data->root_region,
 								command_data->element_point_ranges_selection,
-								Material_package_get_default_material(command_data->material_package),
+								defaultMaterial,
 								command_data->user_interface,
 								command_data->default_time_keeper_app),
 								command_data->execute_command);
@@ -4715,7 +4714,7 @@ Executes a GFX CREATE WINDOW command.
 								interactive_tool_manager,
 								command_data->root_region,
 								command_data->element_point_ranges_selection,
-								Material_package_get_default_material(command_data->material_package),
+								defaultMaterial,
 								command_data->user_interface,
 								command_data->default_time_keeper_app),
 								command_data->execute_command);
@@ -4724,10 +4723,13 @@ Executes a GFX CREATE WINDOW command.
 								interactive_tool_manager,
 								command_data->root_region,
 								command_data->element_point_ranges_selection,
-								Material_package_get_default_material(command_data->material_package),
+								defaultMaterial,
 								command_data->user_interface,
 								command_data->default_time_keeper_app),
 								command_data->execute_command);
+						if (defaultMaterial)
+							Cmiss_graphics_material_destroy(&defaultMaterial);
+
 						if (NULL != (window=CREATE(Graphics_window)(name,buffer_mode,stereo_mode,
 							minimum_colour_buffer_depth, minimum_depth_buffer_depth,
 							minimum_accumulation_buffer_depth,
@@ -5554,7 +5556,7 @@ Executes a GFX CREATE command.
 				Option_table_add_entry(option_table,"lmodel",NULL,
 					command_data_void,gfx_create_light_model);
 				Option_table_add_entry(option_table,"material",NULL,
-					(void *)command_data->material_package,gfx_create_material);
+					(void *)command_data->material_module,gfx_create_material);
 				Option_table_add_entry(option_table, "more_flow_particles",
 					/*create_more*/(void *)1, command_data_void, gfx_create_flow_particles);
 				Option_table_add_entry(option_table, "ngroup", /*use_object_type*/(void *)1,
@@ -6638,7 +6640,7 @@ Executes a GFX DESTROY command.
 					command_data_void, gfx_destroy_elements);
 				/* material */
 				Option_table_add_entry(option_table, "material", NULL,
-					Material_package_get_material_manager(command_data->material_package), gfx_destroy_material);
+					Cmiss_graphics_material_module_get_manager(command_data->material_module), gfx_destroy_material);
 				/* ngroup */
 				Option_table_add_entry(option_table, "ngroup", NULL,
 					command_data->root_region, gfx_destroy_group);
@@ -7029,14 +7031,16 @@ Executes a GFX EDIT_SCENE command.  Brings up the Region_tree_viewer.
 			}
 			else
 			{
+				Cmiss_graphics_material_id defaultMaterial =
+					Cmiss_graphics_material_module_get_default_material(command_data->material_module);
 				if ((!command_data->user_interface) ||
 					(!CREATE(Region_tree_viewer)(	&(command_data->region_tree_viewer),
 						command_data->graphics_module,
 						command_data->scene_manager,
 						scene,
 						command_data->root_region,
-						Material_package_get_material_manager(command_data->material_package),
-						Material_package_get_default_material(command_data->material_package),
+						Cmiss_graphics_material_module_get_manager(command_data->material_module),
+						defaultMaterial,
 						command_data->default_font,
 						command_data->glyph_manager,
 						command_data->spectrum_manager,
@@ -7047,6 +7051,8 @@ Executes a GFX EDIT_SCENE command.  Brings up the Region_tree_viewer.
 						"Could not create scene editor");
 					return_code = 0;
 				}
+				if (defaultMaterial)
+					Cmiss_graphics_material_destroy(&defaultMaterial);
 			}
 		} /* parse error, help */
 		DESTROY(Option_table)(&option_table);
@@ -8150,7 +8156,7 @@ static int execute_command_gfx_import(struct Parse_state *state,
 	{
 		struct Spectrum *rgb_spectrum = (struct Spectrum *)NULL;
 		struct Graphical_material *material =
-			ACCESS(Graphical_material)(Material_package_get_default_material(command_data->material_package));
+			Cmiss_graphics_material_module_get_default_material(command_data->material_module);
 
 		char *graphics_object_name = NULL, *region_path = NULL;
 		char *file_name;
@@ -8185,7 +8191,7 @@ static int execute_command_gfx_import(struct Parse_state *state,
 			command_data->spectrum_manager,set_Spectrum);
 		// material
 		Option_table_add_set_Material_entry(option_table, "material", &material,
-			command_data->material_package);
+			command_data->material_module);
 		// deflection
 		Option_table_add_entry(option_table, "deflection", &deflection, NULL, set_float );
 
@@ -8240,7 +8246,7 @@ static int execute_command_gfx_import(struct Parse_state *state,
 			DEACCESS(Spectrum)(&rgb_spectrum);
 		}
 		DEALLOCATE(graphics_object_name);
-		DEACCESS(Graphical_material)(&material);
+		Cmiss_graphics_material_destroy(&material);
 		DEALLOCATE(file_name);
 	}
 	else
@@ -8878,7 +8884,7 @@ Executes a GFX LIST ALL_COMMANDS.
 				}
 				/* Command of graphical_material */
 				if (NULL != (graphical_material_manager =
-					Material_package_get_material_manager(command_data->material_package)))
+					Cmiss_graphics_material_module_get_manager(command_data->material_module)))
 				{
 					command_prefix="gfx create material ";
 					return_code=FOR_EACH_OBJECT_IN_MANAGER(Graphical_material)(
@@ -9569,7 +9575,7 @@ Executes a GFX LIST MATERIAL.
 			/* must deaccess material since accessed by set_Graphical_material */
 			if (material)
 			{
-				DEACCESS(Graphical_material)(&material);
+				Cmiss_graphics_material_destroy(&material);
 			}
 		}
 		else
@@ -10718,7 +10724,7 @@ Executes a GFX LIST command.
 				command_data->light_model_manager, gfx_list_light_model);
 			/* material */
 			Option_table_add_entry(option_table, "material", NULL,
-				Material_package_get_material_manager(command_data->material_package), gfx_list_graphical_material);
+				Cmiss_graphics_material_module_get_manager(command_data->material_module), gfx_list_graphical_material);
 #if defined (SGI_MOVIE_FILE)
 			/* movie */
 			Option_table_add_entry(option_table, "movie", NULL,
@@ -11145,7 +11151,7 @@ Executes a GFX MODIFY GRAPHICS_OBJECT command.
 				/* initialise defaults */
 				if (NULL != (material = get_GT_object_default_material(graphics_object)))
 				{
-					ACCESS(Graphical_material)(material);
+					Cmiss_graphics_material_access(material);
 				}
 				if (NULL != (spectrum = get_GT_object_spectrum(graphics_object)))
 				{
@@ -11153,7 +11159,7 @@ Executes a GFX MODIFY GRAPHICS_OBJECT command.
 				}
 				option_table = CREATE(Option_table)();
 				Option_table_add_set_Material_entry(option_table, "material",&material,
-					command_data->material_package);
+					command_data->material_module);
 				Option_table_add_entry(option_table,"spectrum",&spectrum,
 					command_data->spectrum_manager,set_Spectrum);
 				return_code = Option_table_multi_parse(option_table, state);
@@ -11165,7 +11171,7 @@ Executes a GFX MODIFY GRAPHICS_OBJECT command.
 				}
 				if (material)
 				{
-					DEACCESS(Graphical_material)(&material);
+					Cmiss_graphics_material_destroy(&material);
 				}
 				if (spectrum)
 				{
@@ -11197,7 +11203,7 @@ Executes a GFX MODIFY GRAPHICS_OBJECT command.
 			material = (struct Graphical_material *)NULL;
 			option_table=CREATE(Option_table)();
 			Option_table_add_set_Material_entry(option_table, "material",&material,
-				command_data->material_package);
+				command_data->material_module);
 			Option_table_add_entry(option_table,"spectrum",&spectrum,
 				command_data->spectrum_manager,set_Spectrum);
 			return_code=Option_table_parse(option_table,state);
@@ -11847,7 +11853,7 @@ Executes a GFX MODIFY command.
 					gfx_modify_emoter);
 				/* environment_map */
 				modify_environment_map_data.graphical_material_manager=
-					Material_package_get_material_manager(command_data->material_package);
+					Cmiss_graphics_material_module_get_manager(command_data->material_module);
 				modify_environment_map_data.environment_map_manager=
 					command_data->environment_map_manager;
 				Option_table_add_entry(option_table,"environment_map",NULL,
@@ -11881,7 +11887,7 @@ Executes a GFX MODIFY command.
 					(void *)(&modify_light_model_data), modify_Light_model);
 				/* material */
 				Option_table_add_entry(option_table,"material",NULL,
-					(void *)command_data->material_package, modify_Graphical_material);
+					(void *)command_data->material_module, modify_Graphical_material);
 				/* ngroup */
 				Option_table_add_entry(option_table,"ngroup",NULL,
 					(void *)command_data, gfx_modify_node_group);
@@ -12816,7 +12822,7 @@ otherwise the file of graphics objects is read.
 					if (0 != (return_code = check_suffix(&file_name, ".exgobj")))
 					{
 						return_code=file_read_graphics_objects(file_name, command_data->io_stream_package,
-							Material_package_get_material_manager(command_data->material_package),
+							Cmiss_graphics_material_module_get_manager(command_data->material_module),
 							command_data->glyph_manager);
 					}
 				}
@@ -12997,7 +13003,7 @@ otherwise the wavefront obj file is read.
 						return_code=file_read_voltex_graphics_object_from_obj(file_name,
 							command_data->io_stream_package,
 							graphics_object_name, render_type, time,
-							Material_package_get_material_manager(command_data->material_package),
+							Cmiss_graphics_material_module_get_manager(command_data->material_module),
 							command_data->glyph_manager);
 					}
 				}
@@ -15271,7 +15277,7 @@ Can also write individual groups with the <group> option.
 										 for_each_spectrum_list_or_write_commands, (void *)"true", command_data->spectrum_manager);
 							 }
 							 if (NULL != (graphical_material_manager =
-									Material_package_get_material_manager(command_data->material_package)))
+									Cmiss_graphics_material_module_get_manager(command_data->material_module)))
 							 {
 									command_prefix="gfx create material ";
 									return_code=FOR_EACH_OBJECT_IN_MANAGER(Graphical_material)(
@@ -17996,13 +18002,14 @@ Initialise all the subcomponents of cmgui and create the Cmiss_command_data
 			command_data->default_spectrum=
 				Cmiss_graphics_module_get_default_spectrum(command_data->graphics_module);
 		}
-		/* create Material package and CMGUI default materials */
-		if (NULL != (command_data->material_package =
-				Cmiss_graphics_module_get_material_package(command_data->graphics_module)))
+		/* create Material module and CMGUI default materials */
+		if (NULL != (command_data->material_module =
+				Cmiss_graphics_module_get_material_module(command_data->graphics_module)))
 		{
-			if (NULL != (material = Material_package_get_default_material(command_data->material_package)))
+			if (NULL != (material = Cmiss_graphics_material_module_get_default_material(command_data->material_module)))
 			{
 				Graphical_material_set_alpha(material, 1.0);
+				Cmiss_graphics_material_destroy(&material);
 			}
 		}
 		command_data->default_font = Cmiss_graphics_module_get_default_font(
@@ -18470,7 +18477,7 @@ NOTE: Do not call this directly: call Cmiss_command_data_destroy() to deaccess.
 		command_data->curve_manager = NULL;
 		DEACCESS(Spectrum)(&(command_data->default_spectrum));
 		command_data->spectrum_manager=NULL;
-		DEACCESS(Material_package)(&command_data->material_package);
+		Cmiss_graphics_material_module_destroy(&command_data->material_module);
 		DEACCESS(Cmiss_font)(&command_data->default_font);
 		DESTROY(MANAGER(VT_volume_texture))(&command_data->volume_texture_manager);
 		DESTROY(MANAGER(Environment_map))(&command_data->environment_map_manager);

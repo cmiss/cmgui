@@ -833,8 +833,8 @@ void OnMaterialEditorCreateNewMaterial(wxCommandEvent& event)
 	if (NewMaterialDialog->ShowModal() == wxID_OK)
 	{
 		wxString material_string = NewMaterialDialog->GetValue();
-
-		material = CREATE(Graphical_material)(material_string.mb_str(wxConvUTF8));
+		material = Cmiss_graphics_material_create_private();
+		Cmiss_graphics_material_set_name(material, material_string.mb_str(wxConvUTF8));
 		if (material != NULL)
 		{
 			if(MANAGER_COPY_WITHOUT_IDENTIFIER(Graphical_material,name)
@@ -848,6 +848,7 @@ void OnMaterialEditorCreateNewMaterial(wxCommandEvent& event)
 				make_current_material(material_editor, material);
 				material_editor_wx_set_material(material_editor,material);
 			}
+			Cmiss_graphics_material_destroy(&material);
 		}
 	}
 	delete NewMaterialDialog;
@@ -1162,7 +1163,7 @@ int Material_editor_remove_widgets(struct Material_editor *material_editor)
 		}
 		if (material_editor->edit_material)
 		{
-			DESTROY(Graphical_material)(&(material_editor->edit_material));
+			Cmiss_graphics_material_destroy(&(material_editor->edit_material));
 		}
 		if (material_editor->graphics_buffer)
 		{
@@ -1267,13 +1268,15 @@ Sets the <material> to be edited by the <material_editor>.
 		return_code=1;
 		if (material_editor->edit_material)
 		{
-			DESTROY(Graphical_material)(&(material_editor->edit_material));
+			Cmiss_graphics_material_destroy(&(material_editor->edit_material));
 		}
 		if (material)
 		{
+			material_editor->edit_material = Cmiss_graphics_material_create_private();
+			Cmiss_graphics_material_set_name(material_editor->edit_material, "copy");
+
 			/* create a copy for editing */
-			if ((material_editor->edit_material=
-				CREATE(Graphical_material)("copy"))&&
+			if ((0 != material_editor->edit_material)&&
 				MANAGER_COPY_WITHOUT_IDENTIFIER(Graphical_material,name)
 				(material_editor->edit_material,material))
 			{
@@ -1363,7 +1366,7 @@ Sets the <material> to be edited by the <material_editor>.
 			{
 				if (material_editor->edit_material)
 				{
-					DESTROY(Graphical_material)(&(material_editor->edit_material));
+					Cmiss_graphics_material_destroy(&(material_editor->edit_material));
 				}
 				display_message(ERROR_MESSAGE,
 					"material_editor_wx_set_material.  Could not make copy of material");

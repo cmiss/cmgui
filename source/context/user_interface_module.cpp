@@ -42,6 +42,7 @@ DESCRIPTION :
  * ***** END LICENSE BLOCK ***** */
 
 #include "zinc/graphic.h"
+#include "zinc/graphicsmaterial.h"
 #include "time/time_keeper_app.hpp"
 #include "comfile/comfile.h"
 #include "command/command_window.h"
@@ -205,8 +206,10 @@ struct User_interface_module *User_interface_module_create(
 		UI_module->interactive_tool_manager=CREATE(MANAGER(Interactive_tool))();
 		if (UI_module->user_interface)
 		{
-			struct Material_package *material_package =
-				Cmiss_graphics_module_get_material_package(graphics_module);
+			struct Cmiss_graphics_material_module *material_module =
+				Cmiss_graphics_module_get_material_module(graphics_module);
+			Cmiss_graphics_material_id defaultMaterial =
+				Cmiss_graphics_material_module_get_default_material(material_module);
 			UI_module->transform_tool=create_Interactive_tool_transform(
 				UI_module->user_interface);
 			ADD_OBJECT_TO_MANAGER(Interactive_tool)(UI_module->transform_tool,
@@ -214,20 +217,20 @@ struct User_interface_module *User_interface_module_create(
 			UI_module->node_tool=CREATE(Node_tool)(
 				UI_module->interactive_tool_manager,
 				root_region, /*use_data*/0,
-				Material_package_get_default_material(material_package),
+				defaultMaterial,
 				UI_module->user_interface,
 				UI_module->default_time_keeper_app);
 			UI_module->data_tool=CREATE(Node_tool)(
 				UI_module->interactive_tool_manager,
 				root_region, /*use_data*/1,
-				Material_package_get_default_material(material_package),
+				defaultMaterial,
 				UI_module->user_interface,
 				UI_module->default_time_keeper_app);
 			UI_module->element_tool=CREATE(Element_tool)(
 				UI_module->interactive_tool_manager,
 				root_region,
 				Cmiss_context_get_element_point_ranges_selection(Cmiss_context_app_get_core_context(context)),
-				Material_package_get_default_material(material_package),
+				defaultMaterial,
 				UI_module->user_interface,
 				UI_module->default_time_keeper_app);
 #if defined (USE_OPENCASCADE)
@@ -235,7 +238,7 @@ struct User_interface_module *User_interface_module_create(
 				UI_module->interactive_tool_manager,
 				root_region,
 				Cmiss_context_get_element_point_ranges_selection(context),
-				Material_package_get_default_material(material_package),
+				defaultMaterial,
 				UI_module->user_interface,
 				UI_module->default_time_keeper_app);
 #endif /* defined (USE_OPENCASCADE) */
@@ -243,10 +246,11 @@ struct User_interface_module *User_interface_module_create(
 				UI_module->interactive_tool_manager,
 				root_region,
 				Cmiss_context_get_element_point_ranges_selection(Cmiss_context_app_get_core_context(context)),
-				Material_package_get_default_material(material_package),
+				defaultMaterial,
 				UI_module->user_interface,
 				UI_module->default_time_keeper_app);
-			DEACCESS(Material_package)(&material_package);
+			Cmiss_graphics_material_destroy(&defaultMaterial);
+			Cmiss_graphics_material_module_destroy(&material_module);
 		}
 		if (UI_module->user_interface)
 		{

@@ -734,7 +734,7 @@ Creates an Cad_tool with Interactive_tool in <interactive_tool_manager>.
 			cad_tool->element_point_ranges_selection=
 				element_point_ranges_selection;
 			cad_tool->rubber_band_material=
-				ACCESS(Graphical_material)(rubber_band_material);
+				Cmiss_graphics_material_access(rubber_band_material);
 			cad_tool->user_interface=user_interface;
 			cad_tool->time_keeper = (struct Time_keeper *)NULL;
 			cad_tool->rendition=(struct Cmiss_rendition *)NULL;
@@ -815,7 +815,7 @@ structure itself.
 		REACCESS(Interaction_volume)(&(cad_tool->last_interaction_volume),
 			(struct Interaction_volume *)NULL);
 		REACCESS(GT_object)(&(cad_tool->rubber_band),(struct GT_object *)NULL);
-		DEACCESS(Graphical_material)(&(cad_tool->rubber_band_material));
+		Cmiss_graphics_material_destroy(&(cad_tool->rubber_band_material));
 		if (cad_tool->time_keeper)
 		{
 			DEACCESS(Time_keeper)(&(cad_tool->time_keeper));

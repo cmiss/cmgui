@@ -45,6 +45,7 @@ Interactive tool for selecting elements with mouse and other devices.
 #include "configure/cmgui_configure.h"
 #endif /* defined (1) */
 #include "zinc/graphicsfilter.h"
+#include "zinc/graphicsmaterial.h"
 #include "zinc/rendition.h"
 #include "command/command.h"
 #include "computed_field/computed_field.h"
@@ -896,7 +897,7 @@ Selects elements in <element_selection> in response to interactive_events.
 			element_tool->element_point_ranges_selection=
 				element_point_ranges_selection;
 			element_tool->rubber_band_material=
-				ACCESS(Graphical_material)(rubber_band_material);
+				Cmiss_graphics_material_access(rubber_band_material);
 			element_tool->user_interface=user_interface;
 			element_tool->time_keeper_app = (struct Time_keeper_app *)NULL;
 			element_tool->rendition=(struct Cmiss_rendition *)NULL;
@@ -977,7 +978,7 @@ structure itself.
 		REACCESS(Interaction_volume)(&(element_tool->last_interaction_volume),
 			(struct Interaction_volume *)NULL);
 		REACCESS(GT_object)(&(element_tool->rubber_band),(struct GT_object *)NULL);
-		DEACCESS(Graphical_material)(&(element_tool->rubber_band_material));
+		Cmiss_graphics_material_destroy(&(element_tool->rubber_band_material));
 		if (element_tool->time_keeper_app)
 		{
 			DEACCESS(Time_keeper_app)(&(element_tool->time_keeper_app));

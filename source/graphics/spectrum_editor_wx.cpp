@@ -16,6 +16,7 @@ Provides the wxWidgets interface to manipulate spectrum settings.
 
 #include "zinc/glyph.h"
 #include "zinc/scene.h"
+#include "zinc/graphicsmaterial.h"
 #include "zinc/graphicsmodule.h"
 #include "zinc/rendition.h"
 #include "command/parser.h"
@@ -2237,14 +2238,13 @@ Creates a spectrum_editor widget.
 					 spectrum_editor->spectrum_lower_panel->SetScrollbars(10,10,10,40);
 					 spectrum_editor->spectrum_higher_panel->SetScrollbars(10,10,40,40);
 					 return_code = 1;
-					 spectrum_editor->editor_material = ACCESS(Graphical_material)
-							(CREATE(Graphical_material)("editor_material"));
+					 spectrum_editor->editor_material = Cmiss_graphics_material_create_private();
+					 Cmiss_graphics_material_set_name(spectrum_editor->editor_material, "editor_material");
 					 Graphical_material_set_ambient(spectrum_editor->editor_material, &black );
 					 Graphical_material_set_diffuse(spectrum_editor->editor_material, &black );
 					 Graphical_material_set_shininess(spectrum_editor->editor_material, 0.8 );
-					 tick_material = CREATE(Graphical_material)("editor_material");
-					 spectrum_editor->tick_material = ACCESS(Graphical_material)(
-							tick_material);
+					 spectrum_editor->tick_material = Cmiss_graphics_material_create_private();
+					 Cmiss_graphics_material_set_name(spectrum_editor->tick_material, "tick_material");
 					 Graphical_material_set_ambient(tick_material, &off_white );
 					 Graphical_material_set_diffuse(tick_material, &off_white );
 					 Graphical_material_set_shininess(tick_material, 0.8 );
@@ -2580,8 +2580,8 @@ Destroys the <*spectrum_editor_address> and sets
 		(spectrum_editor = *spectrum_editor_address))
 	{
 		return_code = 1;
-		DEACCESS(Graphical_material)(&spectrum_editor->editor_material);
-		DEACCESS(Graphical_material)(&spectrum_editor->tick_material);
+		Cmiss_graphics_material_destroy(&spectrum_editor->editor_material);
+		Cmiss_graphics_material_destroy(&spectrum_editor->tick_material);
 		/* The strings in the labels graphics object are stored in two
 			 ALLOCATED blocks instead of ALLOCATING each string individually.
 			 So I will manually DEALLOCATE the strings and set them to NULL */

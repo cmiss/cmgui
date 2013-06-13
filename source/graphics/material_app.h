@@ -5,17 +5,17 @@
 //#define MATERIAL_PRECISION float
 #define MATERIAL_PRECISION_STRING "lf"
 int gfx_create_material(struct Parse_state *state,
-	void *dummy_to_be_modified, void *material_package_void);
+	void *dummy_to_be_modified, void *material_module_void);
 /*******************************************************************************
 LAST MODIFIED : 20 November 2003
 
 DESCRIPTION :
-Shifted from command/cmiss.c now that there is a material package.
+Shifted from command/cmiss.c now that there is a material module.
 If the material already exists, then behaves like gfx modify material.
 ==============================================================================*/
 
 int modify_Graphical_material(struct Parse_state *parse_state,void *material,
-	void *material_package_void);
+	void *material_module_void);
 /*******************************************************************************
 LAST MODIFIED : 5 September 1996
 
@@ -48,12 +48,12 @@ Modifier function to set the material from a command.
 
 int Option_table_add_set_Material_entry(
 	struct Option_table *option_table, const char *token,
-	struct Graphical_material **material, struct Material_package *material_package);
+	struct Graphical_material **material, struct Cmiss_graphics_material_module *material_module);
 /*******************************************************************************
 LAST MODIFIED : 20 November 2003
 
 DESCRIPTION :
 Adds the given <token> to the <option_table>.  The <material> is selected from
-the <material_package> by name.
+the <material_module> by name.
 	struct Graphical_material* material, const char *uniform_name, float value);*/
 
