@@ -32,7 +32,8 @@ If the material already exists, then behaves like gfx modify material.
 	const char *current_token;
 	int material_is_new,return_code;
 	struct Graphical_material *material;
-	struct Cmiss_graphics_material_module *material_module;
+	struct Material_module_app *app_module = 0;
+	struct Cmiss_graphics_material_module *material_module = 0;
 
 	ENTER(gfx_create_material);
 	USE_PARAMETER(dummy_to_be_modified);
@@ -41,8 +42,9 @@ If the material already exists, then behaves like gfx modify material.
 		current_token=state->current_token;
 		if (current_token)
 		{
-			material_module=(struct Cmiss_graphics_material_module *)material_module_void;
-			if (material_module)
+			app_module=(struct Material_module_app *)material_module_void;
+			if (app_module && (NULL != (material_module =
+				(struct Cmiss_graphics_material_module *)app_module->module)))
 			{
 				if (strcmp(PARSER_HELP_STRING,current_token)&&
 					strcmp(PARSER_RECURSIVE_HELP_STRING,current_token))
@@ -297,15 +299,17 @@ DESCRIPTION :
 		process, return_code;
 	struct Graphical_material *material_to_be_modified,
 		*material_to_be_modified_copy;
-	struct Cmiss_graphics_material_module *material_module;
+	struct Cmiss_graphics_material_module *material_module = 0;
+	struct Material_module_app *app_module = 0;
 	struct Option_table *help_option_table, *option_table, *mode_option_table;
 	double *uniform_values;
 
 	ENTER(modify_Graphical_material);
 	if (state)
 	{
-		material_module = (struct Cmiss_graphics_material_module *)material_module_void;
-		if (material_module)
+		app_module=(struct Material_module_app *)material_module_void;
+		if (app_module && (NULL != (material_module =
+			(struct Cmiss_graphics_material_module *)app_module->module)))
 		{
 			current_token=state->current_token;
 			if (current_token)
@@ -531,7 +535,7 @@ DESCRIPTION :
 						set_Colour);
 					Option_table_add_entry(option_table, "fourth_texture",
 						&(material_to_be_modified_copy->fourth_image_texture),
-						Cmiss_graphics_material_module_get_region_non_access(material_module),
+						(Cmiss_region *)app_module->region,
 						set_Material_image_texture);
 					Option_table_add_name_entry(option_table, "fragment_program_string",
 						&fragment_program_string);
@@ -557,7 +561,7 @@ DESCRIPTION :
 					Option_table_add_suboption_table(option_table, mode_option_table);
 					Option_table_add_entry(option_table, "secondary_texture",
 						&(material_to_be_modified_copy->second_image_texture),
-						Cmiss_graphics_material_module_get_region_non_access(material_module),
+						(Cmiss_region *)app_module->region,
 						set_Material_image_texture);
 					Option_table_add_entry(option_table, "shininess",
 						&(material_shininess), NULL,
@@ -567,11 +571,11 @@ DESCRIPTION :
 						set_Colour);
 					Option_table_add_entry(option_table, "texture",
 						&(material_to_be_modified_copy->image_texture),
-						Cmiss_graphics_material_module_get_region_non_access(material_module),
+						(Cmiss_region *)app_module->region,
 						set_Material_image_texture);
 					Option_table_add_entry(option_table, "third_texture",
 						&(material_to_be_modified_copy->third_image_texture),
-						Cmiss_graphics_material_module_get_region_non_access(material_module),
+						(Cmiss_region *)app_module->region,
 						set_Material_image_texture);
 					Option_table_add_name_entry(option_table, "vertex_program_string",
 						&vertex_program_string);
@@ -994,25 +998,3 @@ the <material_module> by name.
 
 #include "graphics/graphics_module.h"
 #include "general/manager_private.h"
-
-int Cmiss_graphics_material_execute_command(struct Graphical_material *material, const char *command_string)
-{
-	int return_code = 0;
-	if (material && command_string)
-	{
-		struct Parse_state *state = create_Parse_state(command_string);
-		if (state)
-		{
-			struct Cmiss_graphics_material_module *material_module = material->module;
-			if(material_module)
-			{
-				return_code=modify_Graphical_material(state,(void *)material,
-						(void *)material_module);
-			}
-			destroy_Parse_state(&state);
-		}
-	}
-
-	return return_code;
-}
-

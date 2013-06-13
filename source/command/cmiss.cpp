@@ -5562,8 +5562,11 @@ Executes a GFX CREATE command.
 					command_data_void,gfx_create_light);
 				Option_table_add_entry(option_table,"lmodel",NULL,
 					command_data_void,gfx_create_light_model);
+				struct Material_module_app material_module;
+				material_module.module = (void *)command_data->material_module;
+				material_module.region = (void *)command_data->root_region;
 				Option_table_add_entry(option_table,"material",NULL,
-					(void *)command_data->material_module,gfx_create_material);
+					(void *)(&material_module),gfx_create_material);
 				Option_table_add_entry(option_table, "more_flow_particles",
 					/*create_more*/(void *)1, command_data_void, gfx_create_flow_particles);
 				Option_table_add_entry(option_table, "ngroup", /*use_object_type*/(void *)1,
@@ -11893,8 +11896,11 @@ Executes a GFX MODIFY command.
 				Option_table_add_entry(option_table,"lmodel",NULL,
 					(void *)(&modify_light_model_data), modify_Light_model);
 				/* material */
+				struct Material_module_app material_module;
+				material_module.module = (void *)command_data->material_module;
+				material_module.region = (void *)command_data->root_region;
 				Option_table_add_entry(option_table,"material",NULL,
-					(void *)command_data->material_module, modify_Graphical_material);
+					(void *)(&material_module), modify_Graphical_material);
 				/* ngroup */
 				Option_table_add_entry(option_table,"ngroup",NULL,
 					(void *)command_data, gfx_modify_node_group);

@@ -1,9 +1,18 @@
+#if !defined (MATERIAL_APP_H)
+#define MATERIAL_APP_H
 
 #include "zinc/field.h"
 #include "zinc/graphicsmodule.h"
 /*???DB.  Make consistent with finite_element.h ? */
 //#define MATERIAL_PRECISION float
 #define MATERIAL_PRECISION_STRING "lf"
+
+struct Material_module_app
+{
+	void *module;
+	void *region;
+};
+
 int gfx_create_material(struct Parse_state *state,
 	void *dummy_to_be_modified, void *material_module_void);
 /*******************************************************************************
@@ -57,3 +66,4 @@ Adds the given <token> to the <option_table>.  The <material> is selected from
 the <material_module> by name.
 	struct Graphical_material* material, const char *uniform_name, float value);*/
 
+#endif
