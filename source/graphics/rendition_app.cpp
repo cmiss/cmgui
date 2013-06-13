@@ -446,23 +446,8 @@ int Cmiss_rendition_execute_command_internal(Cmiss_rendition_id rendition,
 					modify_rendition_data.position);
 			} /* parse error,help */
 			DESTROY(Option_table)(&option_table);
-			if (modify_rendition_data.graphic)
-			{
-				DEACCESS(Cmiss_graphic)(&(modify_rendition_data.graphic));
-			}
-			if (rendition_command_data.default_font)
-			{
-				DEACCESS(Cmiss_font)(&rendition_command_data.default_font);
-			}
-			if (rendition_command_data.default_spectrum)
-			{
-				DEACCESS(Spectrum)(&rendition_command_data.default_spectrum);
-			}
-			if (rendition_command_data.default_material)
-			{
-				Cmiss_graphics_material_destroy(&rendition_command_data.default_material);
-			}
-			Cmiss_region_destroy(&(rendition_command_data.root_region));
+			Cmiss_graphic_destroy(&modify_rendition_data.graphic);
+			Cmiss_rendition_cleanup_rendition_command_data(&rendition_command_data);
 		}
 	}
 	return return_code;
