@@ -1754,7 +1754,7 @@ release.
 										Cmiss_graphic_point_attributes_get_orientation_scale_field(point_attributes);
 									if (orientation_scale_field)
 									{
-										edit_info.wrapper_orientation_scale_field = orientation_scale_field;
+										edit_info.orientation_scale_field = orientation_scale_field;
 										edit_info.wrapper_orientation_scale_field =
 											Computed_field_begin_wrap_orientation_scale_field(
 												orientation_scale_field, edit_info.rc_coordinate_field);
