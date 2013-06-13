@@ -355,7 +355,7 @@ Updates the arrays of all the choosable objects and their names.
 
 		item_names = enumerator->get_valid_strings(&number_of_items,
 			conditional_function, conditional_function_user_data);
-		if (enumerator->value_to_string((Enumerator::Enumerator_type(0))))
+		if (enumerator->value_to_string((static_cast<typename Enumerator::Enumerator_type>(0))))
 		{
 			first_value = 0;
 		}
