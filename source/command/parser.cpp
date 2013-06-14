@@ -6110,6 +6110,7 @@ int set_multiple_strings(struct Parse_state *state,void *multiple_strings_addres
 		if (Parse_state_help_mode(state))
 		{
 			display_message(INFORMATION_MESSAGE, " %s", (char *)strings_description_void);
+			return return_code;
 		}
 		while (true)
 		{
