@@ -812,7 +812,14 @@ int gfx_modify_rendition_graphic(struct Parse_state *state,
 						{
 							display_message(WARNING_MESSAGE, "Overriding lateral scale_factors for axes glyph");
 						}
-						glyph_scale_factors[2] = glyph_scale_factors[1] = 0.0;
+						if (glyph_base_size[1] == 0.0)
+						{
+							glyph_scale_factors[2] = glyph_scale_factors[1] = glyph_scale_factors[0]*head_diameter;
+						}
+						else
+						{
+							glyph_scale_factors[2] = glyph_scale_factors[1] = 0.0;
+						}
 						label_offset[0] = 1.1;
 						if (axes_labels)
 						{
