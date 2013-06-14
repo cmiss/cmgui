@@ -2112,7 +2112,6 @@ Creates a spectrum_editor widget.
 	 struct GT_surface *cylinder_surface;
 	 struct GT_polyline *tick_lines;
 	 struct GT_pointset *tick_labels;
-	 struct Graphical_material *tick_material;
 	 char **strings, *string_data;
 	 struct Spectrum *temp_spectrum = NULL;
 
@@ -2245,9 +2244,9 @@ Creates a spectrum_editor widget.
 					 Graphical_material_set_shininess(spectrum_editor->editor_material, 0.8 );
 					 spectrum_editor->tick_material = Cmiss_graphics_material_create_private();
 					 Cmiss_graphics_material_set_name(spectrum_editor->tick_material, "tick_material");
-					 Graphical_material_set_ambient(tick_material, &off_white );
-					 Graphical_material_set_diffuse(tick_material, &off_white );
-					 Graphical_material_set_shininess(tick_material, 0.8 );
+					 Graphical_material_set_ambient(spectrum_editor->tick_material, &off_white );
+					 Graphical_material_set_diffuse(spectrum_editor->tick_material, &off_white );
+					 Graphical_material_set_shininess(spectrum_editor->tick_material, 0.8 );
 					 if (ALLOCATE( points, Triple, surface_discretise_xi1 *
 								 surface_discretise_xi2) &&
 							ALLOCATE( normalpoints, Triple, surface_discretise_xi1 *
@@ -2315,7 +2314,7 @@ Creates a spectrum_editor widget.
 							points = (Triple *)NULL;
 							if ((spectrum_editor->tick_lines_graphics_object=
 										CREATE(GT_object)("spectrum_editor_tick_lines",g_POLYLINE,
-											 tick_material)))
+											 spectrum_editor->tick_material)))
 							{
 								 GT_object_set_next_object(spectrum_editor->graphics_object,
 										spectrum_editor->tick_lines_graphics_object);
@@ -2355,7 +2354,7 @@ Creates a spectrum_editor widget.
 							string_data[0] = 0;
 							spectrum_editor->tick_labels_graphics_object =
 								CREATE(GT_object)("spectrum_editor_tick_labels",
-									g_POINTSET,tick_material);
+									g_POINTSET,spectrum_editor->tick_material);
 							if (spectrum_editor->tick_labels_graphics_object)
 							{
 								 GT_object_set_next_object(spectrum_editor->tick_lines_graphics_object,
