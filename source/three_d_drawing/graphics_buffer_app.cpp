@@ -1652,7 +1652,7 @@ Closes the Graphics buffer package
 #if defined (WIN32_USER_INTERFACE)
 		if (package->hidden_graphics_buffer)
 		{
-			DESTROY(Graphics_buffer)(&package->hidden_graphics_buffer);
+			DEACCESS(Graphics_buffer)(&package->hidden_graphics_buffer);
 		}
 		if (package->hidden_accelerated_window)
 		{
@@ -2259,7 +2259,7 @@ DESCRIPTION :
 				{
 					display_message(ERROR_MESSAGE,"create_Graphics_buffer_gtkglarea.  "
 						"Unable to create gtk gl area.");
-					DESTROY(Graphics_buffer)(&buffer);
+					DEACCESS(Graphics_buffer)(&buffer);
 					buffer = (struct Graphics_buffer *)NULL;
 				}
 			}
@@ -2293,7 +2293,7 @@ DESCRIPTION :
 				}
 				else
 				{
-					DESTROY(Graphics_buffer)(&buffer);
+					DEACCESS(Graphics_buffer)(&buffer);
 					buffer = (struct Graphics_buffer *)NULL;
 				}
 
@@ -2478,7 +2478,7 @@ DESCRIPTION :
 					{
 						display_message(ERROR_MESSAGE,"create_Graphics_buffer_gtkgl.  "
 							"Unable to add opengl capability.");
-						DESTROY(Graphics_buffer)(&buffer);
+						DEACCESS(Graphics_buffer)(&buffer);
 						buffer = (struct Graphics_buffer *)NULL;
 					}
 				}
@@ -2526,7 +2526,7 @@ DESCRIPTION :
 			}
 			else
 			{
-				DESTROY(Graphics_buffer)(&buffer);
+				DEACCESS(Graphics_buffer)(&buffer);
 				buffer = (struct Graphics_buffer *)NULL;
 			}
 
@@ -3264,7 +3264,7 @@ are performed but the graphics window will render into the supplied device conte
 		{
 			if (!Graphics_buffer_win32_create_context(buffer))
 			{
-				DESTROY(Graphics_buffer)(&buffer);
+				DEACCESS(Graphics_buffer)(&buffer);
 				buffer = (struct Graphics_buffer *)NULL;
 			}
 		}
@@ -4232,7 +4232,7 @@ DESCRIPTION :
 					{
 						display_message(ERROR_MESSAGE,"create_Graphics_buffer_win32.  "
 							"Unable enable the render context.");
-						DESTROY(Graphics_buffer)(&buffer);
+						DEACCESS(Graphics_buffer)(&buffer);
 						buffer = (struct Graphics_buffer *)NULL;
 					}
 				}
@@ -4240,7 +4240,7 @@ DESCRIPTION :
 				{
 					display_message(ERROR_MESSAGE,"create_Graphics_buffer_win32.  "
 						"Unable associate port with context.");
-					DESTROY(Graphics_buffer)(&buffer);
+					DEACCESS(Graphics_buffer)(&buffer);
 					buffer = (struct Graphics_buffer *)NULL;
 				}
 			}
@@ -4248,7 +4248,7 @@ DESCRIPTION :
 			{
 				display_message(ERROR_MESSAGE,"create_Graphics_buffer_win32.  "
 					"Unable to create the render context.");
-				DESTROY(Graphics_buffer)(&buffer);
+				DEACCESS(Graphics_buffer)(&buffer);
 				buffer = (struct Graphics_buffer *)NULL;
 			}
 		}
@@ -4256,7 +4256,7 @@ DESCRIPTION :
 		{
 			display_message(ERROR_MESSAGE,"create_Graphics_buffer_win32.  "
 				"Unable to set pixel format.");
-			DESTROY(Graphics_buffer)(&buffer);
+			DEACCESS(Graphics_buffer)(&buffer);
 			buffer = (struct Graphics_buffer *)NULL;
 		}
 	}
@@ -5850,20 +5850,20 @@ x==============================================================================*
 
 #endif /* defined (WX_USER_INTERFACE) */
 
-		DESTROY(Graphics_buffer)(&(buffer->core_buffer));
+		DEACCESS(Graphics_buffer)(&(buffer->core_buffer));
 		DEALLOCATE(*buffer_ptr);
 		*buffer_ptr = 0;
 	}
 	else
 	{
 		display_message(ERROR_MESSAGE,
-			"DESTROY(Graphics_buffer).  Missing buffer");
+			"DEACCESS(Graphics_buffer).  Missing buffer");
 		return_code=0;
 	}
 	LEAVE;
 
 	return (return_code);
-} /* DESTROY(Graphics_buffer) */
+} /* DEACCESS(Graphics_buffer) */
 
 int Graphics_buffer_app_is_visible(struct Graphics_buffer_app *buffer)
 {
