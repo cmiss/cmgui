@@ -2449,6 +2449,7 @@ Creates a spectrum_editor widget.
 										46,10);
 								 Scene_viewer_app_redraw(
 										spectrum_editor->spectrum_editor_scene_viewer);
+								 DEACCESS(Graphics_buffer_app)(&graphics_buffer);
 							}
 					 }
 					 if (spectrum)
