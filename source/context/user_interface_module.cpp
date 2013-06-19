@@ -200,8 +200,7 @@ struct User_interface_module *User_interface_module_create(
 		UI_module->graphics_window_manager=CREATE(MANAGER(Graphics_window))();
 #endif /* defined (USE_CMGUI_GRAPHICS_WINDOW) */
 		Cmiss_time_keeper *time_keeper = Cmiss_context_get_default_time_keeper(Cmiss_context_app_get_core_context(context));
-		UI_module->default_time_keeper_app=ACCESS(Time_keeper_app)(
-			new Time_keeper_app(time_keeper, UI_module->event_dispatcher));
+		UI_module->default_time_keeper_app = new Time_keeper_app(time_keeper, UI_module->event_dispatcher);
 		Cmiss_time_keeper_destroy(&time_keeper);
 		UI_module->interactive_tool_manager=CREATE(MANAGER(Interactive_tool))();
 		if (UI_module->user_interface)
