@@ -396,7 +396,7 @@ void TessellationDialog::OnTessellationDialogAddNewPressed(wxCommandEvent &event
 	MANAGER_BEGIN_CACHE(Cmiss_tessellation)(tessellation_manager);
 	Cmiss_tessellation *new_tessellation =
 		Cmiss_graphics_module_create_tessellation(graphics_module);
-	Cmiss_tessellation_set_attribute_integer(new_tessellation, CMISS_TESSELLATION_ATTRIBUTE_IS_MANAGED, 1);
+	Cmiss_tessellation_set_managed(new_tessellation, 1);
 	Cmiss_tessellation_destroy(&new_tessellation);
 	MANAGER_END_CACHE(Cmiss_tessellation)(tessellation_manager);
 }

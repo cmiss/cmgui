@@ -1289,7 +1289,7 @@ static int gfx_create_group(struct Parse_state *state,
 					Cmiss_field_module_begin_change(field_module);
 					Cmiss_field_id group_field = Cmiss_field_module_create_group(field_module);
 					return_code = Cmiss_field_set_name(group_field, group_name) &&
-						Cmiss_field_set_attribute_integer(group_field, CMISS_FIELD_ATTRIBUTE_IS_MANAGED, 1);
+						Cmiss_field_set_managed(group_field, 1);
 					if (Multi_range_get_number_of_ranges(add_ranges) > 0)
 					{
 						Cmiss_field_group_id group = Cmiss_field_cast_group(group_field);
@@ -4411,7 +4411,7 @@ Executes a GFX CREATE TEXTURE command.
 										Cmiss_field_id image_field =	Cmiss_field_module_create_image(
 											field_module, NULL, NULL);
 										Cmiss_field_set_name(image_field, field_name);
-										Cmiss_field_set_attribute_integer(image_field, CMISS_FIELD_ATTRIBUTE_IS_MANAGED, 1);
+										Cmiss_field_set_managed(image_field, 1);
 										Cmiss_field_image_id image = Cmiss_field_cast_image(image_field);
 										Cmiss_field_image_set_texture(image, texture);
 										Cmiss_field_destroy(&image_field);
@@ -5823,8 +5823,7 @@ static int gfx_destroy_group(struct Parse_state *state,
 				display_message(INFORMATION_MESSAGE, "Group %s marked for destruction when no longer in use.\n",
 					current_token);
 			}
-			return_code = Cmiss_field_set_attribute_integer(
-				Cmiss_field_group_base_cast(group), CMISS_FIELD_ATTRIBUTE_IS_MANAGED, 0);
+			return_code = Cmiss_field_set_managed(Cmiss_field_group_base_cast(group), 0);
 		}
 		Cmiss_field_group_destroy(&group);
 		Cmiss_region_destroy(&region);
@@ -6114,7 +6113,7 @@ Executes a GFX DESTROY FIELD command.
 							display_message(INFORMATION_MESSAGE, "Field %s marked for destruction when no longer in use.\n",
 								current_token);
 						}
-						return_code = Cmiss_field_set_attribute_integer(field, CMISS_FIELD_ATTRIBUTE_IS_MANAGED, 0);
+						return_code = Cmiss_field_set_managed(field, 0);
 						if (!return_code)
 						{
 							display_message(ERROR_MESSAGE, "gfx destroy field.  Failed");

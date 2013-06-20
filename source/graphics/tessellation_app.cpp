@@ -281,7 +281,7 @@ int gfx_define_tessellation(struct Parse_state *state, void *dummy_to_be_modifie
 				{
 					// set managed state for all tessellations created or edited otherwise
 					// cleaned up at end of command.
-					Cmiss_tessellation_set_attribute_integer(tessellation, CMISS_TESSELLATION_ATTRIBUTE_IS_MANAGED, 1);
+					Cmiss_tessellation_set_managed(tessellation, 1);
 					return_code = gfx_define_tessellation_contents(state, (void *)tessellation, graphics_module_void);
 				}
 				Cmiss_tessellation_destroy(&tessellation);
@@ -329,7 +329,7 @@ int gfx_destroy_tessellation(struct Parse_state *state,
 		{
 			if (tessellation)
 			{
-				Cmiss_tessellation_set_attribute_integer(tessellation, CMISS_TESSELLATION_ATTRIBUTE_IS_MANAGED, 0);
+				Cmiss_tessellation_set_managed(tessellation, 0);
 				//-- if (tessellation->access_count > 2)
 				//-- {
 				//-- 	display_message(INFORMATION_MESSAGE, "Tessellation marked for destruction when no longer in use.\n");
