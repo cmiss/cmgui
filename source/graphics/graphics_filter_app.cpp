@@ -465,6 +465,7 @@ int gfx_list_graphics_filter(struct Parse_state *state, void *dummy_to_be_modifi
 				}
 			}
 		}
+		DEALLOCATE(filter_name);
 		DESTROY(Option_table)(&option_table);
 	}
 	else
