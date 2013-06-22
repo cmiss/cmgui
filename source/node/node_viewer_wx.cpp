@@ -90,7 +90,7 @@ struct Node_viewer
 	struct Node_viewer **node_viewer_address;
 	Cmiss_node_id current_node;
 	struct Cmiss_region *region;
-	int use_data;
+	Cmiss_field_domain_type domain_type;
 	struct FE_region *fe_region;
 	struct MANAGER(Computed_field) *computed_field_manager;
 	void *computed_field_manager_callback_id;
@@ -609,8 +609,8 @@ static void Node_viewer_Computed_field_change(
 				Cmiss_field_group_base_cast(selection_group), Computed_field_is_in_list, (void *)changed_field_list))
 			{
 				Cmiss_field_module_id field_module = Cmiss_region_get_field_module(node_viewer->region);
-				Cmiss_nodeset_id master_nodeset = Cmiss_field_module_find_nodeset_by_name(
-					field_module, node_viewer->use_data ? "cmiss_data" : "cmiss_nodes");
+				Cmiss_nodeset_id master_nodeset = Cmiss_field_module_find_nodeset_by_domain_type(
+					field_module, node_viewer->domain_type);
 				Cmiss_field_module_destroy(&field_module);
 				Cmiss_field_node_group_id node_group = Cmiss_field_group_get_node_group(selection_group, master_nodeset);
 				Cmiss_nodeset_destroy(&master_nodeset);
@@ -658,8 +658,8 @@ Cmiss_node_id Node_viewer_get_first_node(Node_viewer *node_viewer)
 	if (node_viewer)
 	{
 		Cmiss_field_module_id field_module = Cmiss_region_get_field_module(node_viewer->region);
-		Cmiss_nodeset_id nodeset = Cmiss_field_module_find_nodeset_by_name(field_module,
-			node_viewer->use_data ? "cmiss_data" : "cmiss_nodes");
+		Cmiss_nodeset_id nodeset = Cmiss_field_module_find_nodeset_by_domain_type(field_module,
+			node_viewer->domain_type);
 		Cmiss_node_iterator_id iter = Cmiss_nodeset_create_node_iterator(nodeset);
 		node = Cmiss_node_iterator_next(iter);
 		Cmiss_node_iterator_destroy(&iter);
@@ -672,7 +672,7 @@ Cmiss_node_id Node_viewer_get_first_node(Node_viewer *node_viewer)
 struct Node_viewer *Node_viewer_create(
 	struct Node_viewer **node_viewer_address,
 	const char *dialog_title,
-	Cmiss_region_id root_region, int use_data,
+	Cmiss_region_id root_region, Cmiss_field_domain_type domain_type,
 	Cmiss_graphics_module_id graphics_module,
 	struct Time_keeper_app *time_keeper_app)
 {
@@ -689,9 +689,9 @@ struct Node_viewer *Node_viewer_create(
 			node_viewer->computed_field_manager =
 				Cmiss_region_get_Computed_field_manager(node_viewer->region);
 			node_viewer->node_viewer_address = node_viewer_address;
-			node_viewer->use_data = use_data;
+			node_viewer->domain_type = domain_type;
 			node_viewer->fe_region = Cmiss_region_get_FE_region(root_region);
-			if (use_data)
+			if (domain_type == CMISS_FIELD_DOMAIN_DATA)
 			{
 				node_viewer->fe_region = FE_region_get_data_FE_region(node_viewer->fe_region);
 			}
@@ -1014,8 +1014,8 @@ static int node_viewer_setup_components(
 		if (feField)
 		{
 			Cmiss_field_module_id field_module = Cmiss_region_get_field_module(node_viewer->region);
-			Cmiss_nodeset_id nodeset = Cmiss_field_module_find_nodeset_by_name(field_module,
-				node_viewer->use_data ? "cmiss_data" : "cmiss_nodes");
+			Cmiss_nodeset_id nodeset = Cmiss_field_module_find_nodeset_by_domain_type(field_module,
+				node_viewer->domain_type);
 			nodeTemplate = Cmiss_nodeset_create_node_template(nodeset);
 			Cmiss_node_template_define_field_from_node(nodeTemplate, field, node);
 			Cmiss_nodeset_destroy(&nodeset);
@@ -1106,7 +1106,7 @@ in this region only.
 			{
 				node_viewer->fe_region = Cmiss_region_get_FE_region(region);
 
-				if (node_viewer->use_data)
+				if (node_viewer->domain_type = CMISS_FIELD_DOMAIN_DATA)
 				{
 					node_viewer->fe_region = FE_region_get_data_FE_region(
 						node_viewer->fe_region);

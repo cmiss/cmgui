@@ -83,19 +83,19 @@
 														<orient>wxHORIZONTAL</orient>
 														<object class ="sizeritem">
 															<flag>wxALIGN_CENTRE</flag>
-															<object class = "wxPanel" name="TypeFormChooser">
-																<size>200,26</size>
+															<object class = "wxPanel" name="AddGraphicChooserPanel">
+																<size>150,26</size>
 															</object>
 														</object>
 														<object class ="sizeritem">
-															<object class = "wxButton" name="AddButton">
-																<label>Add</label>
+															<object class = "wxButton" name="CopyButton">
+																<label>Copy</label>
 																<size>-1,26</size>
 															</object>
 														</object>
 														<object class ="sizeritem">
-															<object class = "wxButton" name="DelButton">
-																<label>Del</label>
+															<object class = "wxButton" name="DeleteButton">
+																<label>Delete</label>
 																<size>-1,26</size>
 															</object>
 														</object>
@@ -156,6 +156,23 @@
 												</object>
 
 												<object class="sizeritem">
+													<object class = "wxBoxSizer">
+														<orient>wxHORIZONTAL</orient>
+														<object class="sizeritem">
+															<flag>wxALIGN_CENTRE_VERTICAL</flag>
+															<object class	="wxStaticText" name="DomainTypeText">
+																<label>Domain:</label>
+															</object>
+														</object>
+														<object class="sizeritem">
+															<object class	="wxPanel" name="DomainTypeChooserPanel">
+																<size>200,30</size>
+															</object>
+														</object>
+													</object>
+												</object>
+
+												<object class="sizeritem">
 				   									<object class = "wxBoxSizer">	
 														<orient>wxHORIZONTAL</orient>
 														<object class="sizeritem">
@@ -205,23 +222,6 @@
 														</object>
 													</object>
 												</object>
-
-											<object class="sizeritem">
-				   								<object class = "wxBoxSizer">	
-													<orient>wxHORIZONTAL</orient>
-													<object class="sizeritem">
-														<flag>wxALIGN_CENTRE_VERTICAL</flag>
-														<object class	="wxStaticText" name="UseElementTypeText"> 
-															<label>Use Element Type:</label>				  			
-	 													</object>
-													</object>
-													<object class="sizeritem">
-														<object class	="wxPanel" name="UseElementTypeChooserPanel">
-															<size>200,30</size>
-	 													</object>
-													</object>
-												</object>
-											</object>
 
 											<object class="sizeritem">
 				   								<object class = "wxBoxSizer">	
@@ -447,7 +447,7 @@
 											</object>
 
 											<object class="sizeritem">
-				   								<object class = "wxBoxSizer">	
+				   							<object class = "wxBoxSizer">	
 													<orient>wxHORIZONTAL</orient>
 													<object class="sizeritem">
 														<flag>wxALIGN_CENTRE_VERTICAL</flag>
@@ -470,7 +470,7 @@
 											</object>
 
 											<object class="sizeritem">
-				   								<object class = "wxBoxSizer">	
+				   							<object class = "wxBoxSizer">	
 													<orient>wxHORIZONTAL</orient>
 													<object class="sizeritem">
 														<flag>wxALIGN_CENTRE_VERTICAL</flag>
@@ -487,25 +487,7 @@
 											</object>
 
 											<object class="sizeritem">
-				   								<object class = "wxBoxSizer">	
-													<orient>wxHORIZONTAL</orient>
-													<object class="sizeritem">
-														<flag>wxALIGN_CENTRE_VERTICAL</flag>
-														<object class	="wxStaticText" name="XiDiscretizationModeText"> 
-															<label>Xi discretization mode:</label>				  			
-	 													</object>
-													</object>
-													<object class="sizeritem">
-														<object class	="wxPanel" name="XiDiscretizationModeChooserPanel">
-															<size>200,30</size>
-	 													</object>
-													</object>
-												</object>
-											</object>
-
-
-											<object class="sizeritem">
-			  	 								<object class = "wxBoxSizer">	
+			  	 							<object class = "wxBoxSizer">	
 													<orient>wxHORIZONTAL</orient>
 													<object class="sizeritem">
 														<flag>wxALIGN_CENTRE_VERTICAL</flag>
@@ -528,6 +510,23 @@
 											</object>
 
 											<object class="sizeritem">
+												<object class = "wxBoxSizer">
+													<orient>wxHORIZONTAL</orient>
+													<object class="sizeritem">
+														<flag>wxALIGN_CENTRE_VERTICAL</flag>
+														<object class	="wxStaticText" name="XiDiscretizationModeText">
+															<label>Xi discretization mode:</label>
+														</object>
+													</object>
+													<object class="sizeritem">
+														<object class	="wxPanel" name="XiDiscretizationModeChooserPanel">
+															<size>200,30</size>
+														</object>
+													</object>
+												</object>
+											</object>
+
+												<object class="sizeritem">
 				   								<object class = "wxBoxSizer">	
 													<orient>wxHORIZONTAL</orient>
 													<object class="sizeritem">

@@ -8,6 +8,14 @@ int gfx_modify_rendition_graphic(struct Parse_state *state,
 	struct Modify_rendition_data *modify_rendition_data,
 	struct Rendition_command_data *rendition_command_data);
 
+/**
+ * Executes a GFX MODIFY RENDITION CONTOURS command.
+ * If return_code is 1, returns the completed Modify_rendition_data with the
+ * parsed graphic. Note that the graphic are ACCESSed once on valid return.
+ */
+int gfx_modify_rendition_contours(struct Parse_state *state,
+	void *modify_rendition_data_void,void *rendition_command_data_void);
+
 /***************************************************************************//**
  * Executes a GFX MODIFY RENDITION CYLINDERS command.
  * If return_code is 1, returns the completed Modify_rendition_data with the
@@ -64,6 +72,18 @@ int gfx_modify_rendition_node_points(struct Parse_state *state,
 int gfx_modify_rendition_point(struct Parse_state *state,
 		void *modify_rendition_data_void,void *rendition_command_data_void);
 
+/**
+ * Executes a GFX MODIFY RENDITION POINTS command.
+ * If return_code is 1, returns the completed Modify_rendition_data with the
+ * parsed graphic. Note that the graphic are ACCESSed once on valid return.
+ * @param state Parse state
+ * @param modify_rendition_data_void void pointer to a container object
+ * @param command_data_void void pointer to a container object
+ * @return if successfully modify surface returns 1, else 0
+ */
+int gfx_modify_rendition_points(struct Parse_state *state,
+	void *modify_rendition_data_void,void *rendition_command_data_void);
+
 /***************************************************************************//**
  * Executes a GFX MODIFY RENDITION STREAMLINES command.
  * If return_code is 1, returns the completed Modify_rendition_data with the
@@ -83,5 +103,3 @@ int gfx_modify_rendition_streamlines(struct Parse_state *state,
  */
 int gfx_modify_rendition_surfaces(struct Parse_state *state,
 	void *modify_rendition_data_void,void *rendition_command_data_void);
-
-/***************************************************************************//**/

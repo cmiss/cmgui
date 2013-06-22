@@ -1001,7 +1001,7 @@ static int process_modify_element_group(Cmiss_field_group_id group,
 		Cmiss_nodeset_group_id remove_nodeset_group = 0;
 		if (manage_nodes)
 		{
-			Cmiss_nodeset_id master_nodeset = Cmiss_field_module_find_nodeset_by_name(field_module, "cmiss_nodes");
+			Cmiss_nodeset_id master_nodeset = Cmiss_field_module_find_nodeset_by_domain_type(field_module, CMISS_FIELD_DOMAIN_NODES);
 			Cmiss_field_node_group_id modify_node_group = Cmiss_field_group_get_node_group(group, master_nodeset);
 			if ((!modify_node_group) && add_flag)
 				modify_node_group = Cmiss_field_group_create_node_group(group, master_nodeset);
@@ -1306,8 +1306,8 @@ static int gfx_create_group(struct Parse_state *state,
 							case 1: // nodes
 							case 2: // data
 							{
-								Cmiss_nodeset_id master_nodeset = Cmiss_field_module_find_nodeset_by_name(field_module,
-									(object_type == 1) ? "cmiss_nodes" : "cmiss_data");
+								Cmiss_nodeset_id master_nodeset = Cmiss_field_module_find_nodeset_by_domain_type(field_module,
+									(object_type == 1) ? CMISS_FIELD_DOMAIN_NODES : CMISS_FIELD_DOMAIN_DATA);
 								Cmiss_field_node_group_id node_group = Cmiss_field_group_create_node_group(group, master_nodeset);
 								Cmiss_nodeset_group_id modify_nodeset_group = Cmiss_field_node_group_get_nodeset(node_group);
 								Cmiss_node_iterator_id iter = Cmiss_nodeset_create_node_iterator(master_nodeset);
@@ -2252,7 +2252,7 @@ Executes a GFX CREATE NODE_VIEWER command.
 					if (NULL != (command_data->node_viewer = Node_viewer_create(
 						&(command_data->node_viewer),
 						"Node Viewer",
-						command_data->root_region, /*use_data*/0,
+						command_data->root_region, CMISS_FIELD_DOMAIN_NODES,
 						command_data->graphics_module,
 						command_data->default_time_keeper_app)))
 					{
@@ -2329,7 +2329,7 @@ Executes a GFX CREATE DATA_VIEWER command.
 					if (NULL != (command_data->node_viewer = Node_viewer_create(
 						&(command_data->node_viewer),
 						"Data Viewer",
-						command_data->root_region, /*use_data*/1,
+						command_data->root_region, CMISS_FIELD_DOMAIN_DATA,
 						command_data->graphics_module,
 						command_data->default_time_keeper_app)))
 					{
@@ -2676,7 +2676,7 @@ Executes a GFX CREATE SNAKE command.
 				Cmiss_mesh_group_id mesh_group = 0;
 				if (group)
 				{
-					Cmiss_nodeset_id master_nodeset = Cmiss_field_module_find_nodeset_by_name(field_module, "cmiss_nodes");
+					Cmiss_nodeset_id master_nodeset = Cmiss_field_module_find_nodeset_by_domain_type(field_module, CMISS_FIELD_DOMAIN_NODES);
 					Cmiss_field_node_group_id node_group = Cmiss_field_group_get_node_group(group, master_nodeset);
 					if (!node_group)
 						node_group = Cmiss_field_group_create_node_group(group, master_nodeset);
@@ -4696,14 +4696,14 @@ Executes a GFX CREATE WINDOW command.
 							Cmiss_graphics_material_module_get_default_material(command_data->material_module);
 						Node_tool_set_execute_command(CREATE(Node_tool)(
 								interactive_tool_manager,
-								command_data->root_region, /*use_data*/0,
+								command_data->root_region, CMISS_FIELD_DOMAIN_NODES,
 								defaultMaterial,
 								command_data->user_interface,
 								command_data->default_time_keeper_app),
 								command_data->execute_command);
 						Node_tool_set_execute_command(CREATE(Node_tool)(
 								interactive_tool_manager,
-								command_data->root_region, /*use_data*/1,
+								command_data->root_region, CMISS_FIELD_DOMAIN_DATA,
 								defaultMaterial,
 								command_data->user_interface,
 								command_data->default_time_keeper_app),
@@ -8763,8 +8763,8 @@ int gfx_evaluate(struct Parse_state *state, void *dummy_to_be_modified,
 						}
 						if (node_region_path || data_region_path)
 						{
-							Cmiss_nodeset_id nodeset = Cmiss_field_module_find_nodeset_by_name(
-								field_module, node_region_path ? "cmiss_nodes" : "cmiss_data");
+							Cmiss_nodeset_id nodeset = Cmiss_field_module_find_nodeset_by_domain_type(
+								field_module, node_region_path ? CMISS_FIELD_DOMAIN_NODES : CMISS_FIELD_DOMAIN_DATA);
 							if (group)
 							{
 								Cmiss_field_node_group_id node_group = Cmiss_field_group_get_node_group(group, nodeset);
@@ -9425,8 +9425,8 @@ use node_manager and node_selection.
 		if (return_code)
 		{
 			Cmiss_field_module_id field_module = Cmiss_region_get_field_module(region);
-			Cmiss_nodeset_id master_nodeset = Cmiss_field_module_find_nodeset_by_name(field_module,
-				use_data ? "cmiss_data" : "cmiss_nodes");
+			Cmiss_nodeset_id master_nodeset = Cmiss_field_module_find_nodeset_by_domain_type(field_module,
+				use_data ? CMISS_FIELD_DOMAIN_DATA : CMISS_FIELD_DOMAIN_NODES);
 			Cmiss_nodeset_group_id selection_nodeset_group = 0;
 			if (selected_flag)
 			{
@@ -11348,8 +11348,8 @@ static int gfx_modify_node_group(struct Parse_state *state,
 			if (return_code)
 			{
 				Cmiss_field_module_id field_module = Cmiss_region_get_field_module(region);
-				Cmiss_nodeset_id master_nodeset = Cmiss_field_module_find_nodeset_by_name(field_module,
-					use_data ? "cmiss_data" : "cmiss_nodes");
+				Cmiss_nodeset_id master_nodeset = Cmiss_field_module_find_nodeset_by_domain_type(field_module,
+					use_data ? CMISS_FIELD_DOMAIN_DATA : CMISS_FIELD_DOMAIN_NODES);
 				Cmiss_nodeset_group_id selection_nodeset_group = 0;
 				if (selected_flag)
 				{
@@ -11694,8 +11694,8 @@ static int gfx_modify_nodes(struct Parse_state *state,
 				display_message(ERROR_MESSAGE, "gfx modify nodes:  Cannot find field %s", field_name);
 				return_code = 0;
 			}
-			Cmiss_nodeset_id nodeset = Cmiss_field_module_find_nodeset_by_name(field_module,
-				use_data ? "cmiss_data" : "cmiss_nodes");
+			Cmiss_nodeset_id nodeset = Cmiss_field_module_find_nodeset_by_domain_type(field_module,
+				use_data ? CMISS_FIELD_DOMAIN_DATA : CMISS_FIELD_DOMAIN_NODES);
 			Cmiss_node_template_id node_template = Cmiss_nodeset_create_node_template(nodeset);
 			if (define_field_name)
 			{

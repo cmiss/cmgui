@@ -256,6 +256,7 @@ release.
 			input_modifier=Interactive_event_get_input_modifier(event);
 			shift_pressed=(INTERACTIVE_EVENT_MODIFIER_SHIFT & input_modifier);
 			Cmiss_graphics_module *graphics_module = Cmiss_scene_get_graphics_module(scene);
+			Cmiss_graphics_filter_module_id filter_module = Cmiss_graphics_module_get_filter_module(graphics_module);
 			Cmiss_graphics_filter_id combined_filter = Cmiss_graphics_module_create_filter_operator_or(
 				graphics_module);
 			if ((element_tool->select_elements_enabled)||(element_tool->select_faces_enabled)||
@@ -264,42 +265,40 @@ release.
 				Cmiss_graphics_filter_id element_filter = 0;
 				Cmiss_graphics_filter_operator_id or_filter = Cmiss_graphics_filter_cast_operator(
 					combined_filter);
-				if (element_tool->select_faces_enabled)
+				if (element_tool->select_lines_enabled)
 				{
-					element_filter = Cmiss_graphics_module_create_filter_graphic_type(
-						graphics_module, CMISS_GRAPHIC_SURFACES);
+					element_filter = Cmiss_graphics_filter_module_create_filter_domain_type(
+						filter_module, CMISS_FIELD_DOMAIN_ELEMENTS_1D);
 					Cmiss_graphics_filter_operator_append_operand(or_filter, element_filter);
 					Cmiss_graphics_filter_destroy(&element_filter);
 				}
-				if (element_tool->select_lines_enabled)
+				if (element_tool->select_faces_enabled)
 				{
-					element_filter = Cmiss_graphics_module_create_filter_graphic_type(
-						graphics_module, CMISS_GRAPHIC_LINES);
-					Cmiss_graphics_filter_operator_append_operand(or_filter, element_filter);
-					Cmiss_graphics_filter_destroy(&element_filter);
-					element_filter = Cmiss_graphics_module_create_filter_graphic_type(
-						graphics_module, CMISS_GRAPHIC_CYLINDERS);
+					element_filter = Cmiss_graphics_filter_module_create_filter_domain_type(
+						filter_module, CMISS_FIELD_DOMAIN_ELEMENTS_2D);
 					Cmiss_graphics_filter_operator_append_operand(or_filter, element_filter);
 					Cmiss_graphics_filter_destroy(&element_filter);
 				}
 				if (element_tool->select_elements_enabled)
 				{
-					element_filter = Cmiss_graphics_module_create_filter_graphic_type(
-						graphics_module, CMISS_GRAPHIC_STREAMLINES);
+					element_filter = Cmiss_graphics_filter_module_create_filter_domain_type(
+						filter_module, CMISS_FIELD_DOMAIN_ELEMENTS_HIGHEST_DIMENSION);
 					Cmiss_graphics_filter_operator_append_operand(or_filter, element_filter);
 					Cmiss_graphics_filter_destroy(&element_filter);
-					element_filter = Cmiss_graphics_module_create_filter_graphic_type(
-						graphics_module, CMISS_GRAPHIC_ISO_SURFACES);
-					Cmiss_graphics_filter_operator_append_operand(or_filter, element_filter);
-					Cmiss_graphics_filter_destroy(&element_filter);
-					element_filter = Cmiss_graphics_module_create_filter_graphic_type(
-						graphics_module, CMISS_GRAPHIC_ELEMENT_POINTS);
+					element_filter = Cmiss_graphics_filter_module_create_filter_domain_type(
+						filter_module, CMISS_FIELD_DOMAIN_ELEMENTS_3D);
 					Cmiss_graphics_filter_operator_append_operand(or_filter, element_filter);
 					Cmiss_graphics_filter_destroy(&element_filter);
 				}
 				Cmiss_graphics_filter_operator_destroy(&or_filter);
 			}
+			else
+			{
+				Cmiss_graphics_filter_set_attribute_integer(combined_filter, CMISS_GRAPHICS_FILTER_ATTRIBUTE_IS_INVERSE, 1);
+			}
+			Cmiss_graphics_filter_module_destroy(&filter_module);
 			Cmiss_graphics_module_destroy(&graphics_module);
+			// Possible optimisation: don't pick streamlines
 			Cmiss_scene_picker_set_graphics_filter(scene_picker, combined_filter);
 			switch (event_type)
 			{

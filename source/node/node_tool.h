@@ -78,22 +78,17 @@ Global functions
 ----------------
 */
 
+/**
+ * Creates a Node_tool for editing nodes/data from the region tree.
+ * Domain type may be CMISS_FIELD_DOMAIN_NODES or CMISS_FIELD_DOMAIN_DATA.
+ * <element_manager> should be NULL for CMISS_FIELD_DOMAIN_DATA.
+ */
 struct Node_tool *CREATE(Node_tool)(
 	struct MANAGER(Interactive_tool) *interactive_tool_manager,
-	struct Cmiss_region *root_region, int use_data,
+	struct Cmiss_region *root_region, Cmiss_field_domain_type domain_type,
 	struct Graphical_material *rubber_band_material,
 	struct User_interface *user_interface,
 	struct Time_keeper_app *time_keeper_app);
-/*******************************************************************************
-LAST MODIFIED : 15 January 2003
-
-DESCRIPTION :
-Creates a Node_tool for editing nodes/data in the <root_region>,
-using the <node_selection>.
-The <use_data> flag indicates to use data, and that the <node_selection>
-refers to data, not nodes; needed since different GT_element_settings types are
-used to represent them. <element_manager> should be NULL if <use_data> is true.
-==============================================================================*/
 
 int DESTROY(Node_tool)(struct Node_tool **node_tool_address);
 /*******************************************************************************

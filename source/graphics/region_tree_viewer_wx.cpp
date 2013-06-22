@@ -53,6 +53,7 @@ codes used to build scene editor with wxWidgets.
 #include "zinc/graphic.h"
 #include "zinc/graphicsmodule.h"
 #include "zinc/spectrum.h"
+#include "zinc/status.h"
 #include "general/debug.h"
 #include "general/indexed_list_private.h"
 #include "general/mystring.h"
@@ -106,6 +107,7 @@ enum
 	CmguiTree_MenuItem2,
 	CmguiTree_MenuItem3,
 	CmguiTree_MenuItem4,
+	/*
 	AddMenuItemNode,
 	AddMenuItemData,
 	AddMenuItemLines,
@@ -115,6 +117,7 @@ enum
 	AddMenuItemElement,
 	AddMenuItemStreamlines,
 	AddMenuItemStaticGraphic,
+	*/
 	CmguiTree_Ctrl = 1000
 };
 
@@ -355,7 +358,6 @@ DESCRIPTION :
 	struct Cmiss_font *default_font;
 	struct MANAGER(Scene) *scene_manager;
 	struct User_interface *user_interface;
-	enum Cmiss_graphic_type current_graphic_type;
 	struct Cmiss_graphic *current_graphic;
 	struct MANAGER(GT_object) *glyph_manager;
 	struct MANAGER(VT_volume_texture) *volume_texture_manager;
@@ -364,7 +366,7 @@ DESCRIPTION :
 	struct Computed_field *radius_scalar_field ;
 	struct Cmiss_region *root_region, *current_region;
 	enum Graphics_select_mode select_mode;
-	enum Use_element_type use_element_type;
+	enum Cmiss_field_domain_type domain_type;
 	enum Xi_discretization_mode xi_discretization_mode;
 	enum Streamline_type streamline_type;
 	enum Streamline_data_type streamline_data_type;
@@ -495,6 +497,65 @@ void wxCmguiHierachicalTree::SendLeftDownEvent(wxMouseEvent& event)
 	}
 };
 
+/**
+ * Graphic types that can be added in the scene editor. More than actual number
+ * of graphic types as some options allow preset attributes. e.g
+ * NODE_POINTS creates a POINTS graphic with DOMAIN_NODES and a default
+ * coordinate field.
+ * Ensure Add_graphic_type_string has a string for each valid enum.
+ */
+enum Add_graphic_type
+{
+	ADD_GRAPHIC_TYPE_INVALID = 0,
+	ADD_GRAPHIC_TYPE_POINTS,
+	ADD_GRAPHIC_TYPE_NODE_POINTS,
+	ADD_GRAPHIC_TYPE_DATA_POINTS,
+	ADD_GRAPHIC_TYPE_ELEMENT_POINTS,
+	ADD_GRAPHIC_TYPE_LINES,
+	ADD_GRAPHIC_TYPE_CYLINDERS,
+	ADD_GRAPHIC_TYPE_SURFACES,
+	ADD_GRAPHIC_TYPE_ISOLINES,
+	ADD_GRAPHIC_TYPE_ISOSURFACES,
+	ADD_GRAPHIC_TYPE_STREAMLINES
+};
+
+const char *Add_graphic_type_string(Add_graphic_type add_graphic_type)
+{
+	switch (add_graphic_type)
+	{
+	case ADD_GRAPHIC_TYPE_POINTS:
+		return "Points";
+		break;
+	case ADD_GRAPHIC_TYPE_NODE_POINTS:
+		return "Node points";
+		break;
+	case ADD_GRAPHIC_TYPE_DATA_POINTS:
+		return "Data points";
+		break;
+	case ADD_GRAPHIC_TYPE_ELEMENT_POINTS:
+		return "Element points";
+		break;
+	case ADD_GRAPHIC_TYPE_LINES:
+		return "Lines";
+		break;
+	case ADD_GRAPHIC_TYPE_CYLINDERS:
+		return "Cylinders";
+		break;
+	case ADD_GRAPHIC_TYPE_SURFACES:
+		return "Surfaces";
+		break;
+	case ADD_GRAPHIC_TYPE_ISOLINES:
+		return "Isolines";
+		break;
+	case ADD_GRAPHIC_TYPE_ISOSURFACES:
+		return "Isosurfaces";
+		break;
+	case ADD_GRAPHIC_TYPE_STREAMLINES:
+		return "Streamlines";
+		break;
+	}
+	return 0;
+}
 
 class wxRegionTreeViewer : public wxFrame
 {
@@ -509,7 +570,7 @@ class wxRegionTreeViewer : public wxFrame
 	wxListBox *scenelistbox,*graphicalitemslistbox;
 	wxStaticText *currentsceneobjecttext,*constantradius,*scalefactor,
 		*isoscalartext, *glyphtext, *offsettext, *baseglyphsizetext, *selectmodetext,
-		*glyphscalefactorstext, *useelementtypetext, *xidiscretizationmodetext,
+		*glyphscalefactorstext, *domaintypetext, *xidiscretizationmodetext,
 		*tessellationtext, *glyph_repeat_mode_text, *labeloffsettext,
 		*discretizationtext, *circlediscretizationtext,*densityfieldtext,*xitext,
 		*streamtypetext, *streamlengthtext, *streamwidthtext, *streamvectortext,
@@ -531,14 +592,14 @@ class wxRegionTreeViewer : public wxFrame
 		*glyph_repeat_mode_chooser_panel,
 		*orientation_scale_field_chooser_panel, *variable_scale_field_chooser_panel,
 		*label_chooser_panel, *font_chooser_panel, *select_mode_chooser_panel,
-		*use_element_type_chooser_panel, *xi_discretization_mode_chooser_panel,
+		*domain_type_chooser_panel, *xi_discretization_mode_chooser_panel,
 		*native_discretization_field_chooser_panel, *density_field_chooser_panel,
 		*streamline_type_chooser_panel, *stream_vector_chooser_panel,
 		*streamline_data_type_chooser_panel, *spectrum_chooser_panel,
 		*texture_coordinates_chooser_panel, *render_type_chooser_panel,
 		*seed_element_panel, *subgroup_field_chooser_panel, *tessellation_chooser_panel;
 	wxWindow *glyphbox,*glyphline;
-	wxChoice *facechoice;
+	wxChoice *facechoice, *add_graphic_choice;
 	wxString TempText;
 	DEFINE_MANAGER_CLASS(Cmiss_scene);
 	Managed_object_chooser<Scene,MANAGER_CLASS(Cmiss_scene)>
@@ -551,9 +612,11 @@ class wxRegionTreeViewer : public wxFrame
 	*graphical_material_chooser;
 	Managed_object_chooser<Graphical_material,MANAGER_CLASS(Graphical_material)>
 	*selected_material_chooser;
+	/*
 	DEFINE_ENUMERATOR_TYPE_CLASS(Cmiss_graphic_type);
 	Enumerator_chooser<ENUMERATOR_TYPE_CLASS(Cmiss_graphic_type)>
 	*graphic_type_chooser;
+	*/
 	DEFINE_ENUMERATOR_TYPE_CLASS(Graphics_select_mode);
 	Enumerator_chooser<ENUMERATOR_TYPE_CLASS(Graphics_select_mode)>
 	*select_mode_chooser;
@@ -583,9 +646,9 @@ class wxRegionTreeViewer : public wxFrame
 	DEFINE_MANAGER_CLASS(Cmiss_font);
 		 Managed_object_chooser<Cmiss_font,MANAGER_CLASS(Cmiss_font)>
 	*font_chooser;
-	DEFINE_ENUMERATOR_TYPE_CLASS(Use_element_type);
-	Enumerator_chooser<ENUMERATOR_TYPE_CLASS(Use_element_type)>
-		*use_element_type_chooser;
+	DEFINE_ENUMERATOR_TYPE_CLASS(Cmiss_field_domain_type);
+	Enumerator_chooser<ENUMERATOR_TYPE_CLASS(Cmiss_field_domain_type)>
+		*domain_type_chooser;
 	DEFINE_ENUMERATOR_TYPE_CLASS(Xi_discretization_mode);
 	Enumerator_chooser<ENUMERATOR_TYPE_CLASS(Xi_discretization_mode)>
 		*xi_discretization_mode_chooser;
@@ -662,21 +725,22 @@ public:
 	selected_material_chooser->set_callback(selected_material_callback);
 	selected_material_chooser_panel->Fit();
 	tessellationWindowID = 0;
-	wxPanel *graphic_type_chooser_panel =
-		XRCCTRL(*this, "TypeFormChooser", wxPanel);
-	graphic_type_chooser =
-		new Enumerator_chooser<ENUMERATOR_TYPE_CLASS(Cmiss_graphic_type)>
-		(graphic_type_chooser_panel,
-				region_tree_viewer->current_graphic_type,
-				(ENUMERATOR_CONDITIONAL_FUNCTION(Cmiss_graphic_type) *)NULL,
-				(void *)NULL, region_tree_viewer->user_interface);
-  graphic_type_chooser_panel->Fit();
-	Callback_base< enum Cmiss_graphic_type > *graphic_type_callback =
-		new Callback_member_callback< enum Cmiss_graphic_type,
-				wxRegionTreeViewer, int (wxRegionTreeViewer::*)(enum Cmiss_graphic_type) >
-		(this, &wxRegionTreeViewer::Region_tree_viewer_graphic_type_callback);
-	graphic_type_chooser->set_callback(graphic_type_callback);
-	graphic_type_chooser->set_value(region_tree_viewer->current_graphic_type);
+
+	wxPanel *add_graphic_chooser_panel = XRCCTRL(*this, "AddGraphicChooserPanel", wxPanel);
+	add_graphic_choice = new wxChoice(add_graphic_chooser_panel, /*id*/-1, wxPoint(0,0), wxSize(-1,-1));
+	add_graphic_choice->Append(wxString::FromAscii("Add..."), (void *)ADD_GRAPHIC_TYPE_INVALID);
+	add_graphic_choice->Append(wxString::FromAscii("---"), (void *)ADD_GRAPHIC_TYPE_INVALID);
+	for (int i = 1; ; ++i)
+	{
+		const char *add_graphic_type_string =
+			Add_graphic_type_string(static_cast<Add_graphic_type>(i));
+		if (!add_graphic_type_string)
+			break;
+		add_graphic_choice->Append(wxString::FromAscii(add_graphic_type_string), (void *)i);
+	}
+	add_graphic_choice->SetSelection(0);
+	add_graphic_choice->Connect(wxEVT_COMMAND_CHOICE_SELECTED,
+		wxCommandEventHandler(wxRegionTreeViewer::AddGraphicChoice), NULL, this);
 
 	data_field_chooser = NULL;
 	/* Set the spectrum_chooser*/
@@ -736,7 +800,7 @@ public:
 	label_field_chooser= NULL;
 	subgroup_field_chooser= NULL;
 	font_chooser=NULL;
-	use_element_type_chooser = NULL;
+	domain_type_chooser = NULL;
 	xi_discretization_mode_chooser = NULL;
 	native_discretization_field_chooser = NULL;
 	xi_point_density_field_chooser =NULL;
@@ -826,7 +890,8 @@ public:
 		delete coordinate_field_chooser;
 		delete graphical_material_chooser;
 		delete selected_material_chooser;
-		delete graphic_type_chooser;
+		delete add_graphic_choice;
+		//delete graphic_type_chooser;
 		delete select_mode_chooser;
 		delete data_field_chooser;
 		delete spectrum_chooser;
@@ -838,7 +903,7 @@ public:
 		delete variable_scale_field_chooser;
 		delete label_field_chooser;
 		delete subgroup_field_chooser;
-		delete use_element_type_chooser;
+		delete domain_type_chooser;
 		delete xi_discretization_mode_chooser;
 		delete tessellation_chooser;
 		delete native_discretization_field_chooser;
@@ -951,78 +1016,6 @@ Callback from wxChooser<Selected Material> when choice is made.
 		region_tree_viewer->edit_rendition);
 	Region_tree_viewer_wx_set_list_string(region_tree_viewer->current_graphic);
 	return(1);
-}
-
-/***************************************************************************//**
- *Callback from graphic enumerator chooser when choice is made.
- */
-int Region_tree_viewer_graphic_type_callback(enum Cmiss_graphic_type new_value)
-{
-	int return_code = 0;
-
-	if (region_tree_viewer)
-	{
-		if (region_tree_viewer->current_graphic_type != new_value)
-		{
-			if (!graphicalitemschecklist)
-				graphicalitemschecklist=XRCCTRL(*this,"CmissGraphicListBox",wxCheckListBox);
-			int number= graphicalitemschecklist->GetCount();
-			graphicalitemschecklist->SetSelection(wxNOT_FOUND);
-			Cmiss_graphic *graphic = NULL;
-			region_tree_viewer->current_graphic_type = new_value;
-			graphic = first_graphic_in_Cmiss_rendition_that(
-				region_tree_viewer->edit_rendition,
-				Cmiss_graphic_type_matches,
-				(void*)region_tree_viewer->current_graphic_type);
-			if (graphic)
-			{
-				for (int i=0;number>i;i++)
-				{
-					Cmiss_graphic *newgraphic;
-					newgraphic = Cmiss_rendition_get_graphic_at_position(
-						region_tree_viewer->edit_rendition, i+1);
-					if (graphic == newgraphic)
-					{
-						graphicalitemschecklist->SetSelection(i);
-						Region_tree_viewer_wx_update_graphic_type(newgraphic);
-						Region_tree_viewer_wx_update_graphic_widgets();
-						break;
-					}
-					if (newgraphic)
-					{
-						Cmiss_graphic_destroy(&newgraphic);
-					}
-				}
-				if (graphic != region_tree_viewer->current_graphic)
-				{
-					if (region_tree_viewer->current_graphic)
-						REACCESS(Cmiss_graphic)(&(region_tree_viewer->current_graphic),
-							graphic);
-					/* if graphic_type changed, select it in graphic_type option menu */
-					Cmiss_graphic_type graphic_type = Cmiss_graphic_get_graphic_type(graphic);
-					if (graphic_type != region_tree_viewer->current_graphic_type)
-					{
-						region_tree_viewer->current_graphic_type = graphic_type;
-					}
-				}
-				return_code = 1;
-			}
-			else
-			{
-				if (region_tree_viewer->current_graphic)
-					REACCESS(Cmiss_graphic)(&(region_tree_viewer->current_graphic),
-						NULL);
-			}
-		}
-
-	}
-	else
-	{
-		display_message(ERROR_MESSAGE,
-			"setting type callback.  Invalid argument(s)");
-		return_code =  0;
-	}
-	return (return_code);
 }
 
 int select_mode_callback(enum Graphics_select_mode select_mode)
@@ -1217,40 +1210,29 @@ int font_callback(Cmiss_font *font)
 	return 1;
 }
 
-int use_element_type_callback(enum Use_element_type use_element_type)
-/*******************************************************************************
-LAST MODIFIED : 22 March 2007
-
-DESCRIPTION :
-Callback from wxChooser<Use Element Type> when choice is made.
-==============================================================================*/
+/**
+ * Callback from wxChooser<Domain Type> when choice is made.
+ */
+int domain_type_callback(enum Cmiss_field_domain_type domain_type)
  {
-	Cmiss_graphic_face_type face;
+	if (CMISS_OK != Cmiss_graphic_set_domain_type(region_tree_viewer->current_graphic,domain_type))
+	{
+		// user chose an invalid domain type for the graphic
+		domain_type_chooser->set_value(Cmiss_graphic_get_domain_type(region_tree_viewer->current_graphic));
+		return 1;
+	}
 
-	Cmiss_graphic_set_use_element_type(
-		region_tree_viewer->current_graphic,use_element_type);
 	exteriorcheckbox=XRCCTRL(*this,"ExteriorCheckBox",wxCheckBox);
 	facecheckbox=XRCCTRL(*this, "FaceCheckBox",wxCheckBox);
 	facechoice=XRCCTRL(*this, "FaceChoice",wxChoice);
-
-	if (CMISS_GRAPHIC_ISO_SURFACES==region_tree_viewer->current_graphic_type)
-	{
-		linewidthtextctrl=XRCCTRL(*this,"LineWidthTextCtrl",wxTextCtrl);
-		if (USE_FACES != use_element_type)
-		{
-			linewidthtextctrl->Disable();
-		}
-		else
-		{
-			linewidthtextctrl->Enable();
-		}
-	}
-	if  (USE_ELEMENTS != use_element_type)
+	if ((CMISS_FIELD_DOMAIN_ELEMENTS_1D == domain_type) ||
+		(CMISS_FIELD_DOMAIN_ELEMENTS_2D == domain_type))
 	{
 		exteriorcheckbox->Enable();
 		facecheckbox->Enable();
 		Cmiss_graphic_set_exterior(region_tree_viewer->current_graphic,
 			exteriorcheckbox->IsChecked());
+		Cmiss_graphic_face_type face;
 		if (facecheckbox->IsChecked())
 		{
 			facechoice->Enable();
@@ -1268,13 +1250,82 @@ Callback from wxChooser<Use Element Type> when choice is made.
 		exteriorcheckbox->Disable();
 		facecheckbox->Disable();
 		facechoice->Disable();
-		Cmiss_graphic_set_exterior(region_tree_viewer->current_graphic,0);
-		Cmiss_graphic_set_face(region_tree_viewer->current_graphic, CMISS_GRAPHIC_FACE_ALL);
+	}
+
+	xidiscretizationmodetext = XRCCTRL(*this,"XiDiscretizationModeText",wxStaticText);
+	xi_discretization_mode_chooser_panel= XRCCTRL(*this,"XiDiscretizationModeChooserPanel",wxPanel);
+	wxStaticText *nativediscretizationfieldtext=XRCCTRL(*this,"NativeDiscretizationFieldText",wxStaticText);
+	native_discretization_field_chooser_panel=XRCCTRL(*this, "NativeDiscretizationFieldChooserPanel",wxPanel);
+	densityfieldtext=XRCCTRL(*this, "DensityFieldText",wxStaticText);
+	density_field_chooser_panel=XRCCTRL(*this,"DensityFieldChooserPanel",wxPanel);
+	xitext=XRCCTRL(*this,"XiText",wxStaticText);
+	xitextctrl=XRCCTRL(*this,"XiTextCtrl",wxTextCtrl);
+	const Cmiss_graphic_type graphic_type = Cmiss_graphic_get_graphic_type(region_tree_viewer->current_graphic);
+	const int domain_dimension = Cmiss_graphic_get_domain_dimension(region_tree_viewer->current_graphic);
+	if ((CMISS_GRAPHIC_POINTS == graphic_type) || (CMISS_GRAPHIC_STREAMLINES == graphic_type))
+	{
+		Xi_discretization_mode xi_discretization_mode = XI_DISCRETIZATION_INVALID_MODE;
+		Cmiss_field *xi_point_density_field = 0;
+		Cmiss_graphic_get_xi_discretization(region_tree_viewer->current_graphic,
+			&xi_discretization_mode, &xi_point_density_field);
+		if (domain_dimension > 0)
+		{
+			xidiscretizationmodetext->Enable();
+			xi_discretization_mode_chooser_panel->Enable();
+		}
+		else
+		{
+			xidiscretizationmodetext->Disable();
+			xi_discretization_mode_chooser_panel->Disable();
+		}
+
+		if ((domain_dimension > 0) && (XI_DISCRETIZATION_EXACT_XI != xi_discretization_mode))
+		{
+			discretizationtextctrl->Enable();
+			discretizationtext->Enable();
+			nativediscretizationfieldtext->Enable();
+			native_discretization_field_chooser_panel->Enable();
+		}
+		else
+		{
+			discretizationtextctrl->Disable();
+			discretizationtext->Disable();
+			nativediscretizationfieldtext->Disable();
+			native_discretization_field_chooser_panel->Disable();
+		}
+		if ((domain_dimension > 0) && (
+			(XI_DISCRETIZATION_CELL_DENSITY == xi_discretization_mode)||
+			(XI_DISCRETIZATION_CELL_POISSON == xi_discretization_mode)))
+		{
+			densityfieldtext->Enable();
+			density_field_chooser_panel->Enable();
+		}
+		else
+		{
+			densityfieldtext->Disable();
+			density_field_chooser_panel->Disable();
+		}
+
+		Triple seed_xi;
+		char temp_string[100];
+		Cmiss_graphic_get_seed_xi(region_tree_viewer->current_graphic,seed_xi);
+		sprintf(temp_string,"%g,%g,%g",seed_xi[0],seed_xi[1],seed_xi[2]);
+		xitextctrl->SetValue(wxString::FromAscii(temp_string));
+		if ((domain_dimension > 0) && (XI_DISCRETIZATION_EXACT_XI == xi_discretization_mode))
+		{
+			xitext->Enable();
+			xitextctrl->Enable();
+		}
+		else
+		{
+			xitext->Disable();
+			xitextctrl->Disable();
+		}
 	}
 
 	Region_tree_viewer_autoapply(region_tree_viewer->rendition,
 	  region_tree_viewer->edit_rendition);
-	//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphic);
+	Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphic);
 	return 1;
  }
 
@@ -1340,14 +1391,7 @@ Callback from wxChooser<xi Discretization Mode> when choice is made.
 				native_discretization_field_chooser_panel->Enable();
 				xitext->Disable();
 				xitextctrl->Disable();
-				if 	((struct FE_field *)NULL != native_discretization_field)
-				{
 				native_discretization_field_chooser_panel->Enable();
-				}
-				else
-				{
-				native_discretization_field_chooser_panel->Disable();
-				}
 			}
 			else
 			{
@@ -1809,22 +1853,13 @@ void ApplyClicked(wxCommandEvent &event)
 	}
 }
 
-void Region_tree_viewer_wx_update_graphic_type(Cmiss_graphic *graphic)
+void Region_tree_viewer_wx_update_current_graphic(Cmiss_graphic *graphic)
 {
 	wxScrolledWindow *sceneeditingpanel= XRCCTRL(*this, "SceneEditing",wxScrolledWindow);
 	sceneeditingpanel->Enable();
 	sceneeditingpanel->Show();
 	graphicalitemschecklist=XRCCTRL(*this,"CmissGraphicListBox",wxCheckListBox);
 	REACCESS(Cmiss_graphic)(&region_tree_viewer->current_graphic, graphic);
-	if (graphic)
-	{
-		region_tree_viewer->current_graphic_type = Cmiss_graphic_get_graphic_type(graphic);
-		graphic_type_chooser->set_value(region_tree_viewer->current_graphic_type);
-	}
-	else
-	{
-		graphic_type_chooser->set_value(CMISS_GRAPHIC_LINES);
-	}
 }
 
 void Region_tree_viewer_wx_update_graphic_widgets()
@@ -1849,7 +1884,7 @@ void GraphicListBoxProcessSelection(int selection)
 	{
 		Cmiss_graphic *temp_graphic = Cmiss_rendition_get_graphic_at_position(
 			region_tree_viewer->edit_rendition, selection+1);
-		Region_tree_viewer_wx_update_graphic_type(temp_graphic);
+		Region_tree_viewer_wx_update_current_graphic(temp_graphic);
 		Region_tree_viewer_wx_update_graphic_widgets();
 		if (temp_graphic)
 		{
@@ -1877,14 +1912,28 @@ void GraphicListBoxClicked(wxCommandEvent &event)
 	GraphicListBoxProcessSelection(event.GetInt());
 }
 
-void AddGraphic(Cmiss_graphic *graphic_to_copy, enum Cmiss_graphic_type graphic_type)
+/**
+ * @param domain_type  If not CMISS_FIELD_DOMAIN_TYPE_INVALID, set for
+ * new graphic and also set coordinate field.
+ */
+void AddGraphic(Cmiss_graphic_type graphic_type,
+	Cmiss_field_domain_type domain_type, Cmiss_graphic *graphic_to_copy)
 {
 	Cmiss_graphic *graphic = Cmiss_rendition_create_graphic_app(
 		region_tree_viewer->edit_rendition, graphic_type, graphic_to_copy);
 	if (graphic)
 	{
-		/* make sure new graphic is visible */
+		// make sure new graphic is visible
 		Cmiss_graphic_set_visibility_flag(graphic,1);
+		// set domain and initial coordinate field if appropriate
+		if (domain_type != CMISS_FIELD_DOMAIN_TYPE_INVALID)
+		{
+			Cmiss_graphic_set_domain_type(graphic, domain_type);
+			Cmiss_field_id coordinate_field = Cmiss_rendition_guess_coordinate_field(
+				region_tree_viewer->edit_rendition, graphic_type);
+			if (coordinate_field)
+				Cmiss_graphic_set_coordinate_field(graphic, coordinate_field);
+		}
 		Cmiss_rendition_add_graphic(region_tree_viewer->edit_rendition, graphic, 0);
 		//Update the list of graphic
 		wxCheckListBox *graphicalitemschecklist =  XRCCTRL(*this, "CmissGraphicListBox",wxCheckListBox);
@@ -1898,7 +1947,7 @@ void AddGraphic(Cmiss_graphic *graphic_to_copy, enum Cmiss_graphic_type graphic_
 		sceneediting->Freeze();
 		Cmiss_graphic *temp_graphic = Cmiss_rendition_get_graphic_at_position(
 			region_tree_viewer->edit_rendition, graphicalitemschecklist->GetCount());
-		Region_tree_viewer_wx_update_graphic_type(temp_graphic);
+		Region_tree_viewer_wx_update_current_graphic(temp_graphic);
 		Cmiss_graphic_destroy(&temp_graphic);
 		Region_tree_viewer_wx_update_graphic_widgets();
 		Region_tree_viewer_autoapply(region_tree_viewer->rendition,
@@ -1909,59 +1958,73 @@ void AddGraphic(Cmiss_graphic *graphic_to_copy, enum Cmiss_graphic_type graphic_
 	}
 }
 
-void AddToGraphicList(wxCommandEvent &event)
+void AddGraphicChoice(wxCommandEvent &event)
 {
-	USE_PARAMETER(event);
-	AddGraphic(region_tree_viewer->current_graphic,
-		region_tree_viewer->current_graphic_type);
+	wxString wxChoiceLabel = event.GetString();
+	const char *choiceLabel = wxChoiceLabel.mb_str(wxConvUTF8);
+	size_t tmp = reinterpret_cast<size_t>(event.GetClientData());
+	Add_graphic_type add_graphic_type = static_cast<Add_graphic_type>(tmp);
+	if (Add_graphic_type_string(add_graphic_type))
+	{
+		Cmiss_graphic_type graphic_type = CMISS_GRAPHIC_TYPE_INVALID;
+		Cmiss_field_domain_type domain_type = CMISS_FIELD_DOMAIN_TYPE_INVALID;
+		switch (add_graphic_type)
+		{
+		case ADD_GRAPHIC_TYPE_POINTS:
+			graphic_type = CMISS_GRAPHIC_POINTS;
+			break;
+		case ADD_GRAPHIC_TYPE_NODE_POINTS:
+			domain_type = CMISS_FIELD_DOMAIN_NODES;
+			graphic_type = CMISS_GRAPHIC_POINTS;
+			break;
+		case ADD_GRAPHIC_TYPE_DATA_POINTS:
+			domain_type = CMISS_FIELD_DOMAIN_DATA;
+			graphic_type = CMISS_GRAPHIC_POINTS;
+			break;
+		case ADD_GRAPHIC_TYPE_ELEMENT_POINTS:
+			domain_type = CMISS_FIELD_DOMAIN_ELEMENTS_HIGHEST_DIMENSION;
+			graphic_type = CMISS_GRAPHIC_POINTS;
+			break;
+		case ADD_GRAPHIC_TYPE_LINES:
+			domain_type = CMISS_FIELD_DOMAIN_ELEMENTS_1D;
+			graphic_type = CMISS_GRAPHIC_LINES;
+			break;
+		case ADD_GRAPHIC_TYPE_CYLINDERS:
+			domain_type = CMISS_FIELD_DOMAIN_ELEMENTS_1D;
+			graphic_type = CMISS_GRAPHIC_CYLINDERS;
+			break;
+		case ADD_GRAPHIC_TYPE_SURFACES:
+			domain_type = CMISS_FIELD_DOMAIN_ELEMENTS_2D;
+			graphic_type = CMISS_GRAPHIC_SURFACES;
+			break;
+		case ADD_GRAPHIC_TYPE_ISOLINES:
+			graphic_type = CMISS_GRAPHIC_CONTOURS;
+			domain_type = CMISS_FIELD_DOMAIN_ELEMENTS_2D;
+			break;
+		case ADD_GRAPHIC_TYPE_ISOSURFACES:
+			graphic_type = CMISS_GRAPHIC_CONTOURS;
+			domain_type = CMISS_FIELD_DOMAIN_ELEMENTS_3D;
+			break;
+		case ADD_GRAPHIC_TYPE_STREAMLINES:
+			domain_type = CMISS_FIELD_DOMAIN_ELEMENTS_HIGHEST_DIMENSION;
+			graphic_type = CMISS_GRAPHIC_STREAMLINES;
+			break;
+		case ADD_GRAPHIC_TYPE_INVALID:
+			break;
+		}
+		AddGraphic(graphic_type, domain_type, (Cmiss_graphic *)0);
+	}
+	add_graphic_choice->SetSelection(0);
 }
 
-void AddGraphicItemFromMenu(wxCommandEvent &event)
+void CopyGraphic(wxCommandEvent &event)
 {
 	USE_PARAMETER(event);
-	Cmiss_graphic *graphic = NULL;
-	enum Cmiss_graphic_type current_graphic_type = CMISS_GRAPHIC_LINES;
-
-	if (AddMenuItemNode == event.GetId())
+	if (region_tree_viewer->current_graphic)
 	{
-		current_graphic_type = CMISS_GRAPHIC_NODE_POINTS;
+		AddGraphic(Cmiss_graphic_get_graphic_type(region_tree_viewer->current_graphic),
+		 CMISS_FIELD_DOMAIN_TYPE_INVALID, region_tree_viewer->current_graphic);
 	}
-	else if (AddMenuItemData == event.GetId())
-	{
-		current_graphic_type = CMISS_GRAPHIC_DATA_POINTS;
-	}
-	else if (AddMenuItemLines == event.GetId())
-	{
-		current_graphic_type = CMISS_GRAPHIC_LINES;
-	}
-	else if (AddMenuItemCylinders == event.GetId())
-	{
-		current_graphic_type = CMISS_GRAPHIC_CYLINDERS;
-	}
-	else if (AddMenuItemSurfaces == event.GetId())
-	{
-		current_graphic_type = CMISS_GRAPHIC_SURFACES;
-	}
-	else if (AddMenuItemIsoSurfaces == event.GetId())
-	{
-		current_graphic_type = CMISS_GRAPHIC_ISO_SURFACES;
-	}
-	else if (AddMenuItemElement == event.GetId())
-	{
-		current_graphic_type = CMISS_GRAPHIC_ELEMENT_POINTS;
-	}
-	else if (AddMenuItemStreamlines == event.GetId())
-	{
-		current_graphic_type = CMISS_GRAPHIC_STREAMLINES;
-	}
-	else if (AddMenuItemStaticGraphic == event.GetId())
-	{
-		current_graphic_type = CMISS_GRAPHIC_POINT;
-	}
-	graphic = first_graphic_in_Cmiss_rendition_that(
-		region_tree_viewer->edit_rendition, Cmiss_graphic_type_matches,
-		(void *)current_graphic_type);
-	AddGraphic(graphic,	current_graphic_type);
 }
 
 void RemoveFromGraphicList(wxCommandEvent &event)
@@ -1970,62 +2033,40 @@ void RemoveFromGraphicList(wxCommandEvent &event)
 
 	USE_PARAMETER(event);
 
-	if (region_tree_viewer->edit_rendition)
+	if (region_tree_viewer->edit_rendition && region_tree_viewer->current_graphic)
 	{
-			graphicalitemschecklist=XRCCTRL(*this,"CmissGraphicListBox",wxCheckListBox);
-			position = Cmiss_rendition_get_graphic_position(
-				region_tree_viewer->edit_rendition, region_tree_viewer->current_graphic);
-			Cmiss_rendition_remove_graphic(
-				region_tree_viewer->edit_rendition, region_tree_viewer->current_graphic);
-			/* inform the client of the changes */
-			if (graphicalitemschecklist->GetCount()>1)
-			{
-				graphicalitemschecklist->SetSelection(wxNOT_FOUND);
-				graphicalitemschecklist->Clear();
-				for_each_graphic_in_Cmiss_rendition(region_tree_viewer->edit_rendition,
-					Region_tree_viewer_add_graphic_item, (void *)region_tree_viewer);
-				if (position>1)
-				{
-					Cmiss_graphic *temp_graphic = NULL;
-					if (graphicalitemschecklist->GetCount()>=position)
-					{
-						graphicalitemschecklist->SetSelection(position-1);
-						temp_graphic = Cmiss_rendition_get_graphic_at_position(
-							region_tree_viewer->edit_rendition, position);
-					}
-					else
-					{
-						graphicalitemschecklist->SetSelection(position-2);
-						temp_graphic = Cmiss_rendition_get_graphic_at_position(
-							region_tree_viewer->edit_rendition, position - 1);
-					}
-					if (temp_graphic)
-					{
-						Region_tree_viewer_wx_update_graphic_type(temp_graphic);
-						Region_tree_viewer_wx_update_graphic_widgets();
-						Cmiss_graphic_destroy(&temp_graphic);
-					}
-						Region_tree_viewer_autoapply(region_tree_viewer->rendition,
-							region_tree_viewer->edit_rendition);
-				}
-			}
-			else
-			{
-				graphicalitemschecklist->SetSelection(wxNOT_FOUND);
-				graphicalitemschecklist->Clear();
-				wxScrolledWindow *sceneeditingpanel= XRCCTRL(*this, "SceneEditing",wxScrolledWindow);
-				sceneeditingpanel->Disable();
-				sceneeditingpanel->Hide();
-			}
+		graphicalitemschecklist=XRCCTRL(*this,"CmissGraphicListBox",wxCheckListBox);
+		position = Cmiss_rendition_get_graphic_position(
+			region_tree_viewer->edit_rendition, region_tree_viewer->current_graphic);
+		Cmiss_rendition_remove_graphic(
+			region_tree_viewer->edit_rendition, region_tree_viewer->current_graphic);
+		graphicalitemschecklist->Clear();
+		for_each_graphic_in_Cmiss_rendition(region_tree_viewer->edit_rendition,
+			Region_tree_viewer_add_graphic_item, (void *)region_tree_viewer);
+		if (graphicalitemschecklist->GetCount() < position)
+		{
+			--position;
+		}
+		Cmiss_graphic *temp_graphic = Cmiss_rendition_get_graphic_at_position(
+			region_tree_viewer->edit_rendition, position);
+		Region_tree_viewer_wx_update_current_graphic(temp_graphic);
+		Region_tree_viewer_wx_update_graphic_widgets();
+		Region_tree_viewer_autoapply(region_tree_viewer->rendition,
+			region_tree_viewer->edit_rendition);
+		if (temp_graphic)
+		{
+			graphicalitemschecklist->SetSelection(position-1);
+			Cmiss_graphic_destroy(&temp_graphic);
+		}
+		else
+		{
+			graphicalitemschecklist->SetSelection(wxNOT_FOUND);
+			graphicalitemschecklist->Clear();
+			wxScrolledWindow *sceneeditingpanel= XRCCTRL(*this, "SceneEditing",wxScrolledWindow);
+			sceneeditingpanel->Disable();
+			sceneeditingpanel->Hide();
+		}
 	}
-	else
-	{
-			display_message(ERROR_MESSAGE,
-				"RemoveFromGraphicList.  Invalid argument(s)");
-	}
-	/*check if autoapply*/
-	Region_tree_viewer_autoapply(region_tree_viewer->rendition,
-		region_tree_viewer->edit_rendition);
 }
 
 void MoveUpInGraphicList(wxCommandEvent &event)
@@ -2053,7 +2094,7 @@ void MoveUpInGraphicList(wxCommandEvent &event)
 			graphicalitemschecklist->SetSelection(position-2);
 			Cmiss_graphic *temp_graphic = Cmiss_rendition_get_graphic_at_position(
 				region_tree_viewer->edit_rendition, position-1);
-			Region_tree_viewer_wx_update_graphic_type(temp_graphic);
+			Region_tree_viewer_wx_update_current_graphic(temp_graphic);
 			Region_tree_viewer_wx_update_graphic_widgets();
 			Cmiss_graphic_destroy(&temp_graphic);
 			Region_tree_viewer_autoapply(region_tree_viewer->rendition,
@@ -2100,7 +2141,7 @@ void MoveUpInGraphicList(wxCommandEvent &event)
 				graphicalitemschecklist->SetSelection(position);
 				Cmiss_graphic *temp_graphic = Cmiss_rendition_get_graphic_at_position(
 					region_tree_viewer->edit_rendition, position+1);
-				Region_tree_viewer_wx_update_graphic_type(temp_graphic);
+				Region_tree_viewer_wx_update_current_graphic(temp_graphic);
 				Region_tree_viewer_wx_update_graphic_widgets();
 				Cmiss_graphic_destroy(&temp_graphic);
 				Region_tree_viewer_autoapply(region_tree_viewer->rendition,
@@ -2877,13 +2918,14 @@ void SetGraphic(Cmiss_graphic *graphic)
 	struct Computed_field *xi_point_density_field, *stream_vector_field,
 		*texture_coord_field;
 	enum Xi_discretization_mode xi_discretization_mode;
-	Triple seed_xi;
 	struct Element_discretization discretization;
 	enum Streamline_type streamline_type;
 	enum Cmiss_graphics_render_type render_type;
 	struct FE_element *seed_element;
 	struct FE_region *fe_region;
 
+	const Cmiss_graphic_type graphic_type = Cmiss_graphic_get_graphic_type(graphic);
+	const int domain_dimension = Cmiss_graphic_get_domain_dimension(graphic);
 	Cmiss_graphic_line_attributes_id line_attributes =
 		Cmiss_graphic_get_line_attributes(graphic);
 	Cmiss_graphic_point_attributes_id point_attributes =
@@ -2931,7 +2973,8 @@ void SetGraphic(Cmiss_graphic *graphic)
 	radius_scalar_chooser_panel=XRCCTRL(*this, "RadiusScalarChooserPanel",wxPanel);
 	constantradius = XRCCTRL(*this,"ConstantRadiusText",wxStaticText);
 	scalefactor = XRCCTRL(*this,"ScaleFactorLabel", wxStaticText);
-	if (CMISS_GRAPHIC_CYLINDERS==region_tree_viewer->current_graphic_type)
+
+	if (CMISS_GRAPHIC_CYLINDERS == graphic_type)
 	{
 		double baseSize, scaleFactor;
 		Cmiss_graphic_line_attributes_get_base_size(line_attributes, 1, &baseSize);
@@ -3105,7 +3148,7 @@ void SetGraphic(Cmiss_graphic *graphic)
 		/* overlay disabled
 		wxCheckBox *overlay_checkbox = XRCCTRL(*this, "OverlayCheckBox", wxCheckBox);
 		wxTextCtrl *overlay_textctrl = XRCCTRL(*this, "OverlayTextCtrl", wxTextCtrl);
-		if (CMISS_GRAPHIC_STATIC == region_tree_viewer->current_graphic_type)
+		if (CMISS_GRAPHIC_STATIC == graphic_type)
 		{
 			overlay_checkbox->SetValue(Cmiss_graphic_is_overlay(graphic));
 			overlay_checkbox->Show();
@@ -3414,38 +3457,28 @@ void SetGraphic(Cmiss_graphic *graphic)
 		selectmodetext->Show();
 		select_mode_chooser->set_value(Cmiss_graphic_get_select_mode(graphic));
 
-		/* element_points and iso_surfaces */
-		/*use_element_type*/
-			use_element_type_chooser_panel =
-				XRCCTRL(*this, "UseElementTypeChooserPanel", wxPanel);
-			useelementtypetext=XRCCTRL(*this,"UseElementTypeText",wxStaticText);
-			if ((CMISS_GRAPHIC_ELEMENT_POINTS==region_tree_viewer->current_graphic_type)||
-				(CMISS_GRAPHIC_ISO_SURFACES==region_tree_viewer->current_graphic_type))
-			{
-				if (use_element_type_chooser == NULL)
-				{
-						use_element_type_chooser =
-							new Enumerator_chooser<ENUMERATOR_TYPE_CLASS(Use_element_type)>
-							(use_element_type_chooser_panel,
-									region_tree_viewer->use_element_type,
-									(ENUMERATOR_CONDITIONAL_FUNCTION(Use_element_type) *)NULL,
-									(void *)NULL, region_tree_viewer->user_interface);
-						use_element_type_chooser_panel->Fit();
-						Callback_base< enum Use_element_type > *use_element_type_callback =
-							new Callback_member_callback< enum Use_element_type,
-							wxRegionTreeViewer, int (wxRegionTreeViewer::*)(enum Use_element_type) >
-							(this, &wxRegionTreeViewer::use_element_type_callback);
-						use_element_type_chooser->set_callback(use_element_type_callback);
-				}
-				use_element_type_chooser_panel->Show();
-				useelementtypetext->Show();
-				use_element_type_chooser->set_value(Cmiss_graphic_get_use_element_type(graphic));
-			}
-			else
-			{
-				use_element_type_chooser_panel->Hide();
-				useelementtypetext->Hide();
-			}
+		domain_type_chooser_panel =
+			XRCCTRL(*this, "DomainTypeChooserPanel", wxPanel);
+		domaintypetext=XRCCTRL(*this,"DomainTypeText",wxStaticText);
+		if (domain_type_chooser == NULL)
+		{
+			domain_type_chooser =
+				new Enumerator_chooser<ENUMERATOR_TYPE_CLASS(Cmiss_field_domain_type)>
+				(domain_type_chooser_panel,
+					region_tree_viewer->domain_type,
+					(ENUMERATOR_CONDITIONAL_FUNCTION(Cmiss_field_domain_type) *)NULL,
+					(void *)NULL, region_tree_viewer->user_interface);
+			domain_type_chooser_panel->Fit();
+			Callback_base< enum Cmiss_field_domain_type > *domain_type_callback =
+				new Callback_member_callback< enum Cmiss_field_domain_type,
+				wxRegionTreeViewer, int (wxRegionTreeViewer::*)(enum Cmiss_field_domain_type) >
+				(this, &wxRegionTreeViewer::domain_type_callback);
+			domain_type_chooser->set_callback(domain_type_callback);
+		}
+		domain_type_chooser_panel->Show();
+		domaintypetext->Show();
+		domain_type_chooser->set_value(Cmiss_graphic_get_domain_type(graphic));
+
 		discretizationtext=XRCCTRL(*this,"DiscretizationText",wxStaticText);
 		discretizationtextctrl=XRCCTRL(*this,"DiscretizationTextCtrl",wxTextCtrl);
 		circlediscretizationtext=XRCCTRL(*this,"CircleDiscretizationText",wxStaticText);
@@ -3453,7 +3486,7 @@ void SetGraphic(Cmiss_graphic *graphic)
 		wxStaticText *nativediscretizationfieldtext=XRCCTRL(*this,"NativeDiscretizationFieldText",wxStaticText);
 		native_discretization_field_chooser_panel=XRCCTRL(*this, "NativeDiscretizationFieldChooserPanel",wxPanel);
 
-		if (Cmiss_graphic_type_uses_attribute(region_tree_viewer->current_graphic_type,
+		if (Cmiss_graphic_type_uses_attribute(graphic_type,
 			CMISS_GRAPHIC_ATTRIBUTE_DISCRETIZATION))
 		{
 			Cmiss_graphic_get_discretization(graphic,
@@ -3473,7 +3506,7 @@ void SetGraphic(Cmiss_graphic *graphic)
 		tessellationtext=XRCCTRL(*this,"TessellationStaticText",wxStaticText);
 		tessellation_chooser_panel=XRCCTRL(*this, "TessellationChooserPanel",wxPanel);
 		tessellationbutton=XRCCTRL(*this,"TessellationButton",wxButton);
-		if (Cmiss_graphic_type_uses_attribute(region_tree_viewer->current_graphic_type,
+		if (Cmiss_graphic_type_uses_attribute(graphic_type,
 			CMISS_GRAPHIC_ATTRIBUTE_TESSELLATION))
 		{
 			Cmiss_tessellation *tessellation = Cmiss_graphic_get_tessellation(graphic);
@@ -3493,7 +3526,7 @@ void SetGraphic(Cmiss_graphic *graphic)
 			tessellationbutton->Show(false);
 		}
 
-		if (CMISS_GRAPHIC_CYLINDERS==region_tree_viewer->current_graphic_type)
+		if (CMISS_GRAPHIC_CYLINDERS==graphic_type)
 		{
 			sprintf(temp_string,"%d",Cmiss_graphic_get_circle_discretization(graphic));
 			circlediscretizationtextctrl->SetValue(wxString::FromAscii(temp_string));
@@ -3512,7 +3545,7 @@ void SetGraphic(Cmiss_graphic *graphic)
 		densityfieldtext=XRCCTRL(*this, "DensityFieldText",wxStaticText);
 		density_field_chooser_panel=XRCCTRL(*this,"DensityFieldChooserPanel",wxPanel);
 
-		if (Cmiss_graphic_type_uses_attribute(region_tree_viewer->current_graphic_type,
+		if (Cmiss_graphic_type_uses_attribute(graphic_type,
 			CMISS_GRAPHIC_ATTRIBUTE_NATIVE_DISCRETIZATION_FIELD))
 		{
 			struct FE_field *native_discretization_field =
@@ -3534,17 +3567,26 @@ void SetGraphic(Cmiss_graphic *graphic)
 			}
 			nativediscretizationfieldtext->Show();
 			native_discretization_field_chooser_panel->Show();
-			if (native_discretization_field != NULL)
+			if (domain_dimension > 0)
 			{
-				native_discretization_field_chooser->set_object(
-					FIRST_OBJECT_IN_MANAGER_THAT(Computed_field)(
-						Computed_field_wraps_fe_field, native_discretization_field,
-						region_tree_viewer->field_manager));
+				if (native_discretization_field != NULL)
+				{
+					native_discretization_field_chooser->set_object(
+						FIRST_OBJECT_IN_MANAGER_THAT(Computed_field)(
+							Computed_field_wraps_fe_field, native_discretization_field,
+							region_tree_viewer->field_manager));
+				}
+				else
+				{
+					native_discretization_field_chooser->set_object(NULL);
+				}
+				nativediscretizationfieldtext->Enable();
 				native_discretization_field_chooser_panel->Enable();
 			}
 			else
 			{
-				native_discretization_field_chooser->set_object(NULL);
+				nativediscretizationfieldtext->Disable();
+				native_discretization_field_chooser_panel->Disable();
 			}
 		}
 		else
@@ -3553,7 +3595,7 @@ void SetGraphic(Cmiss_graphic *graphic)
 			native_discretization_field_chooser_panel->Hide();
 		}
 
-		if (Cmiss_graphic_type_uses_attribute(region_tree_viewer->current_graphic_type,
+		if (Cmiss_graphic_type_uses_attribute(graphic_type,
 			CMISS_GRAPHIC_ATTRIBUTE_DISCRETIZATION))
 		{
 			Cmiss_graphic_get_xi_discretization(graphic,
@@ -3599,12 +3641,7 @@ void SetGraphic(Cmiss_graphic *graphic)
 			{
 				discretizationtextctrl->Enable();
 				discretizationtext->Enable();
-				struct FE_field *native_discretization_field =
-					Cmiss_graphic_get_native_discretization_field(graphic);
-				if ((struct FE_field *)NULL != native_discretization_field)
-				{
-					native_discretization_field_chooser_panel->Enable();
-				}
+				native_discretization_field_chooser_panel->Enable();
 			}
 			else
 			{
@@ -3636,7 +3673,7 @@ void SetGraphic(Cmiss_graphic *graphic)
 		seed_element_panel = XRCCTRL(*this, "SeedElementPanel", wxPanel);
 		seedelementcheckbox = XRCCTRL(*this, "SeedElementCheckBox", wxCheckBox);
 
-		if (CMISS_GRAPHIC_STREAMLINES==region_tree_viewer->current_graphic_type)
+		if (CMISS_GRAPHIC_STREAMLINES==graphic_type)
 		{
 			seed_element_panel->Show();
 			seedelementcheckbox->Show();
@@ -3676,15 +3713,17 @@ void SetGraphic(Cmiss_graphic *graphic)
 		/* seed xi */
 		xitext=XRCCTRL(*this,"XiText",wxStaticText);
 		xitextctrl=XRCCTRL(*this,"XiTextCtrl",wxTextCtrl);
-		if ((CMISS_GRAPHIC_ELEMENT_POINTS==region_tree_viewer->current_graphic_type)||
-			(CMISS_GRAPHIC_STREAMLINES==region_tree_viewer->current_graphic_type))
+		/* for sampling points only */
+		if ((CMISS_GRAPHIC_POINTS == graphic_type) ||
+			(CMISS_GRAPHIC_STREAMLINES == graphic_type))
 		{
 			xitext->Show();
 			xitextctrl->Show();
+			Triple seed_xi;
 			Cmiss_graphic_get_seed_xi(region_tree_viewer->current_graphic,seed_xi);
 			sprintf(temp_string,"%g,%g,%g",seed_xi[0],seed_xi[1],seed_xi[2]);
 			xitextctrl->SetValue(wxString::FromAscii(temp_string));
-			if (XI_DISCRETIZATION_EXACT_XI == xi_discretization_mode)
+			if ((domain_dimension > 0) && (XI_DISCRETIZATION_EXACT_XI == xi_discretization_mode))
 			{
 				xitext->Enable();
 				xitextctrl->Enable();
@@ -3712,7 +3751,7 @@ void SetGraphic(Cmiss_graphic *graphic)
 		stream_vector_chooser_panel=XRCCTRL(*this, "StreamVectorChooserPanel",wxPanel);
 		reversecheckbox=XRCCTRL(*this,"ReverseCheckBox",wxCheckBox);
 
-		if (CMISS_GRAPHIC_STREAMLINES==region_tree_viewer->current_graphic_type)
+		if (CMISS_GRAPHIC_STREAMLINES==graphic_type)
 		{
 			float streamline_length;
 			streamtypetext->Show();
@@ -3782,7 +3821,7 @@ void SetGraphic(Cmiss_graphic *graphic)
 		linewidthtext=XRCCTRL(*this,"LineWidthText",wxStaticText);
 		linewidthtextctrl=XRCCTRL(*this,"LineWidthTextCtrl",wxTextCtrl);
 
-		if (CMISS_GRAPHIC_LINES==region_tree_viewer->current_graphic_type)
+		if (CMISS_GRAPHIC_POINTS != graphic_type)
 		{
 			linewidthtext->Show();
 			linewidthtextctrl->Show();
@@ -3790,11 +3829,6 @@ void SetGraphic(Cmiss_graphic *graphic)
 			sprintf(temp_string,"%d",line_width);
 			linewidthtextctrl->SetValue(wxString::FromAscii(temp_string));
 			linewidthtextctrl->Enable();
-			if (CMISS_GRAPHIC_ISO_SURFACES==region_tree_viewer->current_graphic_type &&
-				USE_FACES != Cmiss_graphic_get_use_element_type(graphic))
-			{
-				linewidthtextctrl->Disable();
-			}
 		}
 		else
 		{
@@ -3844,7 +3878,7 @@ void SetGraphic(Cmiss_graphic *graphic)
 			Cmiss_spectrum_destroy(&spectrum);
 		}
 
-		if (CMISS_GRAPHIC_STREAMLINES==region_tree_viewer->current_graphic_type)
+		if (CMISS_GRAPHIC_STREAMLINES==graphic_type)
 		{
 			streamlinedatatypetext->Show();
 			streamline_data_type_chooser_panel->Show();
@@ -3875,11 +3909,8 @@ void SetGraphic(Cmiss_graphic *graphic)
 
 		wxStaticText *texturecoordinatestext = XRCCTRL(*this, "TextureCoordinatesText", wxStaticText);
 		texture_coordinates_chooser_panel = XRCCTRL(*this, "TextrueCoordinatesChooserPanel", wxPanel);
-		if ((CMISS_GRAPHIC_CYLINDERS == region_tree_viewer->current_graphic_type) ||
-			(CMISS_GRAPHIC_SURFACES == region_tree_viewer->current_graphic_type) ||
-			(CMISS_GRAPHIC_ISO_SURFACES == region_tree_viewer->current_graphic_type))
+		if (Cmiss_graphic_type_uses_attribute(graphic_type, CMISS_GRAPHIC_ATTRIBUTE_TEXTURE_COORDINATE_FIELD))
 		{
-			/* set texture_coordinate field */
 			texture_coordinates_chooser_panel->Show();
 			texturecoordinatestext->Show();
 			texture_coord_field = Cmiss_graphic_get_texture_coordinate_field(graphic);
@@ -3909,9 +3940,7 @@ void SetGraphic(Cmiss_graphic *graphic)
 		/* render_type */
 		rendertypetext=XRCCTRL(*this, "RenderTypeText",wxStaticText);
 		render_type_chooser_panel=XRCCTRL(*this,"RenderTypeChooserPanel",wxPanel);
-		if ((CMISS_GRAPHIC_CYLINDERS == region_tree_viewer->current_graphic_type) ||
-			(CMISS_GRAPHIC_SURFACES==region_tree_viewer->current_graphic_type) ||
-			(CMISS_GRAPHIC_ISO_SURFACES==region_tree_viewer->current_graphic_type))
+		if (Cmiss_graphic_type_uses_attribute(graphic_type, CMISS_GRAPHIC_ATTRIBUTE_RENDER_TYPE))
 		{
 			/* set texture_coordinate field */
 			rendertypetext->Show();
@@ -3942,61 +3971,41 @@ void SetGraphic(Cmiss_graphic *graphic)
 		exteriorcheckbox=XRCCTRL(*this,"ExteriorCheckBox",wxCheckBox);
 		facecheckbox=XRCCTRL(*this, "FaceCheckBox",wxCheckBox);
 		facechoice=XRCCTRL(*this, "FaceChoice",wxChoice);
-		if ((CMISS_GRAPHIC_DATA_POINTS!=region_tree_viewer->current_graphic_type) &&
-			(CMISS_GRAPHIC_NODE_POINTS!=region_tree_viewer->current_graphic_type) &&
-			(CMISS_GRAPHIC_STREAMLINES!=region_tree_viewer->current_graphic_type) &&
-			(CMISS_GRAPHIC_POINT!=region_tree_viewer->current_graphic_type))
+		Cmiss_field_domain_type domain_type = Cmiss_graphic_get_domain_type(graphic);
+		exteriorcheckbox->Show();
+		facecheckbox->Show();
+		facechoice->Show();
+		if ((CMISS_FIELD_DOMAIN_ELEMENTS_1D == domain_type) ||
+			(CMISS_FIELD_DOMAIN_ELEMENTS_2D == domain_type))
 		{
-			exteriorcheckbox->Show();
-			facecheckbox->Show();
-			facechoice->Show();
-
-			if ((CMISS_GRAPHIC_ISO_SURFACES!=region_tree_viewer->current_graphic_type) &&
-				(CMISS_GRAPHIC_ELEMENT_POINTS!=region_tree_viewer->current_graphic_type))
-			{
-					exteriorcheckbox->Enable();
-					facecheckbox->Enable();
-			}
-			else
-			{
-				if  (USE_ELEMENTS != Cmiss_graphic_get_use_element_type(graphic))
-				{
-					exteriorcheckbox->Enable();
-					facecheckbox->Enable();
-				}
-				else
-				{
-					exteriorcheckbox->Disable();
-					facecheckbox->Disable();
-					facechoice->Disable();
-				}
-			}
-			if (Cmiss_graphic_get_exterior(graphic))
-			{
-				exteriorcheckbox->SetValue(1);
-			}
-			else
-			{
-				exteriorcheckbox->SetValue(0);
-			}
-			face = Cmiss_graphic_get_face(graphic);
-			if (face >= CMISS_GRAPHIC_FACE_XI1_0)
-			{
-				facecheckbox->SetValue(1);
-				facechoice->Enable();
-				facechoice->SetSelection(static_cast<int>(face) - CMISS_GRAPHIC_FACE_XI1_0);
-			}
-			else
-			{
-				facecheckbox->SetValue(0);
-				facechoice->Disable();
-			}
+			exteriorcheckbox->Enable();
+			facecheckbox->Enable();
 		}
 		else
 		{
-			exteriorcheckbox->Hide();
-			facecheckbox->Hide();
-			facechoice->Hide();
+			exteriorcheckbox->Disable();
+			facecheckbox->Disable();
+			facechoice->Disable();
+		}
+		if (Cmiss_graphic_get_exterior(graphic))
+		{
+			exteriorcheckbox->SetValue(1);
+		}
+		else
+		{
+			exteriorcheckbox->SetValue(0);
+		}
+		face = Cmiss_graphic_get_face(graphic);
+		if (face >= CMISS_GRAPHIC_FACE_XI1_0)
+		{
+			facecheckbox->SetValue(1);
+			facechoice->Enable();
+			facechoice->SetSelection(static_cast<int>(face) - CMISS_GRAPHIC_FACE_XI1_0);
+		}
+		else
+		{
+			facecheckbox->SetValue(0);
+			facechoice->Disable();
 		}
 		Cmiss_graphic_contours_destroy(&contours);
 		Cmiss_graphic_line_attributes_destroy(&line_attributes);
@@ -4126,19 +4135,8 @@ void ShowMenu(wxTreeItemId id, const wxPoint& pt)
 	const char *full_path = GetRegionPathFromTreeItemId(
 		id);
 	wxMenu menu(wxString::FromAscii(full_path));
-	wxMenu *add_menu= new wxMenu(wxT("Graphic"));
-	add_menu->Append(AddMenuItemNode, wxT("node_points"));
-	add_menu->Append(AddMenuItemData, wxT("data_points"));
-	add_menu->Append(AddMenuItemLines, wxT("lines"));
-	add_menu->Append(AddMenuItemCylinders, wxT("cylinders"));
-	add_menu->Append(AddMenuItemSurfaces, wxT("surfaces"));
-	add_menu->Append(AddMenuItemIsoSurfaces, wxT("iso_surfaces"));
-	add_menu->Append(AddMenuItemElement, wxT("element_points"));
-	add_menu->Append(AddMenuItemStreamlines, wxT("streamlines"));
-	add_menu->Append(AddMenuItemStaticGraphic, wxT("point"));
 	menu.Append(CmguiTree_MenuItem1, wxT("Turn on tree visibililty"));
 	menu.Append(CmguiTree_MenuItem2, wxT("Turn off tree visibililty"));
-	menu.AppendSubMenu(add_menu, wxT("Add"), wxT("Graphic Type"));
 	PopupMenu(&menu, pt);
 	DEALLOCATE(full_path);
 }
@@ -4204,7 +4202,7 @@ void OnMenuSelectionOn(wxCommandEvent &event)
 
 	USE_PARAMETER(event);
 
-	int num = region_tree_viewer->testing_tree_ctrl->GetSelections(array);
+	int num = static_cast<int>(region_tree_viewer->testing_tree_ctrl->GetSelections(array));
 	for (int i = 0; i < num; i ++)
 	{
 		SetVisibilityOfTreeId(array[i], 1);
@@ -4218,7 +4216,7 @@ void OnMenuSelectionOff(wxCommandEvent &event)
 
 	USE_PARAMETER(event);
 
-	int num = region_tree_viewer->testing_tree_ctrl->GetSelections(array);
+	int num = static_cast<int>(region_tree_viewer->testing_tree_ctrl->GetSelections(array));
 	for (int i = 0; i < num; i ++)
 	{
 		SetVisibilityOfTreeId(array[i], 0);
@@ -4264,11 +4262,11 @@ BEGIN_EVENT_TABLE(wxRegionTreeViewer, wxFrame)
 	EVT_CHECKBOX(XRCID("AutoCheckBox"),wxRegionTreeViewer::AutoChecked)
 	EVT_BUTTON(XRCID("ApplyButton"),wxRegionTreeViewer::ApplyClicked)
 	EVT_BUTTON(XRCID("RevertButton"),wxRegionTreeViewer::RevertClicked)
-	EVT_BUTTON(XRCID("AddButton"),wxRegionTreeViewer::AddToGraphicList)
 	EVT_CHECKLISTBOX(XRCID("CmissGraphicListBox"), wxRegionTreeViewer::GraphicListBoxChecked)
 	EVT_TEXT_ENTER(XRCID("NameTextField"),wxRegionTreeViewer::GraphicEditorNameText)
 	EVT_LISTBOX(XRCID("CmissGraphicListBox"), wxRegionTreeViewer::GraphicListBoxClicked)
-	EVT_BUTTON(XRCID("DelButton"),wxRegionTreeViewer::RemoveFromGraphicList)
+	EVT_BUTTON(XRCID("CopyButton"),wxRegionTreeViewer::CopyGraphic)
+	EVT_BUTTON(XRCID("DeleteButton"),wxRegionTreeViewer::RemoveFromGraphicList)
 	EVT_BUTTON(XRCID("UpButton"),wxRegionTreeViewer::MoveUpInGraphicList)
 	EVT_BUTTON(XRCID("DownButton"),wxRegionTreeViewer::MoveDownInGraphicList)
 	EVT_TEXT_ENTER(XRCID("ConstantRadiusTextCtrl"), wxRegionTreeViewer::EnterRadiusBaseSize)
@@ -4305,6 +4303,7 @@ BEGIN_EVENT_TABLE(wxRegionTreeViewer, wxFrame)
 	EVT_BUTTON(XRCID("TessellationButton"),wxRegionTreeViewer::EditTessellation)
 	EVT_MENU(CmguiTree_MenuItem1, wxRegionTreeViewer::OnMenuSelectionOn)
 	EVT_MENU(CmguiTree_MenuItem2, wxRegionTreeViewer::OnMenuSelectionOff)
+/*
 	EVT_MENU(AddMenuItemNode, wxRegionTreeViewer::AddGraphicItemFromMenu)
 	EVT_MENU(AddMenuItemData, wxRegionTreeViewer::AddGraphicItemFromMenu)
 	EVT_MENU(AddMenuItemLines, wxRegionTreeViewer::AddGraphicItemFromMenu)
@@ -4314,6 +4313,7 @@ BEGIN_EVENT_TABLE(wxRegionTreeViewer, wxFrame)
 	EVT_MENU(AddMenuItemElement, wxRegionTreeViewer::AddGraphicItemFromMenu)
 	EVT_MENU(AddMenuItemStreamlines, wxRegionTreeViewer::AddGraphicItemFromMenu)
 	EVT_MENU(AddMenuItemStaticGraphic, wxRegionTreeViewer::AddGraphicItemFromMenu)
+*/
 #if defined (__WXMSW__)
 	EVT_SIZE(wxRegionTreeViewer::FrameGetSize)
 #endif /*!defined (__WXMSW__)*/
@@ -4354,7 +4354,7 @@ int Region_tree_viewer_revert_changes(Region_tree_viewer *region_tree_viewer)
 				Region_tree_viewer_wx_set_manager_in_choosers(region_tree_viewer);
 			Cmiss_graphic *temp_graphic = Cmiss_rendition_get_graphic_at_position(
 				region_tree_viewer->edit_rendition, selection+1);
-			region_tree_viewer->wx_region_tree_viewer->Region_tree_viewer_wx_update_graphic_type(temp_graphic);
+			region_tree_viewer->wx_region_tree_viewer->Region_tree_viewer_wx_update_current_graphic(temp_graphic);
 			region_tree_viewer->wx_region_tree_viewer->Region_tree_viewer_wx_update_graphic_widgets();
 			Cmiss_graphic_destroy(&temp_graphic);
 			if (region_tree_viewer->transformation_editor)
@@ -4485,18 +4485,13 @@ void Region_tree_viewer_set_active_rendition(
 				}
 				temp_graphic = Cmiss_rendition_get_graphic_at_position(
 					region_tree_viewer->edit_rendition, num);
-				region_tree_viewer->wx_region_tree_viewer->Region_tree_viewer_wx_update_graphic_type(
+				region_tree_viewer->wx_region_tree_viewer->Region_tree_viewer_wx_update_current_graphic(
 					temp_graphic);
 				region_tree_viewer->graphiclistbox->SetSelection(num - 1);
 				REACCESS(Cmiss_graphic)(&region_tree_viewer->current_graphic,
 					temp_graphic);
 				if (temp_graphic)
 					Cmiss_graphic_destroy(&temp_graphic);
-				if (region_tree_viewer->current_graphic)
-				{
-					region_tree_viewer->current_graphic_type
-						= Cmiss_graphic_get_graphic_type(region_tree_viewer->current_graphic);
-				}
 				region_tree_viewer->lowersplitter->Enable();
 				region_tree_viewer->lowersplitter->Show();
 			}
@@ -4508,8 +4503,7 @@ void Region_tree_viewer_set_active_rendition(
 				}
 				region_tree_viewer->lowersplitter->Enable();
 				region_tree_viewer->lowersplitter->Show();
-				region_tree_viewer->wx_region_tree_viewer->Region_tree_viewer_wx_update_graphic_type(NULL);
-				region_tree_viewer->current_graphic_type = CMISS_GRAPHIC_LINES;
+				region_tree_viewer->wx_region_tree_viewer->Region_tree_viewer_wx_update_current_graphic(NULL);
 			}
 			region_tree_viewer->field_manager
 				= Cmiss_region_get_Computed_field_manager(Cmiss_rendition_get_region(
@@ -4707,7 +4701,6 @@ DESCRIPTION :
 			region_tree_viewer->glyph_manager=glyph_manager;
 			region_tree_viewer->scene_manager = scene_manager;
 			region_tree_viewer->user_interface=user_interface;
-			region_tree_viewer->current_graphic_type=CMISS_GRAPHIC_LINES;
 			region_tree_viewer->current_graphic = (Cmiss_graphic *)NULL;
 			region_tree_viewer->volume_texture_manager=volume_texture_manager;
 			region_tree_viewer->field_manager=(MANAGER(Computed_field)*)NULL;
@@ -4716,7 +4709,7 @@ DESCRIPTION :
 			region_tree_viewer->constant_radius=0.0;
 			region_tree_viewer->radius_scale_factor=1.0;
 			region_tree_viewer->radius_scalar_field = (Computed_field *)NULL;
-			region_tree_viewer->use_element_type= (Use_element_type)NULL;
+			region_tree_viewer->domain_type = CMISS_FIELD_DOMAIN_TYPE_INVALID;
 			region_tree_viewer->xi_discretization_mode= (Xi_discretization_mode)NULL;
 			region_tree_viewer->streamline_type=(Streamline_type)NULL;
 			region_tree_viewer->streamline_data_type=(Streamline_data_type)NULL;

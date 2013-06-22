@@ -30,8 +30,20 @@
 #include "finite_element/finite_element_region_app.h"
 #include "graphics/tessellation_app.hpp"
 
+enum Legacy_graphic_type
+{
+	LEGACY_GRAPHIC_NONE,
+	LEGACY_GRAPHIC_POINT,
+	LEGACY_GRAPHIC_NODE_POINTS,
+	LEGACY_GRAPHIC_DATA_POINTS,
+	LEGACY_GRAPHIC_ELEMENT_POINTS,
+	LEGACY_GRAPHIC_CYLINDERS,
+	LEGACY_GRAPHIC_ISO_SURFACES
+};
+
 int gfx_modify_rendition_graphic(struct Parse_state *state,
-	enum Cmiss_graphic_type graphic_type, const char *help_text,
+	enum Cmiss_graphic_type graphic_type,
+	enum Legacy_graphic_type legacy_graphic_type, const char *help_text,
 	struct Modify_rendition_data *modify_rendition_data,
 	struct Rendition_command_data *rendition_command_data)
 {
@@ -51,6 +63,21 @@ int gfx_modify_rendition_graphic(struct Parse_state *state,
 	{
 		graphic = Cmiss_rendition_create_graphic_app(rendition_command_data->rendition,
 			graphic_type, modify_rendition_data->graphic);
+		switch (legacy_graphic_type)
+		{
+		case LEGACY_GRAPHIC_NODE_POINTS:
+			Cmiss_graphic_set_domain_type(graphic, CMISS_FIELD_DOMAIN_NODES);
+			break;
+		case LEGACY_GRAPHIC_DATA_POINTS:
+			Cmiss_graphic_set_domain_type(graphic, CMISS_FIELD_DOMAIN_DATA);
+			break;
+		case LEGACY_GRAPHIC_ELEMENT_POINTS:
+			Cmiss_graphic_set_domain_type(graphic, CMISS_FIELD_DOMAIN_ELEMENTS_HIGHEST_DIMENSION);
+			break;
+		default:
+			// do nothing
+			break;
+		}
 		Cmiss_rendition_set_graphics_defaults_gfx_modify(rendition_command_data->rendition, graphic);
 		if (modify_rendition_data->group)
 		{
@@ -79,13 +106,6 @@ int gfx_modify_rendition_graphic(struct Parse_state *state,
 	char *font_name = (char *)NULL;
 	Cmiss_field_id xi_point_density_field = 0;
 
-	enum Use_element_type use_element_type;
-	const char *use_element_type_string = 0;
-	if (Cmiss_graphic_type_uses_attribute(graphic_type, CMISS_GRAPHIC_ATTRIBUTE_USE_ELEMENT_TYPE))
-	{
-		use_element_type = Cmiss_graphic_get_use_element_type(graphic);
-		use_element_type_string = ENUMERATOR_STRING(Use_element_type)(use_element_type);
-	}
 	enum Xi_discretization_mode xi_discretization_mode;
 	const char *xi_discretization_mode_string = 0;
 	if (Cmiss_graphic_type_uses_attribute(graphic_type, CMISS_GRAPHIC_ATTRIBUTE_XI_DISCRETIZATION_MODE))
@@ -150,7 +170,10 @@ int gfx_modify_rendition_graphic(struct Parse_state *state,
 		(void *)1,set_name);
 
 	/* cell_centres/cell_corners/cell_density/exact_xi */
-	if (Cmiss_graphic_type_uses_attribute(graphic_type, CMISS_GRAPHIC_ATTRIBUTE_XI_DISCRETIZATION_MODE))
+	if ((legacy_graphic_type != LEGACY_GRAPHIC_POINT) &&
+		(legacy_graphic_type != LEGACY_GRAPHIC_NODE_POINTS) &&
+		(legacy_graphic_type != LEGACY_GRAPHIC_DATA_POINTS) &&
+		Cmiss_graphic_type_uses_attribute(graphic_type, CMISS_GRAPHIC_ATTRIBUTE_XI_DISCRETIZATION_MODE))
 	{
 		valid_strings = ENUMERATOR_GET_VALID_STRINGS(Xi_discretization_mode)(
 			&number_of_valid_strings,
@@ -187,7 +210,7 @@ int gfx_modify_rendition_graphic(struct Parse_state *state,
 
 	/* constant_radius */
 	double constant_radius = 0;
-	if (graphic_type == CMISS_GRAPHIC_CYLINDERS)
+	if (legacy_graphic_type == LEGACY_GRAPHIC_CYLINDERS)
 	{
 		Cmiss_graphic_line_attributes_get_base_size(line_attributes, 1, &constant_radius);
 		constant_radius *= 0.5; // convert from diameter
@@ -253,6 +276,23 @@ int gfx_modify_rendition_graphic(struct Parse_state *state,
 			&(graphic->discretization),NULL, set_Element_discretization);
 	}
 
+	/* domain type */
+	Cmiss_field_domain_type domain_type = Cmiss_graphic_get_domain_type(graphic);
+	const char *domain_type_string = ENUMERATOR_STRING(Cmiss_field_domain_type)(domain_type);
+	if ((graphic_type != CMISS_GRAPHIC_LINES) &&
+		(graphic_type != CMISS_GRAPHIC_CYLINDERS) &&
+		(graphic_type != CMISS_GRAPHIC_SURFACES) &&
+		(legacy_graphic_type != LEGACY_GRAPHIC_NONE))
+	{
+		valid_strings = ENUMERATOR_GET_VALID_STRINGS(Cmiss_field_domain_type)(
+			&number_of_valid_strings,
+			(ENUMERATOR_CONDITIONAL_FUNCTION(Cmiss_field_domain_type) *)NULL,
+			(void *)NULL);
+		Option_table_add_enumerator(option_table, number_of_valid_strings,
+			valid_strings, &domain_type_string);
+		DEALLOCATE(valid_strings);
+	}
+
 	/* ellipse/line/rectangle/ribbon */
 	Streamline_type streamline_type = STREAM_LINE;
 	const char *streamline_type_string = ENUMERATOR_STRING(Streamline_type)(streamline_type);
@@ -312,7 +352,7 @@ int gfx_modify_rendition_graphic(struct Parse_state *state,
 	/* deprecated: glyph scaling mode constant/scalar/vector/axes/general */
 	const char *deprecated_glyph_scaling_mode_strings[] = { "constant", "scalar", "vector", "axes", "general" };
 	const char *glyph_scaling_mode_string = 0;
-	if (Cmiss_graphic_type_uses_attribute(graphic_type, CMISS_GRAPHIC_ATTRIBUTE_GLYPH))
+	if ((legacy_graphic_type != LEGACY_GRAPHIC_NONE) && point_attributes)
 	{
 		Option_table_add_enumerator(option_table, /*number_of_valid_strings*/5,
 			deprecated_glyph_scaling_mode_strings, &glyph_scaling_mode_string);
@@ -608,16 +648,19 @@ int gfx_modify_rendition_graphic(struct Parse_state *state,
 			&(graphic->texture_coordinate_field), &set_texture_coordinate_field_data);
 	}
 
-	/* use_elements/use_faces/use_lines */
-	if (Cmiss_graphic_type_uses_attribute(graphic_type, CMISS_GRAPHIC_ATTRIBUTE_USE_ELEMENT_TYPE))
+	/* legacy use_elements/use_faces/use_lines: translated into domain type */
+	const char *use_element_type_strings[] = { "use_elements", "use_faces", "use_lines" };
+	const enum Cmiss_field_domain_type use_element_type_to_domain_type[] =
 	{
-		valid_strings = ENUMERATOR_GET_VALID_STRINGS(Use_element_type)(
-			&number_of_valid_strings,
-			(ENUMERATOR_CONDITIONAL_FUNCTION(Use_element_type) *)NULL,
-			(void *)NULL);
-		Option_table_add_enumerator(option_table,number_of_valid_strings,
-			valid_strings,&use_element_type_string);
-		DEALLOCATE(valid_strings);
+		CMISS_FIELD_DOMAIN_ELEMENTS_HIGHEST_DIMENSION,
+		CMISS_FIELD_DOMAIN_ELEMENTS_2D,
+		CMISS_FIELD_DOMAIN_ELEMENTS_1D
+	};
+	const char *use_element_type_string = 0;
+	if ((legacy_graphic_type == LEGACY_GRAPHIC_ISO_SURFACES) ||
+		(legacy_graphic_type == LEGACY_GRAPHIC_ELEMENT_POINTS))
+	{
+		Option_table_add_enumerator(option_table, 3, use_element_type_strings, &use_element_type_string);
 	}
 
 	/* variable_scale */
@@ -728,10 +771,25 @@ int gfx_modify_rendition_graphic(struct Parse_state *state,
 			}
 		}
 
-		if (Cmiss_graphic_type_uses_attribute(graphic_type, CMISS_GRAPHIC_ATTRIBUTE_USE_ELEMENT_TYPE))
+		if ((graphic_type != CMISS_GRAPHIC_LINES) &&
+			(graphic_type != CMISS_GRAPHIC_CYLINDERS) &&
+			(graphic_type != CMISS_GRAPHIC_SURFACES))
 		{
-			STRING_TO_ENUMERATOR(Use_element_type)(use_element_type_string, &use_element_type);
-			Cmiss_graphic_set_use_element_type(graphic, use_element_type);
+			STRING_TO_ENUMERATOR(Cmiss_field_domain_type)(domain_type_string, &domain_type);
+			Cmiss_graphic_set_domain_type(graphic, domain_type);
+		}
+		// translate legacy use_element_type to domain_type
+		if (use_element_type_string)
+		{
+			for (int i = 0; i < 3; i++)
+			{
+				if (fuzzy_string_compare_same_length(use_element_type_string, use_element_type_strings[i]))
+				{
+					domain_type = use_element_type_to_domain_type[i];
+					Cmiss_graphic_set_domain_type(graphic, domain_type);
+					break;
+				}
+			}
 		}
 
 		if (point_attributes)
@@ -739,6 +797,20 @@ int gfx_modify_rendition_graphic(struct Parse_state *state,
 			Cmiss_glyph_repeat_mode glyph_repeat_mode = CMISS_GLYPH_REPEAT_NONE;
 			STRING_TO_ENUMERATOR(Cmiss_glyph_repeat_mode)(glyph_repeat_mode_string, &glyph_repeat_mode);
 			Cmiss_glyph_id glyph = 0;
+			if (legacy_graphic_type == LEGACY_GRAPHIC_POINT)
+			{
+				// scale factors and orientation were never used, and offset was in model units.
+				// now the offset is in multiples of glyph axes, i.e. need divide by the base size
+				// to work as before
+				for (int i = 0; i < 3; i++)
+				{
+					if (glyph_base_size[i] != 0.0)
+					{
+						glyph_centre[i] /= glyph_base_size[i];
+					}
+				}
+			}
+
 			if (glyph_name && (0 != strcmp(glyph_name, "none")))
 			{
 				if ((0 == strcmp(glyph_name, "mirror_arrow_solid")) ||
@@ -1042,35 +1114,12 @@ int gfx_modify_rendition_graphic(struct Parse_state *state,
 	return return_code;
 }
 
-int gfx_modify_rendition_cylinders(struct Parse_state *state,
-	void *modify_rendition_data_void,void *rendition_command_data_void)
-{
-	return gfx_modify_rendition_graphic(state, CMISS_GRAPHIC_CYLINDERS, /*help_text*/(const char *)0,
-		reinterpret_cast<Modify_rendition_data *>(modify_rendition_data_void),
-		reinterpret_cast<Rendition_command_data *>(rendition_command_data_void));
-}
-
-int gfx_modify_rendition_data_points(struct Parse_state *state,
-	void *modify_rendition_data_void,void *rendition_command_data_void)
-{
-	return gfx_modify_rendition_graphic(state, CMISS_GRAPHIC_DATA_POINTS, /*help_text*/(const char *)0,
-		reinterpret_cast<Modify_rendition_data *>(modify_rendition_data_void),
-		reinterpret_cast<Rendition_command_data *>(rendition_command_data_void));
-}
-
-int gfx_modify_rendition_element_points(struct Parse_state *state,
-	void *modify_rendition_data_void,void *rendition_command_data_void)
-{
-	return gfx_modify_rendition_graphic(state, CMISS_GRAPHIC_ELEMENT_POINTS, /*help_text*/(const char *)0,
-		reinterpret_cast<Modify_rendition_data *>(modify_rendition_data_void),
-		reinterpret_cast<Rendition_command_data *>(rendition_command_data_void));
-}
-
-int gfx_modify_rendition_iso_surfaces(struct Parse_state *state,
+int gfx_modify_rendition_contours(struct Parse_state *state,
 	void *modify_rendition_data_void,void *rendition_command_data_void)
 {
 	const char *help_text =
-		"Create isosurfaces in volume elements <use_elements> or isolines in face or surface elements <use_faces>.  "
+		"Create contours i.e. isosurfaces in volume elements <domain_elements_3d> or isolines in face or surface elements "
+		"<domain_elements_2d>.  "
 		"The isosurface will be generated at the values in the elements where <iso_scalar> equals the iso values specified.  "
 		"The iso values can be specified either as a list with the <iso_values> option "
 		"or by specifying <range_number_of_iso_values>, <first_iso_value> and <last_iso_value>.  "
@@ -1092,7 +1141,47 @@ int gfx_modify_rendition_iso_surfaces(struct Parse_state *state,
 		"The <texture_coordinates> are used to lay out a texture if the <material> contains a texture.  "
 		"A graphic can be made <visible> or <invisible>.  ";
 
-	return gfx_modify_rendition_graphic(state, CMISS_GRAPHIC_ISO_SURFACES, help_text,
+	return gfx_modify_rendition_graphic(state, CMISS_GRAPHIC_CONTOURS,
+		LEGACY_GRAPHIC_NONE, help_text,
+		reinterpret_cast<Modify_rendition_data *>(modify_rendition_data_void),
+		reinterpret_cast<Rendition_command_data *>(rendition_command_data_void));
+}
+
+int gfx_modify_rendition_cylinders(struct Parse_state *state,
+	void *modify_rendition_data_void,void *rendition_command_data_void)
+{
+	return gfx_modify_rendition_graphic(state, CMISS_GRAPHIC_CYLINDERS,
+		LEGACY_GRAPHIC_CYLINDERS, /*help_text*/(const char *)0,
+		reinterpret_cast<Modify_rendition_data *>(modify_rendition_data_void),
+		reinterpret_cast<Rendition_command_data *>(rendition_command_data_void));
+}
+
+int gfx_modify_rendition_data_points(struct Parse_state *state,
+	void *modify_rendition_data_void,void *rendition_command_data_void)
+{
+	const char *help_text = "Deprecated; use points with domain_data option instead.";
+	return gfx_modify_rendition_graphic(state, CMISS_GRAPHIC_POINTS,
+		LEGACY_GRAPHIC_DATA_POINTS, help_text,
+		reinterpret_cast<Modify_rendition_data *>(modify_rendition_data_void),
+		reinterpret_cast<Rendition_command_data *>(rendition_command_data_void));
+}
+
+int gfx_modify_rendition_element_points(struct Parse_state *state,
+	void *modify_rendition_data_void,void *rendition_command_data_void)
+{
+	const char *help_text = "Deprecated; use points with domain_elements* option instead.";
+	return gfx_modify_rendition_graphic(state, CMISS_GRAPHIC_POINTS,
+		LEGACY_GRAPHIC_ELEMENT_POINTS, help_text,
+		reinterpret_cast<Modify_rendition_data *>(modify_rendition_data_void),
+		reinterpret_cast<Rendition_command_data *>(rendition_command_data_void));
+}
+
+int gfx_modify_rendition_iso_surfaces(struct Parse_state *state,
+	void *modify_rendition_data_void,void *rendition_command_data_void)
+{
+	const char *help_text = "Deprecated; use contours with domain_elements* option instead.";
+	return gfx_modify_rendition_graphic(state, CMISS_GRAPHIC_CONTOURS,
+		LEGACY_GRAPHIC_ISO_SURFACES, help_text,
 		reinterpret_cast<Modify_rendition_data *>(modify_rendition_data_void),
 		reinterpret_cast<Rendition_command_data *>(rendition_command_data_void));
 }
@@ -1100,7 +1189,8 @@ int gfx_modify_rendition_iso_surfaces(struct Parse_state *state,
 int gfx_modify_rendition_lines(struct Parse_state *state,
 	void *modify_rendition_data_void,void *rendition_command_data_void)
 {
-	return gfx_modify_rendition_graphic(state, CMISS_GRAPHIC_LINES, /*help_text*/(const char *)0,
+	return gfx_modify_rendition_graphic(state, CMISS_GRAPHIC_LINES,
+		LEGACY_GRAPHIC_NONE, /*help_text*/(const char *)0,
 		reinterpret_cast<Modify_rendition_data *>(modify_rendition_data_void),
 		reinterpret_cast<Rendition_command_data *>(rendition_command_data_void));
 }
@@ -1108,7 +1198,9 @@ int gfx_modify_rendition_lines(struct Parse_state *state,
 int gfx_modify_rendition_node_points(struct Parse_state *state,
 	void *modify_rendition_data_void,void *rendition_command_data_void)
 {
-	return gfx_modify_rendition_graphic(state, CMISS_GRAPHIC_NODE_POINTS, /*help_text*/(const char *)0,
+	const char *help_text = "Deprecated; use points with domain_nodes option instead.";
+	return gfx_modify_rendition_graphic(state, CMISS_GRAPHIC_POINTS,
+		LEGACY_GRAPHIC_NODE_POINTS, /*help_text*/(const char *)0,
 		reinterpret_cast<Modify_rendition_data *>(modify_rendition_data_void),
 		reinterpret_cast<Rendition_command_data *>(rendition_command_data_void));
 }
@@ -1116,7 +1208,9 @@ int gfx_modify_rendition_node_points(struct Parse_state *state,
 int gfx_modify_rendition_point(struct Parse_state *state,
 	void *modify_rendition_data_void,void *rendition_command_data_void)
 {
-	return gfx_modify_rendition_graphic(state, CMISS_GRAPHIC_POINT, /*help_text*/(const char *)0,
+	const char *help_text = "Deprecated; use points with domain_point option instead.";
+	return gfx_modify_rendition_graphic(state, CMISS_GRAPHIC_POINTS,
+		LEGACY_GRAPHIC_POINT, /*help_text*/(const char *)0,
 		reinterpret_cast<Modify_rendition_data *>(modify_rendition_data_void),
 		reinterpret_cast<Rendition_command_data *>(rendition_command_data_void));
 }
@@ -1124,7 +1218,8 @@ int gfx_modify_rendition_point(struct Parse_state *state,
 int gfx_modify_rendition_streamlines(struct Parse_state *state,
 	void *modify_rendition_data_void,void *rendition_command_data_void)
 {
-	return gfx_modify_rendition_graphic(state, CMISS_GRAPHIC_STREAMLINES, /*help_text*/(const char *)0,
+	return gfx_modify_rendition_graphic(state, CMISS_GRAPHIC_STREAMLINES,
+		LEGACY_GRAPHIC_NONE, /*help_text*/(const char *)0,
 		reinterpret_cast<Modify_rendition_data *>(modify_rendition_data_void),
 		reinterpret_cast<Rendition_command_data *>(rendition_command_data_void));
 }
@@ -1132,7 +1227,17 @@ int gfx_modify_rendition_streamlines(struct Parse_state *state,
 int gfx_modify_rendition_surfaces(struct Parse_state *state,
 	void *modify_rendition_data_void,void *rendition_command_data_void)
 {
-	return gfx_modify_rendition_graphic(state, CMISS_GRAPHIC_SURFACES, /*help_text*/(const char *)0,
+	return gfx_modify_rendition_graphic(state, CMISS_GRAPHIC_SURFACES,
+		LEGACY_GRAPHIC_NONE, /*help_text*/(const char *)0,
+		reinterpret_cast<Modify_rendition_data *>(modify_rendition_data_void),
+		reinterpret_cast<Rendition_command_data *>(rendition_command_data_void));
+}
+
+int gfx_modify_rendition_points(struct Parse_state *state,
+	void *modify_rendition_data_void,void *rendition_command_data_void)
+{
+	return gfx_modify_rendition_graphic(state, CMISS_GRAPHIC_POINTS,
+		LEGACY_GRAPHIC_NONE, /*help_text*/(const char *)0,
 		reinterpret_cast<Modify_rendition_data *>(modify_rendition_data_void),
 		reinterpret_cast<Rendition_command_data *>(rendition_command_data_void));
 }

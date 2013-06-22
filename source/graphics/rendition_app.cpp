@@ -397,6 +397,10 @@ int Cmiss_rendition_execute_command_internal(Cmiss_rendition_id rendition,
 				&rendition_command_data);
 
 			option_table = CREATE(Option_table)();
+			/* contours */
+			Option_table_add_entry(option_table, "contours",
+				(void *)&modify_rendition_data, (void *)&rendition_command_data,
+				gfx_modify_rendition_contours);
 			/* cylinders */
 			Option_table_add_entry(option_table, "cylinders",
 				(void *)&modify_rendition_data, (void *)&rendition_command_data,
@@ -428,6 +432,10 @@ int Cmiss_rendition_execute_command_internal(Cmiss_rendition_id rendition,
 			Option_table_add_entry(option_table, "point",
 				(void *)&modify_rendition_data, (void *)&rendition_command_data,
 				gfx_modify_rendition_point);
+			/* points */
+			Option_table_add_entry(option_table, "points",
+				(void *)&modify_rendition_data, (void *)&rendition_command_data,
+				gfx_modify_rendition_points);
 			/* streamlines */
 			Option_table_add_entry(option_table, "streamlines",
 				(void *)&modify_rendition_data, (void *)&rendition_command_data,
@@ -483,7 +491,7 @@ int Cmiss_rendition_add_glyph(struct Cmiss_rendition *rendition,
 				(void *)cmiss_graphic_name, rendition->list_of_graphics))
 		{
 			Cmiss_rendition_begin_change(rendition);
-			Cmiss_graphic *graphic = Cmiss_rendition_create_graphic(rendition, CMISS_GRAPHIC_POINT);
+			Cmiss_graphic *graphic = Cmiss_graphic_points_base_cast(Cmiss_rendition_create_graphic_points(rendition));
 			Cmiss_graphic_set_name(graphic, cmiss_graphic_name);
 			Cmiss_graphic_point_attributes_id point_attributes = Cmiss_graphic_get_point_attributes(graphic);
 			Cmiss_graphic_point_attributes_set_glyph(point_attributes, reinterpret_cast<Cmiss_glyph_id>(glyph));

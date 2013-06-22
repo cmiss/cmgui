@@ -123,8 +123,7 @@ changes in node position and derivatives etc.
 	struct Execute_command *execute_command;
 	struct MANAGER(Interactive_tool) *interactive_tool_manager;
 	struct Interactive_tool *interactive_tool;
-	/* flag indicating that the above manager is actually the data manager */
-	int use_data;
+	Cmiss_field_domain_type domain_type; // nodes or data
 	/* The root region */
 	struct Cmiss_region *root_region;
 	/* The region we are working in */
@@ -257,15 +256,15 @@ static int Node_tool_refresh_element_dimension_text(
 	 struct Node_tool *node_tool);
 #endif /*defined (WX_USER_INTERFACE)*/
 
-static int Cmiss_field_group_destroy_all_nodes(Cmiss_field_group_id group, void *use_data_address_void)
+static int Cmiss_field_group_destroy_all_nodes(Cmiss_field_group_id group, void *domain_type_address_void)
 {
 	int return_code = 0;
-	int *use_data_address = (int *)use_data_address_void;
-	if (group && use_data_address)
+	Cmiss_field_domain_type *domain_type_address = (Cmiss_field_domain_type *)domain_type_address_void;
+	if (group && domain_type_address)
 	{
 		Cmiss_field_module_id field_module = Cmiss_field_get_field_module(Cmiss_field_group_base_cast(group));
-		Cmiss_nodeset_id master_nodeset = Cmiss_field_module_find_nodeset_by_name(
-			field_module, (*use_data_address) ? "cmiss_data" : "cmiss_nodes");
+		Cmiss_nodeset_id master_nodeset =
+			Cmiss_field_module_find_nodeset_by_domain_type(field_module, *domain_type_address);
 		Cmiss_field_node_group_id node_group = Cmiss_field_group_get_node_group(group, master_nodeset);
 		Cmiss_nodeset_destroy(&master_nodeset);
 		if (node_group)
@@ -293,8 +292,8 @@ int Node_tool_destroy_selected_nodes(struct Node_tool *node_tool)
 		if (selection_group)
 		{
 			Cmiss_field_group_for_each_group_hierarchical(selection_group,
-				Cmiss_field_group_destroy_all_nodes, (void *)&(node_tool->use_data));
-			if (node_tool->use_data)
+				Cmiss_field_group_destroy_all_nodes, (void *)&(node_tool->domain_type));
+			if (node_tool->domain_type == CMISS_FIELD_DOMAIN_DATA)
 			{
 				Cmiss_field_group_clear_region_tree_data(selection_group);
 			}
@@ -1180,21 +1179,18 @@ try to enforce that the node is created on that element.
 ==============================================================================*/
 {
 	double d,LU_transformation_matrix[16],node_coordinates[3];
-	enum  Cmiss_graphic_type cmiss_graphic_type;
 	FE_value coordinates[3];
 	int i,LU_indx[4],node_number,transformation_required;
 	struct Computed_field *rc_coordinate_field,*node_tool_coordinate_field;
 	struct FE_node *merged_node, *node;
-	struct Cmiss_rendition *rendition;
-	struct Cmiss_graphic *graphic;
 	struct Scene_picked_object *scene_picked_object;
 
 	ENTER(Node_tool_create_node_at_interaction_volume);
 	USE_PARAMETER(scene);
 	merged_node = (struct FE_node *)NULL;
 	scene_picked_object=(struct Scene_picked_object *)NULL;
-	rendition=(struct Cmiss_rendition *)NULL;
-	graphic=(struct Cmiss_graphic *)NULL;
+	Cmiss_rendition *rendition = 0;
+	Cmiss_graphic *graphic = 0;
 	if (!node_tool || !interaction_volume)
 	{
 		display_message(ERROR_MESSAGE,
@@ -1217,20 +1213,22 @@ try to enforce that the node is created on that element.
 			Cmiss_field_module_id field_module = Cmiss_region_get_field_module(node_tool->region);
 			Cmiss_field_module_begin_change(field_module);
 			Cmiss_field_cache_id field_cache = Cmiss_field_module_create_cache(field_module);
-			if (node_tool->use_data)
-			{
-				cmiss_graphic_type=CMISS_GRAPHIC_DATA_POINTS;
-			}
-			else
-			{
-				cmiss_graphic_type=CMISS_GRAPHIC_NODE_POINTS;
-			}
 			node_tool_coordinate_field=node_tool->coordinate_field;
 			rendition = Cmiss_region_get_rendition_internal(node_tool->region);
 			if (scene && rendition)
 			{
-				graphic = first_graphic_in_Cmiss_rendition_that(
-					rendition, Cmiss_graphic_type_matches,	(void*)cmiss_graphic_type);
+				graphic = Cmiss_rendition_get_first_graphic(rendition);
+				while (graphic)
+				{
+					if ((CMISS_GRAPHIC_POINTS == Cmiss_graphic_get_graphic_type(graphic)) &&
+						(Cmiss_graphic_get_domain_type(graphic) == node_tool->domain_type))
+					{
+						break;
+					}
+					Cmiss_graphic_id ref_graphic = graphic;
+					graphic = Cmiss_rendition_get_next_graphic(rendition, ref_graphic);
+					Cmiss_graphic_destroy(&ref_graphic);
+				}
 				scene_picked_object=CREATE(Scene_picked_object)(/*hit_no*/0);
 				if (scene_picked_object != 0)
 				{
@@ -1314,8 +1312,8 @@ try to enforce that the node is created on that element.
 						if (node_tool->group_field)
 						{
 							Cmiss_field_module_id field_module = Cmiss_region_get_field_module(node_tool->region);
-							Cmiss_nodeset_id master_nodeset = Cmiss_field_module_find_nodeset_by_name(field_module,
-								node_tool->use_data ? "cmiss_data" : "cmiss_nodes");
+							Cmiss_nodeset_id master_nodeset =
+								Cmiss_field_module_find_nodeset_by_domain_type(field_module, node_tool->domain_type);
 							Cmiss_field_module_begin_change(field_module);
 							Cmiss_field_node_group_id modify_node_group =
 								Cmiss_field_group_get_node_group(node_tool->group_field, master_nodeset);
@@ -1354,11 +1352,8 @@ try to enforce that the node is created on that element.
 		if ((!merged_node) || (!scene_picked_object) || (!rendition))
 		{
 			scene_picked_object=(struct Scene_picked_object *)NULL;
-			if (rendition)
-			{
-				Cmiss_rendition_destroy(&rendition);
-			}
-			graphic=(struct Cmiss_graphic *)NULL;
+			Cmiss_rendition_destroy(&rendition);
+			Cmiss_graphic_destroy(&graphic);
 		}
 		REACCESS(Cmiss_rendition)(&(node_tool->rendition),
 			rendition);
@@ -1416,8 +1411,8 @@ int Node_tool_set_picked_node(struct Node_tool *node_tool, struct FE_node *picke
 			Cmiss_field_group_id selection_group = Cmiss_rendition_get_or_create_selection_group(node_tool->rendition);
 			if (selection_group)
 			{
-				Cmiss_nodeset_id master_nodeset = Cmiss_field_module_find_nodeset_by_name(
-					field_module, node_tool->use_data ? "cmiss_data" : "cmiss_nodes");
+				Cmiss_nodeset_id master_nodeset = Cmiss_field_module_find_nodeset_by_domain_type(
+					field_module, node_tool->domain_type);
 				if (master_nodeset)
 				{
 					Cmiss_field_node_group_id node_group = Cmiss_field_group_get_node_group(selection_group, master_nodeset);
@@ -1458,7 +1453,6 @@ of space affected by the interaction. Main events are button press, movement and
 release.
 ==============================================================================*/
 {
-	double d;
 	enum Interactive_event_type event_type;
 	FE_value time;
 	int clear_selection,input_modifier,return_code,shift_pressed;
@@ -1499,7 +1493,7 @@ release.
 						nearest_element = (struct FE_element *)NULL;
 						if (node_tool->select_enabled)
 						{
-							if (node_tool->use_data)
+							if (node_tool->domain_type == CMISS_FIELD_DOMAIN_DATA)
 							{
 								picked_node = Cmiss_scene_picker_get_nearest_data(scene_picker);
 								nearest_node_graphic = Cmiss_scene_picker_get_nearest_data_graphic(scene_picker);
@@ -1536,8 +1530,8 @@ release.
 							Cmiss_field_group_id selection_group = Cmiss_rendition_get_selection_group(rendition);
 							if (selection_group)
 							{
-								Cmiss_nodeset_id master_nodeset = Cmiss_field_module_find_nodeset_by_name(
-									field_module, node_tool->use_data ? "cmiss_data" : "cmiss_nodes");
+								Cmiss_nodeset_id master_nodeset = Cmiss_field_module_find_nodeset_by_domain_type(
+									field_module, node_tool->domain_type);
 								Cmiss_field_node_group_id node_group = Cmiss_field_group_get_node_group(selection_group, master_nodeset);
 								Cmiss_nodeset_destroy(&master_nodeset);
 								if (node_group)
@@ -1619,7 +1613,7 @@ release.
 								Cmiss_field_group_id root_group = Cmiss_rendition_get_selection_group(root_rendition);
 								if (root_group)
 								{
-									if (!node_tool->use_data)
+									if (node_tool->domain_type == CMISS_FIELD_DOMAIN_NODES)
 										Cmiss_field_group_clear_region_tree_node(root_group);
 									else
 										Cmiss_field_group_clear_region_tree_data(root_group);
@@ -1801,8 +1795,8 @@ release.
 									Cmiss_field_group_id selection_group = Cmiss_rendition_get_selection_group(node_tool->rendition);
 									if (node_tool->rendition && selection_group)
 									{
-										Cmiss_nodeset_id master_nodeset = Cmiss_field_module_find_nodeset_by_name(
-											field_module, node_tool->use_data ? "cmiss_data" : "cmiss_nodes");
+										Cmiss_nodeset_id master_nodeset = Cmiss_field_module_find_nodeset_by_domain_type(
+											field_module, node_tool->domain_type);
 										edit_info.fe_region=Cmiss_region_get_FE_region(temp_region);
 										Cmiss_field_node_group_id node_group = Cmiss_field_group_get_node_group(selection_group, master_nodeset);
 										Cmiss_nodeset_destroy(&master_nodeset);
@@ -1883,7 +1877,7 @@ release.
 									struct LIST(FE_node) *temp_node_list = CREATE(LIST(FE_node))();
 									ADD_OBJECT_TO_LIST(FE_node)(node_tool->last_picked_node, temp_node_list);
 									Cmiss_rendition_remove_selection_from_node_list(node_tool->rendition,
-										temp_node_list, node_tool->use_data);
+										temp_node_list, (node_tool->domain_type == CMISS_FIELD_DOMAIN_DATA));
 									DESTROY(LIST(FE_node))(&temp_node_list);
 								}
 							}
@@ -1932,7 +1926,7 @@ release.
 											Cmiss_rendition_get_or_create_selection_group(region_rendition);
 										if (selection_group)
 										{
-											if (node_tool->use_data)
+											if (node_tool->domain_type == CMISS_FIELD_DOMAIN_DATA)
 												Cmiss_scene_picker_add_picked_data_to_group(scene_picker, selection_group);
 											else
 												Cmiss_scene_picker_add_picked_nodes_to_group(scene_picker, selection_group);
@@ -2127,7 +2121,7 @@ public:
 		second_element_staticbox = XRCCTRL(*this, "SecondElementStaticBox",wxWindow);
 
 		Title = XRCCTRL(*this,"NodeSizer",wxWindow);
-		if (node_tool->use_data)
+		if (node_tool->domain_type == CMISS_FIELD_DOMAIN_DATA)
 		{
 			 Title->SetLabel(wxT("Data Tool"));
 			 create_elements_checkbox->Hide();
@@ -2431,7 +2425,8 @@ Set the selected option in the Coordinate Field chooser.
 				if (selection_group)
 				{
 					node_list = FE_node_list_from_region_and_selection_group(
-						node_tool->region, NULL, Cmiss_field_group_base_cast(selection_group), NULL, 0, node_tool->use_data);
+						node_tool->region, NULL, Cmiss_field_group_base_cast(selection_group),
+						NULL, 0, (node_tool->domain_type == CMISS_FIELD_DOMAIN_DATA));
 					FE_region_begin_change(node_tool->fe_region);
 					FE_region_undefine_FE_field_in_FE_node_list(
 						node_tool->fe_region, fe_field, node_list, &number_in_elements);
@@ -2749,7 +2744,7 @@ Copies the state of one node tool to another.
 			destination_node_tool = CREATE(Node_tool)(
 				destination_tool_manager,
 				source_node_tool->root_region,
-				source_node_tool->use_data,
+				source_node_tool->domain_type,
 				source_node_tool->rubber_band_material,
 				source_node_tool->user_interface,
 				source_node_tool->time_keeper_app);
@@ -2920,8 +2915,8 @@ static void Node_tool_Computed_field_change(
 			{
 				Cmiss_field_module_id field_module = Cmiss_region_get_field_module(node_tool->region);
 				Cmiss_field_node_group_id node_group = NULL;
-				Cmiss_nodeset_id master_nodeset = Cmiss_field_module_find_nodeset_by_name(
-					field_module, node_tool->use_data ? "cmiss_data" : "cmiss_nodes");
+				Cmiss_nodeset_id master_nodeset = Cmiss_field_module_find_nodeset_by_domain_type(
+					field_module, node_tool->domain_type);
 				Cmiss_field_module_destroy(&field_module);
 				node_group = Cmiss_field_group_get_node_group(selection_group, master_nodeset);
 				Cmiss_nodeset_destroy(&master_nodeset);
@@ -3149,7 +3144,7 @@ in this region only.
 			if (region)
 			{
 				node_tool->fe_region = Cmiss_region_get_FE_region(region);
-				if (node_tool->use_data)
+				if (node_tool->domain_type == CMISS_FIELD_DOMAIN_DATA)
 				{
 					node_tool->fe_region = FE_region_get_data_FE_region(node_tool->fe_region);
 				}
@@ -3209,19 +3204,10 @@ in this region only.
 
 struct Node_tool *CREATE(Node_tool)(
 	struct MANAGER(Interactive_tool) *interactive_tool_manager,
-	struct Cmiss_region *root_region, int use_data,
+	struct Cmiss_region *root_region, Cmiss_field_domain_type domain_type,
 	struct Graphical_material *rubber_band_material,
 	struct User_interface *user_interface,
 	struct Time_keeper_app *time_keeper_app)
-/*******************************************************************************
-LAST MODIFIED : 17 May 2003
-
-DESCRIPTION :
-Creates a Node_tool for editing nodes/data in the <node_manager>.
-The <use_data> flag indicates to use data, and that the selection
-refers to data, not nodes; needed since different GT_element_settings types are
-used to represent them. <element_manager> should be NULL if <use_data> is true.
-==============================================================================*/
 {
 	char *initial_path;
 	const char *tool_display_name,*tool_name;
@@ -3244,7 +3230,7 @@ used to represent them. <element_manager> should be NULL if <use_data> is true.
 			node_tool->region=(struct Cmiss_region *)NULL;
 			node_tool->group_field = (Cmiss_field_group_id)NULL;
 			node_tool->fe_region=(struct FE_region *)NULL;
-			node_tool->use_data = use_data;
+			node_tool->domain_type = domain_type;
 			node_tool->rubber_band_material=
 				Cmiss_graphics_material_access(rubber_band_material);
 			node_tool->user_interface=user_interface;
@@ -3278,7 +3264,7 @@ used to represent them. <element_manager> should be NULL if <use_data> is true.
 			node_tool->command_field = (struct Computed_field *)NULL;
 			node_tool->element_xi_field = (struct Computed_field *)NULL;
 			/* interactive_tool */
-			if (use_data)
+			if (node_tool->domain_type == CMISS_FIELD_DOMAIN_DATA)
 			{
 				tool_name="data_tool";
 				tool_display_name="Data tool";
@@ -4462,7 +4448,7 @@ Which tool that is being modified is passed in <node_tool_void>.
 		region = NULL;
 		group = NULL;
 #if defined (WX_USER_INTERFACE)
-		if (node_tool && !node_tool->use_data)
+		if (node_tool && (node_tool->domain_type == CMISS_FIELD_DOMAIN_NODES))
 		{
 			element_create_enabled = 0;
 			element_dimension = 2;
@@ -4495,7 +4481,7 @@ Which tool that is being modified is passed in <node_tool_void>.
 				xi_field_name = Cmiss_field_get_name(element_xi_field);
 			}
 #if defined (WX_USER_INTERFACE)
-		if (node_tool && !node_tool->use_data)
+		if (node_tool && (node_tool->domain_type == CMISS_FIELD_DOMAIN_NODES))
 		{
 			 element_create_enabled = Node_tool_get_element_create_enabled(node_tool);
 			 element_dimension =
@@ -4519,7 +4505,7 @@ Which tool that is being modified is passed in <node_tool_void>.
 		/* define/no_define */
 		Option_table_add_switch(option_table,"define","no_define",&define_enabled);
 #if defined (WX_USER_INTERFACE)
-		if (node_tool && !node_tool->use_data)
+		if (node_tool && (node_tool->domain_type == CMISS_FIELD_DOMAIN_NODES))
 		{
 			 /* create/no_create */
 			 Option_table_add_switch(option_table,"element_create","no_element_create",&element_create_enabled);
@@ -4619,7 +4605,7 @@ Which tool that is being modified is passed in <node_tool_void>.
 				Node_tool_set_constrain_to_surface(node_tool,constrain_to_surface);
 				Node_tool_set_motion_update_enabled(node_tool,motion_update_enabled);
 #if defined (WX_USER_INTERFACE)
-				if (!node_tool->use_data)
+				if (node_tool->domain_type == CMISS_FIELD_DOMAIN_NODES)
 				{
 					Node_tool_set_element_dimension(node_tool,element_dimension);
 					Node_tool_set_element_create_enabled(node_tool,element_create_enabled);
