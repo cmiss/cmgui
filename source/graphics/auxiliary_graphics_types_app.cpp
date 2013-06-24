@@ -1,6 +1,6 @@
 
 
-#include "zinc/types/graphicid.h"
+#include "zinc/types/elementid.h"
 
 #include "command/parser.h"
 
