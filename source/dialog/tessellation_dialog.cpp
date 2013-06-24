@@ -141,7 +141,7 @@ void TessellationItem::update_divisions_string_for_dialog()
 	}
 	else
 	{
-		temp.Printf("%s", wxString::FromAscii("0"));
+		temp.Printf(wxString::FromAscii("%s"), wxString::FromAscii("0"));
 	}
 	divisionsTextCtrl->ChangeValue(temp);
 }
@@ -168,7 +168,7 @@ void TessellationItem::update_refinement_string_for_dialog()
 	}
 	else
 	{
-		temp.Printf("%s", wxString::FromAscii("0"));
+		temp.Printf(wxString::FromAscii("%s"), wxString::FromAscii("0"));
 	}
 	refinementTextCtrl->ChangeValue(temp);
 }
