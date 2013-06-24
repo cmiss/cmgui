@@ -107,17 +107,6 @@ enum
 	CmguiTree_MenuItem2,
 	CmguiTree_MenuItem3,
 	CmguiTree_MenuItem4,
-	/*
-	AddMenuItemNode,
-	AddMenuItemData,
-	AddMenuItemLines,
-	AddMenuItemCylinders,
-	AddMenuItemSurfaces,
-	AddMenuItemIsoSurfaces,
-	AddMenuItemElement,
-	AddMenuItemStreamlines,
-	AddMenuItemStaticGraphic,
-	*/
 	CmguiTree_Ctrl = 1000
 };
 
@@ -4303,17 +4292,6 @@ BEGIN_EVENT_TABLE(wxRegionTreeViewer, wxFrame)
 	EVT_BUTTON(XRCID("TessellationButton"),wxRegionTreeViewer::EditTessellation)
 	EVT_MENU(CmguiTree_MenuItem1, wxRegionTreeViewer::OnMenuSelectionOn)
 	EVT_MENU(CmguiTree_MenuItem2, wxRegionTreeViewer::OnMenuSelectionOff)
-/*
-	EVT_MENU(AddMenuItemNode, wxRegionTreeViewer::AddGraphicItemFromMenu)
-	EVT_MENU(AddMenuItemData, wxRegionTreeViewer::AddGraphicItemFromMenu)
-	EVT_MENU(AddMenuItemLines, wxRegionTreeViewer::AddGraphicItemFromMenu)
-	EVT_MENU(AddMenuItemCylinders, wxRegionTreeViewer::AddGraphicItemFromMenu)
-	EVT_MENU(AddMenuItemSurfaces, wxRegionTreeViewer::AddGraphicItemFromMenu)
-	EVT_MENU(AddMenuItemIsoSurfaces, wxRegionTreeViewer::AddGraphicItemFromMenu)
-	EVT_MENU(AddMenuItemElement, wxRegionTreeViewer::AddGraphicItemFromMenu)
-	EVT_MENU(AddMenuItemStreamlines, wxRegionTreeViewer::AddGraphicItemFromMenu)
-	EVT_MENU(AddMenuItemStaticGraphic, wxRegionTreeViewer::AddGraphicItemFromMenu)
-*/
 #if defined (__WXMSW__)
 	EVT_SIZE(wxRegionTreeViewer::FrameGetSize)
 #endif /*!defined (__WXMSW__)*/
