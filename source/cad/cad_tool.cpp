@@ -292,31 +292,6 @@ static void Cad_tool_interactive_event_handler(void *device_id,
 								create_Interaction_volume_bounding_box(
 								cad_tool->last_interaction_volume,interaction_volume)))
 							{
-								if (INTERACTIVE_EVENT_MOTION_NOTIFY==event_type)
-								{
-									if (!cad_tool->rubber_band)
-									{
-										/* create rubber_band object and put in scene */
-										cad_tool->rubber_band=CREATE(GT_object)(
-											"cad_tool_rubber_band",g_POLYLINE,
-											cad_tool->rubber_band_material);
-										ACCESS(GT_object)(cad_tool->rubber_band);
-#if defined (USE_SCENE_OBJECT)
-										Scene_add_graphics_object(scene,cad_tool->rubber_band,
-											/*position*/0,"cad_tool_rubber_band",
-											/*fast_changing*/1);
-#endif
-									}
-									Interaction_volume_make_polyline_extents(
-										temp_interaction_volume,cad_tool->rubber_band);
-								}
-								else
-								{
-#if defined (USE_SCENE_OBJECT)
-									Scene_remove_graphics_object(scene,cad_tool->rubber_band);
-#endif
-									DEACCESS(GT_object)(&(cad_tool->rubber_band));
-								}
 								if (INTERACTIVE_EVENT_BUTTON_RELEASE==event_type)
 								{
 									if (NULL != (scene_picked_object_list=

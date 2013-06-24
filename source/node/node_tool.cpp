@@ -1183,12 +1183,10 @@ try to enforce that the node is created on that element.
 	int i,LU_indx[4],node_number,transformation_required;
 	struct Computed_field *rc_coordinate_field,*node_tool_coordinate_field;
 	struct FE_node *merged_node, *node;
-	struct Scene_picked_object *scene_picked_object;
 
 	ENTER(Node_tool_create_node_at_interaction_volume);
 	USE_PARAMETER(scene);
 	merged_node = (struct FE_node *)NULL;
-	scene_picked_object=(struct Scene_picked_object *)NULL;
 	Cmiss_rendition *rendition = 0;
 	Cmiss_graphic *graphic = 0;
 	if (!node_tool || !interaction_volume)
@@ -1229,15 +1227,6 @@ try to enforce that the node is created on that element.
 					graphic = Cmiss_rendition_get_next_graphic(rendition, ref_graphic);
 					Cmiss_graphic_destroy(&ref_graphic);
 				}
-				scene_picked_object=CREATE(Scene_picked_object)(/*hit_no*/0);
-				if (scene_picked_object != 0)
-				{
-					Scene_picked_object_add_rendition(scene_picked_object, rendition);
-				}
-			}
-			else
-			{
-				scene_picked_object=(struct Scene_picked_object *)NULL;
 			}
 			rc_coordinate_field=
 				Computed_field_begin_wrap_coordinate_field(node_tool_coordinate_field);
@@ -1276,15 +1265,6 @@ try to enforce that the node is created on that element.
 				for (i=0;i<3;i++)
 				{
 					coordinates[i]=(FE_value)node_coordinates[i];
-				}
-				if (scene_picked_object&&
-					Scene_picked_object_get_total_transformation_matrix(
-						scene_picked_object,&transformation_required,
-						LU_transformation_matrix)&&transformation_required&&
-					LU_decompose(4,LU_transformation_matrix,LU_indx,&d,/*singular_tolerance*/1.0e-12))
-				{
-					world_to_model_coordinates(coordinates,
-						LU_transformation_matrix,LU_indx);
 				}
 				node = CREATE(FE_node)(node_number, node_tool->fe_region, /*template*/(struct FE_node *)NULL);
 				if (!node)
@@ -1349,9 +1329,8 @@ try to enforce that the node is created on that element.
 	if (node_tool)
 	{
 		/* only need following if editing; in which case need all of them */
-		if ((!merged_node) || (!scene_picked_object) || (!rendition))
+		if ((!merged_node) || (!rendition))
 		{
-			scene_picked_object=(struct Scene_picked_object *)NULL;
 			Cmiss_rendition_destroy(&rendition);
 			Cmiss_graphic_destroy(&graphic);
 		}
@@ -1771,7 +1750,7 @@ release.
 									Cmiss_field_destroy(&signed_scale_field);
 									Cmiss_graphic_point_attributes_destroy(&point_attributes);
 								}
-								/* work out scene_object transformation information */
+								/* work out transformation information */
 								/* best we can do is use world coordinates;
 								 * will look wrong if nodes drawn with a transformation */
 								edit_info.transformation_required=0;

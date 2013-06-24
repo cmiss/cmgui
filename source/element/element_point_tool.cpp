@@ -328,27 +328,23 @@ release.
 									interaction_volume);
 							if (temp_interaction_volume != 0)
 							{
-								if (INTERACTIVE_EVENT_MOTION_NOTIFY==event_type)
-								{
-									if (!element_point_tool->rubber_band)
-									{
-										/* create rubber_band object and put in scene */
-										element_point_tool->rubber_band=CREATE(GT_object)(
-											"element_point_tool_rubber_band",g_POLYLINE,
-											element_point_tool->rubber_band_material);
-										ACCESS(GT_object)(element_point_tool->rubber_band);
-									}
-									Interaction_volume_make_polyline_extents(
-										temp_interaction_volume,element_point_tool->rubber_band);
-								}
-								else
-								{
-#if defined (USE_SCENE_OBJECTS)
-									Scene_remove_graphics_object(scene,
-										element_point_tool->rubber_band);
-#endif
-									DEACCESS(GT_object)(&(element_point_tool->rubber_band));
-								}
+//								if (INTERACTIVE_EVENT_MOTION_NOTIFY==event_type)
+//								{
+//									if (!element_point_tool->rubber_band)
+//									{
+//										/* create rubber_band object and put in scene */
+//										element_point_tool->rubber_band=CREATE(GT_object)(
+//											"element_point_tool_rubber_band",g_POLYLINE,
+//											element_point_tool->rubber_band_material);
+//										ACCESS(GT_object)(element_point_tool->rubber_band);
+//									}
+//									Interaction_volume_make_polyline_extents(
+//										temp_interaction_volume,element_point_tool->rubber_band);
+//								}
+//								else
+//								{
+//									DEACCESS(GT_object)(&(element_point_tool->rubber_band));
+//								}
 								if (INTERACTIVE_EVENT_BUTTON_RELEASE==event_type)
 								{
 									scene_picked_object_list=

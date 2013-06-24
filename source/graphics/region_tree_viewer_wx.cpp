@@ -4397,7 +4397,7 @@ int Region_tree_viewer_revert_changes(Region_tree_viewer *region_tree_viewer)
 *this also change the current field manager in scene editor.
 *
 * @param region_tree_viewer scene editor to be modified
-* @param scene_object Currently active object
+* @param rendition Currently active rendition
 */
 
 void Region_tree_viewer_set_active_rendition(

@@ -10396,7 +10396,6 @@ DESCRIPTION :
 Executes a GFX LIST TRANSFORMATION.
 ==============================================================================*/
 {
-	//char *command_prefix,commands_flag,*scene_name,*scene_object_name;
 	char commands_flag,*region_name = NULL;
 	int return_code;
 	struct Cmiss_command_data *command_data;

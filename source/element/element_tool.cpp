@@ -313,13 +313,6 @@ release.
 						{
 							element_tool->picked_element_was_unselected=1;
 							picked_element = Cmiss_scene_picker_get_nearest_element(scene_picker);
-						/*	picked_element=Scene_picked_object_list_get_nearest_element(
-															scene_picked_object_list,(struct Cmiss_region *)NULL,
-															element_tool->select_elements_enabled,
-															element_tool->select_faces_enabled,
-															element_tool->select_lines_enabled,
-															(struct Scene_picked_object **)NULL,
-															&rendition,	(struct Cmiss_graphic **)NULL);*/
 							if (0 != picked_element)
 							{
 								/* Open command_field of picked_element in browser */
@@ -489,27 +482,24 @@ release.
 								element_tool->last_interaction_volume,interaction_volume);
 							if (temp_interaction_volume != 0)
 							{
-								if (INTERACTIVE_EVENT_MOTION_NOTIFY==event_type)
-								{
-									if (!element_tool->rubber_band)
-									{
-										/* create rubber_band object and put in scene */
-										element_tool->rubber_band=CREATE(GT_object)(
-											"element_tool_rubber_band",g_POLYLINE,
-											element_tool->rubber_band_material);
-										ACCESS(GT_object)(element_tool->rubber_band);
-									}
-									Interaction_volume_make_polyline_extents(
-										temp_interaction_volume,element_tool->rubber_band);
-								}
-								else
-								{
-#if defined (USE_SCENE_OBJECT)
-									Scene_remove_graphics_object(scene,element_tool->rubber_band);
-#endif
-									DEACCESS(GT_object)(&(element_tool->rubber_band));
-								}
-								if (INTERACTIVE_EVENT_BUTTON_RELEASE==event_type)
+//								if (INTERACTIVE_EVENT_MOTION_NOTIFY==event_type)
+//								{
+//									if (!element_tool->rubber_band)
+//									{
+//										/* create rubber_band object and put in scene */
+//										element_tool->rubber_band=CREATE(GT_object)(
+//											"element_tool_rubber_band",g_POLYLINE,
+//											element_tool->rubber_band_material);
+//										ACCESS(GT_object)(element_tool->rubber_band);
+//									}
+//									Interaction_volume_make_polyline_extents(
+//										temp_interaction_volume,element_tool->rubber_band);
+//								}
+//								else
+//								{
+//									DEACCESS(GT_object)(&(element_tool->rubber_band));
+//								}
+//								if (INTERACTIVE_EVENT_BUTTON_RELEASE==event_type)
 								{
 									Cmiss_scene_picker_set_interaction_volume(scene_picker,
 										temp_interaction_volume);
