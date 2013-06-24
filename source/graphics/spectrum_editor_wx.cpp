@@ -147,8 +147,7 @@ a complete copy of <Spectrum>.
 			spectrum_editor->spectrum_overwrite_colour_radiobox->SetSelection(
 				 Spectrum_get_opaque_colour_flag(spectrum_editor->edit_spectrum));
 			set_GT_object_Spectrum(spectrum_editor->graphics_object,
-				(void *)spectrum_editor->edit_spectrum);
-
+				spectrum_editor->edit_spectrum);
 			return_code=1;
 		}
 		else

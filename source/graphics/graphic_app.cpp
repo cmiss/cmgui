@@ -279,10 +279,11 @@ int gfx_modify_rendition_graphic(struct Parse_state *state,
 	/* domain type */
 	Cmiss_field_domain_type domain_type = Cmiss_graphic_get_domain_type(graphic);
 	const char *domain_type_string = ENUMERATOR_STRING(Cmiss_field_domain_type)(domain_type);
-	if ((graphic_type != CMISS_GRAPHIC_LINES) &&
-		(graphic_type != CMISS_GRAPHIC_CYLINDERS) &&
-		(graphic_type != CMISS_GRAPHIC_SURFACES) &&
-		(legacy_graphic_type != LEGACY_GRAPHIC_NONE))
+	if ((legacy_graphic_type != LEGACY_GRAPHIC_POINT) &&
+		(legacy_graphic_type != LEGACY_GRAPHIC_NODE_POINTS) &&
+		(legacy_graphic_type != LEGACY_GRAPHIC_DATA_POINTS) &&
+		(legacy_graphic_type != LEGACY_GRAPHIC_ELEMENT_POINTS) &&
+		(legacy_graphic_type != LEGACY_GRAPHIC_ISO_SURFACES))
 	{
 		valid_strings = ENUMERATOR_GET_VALID_STRINGS(Cmiss_field_domain_type)(
 			&number_of_valid_strings,
