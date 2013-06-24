@@ -377,7 +377,7 @@ int gfx_define_graphics_filter(struct Parse_state *state, void *root_region_void
 				return_code = gfx_define_graphics_filter_contents(state, (void *)&graphics_filter, (void*)&filter_data);
 				if (return_code)
 				{
-					Cmiss_graphics_filter_set_managed(graphics_filter, 1);
+					Cmiss_graphics_filter_set_managed(graphics_filter, true);
 					if (!existing_filter)
 						Cmiss_graphics_filter_set_name(graphics_filter, current_token);
 				}

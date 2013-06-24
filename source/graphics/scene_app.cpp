@@ -232,9 +232,9 @@ int define_Scene(struct Parse_state *state, void *dummy_to_be_modified,
 				shift_Parse_state(state,1);
 				if (scene)
 				{
-					// set managed state for all tessellations created or edited otherwise
+					// set managed state for all scene created or edited otherwise
 					// cleaned up at end of command.
-					Cmiss_scene_set_managed(scene, 1);
+					Cmiss_scene_set_managed(scene, true);
 					return_code = define_Scene_contents(state, (void *)scene, define_scene_data_void);
 				}
 				Cmiss_scene_destroy(&scene);

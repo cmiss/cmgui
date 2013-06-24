@@ -85,7 +85,7 @@ If the material already exists, then behaves like gfx modify material.
 						}
 						if (material_is_new)
 						{
-							Cmiss_graphics_material_set_managed(material, 1);
+							Cmiss_graphics_material_set_managed(material, true);
 							ADD_OBJECT_TO_MANAGER(Graphical_material)(material,
 								Cmiss_graphics_material_module_get_manager(material_module));
 						}
