@@ -1221,16 +1221,16 @@ int domain_type_callback(enum Cmiss_field_domain_type domain_type)
 		facecheckbox->Enable();
 		Cmiss_graphic_set_exterior(region_tree_viewer->current_graphic,
 			exteriorcheckbox->IsChecked());
-		Cmiss_graphic_face_type face;
+		Cmiss_element_face_type face;
 		if (facecheckbox->IsChecked())
 		{
 			facechoice->Enable();
-			face = static_cast<Cmiss_graphic_face_type>(facechoice->GetSelection() + CMISS_GRAPHIC_FACE_XI1_0);
+			face = static_cast<Cmiss_element_face_type>(facechoice->GetSelection() + CMISS_ELEMENT_FACE_XI1_0);
 		}
 		else
 		{
 			facechoice->Disable();
-			face= CMISS_GRAPHIC_FACE_ALL;
+			face= CMISS_ELEMENT_FACE_ALL;
 		}
 		Cmiss_graphic_set_face(region_tree_viewer->current_graphic,face);
 	}
@@ -2859,19 +2859,19 @@ void ExteriorChecked(wxCommandEvent &event)
 
 void FaceChecked(wxCommandEvent &event)
 {
-	Cmiss_graphic_face_type face;
+	Cmiss_element_face_type face;
 	USE_PARAMETER(event);
 	facecheckbox=XRCCTRL(*this, "FaceCheckBox",wxCheckBox);
 	facechoice=XRCCTRL(*this, "FaceChoice",wxChoice);
 	if (facecheckbox->IsChecked())
 	{
 		facechoice->Enable();
-		face = static_cast<Cmiss_graphic_face_type>(facechoice->GetSelection() + CMISS_GRAPHIC_FACE_XI1_0);
+		face = static_cast<Cmiss_element_face_type>(facechoice->GetSelection() + CMISS_ELEMENT_FACE_XI1_0);
 	}
 	else
 	{
 		facechoice->Disable();
-		face = CMISS_GRAPHIC_FACE_ALL;
+		face = CMISS_ELEMENT_FACE_ALL;
 	}
 	Cmiss_graphic_set_face(region_tree_viewer->current_graphic,face);
 	Region_tree_viewer_autoapply(region_tree_viewer->rendition,
@@ -2881,10 +2881,10 @@ void FaceChecked(wxCommandEvent &event)
 
 void FaceChosen(wxCommandEvent &event)
 {
-	Cmiss_graphic_face_type face;
+	Cmiss_element_face_type face;
 	USE_PARAMETER(event);
 	facechoice=XRCCTRL(*this, "FaceChoice",wxChoice);
-	face = static_cast<Cmiss_graphic_face_type>(facechoice->GetSelection() + CMISS_GRAPHIC_FACE_XI1_0);
+	face = static_cast<Cmiss_element_face_type>(facechoice->GetSelection() + CMISS_ELEMENT_FACE_XI1_0);
 	Cmiss_graphic_set_face(region_tree_viewer->current_graphic, face);
 	Region_tree_viewer_autoapply(region_tree_viewer->rendition,
 		region_tree_viewer->edit_rendition);
@@ -2902,7 +2902,7 @@ void SetBothMaterialChooser(Cmiss_graphic *graphic)
 void SetGraphic(Cmiss_graphic *graphic)
 {
 	int error, reverse_track,line_width;
-	Cmiss_graphic_face_type face = CMISS_GRAPHIC_FACE_INVALID;
+	Cmiss_element_face_type face = CMISS_ELEMENT_FACE_INVALID;
 	char temp_string[50], *vector_temp_string;
 	struct Computed_field *xi_point_density_field, *stream_vector_field,
 		*texture_coord_field;
@@ -3985,11 +3985,11 @@ void SetGraphic(Cmiss_graphic *graphic)
 			exteriorcheckbox->SetValue(0);
 		}
 		face = Cmiss_graphic_get_face(graphic);
-		if (face >= CMISS_GRAPHIC_FACE_XI1_0)
+		if (face >= CMISS_ELEMENT_FACE_XI1_0)
 		{
 			facecheckbox->SetValue(1);
 			facechoice->Enable();
-			facechoice->SetSelection(static_cast<int>(face) - CMISS_GRAPHIC_FACE_XI1_0);
+			facechoice->SetSelection(static_cast<int>(face) - CMISS_ELEMENT_FACE_XI1_0);
 		}
 		else
 		{

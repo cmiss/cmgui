@@ -184,18 +184,20 @@ int gfx_modify_rendition_graphic(struct Parse_state *state,
 		DEALLOCATE(valid_strings);
 	}
 
-	/* glyph centre: note equal to negative of point_offset! */
 	int three = 3;
-	double glyph_centre[3];
+	double glyph_offset[3];
 	if (point_attributes)
 	{
-		Cmiss_graphic_point_attributes_get_offset(point_attributes, 3, glyph_centre);
+		Cmiss_graphic_point_attributes_get_offset(point_attributes, 3, glyph_offset);
+	}
+
+	/* glyph centre: note equal to negative of point offset! */
+	double glyph_centre[3];
+	if (point_attributes && (legacy_graphic_type != LEGACY_GRAPHIC_NONE))
+	{
 		for (int i = 0; i < 3; i++)
 		{
-			if (glyph_centre[i] != 0.0)
-			{
-				glyph_centre[i] = -glyph_centre[i];
-			}
+			glyph_centre[i] = (glyph_offset[i] != 0.0) ? -glyph_offset[i] : 0.0;
 		}
 		Option_table_add_double_vector_entry(option_table, "centre", glyph_centre, &three);
 	}
@@ -317,7 +319,7 @@ int gfx_modify_rendition_graphic(struct Parse_state *state,
 	}
 
 	/* face */
-	enum Cmiss_graphic_face_type face_type = CMISS_GRAPHIC_FACE_ALL;
+	enum Cmiss_element_face_type face_type = CMISS_ELEMENT_FACE_ALL;
 	if (Cmiss_graphic_type_uses_attribute(graphic_type, CMISS_GRAPHIC_ATTRIBUTE_FACE))
 	{
 		face_type = Cmiss_graphic_get_face(graphic);
@@ -479,6 +481,12 @@ int gfx_modify_rendition_graphic(struct Parse_state *state,
 		Option_table_add_enumerator(option_table, number_of_valid_strings,
 			valid_strings, &streamline_data_type_string);
 		DEALLOCATE(valid_strings);
+	}
+
+	/* glyph offset */
+	if (point_attributes && (legacy_graphic_type == LEGACY_GRAPHIC_NONE))
+	{
+		Option_table_add_double_vector_entry(option_table, "offset", glyph_offset, &three);
 	}
 
 	/* orientation */
@@ -919,15 +927,16 @@ int gfx_modify_rendition_graphic(struct Parse_state *state,
 			Cmiss_glyph_destroy(&glyph);
 			Cmiss_graphic_point_attributes_set_glyph_repeat_mode(point_attributes, glyph_repeat_mode);
 			Cmiss_graphic_point_attributes_set_orientation_scale_field(point_attributes, orientation_scale_field);
-			// reverse centre to get offset:
-			for (int i = 0; i < 3; i++)
+
+			if (legacy_graphic_type != LEGACY_GRAPHIC_NONE)
 			{
-				if (glyph_centre[i] != 0.0)
+				// reverse centre to get offset:
+				for (int i = 0; i < 3; i++)
 				{
-					glyph_centre[i] = -glyph_centre[i];
+					glyph_offset[i] = (glyph_centre[i] != 0.0) ? -glyph_centre[i] : 0.0;
 				}
 			}
-			Cmiss_graphic_point_attributes_set_offset(point_attributes, 3, glyph_centre);
+			Cmiss_graphic_point_attributes_set_offset(point_attributes, 3, glyph_offset);
 			Cmiss_graphic_point_attributes_set_base_size(point_attributes, 3, glyph_base_size);
 			Cmiss_graphic_point_attributes_set_scale_factors(point_attributes, 3, glyph_scale_factors);
 			Cmiss_graphic_point_attributes_set_signed_scale_field(point_attributes, signed_scale_field);

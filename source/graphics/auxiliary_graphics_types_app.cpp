@@ -19,8 +19,8 @@ int set_graphic_face_type(struct Parse_state *state, void *face_type_address_voi
 {
 	int return_code = 1;
 	USE_PARAMETER(dummy_user_data);
-	enum Cmiss_graphic_face_type *face_type_address =
-		static_cast<Cmiss_graphic_face_type*>(face_type_address_void);
+	enum Cmiss_element_face_type *face_type_address =
+		static_cast<Cmiss_element_face_type*>(face_type_address_void);
 	if (state && face_type_address)
 	{
 		const char *current_token = state->current_token;
@@ -32,32 +32,32 @@ int set_graphic_face_type(struct Parse_state *state, void *face_type_address_voi
 				/*???DB.  Only valid for cubes (not polygons) */
 				if (fuzzy_string_compare(current_token,"XI1_0"))
 				{
-					*face_type_address = CMISS_GRAPHIC_FACE_XI1_0;
+					*face_type_address = CMISS_ELEMENT_FACE_XI1_0;
 					shift_Parse_state(state,1);
 				}
 				else if (fuzzy_string_compare(current_token,"XI1_1"))
 				{
-					*face_type_address = CMISS_GRAPHIC_FACE_XI1_1;
+					*face_type_address = CMISS_ELEMENT_FACE_XI1_1;
 					shift_Parse_state(state,1);
 				}
 				else if (fuzzy_string_compare(current_token,"XI2_0"))
 				{
-					*face_type_address = CMISS_GRAPHIC_FACE_XI2_0;
+					*face_type_address = CMISS_ELEMENT_FACE_XI2_0;
 					shift_Parse_state(state,1);
 				}
 				else if (fuzzy_string_compare(current_token,"XI2_1"))
 				{
-					*face_type_address = CMISS_GRAPHIC_FACE_XI2_1;
+					*face_type_address = CMISS_ELEMENT_FACE_XI2_1;
 					shift_Parse_state(state,1);
 				}
 				else if (fuzzy_string_compare(current_token,"XI3_0"))
 				{
-					*face_type_address = CMISS_GRAPHIC_FACE_XI3_0;
+					*face_type_address = CMISS_ELEMENT_FACE_XI3_0;
 					shift_Parse_state(state,1);
 				}
 				else if (fuzzy_string_compare(current_token,"XI3_1"))
 				{
-					*face_type_address = CMISS_GRAPHIC_FACE_XI3_1;
+					*face_type_address = CMISS_ELEMENT_FACE_XI3_1;
 					shift_Parse_state(state,1);
 				}
 				else
