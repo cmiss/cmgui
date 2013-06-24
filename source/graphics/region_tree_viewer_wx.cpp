@@ -719,13 +719,13 @@ public:
 	add_graphic_choice = new wxChoice(add_graphic_chooser_panel, /*id*/-1, wxPoint(0,0), wxSize(-1,-1));
 	add_graphic_choice->Append(wxString::FromAscii("Add..."), (void *)ADD_GRAPHIC_TYPE_INVALID);
 	add_graphic_choice->Append(wxString::FromAscii("---"), (void *)ADD_GRAPHIC_TYPE_INVALID);
-	for (int i = 1; ; ++i)
+	for (size_t i = 1; ; ++i)
 	{
 		const char *add_graphic_type_string =
 			Add_graphic_type_string(static_cast<Add_graphic_type>(i));
 		if (!add_graphic_type_string)
 			break;
-		add_graphic_choice->Append(wxString::FromAscii(add_graphic_type_string), (void *)i);
+		add_graphic_choice->Append(wxString::FromAscii(add_graphic_type_string), reinterpret_cast<void *>(i));
 	}
 	add_graphic_choice->SetSelection(0);
 	add_graphic_choice->Connect(wxEVT_COMMAND_CHOICE_SELECTED,
