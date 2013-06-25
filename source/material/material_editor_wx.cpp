@@ -108,6 +108,7 @@ deaccess it.
 	Colour_editor *ambient_colour_editor, *diffuse_colour_editor, *emitted_colour_editor,
 		*specular_colour_editor;
 	void *material_manager_callback_id;
+	Cmiss_graphics_material_module *material_module;
 	Cmiss_graphics_module *graphics_module;
   Cmiss_region *root_region;
 }; /* Material_editor */
@@ -387,6 +388,7 @@ Destroys the <*material_editor_address> and sets
 		(material_editor = *material_editor_address))
 	{
 		Material_editor_remove_widgets(material_editor);
+		Cmiss_graphics_material_module_destroy(&material_editor->material_module);
 		Cmiss_graphics_module_destroy(&material_editor->graphics_module);
 		Cmiss_region_destroy(&material_editor->root_region);
 		DEALLOCATE(*material_editor_address);
@@ -1206,8 +1208,9 @@ Creates a Material_editor.
 				/* initialise the structure */
 				material_editor->material_manager_callback_id=(void *)NULL;
 				material_editor->background=0; /* tri-colour */
-				material_editor->graphical_material_manager = Cmiss_graphics_module_get_material_manager(
-						graphics_module);
+				material_editor->material_module = Cmiss_graphics_module_get_material_module(graphics_module);
+				material_editor->graphical_material_manager =
+					Cmiss_graphics_material_module_get_manager(material_editor->material_module);
 				material_editor->graphics_module = Cmiss_graphics_module_access(graphics_module);
 				material_editor->root_region = Cmiss_region_access(root_region);
 				material_editor->graphics_buffer = (struct Graphics_buffer_app *)NULL;

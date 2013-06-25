@@ -5,6 +5,7 @@
 
 #include "zinc/fieldmodule.h"
 #include "zinc/graphic.h"
+#include "zinc/graphicsmaterial.h"
 #include "zinc/graphicsmodule.h"
 #include "zinc/font.h"
 #include "zinc/spectrum.h"
@@ -345,9 +346,11 @@ int gfx_modify_rendition_graphic(struct Parse_state *state,
 	char *glyph_name = 0;
 	if (point_attributes)
 	{
-		if (graphic->glyph)
+		Cmiss_glyph_id glyph = Cmiss_graphic_point_attributes_get_glyph(point_attributes);
+		if (glyph)
 		{
-			GET_NAME(GT_object)(graphic->glyph, &glyph_name);
+			glyph_name = Cmiss_glyph_get_name(glyph);
+			Cmiss_glyph_destroy(&glyph);
 		}
 		Option_table_add_string_entry(option_table, "glyph", &glyph_name, " GLYPH_NAME|none");
 	}
@@ -441,9 +444,9 @@ int gfx_modify_rendition_graphic(struct Parse_state *state,
 	}
 
 	/* material */
-	Option_table_add_entry(option_table,"material",&(graphic->material),
-		rendition_command_data->graphical_material_manager,
-		set_Graphical_material);
+	Cmiss_graphics_material_id material = Cmiss_graphic_get_material(graphic);
+	Option_table_add_set_Material_entry(option_table, "material", &material,
+		rendition_command_data->graphics_material_module);
 
 	/* glyph repeat mode REPEAT_NONE|REPEAT_AXES_2D|REPEAT_AXES_3D|REPEAT_MIRROR */
 	const char *glyph_repeat_mode_string = 0;
@@ -566,9 +569,8 @@ int gfx_modify_rendition_graphic(struct Parse_state *state,
 	/* secondary_material (was: multipass_pass1_material) */
 	if (graphic_type == CMISS_GRAPHIC_LINES)
 	{
-		Option_table_add_entry(option_table, "secondary_material",
-			&(graphic->secondary_material), rendition_command_data->graphical_material_manager,
-			set_Graphical_material);
+		Option_table_add_set_Material_entry(option_table, "secondary_material", &(graphic->secondary_material),
+			rendition_command_data->graphics_material_module);
 	}
 
 	/* seed_element */
@@ -609,10 +611,9 @@ int gfx_modify_rendition_graphic(struct Parse_state *state,
 	DEALLOCATE(valid_strings);
 
 	/* selected_material */
-	Option_table_add_entry(option_table,"selected_material",
-		&(graphic->selected_material),
-		rendition_command_data->graphical_material_manager,
-		set_Graphical_material);
+	Cmiss_graphics_material_id selected_material = Cmiss_graphic_get_selected_material(graphic);
+	Option_table_add_set_Material_entry(option_table, "selected_material", &selected_material,
+		rendition_command_data->graphics_material_module);
 
 	/* glyph base size */
 	double glyph_base_size[3];
@@ -647,6 +648,7 @@ int gfx_modify_rendition_graphic(struct Parse_state *state,
 	}
 
 	/* texture_coordinates */
+	Cmiss_field_id texture_coordinate_field = Cmiss_graphic_get_texture_coordinate_field(graphic);
 	Set_Computed_field_conditional_data set_texture_coordinate_field_data;
 	set_texture_coordinate_field_data.computed_field_manager = rendition_command_data->computed_field_manager;
 	set_texture_coordinate_field_data.conditional_function = Computed_field_has_up_to_3_numerical_components;
@@ -654,7 +656,7 @@ int gfx_modify_rendition_graphic(struct Parse_state *state,
 	if (Cmiss_graphic_type_uses_attribute(graphic_type, CMISS_GRAPHIC_ATTRIBUTE_TEXTURE_COORDINATE_FIELD))
 	{
 		Option_table_add_Computed_field_conditional_entry(option_table, "texture_coordinates",
-			&(graphic->texture_coordinate_field), &set_texture_coordinate_field_data);
+			&texture_coordinate_field, &set_texture_coordinate_field_data);
 	}
 
 	/* legacy use_elements/use_faces/use_lines: translated into domain type */
@@ -731,6 +733,9 @@ int gfx_modify_rendition_graphic(struct Parse_state *state,
 			 Cmiss_graphic_set_face(graphic, face_type);
 		}
 		Cmiss_graphic_set_tessellation(graphic, tessellation);
+		Cmiss_graphic_set_texture_coordinate_field(graphic, texture_coordinate_field);
+		Cmiss_graphic_set_material(graphic, material);
+		Cmiss_graphic_set_selected_material(graphic, selected_material);
 
 		if (contours)
 		{
@@ -1103,6 +1108,7 @@ int gfx_modify_rendition_graphic(struct Parse_state *state,
 	Cmiss_field_destroy(&orientation_scale_field);
 	Cmiss_field_destroy(&subgroup_field);
 	Cmiss_field_destroy(&signed_scale_field);
+	Cmiss_field_destroy(&texture_coordinate_field);
 	Cmiss_field_destroy(&xi_point_density_field);
 	if (font_name)
 	{
@@ -1120,6 +1126,8 @@ int gfx_modify_rendition_graphic(struct Parse_state *state,
 	Cmiss_graphic_point_attributes_destroy(&point_attributes);
 	Cmiss_spectrum_destroy(&spectrum);
 	Cmiss_tessellation_destroy(&tessellation);
+	Cmiss_graphics_material_destroy(&material);
+	Cmiss_graphics_material_destroy(&selected_material);
 	DEALLOCATE(name);
 	return return_code;
 }

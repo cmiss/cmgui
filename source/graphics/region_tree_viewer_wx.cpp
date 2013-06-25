@@ -51,6 +51,7 @@ codes used to build scene editor with wxWidgets.
 
 #include "zinc/rendition.h"
 #include "zinc/graphic.h"
+#include "zinc/graphicsmaterial.h"
 #include "zinc/graphicsmodule.h"
 #include "zinc/spectrum.h"
 #include "zinc/status.h"
@@ -2893,10 +2894,12 @@ void FaceChosen(wxCommandEvent &event)
 
 void SetBothMaterialChooser(Cmiss_graphic *graphic)
 {
-	graphical_material_chooser->set_object(Cmiss_graphic_get_material
-		(graphic));
-	selected_material_chooser->set_object(Cmiss_graphic_get_selected_material
-		(graphic));
+	Cmiss_graphics_material_id material = Cmiss_graphic_get_material(graphic);
+	graphical_material_chooser->set_object(material);
+	Cmiss_graphics_material_destroy(&material);
+	Cmiss_graphics_material_id selected_material = Cmiss_graphic_get_selected_material(graphic);
+	selected_material_chooser->set_object(selected_material);
+	Cmiss_graphics_material_destroy(&selected_material);
 }
 
 void SetGraphic(Cmiss_graphic *graphic)
@@ -2904,8 +2907,7 @@ void SetGraphic(Cmiss_graphic *graphic)
 	int error, reverse_track,line_width;
 	Cmiss_element_face_type face = CMISS_ELEMENT_FACE_INVALID;
 	char temp_string[50], *vector_temp_string;
-	struct Computed_field *xi_point_density_field, *stream_vector_field,
-		*texture_coord_field;
+	struct Computed_field *xi_point_density_field, *stream_vector_field;
 	enum Xi_discretization_mode xi_discretization_mode;
 	struct Element_discretization discretization;
 	enum Streamline_type streamline_type;
@@ -3902,12 +3904,12 @@ void SetGraphic(Cmiss_graphic *graphic)
 		{
 			texture_coordinates_chooser_panel->Show();
 			texturecoordinatestext->Show();
-			texture_coord_field = Cmiss_graphic_get_texture_coordinate_field(graphic);
+			Cmiss_field_id texture_coordinate_field = Cmiss_graphic_get_texture_coordinate_field(graphic);
 			if (texture_coord_field_chooser == NULL)
 			{
 				texture_coord_field_chooser =
 						new Managed_object_chooser<Computed_field,MANAGER_CLASS(Computed_field)>
-				   (texture_coordinates_chooser_panel,texture_coord_field, region_tree_viewer->field_manager,
+				   (texture_coordinates_chooser_panel,texture_coordinate_field, region_tree_viewer->field_manager,
 							Computed_field_has_up_to_3_numerical_components, (void *)NULL,
 							region_tree_viewer->user_interface);
 				Callback_base< Computed_field* > *texture_coord_field_callback =
@@ -3918,7 +3920,8 @@ void SetGraphic(Cmiss_graphic *graphic)
 				texture_coordinates_chooser_panel->Fit();
 				texture_coord_field_chooser->include_null_item(true);
 			}
-			texture_coord_field_chooser->set_object(texture_coord_field);
+			texture_coord_field_chooser->set_object(texture_coordinate_field);
+			Cmiss_field_destroy(&texture_coordinate_field);
 		}
 		else
 		{
