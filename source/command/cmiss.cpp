@@ -5323,9 +5323,22 @@ static int gfx_convert_graphics(struct Parse_state *state,
 		enum Render_to_finite_elements_mode render_mode = RENDER_TO_FINITE_ELEMENTS_LINEAR_PRODUCT;
 
 		Option_table *option_table=CREATE(Option_table)();
+		Option_table_add_help(option_table,
+			"Create finite elements or a point cloud of nodes from line and surface graphics. "
+			"With mode 'render_linear_product_elements' linear finite elements are made from lines and surfaces. "
+			"With mode 'render_surface_node_cloud', nodes are created at points in the lines and "
+			"surfaces sampled according to a Poisson distribution with the supplied densities. "
+			"The surface_density gives the base expected number of points per unit area, and if the "
+			"graphic has a data field, the value of its first component scaled by surface_density_scale_factor "
+			"is added to the expected number. Separate values for lines control the expected number per unit length.");
 		/* coordinate */
 		Option_table_add_string_entry(option_table,"coordinate",&coordinate_field_name,
 			" FIELD_NAME");
+		double line_density = 1.0;
+		Option_table_add_double_entry(option_table, "line_density", &line_density);
+		double line_density_scale_factor = 0.0;
+		Option_table_add_double_entry(option_table, "line_density_scale_factor", &line_density_scale_factor);
+
 		/* render_to_finite_elements_mode */
 		OPTION_TABLE_ADD_ENUMERATOR(Render_to_finite_elements_mode)(option_table,
 			&render_mode);
@@ -5334,6 +5347,10 @@ static int gfx_convert_graphics(struct Parse_state *state,
 		/* scene */
 		Option_table_add_string_entry(option_table, "scene",
 			&scene_path_name, " SCENE_NAME[/REGION_PATH][.GRAPHIC_NAME]{default}");
+		double surface_density = 1.0;
+		Option_table_add_double_entry(option_table, "surface_density", &surface_density);
+		double surface_density_scale_factor = 0.0;
+		Option_table_add_double_entry(option_table, "surface_density_scale_factor", &surface_density_scale_factor);
 		return_code=Option_table_multi_parse(option_table,state);
 		DESTROY(Option_table)(&option_table);
 
@@ -5360,7 +5377,7 @@ static int gfx_convert_graphics(struct Parse_state *state,
 				(coordinate_field = FIND_BY_IDENTIFIER_IN_MANAGER(Computed_field,name)(
 						coordinate_field_name, Cmiss_region_get_Computed_field_manager(region))))
 			{
-				if (Computed_field_has_3_components(coordinate_field, NULL))
+				if (Computed_field_has_up_to_3_numerical_components(coordinate_field, NULL))
 				{
 					Cmiss_field_access(coordinate_field);
 				}
@@ -5399,7 +5416,8 @@ static int gfx_convert_graphics(struct Parse_state *state,
 		if (return_code)
 		{
 			render_to_finite_elements(scene, input_region, graphic_name, render_mode,
-				region, group, coordinate_field);
+				region, group, coordinate_field, static_cast<Cmiss_nodeset_id>(0),
+				line_density, line_density_scale_factor, surface_density, surface_density_scale_factor);
 		}
 		if (scene)
 		{
