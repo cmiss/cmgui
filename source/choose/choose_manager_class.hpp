@@ -204,35 +204,35 @@ Called by the
 *
 * @param new_manager object manager to be used in this chooser
 */
-	 int set_manager(typename Manager::Manager_type *new_manager)
-	 {
-			int return_code = 1;
+	int set_manager(typename Manager::Manager_type *new_manager)
+	{
+		int return_code = 1;
 
-			Manager *temp_manager(new Manager(new_manager));
-			if (temp_manager != manager)
+		Manager *temp_manager(new Manager(new_manager));
+		if (temp_manager != manager)
+		{
+			if (manager && manager_callback_id)
+				manager->deregister_callback(manager_callback_id);
+			manager = temp_manager;
+			if (build_items())
 			{
-				if (manager && manager_callback_id)
-				 manager->deregister_callback(manager_callback_id);
-				 manager = temp_manager;
-				 if (build_items())
-				 {
-						return_code=chooser->build_main_menu(
-							 number_of_items, items, item_names, (Managed_object *)NULL);
-						return_code = 1;
-						manager_callback_id =
-							 manager->register_callback(global_object_change, this);
-				 }
-				 else
-				 {
-						display_message(ERROR_MESSAGE,
-							 "Managed_object_chooser::set_manager.   "
-							 " Could not update menu");
-						return_code = 0;
-				 }
+				return_code=chooser->build_main_menu(
+					number_of_items, items, item_names, (Managed_object *)NULL);
+				return_code = 1;
+				manager_callback_id = manager->manager ?
+					manager->register_callback(global_object_change, this) : 0;
 			}
+			else
+			{
+				display_message(ERROR_MESSAGE,
+					"Managed_object_chooser::set_manager.   "
+					" Could not update menu");
+				return_code = 0;
+			}
+		}
 
-			return (return_code);
-	 }
+		return (return_code);
+	}
 
 	Callback_base<Managed_object*> *get_callback()
 /*****************************************************************************
@@ -361,13 +361,8 @@ DESCRIPTION :
 		return (return_code);
 	} /* Managed_object_chooser::is_item_in_chooser */
 
+	/** A manager iterator which adds each object to the chooser */
 	static int add_object_to_list(Managed_object *object, void *chooser_object_void)
-/*****************************************************************************
-LAST MODIFIED : 8 February 2007
-
-DESCRIPTION :
-A manager iterator which adds each object to the chooser.
-============================================================================*/
 	{
 		int return_code;
 		Managed_object_chooser* chooser_object;
@@ -403,64 +398,59 @@ A manager iterator which adds each object to the chooser.
 			return_code = 0;
 		}
 		return (return_code);
-	} /* Managed_object_chooser::add_object_to_list */
+	}
 
+	/** Updates the arrays of all the choosable objects and their names */
 	int build_items()
-/*****************************************************************************
-LAST MODIFIED : 8 February 2007
-
-DESCRIPTION :
-Updates the arrays of all the choosable objects and their names.
-============================================================================*/
 	{
-		char **new_item_names;
-		int i,max_number_of_objects,return_code;
-		Managed_object **new_items;
-
-		return_code=0;
-		new_items = (Managed_object **)NULL;
-		new_item_names = (char **)NULL;
-
-		max_number_of_objects= manager->number_in_manager();
-		if (null_item_flag)
+		if (items)
 		{
-			max_number_of_objects++;
+			DEALLOCATE(items);
+			items = 0;
 		}
-		if ((0==max_number_of_objects) ||
-			(ALLOCATE(new_items,Managed_object *,max_number_of_objects) &&
-				ALLOCATE(new_item_names,char *,max_number_of_objects)))
+		if (item_names)
 		{
-			if (items)
+			for (int i = 0; i < number_of_items; i++)
 			{
-				DEALLOCATE(items);
+				DEALLOCATE(item_names[i]);
 			}
-			if (item_names)
-			{
-				for (i=0;i<number_of_items;i++)
-				{
-					DEALLOCATE(item_names[i]);
-				}
-				DEALLOCATE(item_names);
-			}
-			items = new_items;
-			item_names = new_item_names;
-			number_of_items = 0;
+			DEALLOCATE(item_names);
+			item_names = 0;
+		}
+		number_of_items = 0;
+		int return_code = 1;
+		if (manager && manager->manager)
+		{
+			Managed_object **new_items = 0;
+			char **new_item_names = 0;
+			int max_number_of_objects = manager->number_in_manager();
 			if (null_item_flag)
 			{
-				*(this->item_names)=duplicate_string("-");
-				this->items[0] = NULL;
-				this->number_of_items++;
+				max_number_of_objects++;
 			}
-			manager->for_each_object_in_manager(
-				add_object_to_list, this);
-			return_code = 1;
-		}
-		else
-		{
-			return_code = 0;
+			if ((0 == max_number_of_objects) ||
+				(ALLOCATE(new_items, Managed_object *, max_number_of_objects) &&
+					ALLOCATE(new_item_names, char *, max_number_of_objects)))
+			{
+				items = new_items;
+				item_names = new_item_names;
+				if (null_item_flag)
+				{
+					*(this->item_names) = duplicate_string("-");
+					this->items[0] = NULL;
+					this->number_of_items++;
+				}
+				manager->for_each_object_in_manager(
+					add_object_to_list, this);
+				return_code = 1;
+			}
+			else
+			{
+				return_code = 0;
+			}
 		}
 		return (return_code);
-	}  /* Managed_object_chooser::build_items */
+	}
 
 	static int object_status_changed(Managed_object *object, void *class_chooser_void)
 /*****************************************************************************
