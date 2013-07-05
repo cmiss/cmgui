@@ -42,7 +42,6 @@
 #include <iterator>
 #include "dialog/tessellation_dialog.hpp"
 #include "icon/cmiss_icon.xpm"
-#include "graphics/graphics_module.h"
 #include "general/debug.h"
 
 TessellationItem::TessellationItem(wxWindow* parent, MANAGER(Cmiss_tessellation) *tessellation_manager_in,
@@ -54,6 +53,7 @@ TessellationItem::TessellationItem(wxWindow* parent, MANAGER(Cmiss_tessellation)
 	labelChanged = 0;
 	refinementChanged = 0;
 	divisionsChanged = 0;
+	circleDivisionsChanged = 0;
 	char *name = Cmiss_tessellation_get_name(tessellation);
 	SetName(wxString::FromAscii(name));
 	wxSizer *Sizer = parent->GetSizer();
@@ -71,6 +71,10 @@ TessellationItem::TessellationItem(wxWindow* parent, MANAGER(Cmiss_tessellation)
 		wxEmptyString, wxDefaultPosition, wxSize(-1, 25), wxTE_CENTRE
 		| wxTE_PROCESS_ENTER | wxTE_PROCESS_TAB);
 	update_refinement_string_for_dialog();
+	circleDivisionsTextCtrl = new wxTextCtrl(this, wxID_ANY,
+		wxEmptyString, wxDefaultPosition, wxSize(-1, 25), wxTE_CENTRE
+		| wxTE_PROCESS_ENTER | wxTE_PROCESS_TAB);
+	update_circle_divisions_string_for_dialog();
 	applyButton = new wxButton(this, wxID_ANY, wxT("apply"),
 			wxDefaultPosition, wxSize(-1, 30), wxBU_EXACTFIT);
 	applyButton->Disable();
@@ -88,6 +92,8 @@ void TessellationItem::do_layout()
 			| wxALIGN_CENTER_HORIZONTAL | wxALIGN_CENTER_VERTICAL, 0);
 	objectPanelSizer->Add(refinementTextCtrl, 1, wxEXPAND
 			| wxALIGN_CENTER_HORIZONTAL | wxALIGN_CENTER_VERTICAL, 0);
+	objectPanelSizer->Add(circleDivisionsTextCtrl, 1, wxEXPAND
+			| wxALIGN_CENTER_HORIZONTAL | wxALIGN_CENTER_VERTICAL, 0);
 	objectPanelSizer->Add(applyButton, 1, wxEXPAND | wxALIGN_CENTER_HORIZONTAL
 			| wxALIGN_CENTER_VERTICAL, 0);
 	SetSizer(objectPanelSizer);
@@ -102,6 +108,9 @@ void TessellationItem::set_callback()
 	refinementTextCtrl->Connect(wxEVT_COMMAND_TEXT_ENTER,
 		wxCommandEventHandler(TessellationItem::OnTessellationTextEntered),
 			NULL, this);
+	circleDivisionsTextCtrl->Connect(wxEVT_COMMAND_TEXT_ENTER,
+		wxCommandEventHandler(TessellationItem::OnTessellationTextEntered),
+			NULL, this);
 	tessellationLabel->Connect(wxEVT_COMMAND_TEXT_ENTER,
 		wxCommandEventHandler(TessellationItem::OnTessellationTextEntered),
 			NULL, this);
@@ -114,6 +123,9 @@ void TessellationItem::set_callback()
 	refinementTextCtrl->Connect(wxEVT_KILL_FOCUS,
 		wxCommandEventHandler(TessellationItem::OnTessellationTextEntered),
 			NULL, this);
+	circleDivisionsTextCtrl->Connect(wxEVT_KILL_FOCUS,
+		wxCommandEventHandler(TessellationItem::OnTessellationTextEntered),
+			NULL, this);
 	tessellationLabel->Connect(wxEVT_KILL_FOCUS,
 		wxCommandEventHandler(TessellationItem::OnTessellationTextEntered),
 			NULL, this);
@@ -122,8 +134,7 @@ void TessellationItem::set_callback()
 void TessellationItem::update_divisions_string_for_dialog()
 {
 	int i = 0;
-	int number_of_divisions = Cmiss_tessellation_get_attribute_integer(
-		tessellation, CMISS_TESSELLATION_ATTRIBUTE_MINIMUM_DIVISIONS_SIZE);
+	int number_of_divisions = Cmiss_tessellation_get_minimum_divisions(tessellation, 0, 0);
 	wxString temp;
 	if (number_of_divisions > 0)
 	{
@@ -149,8 +160,7 @@ void TessellationItem::update_divisions_string_for_dialog()
 void TessellationItem::update_refinement_string_for_dialog()
 {
 	int i = 0;
-	int number_of_refinements = Cmiss_tessellation_get_attribute_integer(
-		tessellation, CMISS_TESSELLATION_ATTRIBUTE_REFINEMENT_FACTORS_SIZE);
+	int number_of_refinements = Cmiss_tessellation_get_refinement_factors(tessellation, 0, 0);
 	wxString temp;
 	if (number_of_refinements > 0)
 	{
@@ -171,6 +181,15 @@ void TessellationItem::update_refinement_string_for_dialog()
 		temp = "0";
 	}
 	refinementTextCtrl->ChangeValue(temp);
+}
+
+void TessellationItem::update_circle_divisions_string_for_dialog()
+{
+	int circleDivisions = Cmiss_tessellation_get_circle_divisions(tessellation);
+	char temp_char[20];
+	sprintf(temp_char, "%d", circleDivisions);
+	wxString temp(temp_char);
+	circleDivisionsTextCtrl->ChangeValue(temp);
 }
 
 void TessellationItem::OnTessellationTextEntered(wxCommandEvent& event)
@@ -200,7 +219,7 @@ void TessellationItem::OnTessellationTextEntered(wxCommandEvent& event)
 				DEALLOCATE(values);
 			}
 		}
-		else
+		else if (divisionsTextCtrl == textctrl)
 		{
 			wxString temp = textctrl->GetValue();
 			int size = 0, *values = NULL;
@@ -218,7 +237,20 @@ void TessellationItem::OnTessellationTextEntered(wxCommandEvent& event)
 				DEALLOCATE(values);
 			}
 		}
-		if (labelChanged || divisionsChanged || refinementChanged)
+		else if (circleDivisionsTextCtrl == textctrl)
+		{
+			wxString temp = textctrl->GetValue();
+			int circleDivisions = atoi(temp.mb_str(wxConvUTF8));
+			if (circleDivisions > 0)
+			{
+				circleDivisionsChanged = 1;
+			}
+			else
+			{
+				update_circle_divisions_string_for_dialog();
+			}
+		}
+		if (labelChanged || divisionsChanged || refinementChanged || circleDivisionsChanged)
 		{
 			applyButton->Enable();
 		}
@@ -277,6 +309,16 @@ void TessellationItem::OnTessellationApplyPressed(wxCommandEvent& event)
 		}
 		divisionsChanged = 0;
 	}
+	if (circleDivisionsChanged)
+	{
+		wxString temp = circleDivisionsTextCtrl->GetValue();
+		int circleDivisions = atoi(temp.mb_str(wxConvUTF8));
+		if (circleDivisions > 0)
+		{
+			Cmiss_tessellation_set_circle_divisions(tessellation, circleDivisions);
+		}
+		circleDivisionsChanged = 0;
+	}
 	applyButton->Disable();
 	MANAGER_END_CACHE(Cmiss_tessellation)(tessellation_manager);
 }
@@ -309,12 +351,12 @@ void TessellationManagerCallback(struct MANAGER_MESSAGE(Cmiss_tessellation) *mes
 	dialog->manager_callback(message);
 }
 
-TessellationDialog::TessellationDialog(Cmiss_graphics_module *graphics_module_in, wxWindow* parent,
+TessellationDialog::TessellationDialog(Cmiss_tessellation_module *tessellation_module_in, wxWindow* parent,
 		int id, const wxPoint& pos, const wxSize& size):
 	wxDialog(parent, id, wxString::FromAscii("Tessellation Editor"), pos, size, wxDEFAULT_FRAME_STYLE|wxDIALOG_NO_PARENT)
 {
-		graphics_module = graphics_module_in;
-		tessellation_manager = Cmiss_graphics_module_get_tessellation_manager(graphics_module);
+		tessellation_module = tessellation_module_in;
+		tessellation_manager = Cmiss_tessellation_module_get_manager(tessellation_module);
 	sizer_1_staticbox = new wxStaticBox(this, -1, wxEmptyString);
 	label_1 = new wxStaticText(this, wxID_ANY, wxT("Tessellation\n"), wxDefaultPosition,
 		wxDefaultSize, wxALIGN_CENTRE);
@@ -322,7 +364,9 @@ TessellationDialog::TessellationDialog(Cmiss_graphics_module *graphics_module_in
 		wxDefaultPosition, wxDefaultSize, wxALIGN_CENTRE);
 	label_3 = new wxStaticText(this, wxID_ANY, wxT("Refinement\n Factors\n#*#*...\n"),
 		wxDefaultPosition, wxDefaultSize, wxALIGN_CENTRE);
-	label_4 = new wxStaticText(this, wxID_ANY, wxT(""),
+	label_4 = new wxStaticText(this, wxID_ANY, wxT("Circle\n Divisions\n# >= 3\n"),
+		wxDefaultPosition, wxDefaultSize, wxALIGN_CENTRE);
+	label_5 = new wxStaticText(this, wxID_ANY, wxT(""),
 		wxDefaultPosition, wxDefaultSize, wxALIGN_CENTRE);
 	TessellationItemsPanel = new wxScrolledWindow(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxVSCROLL);
 	addNewButton = new wxButton(TessellationItemsPanel, wxID_ANY, wxT("add tessellation"),
@@ -381,6 +425,7 @@ void TessellationDialog::do_layout()
 	sizer_2->Add(label_2, 1, wxEXPAND|wxALIGN_CENTER_HORIZONTAL|wxALIGN_BOTTOM, 0);
 	sizer_2->Add(label_3, 1, wxEXPAND|wxALIGN_CENTER_HORIZONTAL|wxALIGN_BOTTOM, 0);
 	sizer_2->Add(label_4, 1, wxEXPAND|wxALIGN_CENTER_HORIZONTAL|wxALIGN_BOTTOM, 0);
+	sizer_2->Add(label_5, 1, wxEXPAND|wxALIGN_CENTER_HORIZONTAL|wxALIGN_BOTTOM, 0);
 	panel_sizer->Add(addNewButton, 0 ,wxALIGN_LEFT|wxALIGN_BOTTOM, 0);
 	TessellationItemsPanel->SetSizer(panel_sizer);
 	sizer_1->Add(sizer_2, 0, wxEXPAND, 0);
@@ -395,7 +440,7 @@ void TessellationDialog::OnTessellationDialogAddNewPressed(wxCommandEvent &event
 	USE_PARAMETER(event);
 	MANAGER_BEGIN_CACHE(Cmiss_tessellation)(tessellation_manager);
 	Cmiss_tessellation *new_tessellation =
-		Cmiss_graphics_module_create_tessellation(graphics_module);
+		Cmiss_tessellation_module_create_tessellation(tessellation_module);
 	Cmiss_tessellation_set_managed(new_tessellation, true);
 	Cmiss_tessellation_destroy(&new_tessellation);
 	MANAGER_END_CACHE(Cmiss_tessellation)(tessellation_manager);

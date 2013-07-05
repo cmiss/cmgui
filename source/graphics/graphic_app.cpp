@@ -19,6 +19,7 @@
 #include "graphics/graphic.h"
 #include "graphics/rendition.h"
 #include "graphics/rendition_app.h"
+#include "graphics/tessellation.hpp"
 #include "computed_field/computed_field_finite_element.h"
 #include "graphics/auxiliary_graphics_types_app.h"
 #include "computed_field/computed_field_set.h"
@@ -204,11 +205,12 @@ int gfx_modify_rendition_graphic(struct Parse_state *state,
 	}
 
 	/* circle_discretization */
-	if (graphic_type == CMISS_GRAPHIC_CYLINDERS)
+	int circle_discretization = 0;
+	if (legacy_graphic_type == LEGACY_GRAPHIC_CYLINDERS)
 	{
 		Option_table_add_entry(option_table, "circle_discretization",
-			(void *)&(graphic->circle_discretization), (void *)NULL,
-			set_Circle_discretization);
+			(void *)&circle_discretization, (void *)NULL,
+			set_circle_divisions);
 	}
 
 	/* constant_radius */
@@ -273,10 +275,13 @@ int gfx_modify_rendition_graphic(struct Parse_state *state,
 	}
 
 	/* discretization */
-	if (Cmiss_graphic_type_uses_attribute(graphic_type, CMISS_GRAPHIC_ATTRIBUTE_DISCRETIZATION))
+	int element_divisions_size = 0;
+	int *element_divisions = 0;
+	if ((legacy_graphic_type == LEGACY_GRAPHIC_ELEMENT_POINTS) ||
+		(graphic_type == CMISS_GRAPHIC_STREAMLINES))
 	{
-		Option_table_add_entry(option_table,"discretization",
-			&(graphic->discretization),NULL, set_Element_discretization);
+		Option_table_add_divisions_entry(option_table, "discretization",
+			&element_divisions, &element_divisions_size);
 	}
 
 	/* domain type */
@@ -446,7 +451,7 @@ int gfx_modify_rendition_graphic(struct Parse_state *state,
 	/* material */
 	Cmiss_graphics_material_id material = Cmiss_graphic_get_material(graphic);
 	Option_table_add_set_Material_entry(option_table, "material", &material,
-		rendition_command_data->graphics_material_module);
+		rendition_command_data->material_module);
 
 	/* glyph repeat mode REPEAT_NONE|REPEAT_AXES_2D|REPEAT_AXES_3D|REPEAT_MIRROR */
 	const char *glyph_repeat_mode_string = 0;
@@ -570,7 +575,7 @@ int gfx_modify_rendition_graphic(struct Parse_state *state,
 	if (graphic_type == CMISS_GRAPHIC_LINES)
 	{
 		Option_table_add_set_Material_entry(option_table, "secondary_material", &(graphic->secondary_material),
-			rendition_command_data->graphics_material_module);
+			rendition_command_data->material_module);
 	}
 
 	/* seed_element */
@@ -613,7 +618,7 @@ int gfx_modify_rendition_graphic(struct Parse_state *state,
 	/* selected_material */
 	Cmiss_graphics_material_id selected_material = Cmiss_graphic_get_selected_material(graphic);
 	Option_table_add_set_Material_entry(option_table, "selected_material", &selected_material,
-		rendition_command_data->graphics_material_module);
+		rendition_command_data->material_module);
 
 	/* glyph base size */
 	double glyph_base_size[3];
@@ -641,10 +646,12 @@ int gfx_modify_rendition_graphic(struct Parse_state *state,
 
 	/* tessellation */
 	Cmiss_tessellation_id tessellation = Cmiss_graphic_get_tessellation(graphic);
-	if (Cmiss_graphic_type_uses_attribute(graphic_type, CMISS_GRAPHIC_ATTRIBUTE_TESSELLATION))
+	if ((legacy_graphic_type != LEGACY_GRAPHIC_POINT) &&
+		(legacy_graphic_type != LEGACY_GRAPHIC_NODE_POINTS) &&
+		(legacy_graphic_type != LEGACY_GRAPHIC_DATA_POINTS))
 	{
 		Option_table_add_Cmiss_tessellation_entry(option_table, "tessellation",
-			rendition_command_data->graphics_module, &tessellation);
+			rendition_command_data->tessellation_module, &tessellation);
 	}
 
 	/* texture_coordinates */
@@ -984,7 +991,20 @@ int gfx_modify_rendition_graphic(struct Parse_state *state,
 		STRING_TO_ENUMERATOR(Graphics_select_mode)(select_mode_string, &select_mode);
 		Cmiss_graphic_set_select_mode(graphic, select_mode);
 
-		if (graphic_type == CMISS_GRAPHIC_CYLINDERS)
+		if ((0 != element_divisions_size) || (0 != circle_discretization))
+		{
+			Cmiss_tessellation_module_id tessellationModule =
+				Cmiss_graphics_module_get_tessellation_module(rendition_command_data->graphics_module);
+			Cmiss_tessellation_id fixedTessellation =
+				Cmiss_tessellation_module_find_or_create_fixed_tessellation(tessellationModule,
+					element_divisions_size, element_divisions, circle_discretization,
+					tessellation);
+			Cmiss_graphic_set_tessellation(graphic, fixedTessellation);
+			Cmiss_tessellation_destroy(&fixedTessellation);
+			Cmiss_tessellation_module_destroy(&tessellationModule);
+		}	
+
+		if (legacy_graphic_type = LEGACY_GRAPHIC_CYLINDERS)
 		{
 			const double line_base_size = 2.0*constant_radius; // convert to diameter
 			Cmiss_graphic_line_attributes_set_base_size(line_attributes, 1, &line_base_size);
@@ -1218,7 +1238,7 @@ int gfx_modify_rendition_node_points(struct Parse_state *state,
 {
 	const char *help_text = "Deprecated; use points with domain_nodes option instead.";
 	return gfx_modify_rendition_graphic(state, CMISS_GRAPHIC_POINTS,
-		LEGACY_GRAPHIC_NODE_POINTS, /*help_text*/(const char *)0,
+		LEGACY_GRAPHIC_NODE_POINTS, help_text,
 		reinterpret_cast<Modify_rendition_data *>(modify_rendition_data_void),
 		reinterpret_cast<Rendition_command_data *>(rendition_command_data_void));
 }
@@ -1228,7 +1248,7 @@ int gfx_modify_rendition_point(struct Parse_state *state,
 {
 	const char *help_text = "Deprecated; use points with domain_point option instead.";
 	return gfx_modify_rendition_graphic(state, CMISS_GRAPHIC_POINTS,
-		LEGACY_GRAPHIC_POINT, /*help_text*/(const char *)0,
+		LEGACY_GRAPHIC_POINT, help_text,
 		reinterpret_cast<Modify_rendition_data *>(modify_rendition_data_void),
 		reinterpret_cast<Rendition_command_data *>(rendition_command_data_void));
 }

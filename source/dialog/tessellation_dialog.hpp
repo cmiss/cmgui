@@ -57,24 +57,25 @@ public:
 private:
 
 	Cmiss_tessellation *tessellation;
-	int labelChanged, refinementChanged, divisionsChanged;
+	int labelChanged, refinementChanged, divisionsChanged, circleDivisionsChanged;
   MANAGER(Cmiss_tessellation) *tessellation_manager;
  	void do_layout();
  	void set_callback();
 	void update_divisions_string_for_dialog();
 	void update_refinement_string_for_dialog();
+	void update_circle_divisions_string_for_dialog();
 	void OnTessellationTextEntered(wxCommandEvent& event);
 	void OnTessellationApplyPressed(wxCommandEvent& event);
 
 protected:
-	wxTextCtrl *tessellationLabel, *refinementTextCtrl, *divisionsTextCtrl;
+	wxTextCtrl *tessellationLabel, *refinementTextCtrl, *divisionsTextCtrl, *circleDivisionsTextCtrl;
 	wxButton *applyButton;
 };
 
 class TessellationDialog: public wxDialog {
 public:
 
-    TessellationDialog(struct Cmiss_graphics_module *graphics_module_in, wxWindow* parent, int id,
+    TessellationDialog(struct Cmiss_tessellation_module *tessellation_module_in, wxWindow* parent, int id,
     	const wxPoint& pos=wxDefaultPosition, const wxSize& size=wxDefaultSize);
     int add_managed_object(Cmiss_tessellation *tessellation);
     void manager_callback(struct MANAGER_MESSAGE(Cmiss_tessellation) *message);
@@ -87,7 +88,7 @@ public:
     }
 
 private:
-    struct Cmiss_graphics_module *graphics_module;
+    struct Cmiss_tessellation_module *tessellation_module;
     MANAGER(Cmiss_tessellation) *tessellation_manager;
     void *tessellation_manager_callback_id;
     void set_properties();
@@ -102,6 +103,7 @@ protected:
     wxStaticText* label_2;
     wxStaticText* label_3;
     wxStaticText* label_4;
+    wxStaticText* label_5;
     wxButton *addNewButton;
     wxScrolledWindow* TessellationItemsPanel;
 };

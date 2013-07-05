@@ -371,6 +371,7 @@ DESCRIPTION :
 	struct Light_model *default_light_model;
 	struct Cmiss_graphics_material_module *material_module;
 	struct Cmiss_font *default_font;
+	struct Cmiss_tessellation_module *tessellation_module;
 	struct MANAGER(Curve) *curve_manager;
 	struct MANAGER(Scene) *scene_manager;
 	struct Scene *default_scene;
@@ -5782,7 +5783,7 @@ Executes a GFX DEFINE command.
 					command_data->graphics_module, gfx_define_graphics_filter);
 				/* tessellation */
 				Option_table_add_entry(option_table, "tessellation", NULL,
-					command_data->graphics_module, gfx_define_tessellation);
+					command_data->tessellation_module, gfx_define_tessellation);
 				return_code = Option_table_parse(option_table, state);
 				DESTROY(Option_table)(&option_table);
 			}
@@ -6685,7 +6686,7 @@ Executes a GFX DESTROY command.
 					command_data->spectrum_manager, gfx_destroy_spectrum);
 				/* tessellation */
 				Option_table_add_entry(option_table, "tessellation", NULL,
-					command_data->graphics_module, gfx_destroy_tessellation);
+					command_data->tessellation_module, gfx_destroy_tessellation);
 				/* vtextures */
 				Option_table_add_entry(option_table, "vtextures", NULL,
 					command_data->volume_texture_manager, gfx_destroy_vtextures);
@@ -10770,7 +10771,7 @@ Executes a GFX LIST command.
 				command_data->spectrum_manager, gfx_list_spectrum);
 			/* tessellation */
 			Option_table_add_entry(option_table, "tessellation", NULL,
-				command_data->graphics_module, gfx_list_tessellation);
+				command_data->tessellation_module, gfx_list_tessellation);
 			/* texture */
 			Option_table_add_entry(option_table, "texture", NULL,
 					command_data->root_region, gfx_list_texture);
@@ -18015,9 +18016,13 @@ Initialise all the subcomponents of cmgui and create the Cmiss_command_data
 
 		command_data->default_light_model=
 			Cmiss_graphics_module_get_default_light_model(command_data->graphics_module);
-		// ensure we have a default tessellation
-		Cmiss_tessellation_id default_tessellation = Cmiss_graphics_module_get_default_tessellation(command_data->graphics_module);
+
+		// ensure we have default tessellations
+		command_data->tessellation_module = Cmiss_graphics_module_get_tessellation_module(command_data->graphics_module);
+		Cmiss_tessellation_id default_tessellation = Cmiss_tessellation_module_get_default_tessellation(command_data->tessellation_module);
 		Cmiss_tessellation_destroy(&default_tessellation);
+		Cmiss_tessellation_id default_points_tessellation = Cmiss_tessellation_module_get_default_points_tessellation(command_data->tessellation_module);
+		Cmiss_tessellation_destroy(&default_points_tessellation);
 
 		/* environment map manager */
 		command_data->environment_map_manager=CREATE(MANAGER(Environment_map))();
@@ -18032,9 +18037,10 @@ Initialise all the subcomponents of cmgui and create the Cmiss_command_data
 				Cmiss_graphics_module_get_default_spectrum(command_data->graphics_module);
 		}
 		/* create Material module and CMGUI default materials */
-		if (NULL != (command_data->material_module =
-				Cmiss_graphics_module_get_material_module(command_data->graphics_module)))
+		command_data->material_module = Cmiss_graphics_module_get_material_module(command_data->graphics_module);
+		if (command_data->material_module)
 		{
+			Cmiss_graphics_material_module_define_standard_materials(command_data->material_module);
 			if (NULL != (material = Cmiss_graphics_material_module_get_default_material(command_data->material_module)))
 			{
 				Graphical_material_set_alpha(material, 1.0);
@@ -18043,6 +18049,11 @@ Initialise all the subcomponents of cmgui and create the Cmiss_command_data
 		}
 		command_data->default_font = Cmiss_graphics_module_get_default_font(
 			command_data->graphics_module);
+
+		command_data->glyph_module = Cmiss_graphics_module_get_glyph_module(command_data->graphics_module);
+		Cmiss_glyph_module_define_standard_glyphs(command_data->glyph_module);
+		Cmiss_glyph_module_define_standard_cmgui_glyphs(command_data->glyph_module);
+		command_data->glyph_manager = Cmiss_glyph_module_get_glyph_manager(command_data->glyph_module);
 
 #if defined (USE_CMGUI_GRAPHICS_WINDOW)
 		command_data->graphics_buffer_package = UI_module->graphics_buffer_package;
@@ -18064,12 +18075,6 @@ Initialise all the subcomponents of cmgui and create the Cmiss_command_data
 		/*SAB.  Eventually want device manager */
 		command_data->device_list=CREATE(LIST(Io_device))();
 #endif /* defined (SELECT_DESCRIPTORS) */
-
-		command_data->glyph_module = Cmiss_graphics_module_get_glyph_module(command_data->graphics_module);
-		Cmiss_glyph_module_create_standard_glyphs(command_data->glyph_module);
-		Cmiss_glyph_module_create_standard_cmgui_glyphs(command_data->glyph_module);
-		command_data->glyph_manager = Cmiss_glyph_module_get_glyph_manager(command_data->glyph_module);
-
 		/* global list of selected objects */
 		command_data->any_object_selection = Cmiss_context_get_any_object_selection(Cmiss_context_app_get_core_context(context));
 		command_data->element_point_ranges_selection =
@@ -18507,6 +18512,7 @@ NOTE: Do not call this directly: call Cmiss_command_data_destroy() to deaccess.
 		DEACCESS(Spectrum)(&(command_data->default_spectrum));
 		command_data->spectrum_manager=NULL;
 		Cmiss_graphics_material_module_destroy(&command_data->material_module);
+		Cmiss_tessellation_module_destroy(&command_data->tessellation_module);
 		DEACCESS(Cmiss_font)(&command_data->default_font);
 		DESTROY(MANAGER(VT_volume_texture))(&command_data->volume_texture_manager);
 		DESTROY(MANAGER(Environment_map))(&command_data->environment_map_manager);

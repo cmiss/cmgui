@@ -86,40 +86,36 @@ int set_graphic_face_type(struct Parse_state *state, void *face_type_address_voi
 	return (return_code);
 }
 
-int set_Circle_discretization(struct Parse_state *state,
-	void *circle_discretization_void,void *user_interface_void)
-/*******************************************************************************
-LAST MODIFIED : 27 April 1999
-
-DESCRIPTION :
-A modifier function for setting number of segments used to draw circles.
-==============================================================================*/
+int set_circle_divisions(struct Parse_state *state,
+	void *circle_divisions_void, void *dummy_void)
 {
-	const char *current_token;
 	int return_code;
-	int *circle_discretization;
-
-	USE_PARAMETER(user_interface_void);
-	ENTER(set_Circle_discretization);
+	int *circle_divisions;
 	if (state)
 	{
-		current_token=state->current_token;
+		const char *current_token=state->current_token;
 		if (current_token)
 		{
 			if (strcmp(PARSER_HELP_STRING,current_token)&&
 				strcmp(PARSER_RECURSIVE_HELP_STRING,current_token))
 			{
-				circle_discretization = (int *)circle_discretization_void;
-				if (circle_discretization)
+				circle_divisions = (int *)circle_divisions_void;
+				if (circle_divisions)
 				{
-					if (1==sscanf(current_token,"%d",circle_discretization))
+					if (1==sscanf(current_token,"%d",circle_divisions))
 					{
 						shift_Parse_state(state,1);
-						return_code=check_Circle_discretization(circle_discretization);
+						return_code = ((*circle_divisions) >= 3);
+						if (!return_code)
+						{
+							display_message(ERROR_MESSAGE, "Circle divisions must be >= 3");
+							display_parse_state_location(state);
+							return_code=0;
+						}
 					}
 					else
 					{
-						display_message(ERROR_MESSAGE,"Invalid discretization: %s",
+						display_message(ERROR_MESSAGE,"Invalid circle divisions: %s",
 							current_token);
 						display_parse_state_location(state);
 						return_code=0;
@@ -128,30 +124,21 @@ A modifier function for setting number of segments used to draw circles.
 				else
 				{
 					display_message(ERROR_MESSAGE,
-						"set_Circle_discretization.  Missing circle_discretization");
+						"set_circle_divisions.  Missing circle divisions");
 					return_code=0;
 				}
 			}
 			else
 			{
-				circle_discretization = (int *)circle_discretization_void;
-				if (circle_discretization)
+				circle_divisions = (int *)circle_divisions_void;
+				if (circle_divisions && (3 <= *circle_divisions))
 				{
-					/* use negative value to signal that it is not determined which
-						 current value is the default */
-					if (0 > *circle_discretization)
-					{
-						display_message(INFORMATION_MESSAGE," #[CURRENT]{integer}");
-					}
-					else
-					{
-						display_message(INFORMATION_MESSAGE,
-							" #[%d]{integer}",*circle_discretization);
-					}
+					display_message(INFORMATION_MESSAGE,
+						" #[%d]{integer>=3}", *circle_divisions);
 				}
 				else
 				{
-					display_message(INFORMATION_MESSAGE," #{integer}");
+					display_message(INFORMATION_MESSAGE," #{integer>=3}");
 				}
 				return_code=1;
 			}
@@ -165,15 +152,11 @@ A modifier function for setting number of segments used to draw circles.
 	}
 	else
 	{
-		display_message(ERROR_MESSAGE,"set_Circle_discretization.  Missing state");
+		display_message(ERROR_MESSAGE,"set_circle_divisions.  Missing state");
 		return_code=0;
 	}
-	LEAVE;
-
 	return (return_code);
-} /* set_Circle_discretization */
-
-
+}
 
 int set_Element_discretization(struct Parse_state *state,
 	void *element_discretization_void,void *user_interface_void)

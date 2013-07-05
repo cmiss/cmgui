@@ -4,6 +4,7 @@
 #include "general/debug.h"
 #include "general/message.h"
 #include "command/parser.h"
+#include "graphics/auxiliary_graphics_types_app.h"
 #include "graphics/graphics_module.h"
 #include "graphics/scene.h"
 #include "graphics/render_gl.h"
@@ -41,14 +42,14 @@ int gfx_modify_rendition_general(struct Parse_state *state,
 			Option_table *option_table = CREATE(Option_table)();
 			Option_table_add_help(option_table,
 				"The clear option removes all graphics from the rendition. "
-				"Option 'circle_discretization' is deprecated: use circle_discretization option on cylinders instead. "
+				"Option 'circle_discretization' is deprecated: use tessellation option on individual graphics instead. "
 				"Option 'default_coordinate' is deprecated: use coordinate option on individual graphics instead. "
 				"Option 'element_discretization' is deprecated: use tessellation option on individual graphics instead. "
 				"Option 'native_discretization' is deprecated: use native_discretization option on individual graphics instead. ");
 			/* circle_discretization */
 			Option_table_add_entry(option_table, "circle_discretization",
 				(void *)&rendition->circle_discretization, (void *)NULL,
-				set_Circle_discretization);
+				set_circle_divisions);
 			/* clear */
 			Option_table_add_entry(option_table, "clear",
 				(void *)&clear_flag, NULL, set_char_flag);
@@ -80,6 +81,11 @@ int gfx_modify_rendition_general(struct Parse_state *state,
 			DESTROY(Option_table)(&option_table);
 			if (return_code)
 			{
+				if ((rendition->circle_discretization > 0) && (rendition->circle_discretization < 12))
+				{
+					// silently use minimum of 12 otherwise sphere glyphs will look poor
+					rendition->circle_discretization = 12;
+				}
 				if (clear_flag)
 				{
 					if (group)

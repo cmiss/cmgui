@@ -338,6 +338,7 @@ DESCRIPTION :
 		transformation_expanded, transformation_callback_flag,
 		gt_element_group_callback_flag, rendition_callback_flag;
 	struct Cmiss_graphics_module *graphics_module;
+	Cmiss_tessellation_module_id tessellationModule;
 	/* access gt_element_group for current_object if applicable */
 	struct Cmiss_rendition *rendition, *edit_rendition;
 	Scene *scene;
@@ -562,7 +563,7 @@ class wxRegionTreeViewer : public wxFrame
 		*isoscalartext, *glyphtext, *offsettext, *baseglyphsizetext, *selectmodetext,
 		*glyphscalefactorstext, *domaintypetext, *xidiscretizationmodetext,
 		*tessellationtext, *glyph_repeat_mode_text, *labeloffsettext,
-		*discretizationtext, *circlediscretizationtext,*densityfieldtext,*xitext,
+		*densityfieldtext, *xitext,
 		*streamtypetext, *streamlengthtext, *streamwidthtext, *streamvectortext,
 		*linewidthtext, *streamlinedatatypetext, *spectrumtext, *rendertypetext,
 		*staticlabeltext, *fonttext;
@@ -573,8 +574,8 @@ class wxRegionTreeViewer : public wxFrame
 	wxPanel *isovalueoptionspane;
 	wxTextCtrl *nametextfield,
 		*constantradiustextctrl, *scalefactorstextctrl, *isoscalartextctrl, *offsettextctrl,
-		*baseglyphsizetextctrl,*glyphscalefactorstextctrl,*discretizationtextctrl,
-		*circlediscretizationtextctrl,*xitextctrl,*lengthtextctrl,*widthtextctrl,
+		*baseglyphsizetextctrl,*glyphscalefactorstextctrl,
+		*xitextctrl,*lengthtextctrl,*widthtextctrl,
 		*linewidthtextctrl,*isovaluesequencenumbertextctrl, *isovaluesequencefirsttextctrl,
 		*isovaluesequencelasttextctrl, *labeloffsettextctrl, *staticlabeltextctrl[3];
 	wxPanel	*coordinate_field_chooser_panel, *coordinate_system_chooser_panel, *data_chooser_panel,
@@ -753,10 +754,9 @@ public:
 	tessellation_chooser =
 		new Managed_object_chooser<Cmiss_tessellation,MANAGER_CLASS(Cmiss_tessellation)>(
 			tessellation_chooser_panel, /*initial*/static_cast<Cmiss_tessellation*>(0),
-			Cmiss_graphics_module_get_tessellation_manager(region_tree_viewer->graphics_module),
+			Cmiss_tessellation_module_get_manager(region_tree_viewer->tessellationModule),
 			(MANAGER_CONDITIONAL_FUNCTION(Cmiss_tessellation) *)NULL, (void *)NULL,
 			region_tree_viewer->user_interface);
-	tessellation_chooser->include_null_item(true);
 	Callback_base< Cmiss_tessellation* > *tessellation_callback =
 		 new Callback_member_callback< Cmiss_tessellation*,
 				wxRegionTreeViewer, int (wxRegionTreeViewer::*)(Cmiss_tessellation *) >
@@ -844,9 +844,6 @@ public:
 		NULL, this);
 	XRCCTRL(*this,"StaticLabelTextCtrl3", wxTextCtrl)->Connect(wxEVT_KILL_FOCUS,
 		wxCommandEventHandler(wxRegionTreeViewer::EnterStaticLabelText),
-		NULL, this);
-	XRCCTRL(*this,"DiscretizationTextCtrl", wxTextCtrl)->Connect(wxEVT_KILL_FOCUS,
-		wxCommandEventHandler(wxRegionTreeViewer::EnterElementDiscretization),
 		NULL, this);
 	XRCCTRL(*this,"XiTextCtrl", wxTextCtrl)->Connect(wxEVT_KILL_FOCUS,
 		wxCommandEventHandler(wxRegionTreeViewer::EnterSeedXi),
@@ -1271,15 +1268,11 @@ int domain_type_callback(enum Cmiss_field_domain_type domain_type)
 
 		if ((domain_dimension > 0) && (XI_DISCRETIZATION_EXACT_XI != xi_discretization_mode))
 		{
-			discretizationtextctrl->Enable();
-			discretizationtext->Enable();
 			nativediscretizationfieldtext->Enable();
 			native_discretization_field_chooser_panel->Enable();
 		}
 		else
 		{
-			discretizationtextctrl->Disable();
-			discretizationtext->Disable();
 			nativediscretizationfieldtext->Disable();
 			native_discretization_field_chooser_panel->Disable();
 		}
@@ -1330,8 +1323,6 @@ Callback from wxChooser<xi Discretization Mode> when choice is made.
 	enum Xi_discretization_mode old_xi_discretization_mode;
 	struct Computed_field *old_xi_point_density_field, *xi_point_density_field;
 
-	discretizationtext=XRCCTRL(*this,"DiscretizationText",wxStaticText);
-	discretizationtextctrl=XRCCTRL(*this,"DiscretizationTextCtrl",wxTextCtrl);
 	wxStaticText *nativediscretizationfieldtext=XRCCTRL(*this,"NativeDiscretizationFieldText",wxStaticText);
 	native_discretization_field_chooser_panel=XRCCTRL(*this, "NativeDiscretizationFieldChooserPanel",wxPanel);
 	densityfieldtext=XRCCTRL(*this, "DensityFieldText",wxStaticText);
@@ -1375,8 +1366,6 @@ Callback from wxChooser<xi Discretization Mode> when choice is made.
 			{
 				FE_field *native_discretization_field=
 				Cmiss_graphic_get_native_discretization_field(region_tree_viewer->current_graphic);
-				discretizationtextctrl->Enable();
-				discretizationtext->Enable();
 				nativediscretizationfieldtext->Enable();
 				native_discretization_field_chooser_panel->Enable();
 				xitext->Disable();
@@ -1385,8 +1374,6 @@ Callback from wxChooser<xi Discretization Mode> when choice is made.
 			}
 			else
 			{
-				discretizationtextctrl->Disable();
-				discretizationtext->Disable();
 				nativediscretizationfieldtext->Disable();
 				native_discretization_field_chooser_panel->Disable();
 				xitext->Enable();
@@ -1920,7 +1907,7 @@ void AddGraphic(Cmiss_graphic_type graphic_type,
 		{
 			Cmiss_graphic_set_domain_type(graphic, domain_type);
 			Cmiss_field_id coordinate_field = Cmiss_rendition_guess_coordinate_field(
-				region_tree_viewer->edit_rendition, graphic_type);
+				region_tree_viewer->edit_rendition, domain_type);
 			if (coordinate_field)
 				Cmiss_graphic_set_coordinate_field(graphic, coordinate_field);
 		}
@@ -2573,92 +2560,6 @@ void EnterGlyphScale(wxCommandEvent &event)
 	}
 */
 
-void EnterElementDiscretization(wxCommandEvent &event)
-{
-	char temp_string[100];
-	struct Element_discretization discretization;
-	struct Parse_state *temp_state;
-
-	USE_PARAMETER(event);
-	discretizationtextctrl=XRCCTRL(*this,"DiscretizationTextCtrl",wxTextCtrl);
-
-	if (region_tree_viewer->current_graphic)
-	{
-		/* Get the text string */
-		discretizationtextctrl=XRCCTRL(*this,"DiscretizationTextCtrl",wxTextCtrl);
-		wxString wxTextEntry = discretizationtextctrl->GetValue();
-		const char *text_entry = wxTextEntry.mb_str(wxConvUTF8);
-		if (text_entry)
-		{
-			temp_state=create_Parse_state(text_entry);
-			if (temp_state)
-			{
-				if (set_Element_discretization(temp_state,(void *)&discretization,
-						(void *)region_tree_viewer->user_interface)&&
-					Cmiss_graphic_set_discretization(
-						region_tree_viewer->current_graphic,&discretization))
-				{
-					/* inform the client of the change */
-					Region_tree_viewer_autoapply(region_tree_viewer->rendition,
-						region_tree_viewer->edit_rendition);
-					//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphic);
-				}
-				destroy_Parse_state(&temp_state);
-			}
-			else
-			{
-				display_message(ERROR_MESSAGE,
-					"settings_editor_discretization_text_CB.  "
-					"Could not create parse state");
-			}
-		}
-		else
-		{
-			display_message(ERROR_MESSAGE,
-				"settings_editor_discretization_text_CB.  Missing text");
-		}
-		if (Cmiss_graphic_get_discretization(
-					region_tree_viewer->current_graphic,&discretization))
-		{
-			/* always restore constant_radius to actual value in use */
-			sprintf(temp_string,"%d*%d*%d",discretization.number_in_xi1,
-				discretization.number_in_xi2,discretization.number_in_xi3);
-			discretizationtextctrl->ChangeValue(wxString::FromAscii(temp_string));
-		}
-	}
-}
-
-void EnterCircleDiscretization(wxCommandEvent &event)
-{
-	char temp_string[50];
-	int circle_discretization;
-
-	USE_PARAMETER(event);
-
-	if (region_tree_viewer->current_graphic)
-	{
-		wxString circle_discretization_string = circlediscretizationtextctrl->GetValue();
-		circle_discretization = atoi(circle_discretization_string.mb_str(wxConvUTF8));
-		/* Get the text string */
-		Cmiss_graphic_set_circle_discretization(
-			region_tree_viewer->current_graphic,circle_discretization);
-		/* inform the client of the change */
-		Region_tree_viewer_autoapply(region_tree_viewer->rendition,
-			region_tree_viewer->edit_rendition);
-		//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphic);
-	}
-	else
-	{
-		display_message(ERROR_MESSAGE,
-			"EnterCircleDiscretization. Invalid argument");
-	}
-
-	/* always restore constant_radius to actual value in use */
-	sprintf(temp_string,"%d",
-		Cmiss_graphic_get_circle_discretization(region_tree_viewer->current_graphic));
-	circlediscretizationtextctrl->ChangeValue(wxString::FromAscii(temp_string));
-}
-
 void SeedElementChecked(wxCommandEvent &event)
 {
 	seed_element_panel = XRCCTRL(*this, "SeedElementPanel", wxPanel);
@@ -2909,7 +2810,6 @@ void SetGraphic(Cmiss_graphic *graphic)
 	char temp_string[50], *vector_temp_string;
 	struct Computed_field *xi_point_density_field, *stream_vector_field;
 	enum Xi_discretization_mode xi_discretization_mode;
-	struct Element_discretization discretization;
 	enum Streamline_type streamline_type;
 	enum Cmiss_graphics_render_type render_type;
 	struct FE_element *seed_element;
@@ -3470,30 +3370,6 @@ void SetGraphic(Cmiss_graphic *graphic)
 		domaintypetext->Show();
 		domain_type_chooser->set_value(Cmiss_graphic_get_domain_type(graphic));
 
-		discretizationtext=XRCCTRL(*this,"DiscretizationText",wxStaticText);
-		discretizationtextctrl=XRCCTRL(*this,"DiscretizationTextCtrl",wxTextCtrl);
-		circlediscretizationtext=XRCCTRL(*this,"CircleDiscretizationText",wxStaticText);
-		circlediscretizationtextctrl=XRCCTRL(*this,"CircleDiscretizationTextCtrl",wxTextCtrl);
-		wxStaticText *nativediscretizationfieldtext=XRCCTRL(*this,"NativeDiscretizationFieldText",wxStaticText);
-		native_discretization_field_chooser_panel=XRCCTRL(*this, "NativeDiscretizationFieldChooserPanel",wxPanel);
-
-		if (Cmiss_graphic_type_uses_attribute(graphic_type,
-			CMISS_GRAPHIC_ATTRIBUTE_DISCRETIZATION))
-		{
-			Cmiss_graphic_get_discretization(graphic,
-				&discretization);
-			sprintf(temp_string,"%d*%d*%d",discretization.number_in_xi1,
-				discretization.number_in_xi2,discretization.number_in_xi3);
-			discretizationtextctrl->SetValue(wxString::FromAscii(temp_string));
-			discretizationtextctrl->Show();
-			discretizationtext->Show();
-		}
-		else
-		{
-			discretizationtextctrl->Hide();
-			discretizationtext->Hide();
-		}
-
 		tessellationtext=XRCCTRL(*this,"TessellationStaticText",wxStaticText);
 		tessellation_chooser_panel=XRCCTRL(*this, "TessellationChooserPanel",wxPanel);
 		tessellationbutton=XRCCTRL(*this,"TessellationButton",wxButton);
@@ -3517,20 +3393,9 @@ void SetGraphic(Cmiss_graphic *graphic)
 			tessellationbutton->Show(false);
 		}
 
-		if (CMISS_GRAPHIC_CYLINDERS==graphic_type)
-		{
-			sprintf(temp_string,"%d",Cmiss_graphic_get_circle_discretization(graphic));
-			circlediscretizationtextctrl->SetValue(wxString::FromAscii(temp_string));
-			circlediscretizationtextctrl->Show();
-			circlediscretizationtext->Show();
-		}
-		else
-		{
-			circlediscretizationtextctrl->Hide();
-			circlediscretizationtext->Hide();
-		}
-
 		/* element_points */
+		wxStaticText *nativediscretizationfieldtext=XRCCTRL(*this,"NativeDiscretizationFieldText",wxStaticText);
+		native_discretization_field_chooser_panel=XRCCTRL(*this, "NativeDiscretizationFieldChooserPanel",wxPanel);
 		xidiscretizationmodetext = XRCCTRL(*this,"XiDiscretizationModeText",wxStaticText);
 		xi_discretization_mode_chooser_panel= XRCCTRL(*this,"XiDiscretizationModeChooserPanel",wxPanel);
 		densityfieldtext=XRCCTRL(*this, "DensityFieldText",wxStaticText);
@@ -3587,7 +3452,7 @@ void SetGraphic(Cmiss_graphic *graphic)
 		}
 
 		if (Cmiss_graphic_type_uses_attribute(graphic_type,
-			CMISS_GRAPHIC_ATTRIBUTE_DISCRETIZATION))
+			CMISS_GRAPHIC_ATTRIBUTE_XI_DISCRETIZATION_MODE))
 		{
 			Cmiss_graphic_get_xi_discretization(graphic,
 				&xi_discretization_mode, &xi_point_density_field);
@@ -3630,14 +3495,10 @@ void SetGraphic(Cmiss_graphic *graphic)
 
 			if (XI_DISCRETIZATION_EXACT_XI != xi_discretization_mode)
 			{
-				discretizationtextctrl->Enable();
-				discretizationtext->Enable();
 				native_discretization_field_chooser_panel->Enable();
 			}
 			else
 			{
-				discretizationtextctrl->Disable();
-				discretizationtext->Disable();
 				native_discretization_field_chooser_panel->Disable();
 			}
 			if ((XI_DISCRETIZATION_CELL_DENSITY == xi_discretization_mode)||
@@ -4231,7 +4092,7 @@ void EditTessellation(wxCommandEvent &event)
 	if (!window)
 	{
 		TessellationDialog *dlg = new TessellationDialog(
-			region_tree_viewer->graphics_module, this, wxID_ANY);
+			region_tree_viewer->tessellationModule, this, wxID_ANY);
 		tessellationWindowID = dlg->GetId();
 		dlg->Show();
 	}
@@ -4278,8 +4139,6 @@ BEGIN_EVENT_TABLE(wxRegionTreeViewer, wxFrame)
 	EVT_CHECKBOX(XRCID("OverlayCheckBox"),wxRegionTreeViewer::OverlayChecked)
 	EVT_TEXT_ENTER(XRCID("OverlayTextCtrl"),wxRegionTreeViewer::OverlayEntered)
 	*/
-	EVT_TEXT_ENTER(XRCID("DiscretizationTextCtrl"),wxRegionTreeViewer::EnterElementDiscretization)
-	EVT_TEXT_ENTER(XRCID("CircleDiscretizationTextCtrl"),wxRegionTreeViewer::EnterCircleDiscretization)
 	EVT_CHECKBOX(XRCID("SeedElementCheckBox"),wxRegionTreeViewer::SeedElementChecked)
 	EVT_TEXT_ENTER(XRCID("XiTextCtrl"),wxRegionTreeViewer::EnterSeedXi)
 	EVT_TEXT_ENTER(XRCID("LengthTextCtrl"),wxRegionTreeViewer::EnterStreamlineLength)
@@ -4673,6 +4532,7 @@ DESCRIPTION :
 			region_tree_viewer->gt_element_group_callback_flag = 0;
 			region_tree_viewer->rendition_callback_flag = 0;
 			region_tree_viewer->graphics_module = graphics_module;
+			region_tree_viewer->tessellationModule = Cmiss_graphics_module_get_tessellation_module(graphics_module);
 			region_tree_viewer->scene = scene;
 			region_tree_viewer->graphical_material_manager = graphical_material_manager;
 			region_tree_viewer->region_tree_viewer_address = (struct Region_tree_viewer **)NULL;
@@ -4829,6 +4689,7 @@ DESCRIPTION :
 			DEACCESS(Cmiss_rendition)(&region_tree_viewer->rendition);
 		delete region_tree_viewer->transformation_editor;
 		delete region_tree_viewer->wx_region_tree_viewer;
+		Cmiss_tessellation_module_destroy(&region_tree_viewer->tessellationModule);
 		DEALLOCATE(*region_tree_viewer_address);
 		*region_tree_viewer_address = NULL;
 		return_code = 1;

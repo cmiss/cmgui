@@ -71,7 +71,7 @@ enum Time_keeper_app_play_mode
 typedef int (*Time_keeper_app_callback)(struct Time_keeper_app *time_keeper_app,
 	enum Time_keeper_app_event event, void *user_data);
 
-class Time_keeper_app
+struct Time_keeper_app
 {
 private:
 

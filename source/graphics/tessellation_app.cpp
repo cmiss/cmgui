@@ -4,9 +4,8 @@
 #include "general/debug.h"
 #include "general/message.h"
 #include "command/parser.h"
+#include "graphics/auxiliary_graphics_types_app.h"
 #include "graphics/tessellation.hpp"
-#include "graphics/graphics_module.h"
-
 
 /***************************************************************************//**
  * Modifier function for setting positive numbers of divisions separated by *.
@@ -102,22 +101,22 @@ int Option_table_add_divisions_entry(struct Option_table *option_table,
 }
 
 int gfx_define_tessellation_contents(struct Parse_state *state, void *tessellation_void,
-	void *graphics_module_void)
+	void *tessellation_module_void)
 {
 	int return_code = 1;
-
-	Cmiss_graphics_module *graphics_module = (Cmiss_graphics_module *)graphics_module_void;
-	if (state && graphics_module)
+	Cmiss_tessellation_module *tessellation_module =
+		reinterpret_cast<Cmiss_tessellation_module *>(tessellation_module_void);
+	if (state && tessellation_module)
 	{
 		Cmiss_tessellation *tessellation = (Cmiss_tessellation *)tessellation_void; // can be null
+		int circleDivisions = 0;
 		int minimum_divisions_size = 1;
 		int refinement_factors_size = 1;
 		if (tessellation)
 		{
-			minimum_divisions_size = Cmiss_tessellation_get_attribute_integer(tessellation,
-				CMISS_TESSELLATION_ATTRIBUTE_MINIMUM_DIVISIONS_SIZE);
-			refinement_factors_size = Cmiss_tessellation_get_attribute_integer(tessellation,
-				CMISS_TESSELLATION_ATTRIBUTE_REFINEMENT_FACTORS_SIZE);
+			circleDivisions = Cmiss_tessellation_get_circle_divisions(tessellation);
+			minimum_divisions_size = Cmiss_tessellation_get_minimum_divisions(tessellation, 0, 0);
+			refinement_factors_size = Cmiss_tessellation_get_refinement_factors(tessellation, 0, 0);
 		}
 		int *minimum_divisions;
 		int *refinement_factors;
@@ -142,7 +141,11 @@ int gfx_define_tessellation_contents(struct Parse_state *state, void *tessellati
 			"non-linear basis functions the minimum_divisions is multiplied by "
 			"the refinement_factors to give the refined number of segments. "
 			"Both minimum_divisions and refinement_factors use the last supplied "
-			"number for all higher dimensions, so \"4\" = \"4*4\" and so on.");
+			"number for all higher dimensions, so \"4\" = \"4*4\" and so on. "
+			"The circle_divisions sets the number of line segments used to "
+			"approximate circles in cylinders, spheres etc.");
+		Option_table_add_entry(option_table, "circle_divisions",
+			(void *)&circleDivisions, (void *)NULL, set_circle_divisions);
 		Option_table_add_divisions_entry(option_table, "minimum_divisions",
 			&minimum_divisions, &minimum_divisions_size);
 		Option_table_add_divisions_entry(option_table, "refinement_factors",
@@ -153,7 +156,8 @@ int gfx_define_tessellation_contents(struct Parse_state *state, void *tessellati
 		{
 			return_code =
 				Cmiss_tessellation_set_minimum_divisions(tessellation, minimum_divisions_size, minimum_divisions) &&
-				Cmiss_tessellation_set_refinement_factors(tessellation, refinement_factors_size, refinement_factors);
+				Cmiss_tessellation_set_refinement_factors(tessellation, refinement_factors_size, refinement_factors) &&
+				((circleDivisions < 3) || Cmiss_tessellation_set_circle_divisions(tessellation, circleDivisions));
 		}
 		DEALLOCATE(minimum_divisions);
 		DEALLOCATE(refinement_factors);
@@ -167,18 +171,18 @@ int gfx_define_tessellation_contents(struct Parse_state *state, void *tessellati
 	return return_code;
 }
 
-
 /***************************************************************************//**
- * @see Option_table_add_set_Cmiss_tessellation
+ * @see Option_table_add_Cmiss_tessellation_entry
  */
 int set_Cmiss_tessellation(struct Parse_state *state,
-	void *tessellation_address_void, void *graphics_module_void)
+	void *tessellation_address_void, void *tessellation_module_void)
 {
 	int return_code = 1;
 
 	Cmiss_tessellation **tessellation_address = (Cmiss_tessellation **)tessellation_address_void;
-	Cmiss_graphics_module *graphics_module = (Cmiss_graphics_module *)graphics_module_void;
-	if (state && tessellation_address && graphics_module)
+	Cmiss_tessellation_module *tessellation_module =
+		reinterpret_cast<Cmiss_tessellation_module *>(tessellation_module_void);
+	if (state && tessellation_address && tessellation_module)
 	{
 		const char *current_token = state->current_token;
 		if (current_token)
@@ -189,7 +193,7 @@ int set_Cmiss_tessellation(struct Parse_state *state,
 				Cmiss_tessellation *tessellation = NULL;
 				if (!fuzzy_string_compare(current_token, "NONE"))
 				{
-					tessellation = Cmiss_graphics_module_find_tessellation_by_name(graphics_module, current_token);
+					tessellation = Cmiss_tessellation_module_find_tessellation_by_name(tessellation_module, current_token);
 					if (!tessellation)
 					{
 						display_message(ERROR_MESSAGE, "Unknown tessellation : %s", current_token);
@@ -230,14 +234,14 @@ int set_Cmiss_tessellation(struct Parse_state *state,
 }
 
 int Option_table_add_Cmiss_tessellation_entry(struct Option_table *option_table,
-	const char *token, struct Cmiss_graphics_module *graphics_module,
+	const char *token, struct Cmiss_tessellation_module *tessellation_module,
 	struct Cmiss_tessellation **tessellation_address)
 {
 	int return_code;
-	if (option_table && token && graphics_module && tessellation_address)
+	if (option_table && token && tessellation_module && tessellation_address)
 	{
 		return_code = Option_table_add_entry(option_table, token,
-			(void *)tessellation_address, (void *)graphics_module,
+			(void *)tessellation_address, (void *)tessellation_module,
 			set_Cmiss_tessellation);
 	}
 	else
@@ -252,13 +256,14 @@ int Option_table_add_Cmiss_tessellation_entry(struct Option_table *option_table,
 }
 
 int gfx_define_tessellation(struct Parse_state *state, void *dummy_to_be_modified,
-	void *graphics_module_void)
+	void *tessellation_module_void)
 {
 	int return_code = 1;
 
 	USE_PARAMETER(dummy_to_be_modified);
-	Cmiss_graphics_module *graphics_module = (Cmiss_graphics_module *)graphics_module_void;
-	if (state && graphics_module)
+	Cmiss_tessellation_module *tessellation_module =
+		reinterpret_cast<Cmiss_tessellation_module *>(tessellation_module_void);
+	if (state && tessellation_module)
 	{
 		const char *current_token = state->current_token;
 		if (current_token)
@@ -266,14 +271,12 @@ int gfx_define_tessellation(struct Parse_state *state, void *dummy_to_be_modifie
 			if (strcmp(PARSER_HELP_STRING, current_token) &&
 				strcmp(PARSER_RECURSIVE_HELP_STRING, current_token))
 			{
-				MANAGER(Cmiss_tessellation) *tessellation_manager =
-					Cmiss_graphics_module_get_tessellation_manager(graphics_module);
-				MANAGER_BEGIN_CACHE(Cmiss_tessellation)(tessellation_manager);
+				Cmiss_tessellation_module_begin_change(tessellation_module);
 				Cmiss_tessellation *tessellation =
-					Cmiss_graphics_module_find_tessellation_by_name(graphics_module, current_token);
+					Cmiss_tessellation_module_find_tessellation_by_name(tessellation_module, current_token);
 				if (!tessellation)
 				{
-					tessellation = Cmiss_graphics_module_create_tessellation(graphics_module);
+					tessellation = Cmiss_tessellation_module_create_tessellation(tessellation_module);
 					Cmiss_tessellation_set_name(tessellation, current_token);
 				}
 				shift_Parse_state(state,1);
@@ -282,16 +285,16 @@ int gfx_define_tessellation(struct Parse_state *state, void *dummy_to_be_modifie
 					// set managed state for all tessellations created or edited otherwise
 					// cleaned up at end of command.
 					Cmiss_tessellation_set_managed(tessellation, true);
-					return_code = gfx_define_tessellation_contents(state, (void *)tessellation, graphics_module_void);
+					return_code = gfx_define_tessellation_contents(state, (void *)tessellation, tessellation_module_void);
 				}
 				Cmiss_tessellation_destroy(&tessellation);
-				MANAGER_END_CACHE(Cmiss_tessellation)(tessellation_manager);
+				Cmiss_tessellation_module_end_change(tessellation_module);
 			}
 			else
 			{
 				Option_table *option_table = CREATE(Option_table)();
 				Option_table_add_entry(option_table, "TESSELLATION_NAME",
-					/*tessellation*/(void *)NULL, graphics_module_void,
+					/*tessellation*/(void *)NULL, tessellation_module_void,
 					gfx_define_tessellation_contents);
 				return_code = Option_table_parse(option_table,state);
 				DESTROY(Option_table)(&option_table);
@@ -314,16 +317,18 @@ int gfx_define_tessellation(struct Parse_state *state, void *dummy_to_be_modifie
 }
 
 int gfx_destroy_tessellation(struct Parse_state *state,
-	void *dummy_to_be_modified, void *graphics_module_void)
+	void *dummy_to_be_modified, void *tessellation_module_void)
 {
 	int return_code;
 	USE_PARAMETER(dummy_to_be_modified);
-	if (state && graphics_module_void)
+	Cmiss_tessellation_module *tessellation_module =
+		reinterpret_cast<Cmiss_tessellation_module *>(tessellation_module_void);
+	if (state && tessellation_module)
 	{
 		Cmiss_tessellation *tessellation = NULL;
 		Option_table *option_table = CREATE(Option_table)();
 		Option_table_add_entry(option_table, /*token*/(const char *)NULL,
-			(void *)&tessellation, graphics_module_void, set_Cmiss_tessellation);
+			(void *)&tessellation, tessellation_module_void, set_Cmiss_tessellation);
 		return_code = Option_table_multi_parse(option_table,state);
 		if (return_code)
 		{
@@ -358,17 +363,18 @@ int gfx_destroy_tessellation(struct Parse_state *state,
 }
 
 int gfx_list_tessellation(struct Parse_state *state,
-	void *dummy_to_be_modified, void *graphics_module_void)
+	void *dummy_to_be_modified, void *tessellation_module_void)
 {
 	int return_code;
 	USE_PARAMETER(dummy_to_be_modified);
-	Cmiss_graphics_module *graphics_module = (Cmiss_graphics_module *)graphics_module_void;
-	if (state && graphics_module)
+	Cmiss_tessellation_module *tessellation_module =
+		reinterpret_cast<Cmiss_tessellation_module *>(tessellation_module_void);
+	if (state && tessellation_module)
 	{
 		Cmiss_tessellation *tessellation = NULL;
 		Option_table *option_table = CREATE(Option_table)();
 		Option_table_add_entry(option_table, /*token*/(const char *)NULL,
-			(void *)&tessellation, graphics_module_void, set_Cmiss_tessellation);
+			(void *)&tessellation, tessellation_module_void, set_Cmiss_tessellation);
 		return_code = Option_table_multi_parse(option_table,state);
 		if (return_code)
 		{
@@ -379,7 +385,7 @@ int gfx_list_tessellation(struct Parse_state *state,
 			else
 			{
 				return_code = FOR_EACH_OBJECT_IN_MANAGER(Cmiss_tessellation)(list_Cmiss_tessellation_iterator,
-					(void *)NULL, Cmiss_graphics_module_get_tessellation_manager(graphics_module));
+					(void *)NULL, Cmiss_tessellation_module_get_manager(tessellation_module));
 			}
 		}
 		if (tessellation)

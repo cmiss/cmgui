@@ -223,12 +223,6 @@ int WINAPI WinMain(HINSTANCE current_instance,HINSTANCE previous_instance,
 				}
 			}
 #endif
-			Cmiss_graphics_module_id graphics_module = NULL;
-			if (NULL != (graphics_module = Cmiss_context_get_default_graphics_module(Cmiss_context_app_get_core_context(context))))
-			{
-				Cmiss_graphics_module_define_standard_materials(graphics_module);
-				Cmiss_graphics_module_destroy(&graphics_module);
-			}
 			if (NULL != (command_data = Cmiss_context_get_default_command_interpreter(context)))
 			{
 				Cmiss_command_data_set_cmgui_string(command_data, CMGUI_NAME_STRING,

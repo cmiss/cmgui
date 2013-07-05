@@ -526,41 +526,6 @@
 												</object>
 											</object>
 
-												<object class="sizeritem">
-				   								<object class = "wxBoxSizer">	
-													<orient>wxHORIZONTAL</orient>
-													<object class="sizeritem">
-														<flag>wxALIGN_CENTRE_VERTICAL</flag>
-														<object class	="wxStaticText" name="DiscretizationText"> 
-															<label>Discretization:</label>				  			
-	 													</object>
-													</object>
-													<object class="sizeritem">
-														<object class	="wxTextCtrl" name="DiscretizationTextCtrl">
-															<style>wxTE_PROCESS_ENTER</style>
-	 													</object>
-													</object>
-												</object>
-											</object>
-
-
-											<object class="sizeritem">
-				   								<object class = "wxBoxSizer">	
-													<orient>wxHORIZONTAL</orient>
-													<object class="sizeritem">
-														<flag>wxALIGN_CENTRE_VERTICAL</flag>
-														<object class	="wxStaticText" name="CircleDiscretizationText"> 
-															<label>Circle Discretization:</label>				  			
-	 													</object>
-													</object>
-													<object class="sizeritem">
-														<object class	="wxTextCtrl" name="CircleDiscretizationTextCtrl">
-															<style>wxTE_PROCESS_ENTER</style>
-	 													</object>
-													</object>
-												</object>
-											</object>
-
 											<object class="sizeritem">
 				   								<object class = "wxBoxSizer">	
 													<orient>wxHORIZONTAL</orient>
