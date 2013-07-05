@@ -318,7 +318,9 @@ int gfx_modify_rendition_graphic(struct Parse_state *state,
 
 	/* exterior */
 	char exterior_flag = static_cast<char>(Cmiss_graphic_get_exterior(graphic));
-	if (Cmiss_graphic_type_uses_attribute(graphic_type, CMISS_GRAPHIC_ATTRIBUTE_EXTERIOR_FLAG))
+	if ((legacy_graphic_type != LEGACY_GRAPHIC_POINT) &&
+		(legacy_graphic_type != LEGACY_GRAPHIC_NODE_POINTS) &&
+		(legacy_graphic_type != LEGACY_GRAPHIC_DATA_POINTS))
 	{
 		Option_table_add_entry(option_table, "exterior", &exterior_flag,
 			NULL, set_char_flag);
@@ -326,7 +328,9 @@ int gfx_modify_rendition_graphic(struct Parse_state *state,
 
 	/* face */
 	enum Cmiss_element_face_type face_type = CMISS_ELEMENT_FACE_ALL;
-	if (Cmiss_graphic_type_uses_attribute(graphic_type, CMISS_GRAPHIC_ATTRIBUTE_FACE))
+	if ((legacy_graphic_type != LEGACY_GRAPHIC_POINT) &&
+		(legacy_graphic_type != LEGACY_GRAPHIC_NODE_POINTS) &&
+		(legacy_graphic_type != LEGACY_GRAPHIC_DATA_POINTS))
 	{
 		face_type = Cmiss_graphic_get_face(graphic);
 		Option_table_add_entry(option_table,"face", &face_type,
@@ -442,7 +446,8 @@ int gfx_modify_rendition_graphic(struct Parse_state *state,
 	}
 
 	/* line_width */
-	if (Cmiss_graphic_type_uses_attribute(graphic_type, CMISS_GRAPHIC_ATTRIBUTE_LINE_WIDTH))
+	if ((legacy_graphic_type == LEGACY_GRAPHIC_NONE) ||
+		(legacy_graphic_type == LEGACY_GRAPHIC_ISO_SURFACES))
 	{
 		Option_table_add_int_non_negative_entry(option_table,"line_width",
 			&(graphic->line_width));
@@ -469,7 +474,9 @@ int gfx_modify_rendition_graphic(struct Parse_state *state,
 	}
 
 	/* native_discretization */
-	if (Cmiss_graphic_type_uses_attribute(graphic_type, CMISS_GRAPHIC_ATTRIBUTE_NATIVE_DISCRETIZATION_FIELD))
+	if ((legacy_graphic_type != LEGACY_GRAPHIC_POINT) &&
+		(legacy_graphic_type != LEGACY_GRAPHIC_NODE_POINTS) &&
+		(legacy_graphic_type != LEGACY_GRAPHIC_DATA_POINTS))
 	{
 		Option_table_add_set_FE_field_from_FE_region(option_table,
 			"native_discretization", &(graphic->native_discretization_field),
@@ -735,10 +742,7 @@ int gfx_modify_rendition_graphic(struct Parse_state *state,
 		Cmiss_graphic_set_data_field(graphic, data_field);
 		bool use_spectrum = (0 != data_field);
 		Cmiss_graphic_set_exterior(graphic, static_cast<int>(exterior_flag));
-		if (Cmiss_graphic_type_uses_attribute(graphic_type, CMISS_GRAPHIC_ATTRIBUTE_FACE))
-		{
-			 Cmiss_graphic_set_face(graphic, face_type);
-		}
+		Cmiss_graphic_set_face(graphic, face_type);
 		Cmiss_graphic_set_tessellation(graphic, tessellation);
 		Cmiss_graphic_set_texture_coordinate_field(graphic, texture_coordinate_field);
 		Cmiss_graphic_set_material(graphic, material);

@@ -3373,24 +3373,14 @@ void SetGraphic(Cmiss_graphic *graphic)
 		tessellationtext=XRCCTRL(*this,"TessellationStaticText",wxStaticText);
 		tessellation_chooser_panel=XRCCTRL(*this, "TessellationChooserPanel",wxPanel);
 		tessellationbutton=XRCCTRL(*this,"TessellationButton",wxButton);
-		if (Cmiss_graphic_type_uses_attribute(graphic_type,
-			CMISS_GRAPHIC_ATTRIBUTE_TESSELLATION))
+		Cmiss_tessellation *tessellation = Cmiss_graphic_get_tessellation(graphic);
+		tessellation_chooser->set_object(tessellation);
+		tessellation_chooser_panel->Show();
+		tessellationtext->Show();
+		tessellationbutton->Show();
+		if (tessellation)
 		{
-			Cmiss_tessellation *tessellation = Cmiss_graphic_get_tessellation(graphic);
-			tessellation_chooser->set_object(tessellation);
-			tessellation_chooser_panel->Show();
-			tessellationtext->Show();
-			tessellationbutton->Show();
-			if (tessellation)
-			{
-				DEACCESS(Cmiss_tessellation)(&tessellation);
-			}
-		}
-		else
-		{
-			tessellation_chooser_panel->Hide();
-			tessellationtext->Hide();
-			tessellationbutton->Show(false);
+			DEACCESS(Cmiss_tessellation)(&tessellation);
 		}
 
 		/* element_points */
@@ -3401,54 +3391,45 @@ void SetGraphic(Cmiss_graphic *graphic)
 		densityfieldtext=XRCCTRL(*this, "DensityFieldText",wxStaticText);
 		density_field_chooser_panel=XRCCTRL(*this,"DensityFieldChooserPanel",wxPanel);
 
-		if (Cmiss_graphic_type_uses_attribute(graphic_type,
-			CMISS_GRAPHIC_ATTRIBUTE_NATIVE_DISCRETIZATION_FIELD))
+		struct FE_field *native_discretization_field =
+			Cmiss_graphic_get_native_discretization_field(graphic);
+		if (native_discretization_field_chooser==NULL)
 		{
-			struct FE_field *native_discretization_field =
-				Cmiss_graphic_get_native_discretization_field(graphic);
-			if (native_discretization_field_chooser==NULL)
+			native_discretization_field_chooser =
+				new Managed_object_chooser<Computed_field,MANAGER_CLASS(Computed_field)>
+				(native_discretization_field_chooser_panel,(Computed_field*)NULL,
+					region_tree_viewer->field_manager,
+					Computed_field_is_type_finite_element_iterator, (void *)NULL, region_tree_viewer->user_interface);
+			Callback_base< Computed_field* > *native_discretization_callback =
+				new Callback_member_callback< Computed_field*,
+				wxRegionTreeViewer, int (wxRegionTreeViewer::*)(Computed_field *) >
+				(this, &wxRegionTreeViewer::native_discretization_callback);
+			native_discretization_field_chooser->set_callback(native_discretization_callback);
+			native_discretization_field_chooser_panel->Fit();
+			native_discretization_field_chooser->include_null_item(true);
+		}
+		nativediscretizationfieldtext->Show();
+		native_discretization_field_chooser_panel->Show();
+		if (domain_dimension > 0)
+		{
+			if (native_discretization_field != NULL)
 			{
-				native_discretization_field_chooser =
-					new Managed_object_chooser<Computed_field,MANAGER_CLASS(Computed_field)>
-					(native_discretization_field_chooser_panel,(Computed_field*)NULL,
-						region_tree_viewer->field_manager,
-						Computed_field_is_type_finite_element_iterator, (void *)NULL, region_tree_viewer->user_interface);
-				Callback_base< Computed_field* > *native_discretization_callback =
-					new Callback_member_callback< Computed_field*,
-					wxRegionTreeViewer, int (wxRegionTreeViewer::*)(Computed_field *) >
-					(this, &wxRegionTreeViewer::native_discretization_callback);
-				native_discretization_field_chooser->set_callback(native_discretization_callback);
-				native_discretization_field_chooser_panel->Fit();
-				native_discretization_field_chooser->include_null_item(true);
-			}
-			nativediscretizationfieldtext->Show();
-			native_discretization_field_chooser_panel->Show();
-			if (domain_dimension > 0)
-			{
-				if (native_discretization_field != NULL)
-				{
-					native_discretization_field_chooser->set_object(
-						FIRST_OBJECT_IN_MANAGER_THAT(Computed_field)(
-							Computed_field_wraps_fe_field, native_discretization_field,
-							region_tree_viewer->field_manager));
-				}
-				else
-				{
-					native_discretization_field_chooser->set_object(NULL);
-				}
-				nativediscretizationfieldtext->Enable();
-				native_discretization_field_chooser_panel->Enable();
+				native_discretization_field_chooser->set_object(
+					FIRST_OBJECT_IN_MANAGER_THAT(Computed_field)(
+						Computed_field_wraps_fe_field, native_discretization_field,
+						region_tree_viewer->field_manager));
 			}
 			else
 			{
-				nativediscretizationfieldtext->Disable();
-				native_discretization_field_chooser_panel->Disable();
+				native_discretization_field_chooser->set_object(NULL);
 			}
+			nativediscretizationfieldtext->Enable();
+			native_discretization_field_chooser_panel->Enable();
 		}
 		else
 		{
-			nativediscretizationfieldtext->Hide();
-			native_discretization_field_chooser_panel->Hide();
+			nativediscretizationfieldtext->Disable();
+			native_discretization_field_chooser_panel->Disable();
 		}
 
 		if (Cmiss_graphic_type_uses_attribute(graphic_type,
