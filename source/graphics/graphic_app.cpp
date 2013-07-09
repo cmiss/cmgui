@@ -627,8 +627,7 @@ int gfx_modify_rendition_graphic(struct Parse_state *state,
 	if (point_attributes)
 	{
 		Cmiss_graphic_point_attributes_get_scale_factors(point_attributes, 3, glyph_scale_factors);
-		Option_table_add_special_double3_entry(option_table, "scale_factors",
-			glyph_scale_factors, "*");
+		Option_table_add_double_product_entry(option_table, "scale_factors", 3, glyph_scale_factors);
 	}
 
 	/* secondary_material (was: multipass_pass1_material) */
@@ -685,8 +684,7 @@ int gfx_modify_rendition_graphic(struct Parse_state *state,
 	if (point_attributes)
 	{
 		Cmiss_graphic_point_attributes_get_base_size(point_attributes, 3, glyph_base_size);
-		Option_table_add_special_double3_entry(option_table, "size",
-			glyph_base_size, "*");
+		Option_table_add_double_product_entry(option_table, "size", 3, glyph_base_size);
 	}
 
 	/* spectrum */

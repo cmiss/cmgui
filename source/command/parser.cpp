@@ -4384,78 +4384,6 @@ int set_double_product(struct Parse_state *state, void *values_void,
 	return (return_code);
 }
 
-int set_special_double3(struct Parse_state *state,void *values_address_void,
-	void *separation_char_address_void)
-{
-	const char *current_token;
-	char separator;
-	double value,*values;
-	int i,return_code;
-
-	ENTER(set_special_double3);
-	if (state&&(values=(double *)values_address_void)&&
-		(separator=*((char *)separation_char_address_void))&&
-		(('*'==separator)||(','==separator)))
-	{
-		current_token=state->current_token;
-		if (current_token != NULL)
-		{
-			return_code=1;
-			if (strcmp(PARSER_HELP_STRING,current_token)&&
-				strcmp(PARSER_RECURSIVE_HELP_STRING,current_token))
-			{
-				value=(double)0.0;
-				for (i=0;i<3;i++)
-				{
-					if (current_token&&(*current_token != separator))
-					{
-						value=(double)atof(current_token);
-						values[i]=value;
-						current_token=strchr(current_token,separator);
-					}
-					else
-					{
-						if ('*' == separator)
-						{
-							values[i]=value;
-						}
-					}
-					if (current_token)
-					{
-						current_token++;
-						if ('\0' == *current_token)
-						{
-							current_token=(char *)NULL;
-						}
-					}
-				}
-				return_code=shift_Parse_state(state,1);
-			}
-			else
-			{
-				display_message(INFORMATION_MESSAGE,
-					" #%c#%c#[%g%c%g%c%g]{real[%creal[%creal]]}",separator,separator,
-					values[0],separator,values[1],separator,values[2],
-					separator,separator);
-			}
-		}
-		else
-		{
-			display_message(ERROR_MESSAGE,"Missing vector");
-			display_parse_state_location(state);
-			return_code=0;
-		}
-	}
-	else
-	{
-		display_message(ERROR_MESSAGE,"set_special_double3.  Invalid argument(s)");
-		return_code=0;
-	}
-	LEAVE;
-
-	return (return_code);
-} /* set_special_double3 */
-
 int set_float_vector(struct Parse_state *state,void *values_address_void,
 	void *number_of_components_address_void)
 /*******************************************************************************
@@ -6031,28 +5959,6 @@ int Option_table_add_double_product_entry(struct Option_table *option_table,
 	}
 	return (return_code);
 }
-
-int Option_table_add_special_double3_entry(struct Option_table *option_table,
-	const char *token, double *values, const char *separation_char_string)
-{
-	int return_code;
-
-	ENTER(Option_table_add_special_double3_entry);
-	if (option_table && token)
-	{
-		return_code = Option_table_add_entry(option_table, token,
-			values, (void *)separation_char_string, set_special_double3);
-	}
-	else
-	{
-		display_message(ERROR_MESSAGE,
-			"Option_table_add_special_double3_entry.  Invalid argument(s)");
-		return_code=0;
-	}
-	LEAVE;
-
-	return (return_code);
-} /* Option_table_add_special_double3_entry */
 
 static int set_nothing_and_shift(struct Parse_state *state,void *dummy_to_be_modified,
 	void *dummy_user_data_void)

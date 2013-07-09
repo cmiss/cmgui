@@ -2469,7 +2469,7 @@ void EnterGlyphSize(wxCommandEvent &event)
 		Parse_state *temp_state = create_Parse_state(text_entry);
 		const int number_of_components = 3;
 		double point_base_size[3];
-		if (set_special_double3(temp_state, point_base_size, const_cast<char *>("*")))
+		if (set_double_product(temp_state, point_base_size, reinterpret_cast<void *>(3)))
 		{
 			Cmiss_graphic_point_attributes_set_base_size(point_attributes, number_of_components, point_base_size);
 			Region_tree_viewer_autoapply(region_tree_viewer->rendition,
@@ -2503,7 +2503,7 @@ void EnterGlyphScale(wxCommandEvent &event)
 		Parse_state *temp_state = create_Parse_state(text_entry);
 		const int number_of_components = 3;
 		double point_scale_factors[3];
-		if (set_special_double3(temp_state, point_scale_factors, const_cast<char *>("*")))
+		if (set_double_product(temp_state, point_scale_factors, reinterpret_cast<void *>(3)))
 		{
 			Cmiss_graphic_point_attributes_set_scale_factors(point_attributes, number_of_components, point_scale_factors);
 			Region_tree_viewer_autoapply(region_tree_viewer->rendition,

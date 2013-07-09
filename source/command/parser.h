@@ -591,22 +591,6 @@ indicate that the double has been set.
 int set_double_product(struct Parse_state *state, void *values_void,
 	void *valuesCount_void);
 
-/**
- * Modifier function for setting a double[3] from a token with 1 to 3 values
- * separated by the character at <separation_char_address> which may be either an
- * asterisk or a comma. If '*' is used missing components take the values of the
- * last number entered, eg '3' -> 3,3,3, while  '2.4*7.6' becomes 2.4,7.6,7.6.
- * This functionality is useful for setting the size of glyphs. If the separation
- * character is ',', values of unspecified components are left untouched, useful
- * for setting glyph offsets which default to zero or some other number.
- * Missing a number by putting two separators together works as expected, eg:
- * '1.2**3.0' returns 1.2,1.2,3.0, '*2' gives 0.0,2.0,2.0 while ',,3' changes the
- * third component of the double only to 3.
- * ???RC The comma case does not work since ',' is a delimiter for the parser.
- */
-int set_special_double3(struct Parse_state *state,void *values_address_void,
-	void *separation_char_address_void);
-
 int set_float_vector(struct Parse_state *state,void *values_address_void,
 	void *number_of_components_address_void);
 /*******************************************************************************
@@ -913,21 +897,6 @@ the token following is assigned to <value>.
  */
 int Option_table_add_double_product_entry(struct Option_table *option_table,
 	const char *token, size_t valuesCount, double *values);
-
-/**
- * Modifier function for setting a float[3] from a token with 1 to 3 characters
- * separated by the character at <separation_char_address> which may be either an
- * asterisk or a comma. If '*' is used missing components take the values of the
- * last number entered, eg '3' -> 3,3,3, while  '2.4*7.6' becomes 2.4,7.6,7.6.
- * This functionality is useful for setting the size of glyphs. If the separation
- * character is ',', values of unspecified components are left untouched, useful
- * for setting glyph offsets which default to zero or some other number.
- * Missing a number by putting two separators together works as expected, eg:
- * '1.2**3.0' returns 1.2,1.2,3.0, '*2' gives 0.0,2.0,2.0 while ',,3' changes the
- * third component of the float only to 3.
- */
-int Option_table_add_special_double3_entry(struct Option_table *option_table,
-	const char *token, double *values, const char *separation_char_string);
 
 struct Set_names_from_list_token
 /*******************************************************************************
