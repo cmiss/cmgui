@@ -4312,24 +4312,80 @@ A modifier function for setting a double to a non_negative value.
 	return (return_code);
 }
 
+int set_double_product(struct Parse_state *state, void *values_void,
+	void *valuesCount_void)
+{
+	int return_code = 1;
+	const char separator = '*';
+	double *values = reinterpret_cast<double*>(values_void);
+	size_t valuesCount = reinterpret_cast<size_t>(valuesCount_void);
+	if (state && (0 < valuesCount) && values)
+	{
+		const char *current_token = state->current_token;
+		if (current_token != NULL)
+		{
+			if (!Parse_state_help_mode(state))
+			{
+				double value = 0.0;
+				for (int i = 0; i < valuesCount; ++i)
+				{
+					if (current_token && (*current_token != separator))
+					{
+						value = (double)atof(current_token);
+						values[i] = value;
+						current_token = strchr(current_token, separator);
+					}
+					else
+					{
+						values[i] = value;
+					}
+					if (current_token)
+					{
+						current_token++;
+						if ('\0' == *current_token)
+						{
+							current_token=(char *)NULL;
+						}
+					}
+				}
+				return_code=shift_Parse_state(state,1);
+			}
+			else
+			{
+				display_message(INFORMATION_MESSAGE, " #");
+				for (int i = 1; i < valuesCount; ++i)
+				{
+					display_message(INFORMATION_MESSAGE, "*#");
+				}
+				display_message(INFORMATION_MESSAGE, "[");
+				for (int i = 0; i < valuesCount; ++i)
+				{
+					if (i)
+					{
+						display_message(INFORMATION_MESSAGE, "*");
+					}
+					display_message(INFORMATION_MESSAGE, "%g");
+				}
+				display_message(INFORMATION_MESSAGE, "]");
+			}
+		}
+		else
+		{
+			display_message(ERROR_MESSAGE,"Missing values");
+			display_parse_state_location(state);
+			return_code = 0;
+		}
+	}
+	else
+	{
+		display_message(ERROR_MESSAGE,"set_double_product.  Invalid argument(s)");
+		return_code = 0;
+	}
+	return (return_code);
+}
+
 int set_special_double3(struct Parse_state *state,void *values_address_void,
 	void *separation_char_address_void)
-/*******************************************************************************
-LAST MODIFIED : 9 July 1998
-
-DESCRIPTION :
-Modifier function for setting a double[3] from a token with 1 to 3 characters
-separated by the character at <separation_char_address> which may be either an
-asterisk or a comma. If '*' is used missing components take the values of the
-last number entered, eg '3' -> 3,3,3, while  '2.4*7.6' becomes 2.4,7.6,7.6.
-This functionality is useful for setting the size of glyphs. If the separation
-character is ',', values of unspecified components are left untouched, useful
-for setting glyph offsets which default to zero or some other number.
-Missing a number by putting two separators together works as expected, eg:
-'1.2**3.0' returns 1.2,1.2,3.0, '*2' gives 0.0,2.0,2.0 while ',,3' changes the
-third component of the double only to 3.
-???RC The comma case does not work since ',' is a delimiter for the parser.
-==============================================================================*/
 {
 	const char *current_token;
 	char separator;
@@ -5958,6 +6014,24 @@ the <token>.
 	return (return_code);
 } /* Option_table_add_ignore_token_entry */
 
+int Option_table_add_double_product_entry(struct Option_table *option_table,
+	const char *token, size_t valuesCount, double *values)
+{
+	int return_code;
+	if (option_table && token && (0 < valuesCount) && values)
+	{
+		return_code = Option_table_add_entry(option_table, token,
+			values, reinterpret_cast<void *>(valuesCount), set_double_product);
+	}
+	else
+	{
+		display_message(ERROR_MESSAGE,
+			"Option_table_add_double_product_entry.  Invalid argument(s)");
+		return_code=0;
+	}
+	return (return_code);
+}
+
 int Option_table_add_special_double3_entry(struct Option_table *option_table,
 	const char *token, double *values, const char *separation_char_string)
 {
@@ -5979,7 +6053,6 @@ int Option_table_add_special_double3_entry(struct Option_table *option_table,
 
 	return (return_code);
 } /* Option_table_add_special_double3_entry */
-
 
 static int set_nothing_and_shift(struct Parse_state *state,void *dummy_to_be_modified,
 	void *dummy_user_data_void)

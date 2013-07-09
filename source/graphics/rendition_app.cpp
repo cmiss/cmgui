@@ -539,13 +539,7 @@ Cmiss_graphic* Cmiss_rendition_create_graphic_app(Cmiss_rendition *rendition,
 		Cmiss_rendition_set_minimum_graphic_defaults(rendition, graphic);
 		Cmiss_graphic_line_attributes_id line_attributes = Cmiss_graphic_get_line_attributes(graphic);
 		Cmiss_graphic_point_attributes_id point_attributes = Cmiss_graphic_get_point_attributes(graphic);
-		if (graphic_type == CMISS_GRAPHIC_CYLINDERS)
-		{
-			const double two = 2;
-			// default scale factor is 2.0 for radius to diameter conversion
-			Cmiss_graphic_line_attributes_set_scale_factors(line_attributes, 1, &two);
-		}
-		else if (graphic_type == CMISS_GRAPHIC_STREAMLINES)
+		if (graphic_type == CMISS_GRAPHIC_STREAMLINES)
 		{
 			// use previous default of 1.0 for streamline width
 			const double one = 1.0;
