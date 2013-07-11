@@ -46,7 +46,7 @@ Interactive tool for selecting elements with mouse and other devices.
 #endif /* defined (1) */
 #include "zinc/graphicsfilter.h"
 #include "zinc/graphicsmaterial.h"
-#include "zinc/rendition.h"
+#include "zinc/scene.h"
 #include "command/command.h"
 #include "computed_field/computed_field.h"
 #include "computed_field/computed_field_finite_element.h"
@@ -61,8 +61,9 @@ Interactive tool for selecting elements with mouse and other devices.
 #include "interaction/interaction_graphics.h"
 #include "interaction/interaction_volume.h"
 #include "interaction/interactive_event.h"
-#include "graphics/rendition.h"
+#include "graphics/scene.h"
 #include "graphics/graphic.h"
+#include "graphics/material.h"
 #include "graphics/scene_picker.hpp"
 #include "region/cmiss_region.h"
 #include "time/time_keeper_app.hpp"
@@ -108,7 +109,7 @@ struct Element_tool
 	/* needed for destroy button */
 	struct Cmiss_region *region;
 	struct Element_point_ranges_selection *element_point_ranges_selection;
-	struct Graphical_material *rubber_band_material;
+	Cmiss_graphics_material *rubber_band_material;
 	struct Time_keeper_app *time_keeper_app;
 	struct User_interface *user_interface;
 	/* user-settable flags */
@@ -120,7 +121,7 @@ struct Element_tool
 	struct FE_element *last_picked_element;
 	struct Interaction_volume *last_interaction_volume;
 	struct GT_object *rubber_band;
-	struct Cmiss_rendition *rendition;
+	struct Cmiss_scene *scene;
 
 #if defined (WX_USER_INTERFACE)
 	wxElementTool *wx_element_tool;
@@ -166,18 +167,18 @@ int Element_tool_destroy_selected_elements(struct Element_tool *element_tool)
 	if (element_tool->region)
 	{
 		return_code = 1;
-		Cmiss_rendition *root_rendition = Cmiss_region_get_rendition_internal(
+		Cmiss_scene *root_scene = Cmiss_region_get_scene_internal(
 			element_tool->region);
-		Cmiss_field_group_id selection_group = Cmiss_rendition_get_selection_group(root_rendition);
+		Cmiss_field_group_id selection_group = Cmiss_scene_get_selection_group(root_scene);
 		if (selection_group)
 		{
 			return_code = Cmiss_field_group_for_each_group_hierarchical(selection_group,
 				Cmiss_field_group_destroy_all_elements, /*user_data*/(void *)0);
 			Cmiss_field_group_clear_region_tree_element(selection_group);
-			Cmiss_rendition_flush_tree_selections(root_rendition);
+			Cmiss_scene_flush_tree_selections(root_scene);
 			Cmiss_field_group_destroy(&selection_group);
 		}
-		Cmiss_rendition_destroy(&root_rendition);
+		Cmiss_scene_destroy(&root_scene);
 	}
 	return return_code;
 }
@@ -199,8 +200,8 @@ Resets current edit. Called on button release or when tool deactivated.
 	{
 		REACCESS(FE_element)(&(element_tool->last_picked_element),
 			(struct FE_element *)NULL);
-		REACCESS(Cmiss_rendition)(&(element_tool->rendition),
-			(struct Cmiss_rendition *)NULL);
+		REACCESS(Cmiss_scene)(&(element_tool->scene),
+			(struct Cmiss_scene *)NULL);
 		REACCESS(Interaction_volume)(
 			&(element_tool->last_interaction_volume),
 			(struct Interaction_volume *)NULL);
@@ -237,8 +238,8 @@ release.
 	struct FE_element_shape *element_shape;
 	struct Element_tool *element_tool;
 	struct Interaction_volume *interaction_volume,*temp_interaction_volume;
-	struct Scene *scene;
-	struct Cmiss_rendition *rendition = NULL;
+
+	struct Cmiss_scene *top_scene = 0, *scene = 0;
 	FE_value_triple *xi_points;
 	Cmiss_scene_picker_id scene_picker = 0;
 
@@ -248,14 +249,14 @@ release.
 	{
 		Cmiss_region_begin_hierarchical_change(element_tool->region);
 		interaction_volume=Interactive_event_get_interaction_volume(event);
-		scene=Interactive_event_get_scene(event);
+		top_scene=Interactive_event_get_scene(event);
 		if (scene != 0)
 		{
-			scene_picker = Cmiss_scene_create_picker(scene);
+			scene_picker = Cmiss_scene_create_picker(top_scene);
 			event_type=Interactive_event_get_type(event);
 			input_modifier=Interactive_event_get_input_modifier(event);
 			shift_pressed=(INTERACTIVE_EVENT_MODIFIER_SHIFT & input_modifier);
-			Cmiss_graphics_module *graphics_module = Cmiss_scene_get_graphics_module(scene);
+			Cmiss_graphics_module *graphics_module = Cmiss_scene_get_graphics_module(top_scene);
 			Cmiss_graphics_filter_module_id filter_module = Cmiss_graphics_module_get_filter_module(graphics_module);
 			Cmiss_graphics_filter_id combined_filter = Cmiss_graphics_module_create_filter_operator_or(
 				graphics_module);
@@ -361,10 +362,10 @@ release.
 										DEALLOCATE(xi_points);
 									}
 								}
-								Cmiss_field_group_id group = Cmiss_rendition_get_selection_group(rendition);
+								Cmiss_field_group_id group = Cmiss_scene_get_selection_group(top_scene);
 								if (group)
 								{
-									Cmiss_region_id temp_region = Cmiss_rendition_get_region(rendition);
+									Cmiss_region_id temp_region = Cmiss_scene_get_region(top_scene);
 									Cmiss_field_module_id field_module = Cmiss_region_get_field_module(temp_region);
 									int dimension = Cmiss_element_get_dimension(picked_element);
 									Cmiss_mesh_id master_mesh = Cmiss_field_module_find_mesh_by_dimension(field_module, dimension);
@@ -392,33 +393,33 @@ release.
 							{
 								if (element_tool->region)
 								{
-									Cmiss_rendition *root_rendition =
-										Cmiss_region_get_rendition_internal(element_tool->region);
+									Cmiss_scene *root_scene =
+										Cmiss_region_get_scene_internal(element_tool->region);
 									Cmiss_field_group_id root_group =
-										Cmiss_rendition_get_selection_group(root_rendition);
+										Cmiss_scene_get_selection_group(root_scene);
 									if (root_group)
 									{
 										Cmiss_field_group_clear_region_tree_element(root_group);
 										Cmiss_field_group_destroy(&root_group);
 									}
-									Cmiss_rendition_destroy(&root_rendition);
+									Cmiss_scene_destroy(&root_scene);
 								}
 							}
 							if (picked_element)
 							{
 								Cmiss_region_id temp_region = FE_region_get_Cmiss_region(
 									FE_element_get_FE_region(picked_element));
-								rendition = Cmiss_region_get_rendition_internal(temp_region);
-								REACCESS(Cmiss_rendition)(&(element_tool->rendition),
-									rendition);
-								Cmiss_rendition_destroy(&rendition);
+								scene = Cmiss_region_get_scene_internal(temp_region);
+								REACCESS(Cmiss_scene)(&(element_tool->scene),
+									scene);
+								Cmiss_scene_destroy(&scene);
 								Cmiss_region *sub_region = NULL;
 								Cmiss_field_group_id sub_group = NULL;
 								Cmiss_mesh_group_id mesh_group = 0;
-								if (element_tool->rendition)
+								if (element_tool->scene)
 								{
-									sub_region = Cmiss_rendition_get_region(element_tool->rendition);
-									sub_group = Cmiss_rendition_get_or_create_selection_group(element_tool->rendition);
+									sub_region = Cmiss_scene_get_region(element_tool->scene);
+									sub_group = Cmiss_scene_get_or_create_selection_group(element_tool->scene);
 									if (sub_group)
 									{
 										int dimension = Cmiss_element_get_dimension(picked_element);
@@ -469,7 +470,7 @@ release.
 							{
 								struct LIST(FE_element) *temp_element_list = CREATE(LIST(FE_element))();
 								ADD_OBJECT_TO_LIST(FE_element)(element_tool->last_picked_element, temp_element_list);
-								Cmiss_rendition_remove_selection_from_element_list_of_dimension(element_tool->rendition,
+								Cmiss_scene_remove_selection_from_element_list_of_dimension(element_tool->scene,
 									temp_element_list, Cmiss_element_get_dimension(element_tool->last_picked_element));
 								DESTROY(LIST(FE_element))(&temp_element_list);
 							}
@@ -505,17 +506,17 @@ release.
 										temp_interaction_volume);
 									if (element_tool->region)
 									{
-										Cmiss_rendition_id region_rendition = Cmiss_region_get_rendition_internal(
+										Cmiss_scene_id region_scene = Cmiss_region_get_scene_internal(
 											element_tool->region);
 										Cmiss_field_group_id selection_group =
-											Cmiss_rendition_get_or_create_selection_group(region_rendition);
+											Cmiss_scene_get_or_create_selection_group(region_scene);
 										if (selection_group)
 										{
 											Cmiss_scene_picker_add_picked_elements_to_group(scene_picker,
 												selection_group);
 											Cmiss_field_group_destroy(&selection_group);
 										}
-										Cmiss_rendition_destroy(&region_rendition);
+										Cmiss_scene_destroy(&region_scene);
 									}
 								}
 								DEACCESS(Interaction_volume)(&temp_interaction_volume);
@@ -538,10 +539,10 @@ release.
 		}
 		if (element_tool->region)
 		{
-			Cmiss_rendition *root_rendition = Cmiss_region_get_rendition_internal(
+			Cmiss_scene *root_scene = Cmiss_region_get_scene_internal(
 				element_tool->region);
-			Cmiss_rendition_flush_tree_selections(root_rendition);
-			Cmiss_rendition_destroy(&root_rendition);
+			Cmiss_scene_flush_tree_selections(root_scene);
+			Cmiss_scene_destroy(&root_scene);
 		}
 		Cmiss_region_end_hierarchical_change(element_tool->region);
 	}
@@ -858,7 +859,7 @@ struct Element_tool *CREATE(Element_tool)(
 	struct MANAGER(Interactive_tool) *interactive_tool_manager,
 	struct Cmiss_region *region,
 	struct Element_point_ranges_selection *element_point_ranges_selection,
-	struct Graphical_material *rubber_band_material,
+	Cmiss_graphics_material *rubber_band_material,
 	struct User_interface *user_interface,
 	struct Time_keeper_app *time_keeper_app)
 /*******************************************************************************
@@ -889,7 +890,7 @@ Selects elements in <element_selection> in response to interactive_events.
 				Cmiss_graphics_material_access(rubber_band_material);
 			element_tool->user_interface=user_interface;
 			element_tool->time_keeper_app = (struct Time_keeper_app *)NULL;
-			element_tool->rendition=(struct Cmiss_rendition *)NULL;
+			element_tool->scene=(struct Cmiss_scene *)NULL;
 			if (time_keeper_app)
 			{
 				element_tool->time_keeper_app = ACCESS(Time_keeper_app)(time_keeper_app);

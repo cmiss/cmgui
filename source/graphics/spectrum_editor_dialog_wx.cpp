@@ -82,7 +82,7 @@ static struct Spectrum_editor_dialog *CREATE(Spectrum_editor_dialog)(
 	 struct Graphics_buffer_app_package *graphics_buffer_package,
 	 struct User_interface *user_interface,
 	 struct Cmiss_graphics_module *graphics_module,
-	 struct MANAGER(Scene) *scene_manager,
+	 struct Cmiss_region *root_region,
 	 struct Cmiss_region *spectrum_region)
 /*******************************************************************************
 LAST MODIFIED : 23 August 2007
@@ -124,7 +124,7 @@ the spectrums contained in the global list.
 								 graphics_buffer_package,
 								 user_interface,
 								 graphics_module,
-								 scene_manager,
+								 root_region,
 								 spectrum_region)))
 				{
 									 display_message(ERROR_MESSAGE,
@@ -187,7 +187,7 @@ int bring_up_spectrum_editor_dialog(
 	struct Graphics_buffer_app_package *graphics_buffer_package,
 	struct User_interface *user_interface,
 	struct Cmiss_graphics_module *graphics_module,
-	struct MANAGER(Scene) *scene_manager,
+	struct Cmiss_region *root_region,
 	struct Cmiss_region *spectrum_region)
 /*******************************************************************************
 LAST MODIFIED : 18 November 2005
@@ -213,7 +213,7 @@ bring it to the front, otherwise create a new one.
 		{
 			if (CREATE(Spectrum_editor_dialog)(spectrum_editor_dialog_address,
 					spectrum_manager, spectrum, font, graphics_buffer_package,
-					user_interface, graphics_module, scene_manager,
+					user_interface, graphics_module, root_region,
 					spectrum_region))
 			{
 				return_code = 1;

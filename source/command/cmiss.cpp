@@ -63,7 +63,6 @@
 #include "zinc/graphicsmaterial.h"
 #include "zinc/graphicsmodule.h"
 #include "zinc/region.h"
-#include "zinc/rendition.h"
 #include "zinc/scene.h"
 #include "zinc/sceneviewer.h"
 #include "zinc/stream.h"
@@ -147,7 +146,6 @@
 #include "graphics/glyph.hpp"
 #include "graphics/graphic.h"
 #include "graphics/graphics_module.h"
-#include "graphics/rendition.h"
 #include "graphics/render_to_finite_elements.h"
 #include "graphics/render_stl.h"
 #include "graphics/render_vrml.h"
@@ -242,7 +240,6 @@
 #include "computed_field/computed_field_integration_app.h"
 #include "computed_field/computed_field_alias_app.h"
 #include "computed_field/computed_field_coordinate_app.h"
-#include "graphics/rendition_app.h"
 #include "image_processing/computed_field_sigmoid_image_filter_app.h"
 #include "image_processing/computed_field_mean_image_filter_app.h"
 #include "image_processing/computed_field_rescale_intensity_image_filter_app.h"
@@ -282,7 +279,6 @@
 #include "finite_element/export_finite_element_app.h"
 #include "graphics/element_point_ranges_app.h"
 #include "graphics/environment_map_app.h"
-#include "graphics/rendition_app.h"
 #include "finite_element/finite_element_region_app.h"
 #include "graphics/scene_viewer_app.h"
 #include "graphics/font_app.h"
@@ -370,6 +366,7 @@ DESCRIPTION :
 	struct MANAGER(Light_model) *light_model_manager;
 	struct Light_model *default_light_model;
 	struct Cmiss_graphics_material_module *material_module;
+	struct Cmiss_graphics_filter_module *filter_module;
 	struct Cmiss_font *default_font;
 	struct Cmiss_tessellation_module *tessellation_module;
 	struct MANAGER(Curve) *curve_manager;
@@ -956,8 +953,8 @@ static int process_modify_element_group(Cmiss_field_group_id group,
 	Cmiss_mesh_group_id selection_mesh_group = 0;
 	if (selected_flag)
 	{
-		Cmiss_rendition *rendition = Cmiss_region_get_rendition_internal(region);
-		Cmiss_field_group_id selection_group = Cmiss_rendition_get_selection_group(rendition);
+		Cmiss_scene *scene = Cmiss_region_get_scene_internal(region);
+		Cmiss_field_group_id selection_group = Cmiss_scene_get_selection_group(scene);
 		if (selection_group)
 		{
 			Cmiss_field_element_group_id selection_element_group =
@@ -969,7 +966,7 @@ static int process_modify_element_group(Cmiss_field_group_id group,
 			}
 			Cmiss_field_group_destroy(&selection_group);
 		}
-		Cmiss_rendition_destroy(&rendition);
+		Cmiss_scene_destroy(&scene);
 	}
 	Cmiss_mesh_group_id from_mesh_group = 0;
 	if (from_group)
@@ -2659,12 +2656,12 @@ Executes a GFX CREATE SNAKE command.
 		}
 		if (return_code)
 		{
-			Cmiss_rendition *rendition = Cmiss_graphics_module_get_rendition(command_data->graphics_module, source_region);
+			Cmiss_scene *scene = Cmiss_graphics_module_get_scene(command_data->graphics_module, source_region);
 			Cmiss_field_group_id selection_group = NULL;
-			if (rendition)
+			if (scene)
 			{
-				selection_group = Cmiss_rendition_get_selection_group(rendition);
-				Cmiss_rendition_destroy(&rendition);
+				selection_group = Cmiss_scene_get_selection_group(scene);
+				Cmiss_scene_destroy(&scene);
 			}
 			if (selection_group)
 			{
@@ -2916,7 +2913,7 @@ static and referred to by gfx_create_Spectrum
 					Option_table_add_entry(option_table,"overwrite_colour",&overwrite_colour,
 						NULL,set_char_flag);
 					Option_table_add_entry(option_table,"scene_for_autorange",&autorange_scene,
-						command_data->scene_manager,set_Scene);
+						command_data->root_region,set_Scene);
 					Option_table_add_entry(option_table,"red_to_blue",&red_to_blue,
 						NULL,set_char_flag);
 					if (0 != (return_code = Option_table_multi_parse(option_table, state)))
@@ -2988,7 +2985,7 @@ static and referred to by gfx_create_Spectrum
 								/* Could also do all scenes */
 								range_set = 0;
 								Scene_get_data_range_for_spectrum(autorange_scene,
-									spectrum_to_be_modified
+									/*filter*/0, spectrum_to_be_modified
 									/* Not spectrum_to_be_modified_copy as this ptr
 										identifies the valid graphics objects */,
 									&minimum, &maximum, &range_set);
@@ -4745,10 +4742,10 @@ Executes a GFX CREATE WINDOW command.
 							&(command_data->background_colour),
 							command_data->light_manager,command_data->default_light,
 							command_data->light_model_manager,command_data->default_light_model,
-							command_data->scene_manager,command_data->default_scene,
+							command_data->filter_module,command_data->default_scene,
 							interactive_tool_manager,
 							command_data->default_time_keeper_app,
-							command_data->user_interface)))
+							command_data->user_interface, command_data->root_region)))
 						{
 							if (!ADD_OBJECT_TO_MANAGER(Graphics_window)(window,
 							   command_data->graphics_window_manager))
@@ -4775,7 +4772,7 @@ Executes a GFX CREATE WINDOW command.
 							command_data->scene_manager,command_data->default_scene,
 							command_data->interactive_tool_manager,
 							command_data->default_time_keeper_app,
-							command_data->user_interface);
+							command_data->user_interface, command_data->root_region);
 					  if (window)
 						{
 						   if (!ADD_OBJECT_TO_MANAGER(Graphics_window)(window,
@@ -5049,7 +5046,7 @@ Executes a DETACH command.
 #endif /* defined (SELECT_DESCRIPTORS) */
 
 void export_object_name_parser(const char *path_name, const char **scene_name,
-	const char **rendition_name, const char **graphic_name)
+	const char **graphic_name)
 {
 	const char *slash_pointer, *dot_pointer;
 	int total_length, length;
@@ -5075,16 +5072,8 @@ void export_object_name_parser(const char *path_name, const char **scene_name,
 				ALLOCATE(temp_name, char, length+1);
 				strncpy(temp_name, slash_pointer + 1, length);
 				temp_name[length] = '\0';
-				*rendition_name = temp_name;
-				total_length = slash_pointer - path_name;
+				*scene_name = temp_name;
 			}
-		}
-		if (total_length > 1)
-		{
-			ALLOCATE(temp_name, char, total_length+1);
-			strncpy(temp_name, path_name, total_length);
-			temp_name[total_length] = '\0';
-			*scene_name = temp_name;
 		}
 	}
 }
@@ -5317,10 +5306,11 @@ static int gfx_convert_graphics(struct Parse_state *state,
 		char *coordinate_field_name = 0;
 		Cmiss_field_id coordinate_field = 0;
 		const char *scene_name = 0;
-		const char *input_region_path = 0;
 		const char *graphic_name = NULL;
 		Cmiss_scene_id scene = 0;
 		char *scene_path_name = 0;
+		Cmiss_graphics_filter_id filter =
+			Cmiss_graphics_filter_module_get_default_filter(command_data->filter_module);
 		enum Render_to_finite_elements_mode render_mode = RENDER_TO_FINITE_ELEMENTS_LINEAR_PRODUCT;
 
 		Option_table *option_table=CREATE(Option_table)();
@@ -5343,6 +5333,8 @@ static int gfx_convert_graphics(struct Parse_state *state,
 		/* render_to_finite_elements_mode */
 		OPTION_TABLE_ADD_ENUMERATOR(Render_to_finite_elements_mode)(option_table,
 			&render_mode);
+		Option_table_add_entry(option_table, "filter", &filter,
+			command_data->filter_module, set_Cmiss_graphics_filter);
 		/* region */
 		Option_table_add_region_or_group_entry(option_table, "region", &region, &group);
 		/* scene */
@@ -5360,19 +5352,7 @@ static int gfx_convert_graphics(struct Parse_state *state,
 			if (scene_path_name)
 			{
 				export_object_name_parser(scene_path_name, &scene_name,
-					&input_region_path, &graphic_name);
-			}
-			if (scene_name)
-			{
-				REACCESS(Scene)(&(scene),
-					FIND_BY_IDENTIFIER_IN_MANAGER(Scene,name)(scene_name,
-						command_data->scene_manager));
-			}
-			if (!scene)
-			{
-				display_message(ERROR_MESSAGE,
-					"gfx_convert.  Must specify a scene.");
-				return_code = 0;
+					&graphic_name);
 			}
 			if (coordinate_field_name &&
 				(coordinate_field = FIND_BY_IDENTIFIER_IN_MANAGER(Computed_field,name)(
@@ -5398,11 +5378,11 @@ static int gfx_convert_graphics(struct Parse_state *state,
 					"Field %s does not exist.", coordinate_field_name);
 			}
 			input_region = Cmiss_region_find_subregion_at_path(command_data->root_region,
-					input_region_path);
-			if (input_region_path && !input_region)
+				scene_name);
+			if (scene_name && !input_region)
 			{
 				display_message(ERROR_MESSAGE,
-					"gfx_convert.  Invalid input_region");
+					"gfx_convert.  Invalid input_scene");
 				return_code = 0;
 			}
 			if (!coordinate_field)
@@ -5416,13 +5396,13 @@ static int gfx_convert_graphics(struct Parse_state *state,
 
 		if (return_code)
 		{
-			render_to_finite_elements(scene, input_region, graphic_name, render_mode,
+			render_to_finite_elements(input_region, graphic_name, filter, render_mode,
 				region, group, coordinate_field, static_cast<Cmiss_nodeset_id>(0),
 				line_density, line_density_scale_factor, surface_density, surface_density_scale_factor);
 		}
 		if (scene)
 		{
-			DEACCESS(Scene)(&scene);
+			Cmiss_scene_destroy(&scene);
 		}
 		if (coordinate_field)
 		{
@@ -5436,10 +5416,6 @@ static int gfx_convert_graphics(struct Parse_state *state,
 		{
 			DEALLOCATE(scene_name);
 		}
-		if (input_region_path)
-		{
-			DEALLOCATE(input_region_path);
-		}
 		if (graphic_name)
 		{
 			DEALLOCATE(graphic_name);
@@ -5448,6 +5424,8 @@ static int gfx_convert_graphics(struct Parse_state *state,
 		{
 			Cmiss_region_destroy(&input_region);
 		}
+		if (filter)
+			Cmiss_graphics_filter_destroy(&filter);
 		if (scene_path_name)
 		{
 			DEALLOCATE(scene_path_name);
@@ -5541,6 +5519,7 @@ Executes a GFX CREATE command.
 				Option_table_add_entry(option_table,"element_point_viewer",NULL,
 					command_data_void,gfx_create_element_point_viewer);
 #endif /* defined (WX_USER_INTERFACE) */
+#if defined (EMOTER_ENABLE)
 				create_emoter_slider_data.execute_command=command_data->execute_command;
 				create_emoter_slider_data.root_region=
 					command_data->root_region;
@@ -5554,7 +5533,6 @@ Executes a GFX CREATE command.
 					command_data->graphics_buffer_package;
 				create_emoter_slider_data.curve_manager=
 					command_data->curve_manager;
-				create_emoter_slider_data.scene_manager=command_data->scene_manager;
 				create_emoter_slider_data.io_stream_package =
 					command_data->io_stream_package;
 				create_emoter_slider_data.viewer_scene=command_data->default_scene;
@@ -5569,6 +5547,7 @@ Executes a GFX CREATE command.
 					command_data->user_interface;
 				Option_table_add_entry(option_table,"emoter",NULL,
 					(void *)&create_emoter_slider_data,gfx_create_emoter);
+#endif
 				Option_table_add_entry(option_table, "flow_particles",
 					/*create_more*/(void *)0, command_data_void, gfx_create_flow_particles);
 #if defined (WX_USER_INTERFACE)
@@ -5772,15 +5751,13 @@ Executes a GFX DEFINE command.
 					command_data->graphics_module, gfx_define_font);
 				/* scene */
 				Define_scene_data define_scene_data;
-				define_scene_data.light_manager=command_data->light_manager;
-				define_scene_data.scene_manager=command_data->scene_manager;
 				define_scene_data.root_region = command_data->root_region;
 				define_scene_data.graphics_module = command_data->graphics_module;
 				Option_table_add_entry(option_table, "scene", NULL,
 					(void *)(&define_scene_data), define_Scene);
 				/* graphics_filter */
 				Option_table_add_entry(option_table, "graphics_filter", command_data->root_region,
-					command_data->graphics_module, gfx_define_graphics_filter);
+					command_data->filter_module, gfx_define_graphics_filter);
 				/* tessellation */
 				Option_table_add_entry(option_table, "tessellation", NULL,
 					command_data->tessellation_module, gfx_define_tessellation);
@@ -5998,11 +5975,11 @@ static int gfx_destroy_elements(struct Parse_state *state,
 			Cmiss_field_group_id selection_group = NULL;
 			if (selected_flag)
 			{
-				Cmiss_rendition *rendition = Cmiss_region_get_rendition_internal(region);
-				if (rendition)
+				Cmiss_scene *scene = Cmiss_region_get_scene_internal(region);
+				if (scene)
 				{
-					selection_group = Cmiss_rendition_get_selection_group(rendition);
-					Cmiss_rendition_destroy(&rendition);
+					selection_group = Cmiss_scene_get_selection_group(scene);
+					Cmiss_scene_destroy(&scene);
 				}
 			}
 			int use_dimension = dimension;
@@ -6391,11 +6368,11 @@ static int gfx_destroy_nodes(struct Parse_state *state,
 			Cmiss_field_group_id selection_group = NULL;
 			if (selected_flag)
 			{
-				Cmiss_rendition *rendition = Cmiss_region_get_rendition_internal(region);
-				if (rendition)
+				Cmiss_scene *scene = Cmiss_region_get_scene_internal(region);
+				if (scene)
 				{
-					selection_group = Cmiss_rendition_get_selection_group(rendition);
-					Cmiss_rendition_destroy(&rendition);
+					selection_group = Cmiss_scene_get_selection_group(scene);
+					Cmiss_scene_destroy(&scene);
 				}
 			}
 			Cmiss_field_id use_conditional_field = 0;
@@ -6495,44 +6472,12 @@ Executes a GFX DESTROY SCENE command.
 
 	ENTER(gfx_destroy_Scene);
 	USE_PARAMETER(dummy_to_be_modified);
-	if (state && (scene_manager = (struct MANAGER(Scene) *)scene_manager_void))
+	USE_PARAMETER(scene_manager_void);
+	if (state)
 	{
-		if (NULL != (current_token = state->current_token))
-		{
-			if (strcmp(PARSER_HELP_STRING, current_token) &&
-				strcmp(PARSER_RECURSIVE_HELP_STRING, current_token))
-			{
-				if (NULL != (scene = FIND_BY_IDENTIFIER_IN_MANAGER(Scene, name)(
-					current_token, scene_manager)))
-				{
-					if (REMOVE_OBJECT_FROM_MANAGER(Scene)(scene, scene_manager))
-					{
-						return_code = 1;
-					}
-					else
-					{
-						display_message(ERROR_MESSAGE,
-							"Could not remove scene %s from manager", current_token);
-						return_code = 0;
-					}
-				}
-				else
-				{
-					display_message(ERROR_MESSAGE, "Unknown scene: %s", current_token);
-					return_code = 0;
-				}
-			}
-			else
-			{
-				display_message(INFORMATION_MESSAGE, " SCENE_NAME");
-				return_code = 1;
-			}
-		}
-		else
-		{
-			display_message(ERROR_MESSAGE, "Missing scene name");
-			return_code = 0;
-		}
+		display_message(INFORMATION_MESSAGE, " Scene is now the 1 to 1  graphics properties of a region and "
+			"cannot be destroyed");
+		return_code = 1;
 	}
 	else
 	{
@@ -6750,7 +6695,7 @@ Executes a GFX DRAW command.
 			command_data->root_region, set_Cmiss_region_path);
 		/* scene */
 		Option_table_add_entry(option_table,"scene",&scene,
-			command_data->scene_manager,set_Scene);
+			command_data->root_region,set_Scene);
 		/* default when token omitted (graphics_object) */
 		Option_table_add_entry(option_table,(char *)NULL,&graphics_object,
 			command_data->glyph_manager,set_Graphics_object);
@@ -6765,10 +6710,10 @@ Executes a GFX DRAW command.
 					GET_NAME(GT_object)(graphics_object, &graphic_name);
 				}
 				Cmiss_region_id region = Cmiss_scene_get_region(scene);
-				Cmiss_rendition_id rendition =
-					Cmiss_graphics_module_get_rendition(command_data->graphics_module, region);
-				return_code = Cmiss_rendition_add_glyph(rendition, graphics_object, graphic_name);
-				Cmiss_rendition_destroy(&rendition);
+				Cmiss_scene_id scene =
+					Cmiss_graphics_module_get_scene(command_data->graphics_module, region);
+				return_code = Cmiss_scene_add_glyph(scene, graphics_object, graphic_name);
+				Cmiss_scene_destroy(&scene);
 				Cmiss_region_destroy(&region);
 			}
 			else if (region_path)
@@ -6929,13 +6874,13 @@ Executes a GFX EDIT GRAPHICS_OBJECT command.
 					/* SAB Temporary place for this command cause I really need to use it,
 						 not very general, doesn't work in prolate or rotate derivatives */
 					struct Apply_transformation_data data;
-					struct Cmiss_rendition *rendition = NULL;
+					struct Cmiss_scene *scene = NULL;
 					gtMatrix identity = {{1,0,0,0},{0,1,0,0},{0,0,1,0},{0,0,0,1}};
-					rendition = Cmiss_graphics_module_get_rendition(command_data->graphics_module, region);
-					if (rendition)
+					scene = Cmiss_graphics_module_get_scene(command_data->graphics_module, region);
+					if (scene)
 					{
-						if (Cmiss_rendition_has_transformation(rendition)&&
-								Cmiss_rendition_get_transformation(rendition, &(data.transformation)))
+						if (Cmiss_scene_has_transformation(scene)&&
+								Cmiss_scene_get_transformation(scene, &(data.transformation)))
 						{
 							if (NULL != (fe_region = Cmiss_region_get_FE_region(region)))
 							{
@@ -6957,7 +6902,7 @@ Executes a GFX EDIT GRAPHICS_OBJECT command.
 								display_message(WARNING_MESSAGE, "Invalid region");
 								return_code = 0;
 							}
-							Cmiss_rendition_set_transformation(rendition, &identity);
+							Cmiss_scene_set_transformation(scene, &identity);
 						}
 						else
 						{
@@ -7015,21 +6960,9 @@ Executes a GFX EDIT_SCENE command.  Brings up the Region_tree_viewer.
 	USE_PARAMETER(dummy_to_be_modified);
 	if (state && (command_data = (struct Cmiss_command_data *)command_data_void))
 	{
-		if (command_data->region_tree_viewer)
-		{
-			scene = Region_tree_viewer_get_scene(command_data->region_tree_viewer);
-		}
-		else
-		{
-			scene = command_data->default_scene;
-		}
-		ACCESS(Scene)(scene);
 		close_flag = 0;
 
 		option_table = CREATE(Option_table)();
-		/* scene (to edit) */
-		Option_table_add_entry(option_table, "scene",&scene,
-			command_data->scene_manager,set_Scene);
 		/* close (editor) */
 		Option_table_add_entry(option_table, "close", &close_flag,
 			NULL, set_char_flag);
@@ -7043,11 +6976,6 @@ Executes a GFX EDIT_SCENE command.  Brings up the Region_tree_viewer.
 				}
 				else
 				{
-					if (scene != Region_tree_viewer_get_scene(command_data->region_tree_viewer))
-					{
-						return_code = Region_tree_viewer_set_scene(command_data->region_tree_viewer,
-							scene);
-					}
 					Region_tree_viewer_bring_to_front(command_data->region_tree_viewer);
 				}
 			}
@@ -7064,8 +6992,6 @@ Executes a GFX EDIT_SCENE command.  Brings up the Region_tree_viewer.
 				if ((!command_data->user_interface) ||
 					(!CREATE(Region_tree_viewer)(	&(command_data->region_tree_viewer),
 						command_data->graphics_module,
-						command_data->scene_manager,
-						scene,
 						command_data->root_region,
 						Cmiss_graphics_material_module_get_manager(command_data->material_module),
 						defaultMaterial,
@@ -7084,10 +7010,6 @@ Executes a GFX EDIT_SCENE command.  Brings up the Region_tree_viewer.
 			}
 		} /* parse error, help */
 		DESTROY(Option_table)(&option_table);
-		if (scene)
-		{
-			DEACCESS(Scene)(&scene);
-		}
 	}
 	else
 	{
@@ -7134,7 +7056,7 @@ Invokes the graphical spectrum group editor.
 				command_data->default_font,
 				command_data->graphics_buffer_package, command_data->user_interface,
 				command_data->graphics_module,
-				command_data->scene_manager,
+				command_data->root_region,
 				spectrum_region);
 			Cmiss_region_destroy(&spectrum_region);
 		} /* parse error, help */
@@ -7867,21 +7789,25 @@ Executes a GFX EXPORT STL command.
 		if (NULL != (command_data = (struct Cmiss_command_data *)command_data_void))
 		{
 			file_name = (char *)NULL;
-			scene = ACCESS(Scene)(command_data->default_scene);
+			scene = Cmiss_scene_access(command_data->default_scene);
+			Cmiss_graphics_filter_id filter =
+				Cmiss_graphics_filter_module_get_default_filter(command_data->filter_module);
 			option_table = CREATE(Option_table)();
 			/* file */
 			Option_table_add_entry(option_table, "file", &file_name,
 				(void *)1, set_name);
 			/* scene */
 			Option_table_add_entry(option_table,"scene",&scene,
-				command_data->scene_manager,set_Scene);
+				command_data->root_region, set_Scene);
+			Option_table_add_entry(option_table, "filter", &filter,
+				command_data->filter_module, set_Cmiss_graphics_filter);
 			if (0 != (return_code = Option_table_multi_parse(option_table, state)))
 			{
 				if (scene)
 				{
 					if (file_name)
 					{
-						return_code = export_to_stl(file_name, scene);
+						return_code = export_to_stl(file_name, scene, filter);
 					}
 					else
 					{
@@ -7893,7 +7819,9 @@ Executes a GFX EXPORT STL command.
 			}
 			DESTROY(Option_table)(&option_table);
 			if (scene)
-				DEACCESS(Scene)(&scene);
+				Cmiss_scene_destroy(&scene);
+			if (filter)
+				Cmiss_graphics_filter_destroy(&filter);
 			if (file_name)
 			{
 				DEALLOCATE(file_name);
@@ -7940,11 +7868,15 @@ Executes a GFX EXPORT VRML command.
 		{
 			/* initialize defaults */
 			file_name=(char *)NULL;
-			scene=ACCESS(Scene)(command_data->default_scene);
+			Cmiss_graphics_filter_id filter =
+				Cmiss_graphics_filter_module_get_default_filter(command_data->filter_module);
+			scene = Cmiss_scene_access(command_data->default_scene);
 			option_table = CREATE(Option_table)();
 			Option_table_add_entry(option_table, "file", &file_name, (void *)1, set_name);
 			Option_table_add_entry(option_table,"scene",&scene,
-				command_data->scene_manager,set_Scene);
+				command_data->root_region,set_Scene);
+			Option_table_add_entry(option_table, "filter", &filter,
+				command_data->filter_module, set_Cmiss_graphics_filter);
 			return_code = Option_table_multi_parse(option_table, state);
 			DESTROY(Option_table)(&option_table);
 			/* no errors, not asking for help */
@@ -7965,7 +7897,7 @@ Executes a GFX EXPORT VRML command.
 					{
 						if (0 != (return_code = check_suffix(&file_name, ".wrl")))
 						{
-							return_code=export_to_vrml(file_name,scene);
+							return_code=export_to_vrml(file_name,scene, filter);
 						}
 					}
 				}
@@ -7976,7 +7908,9 @@ Executes a GFX EXPORT VRML command.
 				}
 			} /* parse error,help */
 
-			DEACCESS(Scene)(&scene);
+			Cmiss_scene_destroy(&scene);
+			if (filter)
+				Cmiss_graphics_filter_destroy(&filter);
 			if (file_name)
 				DEALLOCATE(file_name);
 		}
@@ -8010,6 +7944,7 @@ Executes a GFX EXPORT WAVEFRONT command.
 	int frame_number, number_of_frames, return_code, version;
 	struct Cmiss_command_data *command_data;
 	struct Scene *scene = NULL;
+	Cmiss_graphics_filter_id filter = 0;
 	static struct Modifier_entry option_table[]=
 	{
 		{"file",NULL,(void *)1,set_name},
@@ -8018,6 +7953,7 @@ Executes a GFX EXPORT WAVEFRONT command.
 		{"number_of_frames",NULL,NULL,set_int_positive},
 		{"scene",NULL,NULL,set_Scene},
 		{"version",NULL,NULL,set_int_positive},
+		{"filter",NULL,NULL,set_Cmiss_graphics_filter},
 		{NULL,NULL,NULL,NULL}
 	};
 	ENTER(gfx_export_wavefront);
@@ -8032,7 +7968,8 @@ Executes a GFX EXPORT WAVEFRONT command.
 			frame_number = 0;
 			full_comments=0;
 			number_of_frames=100;
-			scene=ACCESS(Scene)(command_data->default_scene);
+			scene=Cmiss_scene_access(command_data->default_scene);
+			filter=Cmiss_graphics_filter_module_get_default_filter(command_data->filter_module);
 			version=3;
 			(option_table[0]).to_be_modified= &file_name;
 			(option_table[1]).to_be_modified= &frame_number;
@@ -8041,6 +7978,7 @@ Executes a GFX EXPORT WAVEFRONT command.
 			(option_table[4]).to_be_modified= &scene;
 			(option_table[4]).user_data=command_data->scene_manager;
 			(option_table[5]).to_be_modified= &version;
+			(option_table[6]).to_be_modified= &filter;
 			return_code=process_multiple_options(state,option_table);
 			/* no errors, not asking for help */
 
@@ -8048,25 +7986,12 @@ Executes a GFX EXPORT WAVEFRONT command.
 			{
 				if (!file_name)
 				{
-					if (GET_NAME(Scene)(scene,&file_name))
-					{
-						if (REALLOCATE(temp_filename,file_name,char,strlen(file_name)+5))
-						{
-							file_name=temp_filename;
-							strcat(file_name,".obj");
-						}
-					}
-					else
-					{
-						if (GET_NAME(Scene)(scene,&file_name))
-						{
-							if (REALLOCATE(temp_filename,file_name,char,strlen(file_name)+5))
-							{
-								file_name=temp_filename;
-								strcat(file_name, file_ext);
-							}
-						}
-					}
+					file_name=confirmation_get_write_filename(".obj",
+						 command_data->user_interface
+#if defined (WX_USER_INTERFACE)
+							 , command_data->execute_command
+#endif /* defined (WX_USER_INTERFACE)*/
+																										);
 				}
 				if (file_name)
 				{
@@ -8075,11 +8000,11 @@ Executes a GFX EXPORT WAVEFRONT command.
 					{
 						strcat(file_name, file_ext);
 					}
-					return_code=export_to_wavefront(file_name,scene,full_comments);
+					return_code=export_to_wavefront(file_name, scene, filter, full_comments);
 				}
 			} /* parse error,help */
-			DEACCESS(Scene)(&scene);
-
+			Cmiss_scene_destroy(&scene);
+			Cmiss_graphics_filter_destroy(&filter);
 			if (file_name)
 				DEALLOCATE(file_name);
 		}
@@ -8431,16 +8356,20 @@ static int gfx_mesh_graphics_tetrahedral(struct Parse_state *state,
 			double maxh=100000;
 			double fineness=0.5;
 			int secondorder=0;
-			struct Scene *scene;
+			Cmiss_scene_id scene;
 			char *meshsize_file = NULL;
 			struct Option_table *option_table;
 			scene = ACCESS(Scene)(command_data->default_scene);
+			Cmiss_graphics_filter_id filter =
+				Cmiss_graphics_filter_module_get_default_filter(command_data->filter_module);
 			option_table = CREATE(Option_table)();
 			char clear = 0;
 			Option_table_add_entry(option_table, "region", &region_path,
 				command_data->root_region, set_Cmiss_region_path);
 			Option_table_add_entry(option_table, "scene", &scene,
-				command_data->scene_manager, set_Scene);
+				command_data->root_region, set_Scene);
+			Option_table_add_entry(option_table, "filter", &filter,
+				command_data->filter_module, set_Cmiss_graphics_filter);
 			Option_table_add_entry(option_table,"clear_region",
 				&clear,(void *)NULL,set_char_flag);
 			Option_table_add_entry(option_table,"mesh_global_size",
@@ -8460,8 +8389,8 @@ static int gfx_mesh_graphics_tetrahedral(struct Parse_state *state,
 				{
 					float tolerance = 0.000001;
 					double centre_x, centre_y, centre_z, size_x, size_y, size_z;
-					build_Scene(scene);
-					Scene_get_graphics_range(scene,
+					build_Scene(scene, filter);
+					Cmiss_scene_get_global_graphics_range(scene, filter,
 						&centre_x, &centre_y, &centre_z, &size_x, &size_y, &size_z);
 					if (size_x !=0 && size_y!=0 && size_z!=0)
 					{
@@ -8469,10 +8398,9 @@ static int gfx_mesh_graphics_tetrahedral(struct Parse_state *state,
 							size_x*size_x + size_y*size_y + size_z*size_z);
 					}
 					Render_graphics_triangularisation renderer(NULL, tolerance);
-					Cmiss_graphics_filter_id filter = Cmiss_scene_get_filter(scene);
 					if (renderer.Scene_compile(scene, filter))
 					{
-						return_code = renderer.Scene_execute(scene);
+						return_code = renderer.Scene_tree_execute(scene);
 						trimesh = renderer.get_triangle_mesh();
 						struct Cmiss_region *region = Cmiss_region_find_subregion_at_path(
 							command_data->root_region, region_path);
@@ -8501,8 +8429,6 @@ static int gfx_mesh_graphics_tetrahedral(struct Parse_state *state,
 						}
 						Cmiss_region_destroy(&region);
 					}
-					if (filter)
-						Cmiss_graphics_filter_destroy(&filter);
 				}
 #else
 				USE_PARAMETER(scene);
@@ -8515,7 +8441,8 @@ static int gfx_mesh_graphics_tetrahedral(struct Parse_state *state,
 			}
 			DEALLOCATE(region_path);
 			DESTROY(Option_table)(&option_table);
-			DEACCESS(Scene)(&scene);
+			Cmiss_scene_destroy(&scene);
+			Cmiss_graphics_filter_destroy(&filter);
 			if (meshsize_file)
 			{
 				DEALLOCATE(meshsize_file);
@@ -8553,14 +8480,17 @@ static int gfx_mesh_graphics_triangle(struct Parse_state *state,
 		region_path = Cmiss_region_get_root_region_path();
 		if (NULL != (command_data=(struct Cmiss_command_data *)command_data_void))
 		{
-			struct Scene *scene;
 			Triangle_mesh *trimesh = NULL;
-			scene = ACCESS(Scene)(command_data->default_scene);
+			Cmiss_scene_id scene = Cmiss_scene_access(command_data->default_scene);
+			Cmiss_graphics_filter_id filter =
+				Cmiss_graphics_filter_module_get_default_filter(command_data->filter_module);
 			option_table = CREATE(Option_table)();
 			char clear = 0;
 			Option_table_add_entry(option_table, "scene", &scene,
-				command_data->scene_manager, set_Scene);
-			Option_table_add_entry(option_table, "region", &region_path,
+				command_data->root_region, set_Scene);
+			Option_table_add_entry(option_table, "filter", &filter,
+				command_data->filter_module, set_Cmiss_graphics_filter);
+			Option_table_add_entry(option_table, "target_region", &region_path,
 				command_data->root_region, set_Cmiss_region_path);
 			Option_table_add_entry(option_table,"clear_region",
 				&clear,(void *)NULL,set_char_flag);
@@ -8570,8 +8500,8 @@ static int gfx_mesh_graphics_triangle(struct Parse_state *state,
 				{
 					float tolerance = 0.000001;
 					double centre_x, centre_y, centre_z, size_x, size_y, size_z;
-					build_Scene(scene);
-					Scene_get_graphics_range(scene,
+					build_Scene(scene, filter);
+					Cmiss_scene_get_global_graphics_range(scene, filter,
 						&centre_x, &centre_y, &centre_z, &size_x, &size_y, &size_z);
 					if (size_x !=0 && size_y!=0 && size_z!=0)
 					{
@@ -8579,10 +8509,9 @@ static int gfx_mesh_graphics_triangle(struct Parse_state *state,
 							size_x*size_x + size_y*size_y + size_z*size_z);
 					}
 					Render_graphics_triangularisation renderer(NULL, tolerance);
-					Cmiss_graphics_filter_id filter = Cmiss_scene_get_filter(scene);
 					if (renderer.Scene_compile(scene, filter))
 					{
-						return_code = renderer.Scene_execute(scene);
+						return_code = renderer.Scene_tree_execute(scene);
 						trimesh = renderer.get_triangle_mesh();
 						struct Cmiss_region *region = Cmiss_region_find_subregion_at_path(
 							command_data->root_region, region_path);
@@ -8600,13 +8529,13 @@ static int gfx_mesh_graphics_triangle(struct Parse_state *state,
 						}
 						Cmiss_region_destroy(&region);
 					}
-					if (filter)
-						Cmiss_graphics_filter_destroy(&filter);
+
 				}
 			}
 			DEALLOCATE(region_path);
 			DESTROY(Option_table)(&option_table);
-			DEACCESS(Scene)(&scene);
+			Cmiss_graphics_filter_destroy(&filter);
+			Cmiss_scene_destroy(&scene);
 		}
 		else
 		{
@@ -8772,12 +8701,12 @@ int gfx_evaluate(struct Parse_state *state, void *dummy_to_be_modified,
 						Cmiss_field_group_id selection_group = 0;
 						if (selected_flag)
 						{
-							Cmiss_rendition_id rendition =
-								Cmiss_graphics_module_get_rendition(command_data->graphics_module, region);
-							if (rendition)
+							Cmiss_scene_id scene =
+								Cmiss_graphics_module_get_scene(command_data->graphics_module, region);
+							if (scene)
 							{
-								selection_group = Cmiss_rendition_get_selection_group(rendition);
-								Cmiss_rendition_destroy(&rendition);
+								selection_group = Cmiss_scene_get_selection_group(scene);
+								Cmiss_scene_destroy(&scene);
 							}
 						}
 						if (node_region_path || data_region_path)
@@ -9279,8 +9208,8 @@ Executes a GFX LIST ELEMENT.
 			Cmiss_mesh_group_id selection_mesh_group = 0;
 			if (selected_flag)
 			{
-				Cmiss_rendition *rendition = Cmiss_region_get_rendition_internal(region);
-				Cmiss_field_group_id selection_group = Cmiss_rendition_get_selection_group(rendition);
+				Cmiss_scene *scene = Cmiss_region_get_scene_internal(region);
+				Cmiss_field_group_id selection_group = Cmiss_scene_get_selection_group(scene);
 				if (selection_group)
 				{
 					Cmiss_field_element_group_id selection_element_group =
@@ -9292,7 +9221,7 @@ Executes a GFX LIST ELEMENT.
 					}
 				}
 				Cmiss_field_group_destroy(&selection_group);
-				Cmiss_rendition_destroy(&rendition);
+				Cmiss_scene_destroy(&scene);
 			}
 			int number_of_elements_listed = 0;
 			if ((!selected_flag) || selection_mesh_group)
@@ -9449,8 +9378,8 @@ use node_manager and node_selection.
 			Cmiss_nodeset_group_id selection_nodeset_group = 0;
 			if (selected_flag)
 			{
-				Cmiss_rendition *rendition = Cmiss_region_get_rendition_internal(region);
-				Cmiss_field_group_id selection_group = Cmiss_rendition_get_selection_group(rendition);
+				Cmiss_scene *scene = Cmiss_region_get_scene_internal(region);
+				Cmiss_field_group_id selection_group = Cmiss_scene_get_selection_group(scene);
 				if (selection_group)
 				{
 					Cmiss_field_node_group_id selection_node_group =
@@ -9462,7 +9391,7 @@ use node_manager and node_selection.
 					}
 				}
 				Cmiss_field_group_destroy(&selection_group);
-				Cmiss_rendition_destroy(&rendition);
+				Cmiss_scene_destroy(&scene);
 			}
 			int number_of_nodes_listed = 0;
 			if ((!selected_flag) || selection_nodeset_group)
@@ -9734,13 +9663,13 @@ Executes a GFX LIST REGION command.
 	return (return_code);
 } /* gfx_list_region */
 
-int Cmiss_region_list_rendition(Cmiss_region_id region, int commands_flag, int recursive_flag)
+int Cmiss_region_list_scene(Cmiss_region_id region, int commands_flag, int recursive_flag)
 {
 	if (!region)
 		return 0;
 	int return_code = 1;
 	char *region_path = Cmiss_region_get_path(region);
-	Cmiss_rendition_id rendition = Cmiss_region_get_rendition_internal(region);
+	Cmiss_scene_id scene = Cmiss_region_get_scene_internal(region);
 	if (commands_flag)
 	{
 		int error = 0;
@@ -9748,23 +9677,23 @@ int Cmiss_region_list_rendition(Cmiss_region_id region, int commands_flag, int r
 		make_valid_token(&region_path);
 		append_string(&command_prefix, region_path, &error);
 		append_string(&command_prefix, " ", &error);
-		return_code = Cmiss_rendition_list_commands(rendition, command_prefix, /*command_suffix*/";");
+		return_code = Cmiss_scene_list_commands(scene, command_prefix, /*command_suffix*/";");
 		DEALLOCATE(command_prefix);
 	}
 	else
 	{
 		display_message(INFORMATION_MESSAGE,
-			"Contents of region %s rendition:\n", region_path);
-		return_code = Cmiss_rendition_list_contents(rendition);
+			"Contents of region %s scene:\n", region_path);
+		return_code = Cmiss_scene_list_contents(scene);
 	}
-	Cmiss_rendition_destroy(&rendition);
+	Cmiss_scene_destroy(&scene);
 	DEALLOCATE(region_path);
 	if (recursive_flag)
 	{
 		Cmiss_region_id child = Cmiss_region_get_first_child(region);
 		while (child)
 		{
-			if (!Cmiss_region_list_rendition(child, commands_flag, recursive_flag))
+			if (!Cmiss_region_list_scene(child, commands_flag, recursive_flag))
 			{
 				Cmiss_region_destroy(&child);
 				return_code = 0;
@@ -9802,7 +9731,7 @@ static int gfx_list_g_element(struct Parse_state *state,
 		DESTROY(Option_table)(&option_table);
 		if (return_code)
 		{
-			return_code = Cmiss_region_list_rendition(region, commands_flag, recursive_flag);
+			return_code = Cmiss_region_list_scene(region, commands_flag, recursive_flag);
 		}
 		Cmiss_region_destroy(&region);
 	}
@@ -10161,44 +10090,21 @@ Executes a GFX LIST LMODEL.
  * Executes a GFX LIST SCENE command.
  */
 static int gfx_list_scene(struct Parse_state *state,
-	void *dummy_to_be_modified, void *scene_manager_void)
+	void *dummy_to_be_modified, void *root_region_void)
 {
 	int return_code;
 
-	ENTER(gfx_list_scene);
-	USE_PARAMETER(dummy_to_be_modified);
-	if (state && scene_manager_void)
+	if (state && root_region_void)
 	{
-		struct MANAGER(Cmiss_scene) *scene_manager =
-			(struct MANAGER(Cmiss_scene) *)scene_manager_void;
-		Cmiss_scene *scene = NULL;
-		Option_table *option_table = CREATE(Option_table)();
-		Option_table_add_entry(option_table, /*token*/(const char *)NULL,
-			(void *)&scene, scene_manager_void, set_Scene);
-		if (0 != (return_code = Option_table_multi_parse(option_table, state)))
-		{
-			if (scene)
-			{
-				return_code = list_Scene(scene, (void *)NULL);
-			}
-			else
-			{
-				return_code = FOR_EACH_OBJECT_IN_MANAGER(Scene)(list_Scene,
-					(void *)NULL, scene_manager);
-			}
-		}
-		if (scene)
-		{
-			Cmiss_scene_destroy(&scene);
-		}
-		DESTROY(Option_table)(&option_table);
+		display_message(WARNING_MESSAGE,"gfx_list_scene. Scene is now a direct graphical "
+			"representation of the a region, please use gfx_list_region.");
 	}
 	else
 	{
 		display_message(ERROR_MESSAGE,"gfx_list_scene.  Invalid argument(s)");
 		return_code = 0;
 	}
-	LEAVE;
+
 
 	return (return_code);
 } /* gfx_list_scene */
@@ -10457,8 +10363,8 @@ Executes a GFX LIST TRANSFORMATION.
 				}
 				if (region)
 				{
-					Cmiss_rendition *rendition = Cmiss_region_get_rendition_internal(region);
-					if (rendition)
+					Cmiss_scene *scene = Cmiss_region_get_scene_internal(region);
+					if (scene)
 					{
 						if (commands_flag)
 						{
@@ -10468,11 +10374,11 @@ Executes a GFX LIST TRANSFORMATION.
 							if (ALLOCATE(command_prefix, char, 40 + strlen(region_name)))
 							{
 								sprintf(command_prefix, "gfx set transformation name ");
-								if (rendition)
+								if (scene)
 								{
-									return_code = list_Cmiss_rendition_transformation_commands(
-										rendition,(void *)command_prefix);
-									DEACCESS(Cmiss_rendition)(&rendition);
+									return_code = list_Cmiss_scene_transformation_commands(
+										scene,(void *)command_prefix);
+									DEACCESS(Cmiss_scene)(&scene);
 								}
 								DEALLOCATE(command_prefix);
 							}
@@ -10483,9 +10389,9 @@ Executes a GFX LIST TRANSFORMATION.
 						}
 						else
 						{
-							return_code = list_Cmiss_rendition_transformation(rendition);
+							return_code = list_Cmiss_scene_transformation(scene);
 						}
-						Cmiss_rendition_destroy(&rendition);
+						Cmiss_scene_destroy(&scene);
 					}
 				}
 				else
@@ -10765,7 +10671,7 @@ Executes a GFX LIST command.
 				command_data->root_region, gfx_list_region);
 			/* scene */
 			Option_table_add_entry(option_table, "scene", NULL,
-				command_data->scene_manager, gfx_list_scene);
+				command_data->root_region, gfx_list_scene);
 			/* spectrum */
 			Option_table_add_entry(option_table, "spectrum", NULL,
 				command_data->spectrum_manager, gfx_list_spectrum);
@@ -11125,9 +11031,9 @@ Parameter <help_mode> should be NULL when calling this function.
 		}
 		if (return_code)
 		{
-			struct Cmiss_rendition *rendition = Cmiss_region_get_rendition_internal(region);
-			return_code = Cmiss_rendition_execute_command_internal(rendition, group, state);
-			Cmiss_rendition_destroy(&rendition);
+			struct Cmiss_scene *scene = Cmiss_region_get_scene_internal(region);
+			return_code = Cmiss_scene_execute_command_internal(scene, group, state);
+			Cmiss_scene_destroy(&scene);
 		} /* parse error,help */
 		Cmiss_region_destroy(&region);
 		if (group)
@@ -11371,8 +11277,8 @@ static int gfx_modify_node_group(struct Parse_state *state,
 				Cmiss_nodeset_group_id selection_nodeset_group = 0;
 				if (selected_flag)
 				{
-					Cmiss_rendition *rendition = Cmiss_region_get_rendition_internal(region);
-					Cmiss_field_group_id selection_group = Cmiss_rendition_get_selection_group(rendition);
+					Cmiss_scene *scene = Cmiss_region_get_scene_internal(region);
+					Cmiss_field_group_id selection_group = Cmiss_scene_get_selection_group(scene);
 					if (selection_group)
 					{
 						Cmiss_field_node_group_id selection_node_group =
@@ -11384,7 +11290,7 @@ static int gfx_modify_node_group(struct Parse_state *state,
 						}
 					}
 					Cmiss_field_group_destroy(&selection_group);
-					Cmiss_rendition_destroy(&rendition);
+					Cmiss_scene_destroy(&scene);
 				}
 				Cmiss_nodeset_group_id from_nodeset_group = 0;
 				if (from_group)
@@ -11698,11 +11604,11 @@ static int gfx_modify_nodes(struct Parse_state *state,
 			Cmiss_field_group_id selection_group = NULL;
 			if (selected_flag)
 			{
-				Cmiss_rendition *rendition = Cmiss_region_get_rendition_internal(region);
-				if (rendition)
+				Cmiss_scene *scene = Cmiss_region_get_scene_internal(region);
+				if (scene)
 				{
-					selection_group = Cmiss_rendition_get_selection_group(rendition);
-					Cmiss_rendition_destroy(&rendition);
+					selection_group = Cmiss_scene_get_selection_group(scene);
+					Cmiss_scene_destroy(&scene);
 				}
 			}
 			const char *field_name = define_field_name ? define_field_name : undefine_field_name;
@@ -11926,8 +11832,6 @@ Executes a GFX MODIFY command.
 					(void *)command_data, gfx_modify_nodes);
 				/* scene */
 				Define_scene_data define_scene_data;
-				define_scene_data.light_manager=command_data->light_manager;
-				define_scene_data.scene_manager=command_data->scene_manager;
 				define_scene_data.root_region = command_data->root_region;
 				define_scene_data.graphics_module = command_data->graphics_module;
 				Option_table_add_entry(option_table, "scene", NULL,
@@ -11949,8 +11853,8 @@ Executes a GFX MODIFY command.
 				modify_graphics_window_data.light_manager=command_data->light_manager;
 				modify_graphics_window_data.light_model_manager=
 					command_data->light_model_manager;
-				modify_graphics_window_data.scene_manager=command_data->scene_manager;
 				modify_graphics_window_data.root_region=command_data->root_region;
+				modify_graphics_window_data.filter_module = command_data->filter_module;
 				Option_table_add_entry(option_table,"window",NULL,
 					(void *)(&modify_graphics_window_data), modify_Graphics_window);
 #endif /* defined (USE_CMGUI_GRAPHICS_WINDOW) */
@@ -13282,11 +13186,11 @@ Executes a GFX SELECT command.
 					{
 						if (region)
 						{
-							Cmiss_rendition *local_rendition = Cmiss_graphics_module_get_rendition(
+							Cmiss_scene *local_scene = Cmiss_graphics_module_get_scene(
 								command_data->graphics_module, region);
-							Cmiss_rendition_add_selection_from_node_list(local_rendition,
+							Cmiss_scene_add_selection_from_node_list(local_scene,
 								node_list, /* use_data */1);
-							Cmiss_rendition_destroy(&local_rendition);
+							Cmiss_scene_destroy(&local_scene);
 						}
 						if (verbose_flag)
 						{
@@ -13313,10 +13217,10 @@ Executes a GFX SELECT command.
 								FE_element_list_from_region_and_selection_group(
 									region, dimension, multi_range, NULL, conditional_field, time)))
 						{
-							Cmiss_rendition *local_rendition = Cmiss_graphics_module_get_rendition(
+							Cmiss_scene *local_scene = Cmiss_graphics_module_get_scene(
 								command_data->graphics_module, region);
-							Cmiss_rendition_add_selection_from_element_list_of_dimension(local_rendition,element_list, dimension);
-							Cmiss_rendition_destroy(&local_rendition);
+							Cmiss_scene_add_selection_from_element_list_of_dimension(local_scene,element_list, dimension);
+							Cmiss_scene_destroy(&local_scene);
 							if (verbose_flag)
 							{
 								display_message(INFORMATION_MESSAGE,
@@ -13341,10 +13245,10 @@ Executes a GFX SELECT command.
 								FE_element_list_from_region_and_selection_group(
 									region, /*dimension*/2, multi_range, NULL, conditional_field, time)))
 						{
-							Cmiss_rendition *local_rendition = Cmiss_graphics_module_get_rendition(
+							Cmiss_scene *local_scene = Cmiss_graphics_module_get_scene(
 								command_data->graphics_module, region);
-							Cmiss_rendition_add_selection_from_element_list_of_dimension(local_rendition,element_list, 2);
-							Cmiss_rendition_destroy(&local_rendition);
+							Cmiss_scene_add_selection_from_element_list_of_dimension(local_scene,element_list, 2);
+							Cmiss_scene_destroy(&local_scene);
 							if (verbose_flag)
 							{
 								display_message(INFORMATION_MESSAGE,
@@ -13413,10 +13317,10 @@ Executes a GFX SELECT command.
 								FE_element_list_from_region_and_selection_group(
 									region, /*dimension*/1, multi_range, NULL, conditional_field, time)))
 						{
-							Cmiss_rendition *local_rendition = Cmiss_graphics_module_get_rendition(
+							Cmiss_scene *local_scene = Cmiss_graphics_module_get_scene(
 								command_data->graphics_module, region);
-							Cmiss_rendition_add_selection_from_element_list_of_dimension(local_rendition,element_list, 1);
-							Cmiss_rendition_destroy(&local_rendition);
+							Cmiss_scene_add_selection_from_element_list_of_dimension(local_scene,element_list, 1);
+							Cmiss_scene_destroy(&local_scene);
 							if (verbose_flag)
 							{
 								display_message(INFORMATION_MESSAGE,
@@ -13440,11 +13344,11 @@ Executes a GFX SELECT command.
 					{
 						if (region)
 						{
-							Cmiss_rendition *local_rendition = Cmiss_graphics_module_get_rendition(
+							Cmiss_scene *local_scene = Cmiss_graphics_module_get_scene(
 								command_data->graphics_module, region);
-							Cmiss_rendition_add_selection_from_node_list(local_rendition,
+							Cmiss_scene_add_selection_from_node_list(local_scene,
 								node_list, /* use_data */0);
-							Cmiss_rendition_destroy(&local_rendition);
+							Cmiss_scene_destroy(&local_scene);
 						}
 						if (verbose_flag)
 						{
@@ -13648,11 +13552,11 @@ Executes a GFX UNSELECT command.
 					{
 						if (region)
 						{
-							Cmiss_rendition *local_rendition = Cmiss_graphics_module_get_rendition(
+							Cmiss_scene *local_scene = Cmiss_graphics_module_get_scene(
 								command_data->graphics_module, region);
-							Cmiss_rendition_remove_selection_from_node_list(local_rendition,
+							Cmiss_scene_remove_selection_from_node_list(local_scene,
 								node_list, /* use_data */1);
-							Cmiss_rendition_destroy(&local_rendition);
+							Cmiss_scene_destroy(&local_scene);
 						}
 						if (verbose_flag)
 						{
@@ -13679,10 +13583,10 @@ Executes a GFX UNSELECT command.
 								FE_element_list_from_region_and_selection_group(
 									region, dimension, multi_range, NULL, conditional_field, time)))
 						{
-							Cmiss_rendition *local_rendition = Cmiss_graphics_module_get_rendition(
+							Cmiss_scene *local_scene = Cmiss_graphics_module_get_scene(
 								command_data->graphics_module, region);
-							Cmiss_rendition_remove_selection_from_element_list_of_dimension(local_rendition,element_list, dimension);
-							Cmiss_rendition_destroy(&local_rendition);
+							Cmiss_scene_remove_selection_from_element_list_of_dimension(local_scene,element_list, dimension);
+							Cmiss_scene_destroy(&local_scene);
 							if (verbose_flag)
 							{
 								display_message(INFORMATION_MESSAGE,
@@ -13707,10 +13611,10 @@ Executes a GFX UNSELECT command.
 								FE_element_list_from_region_and_selection_group(
 									region, /*dimension*/2, multi_range, NULL, conditional_field, time)))
 						{
-							Cmiss_rendition *local_rendition = Cmiss_graphics_module_get_rendition(
+							Cmiss_scene *local_scene = Cmiss_graphics_module_get_scene(
 								command_data->graphics_module, region);
-							Cmiss_rendition_remove_selection_from_element_list_of_dimension(local_rendition,element_list, 2);
-							Cmiss_rendition_destroy(&local_rendition);
+							Cmiss_scene_remove_selection_from_element_list_of_dimension(local_scene,element_list, 2);
+							Cmiss_scene_destroy(&local_scene);
 							if (verbose_flag)
 							{
 								display_message(INFORMATION_MESSAGE,
@@ -13779,10 +13683,10 @@ Executes a GFX UNSELECT command.
 								FE_element_list_from_region_and_selection_group(
 									region, /*dimension*/1, multi_range, NULL, conditional_field, time)))
 						{
-							Cmiss_rendition *local_rendition = Cmiss_graphics_module_get_rendition(
+							Cmiss_scene *local_scene = Cmiss_graphics_module_get_scene(
 								command_data->graphics_module, region);
-							Cmiss_rendition_remove_selection_from_element_list_of_dimension(local_rendition, element_list, 1);
-							Cmiss_rendition_destroy(&local_rendition);
+							Cmiss_scene_remove_selection_from_element_list_of_dimension(local_scene, element_list, 1);
+							Cmiss_scene_destroy(&local_scene);
 							if (verbose_flag)
 							{
 								display_message(INFORMATION_MESSAGE,
@@ -13806,11 +13710,11 @@ Executes a GFX UNSELECT command.
 					{
 						if (region)
 						{
-							Cmiss_rendition *local_rendition = Cmiss_graphics_module_get_rendition(
+							Cmiss_scene *local_scene = Cmiss_graphics_module_get_scene(
 								command_data->graphics_module, region);
-							Cmiss_rendition_remove_selection_from_node_list(local_rendition,
+							Cmiss_scene_remove_selection_from_node_list(local_scene,
 								node_list, /* use_data */0);
-							Cmiss_rendition_destroy(&local_rendition);
+							Cmiss_scene_destroy(&local_scene);
 						}
 						DESTROY(LIST(FE_node))(&node_list);
 					}
@@ -14294,20 +14198,20 @@ static int gfx_set_transformation(struct Parse_state *state,
 				}
 				if (return_code)
 				{
-					Cmiss_rendition *rendition = Cmiss_region_get_rendition_internal(region);
-					if (rendition)
+					Cmiss_scene *scene = Cmiss_region_get_scene_internal(region);
+					if (scene)
 					{
 						if (computed_field)
 						{
-							Cmiss_rendition_set_transformation_with_time_callback(rendition,
+							Cmiss_scene_set_transformation_with_time_callback(scene,
 								computed_field);
 						}
 						else
 						{
-							Cmiss_rendition_remove_time_dependent_transformation(rendition);
-							Cmiss_rendition_set_transformation(rendition,&transformation_matrix);
+							Cmiss_scene_remove_time_dependent_transformation(scene);
+							Cmiss_scene_set_transformation(scene,&transformation_matrix);
 						}
-						DEACCESS(Cmiss_rendition)(&rendition);
+						DEACCESS(Cmiss_scene)(&scene);
 					}
 					return_code = 1;
 				}
@@ -14352,7 +14256,7 @@ static int gfx_set_visibility(struct Parse_state *state,
 		char *region_path = 0;
 		Option_table *option_table = CREATE(Option_table)();
 		Option_table_add_help(option_table,
-			"Set the visibility of a whole region's rendition or individual graphics in it. "
+			"Set the visibility of a whole region's scene or individual graphics in it. "
 			"Specify visibility as 'on', 'off' or omit both to toggle. If name option is "
 			"specified, sets visibility for all graphics in region whose name contains the string.");
 		Option_table_add_char_flag_entry(option_table, "off", &off_flag);
@@ -14387,12 +14291,12 @@ static int gfx_set_visibility(struct Parse_state *state,
 		}
 		if (return_code)
 		{
-			Cmiss_rendition_id rendition = Cmiss_region_get_rendition_internal(region);
+			Cmiss_scene_id scene = Cmiss_region_get_scene_internal(region);
 			if (part_graphic_name)
 			{
-				Cmiss_rendition_begin_change(rendition);
+				Cmiss_scene_begin_change(scene);
 				// support legacy command files by changing visibility of each graphic using group as its subgroup field
-				Cmiss_graphic_id graphic = Cmiss_rendition_get_first_graphic(rendition);
+				Cmiss_graphic_id graphic = Cmiss_scene_get_first_graphic(scene);
 				int number_matched = 0;
 				while (graphic)
 				{
@@ -14404,11 +14308,11 @@ static int gfx_set_visibility(struct Parse_state *state,
 						++number_matched;
 					}
 					DEALLOCATE(graphic_name);
-					Cmiss_graphic_id temp = Cmiss_rendition_get_next_graphic(rendition, graphic);
+					Cmiss_graphic_id temp = Cmiss_scene_get_next_graphic(scene, graphic);
 					Cmiss_graphic_destroy(&graphic);
 					graphic = temp;
 				}
-				Cmiss_rendition_end_change(rendition);
+				Cmiss_scene_end_change(scene);
 				if (0 == number_matched)
 				{
 					display_message(WARNING_MESSAGE, "gfx set visibility:  No graphics matched name '%s'", part_graphic_name);
@@ -14416,10 +14320,10 @@ static int gfx_set_visibility(struct Parse_state *state,
 			}
 			else
 			{
-				int visibility_flag = on_flag ? 1 : (off_flag ? 0 : !Cmiss_rendition_get_visibility_flag(rendition));
-				Cmiss_rendition_set_visibility_flag(rendition, visibility_flag);
+				int visibility_flag = on_flag ? 1 : (off_flag ? 0 : !Cmiss_scene_get_visibility_flag(scene));
+				Cmiss_scene_set_visibility_flag(scene, visibility_flag);
 			}
-			Cmiss_rendition_destroy(&rendition);
+			Cmiss_scene_destroy(&scene);
 		}
 		Cmiss_region_destroy(&region);
 		if (region_path)
@@ -18046,7 +17950,11 @@ Initialise all the subcomponents of cmgui and create the Cmiss_command_data
 				Graphical_material_set_alpha(material, 1.0);
 				Cmiss_graphics_material_destroy(&material);
 			}
+			Cmiss_graphics_material_module_define_standard_materials(
+				command_data->material_module);
 		}
+		command_data->filter_module =
+				Cmiss_graphics_module_get_filter_module(command_data->graphics_module);
 		command_data->default_font = Cmiss_graphics_module_get_default_font(
 			command_data->graphics_module);
 
@@ -18213,20 +18121,8 @@ Initialise all the subcomponents of cmgui and create the Cmiss_command_data
 		/* scene manager */
 		/*???RC & SAB.   LOTS of managers need to be created before this
 		  and the User_interface too */
-		if (NULL != (command_data->scene_manager=Cmiss_graphics_module_get_scene_manager(
-									 command_data->graphics_module)))
-		Cmiss_graphics_module_enable_renditions(
-			command_data->graphics_module,command_data->root_region);
-		{
-			command_data->default_scene = Cmiss_graphics_module_get_default_scene(
-				command_data->graphics_module);
-			if (command_data->default_scene)
-			{
-//			display_message(INFORMATION_MESSAGE,"Cmiss_command_data *CREATE\n");
-				Cmiss_scene_set_region(command_data->default_scene, command_data->root_region);
-			}
-		}
-
+		command_data->default_scene = Cmiss_graphics_module_get_default_scene(
+			command_data->graphics_module);
 		if (command_data->computed_field_package && command_data->default_time_keeper_app)
 		{
 			Computed_field_register_types_time(command_data->computed_field_package,
@@ -18511,6 +18407,7 @@ NOTE: Do not call this directly: call Cmiss_command_data_destroy() to deaccess.
 		command_data->curve_manager = NULL;
 		DEACCESS(Spectrum)(&(command_data->default_spectrum));
 		command_data->spectrum_manager=NULL;
+		Cmiss_graphics_filter_module_destroy(&command_data->filter_module);
 		Cmiss_graphics_material_module_destroy(&command_data->material_module);
 		Cmiss_tessellation_module_destroy(&command_data->tessellation_module);
 		DEACCESS(Cmiss_font)(&command_data->default_font);

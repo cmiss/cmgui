@@ -50,7 +50,7 @@
 #include "general/mystring.h"
 #include "general/object.h"
 #include "graphics/graphics_module.h"
-#include "graphics/rendition.h"
+#include "graphics/scene.h"
 #include "selection/any_object_selection.h"
 #include "region/cmiss_region.h"
 /* following is temporary until circular references are removed for Cmiss_region  */

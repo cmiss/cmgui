@@ -66,7 +66,7 @@ group of nodes
 #include "graphics/graphics_window.h"
 #include "graphics/scene.h"
 #include "graphics/scene_viewer.h"
-#include "graphics/rendition.h"
+#include "graphics/scene.h"
 #include "user_interface/confirmation.h"
 #include "user_interface/event_dispatcher.h"
 #include "general/message.h"
@@ -291,9 +291,9 @@ Updates the node locations for the <emoter_slider>
 					transformation[3][0] = shared_data->weights[0];
 					transformation[3][1] = shared_data->weights[1];
 					transformation[3][2] = shared_data->weights[2];
-					Cmiss_rendition *rendition = Cmiss_region_get_rendition_internal(shared_data->region);
-					Cmiss_rendition_set_transformation(rendition, &transformation);
-					Cmiss_rendition_destroy(&rendition);
+					Cmiss_scene *scene = Cmiss_region_get_scene_internal(shared_data->region);
+					Cmiss_scene_set_transformation(scene, &transformation);
+					Cmiss_scene_destroy(&scene);
 				}
 				i=0;
 				offset=em_object->m;

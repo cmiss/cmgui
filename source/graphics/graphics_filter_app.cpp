@@ -6,7 +6,14 @@
 #include "command/parser.h"
 #include "graphics/graphic.h"
 #include "graphics/graphics_filter.hpp"
-#include "graphics/graphics_module.h"
+
+struct Define_graphics_filter_data
+{
+	Cmiss_region *root_region;
+	Cmiss_graphics_filter_module *filter_module;
+	int number_of_filters;
+	Cmiss_graphics_filter **source_filters;
+};
 
 int set_Cmiss_graphics_filter_source_data(struct Parse_state *state,
 	void *filter_data_void,void *dummy_void)
@@ -15,10 +22,10 @@ int set_Cmiss_graphics_filter_source_data(struct Parse_state *state,
 	struct Define_graphics_filter_data *filter_data = (struct Define_graphics_filter_data *)filter_data_void;
 	const char *current_token;
 	Cmiss_graphics_filter *filter = NULL, **temp_source_filters = NULL;
-	Cmiss_graphics_module *graphics_module = filter_data->graphics_module;
+	Cmiss_graphics_filter_module *filter_module = filter_data->filter_module;
 
 	USE_PARAMETER(dummy_void);
-	if (state && filter_data && graphics_module)
+	if (state && filter_data && filter_module)
 	{
 		current_token=state->current_token;
 		if (current_token)
@@ -29,7 +36,7 @@ int set_Cmiss_graphics_filter_source_data(struct Parse_state *state,
 				while (return_code && (current_token = state->current_token))
 				{
 					/* first try to find a number in the token */
-					filter=Cmiss_graphics_module_find_filter_by_name(graphics_module, current_token);
+					filter=Cmiss_graphics_filter_module_find_filter_by_name(filter_module, current_token);
 					if (filter)
 					{
 						shift_Parse_state(state,1);
@@ -118,7 +125,7 @@ int gfx_define_graphics_filter_operator_or(struct Parse_state *state, void *grap
 		{
 			if (!graphics_filter)
 			{
-				graphics_filter = Cmiss_graphics_module_create_filter_operator_or(filter_data->graphics_module);
+				graphics_filter = Cmiss_graphics_filter_module_create_filter_operator_or(filter_data->filter_module);
 				*graphics_filter_handle = graphics_filter;
 			}
 			Cmiss_graphics_filter_operator_id operator_filter = Cmiss_graphics_filter_cast_operator(graphics_filter);
@@ -184,7 +191,7 @@ int gfx_define_graphics_filter_operator_and(struct Parse_state *state, void *gra
 		{
 			if (!graphics_filter)
 			{
-				graphics_filter = Cmiss_graphics_module_create_filter_operator_and(filter_data->graphics_module);
+				graphics_filter = Cmiss_graphics_filter_module_create_filter_operator_and(filter_data->filter_module);
 				*graphics_filter_handle = graphics_filter;
 			}
 			Cmiss_graphics_filter_operator_id operator_filter = Cmiss_graphics_filter_cast_operator(graphics_filter);
@@ -292,13 +299,13 @@ int gfx_define_graphics_filter_contents(struct Parse_state *state, void *graphic
 			{
 				if (match_visibility_flags)
 				{
-					graphics_filter = Cmiss_graphics_module_create_filter_visibility_flags(
-						filter_data->graphics_module);
+					graphics_filter = Cmiss_graphics_filter_module_create_filter_visibility_flags(
+						filter_data->filter_module);
 				}
 				else if (match_graphic_name)
 				{
-					graphics_filter = Cmiss_graphics_module_create_filter_graphic_name(
-						filter_data->graphics_module, match_graphic_name);
+					graphics_filter = Cmiss_graphics_filter_module_create_filter_graphic_name(
+						filter_data->filter_module, match_graphic_name);
 				}
 				else if (match_region_path)
 				{
@@ -306,8 +313,8 @@ int gfx_define_graphics_filter_contents(struct Parse_state *state, void *graphic
 						filter_data->root_region, match_region_path);
 					if (match_region)
 					{
-						graphics_filter = Cmiss_graphics_module_create_filter_region(
-							filter_data->graphics_module, match_region);
+						graphics_filter = Cmiss_graphics_filter_module_create_filter_region(
+							filter_data->filter_module, match_region);
 						Cmiss_region_destroy(&match_region);
 					}
 					else
@@ -320,8 +327,8 @@ int gfx_define_graphics_filter_contents(struct Parse_state *state, void *graphic
 				else if (graphic_type_string)
 				{
 					STRING_TO_ENUMERATOR(Cmiss_graphic_type)(graphic_type_string, &graphic_type);
-					graphics_filter = Cmiss_graphics_module_create_filter_graphic_type(
-						filter_data->graphics_module, graphic_type);
+					graphics_filter = Cmiss_graphics_filter_module_create_filter_graphic_type(
+						filter_data->filter_module, graphic_type);
 				}
 			}
 
@@ -337,7 +344,7 @@ int gfx_define_graphics_filter_contents(struct Parse_state *state, void *graphic
 		if (match_region_path)
 			DEALLOCATE(match_region_path);
 		if (graphic_type_string)
-			DEALLOCATE(match_region_path);
+			DEALLOCATE(graphic_type_string);
 	}
 	else
 	{
@@ -349,29 +356,28 @@ int gfx_define_graphics_filter_contents(struct Parse_state *state, void *graphic
 }
 
 int gfx_define_graphics_filter(struct Parse_state *state, void *root_region_void,
-	void *graphics_module_void)
+	void *filter_module_void)
 {
 	int return_code = 1;
-	Cmiss_graphics_module *graphics_module = (Cmiss_graphics_module *)graphics_module_void;
+	Cmiss_graphics_filter_module *filter_module =
+		(Cmiss_graphics_filter_module *)filter_module_void;
 	Cmiss_region *root_region = (Cmiss_region *)root_region_void;
-	if (state && graphics_module && root_region)
+	if (state && filter_module && root_region)
 	{
 		const char *current_token = state->current_token;
 		if (current_token)
 		{
 			Cmiss_graphics_filter *graphics_filter = NULL;
 			struct Define_graphics_filter_data filter_data;
-			filter_data.graphics_module = graphics_module;
+			filter_data.filter_module = filter_module;
 			filter_data.root_region = root_region;
 			filter_data.number_of_filters = 0;
 			filter_data.source_filters = NULL;
 			if (strcmp(PARSER_HELP_STRING, current_token) &&
 				strcmp(PARSER_RECURSIVE_HELP_STRING, current_token))
 			{
-				MANAGER(Cmiss_graphics_filter) *graphics_filter_manager =
-					Cmiss_graphics_module_get_filter_manager(graphics_module);
-				MANAGER_BEGIN_CACHE(Cmiss_graphics_filter)(graphics_filter_manager);
-				graphics_filter = Cmiss_graphics_module_find_filter_by_name(graphics_module, current_token);
+				Cmiss_graphics_filter_module_begin_change(filter_module);
+				graphics_filter = Cmiss_graphics_filter_module_find_filter_by_name(filter_module, current_token);
 				bool existing_filter = (graphics_filter != 0);
 				shift_Parse_state(state,1);
 				return_code = gfx_define_graphics_filter_contents(state, (void *)&graphics_filter, (void*)&filter_data);
@@ -381,7 +387,7 @@ int gfx_define_graphics_filter(struct Parse_state *state, void *root_region_void
 					if (!existing_filter)
 						Cmiss_graphics_filter_set_name(graphics_filter, current_token);
 				}
-				MANAGER_END_CACHE(Cmiss_graphics_filter)(graphics_filter_manager);
+				Cmiss_graphics_filter_module_end_change(filter_module);
 			}
 			else
 			{
@@ -478,13 +484,13 @@ int gfx_list_graphics_filter(struct Parse_state *state, void *dummy_to_be_modifi
 }
 
 int set_Cmiss_graphics_filter(struct Parse_state *state,
-	void *graphics_filter_address_void, void *graphics_module_void)
+	void *graphics_filter_address_void, void *filter_module_void)
 {
 	int return_code = 1;
 
 	Cmiss_graphics_filter **graphics_filter_address = (Cmiss_graphics_filter **)graphics_filter_address_void;
-	Cmiss_graphics_module *graphics_module = (Cmiss_graphics_module *)graphics_module_void;
-	if (state && graphics_filter_address && graphics_module)
+	Cmiss_graphics_filter_module *filter_module = (Cmiss_graphics_filter_module *)filter_module_void;
+	if (state && graphics_filter_address && filter_module)
 	{
 		const char *current_token = state->current_token;
 		if (current_token)
@@ -495,7 +501,7 @@ int set_Cmiss_graphics_filter(struct Parse_state *state,
 				Cmiss_graphics_filter *graphics_filter = NULL;
 				if (!fuzzy_string_compare(current_token, "NONE"))
 				{
-					graphics_filter = Cmiss_graphics_module_find_filter_by_name(graphics_module, current_token);
+					graphics_filter = Cmiss_graphics_filter_module_find_filter_by_name(filter_module, current_token);
 					if (!graphics_filter)
 					{
 						display_message(ERROR_MESSAGE, "Unknown graphics_filter : %s", current_token);

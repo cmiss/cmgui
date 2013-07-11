@@ -65,7 +65,7 @@ struct Cmiss_scene_viewer_app_module *CREATE(Cmiss_scene_viewer_app_module)(
 	struct MANAGER(Light) *light_manager,struct Light *default_light,
 	struct MANAGER(Light_model) *light_model_manager,
 	struct Light_model *default_light_model,
-	struct MANAGER(Scene) *scene_manager,struct Scene *scene,
+	Cmiss_graphics_filter_module_id filter_module,Cmiss_scene_id scene,
 	struct User_interface *user_interface)
 {
 	struct Cmiss_scene_viewer_app_module *scene_viewer_module;
@@ -78,7 +78,7 @@ struct Cmiss_scene_viewer_app_module *CREATE(Cmiss_scene_viewer_app_module)(
 			scene_viewer_module->access_count = 1;
 			scene_viewer_module->graphics_buffer_package = graphics_buffer_package;
 			scene_viewer_module->core_scene_viewer_module = CREATE(Cmiss_scene_viewer_module)(background_colour,
-				interactive_tool_manager, light_manager, default_light, light_model_manager, default_light_model, scene_manager, scene);
+				interactive_tool_manager, light_manager, default_light, light_model_manager, default_light_model, filter_module);
 			scene_viewer_module->user_interface = user_interface;
 			scene_viewer_module->scene_viewer_app_list = CREATE(LIST(Scene_viewer_app))();
 			scene_viewer_module->destroy_callback_list=
@@ -143,7 +143,7 @@ struct Scene_viewer_app *CREATE(Scene_viewer_app)(struct Graphics_buffer_app *gr
 	struct MANAGER(Light) *light_manager,struct Light *default_light,
 	struct MANAGER(Light_model) *light_model_manager,
 	struct Light_model *default_light_model,
-	struct MANAGER(Scene) *scene_manager, struct Scene *scene,
+	Cmiss_graphics_filter_id filter, struct Cmiss_scene *scene,
 	struct User_interface *user_interface)
 {
 	struct Scene_viewer_app *scene_viewer = 0;
@@ -159,7 +159,8 @@ struct Scene_viewer_app *CREATE(Scene_viewer_app)(struct Graphics_buffer_app *gr
 				default_light,
 				light_model_manager,
 				default_light_model,
-				scene_manager, scene);
+				filter);
+			Cmiss_scene_viewer_set_scene(scene_viewer->core_scene_viewer, scene);
 			scene_viewer->user_interface = user_interface;
 			scene_viewer->idle_update_callback_id = (struct Event_dispatcher_idle_callback *)NULL;
 			/* no current interactive_tool */
@@ -319,49 +320,6 @@ DESCRIPTION :
 	return_code = 1;
 
 	return (return_code);
-}
-
-struct Scene_viewer_app *create_Scene_viewer_app_from_package(
-	struct Graphics_buffer_app *graphics_buffer,
-	struct Cmiss_scene_viewer_app_module *cmiss_scene_viewer_module,
-	struct Scene *scene)
-{
-	struct MANAGER(Interactive_tool) *new_interactive_tool_manager;
-	struct Scene_viewer_app *scene_viewer = 0;
-
-	if (graphics_buffer && cmiss_scene_viewer_module && scene)
-	{
-		scene_viewer = CREATE(Scene_viewer_app)(graphics_buffer,
-			cmiss_scene_viewer_module->core_scene_viewer_module->background_colour,
-			cmiss_scene_viewer_module->core_scene_viewer_module->light_manager,
-			cmiss_scene_viewer_module->core_scene_viewer_module->default_light,
-			cmiss_scene_viewer_module->core_scene_viewer_module->light_model_manager,
-			cmiss_scene_viewer_module->core_scene_viewer_module->default_light_model,
-			cmiss_scene_viewer_module->core_scene_viewer_module->scene_manager,
-			scene, cmiss_scene_viewer_module->user_interface);
-
-		new_interactive_tool_manager = 0;//--CREATE(MANAGER(Interactive_tool))();
-		//--FOR_EACH_OBJECT_IN_MANAGER(Interactive_tool)(
-		//--	Interactive_tool_create_copy_iterator, new_interactive_tool_manager,
-		//--	cmiss_scene_viewer_module->interactive_tool_manager);
-
-		//--Scene_viewer_set_interactive_tool(scene_viewer,
-		//--	FIND_BY_IDENTIFIER_IN_MANAGER(Interactive_tool,name)
-		//--	("transform_tool", new_interactive_tool_manager));
-		scene_viewer->interactive_tool_manager = new_interactive_tool_manager;
-
-		/* Add this scene_viewer to the package list */
-		ADD_OBJECT_TO_LIST(Scene_viewer_app)(scene_viewer,
-			cmiss_scene_viewer_module->scene_viewer_app_list);
-
-		/* Register a callback so that if the scene_viewer is destroyed
-			then it is removed from the list */
-		Scene_viewer_app_add_destroy_callback(scene_viewer,
-			Scene_viewer_app_destroy_remove_from_package,
-			cmiss_scene_viewer_module);
-	}
-
-	return scene_viewer;
 }
 
 int Scene_viewer_app_start_freespin(struct Scene_viewer_app *scene_viewer,

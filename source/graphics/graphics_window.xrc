@@ -21,15 +21,31 @@
 	  							<orient>wxVERTICAL</orient>
 								<object class="sizeritem">
 				   					<object class = "wxBoxSizer">	
-									<orient>wxHORIZONTAL</orient>
+										<orient>wxHORIZONTAL</orient>
 										<object class="sizeritem">
 											<flag>wxALIGN_CENTRE_VERTICAL</flag>
 											<object class	="wxStaticText"> 
-												<label>  Scene:</label>			
+												<label>  Region:</label>			
 	 										</object>
 										</object>
 										<object class="sizeritem">
-											<object class	="wxPanel" name="GraphicsWindowSceneChooserPanel">
+											<object class	="wxPanel" name="GraphicsWindowRegionChooserPanel">
+	 											<size>150,26</size>
+											</object>
+										</object>
+									</object>
+								</object>
+								<object class="sizeritem">
+				   					<object class = "wxBoxSizer">	
+										<orient>wxHORIZONTAL</orient>
+										<object class="sizeritem">
+											<flag>wxALIGN_CENTRE_VERTICAL</flag>
+											<object class	="wxStaticText"> 
+												<label>  Filter:</label>			
+	 										</object>
+										</object>
+										<object class="sizeritem">
+											<object class	="wxPanel" name="GraphicsWindowFilterChooserPanel">
 	 											<size>150,26</size>
 											</object>
 										</object>

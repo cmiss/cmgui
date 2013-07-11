@@ -17,8 +17,7 @@
 #include "command/parser.h"
 #include "graphics/glyph.hpp"
 #include "graphics/graphic.h"
-#include "graphics/rendition.h"
-#include "graphics/rendition_app.h"
+#include "graphics/scene.h"
 #include "graphics/tessellation.hpp"
 #include "computed_field/computed_field_finite_element.h"
 #include "graphics/auxiliary_graphics_types_app.h"
@@ -27,6 +26,7 @@
 #include "graphics/graphics_object_app.h"
 #include "graphics/spectrum_app.h"
 #include "graphics/font.h"
+#include "graphics/scene_app.h"
 #include "graphics/graphics_coordinate_system.hpp"
 #include "graphics/material_app.h"
 #include "finite_element/finite_element_region_app.h"
@@ -43,28 +43,28 @@ enum Legacy_graphic_type
 	LEGACY_GRAPHIC_ISO_SURFACES
 };
 
-int gfx_modify_rendition_graphic(struct Parse_state *state,
+int gfx_modify_scene_graphic(struct Parse_state *state,
 	enum Cmiss_graphic_type graphic_type,
 	enum Legacy_graphic_type legacy_graphic_type, const char *help_text,
-	struct Modify_rendition_data *modify_rendition_data,
-	struct Rendition_command_data *rendition_command_data)
+	struct Modify_scene_data *modify_scene_data,
+	struct Scene_command_data *scene_command_data)
 {
-	if (!(state && rendition_command_data && modify_rendition_data))
+	if (!(state && scene_command_data && modify_scene_data))
 	{
 		display_message(ERROR_MESSAGE,
-			"gfx_modify_rendition_graphic.  Invalid argument(s)");
+			"gfx_modify_scene_graphic.  Invalid argument(s)");
 		return 0;
 	}
 	Cmiss_graphic_id graphic = 0;
-	if (modify_rendition_data->modify_this_graphic)
+	if (modify_scene_data->modify_this_graphic)
 	{
-		graphic = Cmiss_graphic_access(modify_rendition_data->graphic);
+		graphic = Cmiss_graphic_access(modify_scene_data->graphic);
 		graphic_type = Cmiss_graphic_get_graphic_type(graphic);
 	}
 	else
 	{
-		graphic = Cmiss_rendition_create_graphic_app(rendition_command_data->rendition,
-			graphic_type, modify_rendition_data->graphic);
+		graphic = Cmiss_scene_create_graphic_app(scene_command_data->scene,
+			graphic_type, modify_scene_data->graphic);
 		switch (legacy_graphic_type)
 		{
 		case LEGACY_GRAPHIC_NODE_POINTS:
@@ -89,8 +89,8 @@ int gfx_modify_rendition_graphic(struct Parse_state *state,
 			Cmiss_graphic_line_attributes_set_scale_factors(line_attributes, 1, &two);
 			Cmiss_graphic_line_attributes_destroy(&line_attributes);
 		}
-		Cmiss_rendition_set_graphics_defaults_gfx_modify(rendition_command_data->rendition, graphic);
-		if (modify_rendition_data->group)
+		Cmiss_scene_set_graphics_defaults_gfx_modify(scene_command_data->scene, graphic);
+		if (modify_scene_data->group)
 		{
 			Cmiss_field_id subgroup_field = Cmiss_graphic_get_subgroup_field(graphic);
 			if (subgroup_field)
@@ -100,17 +100,17 @@ int gfx_modify_rendition_graphic(struct Parse_state *state,
 			else
 			{
 				Cmiss_graphic_set_subgroup_field(graphic,
-					Cmiss_field_group_base_cast(modify_rendition_data->group));
+					Cmiss_field_group_base_cast(modify_scene_data->group));
 			}
 		}
 	}
 	if (!graphic)
 	{
 		display_message(ERROR_MESSAGE,
-			"gfx_modify_rendition_graphic.  Could not create graphic");
+			"gfx_modify_scene_graphic.  Could not create graphic");
 		return 0;
 	}
-	REACCESS(Cmiss_graphic)(&(modify_rendition_data->graphic), graphic);
+	REACCESS(Cmiss_graphic)(&(modify_scene_data->graphic), graphic);
 
 	int return_code = 1;
 	Cmiss_graphics_coordinate_system coordinate_system = Cmiss_graphic_get_coordinate_system(graphic);
@@ -231,7 +231,7 @@ int gfx_modify_rendition_graphic(struct Parse_state *state,
 	/* coordinate */
 	Cmiss_field_id coordinate_field = Cmiss_graphic_get_coordinate_field(graphic);
 	Set_Computed_field_conditional_data set_coordinate_field_data;
-	set_coordinate_field_data.computed_field_manager = rendition_command_data->computed_field_manager;
+	set_coordinate_field_data.computed_field_manager = scene_command_data->computed_field_manager;
 	set_coordinate_field_data.conditional_function = Computed_field_has_up_to_3_numerical_components;
 	set_coordinate_field_data.conditional_function_user_data = (void *)NULL;
 	Option_table_add_Computed_field_conditional_entry(option_table, "coordinate",
@@ -251,7 +251,7 @@ int gfx_modify_rendition_graphic(struct Parse_state *state,
 	/* data */
 	Cmiss_field_id data_field = Cmiss_graphic_get_data_field(graphic);
 	Set_Computed_field_conditional_data set_data_field_data;
-	set_data_field_data.computed_field_manager = rendition_command_data->computed_field_manager;
+	set_data_field_data.computed_field_manager = scene_command_data->computed_field_manager;
 	set_data_field_data.conditional_function = Computed_field_has_numerical_components;
 	set_data_field_data.conditional_function_user_data = (void *)NULL;
 	Option_table_add_Computed_field_conditional_entry(option_table, "data",
@@ -266,11 +266,11 @@ int gfx_modify_rendition_graphic(struct Parse_state *state,
 
 	/* delete */
 	Option_table_add_entry(option_table,"delete",
-		&(modify_rendition_data->delete_flag),NULL,set_char_flag);
+		&(modify_scene_data->delete_flag),NULL,set_char_flag);
 
 	/* density */
 	Set_Computed_field_conditional_data set_xi_point_density_field_data;
-	set_xi_point_density_field_data.computed_field_manager = rendition_command_data->computed_field_manager;
+	set_xi_point_density_field_data.computed_field_manager = scene_command_data->computed_field_manager;
 	set_xi_point_density_field_data.conditional_function = Computed_field_is_scalar;
 	set_xi_point_density_field_data.conditional_function_user_data = (void *)NULL;
 	if (Cmiss_graphic_type_uses_attribute(graphic_type, CMISS_GRAPHIC_ATTRIBUTE_XI_DISCRETIZATION_MODE))
@@ -382,7 +382,7 @@ int gfx_modify_rendition_graphic(struct Parse_state *state,
 
 	/* iso_scalar */
 	Set_Computed_field_conditional_data set_isoscalar_field_data;
-	set_isoscalar_field_data.computed_field_manager = rendition_command_data->computed_field_manager;
+	set_isoscalar_field_data.computed_field_manager = scene_command_data->computed_field_manager;
 	set_isoscalar_field_data.conditional_function = Computed_field_is_scalar;
 	set_isoscalar_field_data.conditional_function_user_data = (void *)NULL;
 	if (contours)
@@ -408,7 +408,7 @@ int gfx_modify_rendition_graphic(struct Parse_state *state,
 	/* label */
 	Cmiss_field_id label_field = 0;
 	Set_Computed_field_conditional_data set_label_field_data;
-	set_label_field_data.computed_field_manager = rendition_command_data->computed_field_manager;
+	set_label_field_data.computed_field_manager = scene_command_data->computed_field_manager;
 	set_label_field_data.conditional_function = (MANAGER_CONDITIONAL_FUNCTION(Computed_field) *)NULL;
 	set_label_field_data.conditional_function_user_data = (void *)NULL;
 	if (point_attributes)
@@ -436,7 +436,7 @@ int gfx_modify_rendition_graphic(struct Parse_state *state,
 
 	/* ldensity */
 	Set_Computed_field_conditional_data set_label_density_field_data;
-	set_label_density_field_data.computed_field_manager = rendition_command_data->computed_field_manager;
+	set_label_density_field_data.computed_field_manager = scene_command_data->computed_field_manager;
 	set_label_density_field_data.conditional_function = Computed_field_has_up_to_3_numerical_components;
 	set_label_density_field_data.conditional_function_user_data = (void *)NULL;
 	if (Cmiss_graphic_type_uses_attribute(graphic_type, CMISS_GRAPHIC_ATTRIBUTE_LABEL_FIELD))
@@ -499,7 +499,7 @@ int gfx_modify_rendition_graphic(struct Parse_state *state,
 	/* material */
 	Cmiss_graphics_material_id material = Cmiss_graphic_get_material(graphic);
 	Option_table_add_set_Material_entry(option_table, "material", &material,
-		rendition_command_data->material_module);
+		scene_command_data->material_module);
 
 	/* glyph repeat mode REPEAT_NONE|REPEAT_AXES_2D|REPEAT_AXES_3D|REPEAT_MIRROR */
 	const char *glyph_repeat_mode_string = 0;
@@ -523,7 +523,7 @@ int gfx_modify_rendition_graphic(struct Parse_state *state,
 	{
 		Option_table_add_set_FE_field_from_FE_region(option_table,
 			"native_discretization", &(graphic->native_discretization_field),
-			Cmiss_region_get_FE_region(rendition_command_data->region));
+			Cmiss_region_get_FE_region(scene_command_data->region));
 	}
 
 	/* no_data/field_scalar/magnitude_scalar/travel_scalar */
@@ -550,7 +550,7 @@ int gfx_modify_rendition_graphic(struct Parse_state *state,
 	/* orientation */
 	Cmiss_field_id orientation_scale_field = 0;
 	Set_Computed_field_conditional_data set_orientation_scale_field_data;
-	set_orientation_scale_field_data.computed_field_manager = rendition_command_data->computed_field_manager;
+	set_orientation_scale_field_data.computed_field_manager = scene_command_data->computed_field_manager;
 	set_orientation_scale_field_data.conditional_function = Computed_field_is_orientation_scale_capable;
 	set_orientation_scale_field_data.conditional_function_user_data = (void *)NULL;
 	if (point_attributes)
@@ -562,11 +562,11 @@ int gfx_modify_rendition_graphic(struct Parse_state *state,
 
 	/* position */
 	Option_table_add_entry(option_table,"position",
-		&(modify_rendition_data->position),NULL,set_int_non_negative);
+		&(modify_scene_data->position),NULL,set_int_non_negative);
 
 	/* radius_scalar */
 	Set_Computed_field_conditional_data set_radius_scalar_field_data;
-	set_radius_scalar_field_data.computed_field_manager = rendition_command_data->computed_field_manager;
+	set_radius_scalar_field_data.computed_field_manager = scene_command_data->computed_field_manager;
 	set_radius_scalar_field_data.conditional_function = Computed_field_is_scalar;
 	set_radius_scalar_field_data.conditional_function_user_data = (void *)NULL;
 	if (legacy_graphic_type == LEGACY_GRAPHIC_CYLINDERS)
@@ -634,14 +634,14 @@ int gfx_modify_rendition_graphic(struct Parse_state *state,
 	if (graphic_type == CMISS_GRAPHIC_LINES)
 	{
 		Option_table_add_set_Material_entry(option_table, "secondary_material", &(graphic->secondary_material),
-			rendition_command_data->material_module);
+			scene_command_data->material_module);
 	}
 
 	/* seed_element */
 	if (graphic_type == CMISS_GRAPHIC_STREAMLINES)
 	{
 		Option_table_add_entry(option_table, "seed_element",
-			&(graphic->seed_element), Cmiss_region_get_FE_region(rendition_command_data->region),
+			&(graphic->seed_element), Cmiss_region_get_FE_region(scene_command_data->region),
 			set_FE_element_top_level_FE_region);
 	}
 
@@ -649,7 +649,7 @@ int gfx_modify_rendition_graphic(struct Parse_state *state,
 	Set_Computed_field_conditional_data set_seed_mesh_location_field_data;
 	set_seed_mesh_location_field_data.conditional_function = Computed_field_has_value_type_mesh_location;
 	set_seed_mesh_location_field_data.conditional_function_user_data = (void *)NULL;
-	set_seed_mesh_location_field_data.computed_field_manager = rendition_command_data->computed_field_manager;
+	set_seed_mesh_location_field_data.computed_field_manager = scene_command_data->computed_field_manager;
 	if (graphic_type == CMISS_GRAPHIC_STREAMLINES)
 	{
 		Option_table_add_Computed_field_conditional_entry(option_table, "seed_node_mesh_location_field",
@@ -677,7 +677,7 @@ int gfx_modify_rendition_graphic(struct Parse_state *state,
 	/* selected_material */
 	Cmiss_graphics_material_id selected_material = Cmiss_graphic_get_selected_material(graphic);
 	Option_table_add_set_Material_entry(option_table, "selected_material", &selected_material,
-		rendition_command_data->material_module);
+		scene_command_data->material_module);
 
 	/* glyph base size */
 	double glyph_base_size[3];
@@ -690,13 +690,13 @@ int gfx_modify_rendition_graphic(struct Parse_state *state,
 	/* spectrum */
 	Cmiss_spectrum_id spectrum = Cmiss_graphic_get_spectrum(graphic);
 	Option_table_add_entry(option_table,"spectrum",
-		&spectrum, rendition_command_data->spectrum_manager,
+		&spectrum, scene_command_data->spectrum_manager,
 		set_Spectrum);
 
 	/* subgroup field */
 	Cmiss_field_id subgroup_field = Cmiss_graphic_get_subgroup_field(graphic);
 	Set_Computed_field_conditional_data set_subgroup_field_data;
-	set_subgroup_field_data.computed_field_manager = rendition_command_data->computed_field_manager;
+	set_subgroup_field_data.computed_field_manager = scene_command_data->computed_field_manager;
 	set_subgroup_field_data.conditional_function = Computed_field_is_scalar;
 	set_subgroup_field_data.conditional_function_user_data = (void *)NULL;
 	Option_table_add_Computed_field_conditional_entry(option_table, "subgroup",
@@ -709,13 +709,13 @@ int gfx_modify_rendition_graphic(struct Parse_state *state,
 		(legacy_graphic_type != LEGACY_GRAPHIC_DATA_POINTS))
 	{
 		Option_table_add_Cmiss_tessellation_entry(option_table, "tessellation",
-			rendition_command_data->tessellation_module, &tessellation);
+			scene_command_data->tessellation_module, &tessellation);
 	}
 
 	/* texture_coordinates */
 	Cmiss_field_id texture_coordinate_field = Cmiss_graphic_get_texture_coordinate_field(graphic);
 	Set_Computed_field_conditional_data set_texture_coordinate_field_data;
-	set_texture_coordinate_field_data.computed_field_manager = rendition_command_data->computed_field_manager;
+	set_texture_coordinate_field_data.computed_field_manager = scene_command_data->computed_field_manager;
 	set_texture_coordinate_field_data.conditional_function = Computed_field_has_up_to_3_numerical_components;
 	set_texture_coordinate_field_data.conditional_function_user_data = (void *)NULL;
 	if (Cmiss_graphic_type_uses_attribute(graphic_type, CMISS_GRAPHIC_ATTRIBUTE_TEXTURE_COORDINATE_FIELD))
@@ -742,7 +742,7 @@ int gfx_modify_rendition_graphic(struct Parse_state *state,
 	/* variable_scale */
 	Cmiss_field_id signed_scale_field = 0;
 	Set_Computed_field_conditional_data set_signed_scale_field_data;
-	set_signed_scale_field_data.computed_field_manager = rendition_command_data->computed_field_manager;
+	set_signed_scale_field_data.computed_field_manager = scene_command_data->computed_field_manager;
 	set_signed_scale_field_data.conditional_function = Computed_field_has_up_to_3_numerical_components;
 	set_signed_scale_field_data.conditional_function_user_data = (void *)NULL;
 	if (point_attributes)
@@ -755,7 +755,7 @@ int gfx_modify_rendition_graphic(struct Parse_state *state,
 	/* vector */
 	Cmiss_field_id stream_vector_field = 0;
 	Set_Computed_field_conditional_data set_stream_vector_field_data;
-	set_stream_vector_field_data.computed_field_manager = rendition_command_data->computed_field_manager;
+	set_stream_vector_field_data.computed_field_manager = scene_command_data->computed_field_manager;
 	set_stream_vector_field_data.conditional_function = Computed_field_is_stream_vector_capable;
 	set_stream_vector_field_data.conditional_function_user_data = (void *)NULL;
 	if (streamlines)
@@ -805,7 +805,7 @@ int gfx_modify_rendition_graphic(struct Parse_state *state,
 			if (!isoscalar_field)
 			{
 				display_message(ERROR_MESSAGE,
-					"gfx_modify_rendition_iso_surfaces.  Missing iso_scalar field");
+					"gfx_modify_scene_iso_surfaces.  Missing iso_scalar field");
 				return_code=0;
 			}
 			Cmiss_graphic_contours_set_isoscalar_field(contours, isoscalar_field);
@@ -893,13 +893,13 @@ int gfx_modify_rendition_graphic(struct Parse_state *state,
 					(0 == strcmp(glyph_name, "mirror_cone")) ||
 					(0 == strcmp(glyph_name, "mirror_line")))
 				{
-					glyph = Cmiss_glyph_module_find_glyph_by_name(rendition_command_data->glyph_module, glyph_name + 7);
+					glyph = Cmiss_glyph_module_find_glyph_by_name(scene_command_data->glyph_module, glyph_name + 7);
 					glyph_repeat_mode = CMISS_GLYPH_REPEAT_MIRROR;
 				}
 				else if ((0 == strcmp(glyph_name, "arrow_line")) ||
 					(0 == strcmp(glyph_name, "mirror_arrow_line")))
 				{
-					glyph = Cmiss_glyph_module_find_glyph_by_name(rendition_command_data->glyph_module, "arrow");
+					glyph = Cmiss_glyph_module_find_glyph_by_name(scene_command_data->glyph_module, "arrow");
 					if (glyph_name[0] == 'm')
 					{
 						glyph_repeat_mode = CMISS_GLYPH_REPEAT_MIRROR;
@@ -950,7 +950,7 @@ int gfx_modify_rendition_graphic(struct Parse_state *state,
 					}
 					if (arrow_glyph_name)
 					{
-						glyph = Cmiss_glyph_module_find_glyph_by_name(rendition_command_data->glyph_module, arrow_glyph_name);
+						glyph = Cmiss_glyph_module_find_glyph_by_name(scene_command_data->glyph_module, arrow_glyph_name);
 						if ((glyph_base_size[1] != glyph_base_size[0]) || (glyph_base_size[2] != glyph_base_size[0]))
 						{
 							display_message(WARNING_MESSAGE, "Overriding lateral size for axes glyph");
@@ -982,7 +982,7 @@ int gfx_modify_rendition_graphic(struct Parse_state *state,
 				}
 				else
 				{
-					glyph = Cmiss_glyph_module_find_glyph_by_name(rendition_command_data->glyph_module, glyph_name);
+					glyph = Cmiss_glyph_module_find_glyph_by_name(scene_command_data->glyph_module, glyph_name);
 				}
 				if (!glyph)
 				{
@@ -1020,7 +1020,7 @@ int gfx_modify_rendition_graphic(struct Parse_state *state,
 			if (font_name)
 			{
 				Cmiss_font *new_font = Cmiss_graphics_module_find_font_by_name(
-					rendition_command_data->graphics_module, font_name);
+					scene_command_data->graphics_module, font_name);
 				if (new_font)
 				{
 					Cmiss_graphic_point_attributes_set_font(point_attributes, new_font);
@@ -1050,7 +1050,7 @@ int gfx_modify_rendition_graphic(struct Parse_state *state,
 		if ((0 != element_divisions_size) || (0 != circle_discretization))
 		{
 			Cmiss_tessellation_module_id tessellationModule =
-				Cmiss_graphics_module_get_tessellation_module(rendition_command_data->graphics_module);
+				Cmiss_graphics_module_get_tessellation_module(scene_command_data->graphics_module);
 			Cmiss_tessellation_id fixedTessellation =
 				Cmiss_tessellation_module_find_or_create_fixed_tessellation(tessellationModule,
 					element_divisions_size, element_divisions, circle_discretization,
@@ -1075,7 +1075,7 @@ int gfx_modify_rendition_graphic(struct Parse_state *state,
 			}
 			if (return_code && seed_nodeset_name)
 			{
-				Cmiss_field_module_id field_module = Cmiss_region_get_field_module(rendition_command_data->region);
+				Cmiss_field_module_id field_module = Cmiss_region_get_field_module(scene_command_data->region);
 				Cmiss_nodeset_id seed_nodeset =
 					Cmiss_field_module_find_nodeset_by_name(field_module, seed_nodeset_name);
 				if (seed_nodeset || (fuzzy_string_compare(seed_nodeset_name, "none")))
@@ -1161,7 +1161,7 @@ int gfx_modify_rendition_graphic(struct Parse_state *state,
 			}
 			else
 			{
-				Cmiss_graphic_set_spectrum(graphic, rendition_command_data->default_spectrum);
+				Cmiss_graphic_set_spectrum(graphic, scene_command_data->default_spectrum);
 			}
 		}
 		else
@@ -1183,7 +1183,7 @@ int gfx_modify_rendition_graphic(struct Parse_state *state,
 	if (!return_code)
 	{
 		/* parse error, help */
-		Cmiss_graphic_destroy(&(modify_rendition_data->graphic));
+		Cmiss_graphic_destroy(&(modify_scene_data->graphic));
 	}
 	if (glyph_name)
 	{
@@ -1231,8 +1231,8 @@ int gfx_modify_rendition_graphic(struct Parse_state *state,
 	return return_code;
 }
 
-int gfx_modify_rendition_contours(struct Parse_state *state,
-	void *modify_rendition_data_void,void *rendition_command_data_void)
+int gfx_modify_scene_contours(struct Parse_state *state,
+	void *modify_scene_data_void,void *scene_command_data_void)
 {
 	const char *help_text =
 		"Create contours i.e. isosurfaces in volume elements <domain_elements_3d> or isolines in face or surface elements "
@@ -1258,104 +1258,104 @@ int gfx_modify_rendition_contours(struct Parse_state *state,
 		"The <texture_coordinates> are used to lay out a texture if the <material> contains a texture.  "
 		"A graphic can be made <visible> or <invisible>.  ";
 
-	return gfx_modify_rendition_graphic(state, CMISS_GRAPHIC_CONTOURS,
+	return gfx_modify_scene_graphic(state, CMISS_GRAPHIC_CONTOURS,
 		LEGACY_GRAPHIC_NONE, help_text,
-		reinterpret_cast<Modify_rendition_data *>(modify_rendition_data_void),
-		reinterpret_cast<Rendition_command_data *>(rendition_command_data_void));
+		reinterpret_cast<Modify_scene_data *>(modify_scene_data_void),
+		reinterpret_cast<Scene_command_data *>(scene_command_data_void));
 }
 
-int gfx_modify_rendition_cylinders(struct Parse_state *state,
-	void *modify_rendition_data_void,void *rendition_command_data_void)
+int gfx_modify_scene_cylinders(struct Parse_state *state,
+	void *modify_scene_data_void,void *scene_command_data_void)
 {
-	return gfx_modify_rendition_graphic(state, CMISS_GRAPHIC_LINES,
+	return gfx_modify_scene_graphic(state, CMISS_GRAPHIC_LINES,
 		LEGACY_GRAPHIC_CYLINDERS, /*help_text*/(const char *)0,
-		reinterpret_cast<Modify_rendition_data *>(modify_rendition_data_void),
-		reinterpret_cast<Rendition_command_data *>(rendition_command_data_void));
+		reinterpret_cast<Modify_scene_data *>(modify_scene_data_void),
+		reinterpret_cast<Scene_command_data *>(scene_command_data_void));
 }
 
-int gfx_modify_rendition_data_points(struct Parse_state *state,
-	void *modify_rendition_data_void,void *rendition_command_data_void)
+int gfx_modify_scene_data_points(struct Parse_state *state,
+	void *modify_scene_data_void,void *scene_command_data_void)
 {
 	const char *help_text = "Deprecated; use points with domain_data option instead.";
-	return gfx_modify_rendition_graphic(state, CMISS_GRAPHIC_POINTS,
+	return gfx_modify_scene_graphic(state, CMISS_GRAPHIC_POINTS,
 		LEGACY_GRAPHIC_DATA_POINTS, help_text,
-		reinterpret_cast<Modify_rendition_data *>(modify_rendition_data_void),
-		reinterpret_cast<Rendition_command_data *>(rendition_command_data_void));
+		reinterpret_cast<Modify_scene_data *>(modify_scene_data_void),
+		reinterpret_cast<Scene_command_data *>(scene_command_data_void));
 }
 
-int gfx_modify_rendition_element_points(struct Parse_state *state,
-	void *modify_rendition_data_void,void *rendition_command_data_void)
+int gfx_modify_scene_element_points(struct Parse_state *state,
+	void *modify_scene_data_void,void *scene_command_data_void)
 {
 	const char *help_text = "Deprecated; use points with domain_elements* option instead.";
-	return gfx_modify_rendition_graphic(state, CMISS_GRAPHIC_POINTS,
+	return gfx_modify_scene_graphic(state, CMISS_GRAPHIC_POINTS,
 		LEGACY_GRAPHIC_ELEMENT_POINTS, help_text,
-		reinterpret_cast<Modify_rendition_data *>(modify_rendition_data_void),
-		reinterpret_cast<Rendition_command_data *>(rendition_command_data_void));
+		reinterpret_cast<Modify_scene_data *>(modify_scene_data_void),
+		reinterpret_cast<Scene_command_data *>(scene_command_data_void));
 }
 
-int gfx_modify_rendition_iso_surfaces(struct Parse_state *state,
-	void *modify_rendition_data_void,void *rendition_command_data_void)
+int gfx_modify_scene_iso_surfaces(struct Parse_state *state,
+	void *modify_scene_data_void,void *scene_command_data_void)
 {
 	const char *help_text = "Deprecated; use contours with domain_elements* option instead.";
-	return gfx_modify_rendition_graphic(state, CMISS_GRAPHIC_CONTOURS,
+	return gfx_modify_scene_graphic(state, CMISS_GRAPHIC_CONTOURS,
 		LEGACY_GRAPHIC_ISO_SURFACES, help_text,
-		reinterpret_cast<Modify_rendition_data *>(modify_rendition_data_void),
-		reinterpret_cast<Rendition_command_data *>(rendition_command_data_void));
+		reinterpret_cast<Modify_scene_data *>(modify_scene_data_void),
+		reinterpret_cast<Scene_command_data *>(scene_command_data_void));
 }
 
-int gfx_modify_rendition_lines(struct Parse_state *state,
-	void *modify_rendition_data_void,void *rendition_command_data_void)
+int gfx_modify_scene_lines(struct Parse_state *state,
+	void *modify_scene_data_void,void *scene_command_data_void)
 {
-	return gfx_modify_rendition_graphic(state, CMISS_GRAPHIC_LINES,
+	return gfx_modify_scene_graphic(state, CMISS_GRAPHIC_LINES,
 		LEGACY_GRAPHIC_NONE, /*help_text*/(const char *)0,
-		reinterpret_cast<Modify_rendition_data *>(modify_rendition_data_void),
-		reinterpret_cast<Rendition_command_data *>(rendition_command_data_void));
+		reinterpret_cast<Modify_scene_data *>(modify_scene_data_void),
+		reinterpret_cast<Scene_command_data *>(scene_command_data_void));
 }
 
-int gfx_modify_rendition_node_points(struct Parse_state *state,
-	void *modify_rendition_data_void,void *rendition_command_data_void)
+int gfx_modify_scene_node_points(struct Parse_state *state,
+	void *modify_scene_data_void,void *scene_command_data_void)
 {
 	const char *help_text = "Deprecated; use points with domain_nodes option instead.";
-	return gfx_modify_rendition_graphic(state, CMISS_GRAPHIC_POINTS,
+	return gfx_modify_scene_graphic(state, CMISS_GRAPHIC_POINTS,
 		LEGACY_GRAPHIC_NODE_POINTS, help_text,
-		reinterpret_cast<Modify_rendition_data *>(modify_rendition_data_void),
-		reinterpret_cast<Rendition_command_data *>(rendition_command_data_void));
+		reinterpret_cast<Modify_scene_data *>(modify_scene_data_void),
+		reinterpret_cast<Scene_command_data *>(scene_command_data_void));
 }
 
-int gfx_modify_rendition_point(struct Parse_state *state,
-	void *modify_rendition_data_void,void *rendition_command_data_void)
+int gfx_modify_scene_point(struct Parse_state *state,
+	void *modify_scene_data_void,void *scene_command_data_void)
 {
 	const char *help_text = "Deprecated; use points with domain_point option instead.";
-	return gfx_modify_rendition_graphic(state, CMISS_GRAPHIC_POINTS,
+	return gfx_modify_scene_graphic(state, CMISS_GRAPHIC_POINTS,
 		LEGACY_GRAPHIC_POINT, help_text,
-		reinterpret_cast<Modify_rendition_data *>(modify_rendition_data_void),
-		reinterpret_cast<Rendition_command_data *>(rendition_command_data_void));
+		reinterpret_cast<Modify_scene_data *>(modify_scene_data_void),
+		reinterpret_cast<Scene_command_data *>(scene_command_data_void));
 }
 
-int gfx_modify_rendition_streamlines(struct Parse_state *state,
-	void *modify_rendition_data_void,void *rendition_command_data_void)
+int gfx_modify_scene_streamlines(struct Parse_state *state,
+	void *modify_scene_data_void,void *scene_command_data_void)
 {
-	return gfx_modify_rendition_graphic(state, CMISS_GRAPHIC_STREAMLINES,
+	return gfx_modify_scene_graphic(state, CMISS_GRAPHIC_STREAMLINES,
 		LEGACY_GRAPHIC_NONE, /*help_text*/(const char *)0,
-		reinterpret_cast<Modify_rendition_data *>(modify_rendition_data_void),
-		reinterpret_cast<Rendition_command_data *>(rendition_command_data_void));
+		reinterpret_cast<Modify_scene_data *>(modify_scene_data_void),
+		reinterpret_cast<Scene_command_data *>(scene_command_data_void));
 }
 
-int gfx_modify_rendition_surfaces(struct Parse_state *state,
-	void *modify_rendition_data_void,void *rendition_command_data_void)
+int gfx_modify_scene_surfaces(struct Parse_state *state,
+	void *modify_scene_data_void,void *scene_command_data_void)
 {
-	return gfx_modify_rendition_graphic(state, CMISS_GRAPHIC_SURFACES,
+	return gfx_modify_scene_graphic(state, CMISS_GRAPHIC_SURFACES,
 		LEGACY_GRAPHIC_NONE, /*help_text*/(const char *)0,
-		reinterpret_cast<Modify_rendition_data *>(modify_rendition_data_void),
-		reinterpret_cast<Rendition_command_data *>(rendition_command_data_void));
+		reinterpret_cast<Modify_scene_data *>(modify_scene_data_void),
+		reinterpret_cast<Scene_command_data *>(scene_command_data_void));
 }
 
-int gfx_modify_rendition_points(struct Parse_state *state,
-	void *modify_rendition_data_void,void *rendition_command_data_void)
+int gfx_modify_scene_points(struct Parse_state *state,
+	void *modify_scene_data_void,void *scene_command_data_void)
 {
-	return gfx_modify_rendition_graphic(state, CMISS_GRAPHIC_POINTS,
+	return gfx_modify_scene_graphic(state, CMISS_GRAPHIC_POINTS,
 		LEGACY_GRAPHIC_NONE, /*help_text*/(const char *)0,
-		reinterpret_cast<Modify_rendition_data *>(modify_rendition_data_void),
-		reinterpret_cast<Rendition_command_data *>(rendition_command_data_void));
+		reinterpret_cast<Modify_scene_data *>(modify_scene_data_void),
+		reinterpret_cast<Scene_command_data *>(scene_command_data_void));
 }
 

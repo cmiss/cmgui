@@ -49,7 +49,7 @@ Widgets for editing a graphical material.
 #include "configure/cmgui_configure.h"
 #endif /* defined (1) */
 #include "graphics/graphics_module.h"
-#include "graphics/rendition.h"
+#include "graphics/scene.h"
 #include "zinc/graphicsmaterial.h"
 #include "three_d_drawing/graphics_buffer.h"
 #include "command/parser.h"

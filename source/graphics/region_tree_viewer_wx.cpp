@@ -49,7 +49,7 @@ codes used to build scene editor with wxWidgets.
 #include <string>
 #include <vector>
 
-#include "zinc/rendition.h"
+#include "zinc/scene.h"
 #include "zinc/graphic.h"
 #include "zinc/graphicsmaterial.h"
 #include "zinc/graphicsmodule.h"
@@ -61,8 +61,8 @@ codes used to build scene editor with wxWidgets.
 #include "general/object.h"
 #include "graphics/glyph.hpp"
 #include "graphics/graphics_object.h"
-#include "graphics/rendition_app.h"
 #include "graphics/scene.h"
+#include "graphics/scene_app.h"
 #include "general/message.h"
 #include "user_interface/user_interface.h"
 #include "command/parser.h"
@@ -89,7 +89,7 @@ codes used to build scene editor with wxWidgets.
 #include "computed_field/computed_field.h"
 #include "graphics/region_tree_viewer_wx.h"
 #include "graphics/font.h"
-#include "graphics/rendition.h"
+#include "graphics/scene.h"
 #include "graphics/graphic.h"
 #include "graphics/graphics_module.h"
 #include "graphics/graphics_coordinate_system.hpp"
@@ -336,12 +336,11 @@ DESCRIPTION :
 		element will automatically be applied globally */
 	int auto_apply, child_edited, child_expanded,
 		transformation_expanded, transformation_callback_flag,
-		gt_element_group_callback_flag, rendition_callback_flag;
+		gt_element_group_callback_flag, scene_callback_flag;
 	struct Cmiss_graphics_module *graphics_module;
 	Cmiss_tessellation_module_id tessellationModule;
 	/* access gt_element_group for current_object if applicable */
-	struct Cmiss_rendition *rendition, *edit_rendition;
-	Scene *scene;
+	struct Cmiss_scene *scene, *edit_scene;
 	/* keep address of pointer to editor so can self-destroy */
 	struct Region_tree_viewer **region_tree_viewer_address;
 	struct MANAGER(Graphical_material) *graphical_material_manager;
@@ -381,7 +380,7 @@ DESCRIPTION :
 #endif /*defined (WX_USER_INTERFACE)*/
 }; /*struct region_tree_viewer*/
 
-void Region_tree_viewer_wx_transformation_change(struct Cmiss_rendition *rendition,
+void Region_tree_viewer_wx_transformation_change(struct Cmiss_scene *scene,
 	gtMatrix *transformation_matrix, void *region_tree_viewer_void);
 
 /***************************************************************************//**
@@ -390,8 +389,8 @@ void Region_tree_viewer_wx_transformation_change(struct Cmiss_rendition *renditi
 */
 int Region_tree_viewer_revert_changes(Region_tree_viewer *region_tree_viewer);
 
-void Region_tree_viewer_set_active_rendition(
-	struct Region_tree_viewer *region_tree_viewer, struct Cmiss_rendition *rendition);
+void Region_tree_viewer_set_active_scene(
+	struct Region_tree_viewer *region_tree_viewer, struct Cmiss_scene *scene);
 
 // new prototypes
 static int Region_tree_viewer_add_graphic_item(
@@ -408,7 +407,7 @@ static int get_and_set_Cmiss_graphic_widgets(void *region_tree_viewer_void);
 static int Region_tree_viewer_add_graphic(
 	struct Cmiss_graphic *graphic, void *region_tree_viewer_void);
 
-void Region_tree_viewer_set_graphic_widgets_for_rendition(Region_tree_viewer *region_tree_viewer);
+void Region_tree_viewer_set_graphic_widgets_for_scene(Region_tree_viewer *region_tree_viewer);
 
 /*
 Module functions
@@ -416,17 +415,17 @@ Module functions
 */
 
 /***************************************************************************//**
- * This function will be called whenever there are global changes on rendition
+ * This function will be called whenever there are global changes on scene
  */
-static int Region_tree_viewer_wx_rendition_change(
-	struct Cmiss_rendition *rendition, void *region_tree_viewer_void);
+static int Region_tree_viewer_wx_scene_change(
+	struct Cmiss_scene *scene, void *region_tree_viewer_void);
 
 /***************************************************************************//**
 * Callback function in region_tree_viewer_wx when object's transformation has been
 * changed
 *
 */
-void Region_tree_viewer_wx_transformation_change(struct Cmiss_rendition *rendition,
+void Region_tree_viewer_wx_transformation_change(struct Cmiss_scene *scene,
 	gtMatrix *transformation_matrix, void *region_tree_viewer_void)
 {
 	struct Region_tree_viewer *region_tree_viewer =
@@ -434,7 +433,7 @@ void Region_tree_viewer_wx_transformation_change(struct Cmiss_rendition *renditi
 
 	if (region_tree_viewer)
 	{
-		if (rendition == region_tree_viewer->rendition)
+		if (scene == region_tree_viewer->scene)
 		{
 			/* transformation_matrix can be null here which acutally indicates that
 				the scene object has not been transformed. */
@@ -581,9 +580,6 @@ class wxRegionTreeViewer : public wxFrame
 	wxWindow *glyphbox,*glyphline;
 	wxChoice *facechoice, *add_graphic_choice;
 	wxString TempText;
-	DEFINE_MANAGER_CLASS(Cmiss_scene);
-	Managed_object_chooser<Scene,MANAGER_CLASS(Cmiss_scene)>
-		*scene_chooser;
 	DEFINE_MANAGER_CLASS(Computed_field);
 	Managed_object_chooser<Computed_field,MANAGER_CLASS(Computed_field)>
 	*coordinate_field_chooser;
@@ -927,8 +923,8 @@ void Region_tree_viewer_wx_set_manager_in_choosers(struct Region_tree_viewer *re
 	if (texture_coord_field_chooser != NULL)
 			texture_coord_field_chooser->set_manager(region_tree_viewer->field_manager);
 	if (seed_element_chooser != NULL)
-		seed_element_chooser->set_fe_region(Cmiss_region_get_FE_region(Cmiss_rendition_get_region(
-			region_tree_viewer->edit_rendition)));
+		seed_element_chooser->set_fe_region(Cmiss_region_get_FE_region(Cmiss_scene_get_region(
+			region_tree_viewer->edit_scene)));
 }
 
 int coordinate_field_callback(Computed_field *coordinate_field)
@@ -941,8 +937,8 @@ Callback from wxChooser<Coordinate Field> when choice is made.
 	{
 		Cmiss_graphic_set_coordinate_field(
 			region_tree_viewer->current_graphic, coordinate_field);
-		Region_tree_viewer_autoapply(region_tree_viewer->rendition,
-			region_tree_viewer->edit_rendition);
+		Region_tree_viewer_autoapply(region_tree_viewer->scene,
+			region_tree_viewer->edit_scene);
 		//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphic);
 		return(1);
 	}
@@ -958,8 +954,8 @@ Callback from wxChooser<Coordinate Field> when choice is made.
 	{
 		Cmiss_graphic_set_coordinate_system(
 			region_tree_viewer->current_graphic, coordinate_system);
-		Region_tree_viewer_autoapply(region_tree_viewer->rendition,
-			region_tree_viewer->edit_rendition);
+		Region_tree_viewer_autoapply(region_tree_viewer->scene,
+			region_tree_viewer->edit_scene);
 		//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphic);
 		return(1);
 	}
@@ -974,8 +970,8 @@ Callback from wxChooser<Graphical Material> when choice is made.
 	{
 		Cmiss_graphic_set_material(region_tree_viewer->current_graphic,
 			material);
-		Region_tree_viewer_autoapply(region_tree_viewer->rendition,
-			region_tree_viewer->edit_rendition);
+		Region_tree_viewer_autoapply(region_tree_viewer->scene,
+			region_tree_viewer->edit_scene);
 		Region_tree_viewer_wx_set_list_string(region_tree_viewer->current_graphic);
 		return(1);
 	}
@@ -990,8 +986,8 @@ Callback from wxChooser<Selected Material> when choice is made.
 {
 	Cmiss_graphic_set_selected_material(region_tree_viewer->current_graphic,
 		selected_material);
-	Region_tree_viewer_autoapply(region_tree_viewer->rendition,
-		region_tree_viewer->edit_rendition);
+	Region_tree_viewer_autoapply(region_tree_viewer->scene,
+		region_tree_viewer->edit_scene);
 	Region_tree_viewer_wx_set_list_string(region_tree_viewer->current_graphic);
 	return(1);
 }
@@ -1006,30 +1002,11 @@ Callback from wxChooser<select mode> when choice is made.
 {
 	Cmiss_graphic_set_select_mode(
 		region_tree_viewer->current_graphic, select_mode);
-	Region_tree_viewer_autoapply(region_tree_viewer->rendition,
-		region_tree_viewer->edit_rendition);
+	Region_tree_viewer_autoapply(region_tree_viewer->scene,
+		region_tree_viewer->edit_scene);
 	//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphic);
 	return 1;
 }
-
-	int setSceneObject(Scene *scene)
-/*******************************************************************************
-LAST MODIFIED : 9 February 2007
-
-DESCRIPTION :
-Set the selected option in the Scene Object chooser.
-==============================================================================*/
-	{
-		scene_chooser->set_object(scene);
-		if (region_tree_viewer->lowersplitter)
-		{
-				int width, height;
-				region_tree_viewer->lowersplitter->GetSize(&width, &height);
-				region_tree_viewer->lowersplitter->SetSize(width-1, height-1);
-				region_tree_viewer->lowersplitter->SetSize(width+1, height+1);
-		}
-		return 1;
-	}
 
 /**
  * Callback from wxChooser<line orientation scale field> when choice is made.
@@ -1048,8 +1025,8 @@ int line_orientation_scale_field_callback(Computed_field *orientation_scale_fiel
 	{
 		linescalefactorstextctrl->Disable();
 	}
-	Region_tree_viewer_autoapply(region_tree_viewer->rendition,
-		region_tree_viewer->edit_rendition);
+	Region_tree_viewer_autoapply(region_tree_viewer->scene,
+		region_tree_viewer->edit_scene);
 	//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphic);
 	return 1;
 }
@@ -1063,8 +1040,8 @@ int isoscalar_callback(Computed_field *isoscalar_field)
 		Cmiss_graphic_cast_contours(region_tree_viewer->current_graphic);
 	Cmiss_graphic_contours_set_isoscalar_field(contours, isoscalar_field);
 	Cmiss_graphic_contours_destroy(&contours);
-	Region_tree_viewer_autoapply(region_tree_viewer->rendition,
-		region_tree_viewer->edit_rendition);
+	Region_tree_viewer_autoapply(region_tree_viewer->scene,
+		region_tree_viewer->edit_scene);
 	//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphic);
 
 	return 1;
@@ -1080,8 +1057,8 @@ int glyph_callback(GT_object *glyph)
 	Cmiss_graphic_point_attributes_set_glyph(point_attributes, reinterpret_cast<Cmiss_glyph_id>(glyph));
 	Cmiss_graphic_point_attributes_destroy(&point_attributes);
 	/* inform the client of the change */
-	Region_tree_viewer_autoapply(region_tree_viewer->rendition,
-		region_tree_viewer->edit_rendition);
+	Region_tree_viewer_autoapply(region_tree_viewer->scene,
+		region_tree_viewer->edit_scene);
 	//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphic);
 	return 1;
 }
@@ -1096,8 +1073,8 @@ int glyph_repeat_mode_callback(enum Cmiss_glyph_repeat_mode glyph_repeat_mode)
 	Cmiss_graphic_point_attributes_set_glyph_repeat_mode(point_attributes, glyph_repeat_mode);
 	Cmiss_graphic_point_attributes_destroy(&point_attributes);
 	/* inform the client of the change */
-	Region_tree_viewer_autoapply(region_tree_viewer->rendition,
-		region_tree_viewer->edit_rendition);
+	Region_tree_viewer_autoapply(region_tree_viewer->scene,
+		region_tree_viewer->edit_scene);
 	//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphic);
 	return 1;
 }
@@ -1125,8 +1102,8 @@ int orientation_scale_callback(Computed_field *orientation_scale_field)
 		glyphscalefactorstextctrl->Disable();
 	}
 	/* inform the client of the change */
-	Region_tree_viewer_autoapply(region_tree_viewer->rendition,
-		region_tree_viewer->edit_rendition);
+	Region_tree_viewer_autoapply(region_tree_viewer->scene,
+		region_tree_viewer->edit_scene);
 	//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphic);
 	return 1;
 }
@@ -1141,8 +1118,8 @@ int variable_scale_callback(Computed_field *signed_scale_field)
 	Cmiss_graphic_point_attributes_set_signed_scale_field(point_attributes,
 		signed_scale_field);
 	Cmiss_graphic_point_attributes_destroy(&point_attributes);
-	Region_tree_viewer_autoapply(region_tree_viewer->rendition,
-		region_tree_viewer->edit_rendition);
+	Region_tree_viewer_autoapply(region_tree_viewer->scene,
+		region_tree_viewer->edit_scene);
 	//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphic);
 	return 1;
 }
@@ -1156,8 +1133,8 @@ int label_callback(Computed_field *label_field)
 		Cmiss_graphic_get_point_attributes(region_tree_viewer->current_graphic);
 	Cmiss_graphic_point_attributes_set_label_field(point_attributes, label_field);
 	Cmiss_graphic_point_attributes_destroy(&point_attributes);
-	Region_tree_viewer_autoapply(region_tree_viewer->rendition,
-	   region_tree_viewer->edit_rendition);
+	Region_tree_viewer_autoapply(region_tree_viewer->scene,
+	   region_tree_viewer->edit_scene);
 	//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphic);
 	return 1;
 }
@@ -1166,8 +1143,8 @@ int subgroup_field_callback(Computed_field *subgroup_field)
 {
 	Cmiss_graphic_set_subgroup_field(region_tree_viewer->current_graphic,
 		subgroup_field);
-	Region_tree_viewer_autoapply(region_tree_viewer->rendition,
-		region_tree_viewer->edit_rendition);
+	Region_tree_viewer_autoapply(region_tree_viewer->scene,
+		region_tree_viewer->edit_scene);
 	Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphic);
 
 	return 1;
@@ -1182,8 +1159,8 @@ int font_callback(Cmiss_font *font)
 		Cmiss_graphic_get_point_attributes(region_tree_viewer->current_graphic);
 	Cmiss_graphic_point_attributes_set_font(point_attributes, font);
 	Cmiss_graphic_point_attributes_destroy(&point_attributes);
-	Region_tree_viewer_autoapply(region_tree_viewer->rendition,
-	 region_tree_viewer->edit_rendition);
+	Region_tree_viewer_autoapply(region_tree_viewer->scene,
+	 region_tree_viewer->edit_scene);
 	//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphic);
 	return 1;
 }
@@ -1297,8 +1274,8 @@ int domain_type_callback(enum Cmiss_field_domain_type domain_type)
 		}
 	}
 
-	Region_tree_viewer_autoapply(region_tree_viewer->rendition,
-	  region_tree_viewer->edit_rendition);
+	Region_tree_viewer_autoapply(region_tree_viewer->scene,
+	  region_tree_viewer->edit_scene);
 	Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphic);
 	return 1;
  }
@@ -1343,8 +1320,8 @@ Callback from wxChooser<xi Discretization Mode> when choice is made.
 				xi_point_density_field))
 			{
 				/* inform the client of the change */
-				Region_tree_viewer_autoapply(region_tree_viewer->rendition,
-				 region_tree_viewer->edit_rendition);
+				Region_tree_viewer_autoapply(region_tree_viewer->scene,
+				 region_tree_viewer->edit_scene);
 				//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphic);
 			}
 			else
@@ -1404,8 +1381,8 @@ Callback from wxChooser<Native discretization> when choice is made.
 	}
 	Cmiss_graphic_set_native_discretization_field(
 		region_tree_viewer->current_graphic, temp_native_discretization_field);
-	Region_tree_viewer_autoapply(region_tree_viewer->rendition,
-		region_tree_viewer->edit_rendition);
+	Region_tree_viewer_autoapply(region_tree_viewer->scene,
+		region_tree_viewer->edit_scene);
 	//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphic);
 	return 1;
 }
@@ -1428,8 +1405,8 @@ Callback from wxChooser<xi Point Denstiy Field> when choice is made.
 		Cmiss_graphic_set_xi_discretization(
 		region_tree_viewer->current_graphic, xi_discretization_mode,
 		xi_point_density_field);
-	Region_tree_viewer_autoapply(region_tree_viewer->rendition,
-	 region_tree_viewer->edit_rendition);
+	Region_tree_viewer_autoapply(region_tree_viewer->scene,
+	 region_tree_viewer->edit_scene);
 	//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphic);
 	return 1;
 }
@@ -1444,8 +1421,8 @@ Callback from wxChooser<Seed Element> when choice is made.
 {
 	Cmiss_graphic_set_seed_element(region_tree_viewer->current_graphic,
 		seed_element);
-	Region_tree_viewer_autoapply(region_tree_viewer->rendition,
-		region_tree_viewer->edit_rendition);
+	Region_tree_viewer_autoapply(region_tree_viewer->scene,
+		region_tree_viewer->edit_scene);
 	//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphic);
 	return 1;
 }
@@ -1459,8 +1436,8 @@ int line_shape_callback(enum Cmiss_graphic_line_attributes_shape line_shape)
 		Cmiss_graphic_get_line_attributes(region_tree_viewer->current_graphic);
 	if (CMISS_OK == Cmiss_graphic_line_attributes_set_shape(line_attributes, line_shape))
 	{
-		Region_tree_viewer_autoapply(region_tree_viewer->rendition,
-			region_tree_viewer->edit_rendition);
+		Region_tree_viewer_autoapply(region_tree_viewer->scene,
+			region_tree_viewer->edit_scene);
 		//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphic);
 	}
 	else
@@ -1487,8 +1464,8 @@ void EnterLineBaseSize(wxCommandEvent &event)
 		if (set_double_product(temp_state, lineBaseSize, reinterpret_cast<void*>(2)))
 		{
 			Cmiss_graphic_line_attributes_set_base_size(line_attributes, 2, lineBaseSize);
-			Region_tree_viewer_autoapply(region_tree_viewer->rendition,
-				region_tree_viewer->edit_rendition);
+			Region_tree_viewer_autoapply(region_tree_viewer->scene,
+				region_tree_viewer->edit_scene);
 			//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphic);
 		}
 		destroy_Parse_state(&temp_state);
@@ -1519,8 +1496,8 @@ void EnterLineScaleFactors(wxCommandEvent &event)
 		if (set_double_product(temp_state, lineScaleFactors, reinterpret_cast<void*>(2)))
 		{
 			Cmiss_graphic_line_attributes_set_scale_factors(line_attributes, 2, lineScaleFactors);
-			Region_tree_viewer_autoapply(region_tree_viewer->rendition,
-				region_tree_viewer->edit_rendition);
+			Region_tree_viewer_autoapply(region_tree_viewer->scene,
+				region_tree_viewer->edit_scene);
 			//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphic);
 		}
 		destroy_Parse_state(&temp_state);
@@ -1544,8 +1521,8 @@ int stream_vector_callback(Computed_field *stream_vector_field)
 	Cmiss_graphic_streamlines_id streamlines = Cmiss_graphic_cast_streamlines(region_tree_viewer->current_graphic);
 	Cmiss_graphic_streamlines_set_stream_vector_field(streamlines, stream_vector_field);
 	Cmiss_graphic_streamlines_destroy(&streamlines);
-	Region_tree_viewer_autoapply(region_tree_viewer->rendition,
-		region_tree_viewer->edit_rendition);
+	Region_tree_viewer_autoapply(region_tree_viewer->scene,
+		region_tree_viewer->edit_scene);
 	//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphic);
 	return 1;
 }
@@ -1588,8 +1565,8 @@ int streamline_data_type_callback(enum Streamline_data_type streamline_data_type
 			data_chooser_panel->Disable();
 		}
 		/* inform the client of the change */
-		Region_tree_viewer_autoapply(region_tree_viewer->rendition,
-			region_tree_viewer->edit_rendition);
+		Region_tree_viewer_autoapply(region_tree_viewer->scene,
+			region_tree_viewer->edit_scene);
 		//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphic);
 	}
 	return 1;
@@ -1620,8 +1597,8 @@ int data_field_callback(Computed_field *data_field)
 		spectrum_chooser_panel->Disable();
 	}
 
-	Region_tree_viewer_autoapply(region_tree_viewer->rendition,
-		region_tree_viewer->edit_rendition);
+	Region_tree_viewer_autoapply(region_tree_viewer->scene,
+		region_tree_viewer->edit_scene);
 	//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphic);
 	return 1;
 }
@@ -1632,8 +1609,8 @@ int data_field_callback(Computed_field *data_field)
 int spectrum_callback(Spectrum *spectrum)
 {
 	Cmiss_graphic_set_spectrum(region_tree_viewer->current_graphic, spectrum);
-	Region_tree_viewer_autoapply(region_tree_viewer->rendition,
-		region_tree_viewer->edit_rendition);
+	Region_tree_viewer_autoapply(region_tree_viewer->scene,
+		region_tree_viewer->edit_scene);
 	//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphic);
 	return 1;
 }
@@ -1645,8 +1622,8 @@ int tessellation_callback(Cmiss_tessellation *tessellation)
 {
 	Cmiss_graphic_set_tessellation(
 		region_tree_viewer->current_graphic, tessellation);
-	Region_tree_viewer_autoapply(region_tree_viewer->rendition,
-		region_tree_viewer->edit_rendition);
+	Region_tree_viewer_autoapply(region_tree_viewer->scene,
+		region_tree_viewer->edit_scene);
 	//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphic);
 	return 1;
 }
@@ -1662,8 +1639,8 @@ Callback from wxChooser<Texture Coord Field> when choice is made.
 	Cmiss_graphic_set_texture_coordinate_field(
 		region_tree_viewer->current_graphic, texture_coord_field);
 			/* inform the client of the change */
-	Region_tree_viewer_autoapply(region_tree_viewer->rendition,
-				  region_tree_viewer->edit_rendition);
+	Region_tree_viewer_autoapply(region_tree_viewer->scene,
+				  region_tree_viewer->edit_scene);
 	//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphic);
 	return 1;
 }
@@ -1679,8 +1656,8 @@ Callback from wxChooser<Render Type> when choice is made.
 	Cmiss_graphic_set_render_type(
 		region_tree_viewer->current_graphic, render_type);
 			/* inform the client of the change */
-	Region_tree_viewer_autoapply(region_tree_viewer->rendition,
-		region_tree_viewer->edit_rendition);
+	Region_tree_viewer_autoapply(region_tree_viewer->scene,
+		region_tree_viewer->edit_scene);
 	//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphic);
 	return 1;
 }
@@ -1738,27 +1715,27 @@ void FrameGetSize(wxSizeEvent &event)
 /***************************************************************************//**
  *Check if the auto apply clicked or not, if clicked, apply the current changes
  */
-void Region_tree_viewer_autoapply(Cmiss_rendition *destination, Cmiss_rendition *source)
+void Region_tree_viewer_autoapply(Cmiss_scene *destination, Cmiss_scene *source)
 {
 	if(region_tree_viewer->auto_apply)
 	{
-		if (region_tree_viewer->rendition_callback_flag)
+		if (region_tree_viewer->scene_callback_flag)
 		{
-			if (Cmiss_rendition_remove_callback(region_tree_viewer->rendition,
-					Region_tree_viewer_wx_rendition_change, (void *)region_tree_viewer))
+			if (Cmiss_scene_remove_callback(region_tree_viewer->scene,
+					Region_tree_viewer_wx_scene_change, (void *)region_tree_viewer))
 			{
-				region_tree_viewer->rendition_callback_flag = 0;
+				region_tree_viewer->scene_callback_flag = 0;
 			}
 		}
-		if (!Cmiss_rendition_modify(destination,source))
+		if (!Cmiss_scene_modify(destination,source))
 		{
 			display_message(ERROR_MESSAGE, "wxRegionTreeViewer::Region_tree_viewer_autoapply"
-				"Could not modify rendition");
+				"Could not modify scene");
 		}
-		if (Cmiss_rendition_add_callback(region_tree_viewer->rendition,
-				Region_tree_viewer_wx_rendition_change, (void *)region_tree_viewer))
+		if (Cmiss_scene_add_callback(region_tree_viewer->scene,
+				Region_tree_viewer_wx_scene_change, (void *)region_tree_viewer))
 		{
-			region_tree_viewer->rendition_callback_flag = 1;
+			region_tree_viewer->scene_callback_flag = 1;
 		}
 	}
 	else
@@ -1787,8 +1764,8 @@ void Region_tree_viewer_wx_set_list_string(Cmiss_graphic *graphic)
 void Region_tree_viewer_renew_label_on_list(Cmiss_graphic *graphic)
 {
 	graphicalitemschecklist=XRCCTRL(*this,"CmissGraphicListBox",wxCheckListBox);
-	int position = Cmiss_rendition_get_graphic_position(
-		region_tree_viewer->edit_rendition, graphic);
+	int position = Cmiss_scene_get_graphic_position(
+		region_tree_viewer->edit_scene, graphic);
 	bool check = graphicalitemschecklist->IsChecked(position - 1);
 	char *graphic_string = Cmiss_graphic_get_summary_string(region_tree_viewer->current_graphic);
 	graphicalitemschecklist->SetString(position-1, wxString::FromAscii(graphic_string));
@@ -1824,8 +1801,8 @@ void ResetWindow(wxSplitterEvent& event)
 			applybutton->Disable();
 			revertbutton->Disable();
 			region_tree_viewer->auto_apply = 1;
-			Region_tree_viewer_autoapply(region_tree_viewer->rendition,
-				region_tree_viewer->edit_rendition);
+			Region_tree_viewer_autoapply(region_tree_viewer->scene,
+				region_tree_viewer->edit_scene);
 		}
 		else
 		{
@@ -1844,28 +1821,28 @@ void RevertClicked(wxCommandEvent &event)
 void ApplyClicked(wxCommandEvent &event)
 {
 	USE_PARAMETER(event);
-	if (region_tree_viewer->rendition_callback_flag)
+	if (region_tree_viewer->scene_callback_flag)
 	{
-		if (Cmiss_rendition_remove_callback(region_tree_viewer->rendition,
-				Region_tree_viewer_wx_rendition_change, (void *)region_tree_viewer))
+		if (Cmiss_scene_remove_callback(region_tree_viewer->scene,
+				Region_tree_viewer_wx_scene_change, (void *)region_tree_viewer))
 		{
-			region_tree_viewer->rendition_callback_flag = 0;
+			region_tree_viewer->scene_callback_flag = 0;
 		}
 	}
 	if (region_tree_viewer->transformation_editor)
 	{
 		region_tree_viewer->transformation_editor->ApplyTransformation(/*force_apply*/1);
 	}
-	if (!Cmiss_rendition_modify(region_tree_viewer->rendition,
-			region_tree_viewer->edit_rendition))
+	if (!Cmiss_scene_modify(region_tree_viewer->scene,
+			region_tree_viewer->edit_scene))
 	{
 		display_message(ERROR_MESSAGE, "wxRegionTreeViewer::ApplyClicked.  "
-			"Could not modify rendition");
+			"Could not modify scene");
 	}
-	if (Cmiss_rendition_add_callback(region_tree_viewer->rendition,
-			Region_tree_viewer_wx_rendition_change, (void *)region_tree_viewer))
+	if (Cmiss_scene_add_callback(region_tree_viewer->scene,
+			Region_tree_viewer_wx_scene_change, (void *)region_tree_viewer))
 	{
-		region_tree_viewer->rendition_callback_flag = 1;
+		region_tree_viewer->scene_callback_flag = 1;
 	}
 }
 
@@ -1898,8 +1875,8 @@ void GraphicListBoxProcessSelection(int selection)
 {
 	if (-1 != selection)
 	{
-		Cmiss_graphic *temp_graphic = Cmiss_rendition_get_graphic_at_position(
-			region_tree_viewer->edit_rendition, selection+1);
+		Cmiss_graphic *temp_graphic = Cmiss_scene_get_graphic_at_position(
+			region_tree_viewer->edit_scene, selection+1);
 		Region_tree_viewer_wx_update_current_graphic(temp_graphic);
 		Region_tree_viewer_wx_update_graphic_widgets();
 		if (temp_graphic)
@@ -1914,12 +1891,12 @@ void GraphicListBoxChecked(wxCommandEvent &event)
 	int selection = event.GetInt();
 	graphicalitemschecklist->SetSelection(selection);
 	GraphicListBoxProcessSelection(selection);
-	Cmiss_graphic *temp_graphic = Cmiss_rendition_get_graphic_at_position(
-		region_tree_viewer->edit_rendition, selection+1);
+	Cmiss_graphic *temp_graphic = Cmiss_scene_get_graphic_at_position(
+		region_tree_viewer->edit_scene, selection+1);
 	Cmiss_graphic_set_visibility_flag(temp_graphic,
 		graphicalitemschecklist->IsChecked(selection));
-	Region_tree_viewer_autoapply(region_tree_viewer->rendition,
-		region_tree_viewer->edit_rendition);
+	Region_tree_viewer_autoapply(region_tree_viewer->scene,
+		region_tree_viewer->edit_scene);
 	Cmiss_graphic_destroy(&temp_graphic);
 }
 
@@ -1935,8 +1912,8 @@ void GraphicListBoxClicked(wxCommandEvent &event)
 void AddGraphic(Cmiss_graphic_type graphic_type,
 	Cmiss_field_domain_type domain_type, Cmiss_graphic *graphic_to_copy)
 {
-	Cmiss_graphic *graphic = Cmiss_rendition_create_graphic_app(
-		region_tree_viewer->edit_rendition, graphic_type, graphic_to_copy);
+	Cmiss_graphic *graphic = Cmiss_scene_create_graphic_app(
+		region_tree_viewer->edit_scene, graphic_type, graphic_to_copy);
 	if (graphic)
 	{
 		// make sure new graphic is visible
@@ -1945,29 +1922,29 @@ void AddGraphic(Cmiss_graphic_type graphic_type,
 		if (domain_type != CMISS_FIELD_DOMAIN_TYPE_INVALID)
 		{
 			Cmiss_graphic_set_domain_type(graphic, domain_type);
-			Cmiss_field_id coordinate_field = Cmiss_rendition_guess_coordinate_field(
-				region_tree_viewer->edit_rendition, domain_type);
+			Cmiss_field_id coordinate_field = Cmiss_scene_guess_coordinate_field(
+				region_tree_viewer->edit_scene, domain_type);
 			if (coordinate_field)
 				Cmiss_graphic_set_coordinate_field(graphic, coordinate_field);
 		}
-		Cmiss_rendition_add_graphic(region_tree_viewer->edit_rendition, graphic, 0);
+		Cmiss_scene_add_graphic(region_tree_viewer->edit_scene, graphic, 0);
 		//Update the list of graphic
 		wxCheckListBox *graphicalitemschecklist =  XRCCTRL(*this, "CmissGraphicListBox",wxCheckListBox);
 		graphicalitemschecklist->SetSelection(wxNOT_FOUND);
 		graphicalitemschecklist->Clear();
-		for_each_graphic_in_Cmiss_rendition(region_tree_viewer->edit_rendition,
+		for_each_graphic_in_Cmiss_scene(region_tree_viewer->edit_scene,
 			Region_tree_viewer_add_graphic_item, (void *)region_tree_viewer);
 		graphicalitemschecklist->SetSelection((graphicalitemschecklist->GetCount()-1));
 		sceneediting =
 			XRCCTRL(*this, "SceneEditing", wxScrolledWindow);
 		sceneediting->Freeze();
-		Cmiss_graphic *temp_graphic = Cmiss_rendition_get_graphic_at_position(
-			region_tree_viewer->edit_rendition, graphicalitemschecklist->GetCount());
+		Cmiss_graphic *temp_graphic = Cmiss_scene_get_graphic_at_position(
+			region_tree_viewer->edit_scene, graphicalitemschecklist->GetCount());
 		Region_tree_viewer_wx_update_current_graphic(temp_graphic);
 		Cmiss_graphic_destroy(&temp_graphic);
 		Region_tree_viewer_wx_update_graphic_widgets();
-		Region_tree_viewer_autoapply(region_tree_viewer->rendition,
-			region_tree_viewer->edit_rendition);
+		Region_tree_viewer_autoapply(region_tree_viewer->scene,
+			region_tree_viewer->edit_scene);
 		sceneediting->Thaw();
 		sceneediting->Layout();
 		DEACCESS(Cmiss_graphic)(&graphic);
@@ -2041,26 +2018,26 @@ void RemoveFromGraphicList(wxCommandEvent &event)
 
 	USE_PARAMETER(event);
 
-	if (region_tree_viewer->edit_rendition && region_tree_viewer->current_graphic)
+	if (region_tree_viewer->edit_scene && region_tree_viewer->current_graphic)
 	{
 		graphicalitemschecklist=XRCCTRL(*this,"CmissGraphicListBox",wxCheckListBox);
-		position = Cmiss_rendition_get_graphic_position(
-			region_tree_viewer->edit_rendition, region_tree_viewer->current_graphic);
-		Cmiss_rendition_remove_graphic(
-			region_tree_viewer->edit_rendition, region_tree_viewer->current_graphic);
+		position = Cmiss_scene_get_graphic_position(
+			region_tree_viewer->edit_scene, region_tree_viewer->current_graphic);
+		Cmiss_scene_remove_graphic(
+			region_tree_viewer->edit_scene, region_tree_viewer->current_graphic);
 		graphicalitemschecklist->Clear();
-		for_each_graphic_in_Cmiss_rendition(region_tree_viewer->edit_rendition,
+		for_each_graphic_in_Cmiss_scene(region_tree_viewer->edit_scene,
 			Region_tree_viewer_add_graphic_item, (void *)region_tree_viewer);
 		if (graphicalitemschecklist->GetCount() < position)
 		{
 			--position;
 		}
-		Cmiss_graphic *temp_graphic = Cmiss_rendition_get_graphic_at_position(
-			region_tree_viewer->edit_rendition, position);
+		Cmiss_graphic *temp_graphic = Cmiss_scene_get_graphic_at_position(
+			region_tree_viewer->edit_scene, position);
 		Region_tree_viewer_wx_update_current_graphic(temp_graphic);
 		Region_tree_viewer_wx_update_graphic_widgets();
-		Region_tree_viewer_autoapply(region_tree_viewer->rendition,
-			region_tree_viewer->edit_rendition);
+		Region_tree_viewer_autoapply(region_tree_viewer->scene,
+			region_tree_viewer->edit_scene);
 		if (temp_graphic)
 		{
 			graphicalitemschecklist->SetSelection(position-1);
@@ -2082,31 +2059,31 @@ void MoveUpInGraphicList(wxCommandEvent &event)
 	USE_PARAMETER(event);
 	int position;
 	Cmiss_graphic *graphic;
-	if (region_tree_viewer->edit_rendition)
+	if (region_tree_viewer->edit_scene)
 	{
-		if (1 < (position = Cmiss_rendition_get_graphic_position(
-								region_tree_viewer->edit_rendition, region_tree_viewer->current_graphic)))
+		if (1 < (position = Cmiss_scene_get_graphic_position(
+								region_tree_viewer->edit_scene, region_tree_viewer->current_graphic)))
 		{
 			graphic = region_tree_viewer->current_graphic;
 			ACCESS(Cmiss_graphic)(graphic);
-			Cmiss_rendition_remove_graphic(region_tree_viewer->edit_rendition,
+			Cmiss_scene_remove_graphic(region_tree_viewer->edit_scene,
 				region_tree_viewer->current_graphic);
-			Cmiss_rendition_add_graphic(region_tree_viewer->edit_rendition,
+			Cmiss_scene_add_graphic(region_tree_viewer->edit_scene,
 				region_tree_viewer->current_graphic, position - 1);
 			DEACCESS(Cmiss_graphic)(&graphic);
 			graphicalitemschecklist=XRCCTRL(*this,"CmissGraphicListBox",wxCheckListBox);
 			graphicalitemschecklist->SetSelection(wxNOT_FOUND);
 			graphicalitemschecklist->Clear();
-			for_each_graphic_in_Cmiss_rendition(region_tree_viewer->edit_rendition,
+			for_each_graphic_in_Cmiss_scene(region_tree_viewer->edit_scene,
 				Region_tree_viewer_add_graphic_item, (void *)region_tree_viewer);
 			graphicalitemschecklist->SetSelection(position-2);
-			Cmiss_graphic *temp_graphic = Cmiss_rendition_get_graphic_at_position(
-				region_tree_viewer->edit_rendition, position-1);
+			Cmiss_graphic *temp_graphic = Cmiss_scene_get_graphic_at_position(
+				region_tree_viewer->edit_scene, position-1);
 			Region_tree_viewer_wx_update_current_graphic(temp_graphic);
 			Region_tree_viewer_wx_update_graphic_widgets();
 			Cmiss_graphic_destroy(&temp_graphic);
-			Region_tree_viewer_autoapply(region_tree_viewer->rendition,
-				region_tree_viewer->edit_rendition);
+			Region_tree_viewer_autoapply(region_tree_viewer->scene,
+				region_tree_viewer->edit_scene);
 			/* By default the graphic name is the position, so it needs to be updated
 					even though the graphic hasn't actually changed */
 			/* inform the client of the change */
@@ -2127,33 +2104,33 @@ void MoveUpInGraphicList(wxCommandEvent &event)
 
 	 USE_PARAMETER(event);
 
-		if 	(region_tree_viewer->edit_rendition)
+		if 	(region_tree_viewer->edit_scene)
 		{
-			if (Cmiss_rendition_get_number_of_graphics(
-						region_tree_viewer->edit_rendition) >
-				(position = Cmiss_rendition_get_graphic_position(
-					region_tree_viewer->edit_rendition, region_tree_viewer->current_graphic)))
+			if (Cmiss_scene_get_number_of_graphics(
+						region_tree_viewer->edit_scene) >
+				(position = Cmiss_scene_get_graphic_position(
+					region_tree_viewer->edit_scene, region_tree_viewer->current_graphic)))
 			{
 				graphic = region_tree_viewer->current_graphic;
 				ACCESS(Cmiss_graphic)(graphic);
-				Cmiss_rendition_remove_graphic(region_tree_viewer->edit_rendition,
+				Cmiss_scene_remove_graphic(region_tree_viewer->edit_scene,
 					region_tree_viewer->current_graphic);
-				Cmiss_rendition_add_graphic(region_tree_viewer->edit_rendition,
+				Cmiss_scene_add_graphic(region_tree_viewer->edit_scene,
 					region_tree_viewer->current_graphic, position + 1);
 				DEACCESS(Cmiss_graphic)(&graphic);
 				graphicalitemschecklist=XRCCTRL(*this,"CmissGraphicListBox",wxCheckListBox);
 				graphicalitemschecklist->SetSelection(wxNOT_FOUND);
 				graphicalitemschecklist->Clear();
-				for_each_graphic_in_Cmiss_rendition(region_tree_viewer->edit_rendition,
+				for_each_graphic_in_Cmiss_scene(region_tree_viewer->edit_scene,
 					Region_tree_viewer_add_graphic_item, (void *)region_tree_viewer);
 				graphicalitemschecklist->SetSelection(position);
-				Cmiss_graphic *temp_graphic = Cmiss_rendition_get_graphic_at_position(
-					region_tree_viewer->edit_rendition, position+1);
+				Cmiss_graphic *temp_graphic = Cmiss_scene_get_graphic_at_position(
+					region_tree_viewer->edit_scene, position+1);
 				Region_tree_viewer_wx_update_current_graphic(temp_graphic);
 				Region_tree_viewer_wx_update_graphic_widgets();
 				Cmiss_graphic_destroy(&temp_graphic);
-				Region_tree_viewer_autoapply(region_tree_viewer->rendition,
-					region_tree_viewer->edit_rendition);
+				Region_tree_viewer_autoapply(region_tree_viewer->scene,
+					region_tree_viewer->edit_scene);
 				/* By default the graphic name is the position, so it needs to be updated
 					even though the graphic hasn't actually changed */
 				/* inform the client of the change */
@@ -2186,8 +2163,8 @@ void MoveUpInGraphicList(wxCommandEvent &event)
 						region_tree_viewer->current_graphic, new_name);
 						/* inform the client of the change */
 					nametextfield->SetValue(wxString::FromAscii(new_name));
-					Region_tree_viewer_autoapply(region_tree_viewer->rendition,
-						region_tree_viewer->edit_rendition);
+					Region_tree_viewer_autoapply(region_tree_viewer->scene,
+						region_tree_viewer->edit_scene);
 					Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphic);
 				}
 				DEALLOCATE(new_name);
@@ -2247,8 +2224,8 @@ void EnterIsoScalar(wxCommandEvent &event)
 				}
 			}
 			Cmiss_graphic_contours_set_list_isovalues(contours, static_cast<int>(isovalues.size()), isovalues.data());
-			Region_tree_viewer_autoapply(region_tree_viewer->rendition,
-				region_tree_viewer->edit_rendition);
+			Region_tree_viewer_autoapply(region_tree_viewer->scene,
+				region_tree_viewer->edit_scene);
 			//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphic);		/* inform the client of the change */
 		}
 		else
@@ -2355,8 +2332,8 @@ void EnterIsoRange(wxCommandEvent &event)
 		isovaluesequencelasttextctrl->SetValue(wxString::FromAscii(temp_string));
 
 		/* inform the client of the change */
-		Region_tree_viewer_autoapply(region_tree_viewer->rendition,
-			region_tree_viewer->edit_rendition);
+		Region_tree_viewer_autoapply(region_tree_viewer->scene,
+			region_tree_viewer->edit_scene);
 		//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphic);
 	}
 	Cmiss_graphic_contours_destroy(&contours);
@@ -2377,8 +2354,8 @@ void EnterGlyphOffset(wxCommandEvent &event)
 		double point_offset[3] = { 0.0, 0.0, 0.0 };
 		set_double_vector(temp_state, point_offset, (void *)&number_of_components);
 		Cmiss_graphic_point_attributes_set_offset(point_attributes, number_of_components, point_offset);
-		Region_tree_viewer_autoapply(region_tree_viewer->rendition,
-			region_tree_viewer->edit_rendition);
+		Region_tree_viewer_autoapply(region_tree_viewer->scene,
+			region_tree_viewer->edit_scene);
 		//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphic);
 		destroy_Parse_state(&temp_state);
 		Cmiss_graphic_point_attributes_get_offset(point_attributes, number_of_components, point_offset);
@@ -2409,8 +2386,8 @@ void EnterLabelOffset(wxCommandEvent &event)
 		double label_offset[3] = { 0.0, 0.0, 0.0 };
 		set_double_vector(temp_state, label_offset, (void *)&number_of_components);
 		Cmiss_graphic_point_attributes_set_label_offset(point_attributes, number_of_components, label_offset);
-		Region_tree_viewer_autoapply(region_tree_viewer->rendition,
-			region_tree_viewer->edit_rendition);
+		Region_tree_viewer_autoapply(region_tree_viewer->scene,
+			region_tree_viewer->edit_scene);
 		//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphic);
 		destroy_Parse_state(&temp_state);
 		Cmiss_graphic_point_attributes_get_label_offset(point_attributes, number_of_components, label_offset);
@@ -2449,8 +2426,8 @@ void EnterStaticLabelText(wxCommandEvent &event)
 			text_entry = 0;
 		}
 		Cmiss_graphic_point_attributes_set_label_text(point_attributes, i + 1, text_entry);
-		Region_tree_viewer_autoapply(region_tree_viewer->rendition,
-			region_tree_viewer->edit_rendition);
+		Region_tree_viewer_autoapply(region_tree_viewer->scene,
+			region_tree_viewer->edit_scene);
 		//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphic);
 		Cmiss_graphic_point_attributes_destroy(&point_attributes);
 	}
@@ -2472,8 +2449,8 @@ void EnterGlyphSize(wxCommandEvent &event)
 		if (set_double_product(temp_state, point_base_size, reinterpret_cast<void *>(3)))
 		{
 			Cmiss_graphic_point_attributes_set_base_size(point_attributes, number_of_components, point_base_size);
-			Region_tree_viewer_autoapply(region_tree_viewer->rendition,
-				region_tree_viewer->edit_rendition);
+			Region_tree_viewer_autoapply(region_tree_viewer->scene,
+				region_tree_viewer->edit_scene);
 			//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphic);
 		}
 		destroy_Parse_state(&temp_state);
@@ -2506,8 +2483,8 @@ void EnterGlyphScale(wxCommandEvent &event)
 		if (set_double_product(temp_state, point_scale_factors, reinterpret_cast<void *>(3)))
 		{
 			Cmiss_graphic_point_attributes_set_scale_factors(point_attributes, number_of_components, point_scale_factors);
-			Region_tree_viewer_autoapply(region_tree_viewer->rendition,
-				region_tree_viewer->edit_rendition);
+			Region_tree_viewer_autoapply(region_tree_viewer->scene,
+				region_tree_viewer->edit_scene);
 			//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphic);
 		}
 		destroy_Parse_state(&temp_state);
@@ -2530,8 +2507,8 @@ void EnterGlyphScale(wxCommandEvent &event)
 		wxTextCtrl *overlay_textctrl = XRCCTRL(*this, "OverlayTextCtrl", wxTextCtrl);
 		char temp_string[50];
 		Cmiss_graphic_enable_overlay(region_tree_viewer->current_graphic,event.IsChecked());
-		Region_tree_viewer_autoapply(region_tree_viewer->rendition,
-			region_tree_viewer->edit_rendition);
+		Region_tree_viewer_autoapply(region_tree_viewer->scene,
+			region_tree_viewer->edit_scene);
 		if (event.IsChecked())
 		{
 			overlay_textctrl->Enable();
@@ -2554,8 +2531,8 @@ void EnterGlyphScale(wxCommandEvent &event)
 		const char *text_entry=const_cast<char *>(overlay_textctrl->GetValue().mb_str(wxConvUTF8));
 		sscanf(text_entry,"%d",&new_overlay_order);
 		Cmiss_graphic_set_overlay_order(region_tree_viewer->current_graphic, new_overlay_order);
-		Region_tree_viewer_autoapply(region_tree_viewer->rendition,
-			region_tree_viewer->edit_rendition);
+		Region_tree_viewer_autoapply(region_tree_viewer->scene,
+			region_tree_viewer->edit_scene);
 	}
 */
 
@@ -2575,8 +2552,8 @@ void SeedElementChecked(wxCommandEvent &event)
 			Cmiss_graphic_set_seed_element(region_tree_viewer->current_graphic,(FE_element*)NULL);
 			seed_element_panel->Disable();
 	}
-	Region_tree_viewer_autoapply(region_tree_viewer->rendition,
-		region_tree_viewer->edit_rendition);
+	Region_tree_viewer_autoapply(region_tree_viewer->scene,
+		region_tree_viewer->edit_scene);
 	//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphic);
 
 }
@@ -2608,8 +2585,8 @@ void EnterSeedXi(wxCommandEvent &event)
 				Cmiss_graphic_set_seed_xi(
 					region_tree_viewer->current_graphic,seed_xi);
 				/* inform the client of the change */
-				Region_tree_viewer_autoapply(region_tree_viewer->rendition,
-					region_tree_viewer->edit_rendition);
+				Region_tree_viewer_autoapply(region_tree_viewer->scene,
+					region_tree_viewer->edit_scene);
 				//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphic);
 				destroy_Parse_state(&temp_state);
 			}
@@ -2638,8 +2615,8 @@ void EnterStreamlineLength(wxCommandEvent &event)
 		if (Cmiss_graphic_streamlines_set_track_length(streamlines, streamline_length))
 		{
 			/* inform the client of the change */
-			Region_tree_viewer_autoapply(region_tree_viewer->rendition,
-				region_tree_viewer->edit_rendition);
+			Region_tree_viewer_autoapply(region_tree_viewer->scene,
+				region_tree_viewer->edit_scene);
 			//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphic);
 		}
 	}
@@ -2658,8 +2635,8 @@ int streamlines_track_direction_callback(enum Cmiss_graphic_streamlines_track_di
 	Cmiss_graphic_streamlines_id streamlines = Cmiss_graphic_cast_streamlines(region_tree_viewer->current_graphic);
 	Cmiss_graphic_streamlines_set_track_direction(streamlines, track_direction);
 	Cmiss_graphic_streamlines_destroy(&streamlines);
-	Region_tree_viewer_autoapply(region_tree_viewer->rendition,
-		region_tree_viewer->edit_rendition);
+	Region_tree_viewer_autoapply(region_tree_viewer->scene,
+		region_tree_viewer->edit_scene);
 	//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphic);
 	return 1;
 }
@@ -2684,8 +2661,8 @@ void EnterLineWidth(wxCommandEvent &event)
 			Cmiss_graphic_set_line_width(
 				region_tree_viewer->current_graphic, new_line_width);
 			/* inform the client of the change */
-			Region_tree_viewer_autoapply(region_tree_viewer->rendition,
-					  region_tree_viewer->edit_rendition);
+			Region_tree_viewer_autoapply(region_tree_viewer->scene,
+					  region_tree_viewer->edit_scene);
 			//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphic);
 		}
 	}
@@ -2706,8 +2683,8 @@ void ExteriorChecked(wxCommandEvent &event)
 	Cmiss_graphic_set_exterior(region_tree_viewer->current_graphic,
 		exteriorcheckbox->IsChecked());
 		/* inform the client of the change */
-	Region_tree_viewer_autoapply(region_tree_viewer->rendition,
-		region_tree_viewer->edit_rendition);
+	Region_tree_viewer_autoapply(region_tree_viewer->scene,
+		region_tree_viewer->edit_scene);
 	//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphic);
 }
 
@@ -2728,8 +2705,8 @@ void FaceChecked(wxCommandEvent &event)
 		face = CMISS_ELEMENT_FACE_ALL;
 	}
 	Cmiss_graphic_set_face(region_tree_viewer->current_graphic,face);
-	Region_tree_viewer_autoapply(region_tree_viewer->rendition,
-		region_tree_viewer->edit_rendition);
+	Region_tree_viewer_autoapply(region_tree_viewer->scene,
+		region_tree_viewer->edit_scene);
 	//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphic);
  }
 
@@ -2740,8 +2717,8 @@ void FaceChosen(wxCommandEvent &event)
 	facechoice=XRCCTRL(*this, "FaceChoice",wxChoice);
 	face = static_cast<Cmiss_element_face_type>(facechoice->GetSelection() + CMISS_ELEMENT_FACE_XI1_0);
 	Cmiss_graphic_set_face(region_tree_viewer->current_graphic, face);
-	Region_tree_viewer_autoapply(region_tree_viewer->rendition,
-		region_tree_viewer->edit_rendition);
+	Region_tree_viewer_autoapply(region_tree_viewer->scene,
+		region_tree_viewer->edit_scene);
 	//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphic);
 }
 
@@ -3482,8 +3459,8 @@ void SetGraphic(Cmiss_graphic *graphic)
 		{
 			seed_element_panel->Show();
 			seedelementcheckbox->Show();
-			fe_region = Cmiss_region_get_FE_region(Cmiss_rendition_get_region(
-				region_tree_viewer->edit_rendition));
+			fe_region = Cmiss_region_get_FE_region(Cmiss_scene_get_region(
+				region_tree_viewer->edit_scene));
 			seed_element =
 				Cmiss_graphic_get_seed_element(graphic);
 			if (seed_element_chooser == NULL)
@@ -3837,7 +3814,7 @@ void TreeControlSelectionChanged(wxTreeEvent &event)
 	ENTER(TreeControlSelectionChanged);
 
 	struct Cmiss_region *region;
-	struct Cmiss_rendition *rendition;
+	struct Cmiss_scene *scene;
 	int width, height;
 	wxTreeItemId new_id= event.GetItem();
 	wxCmguiHierachicalTreeItemData* data = NULL;
@@ -3851,16 +3828,16 @@ void TreeControlSelectionChanged(wxTreeEvent &event)
 	if (region_tree_viewer->testing_tree_ctrl->GetSelections(array)
 		&& data && (region = data->GetRegion()))
 	{
-		rendition = Cmiss_region_get_rendition_internal(region);
-		if (rendition)
+		scene = Cmiss_region_get_scene_internal(region);
+		if (scene)
 		{
-			Region_tree_viewer_set_active_rendition(region_tree_viewer, rendition);
+			Region_tree_viewer_set_active_scene(region_tree_viewer, scene);
 			region_tree_viewer->lowersplitter->Enable();
 			region_tree_viewer->lowersplitter->Show();
-			Region_tree_viewer_set_graphic_widgets_for_rendition(region_tree_viewer);
+			Region_tree_viewer_set_graphic_widgets_for_scene(region_tree_viewer);
 			if (region_tree_viewer->sceneediting)
 			{
-				if (!Cmiss_rendition_get_number_of_graphics(rendition))
+				if (!Cmiss_scene_get_number_of_graphics(scene))
 				{
 					region_tree_viewer->sceneediting->Hide();
 				}
@@ -3869,14 +3846,14 @@ void TreeControlSelectionChanged(wxTreeEvent &event)
 					region_tree_viewer->sceneediting->Show();
 				}
 			}
-			DEACCESS(Cmiss_rendition)(&rendition);
+			DEACCESS(Cmiss_scene)(&scene);
 		}
 		wxPanel *rightpanel=XRCCTRL(*this,"RightPanel", wxPanel);
 		rightpanel->Layout();
 	}
 	else
 	{
-		Region_tree_viewer_set_active_rendition(
+		Region_tree_viewer_set_active_scene(
 				region_tree_viewer, NULL);
 		if (!region_tree_viewer->graphiclistbox)
 			region_tree_viewer->graphiclistbox = XRCCTRL(
@@ -3886,7 +3863,7 @@ void TreeControlSelectionChanged(wxTreeEvent &event)
 		region_tree_viewer->lowersplitter->Disable();
 		region_tree_viewer->lowersplitter->Hide();
 		region_tree_viewer->sceneediting->Hide();
-		Region_tree_viewer_set_graphic_widgets_for_rendition(region_tree_viewer);
+		Region_tree_viewer_set_graphic_widgets_for_scene(region_tree_viewer);
 	}
 
 	if (region_tree_viewer->lowersplitter)
@@ -3945,23 +3922,23 @@ void OnItemMenu(wxTreeEvent &event)
 void SetVisibilityOfTreeId(wxTreeItemId current_item_id, int flag)
 {
 	struct Cmiss_region *region;
-	struct Cmiss_rendition *rendition;
+	struct Cmiss_scene *scene;
 
 	wxCmguiHierachicalTreeItemData* data =
 		dynamic_cast<wxCmguiHierachicalTreeItemData*>(
 			region_tree_viewer->testing_tree_ctrl->GetItemData(current_item_id));
 	if ((region = data->GetRegion()))
 	{
-		rendition = Cmiss_region_get_rendition_internal(region);
-		if (rendition)
+		scene = Cmiss_region_get_scene_internal(region);
+		if (scene)
 		{
-			Cmiss_rendition_set_visibility_flag(rendition, flag);
+			Cmiss_scene_set_visibility_flag(scene, flag);
 			SetTreeItemImage(current_item_id, !flag);
-			DEACCESS(Cmiss_rendition)(&rendition);
-			if (region_tree_viewer->edit_rendition)
+			DEACCESS(Cmiss_scene)(&scene);
+			if (region_tree_viewer->edit_scene)
 			{
-				Cmiss_rendition_set_visibility_flag(
-					region_tree_viewer->edit_rendition, flag);
+				Cmiss_scene_set_visibility_flag(
+					region_tree_viewer->edit_scene, flag);
 			}
 		}
 	}
@@ -3985,7 +3962,7 @@ void TreeControlImageClicked(wxEvent &event)
 {
 	wxTreeEvent *tree_event = (wxTreeEvent *)&event;
 	SetVisibilityOfTreeId(tree_event->GetItem(),
-		!Cmiss_rendition_get_visibility_flag(region_tree_viewer->edit_rendition));
+		!Cmiss_scene_get_visibility_flag(region_tree_viewer->edit_scene));
 }
 
 void OnMenuSelectionOn(wxCommandEvent &event)
@@ -4105,7 +4082,7 @@ int Region_tree_viewer_revert_changes(Region_tree_viewer *region_tree_viewer)
 	{
 		return_code = 1;
 
-		if (region_tree_viewer->rendition)
+		if (region_tree_viewer->scene)
 		{
 			if (!region_tree_viewer->graphiclistbox)
 			{
@@ -4116,10 +4093,10 @@ int Region_tree_viewer_revert_changes(Region_tree_viewer *region_tree_viewer)
 			int selection=	region_tree_viewer->graphiclistbox->GetSelection();
 			region_tree_viewer->graphiclistbox->SetSelection(wxNOT_FOUND);
 			region_tree_viewer->graphiclistbox->Clear();
-			for_each_graphic_in_Cmiss_rendition(region_tree_viewer->rendition,
+			for_each_graphic_in_Cmiss_scene(region_tree_viewer->scene,
 				Region_tree_viewer_add_graphic_item, (void *)region_tree_viewer);
-			DEACCESS(Cmiss_rendition)(&region_tree_viewer->edit_rendition);
-			region_tree_viewer->edit_rendition = create_editor_copy_Cmiss_rendition(region_tree_viewer->rendition);
+			DEACCESS(Cmiss_scene)(&region_tree_viewer->edit_scene);
+			region_tree_viewer->edit_scene = create_editor_copy_Cmiss_scene(region_tree_viewer->scene);
 			int num = 	region_tree_viewer->graphiclistbox->GetCount();
 			if (selection >= num)
 			{
@@ -4129,14 +4106,14 @@ int Region_tree_viewer_revert_changes(Region_tree_viewer *region_tree_viewer)
 			region_tree_viewer->lowersplitter->Show();
 			region_tree_viewer->wx_region_tree_viewer->
 				Region_tree_viewer_wx_set_manager_in_choosers(region_tree_viewer);
-			Cmiss_graphic *temp_graphic = Cmiss_rendition_get_graphic_at_position(
-				region_tree_viewer->edit_rendition, selection+1);
+			Cmiss_graphic *temp_graphic = Cmiss_scene_get_graphic_at_position(
+				region_tree_viewer->edit_scene, selection+1);
 			region_tree_viewer->wx_region_tree_viewer->Region_tree_viewer_wx_update_current_graphic(temp_graphic);
 			region_tree_viewer->wx_region_tree_viewer->Region_tree_viewer_wx_update_graphic_widgets();
 			Cmiss_graphic_destroy(&temp_graphic);
 			if (region_tree_viewer->transformation_editor)
 			{
-				Cmiss_rendition_get_transformation(region_tree_viewer->rendition,
+				Cmiss_scene_get_transformation(region_tree_viewer->scene,
 					&transformation_matrix);
 				region_tree_viewer->transformation_editor->set_transformation(&transformation_matrix);
 			}
@@ -4144,7 +4121,7 @@ int Region_tree_viewer_revert_changes(Region_tree_viewer *region_tree_viewer)
 		else
 		{
 			display_message(ERROR_MESSAGE,
-				"Region_tree_viewer_revert_changes.  Missing rendition");
+				"Region_tree_viewer_revert_changes.  Missing scene");
 			return_code = 0;
 		}
 
@@ -4169,72 +4146,72 @@ int Region_tree_viewer_revert_changes(Region_tree_viewer *region_tree_viewer)
 }
 
 /***************************************************************************//**
-*AW: Reaccess both pointers of region_tree_viewer->rendition and
-*region_tree_viewer->edit_rendition to rendition if scene object is
+*AW: Reaccess both pointers of region_tree_viewer->scene and
+*region_tree_viewer->edit_scene to scene if scene object is
 *this also change the current field manager in scene editor.
 *
 * @param region_tree_viewer scene editor to be modified
-* @param rendition Currently active rendition
+* @param scene Currently active scene
 */
 
-void Region_tree_viewer_set_active_rendition(
-	struct Region_tree_viewer *region_tree_viewer, struct Cmiss_rendition *rendition)
+void Region_tree_viewer_set_active_scene(
+	struct Region_tree_viewer *region_tree_viewer, struct Cmiss_scene *scene)
 {
-	if (region_tree_viewer->rendition)
+	if (region_tree_viewer->scene)
 	{
 		if (region_tree_viewer->transformation_callback_flag)
 		{
-			region_tree_viewer->transformation_editor->set_rendition(NULL);
-			if (Cmiss_rendition_remove_transformation_callback(
-					region_tree_viewer->rendition,
+			region_tree_viewer->transformation_editor->set_scene(NULL);
+			if (Cmiss_scene_remove_transformation_callback(
+					region_tree_viewer->scene,
 					Region_tree_viewer_wx_transformation_change,
 					(void *) region_tree_viewer))
 			{
 				region_tree_viewer->transformation_callback_flag = 0;
 			}
 		}
-		if (region_tree_viewer->rendition_callback_flag)
+		if (region_tree_viewer->scene_callback_flag)
 		{
-			if (Cmiss_rendition_remove_callback(region_tree_viewer->rendition,
-					Region_tree_viewer_wx_rendition_change, (void *) region_tree_viewer))
+			if (Cmiss_scene_remove_callback(region_tree_viewer->scene,
+					Region_tree_viewer_wx_scene_change, (void *) region_tree_viewer))
 			{
-				region_tree_viewer->rendition_callback_flag = 0;
+				region_tree_viewer->scene_callback_flag = 0;
 			}
 		}
 	}
-	if (region_tree_viewer && rendition)
+	if (region_tree_viewer && scene)
 	{
 		int previous_selection;
-		if (region_tree_viewer->edit_rendition
+		if (region_tree_viewer->edit_scene
 			&& region_tree_viewer->current_graphic)
 		{
-			previous_selection = Cmiss_rendition_get_graphic_position(
-				region_tree_viewer->edit_rendition,
+			previous_selection = Cmiss_scene_get_graphic_position(
+				region_tree_viewer->edit_scene,
 				region_tree_viewer->current_graphic);
 		}
 		else
 		{
 			previous_selection = 0;
 		}
-		REACCESS(Cmiss_rendition)(&region_tree_viewer->rendition, rendition);
-		Cmiss_rendition *edit_rendition;
-		if (region_tree_viewer->rendition)
+		REACCESS(Cmiss_scene)(&region_tree_viewer->scene, scene);
+		Cmiss_scene *edit_scene;
+		if (region_tree_viewer->scene)
 		{
-			edit_rendition = create_editor_copy_Cmiss_rendition(
-				region_tree_viewer->rendition);
-			if (!edit_rendition)
+			edit_scene = create_editor_copy_Cmiss_scene(
+				region_tree_viewer->scene);
+			if (!edit_scene)
 			{
-				display_message(ERROR_MESSAGE, "Rendition_editor_set_rendition.  "
-					"Could not copy rendition");
+				display_message(ERROR_MESSAGE, "Rendition_editor_set_scene.  "
+					"Could not copy scene");
 			}
 		}
 		else
 		{
-			edit_rendition = (struct Cmiss_rendition *) NULL;
+			edit_scene = (struct Cmiss_scene *) NULL;
 		}
-		REACCESS(Cmiss_rendition)(&(region_tree_viewer->edit_rendition),
-			edit_rendition);
-		DEACCESS(Cmiss_rendition)(&edit_rendition);
+		REACCESS(Cmiss_scene)(&(region_tree_viewer->edit_scene),
+			edit_scene);
+		DEACCESS(Cmiss_scene)(&edit_scene);
 		if (previous_selection == 0)
 		{
 			previous_selection = 1;
@@ -4246,22 +4223,22 @@ void Region_tree_viewer_set_active_rendition(
 		}
 		region_tree_viewer->graphiclistbox->SetSelection(wxNOT_FOUND);
 		region_tree_viewer->graphiclistbox->Clear();
-		if (region_tree_viewer->edit_rendition)
+		if (region_tree_viewer->edit_scene)
 		{
-			if (Cmiss_rendition_get_number_of_graphics(
-				region_tree_viewer->edit_rendition) > 0)
+			if (Cmiss_scene_get_number_of_graphics(
+				region_tree_viewer->edit_scene) > 0)
 			{
-				for_each_graphic_in_Cmiss_rendition(region_tree_viewer->edit_rendition,
+				for_each_graphic_in_Cmiss_scene(region_tree_viewer->edit_scene,
 					Region_tree_viewer_add_graphic, (void *) region_tree_viewer);
-				int num = Cmiss_rendition_get_number_of_graphics(
-					region_tree_viewer->edit_rendition);
+				int num = Cmiss_scene_get_number_of_graphics(
+					region_tree_viewer->edit_scene);
 				Cmiss_graphic *temp_graphic = NULL;
 				if (num > previous_selection)
 				{
 					num = previous_selection;
 				}
-				temp_graphic = Cmiss_rendition_get_graphic_at_position(
-					region_tree_viewer->edit_rendition, num);
+				temp_graphic = Cmiss_scene_get_graphic_at_position(
+					region_tree_viewer->edit_scene, num);
 				region_tree_viewer->wx_region_tree_viewer->Region_tree_viewer_wx_update_current_graphic(
 					temp_graphic);
 				region_tree_viewer->graphiclistbox->SetSelection(num - 1);
@@ -4283,36 +4260,36 @@ void Region_tree_viewer_set_active_rendition(
 				region_tree_viewer->wx_region_tree_viewer->Region_tree_viewer_wx_update_current_graphic(NULL);
 			}
 			region_tree_viewer->field_manager
-				= Cmiss_region_get_Computed_field_manager(Cmiss_rendition_get_region(
-					region_tree_viewer->edit_rendition));
+				= Cmiss_region_get_Computed_field_manager(Cmiss_scene_get_region(
+					region_tree_viewer->edit_scene));
 		}
-		if (region_tree_viewer->rendition)
+		if (region_tree_viewer->scene)
 		{
 			gtMatrix transformation_matrix;
-			Cmiss_rendition_get_transformation(region_tree_viewer->rendition,
+			Cmiss_scene_get_transformation(region_tree_viewer->scene,
 				&transformation_matrix);
-			region_tree_viewer->transformation_editor->set_rendition(
-				region_tree_viewer->rendition);
+			region_tree_viewer->transformation_editor->set_scene(
+				region_tree_viewer->scene);
 			region_tree_viewer->transformation_editor->set_transformation(
 				&transformation_matrix);
-			if (Cmiss_rendition_add_transformation_callback(
-				region_tree_viewer->rendition,
+			if (Cmiss_scene_add_transformation_callback(
+				region_tree_viewer->scene,
 				Region_tree_viewer_wx_transformation_change,
 				(void *) region_tree_viewer))
 			{
 				region_tree_viewer->transformation_callback_flag = 1;
 			}
-			if (Cmiss_rendition_add_callback(region_tree_viewer->rendition,
-				Region_tree_viewer_wx_rendition_change, (void *) region_tree_viewer))
+			if (Cmiss_scene_add_callback(region_tree_viewer->scene,
+				Region_tree_viewer_wx_scene_change, (void *) region_tree_viewer))
 			{
-				region_tree_viewer->rendition_callback_flag = 1;
+				region_tree_viewer->scene_callback_flag = 1;
 			}
 		}
 	}
 	else if (region_tree_viewer)
 	{
-		REACCESS(Cmiss_rendition)(&region_tree_viewer->rendition, NULL);
-		REACCESS(Cmiss_rendition)(&region_tree_viewer->edit_rendition, NULL);
+		REACCESS(Cmiss_scene)(&region_tree_viewer->scene, NULL);
+		REACCESS(Cmiss_scene)(&region_tree_viewer->edit_scene, NULL);
 		REACCESS(Cmiss_graphic)(&region_tree_viewer->current_graphic, NULL);
 		region_tree_viewer->field_manager = NULL;
 		region_tree_viewer->wx_region_tree_viewer->Region_tree_viewer_wx_set_manager_in_choosers(region_tree_viewer);
@@ -4344,7 +4321,7 @@ static int get_and_set_Cmiss_graphic_widgets(void *region_tree_viewer_void)
 }
 
 /***************************************************************************//**
- * Iterator function for rendition_editor_update_Graphic_item.
+ * Iterator function for scene_editor_update_Graphic_item.
  */
 static int Region_tree_viewer_add_graphic_item(
 	struct Cmiss_graphic *graphic, void *region_tree_viewer_void)
@@ -4384,7 +4361,6 @@ void Region_tree_viewer_region_tree_region_add_child(Region_tree_viewer *region_
 	char *child_name;
 	wxTreeItemId current;
 	Cmiss_region *current_region;
-	ENTER(Scene_edito);
 
 	current_region = Cmiss_region_get_first_child(parent_region);
 	while (current_region)
@@ -4406,7 +4382,7 @@ void Region_tree_viewer_setup_region_tree(Region_tree_viewer *region_tree_viewer
 {
 	wxTreeItemId current;
 	char *root_region_path;
-	struct Cmiss_rendition *rendition;
+	struct Cmiss_scene *scene;
 
 	ENTER(Region_tree_viewer_setup_region_tree);
 
@@ -4417,10 +4393,10 @@ void Region_tree_viewer_setup_region_tree(Region_tree_viewer *region_tree_viewer
 		region_tree_viewer->testing_tree_ctrl->SetTreeIdRegionWithCallback(
 			current, region_tree_viewer->root_region);
 		region_tree_viewer->testing_tree_ctrl->add_all_child_regions_to_tree_item(current);
-		rendition = Cmiss_region_get_rendition_internal(region_tree_viewer->root_region);
-		REACCESS(Cmiss_rendition)(&region_tree_viewer->rendition,
-			rendition);
-		DEACCESS(Cmiss_rendition)(&rendition);
+		scene = Cmiss_region_get_scene_internal(region_tree_viewer->root_region);
+		REACCESS(Cmiss_scene)(&region_tree_viewer->scene,
+			scene);
+		DEACCESS(Cmiss_scene)(&scene);
 		DEALLOCATE(root_region_path);
 	}
 
@@ -4435,7 +4411,6 @@ Global functions
 struct Region_tree_viewer *CREATE(Region_tree_viewer)(
 	struct Region_tree_viewer **region_tree_viewer_address,
 	struct Cmiss_graphics_module *graphics_module,
-	struct MANAGER(Scene) *scene_manager, struct Scene *scene,
 	struct Cmiss_region *root_region,
 	struct MANAGER(Graphical_material) *graphical_material_manager,
 	struct Graphical_material *default_material,
@@ -4454,7 +4429,7 @@ DESCRIPTION :
 
 	ENTER(CREATE(Region_tree_viewer));
 	region_tree_viewer = (struct Region_tree_viewer *)NULL;
-	if (graphics_module && scene_manager && scene && root_region &&
+	if (graphics_module && root_region &&
 		graphical_material_manager && default_material &&
 		glyph_manager && spectrum_manager &&
 		volume_texture_manager && user_interface)
@@ -4467,17 +4442,15 @@ DESCRIPTION :
 			region_tree_viewer->transformation_expanded=1;
 			region_tree_viewer->transformation_callback_flag = 0;
 			region_tree_viewer->gt_element_group_callback_flag = 0;
-			region_tree_viewer->rendition_callback_flag = 0;
+			region_tree_viewer->scene_callback_flag = 0;
 			region_tree_viewer->graphics_module = graphics_module;
 			region_tree_viewer->tessellationModule = Cmiss_graphics_module_get_tessellation_module(graphics_module);
-			region_tree_viewer->scene = scene;
 			region_tree_viewer->graphical_material_manager = graphical_material_manager;
 			region_tree_viewer->region_tree_viewer_address = (struct Region_tree_viewer **)NULL;
 			region_tree_viewer->default_material=default_material;
 			region_tree_viewer->selected_material=default_material;
 			region_tree_viewer->default_font=default_font;
 			region_tree_viewer->glyph_manager=glyph_manager;
-			region_tree_viewer->scene_manager = scene_manager;
 			region_tree_viewer->user_interface=user_interface;
 			region_tree_viewer->current_graphic = (Cmiss_graphic *)NULL;
 			region_tree_viewer->volume_texture_manager=volume_texture_manager;
@@ -4494,8 +4467,8 @@ DESCRIPTION :
 			region_tree_viewer->current_region = NULL;
 			region_tree_viewer->wx_region_tree_viewer = (wxRegionTreeViewer *)NULL;
 			region_tree_viewer->graphiclistbox = (wxCheckListBox *)NULL;
-			region_tree_viewer->rendition = (Cmiss_rendition *)NULL;
-			region_tree_viewer->edit_rendition = (Cmiss_rendition *)NULL;
+			region_tree_viewer->scene = (Cmiss_scene *)NULL;
+			region_tree_viewer->edit_scene = (Cmiss_scene *)NULL;
 			wxLogNull logNo;
 			region_tree_viewer->wx_region_tree_viewer = new
 				wxRegionTreeViewer(region_tree_viewer);
@@ -4598,28 +4571,28 @@ DESCRIPTION :
 	{
 		if (region_tree_viewer->current_graphic)
 			DEACCESS(Cmiss_graphic)(&region_tree_viewer->current_graphic);
-		if (region_tree_viewer->edit_rendition)
-			DEACCESS(Cmiss_rendition)(&region_tree_viewer->edit_rendition);
-		if (region_tree_viewer->rendition)
+		if (region_tree_viewer->edit_scene)
+			DEACCESS(Cmiss_scene)(&region_tree_viewer->edit_scene);
+		if (region_tree_viewer->scene)
 		{
-			region_tree_viewer->transformation_editor->set_rendition(NULL);
+			region_tree_viewer->transformation_editor->set_scene(NULL);
 			if (region_tree_viewer->transformation_callback_flag &&
-				Cmiss_rendition_remove_transformation_callback(region_tree_viewer->rendition,
+				Cmiss_scene_remove_transformation_callback(region_tree_viewer->scene,
 					Region_tree_viewer_wx_transformation_change, (void *)region_tree_viewer))
 			{
 				region_tree_viewer->transformation_callback_flag = 0;
 			}
-			if (region_tree_viewer->rendition_callback_flag)
+			if (region_tree_viewer->scene_callback_flag)
 			{
-				if (Cmiss_rendition_remove_callback(region_tree_viewer->rendition,
-						Region_tree_viewer_wx_rendition_change, (void *)region_tree_viewer))
+				if (Cmiss_scene_remove_callback(region_tree_viewer->scene,
+						Region_tree_viewer_wx_scene_change, (void *)region_tree_viewer))
 				{
-					region_tree_viewer->rendition_callback_flag = 0;
+					region_tree_viewer->scene_callback_flag = 0;
 				}
 			}
 		}
-		if (region_tree_viewer->rendition)
-			DEACCESS(Cmiss_rendition)(&region_tree_viewer->rendition);
+		if (region_tree_viewer->scene)
+			DEACCESS(Cmiss_scene)(&region_tree_viewer->scene);
 		delete region_tree_viewer->transformation_editor;
 		delete region_tree_viewer->wx_region_tree_viewer;
 		Cmiss_tessellation_module_destroy(&region_tree_viewer->tessellationModule);
@@ -4665,91 +4638,16 @@ De-iconifies and brings the scene editor to the front.
 
 	return (return_code);
 } /* Region_tree_viewer_bring_to_front */
-struct Scene *Region_tree_viewer_get_scene(struct Region_tree_viewer *region_tree_viewer)
-/*******************************************************************************
-LAST MODIFIED : 5 November 2001
-
-DESCRIPTION :
-Returns the root scene of the <region_tree_viewer>.
-==============================================================================*/
-{
-	struct Scene *scene;
-
-	ENTER(Region_tree_viewer_get_scene);
-	scene = (struct Scene*)NULL;
-	if (region_tree_viewer)
-	{
-		scene = region_tree_viewer->scene;
-	}
-	else
-	{
-		display_message(ERROR_MESSAGE,
-			"Region_tree_viewer_get_scene.  Invalid argument(s)");
-		scene = (struct Scene *)NULL;
-	}
-	LEAVE;
-
-	return (scene);
-} /* Region_tree_viewer_get_scene */
-
-
-int Region_tree_viewer_set_scene(struct Region_tree_viewer *region_tree_viewer,
-	struct Scene *scene)
-/*******************************************************************************
-LAST MODIFIED : 9 November 2001
-
-DESCRIPTION :
-Sets the root scene of the <region_tree_viewer>. Updates widgets.
-==============================================================================*/
-{
-	int return_code;
-
-	ENTER(Region_tree_viewer_set_scene);
-	if (region_tree_viewer && scene)
-	{
-		if (scene == Region_tree_viewer_get_scene(region_tree_viewer))
-		{
-				return_code = 1;
-		}
-		else
-		{
-				if(region_tree_viewer->wx_region_tree_viewer)
-				{
-					region_tree_viewer->wx_region_tree_viewer->setSceneObject(scene);
-					return_code = 1;
-				}
-				else
-				{
-					display_message(ERROR_MESSAGE,
-							"Region_tree_viewer_set_scene.  Could not set new scene");
-					return_code = 0;
-				}
-		}
-		if (return_code)
-		{
-				region_tree_viewer->scene = scene;
-		}
-	}
-	else
-	{
-		display_message(ERROR_MESSAGE,
-			"Region_tree_viewer_set_scene.  Invalid argument(s)");
-		return_code = 0;
-	}
-	LEAVE;
-
-	return (return_code);
-} /* Region_tree_viewer_set_scene */
 
 /***************************************************************************//**
 * Setup the graphic widgets.
 *
 * @param region_tree_viewer scene editor to be be modified
 */
-void Region_tree_viewer_set_graphic_widgets_for_rendition(Region_tree_viewer *region_tree_viewer)
+void Region_tree_viewer_set_graphic_widgets_for_scene(Region_tree_viewer *region_tree_viewer)
 {
-	ENTER(Region_tree_viewer_set_graphic_widgets_for_rendition);
-	if (region_tree_viewer && region_tree_viewer->rendition)
+	ENTER(Region_tree_viewer_set_graphic_widgets_for_scene);
+	if (region_tree_viewer && region_tree_viewer->scene)
 	{
 		region_tree_viewer->wx_region_tree_viewer->
 			Region_tree_viewer_wx_set_manager_in_choosers(region_tree_viewer);
@@ -4760,19 +4658,19 @@ void Region_tree_viewer_set_graphic_widgets_for_rendition(Region_tree_viewer *re
 	LEAVE;
 }
 
-static int Region_tree_viewer_wx_rendition_change(
-	struct Cmiss_rendition *rendition, void *region_tree_viewer_void)
+static int Region_tree_viewer_wx_scene_change(
+	struct Cmiss_scene *scene, void *region_tree_viewer_void)
 {
 	Region_tree_viewer *region_tree_viewer;
 	int return_code;
 	//	wxCheckListBox *cmiss_graphic_checklist;
 
-	if (rendition &&
+	if (scene &&
 		(region_tree_viewer = (struct Region_tree_viewer *)region_tree_viewer_void))
 	{
 		return_code = 1;
-		if (!Cmiss_renditions_match(
-					rendition, region_tree_viewer->edit_rendition))
+		if (!Cmiss_scenes_match(
+					scene, region_tree_viewer->edit_scene))
 		{
 			if (region_tree_viewer->auto_apply)
 			{
@@ -4793,7 +4691,7 @@ static int Region_tree_viewer_wx_rendition_change(
 	else
 	{
 		display_message(ERROR_MESSAGE,
-			"Region_tree_viewer_wx_rendition_change.  Invalid argument(s)");
+			"Region_tree_viewer_wx_scene_change.  Invalid argument(s)");
 		return_code = 0;
 	}
 	return return_code;

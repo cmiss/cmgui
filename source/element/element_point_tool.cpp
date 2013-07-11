@@ -169,232 +169,232 @@ of space affected by the interaction. Main events are button press, movement and
 release.
 ==============================================================================*/
 {
-	enum Interactive_event_type event_type;
-	FE_value time, xi[MAXIMUM_ELEMENT_XI_DIMENSIONS];
-	int clear_selection, input_modifier, shift_pressed, start, stop;
-	struct Element_point_ranges *picked_element_point;
-	struct Element_point_ranges_identifier element_point_ranges_identifier;
-	struct Element_point_tool *element_point_tool;
-	struct Interaction_volume *interaction_volume,*temp_interaction_volume;
-	struct LIST(Element_point_ranges) *element_point_ranges_list;
-	struct LIST(Scene_picked_object) *scene_picked_object_list;
-	struct Multi_range *multi_range;
-	struct Scene *scene;
-	Cmiss_scene_picker_id scene_picker = 0;
-
-	ENTER(Element_point_tool_interactive_event_handler);
-	if (device_id&&event&&(element_point_tool=
-		(struct Element_point_tool *)element_point_tool_void))
-	{
-		interaction_volume=Interactive_event_get_interaction_volume(event);
-		scene=Interactive_event_get_scene(event);
-		if (scene != 0)
-		{
-			event_type=Interactive_event_get_type(event);
-			input_modifier=Interactive_event_get_input_modifier(event);
-			shift_pressed=(INTERACTIVE_EVENT_MODIFIER_SHIFT & input_modifier);
-			switch (event_type)
-			{
-				case INTERACTIVE_EVENT_BUTTON_PRESS:
-				{
-					/* interaction only works with first mouse button */
-					if (1==Interactive_event_get_button_number(event))
-					{
-						scene_picked_object_list=
-							Scene_pick_objects(scene,interaction_volume);
-						if (scene_picked_object_list != 0)
-						{
-							element_point_tool->picked_element_point_was_unselected=0;
-							if (0 != (picked_element_point=
-								Scene_picked_object_list_get_nearest_element_point(
-									scene_picked_object_list,(struct Cmiss_region *)NULL,
-									(struct Scene_picked_object **)NULL,
-									(struct Cmiss_rendition **)NULL,
-									(struct Cmiss_graphic **)NULL)))
-							{
-								/* Execute command_field of picked_element_point */
-								if (element_point_tool->command_field)
-								{
-									if (Element_point_ranges_get_identifier(
-											 picked_element_point, &element_point_ranges_identifier))
-									{
-										if (element_point_tool->time_keeper_app)
-										{
-											time = element_point_tool->time_keeper_app->getTimeKeeper()->getTime();
-										}
-										else
-										{
-											time = 0;
-										}
-										/* need to get the xi for the picked_element_point
-											 in order to evaluate the command_field there */
-										if ((multi_range = Element_point_ranges_get_ranges(
-											picked_element_point)) &&
-											(Multi_range_get_range(multi_range, /*range_no*/0,
-												&start, &stop)) &&
-											FE_element_get_numbered_xi_point(
-												element_point_ranges_identifier.element,
-												element_point_ranges_identifier.xi_discretization_mode,
-												element_point_ranges_identifier.number_in_xi,
-												element_point_ranges_identifier.exact_xi,
-												(Cmiss_field_cache_id)0,
-												/*coordinate_field*/(struct Computed_field *)NULL,
-												/*density_field*/(struct Computed_field *)NULL,
-												start, xi))
-										{
-											Cmiss_field_module_id field_module = Cmiss_field_get_field_module(element_point_tool->command_field);
-											Cmiss_field_cache_id field_cache = Cmiss_field_module_create_cache(field_module);
-											Cmiss_field_cache_set_time(field_cache, time);
-											Cmiss_field_cache_set_mesh_location_with_parent(field_cache,
-												element_point_ranges_identifier.element, Cmiss_element_get_dimension(element_point_ranges_identifier.element),
-												xi, element_point_ranges_identifier.top_level_element);
-											char *command_string = Cmiss_field_evaluate_string(element_point_tool->command_field, field_cache);
-											if (command_string)
-											{
-												Execute_command_execute_string(element_point_tool->execute_command, command_string);
-												DEALLOCATE(command_string);
-											}
-											Cmiss_field_cache_destroy(&field_cache);
-											Cmiss_field_module_destroy(&field_module);
-										}
-									}
-								}
-								if (!Element_point_ranges_selection_is_element_point_ranges_selected(
-									element_point_tool->element_point_ranges_selection,
-									picked_element_point))
-								{
-									element_point_tool->picked_element_point_was_unselected=1;
-								}
-							}
-							REACCESS(Element_point_ranges)(
-								&(element_point_tool->last_picked_element_point),
-								picked_element_point);
-							clear_selection = !shift_pressed;
-							if (clear_selection)
-							{
-								Element_point_ranges_selection_begin_cache(
-									element_point_tool->element_point_ranges_selection);
-								Element_point_ranges_selection_clear(
-									element_point_tool->element_point_ranges_selection);
-							}
-							if (picked_element_point)
-							{
-								Element_point_ranges_selection_select_element_point_ranges(
-									element_point_tool->element_point_ranges_selection,
-									picked_element_point);
-							}
-							if (clear_selection)
-							{
-								Element_point_ranges_selection_end_cache(
-									element_point_tool->element_point_ranges_selection);
-							}
-							DESTROY(LIST(Scene_picked_object))(&(scene_picked_object_list));
-						}
-						element_point_tool->motion_detected=0;
-						REACCESS(Interaction_volume)(
-							&(element_point_tool->last_interaction_volume),
-							interaction_volume);
-					}
-				} break;
-				case INTERACTIVE_EVENT_MOTION_NOTIFY:
-				case INTERACTIVE_EVENT_BUTTON_RELEASE:
-				{
-					if (element_point_tool->last_interaction_volume&&
-						((INTERACTIVE_EVENT_MOTION_NOTIFY==event_type) ||
-							(1==Interactive_event_get_button_number(event))))
-					{
-						if (INTERACTIVE_EVENT_MOTION_NOTIFY==event_type)
-						{
-							element_point_tool->motion_detected=1;
-						}
-						if (element_point_tool->last_picked_element_point)
-						{
-							/* unselect last_picked_element_point if not just added */
-							if ((INTERACTIVE_EVENT_BUTTON_RELEASE==event_type)&&
-								shift_pressed&&
-								(!(element_point_tool->picked_element_point_was_unselected)))
-							{
-								Element_point_ranges_selection_unselect_element_point_ranges(
-									element_point_tool->element_point_ranges_selection,
-									element_point_tool->last_picked_element_point);
-							}
-						}
-						else if (element_point_tool->motion_detected)
-						{
-							/* rubber band select */
-							temp_interaction_volume=
-								create_Interaction_volume_bounding_box(
-									element_point_tool->last_interaction_volume,
-									interaction_volume);
-							if (temp_interaction_volume != 0)
-							{
-//								if (INTERACTIVE_EVENT_MOTION_NOTIFY==event_type)
+//	enum Interactive_event_type event_type;
+//	FE_value time, xi[MAXIMUM_ELEMENT_XI_DIMENSIONS];
+//	int clear_selection, input_modifier, shift_pressed, start, stop;
+//	struct Element_point_ranges *picked_element_point;
+//	struct Element_point_ranges_identifier element_point_ranges_identifier;
+//	struct Element_point_tool *element_point_tool;
+//	struct Interaction_volume *interaction_volume,*temp_interaction_volume;
+//	struct LIST(Element_point_ranges) *element_point_ranges_list;
+//	struct LIST(Scene_picked_object) *scene_picked_object_list;
+//	struct Multi_range *multi_range;
+//	struct Scene *scene;
+//	Cmiss_scene_picker_id scene_picker = 0;
+//
+//	ENTER(Element_point_tool_interactive_event_handler);
+//	if (device_id&&event&&(element_point_tool=
+//		(struct Element_point_tool *)element_point_tool_void))
+//	{
+//		interaction_volume=Interactive_event_get_interaction_volume(event);
+//		scene=Interactive_event_get_scene(event);
+//		if (scene != 0)
+//		{
+//			event_type=Interactive_event_get_type(event);
+//			input_modifier=Interactive_event_get_input_modifier(event);
+//			shift_pressed=(INTERACTIVE_EVENT_MODIFIER_SHIFT & input_modifier);
+//			switch (event_type)
+//			{
+//				case INTERACTIVE_EVENT_BUTTON_PRESS:
+//				{
+//					/* interaction only works with first mouse button */
+//					if (1==Interactive_event_get_button_number(event))
+//					{
+//						scene_picked_object_list=
+//							Scene_pick_objects(scene,interaction_volume);
+//						if (scene_picked_object_list != 0)
+//						{
+//							element_point_tool->picked_element_point_was_unselected=0;
+//							if (0 != (picked_element_point=
+//								Scene_picked_object_list_get_nearest_element_point(
+//									scene_picked_object_list,(struct Cmiss_region *)NULL,
+//									(struct Scene_picked_object **)NULL,
+//									(struct Cmiss_rendition **)NULL,
+//									(struct Cmiss_graphic **)NULL)))
+//							{
+//								/* Execute command_field of picked_element_point */
+//								if (element_point_tool->command_field)
 //								{
-//									if (!element_point_tool->rubber_band)
+//									if (Element_point_ranges_get_identifier(
+//											 picked_element_point, &element_point_ranges_identifier))
 //									{
-//										/* create rubber_band object and put in scene */
-//										element_point_tool->rubber_band=CREATE(GT_object)(
-//											"element_point_tool_rubber_band",g_POLYLINE,
-//											element_point_tool->rubber_band_material);
-//										ACCESS(GT_object)(element_point_tool->rubber_band);
+//										if (element_point_tool->time_keeper_app)
+//										{
+//											time = element_point_tool->time_keeper_app->getTimeKeeper()->getTime();
+//										}
+//										else
+//										{
+//											time = 0;
+//										}
+//										/* need to get the xi for the picked_element_point
+//											 in order to evaluate the command_field there */
+//										if ((multi_range = Element_point_ranges_get_ranges(
+//											picked_element_point)) &&
+//											(Multi_range_get_range(multi_range, /*range_no*/0,
+//												&start, &stop)) &&
+//											FE_element_get_numbered_xi_point(
+//												element_point_ranges_identifier.element,
+//												element_point_ranges_identifier.xi_discretization_mode,
+//												element_point_ranges_identifier.number_in_xi,
+//												element_point_ranges_identifier.exact_xi,
+//												(Cmiss_field_cache_id)0,
+//												/*coordinate_field*/(struct Computed_field *)NULL,
+//												/*density_field*/(struct Computed_field *)NULL,
+//												start, xi))
+//										{
+//											Cmiss_field_module_id field_module = Cmiss_field_get_field_module(element_point_tool->command_field);
+//											Cmiss_field_cache_id field_cache = Cmiss_field_module_create_cache(field_module);
+//											Cmiss_field_cache_set_time(field_cache, time);
+//											Cmiss_field_cache_set_mesh_location_with_parent(field_cache,
+//												element_point_ranges_identifier.element, Cmiss_element_get_dimension(element_point_ranges_identifier.element),
+//												xi, element_point_ranges_identifier.top_level_element);
+//											char *command_string = Cmiss_field_evaluate_string(element_point_tool->command_field, field_cache);
+//											if (command_string)
+//											{
+//												Execute_command_execute_string(element_point_tool->execute_command, command_string);
+//												DEALLOCATE(command_string);
+//											}
+//											Cmiss_field_cache_destroy(&field_cache);
+//											Cmiss_field_module_destroy(&field_module);
+//										}
 //									}
-//									Interaction_volume_make_polyline_extents(
-//										temp_interaction_volume,element_point_tool->rubber_band);
 //								}
-//								else
+//								if (!Element_point_ranges_selection_is_element_point_ranges_selected(
+//									element_point_tool->element_point_ranges_selection,
+//									picked_element_point))
 //								{
-//									DEACCESS(GT_object)(&(element_point_tool->rubber_band));
+//									element_point_tool->picked_element_point_was_unselected=1;
 //								}
-								if (INTERACTIVE_EVENT_BUTTON_RELEASE==event_type)
-								{
-									scene_picked_object_list=
-										Scene_pick_objects(scene,temp_interaction_volume);
-									if (scene_picked_object_list != 0)
-									{
-										element_point_ranges_list=
-											Scene_picked_object_list_get_picked_element_points(
-												scene_picked_object_list);
-										if (element_point_ranges_list != 0)
-										{
-											Element_point_ranges_selection_begin_cache(
-												element_point_tool->element_point_ranges_selection);
-											FOR_EACH_OBJECT_IN_LIST(Element_point_ranges)(
-												Element_point_ranges_select,(void *)
-												element_point_tool->element_point_ranges_selection,
-												element_point_ranges_list);
-											Element_point_ranges_selection_end_cache(
-												element_point_tool->element_point_ranges_selection);
-											DESTROY(LIST(Element_point_ranges))(
-												&element_point_ranges_list);
-										}
-										DESTROY(LIST(Scene_picked_object))(
-											&(scene_picked_object_list));
-									}
-								}
-								DEACCESS(Interaction_volume)(&temp_interaction_volume);
-							}
-						}
-						if (INTERACTIVE_EVENT_BUTTON_RELEASE==event_type)
-						{
-							Element_point_tool_reset((void *)element_point_tool);
-						}
-					}
-				} break;
-				default:
-				{
-					display_message(ERROR_MESSAGE,
-						"Element_point_tool_interactive_event_handler.  "
-						"Unknown event type");
-				} break;
-			}
-		}
-	}
-	else
-	{
-		display_message(ERROR_MESSAGE,
-			"Element_point_tool_interactive_event_handler.  Invalid argument(s)");
-	}
-	LEAVE;
+//							}
+//							REACCESS(Element_point_ranges)(
+//								&(element_point_tool->last_picked_element_point),
+//								picked_element_point);
+//							clear_selection = !shift_pressed;
+//							if (clear_selection)
+//							{
+//								Element_point_ranges_selection_begin_cache(
+//									element_point_tool->element_point_ranges_selection);
+//								Element_point_ranges_selection_clear(
+//									element_point_tool->element_point_ranges_selection);
+//							}
+//							if (picked_element_point)
+//							{
+//								Element_point_ranges_selection_select_element_point_ranges(
+//									element_point_tool->element_point_ranges_selection,
+//									picked_element_point);
+//							}
+//							if (clear_selection)
+//							{
+//								Element_point_ranges_selection_end_cache(
+//									element_point_tool->element_point_ranges_selection);
+//							}
+//							DESTROY(LIST(Scene_picked_object))(&(scene_picked_object_list));
+//						}
+//						element_point_tool->motion_detected=0;
+//						REACCESS(Interaction_volume)(
+//							&(element_point_tool->last_interaction_volume),
+//							interaction_volume);
+//					}
+//				} break;
+//				case INTERACTIVE_EVENT_MOTION_NOTIFY:
+//				case INTERACTIVE_EVENT_BUTTON_RELEASE:
+//				{
+//					if (element_point_tool->last_interaction_volume&&
+//						((INTERACTIVE_EVENT_MOTION_NOTIFY==event_type) ||
+//							(1==Interactive_event_get_button_number(event))))
+//					{
+//						if (INTERACTIVE_EVENT_MOTION_NOTIFY==event_type)
+//						{
+//							element_point_tool->motion_detected=1;
+//						}
+//						if (element_point_tool->last_picked_element_point)
+//						{
+//							/* unselect last_picked_element_point if not just added */
+//							if ((INTERACTIVE_EVENT_BUTTON_RELEASE==event_type)&&
+//								shift_pressed&&
+//								(!(element_point_tool->picked_element_point_was_unselected)))
+//							{
+//								Element_point_ranges_selection_unselect_element_point_ranges(
+//									element_point_tool->element_point_ranges_selection,
+//									element_point_tool->last_picked_element_point);
+//							}
+//						}
+//						else if (element_point_tool->motion_detected)
+//						{
+//							/* rubber band select */
+//							temp_interaction_volume=
+//								create_Interaction_volume_bounding_box(
+//									element_point_tool->last_interaction_volume,
+//									interaction_volume);
+//							if (temp_interaction_volume != 0)
+//							{
+////								if (INTERACTIVE_EVENT_MOTION_NOTIFY==event_type)
+////								{
+////									if (!element_point_tool->rubber_band)
+////									{
+////										/* create rubber_band object and put in scene */
+////										element_point_tool->rubber_band=CREATE(GT_object)(
+////											"element_point_tool_rubber_band",g_POLYLINE,
+////											element_point_tool->rubber_band_material);
+////										ACCESS(GT_object)(element_point_tool->rubber_band);
+////									}
+////									Interaction_volume_make_polyline_extents(
+////										temp_interaction_volume,element_point_tool->rubber_band);
+////								}
+////								else
+////								{
+////									DEACCESS(GT_object)(&(element_point_tool->rubber_band));
+////								}
+//								if (INTERACTIVE_EVENT_BUTTON_RELEASE==event_type)
+//								{
+//									scene_picked_object_list=
+//										Scene_pick_objects(scene,temp_interaction_volume);
+//									if (scene_picked_object_list != 0)
+//									{
+//										element_point_ranges_list=
+//											Scene_picked_object_list_get_picked_element_points(
+//												scene_picked_object_list);
+//										if (element_point_ranges_list != 0)
+//										{
+//											Element_point_ranges_selection_begin_cache(
+//												element_point_tool->element_point_ranges_selection);
+//											FOR_EACH_OBJECT_IN_LIST(Element_point_ranges)(
+//												Element_point_ranges_select,(void *)
+//												element_point_tool->element_point_ranges_selection,
+//												element_point_ranges_list);
+//											Element_point_ranges_selection_end_cache(
+//												element_point_tool->element_point_ranges_selection);
+//											DESTROY(LIST(Element_point_ranges))(
+//												&element_point_ranges_list);
+//										}
+//										DESTROY(LIST(Scene_picked_object))(
+//											&(scene_picked_object_list));
+//									}
+//								}
+//								DEACCESS(Interaction_volume)(&temp_interaction_volume);
+//							}
+//						}
+//						if (INTERACTIVE_EVENT_BUTTON_RELEASE==event_type)
+//						{
+//							Element_point_tool_reset((void *)element_point_tool);
+//						}
+//					}
+//				} break;
+//				default:
+//				{
+//					display_message(ERROR_MESSAGE,
+//						"Element_point_tool_interactive_event_handler.  "
+//						"Unknown event type");
+//				} break;
+//			}
+//		}
+//	}
+//	else
+//	{
+//		display_message(ERROR_MESSAGE,
+//			"Element_point_tool_interactive_event_handler.  Invalid argument(s)");
+//	}
+//	LEAVE;
 
 } /* Element_point_tool_interactive_event_handler */
 

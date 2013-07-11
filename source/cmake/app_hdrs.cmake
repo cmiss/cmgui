@@ -9,7 +9,6 @@ SET(APP_HDRS
     source/finite_element/finite_element_app.h
     source/finite_element/finite_element_app.h
     source/graphics/graphic_app.h
-    source/graphics/rendition_app.h
     source/general/geometry_app.h
     source/general/enumerator_private_app.h
     source/general/enumerator_app.h
@@ -54,7 +53,6 @@ SET(APP_HDRS
     source/finite_element/export_finite_element_app.h
     source/graphics/element_point_ranges_app.h
     source/graphics/environment_map_app.h
-    source/graphics/rendition_app.h
     source/finite_element/finite_element_region_app.h
     source/graphics/font_app.h
     source/graphics/scene_viewer_app.h

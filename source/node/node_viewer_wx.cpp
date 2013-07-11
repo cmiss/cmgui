@@ -49,7 +49,7 @@
 #include "zinc/fieldfiniteelement.h"
 #include "zinc/fieldmodule.h"
 #include "zinc/fieldsubobjectgroup.h"
-#include "zinc/rendition.h"
+#include "zinc/scene.h"
 #include "zinc/status.h"
 #include "zinc/timenotifier.h"
 #include "zinc/timekeeper.h"
@@ -598,10 +598,10 @@ static void Node_viewer_Computed_field_change(
 	node_viewer = (struct Node_viewer *)node_viewer_void;
 	if (message && node_viewer)
 	{
-		Cmiss_rendition_id rendition = Cmiss_graphics_module_get_rendition(node_viewer->graphics_module, node_viewer->region);
-		if (rendition)
+		Cmiss_scene_id scene = Cmiss_graphics_module_get_scene(node_viewer->graphics_module, node_viewer->region);
+		if (scene)
 		{
-			Cmiss_field_group_id selection_group = Cmiss_rendition_get_selection_group(rendition);
+			Cmiss_field_group_id selection_group = Cmiss_scene_get_selection_group(scene);
 			changed_field_list =
 				MANAGER_MESSAGE_GET_CHANGE_LIST(Computed_field)(message,
 					MANAGER_CHANGE_RESULT(Computed_field));
@@ -643,7 +643,7 @@ static void Node_viewer_Computed_field_change(
 			}
 			if (changed_field_list)
 				DESTROY(LIST(Computed_field))(&changed_field_list);
-			Cmiss_rendition_destroy(&rendition);
+			Cmiss_scene_destroy(&scene);
 			if (selection_group)
 			{
 				Cmiss_field_group_destroy(&selection_group);

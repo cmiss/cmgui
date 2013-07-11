@@ -65,7 +65,7 @@
 				       </object>
       	           </object>
       	           <object class ="sizeritem">
-                     <object class="wxPanel" name="wxSpectrumSceneChooserPanel">
+                     <object class="wxPanel" name="wxSpectrumRegionChooserPanel">
                         <size>200,26</size>
 				       </object>
       	           </object>

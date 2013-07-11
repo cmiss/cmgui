@@ -52,7 +52,7 @@ Create a cpp class that act as a transformation editor for the wx widgets.
 #include "command/parser.h"
 
 Transformation_editor::Transformation_editor(wxPanel *parent, const char *panel_name,
-	 struct Cmiss_rendition *rendition, int *auto_apply)
+	 struct Cmiss_scene *scene, int *auto_apply)
 /*******************************************************************************
 LAST MODIFIED : 5 March 2008
 
@@ -63,7 +63,7 @@ transformation_editor;
 {
 	 direction_system_index = 0;
 	 transformation_editor_panel = parent;
-	 current_rendition = rendition;
+	 current_scene = scene;
 	 auto_apply_flag = auto_apply;
 	 rate_of_change = 0;
 	USE_PARAMETER(panel_name);
@@ -748,9 +748,9 @@ provoked then use this colour editor to do the settings.
 	 LEAVE;
 }
 
-void Transformation_editor::set_rendition(struct Cmiss_rendition *rendition)
+void Transformation_editor::set_scene(struct Cmiss_scene *scene)
 {
-	 current_rendition = rendition;
+	 current_scene = scene;
 }
 
 void Transformation_editor::transformation_editor_wx_get_rate_of_change_from_interface_slider()
@@ -914,11 +914,11 @@ provoked then use this colour editor to do the settings.
 void Transformation_editor::ApplyTransformation(int force_apply)
 {
 	 ENTER(Transformation_editor::OnTransformationEditorSliderChanged);
-	 if (current_rendition)
+	 if (current_scene)
 	 {
 			if (*auto_apply_flag || force_apply)
 			{
-				 Cmiss_rendition_set_transformation(current_rendition,
+				 Cmiss_scene_set_transformation(current_scene,
 					 &transformation_editor_transformation_matrix);
 			}
 			else

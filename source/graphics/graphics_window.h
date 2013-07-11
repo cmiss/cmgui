@@ -60,7 +60,6 @@ interest and set scene_viewer values directly.
 #include "interaction/interactive_tool.h"
 #include "user_interface/user_interface.h"
 
-
 /*
 Global constants
 ----------------
@@ -148,7 +147,7 @@ Structure to pass to modify_Graphics_window.
 	struct MANAGER(Interactive_tool) *interactive_tool_manager;
 	struct MANAGER(Light) *light_manager;
 	struct MANAGER(Light_model) *light_model_manager;
-	struct MANAGER(Scene) *scene_manager;
+	Cmiss_graphics_filter_module_id filter_module;
 	struct Cmiss_region *root_region;
 }; /* struct Modify_graphics_window_data */
 
@@ -186,10 +185,10 @@ struct Graphics_window *CREATE(Graphics_window)(const char *name,
 	struct Light *default_light,
 	struct MANAGER(Light_model) *light_model_manager,
 	struct Light_model *default_light_model,
-	struct MANAGER(Scene) *scene_manager,struct Scene *scene,
+	Cmiss_graphics_filter_module_id filter_module,Cmiss_scene *scene,
 	struct MANAGER(Interactive_tool) *interactive_tool_manager,
 	struct Time_keeper_app *default_time_keeper_app,
-	struct User_interface *user_interface);
+	struct User_interface *user_interface, Cmiss_region_id region);
 /*******************************************************************************
 LAST MODIFIED : 5 May 2004
 
@@ -360,7 +359,7 @@ are SCENE_VIEWER_PARALLEL,	SCENE_VIEWER_PERSPECTIVE and SCENE_VIEWER_CUSTOM.
 Whether you can set this for a pane depends on current layout_mode of window.
 ==============================================================================*/
 
-struct Scene *Graphics_window_get_Scene(struct Graphics_window *window);
+Cmiss_scene *Graphics_window_get_Scene(struct Graphics_window *window);
 /*******************************************************************************
 LAST MODIFIED : 6 October 1998
 

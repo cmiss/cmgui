@@ -68,7 +68,7 @@ int bring_up_spectrum_editor_dialog(
 	struct Graphics_buffer_app_package *graphics_buffer_package,
 	struct User_interface *user_interface,
 	struct Cmiss_graphics_module *graphics_module,
-	struct MANAGER(Scene) *scene_manager,
+	struct Cmiss_region *root_region,
 	struct Cmiss_region *spectrum_region);
 /*******************************************************************************
 LAST MODIFIED : 18 November 2005

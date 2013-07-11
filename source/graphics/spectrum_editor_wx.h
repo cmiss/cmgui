@@ -65,7 +65,7 @@ struct Spectrum_editor *CREATE(Spectrum_editor)(
 	 struct Graphics_buffer_app_package *graphics_buffer_package,
 	 struct User_interface *user_interface,
 	 struct Cmiss_graphics_module *graphics_module,
-	 struct MANAGER(Scene) *scene_manager,
+	 Cmiss_region_id root_region,
 	 struct Cmiss_region *spectrum_region);
 /*******************************************************************************
 LAST MODIFIED : 4 May 2004

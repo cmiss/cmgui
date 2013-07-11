@@ -45,7 +45,7 @@ Interactive tool for selecting cad primitives with a mouse and other devices.
 #include "configure/cmgui_configure.h"
 #endif /* defined (BUILD_WITH_CMAKE) */
 extern "C" {
-#include "api/cmiss_rendition.h"
+#include "api/cmiss_scene.h"
 #include "command/command.h"
 #include "computed_field/computed_field.h"
 #include "computed_field/computed_field_finite_element.h"
@@ -58,7 +58,7 @@ extern "C" {
 #include "interaction/interaction_graphics.h"
 #include "interaction/interaction_volume.h"
 #include "interaction/interactive_event.h"
-#include "graphics/rendition.h"
+#include "graphics/scene.h"
 #include "graphics/graphic.h"
 #include "region/cmiss_region.h"
 #include "time/time_keeper.h"

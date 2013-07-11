@@ -53,7 +53,7 @@ Create a cpp class that act as a transformation editor for the wx widgets.
 
 #include "general/debug.h"
 #include "graphics/auxiliary_graphics_types.h"
-#include "graphics/rendition.h"
+#include "graphics/scene.h"
 #include "io_devices/conversion.h"
 #include "graphics/graphics_library.h"
 #include "graphics/quaternion.hpp"
@@ -63,10 +63,10 @@ class Transformation_editor : public wxPanel
 
 public:
 
-	 Transformation_editor(wxPanel *parent, const char *panel_name, struct Cmiss_rendition *rendition,
+	 Transformation_editor(wxPanel *parent, const char *panel_name, struct Cmiss_scene *scene,
 			int *auto_apply);
 	 int set_transformation(gtMatrix *transformation_matrix);
-	 void set_rendition(struct Cmiss_rendition *rendition);
+	 void set_scene(struct Cmiss_scene *scene);
 	 void ApplyTransformation(int force_apply);
 
 	 ~Transformation_editor()
@@ -101,7 +101,7 @@ private:
 
 protected:
 	 int *auto_apply_flag, direction_system_index;
-	 struct Cmiss_rendition *current_rendition;
+	 struct Cmiss_scene *current_scene;
 	 gtMatrix transformation_editor_transformation_matrix;
 	 int rate_of_change;
 	 struct Dof3_data global_direction, global_position;

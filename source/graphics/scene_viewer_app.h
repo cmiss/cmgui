@@ -157,7 +157,7 @@ struct Cmiss_scene_viewer_app_module *CREATE(Cmiss_scene_viewer_app_module)(
 	struct MANAGER(Light) *light_manager,struct Light *default_light,
 	struct MANAGER(Light_model) *light_model_manager,
 	struct Light_model *default_light_model,
-	struct MANAGER(Scene) *scene_manager,struct Scene *scene,
+	Cmiss_graphics_filter_module_id filter_module,Cmiss_scene_id scene,
 	struct User_interface *user_interface);
 
 int DESTROY(Cmiss_scene_viewer_app_module)(struct Cmiss_scene_viewer_app_module **scene_viewer_app_package_address);
@@ -167,7 +167,7 @@ struct Scene_viewer_app *CREATE(Scene_viewer_app)(struct Graphics_buffer_app *gr
 	struct MANAGER(Light) *light_manager,struct Light *default_light,
 	struct MANAGER(Light_model) *light_model_manager,
 	struct Light_model *default_light_model,
-	struct MANAGER(Scene) *scene_manager, struct Scene *scene,
+	Cmiss_graphics_filter_id filter_module, struct Cmiss_scene *scene,
 	struct User_interface *user_interface);
 
 int DESTROY(Scene_viewer_app)(struct Scene_viewer_app **scene_viewer_app_address);
