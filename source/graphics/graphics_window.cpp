@@ -56,6 +56,7 @@ interest and set scene_viewer values directly.
 #include <math.h>
 #include "zinc/fieldmodule.h"
 #include "zinc/graphicsfilter.h"
+#include "zinc/sceneviewer.h"
 #include "command/parser.h"
 #include "computed_field/computed_field_image.h"
 #include "general/debug.h"
@@ -174,6 +175,7 @@ Contains information for a graphics window.
 	int manager_change_status;
 
 	struct Graphics_buffer_app_package *graphics_buffer_package;
+	Cmiss_scene_viewer_module_id scene_viewer_module;
 #if defined (GTK_USER_INTERFACE)
 	GtkWidget *shell_window;
 #if GTK_MAJOR_VERSION >= 2
@@ -242,10 +244,6 @@ Contains information for a graphics window.
 	Cmiss_scene *scene;
 	/* graphics window does not need to keep managers now that changes handled
 		 by scene_viewer */
-	struct Light *default_light;
-	struct Light_model *default_light_model;
-	struct MANAGER(Light) *light_manager;
-	struct MANAGER(Light_model) *light_model_manager;
 	Cmiss_graphics_filter_module_id filter_module;
 	/* interaction */
 	struct MANAGER(Interactive_tool) *interactive_tool_manager;
@@ -3180,16 +3178,12 @@ struct Graphics_window *CREATE(Graphics_window)(const char *name,
 	int minimum_colour_buffer_depth, int minimum_depth_buffer_depth,
 	int minimum_accumulation_buffer_depth,
 	struct Graphics_buffer_app_package *graphics_buffer_package,
-	struct Colour *background_colour,
-	struct MANAGER(Light) *light_manager,
-	struct Light *default_light,
-	struct MANAGER(Light_model) *light_model_manager,
-	struct Light_model *default_light_model,
 	Cmiss_graphics_filter_module_id filter_module,Cmiss_scene *scene,
 	struct MANAGER(Interactive_tool) *interactive_tool_manager,
 	struct Time_keeper_app *default_time_keeper_app,
 	struct User_interface *user_interface,
-	Cmiss_region_id root_region)
+	Cmiss_region_id root_region,
+	Cmiss_scene_viewer_module_id scene_viewer_module)
 /*******************************************************************************
 LAST MODIFIED : 6 May 2004
 
@@ -3221,10 +3215,9 @@ it.
 		(GRAPHICS_WINDOW_DOUBLE_BUFFERING==buffering_mode))&&
 		((GRAPHICS_WINDOW_ANY_STEREO_MODE==stereo_mode)||
 		(GRAPHICS_WINDOW_MONO==stereo_mode)||
-		(GRAPHICS_WINDOW_STEREO==stereo_mode))&&background_colour&&
-		light_manager&&light_model_manager&&default_light_model&&
+		(GRAPHICS_WINDOW_STEREO==stereo_mode))&&
 		filter_module&&scene&&interactive_tool_manager&&
-		graphics_buffer_package&&user_interface && root_region)
+		graphics_buffer_package&&user_interface && root_region && scene_viewer_module)
 	{
 		/* Try to allocate space for the window structure */
 		if (ALLOCATE(window,struct Graphics_window,1)&&
@@ -3233,6 +3226,7 @@ it.
 			strcpy((char *)window->name,name);
 			/* initialize the fields of the window structure */
 			window->access_count=0;
+			window->scene_viewer_module = Cmiss_scene_viewer_module_access(scene_viewer_module);
 			window->eye_spacing=0.25;
 			window->std_view_angle=40.0;
 			window->root_region = Cmiss_region_access(root_region);
@@ -3240,10 +3234,6 @@ it.
 				(struct MANAGER(Graphics_window) *)NULL;
 			window->manager_change_status = MANAGER_CHANGE_NONE(Graphics_window);
 			window->graphics_buffer_package = graphics_buffer_package;
-			window->light_manager=light_manager;
-			window->light_model_manager=light_model_manager;
-			window->default_light=ACCESS(Light)(default_light);
-			window->default_light_model=ACCESS(Light_model)(default_light_model);
 			window->filter_module=Cmiss_graphics_filter_module_access(filter_module);
 			window->scene=Cmiss_scene_access(scene);
 			window->time_keeper_app = ACCESS(Time_keeper_app)(default_time_keeper_app);
@@ -3343,8 +3333,8 @@ it.
 					{
 						pane_no = 0;
 						window->scene_viewer_array[pane_no] =
-						 CREATE(Scene_viewer)(graphics_buffer, background_colour, light_manager,
-							default_light, light_model_manager,default_light_model, filter_module,
+						 CREATE(Scene_viewer)(graphics_buffer, background_colour, light_module,
+							default_light, light_model_module,default_light_model, filter_module,
 							window->scene, user_interface);
 						if (window->scene_viewer_array[pane_no])
 						{
@@ -3688,10 +3678,10 @@ it.
 									window->number_of_scene_viewers))
 						{
 							 pane_no = 0;
-							 Cmiss_graphics_filter_id filter = Cmiss_graphics_filter_module_get_default_filter(filter_module);
+							 Cmiss_graphics_filter_id filter = Cmiss_graphics_filter_module_get_default_filter(
+								 window->filter_module);
 							 window->scene_viewer_array[pane_no] = CREATE(Scene_viewer_app)(graphics_buffer,
-								background_colour, light_manager,default_light, light_model_manager,
-								default_light_model, filter, window->scene, user_interface);
+								window->scene_viewer_module, filter, window->scene, user_interface);
 							 Cmiss_graphics_filter_destroy(&filter);
 							 if (window->scene_viewer_array[pane_no])
 							 {
@@ -3857,8 +3847,8 @@ it.
 							pane_no = 0;
 							if (window->scene_viewer_array[pane_no] =
 								 CREATE(Scene_viewer)(graphics_buffer,
-								 background_colour, light_manager,default_light,
-								 light_model_manager,default_light_model,
+								 background_colour, light_module,default_light,
+								 light_model_module,default_light_model,
 								 filter_module, window->scene,
 								 user_interface))
 							{
@@ -3965,14 +3955,6 @@ Graphics_window_destroy_CB.
 			DEALLOCATE(window->scene_viewer_array);
 		}
 #endif /* !defined (WX_USER_INTERFACE) */
-		if (window->default_light)
-		{
-			DEACCESS(Light)(&window->default_light);
-		}
-		if (window->default_light_model)
-		{
-			DEACCESS(Light_model)(&window->default_light_model);
-		}
 		if (window->filter_module)
 		{
 			Cmiss_graphics_filter_module_destroy(&window->filter_module);
@@ -4025,6 +4007,7 @@ Graphics_window_destroy_CB.
 		{
 		 Cmiss_region_destroy(&window->root_region);
 		}
+		Cmiss_scene_viewer_module_destroy(&window->scene_viewer_module);
 #if defined (WX_USER_INTERFACE)
 		if (window->wx_graphics_window)
 		{
@@ -4519,10 +4502,9 @@ Sets the layout mode in effect on the <window>.
 					if (graphics_buffer)
 					{
 						Scene_viewer_get_background_colour(first_scene_viewer->core_scene_viewer,&background_colour);
-						Cmiss_graphics_filter_id filter = Cmiss_graphics_filter_module_get_default_filter(window->filter_module);
+						Cmiss_graphics_filter_id filter = Cmiss_scene_viewer_get_filter(first_scene_viewer->core_scene_viewer);
 						window->scene_viewer_array[pane_no]=
-							CREATE(Scene_viewer_app)(graphics_buffer,&background_colour,window->light_manager,
-								window->default_light, window->light_model_manager,window->default_light_model,
+							CREATE(Scene_viewer_app)(graphics_buffer,	window->scene_viewer_module,
 								filter,window->scene, window->user_interface);
 						Cmiss_graphics_filter_destroy(&filter);
 						if (window->scene_viewer_array[pane_no])

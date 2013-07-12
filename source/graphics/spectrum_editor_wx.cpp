@@ -2397,10 +2397,10 @@ Creates a spectrum_editor widget.
 							if (graphics_buffer)
 							{
 								spectrum_editor->spectrum_editor_scene_viewer =
-									CREATE(Scene_viewer_app)(graphics_buffer,
+									Scene_viewer_app_for_spectrum_create(graphics_buffer,
 										&background_colour,
-										(struct MANAGER(Light) *)NULL,viewer_light,
-										(struct MANAGER(Light_model) *)NULL,viewer_light_model,
+										viewer_light,
+										viewer_light_model,
 										NULL,
 										spectrum_editor->spectrum_editor_scene, spectrum_editor->user_interface);
 								Cmiss_glyph_module_id glyph_module = Cmiss_graphics_module_get_glyph_module(graphics_module);

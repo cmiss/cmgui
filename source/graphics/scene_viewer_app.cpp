@@ -60,25 +60,20 @@ DEFINE_CMISS_CALLBACK_FUNCTIONS(Scene_viewer_app_input_callback,
 
 struct Cmiss_scene_viewer_app_module *CREATE(Cmiss_scene_viewer_app_module)(
 	struct Graphics_buffer_app_package *graphics_buffer_package,
-	struct Colour *background_colour,
-	struct MANAGER(Interactive_tool) *interactive_tool_manager,
-	struct MANAGER(Light) *light_manager,struct Light *default_light,
-	struct MANAGER(Light_model) *light_model_manager,
-	struct Light_model *default_light_model,
-	Cmiss_graphics_filter_module_id filter_module,Cmiss_scene_id scene,
+	Cmiss_graphics_module_id graphics_module,
+	Cmiss_scene_id scene,
 	struct User_interface *user_interface)
 {
 	struct Cmiss_scene_viewer_app_module *scene_viewer_module;
-	if (graphics_buffer_package&&background_colour&&default_light_model&&scene&&
-		user_interface&&graphics_buffer_package&&interactive_tool_manager)
+	if (graphics_buffer_package&&graphics_module&&scene&&user_interface)
 	{
 		/* allocate memory for the scene_viewer structure */
 		if (ALLOCATE(scene_viewer_module,struct Cmiss_scene_viewer_app_module,1))
 		{
 			scene_viewer_module->access_count = 1;
 			scene_viewer_module->graphics_buffer_package = graphics_buffer_package;
-			scene_viewer_module->core_scene_viewer_module = CREATE(Cmiss_scene_viewer_module)(background_colour,
-				interactive_tool_manager, light_manager, default_light, light_model_manager, default_light_model, filter_module);
+			scene_viewer_module->core_scene_viewer_module =
+				Cmiss_graphics_module_get_scene_viewer_module(graphics_module);
 			scene_viewer_module->user_interface = user_interface;
 			scene_viewer_module->scene_viewer_app_list = CREATE(LIST(Scene_viewer_app))();
 			scene_viewer_module->destroy_callback_list=
@@ -98,7 +93,7 @@ struct Cmiss_scene_viewer_app_module *CREATE(Cmiss_scene_viewer_app_module)(
 	LEAVE;
 
 	return (scene_viewer_module);
-} /* CREATE(Cmiss_scene_viewer_module) */
+}
 
 int DESTROY(Cmiss_scene_viewer_app_module)(
 	struct Cmiss_scene_viewer_app_module **scene_viewer_app_package_address)
@@ -139,9 +134,61 @@ void My_Cmiss_scene_viewer_callback(Cmiss_scene_viewer_id /* scene_viewer */,
 }
 
 struct Scene_viewer_app *CREATE(Scene_viewer_app)(struct Graphics_buffer_app *graphics_buffer,
+	Cmiss_scene_viewer_module_id scene_viewer_module,
+	Cmiss_graphics_filter_id filter, struct Cmiss_scene *scene,
+	struct User_interface *user_interface)
+{
+	struct Scene_viewer_app *scene_viewer = 0;
+	if (graphics_buffer && scene_viewer_module)
+	{
+		if (ALLOCATE(scene_viewer, Scene_viewer_app, 1))
+		{
+			scene_viewer->access_count = 1;
+			scene_viewer->graphics_buffer = ACCESS(Graphics_buffer_app)(graphics_buffer);
+			scene_viewer->core_scene_viewer = create_Scene_viewer_from_package(
+				Graphics_buffer_app_get_core_buffer(graphics_buffer), scene_viewer_module);
+			Cmiss_scene_viewer_set_scene(scene_viewer->core_scene_viewer, scene);
+			Cmiss_scene_viewer_set_filter(scene_viewer->core_scene_viewer, filter);
+			scene_viewer->user_interface = user_interface;
+			scene_viewer->idle_update_callback_id = (struct Event_dispatcher_idle_callback *)NULL;
+			/* no current interactive_tool */
+			scene_viewer->interactive_tool=(struct Interactive_tool *)NULL;
+			/* Currently only set when created from a Cmiss_scene_viewer_module
+				to avoid changing the interface */
+			scene_viewer->interactive_tool_manager = 0;
+			scene_viewer->input_callback_list=
+				CREATE(LIST(CMISS_CALLBACK_ITEM(Scene_viewer_app_input_callback)))();
+			/* Add the default callback */
+			CMISS_CALLBACK_LIST_ADD_CALLBACK(Scene_viewer_app_input_callback)(
+				scene_viewer->input_callback_list,
+				Scene_viewer_app_default_input_callback,NULL);
+			scene_viewer->sync_callback_list=
+				CREATE(LIST(CMISS_CALLBACK_ITEM(Scene_viewer_app_callback)))();
+			scene_viewer->transform_callback_list=
+				CREATE(LIST(CMISS_CALLBACK_ITEM(Scene_viewer_app_callback)))();
+			scene_viewer->destroy_callback_list=
+				CREATE(LIST(CMISS_CALLBACK_ITEM(Scene_viewer_app_callback)))();
+			Cmiss_scene_viewer_add_repaint_required_callback(scene_viewer->core_scene_viewer, My_Cmiss_scene_viewer_callback, scene_viewer);
+//			scene_viewer->repaint_required_callback_list=
+//				CREATE(LIST(CMISS_CALLBACK_ITEM(Scene_viewer_callback)))();
+			Graphics_buffer_app_add_initialise_callback(graphics_buffer,
+				Scene_viewer_app_initialise_callback, scene_viewer);
+			Graphics_buffer_app_add_resize_callback(graphics_buffer,
+				Scene_viewer_app_resize_callback, scene_viewer);
+			Graphics_buffer_app_add_expose_callback(graphics_buffer,
+				Scene_viewer_app_expose_callback, scene_viewer);
+			Graphics_buffer_app_add_input_callback(graphics_buffer,
+				Scene_viewer_app_graphics_buffer_input_callback, scene_viewer);
+		}
+	}
+
+	return (scene_viewer);
+}
+
+
+struct Scene_viewer_app *Scene_viewer_app_for_spectrum_create(struct Graphics_buffer_app *graphics_buffer,
 	struct Colour *background_colour,
-	struct MANAGER(Light) *light_manager,struct Light *default_light,
-	struct MANAGER(Light_model) *light_model_manager,
+	struct Light *default_light,
 	struct Light_model *default_light_model,
 	Cmiss_graphics_filter_id filter, struct Cmiss_scene *scene,
 	struct User_interface *user_interface)
@@ -155,9 +202,7 @@ struct Scene_viewer_app *CREATE(Scene_viewer_app)(struct Graphics_buffer_app *gr
 			scene_viewer->graphics_buffer = ACCESS(Graphics_buffer_app)(graphics_buffer);
 			scene_viewer->core_scene_viewer = CREATE(Scene_viewer)(Graphics_buffer_app_get_core_buffer(graphics_buffer),
 				background_colour,
-				light_manager,
 				default_light,
-				light_model_manager,
 				default_light_model,
 				filter);
 			Cmiss_scene_viewer_set_scene(scene_viewer->core_scene_viewer, scene);

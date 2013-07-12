@@ -149,7 +149,7 @@ Modifies the properties of a light model.
 								(void *)light_model_to_be_modified;
 							(help_option_table[0]).user_data=modify_light_model_data_void;
 							return_code=process_option(state,help_option_table);
-							DESTROY(Light_model)(&light_model_to_be_modified);
+							DEACCESS(Light_model)(&light_model_to_be_modified);
 						}
 						else
 						{
@@ -240,7 +240,7 @@ Modifies the properties of a light model.
 					}
 					if (light_model_to_be_modified)
 					{
-						DESTROY(Light_model)(&light_model_to_be_modified_copy);
+						DEACCESS(Light_model)(&light_model_to_be_modified_copy);
 					}
 				}
 			}

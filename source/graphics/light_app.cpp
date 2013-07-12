@@ -118,7 +118,7 @@ DESCRIPTION :
 							light_to_be_modified, modify_light_data_void, modify_Light);
 						return_code = Option_table_parse(option_table, state);
 						DESTROY(Option_table)(&option_table);
-						DESTROY(Light)(&light_to_be_modified);
+						DEACCESS(Light)(&light_to_be_modified);
 					}
 					else
 					{
@@ -211,7 +211,7 @@ DESCRIPTION :
 				DESTROY(Option_table)(&option_table);
 				if (light_to_be_modified)
 				{
-					DESTROY(Light)(&light_to_be_modified_copy);
+					DEACCESS(Light)(&light_to_be_modified_copy);
 				}
 			}
 		}

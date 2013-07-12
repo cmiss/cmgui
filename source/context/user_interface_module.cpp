@@ -275,25 +275,12 @@ struct User_interface_module *User_interface_module_create(
 		{
 			if (graphics_module)
 			{
-				struct Light *default_light =
-					Cmiss_graphics_module_get_default_light(graphics_module);
-				struct Light_model *default_light_model =
-					Cmiss_graphics_module_get_default_light_model(graphics_module);
 				Cmiss_scene_id default_scene =
 					Cmiss_graphics_module_get_default_scene(graphics_module);
-				Cmiss_graphics_filter_module_id filter_module =
-					Cmiss_graphics_module_get_filter_module(graphics_module);
-				UI_module->scene_viewer_module = CREATE(Cmiss_scene_viewer_app_module)
-					(UI_module->graphics_buffer_package,
-						&UI_module->background_colour,
-						UI_module->interactive_tool_manager,
-						Cmiss_graphics_module_get_light_manager(graphics_module), default_light,
-						Cmiss_graphics_module_get_light_model_manager(graphics_module), default_light_model,
-						filter_module, default_scene, UI_module->user_interface);
-				DEACCESS(Light_model)(&default_light_model);
-				DEACCESS(Light)(&default_light);
+				UI_module->scene_viewer_module = CREATE(Cmiss_scene_viewer_app_module)(
+					UI_module->graphics_buffer_package, graphics_module, default_scene,
+					UI_module->user_interface);
 				Cmiss_scene_destroy(&default_scene);
-				Cmiss_graphics_filter_module_destroy(&filter_module);
 			}
 		}
 #endif /* defined (USE_CMGUI_GRAPHICS_WINDOW) */

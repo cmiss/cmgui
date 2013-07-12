@@ -325,7 +325,6 @@ DESCRIPTION :
 #if defined (USE_CMGUI_COMMAND_WINDOW)
 	struct Command_window *command_window;
 #endif /* USE_CMGUI_COMMAND_WINDOW */
-	struct Colour background_colour,foreground_colour;
 	struct Execute_command *execute_command,*set_command;
 	struct Element_point_tool *element_point_tool;
 	struct Element_tool *element_tool;
@@ -361,9 +360,9 @@ DESCRIPTION :
 #endif /* defined (USE_CMGUI_GRAPHICS_WINDOW) */
 	struct MANAGER(Interactive_tool) *interactive_tool_manager;
 	struct IO_stream_package *io_stream_package;
-	struct MANAGER(Light) *light_manager;
+	Light_module *light_module;
 	struct Light *default_light;
-	struct MANAGER(Light_model) *light_model_manager;
+	Light_model_module *light_model_module;
 	struct Light_model *default_light_model;
 	struct Cmiss_graphics_material_module *material_module;
 	struct Cmiss_graphics_filter_module *filter_module;
@@ -2032,11 +2031,12 @@ Executes a GFX CREATE LIGHT command.
 		{
 			if (NULL != (command_data = (struct Cmiss_command_data *)command_data_void))
 			{
+				MANAGER(Light) *light_manager = Light_module_get_manager(command_data->light_module);
 				if (strcmp(PARSER_HELP_STRING,current_token)&&
 					strcmp(PARSER_RECURSIVE_HELP_STRING,current_token))
 				{
-					if (!FIND_BY_IDENTIFIER_IN_MANAGER(Light,name)(current_token,
-						command_data->light_manager))
+					MANAGER(Light) *light_manager = Light_module_get_manager(command_data->light_module);
+					if (!FIND_BY_IDENTIFIER_IN_MANAGER(Light,name)(current_token, light_manager))
 					{
 						if (NULL != (light=CREATE(Light)(current_token)))
 						{
@@ -2046,7 +2046,7 @@ Executes a GFX CREATE LIGHT command.
 							if (state->current_token)
 							{
 								modify_light_data.default_light=command_data->default_light;
-								modify_light_data.light_manager=command_data->light_manager;
+								modify_light_data.light_manager=light_manager;
 								return_code=modify_Light(state,(void *)light,
 									(void *)(&modify_light_data));
 							}
@@ -2054,7 +2054,7 @@ Executes a GFX CREATE LIGHT command.
 							{
 								return_code=1;
 							}
-							ADD_OBJECT_TO_MANAGER(Light)(light,command_data->light_manager);
+							ADD_OBJECT_TO_MANAGER(Light)(light,light_manager);
 						}
 						else
 						{
@@ -2074,7 +2074,7 @@ Executes a GFX CREATE LIGHT command.
 				else
 				{
 					modify_light_data.default_light=command_data->default_light;
-					modify_light_data.light_manager=command_data->light_manager;
+					modify_light_data.light_manager=light_manager;
 					return_code=modify_Light(state,(void *)NULL,
 						(void *)(&modify_light_data));
 					return_code=1;
@@ -2127,11 +2127,11 @@ Executes a GFX CREATE LMODEL command.
 		{
 			if (NULL != (command_data = (struct Cmiss_command_data *)command_data_void))
 			{
+				MANAGER(Light_model) *light_model_manager = Light_model_module_get_manager(command_data->light_model_module);
 				if (strcmp(PARSER_HELP_STRING,current_token)&&
 					strcmp(PARSER_RECURSIVE_HELP_STRING,current_token))
 				{
-					if (!FIND_BY_IDENTIFIER_IN_MANAGER(Light_model,name)(current_token,
-						command_data->light_model_manager))
+					if (!FIND_BY_IDENTIFIER_IN_MANAGER(Light_model,name)(current_token, light_model_manager))
 					{
 						if (NULL != (light_model=CREATE(Light_model)(current_token)))
 						{
@@ -2142,8 +2142,7 @@ Executes a GFX CREATE LMODEL command.
 							{
 								modify_light_model_data.default_light_model=
 									command_data->default_light_model;
-								modify_light_model_data.light_model_manager=
-									command_data->light_model_manager;
+								modify_light_model_data.light_model_manager=light_model_manager;
 								return_code=modify_Light_model(state,(void *)light_model,
 									(void *)(&modify_light_model_data));
 							}
@@ -2151,8 +2150,7 @@ Executes a GFX CREATE LMODEL command.
 							{
 								return_code=1;
 							}
-							ADD_OBJECT_TO_MANAGER(Light_model)(light_model,
-								command_data->light_model_manager);
+							ADD_OBJECT_TO_MANAGER(Light_model)(light_model, light_model_manager);
 						}
 						else
 						{
@@ -2173,8 +2171,7 @@ Executes a GFX CREATE LMODEL command.
 				{
 					modify_light_model_data.default_light_model=
 						command_data->default_light_model;
-					modify_light_model_data.light_model_manager=
-						command_data->light_model_manager;
+					modify_light_model_data.light_model_manager=light_model_manager;
 					return_code=modify_Light_model(state,(void *)NULL,
 						(void *)(&modify_light_model_data));
 					return_code=1;
@@ -4739,13 +4736,11 @@ Executes a GFX CREATE WINDOW command.
 							minimum_colour_buffer_depth, minimum_depth_buffer_depth,
 							minimum_accumulation_buffer_depth,
 							command_data->graphics_buffer_package,
-							&(command_data->background_colour),
-							command_data->light_manager,command_data->default_light,
-							command_data->light_model_manager,command_data->default_light_model,
 							command_data->filter_module,command_data->default_scene,
 							interactive_tool_manager,
 							command_data->default_time_keeper_app,
-							command_data->user_interface, command_data->root_region)))
+							command_data->user_interface, command_data->root_region,
+							command_data->scene_viewer_module->core_scene_viewer_module)))
 						{
 							if (!ADD_OBJECT_TO_MANAGER(Graphics_window)(window,
 							   command_data->graphics_window_manager))
@@ -4767,12 +4762,13 @@ Executes a GFX CREATE WINDOW command.
 							minimum_accumulation_buffer_depth,
 							command_data->graphics_buffer_package,
 							&(command_data->background_colour),
-							command_data->light_manager,command_data->default_light,
-							command_data->light_model_manager,command_data->default_light_model,
+							command_data->light_module,command_data->default_light,
+							command_data->light_model_module,command_data->default_light_model,
 							command_data->scene_manager,command_data->default_scene,
 							command_data->interactive_tool_manager,
 							command_data->default_time_keeper_app,
-							command_data->user_interface, command_data->root_region);
+							command_data->user_interface, command_data->root_region,
+							command_data->scene_viewer_module->core_scene_viewer_module);
 					  if (window)
 						{
 						   if (!ADD_OBJECT_TO_MANAGER(Graphics_window)(window,
@@ -10648,13 +10644,13 @@ Executes a GFX LIST command.
 				command_data->root_region, gfx_list_group);
 			/* light */
 			Option_table_add_entry(option_table, "light", NULL,
-				command_data->light_manager, gfx_list_light);
+				Light_module_get_manager(command_data->light_module), gfx_list_light);
 			/* lines */
 			Option_table_add_entry(option_table, "lines", /*dimension*/(void *)1,
 				command_data_void, gfx_list_FE_element);
 			/* lmodel */
 			Option_table_add_entry(option_table, "lmodel", NULL,
-				command_data->light_model_manager, gfx_list_light_model);
+				Light_model_module_get_manager(command_data->light_model_module), gfx_list_light_model);
 			/* material */
 			Option_table_add_entry(option_table, "material", NULL,
 				Cmiss_graphics_material_module_get_manager(command_data->material_module), gfx_list_graphical_material);
@@ -11808,14 +11804,14 @@ Executes a GFX MODIFY command.
 					(void *)command_data, gfx_modify_graphics_object);
 				/* light */
 				modify_light_data.default_light=command_data->default_light;
-				modify_light_data.light_manager=command_data->light_manager;
+				modify_light_data.light_manager=Light_module_get_manager(command_data->light_module);
 				Option_table_add_entry(option_table,"light",NULL,
 					(void *)(&modify_light_data), modify_Light);
 				/* lmodel */
 				modify_light_model_data.default_light_model=
 					command_data->default_light_model;
 				modify_light_model_data.light_model_manager=
-					command_data->light_model_manager;
+					Light_model_module_get_manager(command_data->light_model_module);
 				Option_table_add_entry(option_table,"lmodel",NULL,
 					(void *)(&modify_light_model_data), modify_Light_model);
 				/* material */
@@ -11850,9 +11846,10 @@ Executes a GFX MODIFY command.
 					command_data->graphics_window_manager;
 				modify_graphics_window_data.interactive_tool_manager=
 					command_data->interactive_tool_manager;
-				modify_graphics_window_data.light_manager=command_data->light_manager;
+				modify_graphics_window_data.light_manager=
+					Light_module_get_manager(command_data->light_module);
 				modify_graphics_window_data.light_model_manager=
-					command_data->light_model_manager;
+					Light_model_module_get_manager(command_data->light_model_module);
 				modify_graphics_window_data.root_region=command_data->root_region;
 				modify_graphics_window_data.filter_module = command_data->filter_module;
 				Option_table_add_entry(option_table,"window",NULL,
@@ -17644,9 +17641,9 @@ Initialise all the subcomponents of cmgui and create the Cmiss_command_data
 		command_data->comfile_window_manager=(struct MANAGER(Comfile_window) *)NULL;
 #endif /* defined WX_USER_INTERFACE*/
 		command_data->default_light=(struct Light *)NULL;
-		command_data->light_manager=(struct MANAGER(Light) *)NULL;
+		command_data->light_module=NULL;
 		command_data->default_light_model=(struct Light_model *)NULL;
-		command_data->light_model_manager=(struct MANAGER(Light_model) *)NULL;
+		command_data->light_model_module=NULL;
 		command_data->environment_map_manager=(struct MANAGER(Environment_map) *)NULL;
 		command_data->volume_texture_manager=(struct MANAGER(VT_volume_texture) *)NULL;
 		command_data->default_spectrum=(struct Spectrum *)NULL;
@@ -17690,12 +17687,6 @@ Initialise all the subcomponents of cmgui and create the Cmiss_command_data
 		command_data->cm_examples_directory=(char *)NULL;
 		command_data->cm_parameters_file_name=(char *)NULL;
 		command_data->default_time_keeper_app = (struct Time_keeper_app *)NULL;
-		command_data->background_colour.red=(float)0;
-		command_data->background_colour.green=(float)0;
-		command_data->background_colour.blue=(float)0;
-		command_data->foreground_colour.red=(float)1;
-		command_data->foreground_colour.green=(float)1;
-		command_data->foreground_colour.blue=(float)1;
 		command_data->help_directory=(char *)NULL;
 		command_data->help_url=(char *)NULL;
 #if defined (USE_PERL_INTERPRETER)
@@ -17909,17 +17900,14 @@ Initialise all the subcomponents of cmgui and create the Cmiss_command_data
 		command_data->graphics_module =
 			Cmiss_context_get_default_graphics_module(Cmiss_context_app_get_core_context(context));
 		/* light manager */
-		if (NULL != (command_data->light_manager=Cmiss_graphics_module_get_light_manager(
-						command_data->graphics_module)))
-		{
-			command_data->default_light=Cmiss_graphics_module_get_default_light(
-				command_data->graphics_module);
-		}
-		command_data->light_model_manager=
-			Cmiss_graphics_module_get_light_model_manager(command_data->graphics_module);
-
+		command_data->light_module=
+			Cmiss_graphics_module_get_light_module(command_data->graphics_module);
+		command_data->default_light=
+			Light_module_get_default_light(command_data->light_module);
+		command_data->light_model_module=
+			Cmiss_graphics_module_get_light_model_module(command_data->graphics_module);
 		command_data->default_light_model=
-			Cmiss_graphics_module_get_default_light_model(command_data->graphics_module);
+			Light_model_module_get_default_light_model(command_data->light_model_module);
 
 		// ensure we have default tessellations
 		command_data->tessellation_module = Cmiss_graphics_module_get_tessellation_module(command_data->graphics_module);
@@ -18415,7 +18403,8 @@ NOTE: Do not call this directly: call Cmiss_command_data_destroy() to deaccess.
 		DESTROY(MANAGER(Environment_map))(&command_data->environment_map_manager);
 		DEACCESS(Light_model)(&(command_data->default_light_model));
 		DEACCESS(Light)(&(command_data->default_light));
-		command_data->light_manager = NULL;
+		Light_module_destroy(&command_data->light_module);
+		Light_model_module_destroy(&command_data->light_model_module);
 		if (command_data->example_directory)
 		{
 			DEALLOCATE(command_data->example_directory);

@@ -180,15 +180,12 @@ struct Graphics_window *CREATE(Graphics_window)(const char *name,
 	int minimum_colour_buffer_depth, int minimum_depth_buffer_depth,
 	int minimum_accumulation_buffer_depth,
 	struct Graphics_buffer_app_package *graphics_buffer_package,
-	struct Colour *background_colour,
-	struct MANAGER(Light) *light_manager,
-	struct Light *default_light,
-	struct MANAGER(Light_model) *light_model_manager,
-	struct Light_model *default_light_model,
 	Cmiss_graphics_filter_module_id filter_module,Cmiss_scene *scene,
 	struct MANAGER(Interactive_tool) *interactive_tool_manager,
 	struct Time_keeper_app *default_time_keeper_app,
-	struct User_interface *user_interface, Cmiss_region_id region);
+	struct User_interface *user_interface,
+	Cmiss_region_id root_region,
+	Cmiss_scene_viewer_module_id scene_viewer_module);
 /*******************************************************************************
 LAST MODIFIED : 5 May 2004
 
