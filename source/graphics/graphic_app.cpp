@@ -1019,8 +1019,11 @@ int gfx_modify_scene_graphic(struct Parse_state *state,
 			}
 			if (font_name)
 			{
-				Cmiss_font *new_font = Cmiss_graphics_module_find_font_by_name(
-					scene_command_data->graphics_module, font_name);
+				Cmiss_font_module_id font_module = Cmiss_graphics_module_get_font_module(
+					scene_command_data->graphics_module);
+				Cmiss_font *new_font = Cmiss_font_module_find_font_by_name(
+					font_module, font_name);
+				Cmiss_font_module_destroy(&font_module);
 				if (new_font)
 				{
 					Cmiss_graphic_point_attributes_set_font(point_attributes, new_font);

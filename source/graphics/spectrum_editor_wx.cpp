@@ -2380,8 +2380,6 @@ Creates a spectrum_editor widget.
 					 {
 							/* Create new rendition */
 							spectrum_editor->private_region = Cmiss_region_access(spectrum_region);
-							Cmiss_graphics_module_enable_scenes(
-								graphics_module, spectrum_editor->private_region);
 							spectrum_editor->spectrum_editor_scene =CREATE(Cmiss_scene)(spectrum_editor->private_region,
 								graphics_module);
 							viewer_light = CREATE(Light)("spectrum_editor_light");

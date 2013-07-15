@@ -86,7 +86,7 @@ struct User_interface_module *User_interface_module_create(
 	if (context && ALLOCATE(UI_module, struct User_interface_module, 1))
 	{
 		root_region = Cmiss_context_get_default_region(Cmiss_context_app_get_core_context(context));
-		graphics_module = Cmiss_context_get_default_graphics_module(Cmiss_context_app_get_core_context(context));
+		graphics_module = Cmiss_context_get_graphics_module(Cmiss_context_app_get_core_context(context));
 		UI_module->event_dispatcher = NULL;
 #if defined (USE_CMGUI_GRAPHICS_WINDOW)
 		UI_module->graphics_window_manager = NULL;
@@ -276,7 +276,7 @@ struct User_interface_module *User_interface_module_create(
 			if (graphics_module)
 			{
 				Cmiss_scene_id default_scene =
-					Cmiss_graphics_module_get_default_scene(graphics_module);
+					Cmiss_graphics_module_get_scene(graphics_module, root_region);
 				UI_module->scene_viewer_module = CREATE(Cmiss_scene_viewer_app_module)(
 					UI_module->graphics_buffer_package, graphics_module, default_scene,
 					UI_module->user_interface);

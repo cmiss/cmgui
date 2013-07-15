@@ -3,7 +3,7 @@
 #endif /* defined (BUILD_WITH_CMAKE) */
 #include <string>
 #include "zinc/font.h"
-#include "zinc/graphicsmodule.h"
+#include "zinc/font.h"
 #include "general/enumerator.h"
 #include "general/enumerator_private.hpp"
 #include "general/message.h"
@@ -13,7 +13,7 @@
 
 
 int gfx_define_font(struct Parse_state *state,
-	void *dummy_to_be_modified,void *graphics_module_void)
+	void *dummy_to_be_modified,void *font_module_void)
 /*******************************************************************************
 LAST MODIFIED : 12 March 2008
 
@@ -23,9 +23,9 @@ Executes a GFX DEFINE FONT command.
 {
 	const char *current_token, *font_name;
 	int return_code;
-	Cmiss_graphics_module_id graphics_module = 0;
+	Cmiss_font_module_id font_module = 0;
 
-	if (state && (graphics_module = (Cmiss_graphics_module_id)graphics_module_void))
+	if (state && (font_module = (Cmiss_font_module_id)font_module_void))
 	{
 		if (NULL != (current_token = state->current_token))
 		{
@@ -36,11 +36,11 @@ Executes a GFX DEFINE FONT command.
 				if (shift_Parse_state(state,1)&&
 					(current_token=state->current_token))
 				{
-					Cmiss_font_id font = Cmiss_graphics_module_find_font_by_name(
-						graphics_module, font_name);
+					Cmiss_font_id font = Cmiss_font_module_find_font_by_name(
+						font_module, font_name);
 					if (!font)
 					{
-						font = Cmiss_graphics_module_create_font(graphics_module);
+						font = Cmiss_font_module_create_font(font_module);
 						Cmiss_font_set_name(font, font_name);
 					}
 					Cmiss_font_render_type render_type = Cmiss_font_get_render_type(font);

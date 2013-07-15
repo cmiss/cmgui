@@ -426,12 +426,12 @@ int gfx_define_graphics_filter(struct Parse_state *state, void *root_region_void
 }
 
 int gfx_list_graphics_filter(struct Parse_state *state, void *dummy_to_be_modified,
-	void *graphics_module_void)
+	void *filter_module_void)
 {
 	USE_PARAMETER(dummy_to_be_modified);
 	int return_code = 1;
-	Cmiss_graphics_module *graphics_module = (Cmiss_graphics_module *)graphics_module_void;
-	if (state && graphics_module)
+	Cmiss_graphics_filter_module_id filter_module = (Cmiss_graphics_filter_module_id)filter_module_void;
+	if (state && filter_module)
 	{
 		char *filter_name = NULL;
 		Option_table *option_table = CREATE(Option_table)();
@@ -443,7 +443,7 @@ int gfx_list_graphics_filter(struct Parse_state *state, void *dummy_to_be_modifi
 			if (filter_name)
 			{
 				Cmiss_graphics_filter *filter =
-					Cmiss_graphics_module_find_filter_by_name(graphics_module, filter_name);
+					Cmiss_graphics_filter_module_find_filter_by_name(filter_module, filter_name);
 				if (filter)
 				{
 					filter->list("gfx define graphics_filter");

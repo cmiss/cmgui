@@ -194,22 +194,6 @@ struct Cmiss_context_app *Cmiss_context_app_access(struct Cmiss_context_app *con
 	}
 	return context;
 }
-struct Cmiss_graphics_module *Cmiss_context_app_create_graphics_module(struct Cmiss_context_app *context)
-{
-	struct Cmiss_graphics_module *graphics_module = NULL;
-
-	if (context)
-	{
-		graphics_module = Cmiss_graphics_module_create(context->context);
-	}
-	else
-	{
-		display_message(ERROR_MESSAGE,
-			"Cmiss_context_create_graphics_module.  Missing context");
-	}
-
-	return graphics_module;
-}
 
 struct Cmiss_command_data *Cmiss_context_get_default_command_interpreter(struct Cmiss_context_app *context)
 {

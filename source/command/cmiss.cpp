@@ -837,11 +837,14 @@ with tick marks and labels for showing the scale of a spectrum.
 					display_message(WARNING_MESSAGE,"Limited to 100 tick_divisions");
 					tick_divisions=100;
 				}
-				if (!(font_name && (0 != (font = Cmiss_graphics_module_find_font_by_name(
-					command_data->graphics_module, font_name)))))
+				Cmiss_font_module_id font_module = Cmiss_graphics_module_get_font_module(
+					command_data->graphics_module);
+				if (!(font_name && (0 != (font = Cmiss_font_module_find_font_by_name(
+					font_module, font_name)))))
 				{
 					font = ACCESS(Cmiss_font)(command_data->default_font);
 				}
+				Cmiss_font_module_destroy(&font_module);
 				/* try to find existing colour_bar for updating */
 				graphics_object=FIND_BY_IDENTIFIER_IN_MANAGER(GT_object,name)(
 					graphics_object_name,command_data->glyph_manager);
@@ -5743,8 +5746,11 @@ Executes a GFX DEFINE command.
 				Option_table_add_entry(option_table, "field", command_data->root_region,
 					command_data->computed_field_package, define_Computed_field);
 				/* font */
+				Cmiss_font_module_id font_module = Cmiss_graphics_module_get_font_module(
+					command_data->graphics_module);
 				Option_table_add_entry(option_table, "font", NULL,
 					command_data->graphics_module, gfx_define_font);
+				Cmiss_font_module_destroy(&font_module);
 				/* scene */
 				Define_scene_data define_scene_data;
 				define_scene_data.root_region = command_data->root_region;
@@ -10635,7 +10641,7 @@ Executes a GFX LIST command.
 				command_data->glyph_manager, gfx_list_graphics_object);
 			/* graphics_filter */
 			Option_table_add_entry(option_table, "graphics_filter", NULL,
-				(void *)command_data->graphics_module, gfx_list_graphics_filter);
+				(void *)command_data->filter_module, gfx_list_graphics_filter);
 			/* grid_points */
 			Option_table_add_entry(option_table, "grid_points", NULL,
 				command_data_void, gfx_list_grid_points);
@@ -17898,7 +17904,7 @@ Initialise all the subcomponents of cmgui and create the Cmiss_command_data
 		command_data->comfile_window_manager = UI_module->comfile_window_manager;
 #endif /* defined (WX_USER_INTERFACE) */
 		command_data->graphics_module =
-			Cmiss_context_get_default_graphics_module(Cmiss_context_app_get_core_context(context));
+			Cmiss_context_get_graphics_module(Cmiss_context_app_get_core_context(context));
 		/* light manager */
 		command_data->light_module=
 			Cmiss_graphics_module_get_light_module(command_data->graphics_module);
@@ -17925,8 +17931,11 @@ Initialise all the subcomponents of cmgui and create the Cmiss_command_data
 				Cmiss_graphics_module_get_spectrum_manager(
 					command_data->graphics_module)))
 		{
-			command_data->default_spectrum=
-				Cmiss_graphics_module_get_default_spectrum(command_data->graphics_module);
+			Cmiss_spectrum_module_id spectrum_module =
+				Cmiss_graphics_module_get_spectrum_module(command_data->graphics_module);
+			command_data->default_spectrum =
+					Cmiss_spectrum_module_get_default_spectrum(spectrum_module);
+			Cmiss_spectrum_module_destroy(&spectrum_module);
 		}
 		/* create Material module and CMGUI default materials */
 		command_data->material_module = Cmiss_graphics_module_get_material_module(command_data->graphics_module);
@@ -18109,8 +18118,8 @@ Initialise all the subcomponents of cmgui and create the Cmiss_command_data
 		/* scene manager */
 		/*???RC & SAB.   LOTS of managers need to be created before this
 		  and the User_interface too */
-		command_data->default_scene = Cmiss_graphics_module_get_default_scene(
-			command_data->graphics_module);
+		command_data->default_scene = Cmiss_graphics_module_get_scene(
+			command_data->graphics_module, command_data->root_region);
 		if (command_data->computed_field_package && command_data->default_time_keeper_app)
 		{
 			Computed_field_register_types_time(command_data->computed_field_package,

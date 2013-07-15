@@ -258,8 +258,8 @@ release.
 			shift_pressed=(INTERACTIVE_EVENT_MODIFIER_SHIFT & input_modifier);
 			Cmiss_graphics_module *graphics_module = Cmiss_scene_get_graphics_module(top_scene);
 			Cmiss_graphics_filter_module_id filter_module = Cmiss_graphics_module_get_filter_module(graphics_module);
-			Cmiss_graphics_filter_id combined_filter = Cmiss_graphics_module_create_filter_operator_or(
-				graphics_module);
+			Cmiss_graphics_filter_id combined_filter = Cmiss_graphics_filter_module_create_filter_operator_or(
+				filter_module);
 			if ((element_tool->select_elements_enabled)||(element_tool->select_faces_enabled)||
 				(element_tool->select_lines_enabled))
 			{
