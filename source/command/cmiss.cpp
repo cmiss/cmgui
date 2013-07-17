@@ -3819,9 +3819,8 @@ Modifies the properties of a texture.
 					evaluate_data.texture_coordinates_field_name = (char *)NULL;
 					/* Try for the special transparent gray material first */
 					if (!(evaluate_data.fail_material =
-						FIND_BY_IDENTIFIER_IN_MANAGER(Graphical_material, name)(
-						"transparent_gray50", Cmiss_graphics_material_module_get_manager(
-							command_data->material_module))))
+					Cmiss_graphics_material_module_find_material_by_name(command_data->material_module,
+						"transparent_gray50")))
 					{
 						/* Just use the default material */
 						evaluate_data.fail_material = Cmiss_graphics_material_module_get_default_material(
