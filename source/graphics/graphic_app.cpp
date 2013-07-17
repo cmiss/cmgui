@@ -1011,7 +1011,6 @@ int gfx_modify_scene_graphic(struct Parse_state *state,
 			Cmiss_graphic_point_attributes_set_label_offset(point_attributes, 3, label_offset);
 			if (0 < label_strings.number_of_strings)
 			{
-				int number_of_labels = label_strings.number_of_strings;
 				for (int i = 0; i < label_strings.number_of_strings; ++i)
 				{
 					Cmiss_graphic_point_attributes_set_label_text(point_attributes, i + 1, label_strings.strings[i]);
@@ -1066,7 +1065,7 @@ int gfx_modify_scene_graphic(struct Parse_state *state,
 		if (legacy_graphic_type == LEGACY_GRAPHIC_CYLINDERS)
 		{
 			// convert radius to diameter
-			line_base_size[1] = line_base_size[0] = 2.0*constant_radius; 
+			line_base_size[1] = line_base_size[0] = 2.0*constant_radius;
 			line_scale_factors[1] = line_scale_factors[0] = 2.0*radius_scale_factor;
 		}
 

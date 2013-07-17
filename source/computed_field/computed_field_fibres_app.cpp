@@ -1,4 +1,5 @@
 
+#include "zinc/fieldfibres.h"
 #include "general/debug.h"
 #include "general/message.h"
 #include "command/parser.h"
@@ -7,7 +8,6 @@
 #include "computed_field/computed_field_private_app.hpp"
 #include "computed_field/computed_field_set.h"
 #include "computed_field/computed_field_set_app.h"
-#include "computed_field/computed_field_fibres.h"
 
 class Computed_field_fibres_package : public Computed_field_type_package
 {
@@ -83,7 +83,7 @@ allows its contents to be modified.
 			if (return_code)
 			{
 				return_code = field_modify->update_field_and_deaccess(
-					Computed_field_create_fibre_axes(
+					Cmiss_field_module_create_fibre_axes(
 						field_modify->get_field_module(), fibre_field, coordinate_field));
 			}
 			DESTROY(Option_table)(&option_table);
