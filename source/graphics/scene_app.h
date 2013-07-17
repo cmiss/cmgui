@@ -3,6 +3,25 @@
 #if !defined (SCENE_APP_H_)
 #define SCENE_APP_H_
 
+/**
+ * Subset of command data passed to scene modify routines.
+ */
+struct Scene_command_data
+{
+	struct Cmiss_graphics_module *graphics_module;
+	struct Cmiss_scene *scene;
+	struct Graphical_material *default_material;
+	struct Cmiss_font *default_font;
+	Cmiss_glyph_module_id glyph_module;
+	struct MANAGER(Computed_field) *computed_field_manager;
+	struct Cmiss_region *region;
+	/* root_region used for seeding streamlines from the nodes in a region */
+	struct Cmiss_region *root_region;
+	Cmiss_graphics_material_module_id material_module;
+	Cmiss_tessellation_module_id tessellation_module;
+	struct Spectrum *default_spectrum;
+	struct MANAGER(Spectrum) *spectrum_manager;
+};
 
 /**
  * Executes a GFX MODIFY SCENE GENERAL command.
@@ -30,7 +49,7 @@ int Cmiss_scene_execute_command_internal(Cmiss_scene_id scene,
  * given name using all other defaults.
  */
 int Cmiss_scene_add_glyph(struct Cmiss_scene *scene,
-	struct GT_object *glyph, const char *cmiss_graphic_name);
+	Cmiss_glyph *glyph, const char *cmiss_graphic_name);
 
 /**
  * Makes a new graphic of the supplied graphic_type, optionally a copy of an

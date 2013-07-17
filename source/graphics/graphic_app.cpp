@@ -23,7 +23,6 @@
 #include "graphics/auxiliary_graphics_types_app.h"
 #include "computed_field/computed_field_set.h"
 #include "computed_field/computed_field_set_app.h"
-#include "graphics/graphics_object_app.h"
 #include "graphics/spectrum_app.h"
 #include "graphics/font.h"
 #include "graphics/scene_app.h"

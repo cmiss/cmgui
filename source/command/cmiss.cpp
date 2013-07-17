@@ -134,7 +134,6 @@
 #include "general/matrix_vector.h"
 #include "general/multi_range.h"
 #include "general/mystring.h"
-#include "graphics/defined_graphics_objects.h"
 #include "graphics/environment_map.h"
 #include "graphics/graphics_object.h"
 #include "graphics/graphics_window.h"
@@ -143,6 +142,7 @@
 #include "graphics/light_model.h"
 #include "graphics/material.h"
 #include "graphics/glyph.hpp"
+#include "graphics/glyph_colour_bar.hpp"
 #include "graphics/graphic.h"
 #include "graphics/graphics_module.h"
 #include "graphics/render_to_finite_elements.h"
@@ -281,7 +281,7 @@
 #include "finite_element/finite_element_region_app.h"
 #include "graphics/scene_viewer_app.h"
 #include "graphics/font_app.h"
-#include "graphics/graphics_object_app.h"
+#include "graphics/glyph_app.h"
 #include "graphics/tessellation_app.hpp"
 #include "graphics/tessellation_app.hpp"
 #include "graphics/graphics_filter_app.hpp"
@@ -341,7 +341,6 @@ DESCRIPTION :
 #endif /* defined (SELECT_DESCRIPTORS) */
 	/* list of glyphs = simple graphics objects with only geometry */
 	Cmiss_glyph_module_id glyph_module;
-	struct MANAGER(GT_object) *glyph_manager;
 #if defined (WX_USER_INTERFACE)
 	struct MANAGER(Comfile_window) *comfile_window_manager;
 #endif /* defined (WX_USER_INTERFACE)*/
@@ -735,23 +734,19 @@ static int gfx_create_axes(struct Parse_state *state,
 	return 1;
 }
 
+/**
+ * Executes a GFX CREATE COLOUR_BAR command. Creates a colour bar glyph
+ * with tick marks and labels for showing the scale of a spectrum.
+ */
 static int gfx_create_colour_bar(struct Parse_state *state,
 	void *dummy_to_be_modified,void *command_data_void)
-/*******************************************************************************
-LAST MODIFIED : 29 March 2001
-
-DESCRIPTION :
-Executes a GFX CREATE COLOUR_BAR command. Creates a colour bar graphics object
-with tick marks and labels for showing the scale of a spectrum.
-==============================================================================*/
 {
-	char *font_name, *graphics_object_name,*number_format;
+	char *font_name, *glyph_name,*number_format;
 	float bar_length,bar_radius,extend_length,tick_length;
 	int number_of_components,return_code,tick_divisions;
 	struct Cmiss_command_data *command_data;
 	struct Graphical_material *label_material,*material;
-	struct Cmiss_font *font;
-	struct GT_object *graphics_object = NULL;
+	//struct Cmiss_font *font;
 	struct Option_table *option_table;
 	struct Spectrum *spectrum;
 	Triple bar_axis,bar_centre,side_axis;
@@ -763,45 +758,39 @@ with tick marks and labels for showing the scale of a spectrum.
 		if (NULL != (command_data = (struct Cmiss_command_data *)command_data_void))
 		{
 			/* initialise defaults */
-			graphics_object_name = duplicate_string("colour_bar");
+			glyph_name = duplicate_string("colour_bar");
 			number_format = duplicate_string("%+.4e");
 			/* must access it now, because we deaccess it later */
 			label_material= Cmiss_graphics_material_module_get_default_material(command_data->material_module);
 			material= Cmiss_graphics_material_module_get_default_material(command_data->material_module);
 			spectrum=ACCESS(Spectrum)(command_data->default_spectrum);
 			number_of_components=3;
-			bar_centre[0]=-0.9;
-			bar_centre[1]=0.0;
-			bar_centre[2]=0.5;
-			bar_axis[0]=0.0;
-			bar_axis[1]=1.0;
-			bar_axis[2]=0.0;
-			side_axis[0]=1.0;
-			side_axis[1]=0.0;
-			side_axis[2]=0.0;
-			bar_length=1.6;
-			extend_length=0.06;
-			bar_radius=0.06;
-			tick_length=0.04;
-			tick_divisions=10;
+			double bar_centre[3] = { -0.9, 0.0, 0.5 };
+			double bar_axis[3] = { 0.0, 1.0, 0.0 };
+			double side_axis[3] = { 1.0, 0.0, 0.0 };
+			double bar_length = 1.6;
+			double extend_length = 0.06;
+			double bar_radius = 0.06;
+			double tick_length = 0.04;
+			double tick_divisions = 10;
 			font_name = (char *)NULL;
 
 			option_table=CREATE(Option_table)();
 			/* as */
-			Option_table_add_entry(option_table,"as",&graphics_object_name,
+			Option_table_add_entry(option_table,"as",&glyph_name,
 				(void *)1,set_name);
 			/* axis */
 			Option_table_add_entry(option_table,"axis",bar_axis,
-				&number_of_components,set_float_vector);
+				&number_of_components,set_double_vector);
 			/* centre */
 			Option_table_add_entry(option_table,"centre",bar_centre,
-				&number_of_components,set_float_vector);
+				&number_of_components,set_double_vector);
 			/* divisions */
 			Option_table_add_entry(option_table,"divisions",&tick_divisions,
 				NULL,set_int_non_negative);
 			/* extend_length */
 			Option_table_add_entry(option_table,"extend_length",&extend_length,
-				NULL,set_float_non_negative);
+				NULL,set_double);
 			/* font */
 			Option_table_add_name_entry(option_table, "font",
 				&font_name);
@@ -810,7 +799,7 @@ with tick marks and labels for showing the scale of a spectrum.
 				command_data->material_module);
 			/* length */
 			Option_table_add_entry(option_table,"length",&bar_length,
-				NULL,set_float_positive);
+				NULL,set_double);
 			/* number_format */
 			Option_table_add_entry(option_table,"number_format",&number_format,
 				(void *)1,set_name);
@@ -819,70 +808,72 @@ with tick marks and labels for showing the scale of a spectrum.
 				command_data->material_module);
 			/* radius */
 			Option_table_add_entry(option_table,"radius",&bar_radius,
-				NULL,set_float_positive);
+				NULL,set_double);
 			/* spectrum */
 			Option_table_add_entry(option_table,"spectrum",&spectrum,
 				command_data->spectrum_manager,set_Spectrum);
 			/* tick_direction */
 			Option_table_add_entry(option_table,"tick_direction",side_axis,
-				&number_of_components,set_float_vector);
+				&number_of_components,set_double_vector);
 			/* tick_length */
 			Option_table_add_entry(option_table,"tick_length",&tick_length,
-				NULL,set_float_non_negative);
+				NULL,set_double);
 			if (0 != (return_code = Option_table_multi_parse(option_table, state)))
 			{
-				if (100 < tick_divisions)
+				Cmiss_glyph_module_begin_change(command_data->glyph_module);
+				Cmiss_glyph_id glyph = Cmiss_glyph_module_find_glyph_by_name(command_data->glyph_module, glyph_name);
+				Cmiss_glyph_colour_bar_id colour_bar = 0;
+				if (glyph)
 				{
-					display_message(WARNING_MESSAGE,"Limited to 100 tick_divisions");
-					tick_divisions=100;
-				}
-				Cmiss_font_module_id font_module = Cmiss_graphics_module_get_font_module(
-					command_data->graphics_module);
-				if (!(font_name && (0 != (font = Cmiss_font_module_find_font_by_name(
-					font_module, font_name)))))
-				{
-					font = ACCESS(Cmiss_font)(command_data->default_font);
-				}
-				Cmiss_font_module_destroy(&font_module);
-				/* try to find existing colour_bar for updating */
-				graphics_object=FIND_BY_IDENTIFIER_IN_MANAGER(GT_object,name)(
-					graphics_object_name,command_data->glyph_manager);
-				if (create_Spectrum_colour_bar(&graphics_object,
-						graphics_object_name,spectrum,/*component_number*/0,
-						bar_centre,bar_axis,side_axis,
-						bar_length,bar_radius,extend_length,tick_divisions,tick_length,
-						number_format,material,label_material, font))
-				{
-					ACCESS(GT_object)(graphics_object);
-					if (IS_MANAGED(GT_object)(graphics_object,
-						command_data->glyph_manager) ||
-						ADD_OBJECT_TO_MANAGER(GT_object)(graphics_object,
-							command_data->glyph_manager))
+					colour_bar = Cmiss_glyph_cast_colour_bar(glyph);
+					if (0 == colour_bar)
 					{
-						GT_object_set_managed(graphics_object, 1);
-						return_code=1;
+						display_message(ERROR_MESSAGE, "Glyph '%s' is not a colour bar", glyph_name);
+						return_code = 0;
 					}
-					else
-					{
-						display_message(ERROR_MESSAGE,
-							"gfx_create_colour_bar.  Could not add graphics object to list");
-						return_code=0;
-					}
-					DEACCESS(GT_object)(&graphics_object);
+					Cmiss_glyph_destroy(&glyph);
 				}
 				else
 				{
-					display_message(ERROR_MESSAGE,
-						"gfx_create_colour_bar.  Could not create colour bar");
-					return_code=0;
+					colour_bar = Cmiss_glyph_module_create_colour_bar(command_data->glyph_module, spectrum);
+					Cmiss_glyph_set_name(Cmiss_glyph_colour_bar_base_cast(colour_bar), glyph_name);
+					Cmiss_glyph_set_managed(Cmiss_glyph_colour_bar_base_cast(colour_bar), true);
 				}
-				DEACCESS(Cmiss_font)(&font);
+				if (colour_bar)
+				{
+					double magnitude = sqrt(bar_axis[0]*bar_axis[0]+bar_axis[1]*bar_axis[1]+bar_axis[2]*bar_axis[2]);
+					if (magnitude > 0.0)
+					{
+						for (int i = 0; i < 3; ++i)
+						{
+							bar_axis[i] *= (bar_length / magnitude);
+						}
+					}
+					magnitude = sqrt(side_axis[0]*side_axis[0]+side_axis[1]*side_axis[1]+side_axis[2]*side_axis[2]);
+					if (magnitude > 0.0)
+					{
+						for (int i = 0; i < 3; ++i)
+						{
+							side_axis[i] *= (bar_radius * 2.0 / magnitude);
+						}
+					}
+					Cmiss_glyph_colour_bar_set_axis(colour_bar, 3, bar_axis);
+					Cmiss_glyph_colour_bar_set_centre(colour_bar, 3, bar_centre);
+					Cmiss_glyph_colour_bar_set_extend_length(colour_bar, extend_length);
+					Cmiss_glyph_colour_bar_set_number_format(colour_bar, number_format);
+					Cmiss_glyph_colour_bar_set_side_axis(colour_bar, 3, side_axis);
+					Cmiss_glyph_colour_bar_set_tick_divisions(colour_bar, tick_divisions);
+					Cmiss_glyph_colour_bar_set_tick_length(colour_bar, tick_length);
+					Cmiss_glyph_colour_bar_set_tick_material(colour_bar, label_material);
+					Cmiss_glyph_colour_bar_destroy(&colour_bar);
+				}
+				Cmiss_glyph_module_end_change(command_data->glyph_module);
 			} /* parse error, help */
 			DESTROY(Option_table)(&option_table);
 			Cmiss_graphics_material_destroy(&label_material);
 			Cmiss_graphics_material_destroy(&material);
 			DEACCESS(Spectrum)(&spectrum);
-			DEALLOCATE(graphics_object_name);
+			DEALLOCATE(glyph_name);
 			DEALLOCATE(number_format);
 		}
 		else
@@ -900,7 +891,7 @@ with tick marks and labels for showing the scale of a spectrum.
 	LEAVE;
 
 	return (return_code);
-} /* gfx_create_colour_bar */
+}
 
 #if defined (WX_USER_INTERFACE)
 static int gfx_create_element_creator(struct Parse_state *state,
@@ -1372,7 +1363,6 @@ Executes a GFX CREATE FLOW_PARTICLES command.
 {
 	float time;
 	FE_value xi[3];
-	gtObject *graphics_object;
 	struct GT_pointset *pointset;
 	int current_number_of_particles, element_number, number_of_particles,
 		return_code, vector_components;
@@ -1498,8 +1488,14 @@ Executes a GFX CREATE FLOW_PARTICLES command.
 		}
 		if (return_code)
 		{
-			if (NULL != (graphics_object=FIND_BY_IDENTIFIER_IN_MANAGER(GT_object,name)(
-				graphics_object_name,command_data->glyph_manager)))
+			Cmiss_glyph_module_begin_change(command_data->glyph_module);
+			Cmiss_glyph_id glyph = Cmiss_glyph_module_find_glyph_by_name(command_data->glyph_module, graphics_object_name);
+			Cmiss_glyph_static *glyphStatic = dynamic_cast<Cmiss_glyph_static*>(glyph);
+			GT_object *graphics_object = 0;
+			if (glyphStatic)
+			{
+			graphics_object = glyphStatic->getGraphicsObject();
+			if (0 != graphics_object)
 			{
 				if (create_more)
 				{
@@ -1507,6 +1503,7 @@ Executes a GFX CREATE FLOW_PARTICLES command.
 					{
 						GT_pointset_get_point_list(pointset,
 							&current_number_of_particles, &old_particle_positions);
+						glyph->changed();
 					}
 					else
 					{
@@ -1522,6 +1519,11 @@ Executes a GFX CREATE FLOW_PARTICLES command.
 					return_code = 0;
 				}
 			}
+			else if (glyph)
+			{
+				display_message(ERROR_MESSAGE, "gfx_create_flow_particles.  Invalid glyph");
+				return_code = 0;
+			}
 			else
 			{
 				if (create_more)
@@ -1532,22 +1534,13 @@ Executes a GFX CREATE FLOW_PARTICLES command.
 				}
 				else
 				{
-					if ((graphics_object=CREATE(GT_object)(graphics_object_name,
-						g_POINTSET,material))&&
-						GT_object_set_managed(graphics_object, 1) &&
-						ADD_OBJECT_TO_MANAGER(GT_object)(graphics_object,
-							command_data->glyph_manager))
-					{
-						return_code=1;
-					}
-					else
-					{
-						display_message(ERROR_MESSAGE,
-							"gfx_create_flow_particles.  Could not create graphics object");
-						DESTROY(GT_object)(&graphics_object);
-						return_code=0;
-					}
+					graphics_object = CREATE(GT_object)(graphics_object_name, g_POINTSET, material);
+					ACCESS(GT_object)(graphics_object);
+					glyph = Cmiss_glyph_module_create_glyph_static(command_data->glyph_module, graphics_object);
+					Cmiss_glyph_set_managed(glyph, true);
+					Cmiss_glyph_set_name(glyph, graphics_object_name);
 				}
+			}
 			}
 			if (return_code)
 			{
@@ -1617,6 +1610,7 @@ Executes a GFX CREATE FLOW_PARTICLES command.
 						if (create_more)
 						{
 							GT_object_changed(graphics_object);
+							glyph->changed();
 						}
 						else
 						{
@@ -1657,6 +1651,12 @@ Executes a GFX CREATE FLOW_PARTICLES command.
 					Cmiss_field_module_destroy(&field_module);
 				}
 			}
+			if (graphics_object)
+			{
+				DEACCESS(GT_object)(&graphics_object);
+			}
+			Cmiss_glyph_destroy(&glyph);
+			Cmiss_glyph_module_end_change(command_data->glyph_module);
 		} /* parse error,help */
 		DESTROY(Option_table)(&option_table);
 		if (coordinate_field)
@@ -5501,7 +5501,6 @@ Executes a GFX CREATE command.
 {
 	int return_code;
 	struct Cmiss_command_data *command_data;
-	struct Create_emoter_slider_data create_emoter_slider_data;
 	struct Option_table *option_table;
 
 	ENTER(execute_command_gfx_create);
@@ -5534,6 +5533,7 @@ Executes a GFX CREATE command.
 					command_data_void,gfx_create_element_point_viewer);
 #endif /* defined (WX_USER_INTERFACE) */
 #if defined (EMOTER_ENABLE)
+				struct Create_emoter_slider_data create_emoter_slider_data;
 				create_emoter_slider_data.execute_command=command_data->execute_command;
 				create_emoter_slider_data.root_region=
 					command_data->root_region;
@@ -6183,7 +6183,6 @@ Executes a GFX DESTROY GRAPHICS_OBJECT command.
 ==============================================================================*/
 {
 	const char *current_token;
-	gtObject *graphics_object;
 	int return_code;
 	struct Cmiss_command_data *command_data;
 
@@ -6198,12 +6197,11 @@ Executes a GFX DESTROY GRAPHICS_OBJECT command.
 				if (strcmp(PARSER_HELP_STRING,current_token)&&
 					strcmp(PARSER_RECURSIVE_HELP_STRING,current_token))
 				{
-					if (NULL != (graphics_object=FIND_BY_IDENTIFIER_IN_MANAGER(GT_object,name)(
-						current_token,command_data->glyph_manager)))
+					Cmiss_glyph_id glyph = Cmiss_glyph_module_find_glyph_by_name(command_data->glyph_module, current_token);
+					if (glyph)
 					{
-						REMOVE_OBJECT_FROM_MANAGER(GT_object)(graphics_object,
-							command_data->glyph_manager);
-						return_code=1;
+						Cmiss_glyph_set_managed(glyph, false);
+						Cmiss_glyph_destroy(&glyph);
 					}
 					else
 					{
@@ -6482,10 +6480,7 @@ DESCRIPTION :
 Executes a GFX DESTROY SCENE command.
 ==============================================================================*/
 {
-	const char *current_token;
-	struct Scene *scene;
 	int return_code;
-	struct MANAGER(Scene) *scene_manager;
 
 	ENTER(gfx_destroy_Scene);
 	USE_PARAMETER(dummy_to_be_modified);
@@ -6696,7 +6691,7 @@ Executes a GFX DRAW command.
 	USE_PARAMETER(dummy_to_be_modified);
 	if (state && (command_data=(struct Cmiss_command_data *)command_data_void))
 	{
-		GT_object *graphics_object = 0;
+		Cmiss_glyph *glyph = 0;
 		Cmiss_scene_id scene = Cmiss_scene_access(command_data->default_scene);
 		char *graphic_name = 0;
 		char *region_path = 0;
@@ -6704,34 +6699,33 @@ Executes a GFX DRAW command.
 		/* as */
 		Option_table_add_entry(option_table,"as",&graphic_name,
 			(void *)1,set_name);
-		/* graphics_object */
-		Option_table_add_entry(option_table,"glyph",&graphics_object,
-			command_data->glyph_manager,set_Graphics_object);
+		/* glyph */
+		Option_table_add_entry(option_table,"glyph",&glyph,
+			command_data->glyph_module, set_Glyph);
 		/* group */
 		Option_table_add_entry(option_table, "group", &region_path,
 			command_data->root_region, set_Cmiss_region_path);
 		/* scene */
 		Option_table_add_entry(option_table,"scene",&scene,
 			command_data->root_region,set_Scene);
-		/* default when token omitted (graphics_object) */
-		Option_table_add_entry(option_table,(char *)NULL,&graphics_object,
-			command_data->glyph_manager,set_Graphics_object);
+		/* default when token omitted (glyph) */
+		Option_table_add_entry(option_table,(char *)NULL,&glyph,
+			command_data->glyph_module, set_Glyph);
 		return_code = Option_table_multi_parse(option_table,state);
 		/* no errors, not asking for help */
 		if (return_code)
 		{
-			if (graphics_object)
+			if (glyph)
 			{
 				if (!graphic_name)
 				{
-					GET_NAME(GT_object)(graphics_object, &graphic_name);
+					graphic_name = Cmiss_glyph_get_name(glyph);
 				}
 				Cmiss_region_id region = Cmiss_scene_get_region(scene);
 				Cmiss_scene_id scene =
 					Cmiss_graphics_module_get_scene(command_data->graphics_module, region);
-				return_code = Cmiss_scene_add_glyph(scene, graphics_object, graphic_name);
+				return_code = Cmiss_scene_add_glyph(scene, glyph, graphic_name);
 				Cmiss_scene_destroy(&scene);
-				Cmiss_region_destroy(&region);
 			}
 			else if (region_path)
 			{
@@ -6746,10 +6740,7 @@ Executes a GFX DRAW command.
 		{
 			DEALLOCATE(region_path);
 		}
-		if (graphics_object)
-		{
-			DEACCESS(GT_object)(&graphics_object);
-		}
+		Cmiss_glyph_destroy(&glyph);
 		if (graphic_name)
 		{
 			DEALLOCATE(graphic_name);
@@ -6972,7 +6963,7 @@ Executes a GFX EDIT_SCENE command.  Brings up the Region_tree_viewer.
 	int return_code;
 	struct Cmiss_command_data *command_data;
 	struct Option_table *option_table;
-	struct Scene *scene;
+
 	ENTER(gfx_edit_scene);
 	USE_PARAMETER(dummy_to_be_modified);
 	if (state && (command_data = (struct Cmiss_command_data *)command_data_void))
@@ -7013,7 +7004,7 @@ Executes a GFX EDIT_SCENE command.  Brings up the Region_tree_viewer.
 						Cmiss_graphics_material_module_get_manager(command_data->material_module),
 						defaultMaterial,
 						command_data->default_font,
-						command_data->glyph_manager,
+						command_data->glyph_module,
 						command_data->spectrum_manager,
 						command_data->volume_texture_manager,
 						command_data->user_interface)))
@@ -7957,7 +7948,7 @@ Executes a GFX EXPORT WAVEFRONT command.
 ==============================================================================*/
 {
 	const char *file_ext = ".obj";
-	char *file_name,full_comments,*temp_filename;
+	char *file_name,full_comments;
 	int frame_number, number_of_frames, return_code, version;
 	struct Cmiss_command_data *command_data;
 	struct Scene *scene = NULL;
@@ -9760,8 +9751,18 @@ static int gfx_list_g_element(struct Parse_state *state,
 	return (return_code);
 }
 
+static int Cmiss_glyph_list_contents(Cmiss_glyph *glyph, void *dummy_void)
+{
+	USE_PARAMETER(dummy_void);
+	Cmiss_glyph_static *glyphStatic = dynamic_cast<Cmiss_glyph_static*>(glyph);
+	Cmiss_glyph_colour_bar *colourBar = dynamic_cast<Cmiss_glyph_colour_bar*>(glyph);
+	display_message(INFORMATION_MESSAGE, "%s = %s; access_count = %d\n", glyph->getName(),
+		glyphStatic ? "static" : (colourBar ? "colour_bar" : "unknown"), glyph->access_count);
+	return 1;
+}
+
 static int gfx_list_graphics_object(struct Parse_state *state,
-	void *dummy_to_be_modified,void *object_list_void)
+	void *dummy_to_be_modified,void *glyph_module_void)
 /*******************************************************************************
 LAST MODIFIED : 26 July 1998
 
@@ -9771,28 +9772,27 @@ Executes a GFX LIST GLYPH/GRAPHICS_OBJECT command.
 {
 	const char *current_token;
 	int return_code;
-	struct GT_object *object;
-	struct MANAGER(GT_object) *list;
 
 	ENTER(gfx_list_graphics_object);
 	USE_PARAMETER(dummy_to_be_modified);
+	Cmiss_glyph_module_id glyphModule = reinterpret_cast<Cmiss_glyph_module *>(glyph_module_void);
 	if (state)
 	{
-		if (NULL != (list=(struct MANAGER(GT_object) *)object_list_void))
+		if (glyphModule)
 		{
 			if (NULL != (current_token = state->current_token))
 			{
-				if (strcmp(PARSER_HELP_STRING,current_token)&&
-					strcmp(PARSER_RECURSIVE_HELP_STRING,current_token))
+				if (!Parse_state_help_mode(state))
 				{
-					if (NULL != (object=FIND_BY_IDENTIFIER_IN_MANAGER(GT_object,name)(
-						current_token,list)))
+					Cmiss_glyph_id glyph = Cmiss_glyph_module_find_glyph_by_name(glyphModule, current_token);
+					if (glyph)
 					{
-						return_code=GT_object_list_contents(object,(void *)NULL);
+						Cmiss_glyph_list_contents(glyph, 0);
+						Cmiss_glyph_destroy(&glyph);
 					}
 					else
 					{
-						display_message(ERROR_MESSAGE,"Could not find object named '%s'",
+						display_message(ERROR_MESSAGE,"Could not find glyph '%s'",
 							current_token);
 						display_parse_state_location(state);
 						return_code=0;
@@ -9806,15 +9806,14 @@ Executes a GFX LIST GLYPH/GRAPHICS_OBJECT command.
 			}
 			else
 			{
-				/* list contents of all objects in list */
-				return_code=FOR_EACH_OBJECT_IN_MANAGER(GT_object)(
-					GT_object_list_contents,(void *)NULL,list);
+				return_code = FOR_EACH_OBJECT_IN_MANAGER(Cmiss_glyph)(
+					Cmiss_glyph_list_contents, (void *)NULL, Cmiss_glyph_module_get_manager(glyphModule));
 			}
 		}
 		else
 		{
 			display_message(ERROR_MESSAGE,
-				"gfx_list_graphics_object.  Missing graphics object list");
+				"gfx_list_graphics_object.  Missing glyph module");
 			return_code=0;
 		}
 	}
@@ -9827,7 +9826,7 @@ Executes a GFX LIST GLYPH/GRAPHICS_OBJECT command.
 	LEAVE;
 
 	return (return_code);
-} /* gfx_list_graphics_object */
+}
 
 static int gfx_list_grid_points(struct Parse_state *state,
 	void *dummy_to_be_modified,void *command_data_void)
@@ -10653,7 +10652,7 @@ Executes a GFX LIST command.
 				command_data_void, gfx_list_g_element);
 			/* glyph */
 			Option_table_add_entry(option_table, "glyph", NULL,
-				command_data->glyph_manager, gfx_list_graphics_object);
+				command_data->glyph_module, gfx_list_graphics_object);
 			/* graphics_filter */
 			Option_table_add_entry(option_table, "graphics_filter", NULL,
 				(void *)command_data->filter_module, gfx_list_graphics_filter);
@@ -11090,12 +11089,10 @@ Executes a GFX MODIFY GRAPHICS_OBJECT command.
 	if (state&&(command_data=(struct Cmiss_command_data *)command_data_void))
 	{
 		graphics_object=(struct GT_object *)NULL;
-		if (!state->current_token||
-			(strcmp(PARSER_HELP_STRING,state->current_token)&&
-			strcmp(PARSER_RECURSIVE_HELP_STRING,state->current_token)))
+		if ((!state->current_token) || (!Parse_state_help_mode(state)))
 		{
-			if (NULL != (graphics_object=FIND_BY_IDENTIFIER_IN_MANAGER(GT_object,name)
-				(state->current_token,command_data->glyph_manager)))
+			Cmiss_glyph_id glyph = Cmiss_glyph_module_find_glyph_by_name(command_data->glyph_module, state->current_token);
+			if (glyph)
 			{
 				shift_Parse_state(state,1);
 				/* initialise defaults */
@@ -11116,8 +11113,21 @@ Executes a GFX MODIFY GRAPHICS_OBJECT command.
 				DESTROY(Option_table)(&option_table);
 				if (return_code)
 				{
-					set_GT_object_default_material(graphics_object, material);
-					set_GT_object_Spectrum(graphics_object, spectrum);
+					Cmiss_glyph_static *glyphStatic = dynamic_cast<Cmiss_glyph_static *>(glyph);
+					if (glyphStatic)
+					{
+						GT_object *graphics_object = glyphStatic->getGraphicsObject();
+						set_GT_object_default_material(graphics_object, material);
+						set_GT_object_Spectrum(graphics_object, spectrum);
+						DEACCESS(GT_object)(&graphics_object);
+					}
+					else
+					{
+						display_message(ERROR_MESSAGE, "Cannot edit non-static glyph '%s'",
+							state->current_token);
+						display_parse_state_location(state);
+						return_code = 0;
+					}
 				}
 				if (material)
 				{
@@ -11142,6 +11152,7 @@ Executes a GFX MODIFY GRAPHICS_OBJECT command.
 				display_parse_state_location(state);
 				return_code=0;
 			}
+			Cmiss_glyph_destroy(&glyph);
 		}
 		else
 		{
@@ -12774,8 +12785,7 @@ otherwise the file of graphics objects is read.
 					if (0 != (return_code = check_suffix(&file_name, ".exgobj")))
 					{
 						return_code=file_read_graphics_objects(file_name, command_data->io_stream_package,
-							Cmiss_graphics_material_module_get_manager(command_data->material_module),
-							command_data->glyph_manager);
+							command_data->material_module, command_data->glyph_module);
 					}
 				}
 			}
@@ -12955,8 +12965,8 @@ otherwise the wavefront obj file is read.
 						return_code=file_read_voltex_graphics_object_from_obj(file_name,
 							command_data->io_stream_package,
 							graphics_object_name, render_type, time,
-							Cmiss_graphics_material_module_get_manager(command_data->material_module),
-							command_data->glyph_manager);
+							command_data->material_module,
+							command_data->glyph_module);
 					}
 				}
 			}
@@ -17683,7 +17693,6 @@ Initialise all the subcomponents of cmgui and create the Cmiss_command_data
 		command_data->device_list=(struct LIST(Io_device) *)NULL;
 #endif /* defined (SELECT_DESCRIPTORS) */
 		command_data->glyph_module=(Cmiss_glyph_module_id)0;
-		command_data->glyph_manager=(struct MANAGER(GT_object) *)0;
 		command_data->any_object_selection=(struct Any_object_selection *)NULL;
 		command_data->element_point_ranges_selection=(struct Element_point_ranges_selection *)NULL;
 		command_data->interactive_tool_manager=(struct MANAGER(Interactive_tool) *)NULL;
@@ -17973,7 +17982,6 @@ Initialise all the subcomponents of cmgui and create the Cmiss_command_data
 		command_data->glyph_module = Cmiss_graphics_module_get_glyph_module(command_data->graphics_module);
 		Cmiss_glyph_module_define_standard_glyphs(command_data->glyph_module);
 		Cmiss_glyph_module_define_standard_cmgui_glyphs(command_data->glyph_module);
-		command_data->glyph_manager = Cmiss_glyph_module_get_glyph_manager(command_data->glyph_module);
 
 #if defined (USE_CMGUI_GRAPHICS_WINDOW)
 		command_data->graphics_buffer_package = UI_module->graphics_buffer_package;

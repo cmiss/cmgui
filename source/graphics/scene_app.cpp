@@ -1,9 +1,11 @@
 
 #include "zinc/glyph.h"
 #include "zinc/graphicsmaterial.h"
+#include "zinc/tessellation.h"
 #include "general/debug.h"
 #include "general/message.h"
 #include "command/parser.h"
+#include "graphics/glyph.hpp"
 #include "graphics/graphics_module.h"
 #include "graphics/scene.h"
 #include "graphics/render_gl.h"
@@ -356,6 +358,57 @@ int Cmiss_scene_list_contents(struct Cmiss_scene *scene)
 	return (return_code);
 } /* Cmiss_scene_list_contents */
 
+int Cmiss_scene_fill_scene_command_data(Cmiss_scene_id scene,
+	struct Scene_command_data *scene_command_data)
+{
+	int return_code = 0;
+	if (scene)
+	{
+		scene_command_data->graphics_module = scene->graphics_module;
+		scene_command_data->scene = scene;
+		scene_command_data->material_module =
+			Cmiss_graphics_module_get_material_module(scene->graphics_module);
+		scene_command_data->default_material =
+			Cmiss_graphics_material_module_get_default_material(scene_command_data->material_module);
+		scene_command_data->default_font =
+			Cmiss_graphics_module_get_default_font(scene->graphics_module);
+		scene_command_data->spectrum_manager =
+			Cmiss_graphics_module_get_spectrum_manager(scene->graphics_module);
+		Cmiss_spectrum_module_id spectrum_module =
+			Cmiss_graphics_module_get_spectrum_module(scene->graphics_module);
+		scene_command_data->default_spectrum =
+				Cmiss_spectrum_module_get_default_spectrum(spectrum_module);
+		Cmiss_spectrum_module_destroy(&spectrum_module);
+		scene_command_data->glyph_module =
+			Cmiss_graphics_module_get_glyph_module(scene->graphics_module);
+		scene_command_data->computed_field_manager =
+			 Cmiss_region_get_Computed_field_manager(scene->region);
+		scene_command_data->region = scene->region;
+		scene_command_data->root_region = Cmiss_region_get_root(scene->region);
+		scene_command_data->tessellation_module =
+			Cmiss_graphics_module_get_tessellation_module(scene->graphics_module);
+		return_code = 1;
+	}
+	return return_code;
+}
+
+int Cmiss_scene_cleanup_scene_command_data(
+	struct Scene_command_data *scene_command_data)
+{
+	int return_code = 0;
+	if (scene_command_data)
+	{
+		Cmiss_graphics_material_module_destroy(&(scene_command_data->material_module));
+		Cmiss_graphics_material_destroy(&scene_command_data->default_material);
+		Cmiss_font_destroy(&scene_command_data->default_font);
+		Cmiss_spectrum_destroy(&scene_command_data->default_spectrum);
+		Cmiss_glyph_module_destroy(&(scene_command_data->glyph_module));
+		Cmiss_tessellation_module_destroy(&(scene_command_data->tessellation_module));
+		Cmiss_region_destroy(&(scene_command_data->root_region));
+		return_code = 1;
+	}
+	return return_code;
+}
 
 int Cmiss_scene_execute_command_internal(Cmiss_scene_id scene,
 	Cmiss_field_group_id group, struct Parse_state *state)
@@ -493,12 +546,11 @@ int Cmiss_scene_execute_command(Cmiss_scene_id scene, const char *command_string
 	return return_code;
 }
 
+// GRC needed?
 int Cmiss_scene_add_glyph(struct Cmiss_scene *scene,
-	struct GT_object *glyph, const char *cmiss_graphic_name)
+	Cmiss_glyph *glyph, const char *cmiss_graphic_name)
 {
 	int return_code = 0;
-
-	ENTER(Cmiss_scene_add_glyph);
 	if (scene && glyph)
 	{
 		if (!FIRST_OBJECT_IN_LIST_THAT(Cmiss_graphic)(Cmiss_graphic_has_name,
@@ -512,12 +564,6 @@ int Cmiss_scene_add_glyph(struct Cmiss_scene *scene,
 			const double one = 1.0;
 			Cmiss_graphic_point_attributes_set_base_size(point_attributes, 1, &one);
 			Cmiss_graphic_point_attributes_destroy(&point_attributes);
-			Cmiss_graphics_material_id material = Cmiss_graphics_material_access(get_GT_object_default_material(glyph));
-			if (material)
-			{
-				Cmiss_graphic_set_material(graphic, material);
-				Cmiss_graphics_material_destroy(&material);
-			}
 			Cmiss_graphic_destroy(&graphic);
 			Cmiss_scene_end_change(scene);
 			return_code = 1;
@@ -528,8 +574,6 @@ int Cmiss_scene_add_glyph(struct Cmiss_scene *scene,
 				"Cmiss_scene_add_glyph.  Graphic with the same name already exists");
 		}
 	}
-	LEAVE;
-
 	return return_code;
 }
 

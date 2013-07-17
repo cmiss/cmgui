@@ -2401,18 +2401,17 @@ Creates a spectrum_editor widget.
 										viewer_light_model,
 										NULL,
 										spectrum_editor->spectrum_editor_scene, spectrum_editor->user_interface);
-								Cmiss_glyph_module_id glyph_module = Cmiss_graphics_module_get_glyph_module(graphics_module);
-								MANAGER(GT_object) *glyph_manager = Cmiss_glyph_module_get_glyph_manager(glyph_module);
-								ADD_OBJECT_TO_MANAGER(GT_object)(spectrum_editor->graphics_object, glyph_manager);
-								Cmiss_glyph_module_destroy(&glyph_module);
-								 if (spectrum_editor->spectrum_editor_scene && spectrum_editor->graphics_object)
-								 {
-									 return_code = Cmiss_scene_add_glyph(spectrum_editor->spectrum_editor_scene,
-										 spectrum_editor->graphics_object, "spectrum_default");
-								 }
-								 Scene_viewer_set_input_mode(
-										spectrum_editor->spectrum_editor_scene_viewer->core_scene_viewer,
-										SCENE_VIEWER_NO_INPUT );
+								Cmiss_glyph_module_id glyphModule = Cmiss_graphics_module_get_glyph_module(graphics_module);
+								Cmiss_glyph_module_begin_change(glyphModule);
+								Cmiss_glyph *glyph = Cmiss_glyph_module_create_glyph_static(glyphModule, spectrum_editor->graphics_object);
+								Cmiss_glyph_set_name(glyph, "spectrum_default");
+								return_code = Cmiss_scene_add_glyph(spectrum_editor->spectrum_editor_scene, glyph, "spectrum_default");
+								Cmiss_glyph_destroy(&glyph);
+								Cmiss_glyph_module_end_change(glyphModule);
+								Cmiss_glyph_module_destroy(&glyphModule);
+								Scene_viewer_set_input_mode(
+									spectrum_editor->spectrum_editor_scene_viewer->core_scene_viewer,
+									SCENE_VIEWER_NO_INPUT );
 								//-- Scene_viewer_app_add_input_callback(
 								//-- 		spectrum_editor->spectrum_editor_scene_viewer,
 								//-- 		spectrum_editor_viewer_input_callback,

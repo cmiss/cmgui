@@ -349,7 +349,7 @@ DESCRIPTION :
 	struct MANAGER(Scene) *scene_manager;
 	struct User_interface *user_interface;
 	struct Cmiss_graphic *current_graphic;
-	struct MANAGER(GT_object) *glyph_manager;
+	Cmiss_glyph_module *glyphModule;
 	struct MANAGER(VT_volume_texture) *volume_texture_manager;
 	struct MANAGER(Computed_field) *field_manager;
 	struct MANAGER(Cmiss_font) *font_manager;
@@ -605,8 +605,8 @@ class wxRegionTreeViewer : public wxFrame
 		*line_orientation_scale_field_chooser;
 	Managed_object_chooser<Computed_field,MANAGER_CLASS(Computed_field)>
 	*isoscalar_chooser;
-	DEFINE_MANAGER_CLASS(GT_object);
-	Managed_object_chooser<GT_object,MANAGER_CLASS(GT_object)>
+	DEFINE_MANAGER_CLASS(Cmiss_glyph);
+	Managed_object_chooser<Cmiss_glyph,MANAGER_CLASS(Cmiss_glyph)>
 	*glyph_chooser;
 	DEFINE_ENUMERATOR_TYPE_CLASS(Cmiss_glyph_repeat_mode);
 	Enumerator_chooser<ENUMERATOR_TYPE_CLASS(Cmiss_glyph_repeat_mode)>
@@ -1050,7 +1050,7 @@ int isoscalar_callback(Computed_field *isoscalar_field)
 /**
  * Callback from wxChooser<Glyph> when choice is made.
  */
-int glyph_callback(GT_object *glyph)
+int glyph_callback(Cmiss_glyph *glyph)
 {
 	Cmiss_graphic_point_attributes_id point_attributes =
 		Cmiss_graphic_get_point_attributes(region_tree_viewer->current_graphic);
@@ -3044,19 +3044,19 @@ void SetGraphic(Cmiss_graphic *graphic)
 			if (glyph_chooser == NULL)
 			{
 				glyph_chooser =
-						new Managed_object_chooser<GT_object, MANAGER_CLASS(GT_object)>
-						(glyph_chooser_panel, reinterpret_cast<GT_object*>(glyph), region_tree_viewer->glyph_manager,
-							(LIST_CONDITIONAL_FUNCTION(GT_object) *)NULL, (void *)NULL,
+						new Managed_object_chooser<Cmiss_glyph, MANAGER_CLASS(Cmiss_glyph)>
+						(glyph_chooser_panel, glyph, Cmiss_glyph_module_get_manager(region_tree_viewer->glyphModule),
+							(LIST_CONDITIONAL_FUNCTION(Cmiss_glyph) *)NULL, (void *)NULL,
 							region_tree_viewer->user_interface);
-				Callback_base< GT_object* > *glyph_callback =
-						new Callback_member_callback< GT_object*,
-						wxRegionTreeViewer, int (wxRegionTreeViewer::*)(GT_object *) >
+				Callback_base< Cmiss_glyph* > *glyph_callback =
+						new Callback_member_callback< Cmiss_glyph*,
+						wxRegionTreeViewer, int (wxRegionTreeViewer::*)(Cmiss_glyph *) >
 						(this, &wxRegionTreeViewer::glyph_callback);
 				glyph_chooser->include_null_item(true);
 				glyph_chooser->set_callback(glyph_callback);
 				glyph_chooser_panel->Fit();
 			}
-			glyph_chooser->set_object(reinterpret_cast<GT_object*>(glyph));
+			glyph_chooser->set_object(glyph);
 
 			if (glyph_repeat_mode_chooser == 0)
 			{
@@ -4415,7 +4415,7 @@ struct Region_tree_viewer *CREATE(Region_tree_viewer)(
 	struct MANAGER(Graphical_material) *graphical_material_manager,
 	struct Graphical_material *default_material,
 	struct Cmiss_font *default_font,
-	struct MANAGER(GT_object) *glyph_manager,
+	Cmiss_glyph_module *glyphModule,
 	struct MANAGER(Spectrum) *spectrum_manager,
 	struct MANAGER(VT_volume_texture) *volume_texture_manager,
 	struct User_interface *user_interface)
@@ -4431,7 +4431,7 @@ DESCRIPTION :
 	region_tree_viewer = (struct Region_tree_viewer *)NULL;
 	if (graphics_module && root_region &&
 		graphical_material_manager && default_material &&
-		glyph_manager && spectrum_manager &&
+		glyphModule && spectrum_manager &&
 		volume_texture_manager && user_interface)
 	{
 		if (ALLOCATE(region_tree_viewer,struct Region_tree_viewer,1))
@@ -4450,7 +4450,7 @@ DESCRIPTION :
 			region_tree_viewer->default_material=default_material;
 			region_tree_viewer->selected_material=default_material;
 			region_tree_viewer->default_font=default_font;
-			region_tree_viewer->glyph_manager=glyph_manager;
+			region_tree_viewer->glyphModule = Cmiss_glyph_module_access(glyphModule);
 			region_tree_viewer->user_interface=user_interface;
 			region_tree_viewer->current_graphic = (Cmiss_graphic *)NULL;
 			region_tree_viewer->volume_texture_manager=volume_texture_manager;
@@ -4593,6 +4593,7 @@ DESCRIPTION :
 		}
 		if (region_tree_viewer->scene)
 			DEACCESS(Cmiss_scene)(&region_tree_viewer->scene);
+		Cmiss_glyph_module_destroy(&region_tree_viewer->glyphModule);
 		delete region_tree_viewer->transformation_editor;
 		delete region_tree_viewer->wx_region_tree_viewer;
 		Cmiss_tessellation_module_destroy(&region_tree_viewer->tessellationModule);
