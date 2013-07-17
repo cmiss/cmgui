@@ -5073,6 +5073,16 @@ void export_object_name_parser(const char *path_name, const char **scene_name,
 				*scene_name = temp_name;
 			}
 		}
+		else
+		{
+			if (total_length > 1)
+			{
+				ALLOCATE(temp_name, char, total_length+1);
+				strncpy(temp_name, path_name, total_length);
+				temp_name[total_length] = '\0';
+				*scene_name = temp_name;
+			}
+		}
 	}
 }
 
@@ -5375,8 +5385,15 @@ static int gfx_convert_graphics(struct Parse_state *state,
 					"gfx_convert_graphics.  "
 					"Field %s does not exist.", coordinate_field_name);
 			}
-			input_region = Cmiss_region_find_subregion_at_path(command_data->root_region,
-				scene_name);
+			if (0!=strcmp(scene_name,"default"))
+			{
+				input_region = Cmiss_region_find_subregion_at_path(command_data->root_region,
+					scene_name);
+			}
+			else
+			{
+				input_region = Cmiss_region_access(command_data->root_region);
+			}
 			if (scene_name && !input_region)
 			{
 				display_message(ERROR_MESSAGE,
