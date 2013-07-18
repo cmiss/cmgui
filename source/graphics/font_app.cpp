@@ -142,7 +142,8 @@ Executes a GFX DEFINE FONT command.
 						}
 
 					}
-
+					DEALLOCATE(valid_render_type_strings);
+					DEALLOCATE(valid_font_font_type_strings);
 					Cmiss_font_destroy(&font);
 					DEALLOCATE(render_type_string);
 					DEALLOCATE(font_type_string);

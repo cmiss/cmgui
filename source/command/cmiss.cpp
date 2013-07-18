@@ -5746,6 +5746,8 @@ Executes a GFX DEFINE command.
 		{
 			if (state->current_token)
 			{
+				Cmiss_font_module_id font_module = Cmiss_graphics_module_get_font_module(
+					command_data->graphics_module);
 				option_table = CREATE(Option_table)();
 				/* curve */
 				curve_command_data.curve_manager =
@@ -5761,11 +5763,8 @@ Executes a GFX DEFINE command.
 				Option_table_add_entry(option_table, "field", command_data->root_region,
 					command_data->computed_field_package, define_Computed_field);
 				/* font */
-				Cmiss_font_module_id font_module = Cmiss_graphics_module_get_font_module(
-					command_data->graphics_module);
 				Option_table_add_entry(option_table, "font", NULL,
-					command_data->graphics_module, gfx_define_font);
-				Cmiss_font_module_destroy(&font_module);
+					font_module, gfx_define_font);
 				/* scene */
 				Define_scene_data define_scene_data;
 				define_scene_data.root_region = command_data->root_region;
@@ -5780,6 +5779,7 @@ Executes a GFX DEFINE command.
 					command_data->tessellation_module, gfx_define_tessellation);
 				return_code = Option_table_parse(option_table, state);
 				DESTROY(Option_table)(&option_table);
+				Cmiss_font_module_destroy(&font_module);
 			}
 			else
 			{
