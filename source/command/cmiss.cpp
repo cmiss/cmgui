@@ -860,11 +860,11 @@ static int gfx_create_colour_bar(struct Parse_state *state,
 					Cmiss_glyph_colour_bar_set_axis(colour_bar, 3, bar_axis);
 					Cmiss_glyph_colour_bar_set_centre(colour_bar, 3, bar_centre);
 					Cmiss_glyph_colour_bar_set_extend_length(colour_bar, extend_length);
+					Cmiss_glyph_colour_bar_set_label_divisions(colour_bar, tick_divisions);
+					Cmiss_glyph_colour_bar_set_label_material(colour_bar, label_material);
 					Cmiss_glyph_colour_bar_set_number_format(colour_bar, number_format);
 					Cmiss_glyph_colour_bar_set_side_axis(colour_bar, 3, side_axis);
-					Cmiss_glyph_colour_bar_set_tick_divisions(colour_bar, tick_divisions);
 					Cmiss_glyph_colour_bar_set_tick_length(colour_bar, tick_length);
-					Cmiss_glyph_colour_bar_set_tick_material(colour_bar, label_material);
 					Cmiss_glyph_colour_bar_destroy(&colour_bar);
 				}
 				Cmiss_glyph_module_end_change(command_data->glyph_module);
