@@ -61,12 +61,23 @@
       	           <object class ="sizeritem">
                      <flag>wxALIGN_CENTRE_VERTICAL</flag>
                      <object class="wxStaticText">
-				          <label> from scene </label>
+				          <label> scene: </label>
 				       </object>
       	           </object>
       	           <object class ="sizeritem">
                      <object class="wxPanel" name="wxSpectrumRegionChooserPanel">
-                        <size>200,26</size>
+                        <size>150,26</size>
+				       </object>
+      	           </object>
+      	           <object class ="sizeritem">
+                     <flag>wxALIGN_CENTRE_VERTICAL</flag>
+                     <object class="wxStaticText">
+				          <label> filter: </label>
+				       </object>
+      	           </object>
+      	           <object class ="sizeritem">
+                     <object class="wxPanel" name="wxSpectrumFilterChooserPanel">
+                        <size>100,26</size>
 				       </object>
       	           </object>
 

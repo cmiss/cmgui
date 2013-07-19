@@ -27,6 +27,7 @@ Provides the wxWidgets interface to manipulate spectrum settings.
 #include "graphics/scene.h"
 #include "graphics/scene_app.h"
 #include "graphics/scene_viewer.h"
+#include "graphics/graphics_filter.hpp"
 #include "graphics/spectrum.h"
 #include "graphics/spectrum_settings.h"
 #include "graphics/spectrum_editor_wx.h"
@@ -49,6 +50,7 @@ Provides the wxWidgets interface to manipulate spectrum settings.
 #include "choose/choose_manager_listbox_class.hpp"
 #include "graphics/spectrum_editor_wx.xrch"
 #include "icon/cmiss_icon.xpm"
+#include "choose/choose_manager_class.hpp"
 
 class wxSpectrumEditor;
 
@@ -93,6 +95,7 @@ Contains all the information carried by the graphical element editor widget.
 	 wxScrolledWindow *spectrum_higher_panel, *spectrum_lower_panel;
 	 void *material_manager_callback_id;
 	 void *spectrum_manager_callback_id;
+	 Cmiss_graphics_filter_module_id filter_module;
 };
 
 
@@ -909,6 +912,9 @@ class wxSpectrumEditor : public wxFrame
 	 DEFINE_MANAGER_CLASS(Spectrum);
 	 Managed_object_listbox<Spectrum, MANAGER_CLASS(Spectrum)>
 	 *spectrum_object_listbox;
+	 DEFINE_MANAGER_CLASS(Cmiss_graphics_filter);
+	 Managed_object_chooser<Cmiss_graphics_filter,MANAGER_CLASS(Cmiss_graphics_filter)>
+	 *filter_chooser;
 public:
 
 	 wxSpectrumEditor(Spectrum_editor *spectrum_editor):
@@ -944,7 +950,17 @@ public:
 				wxSpectrumEditor, int (wxSpectrumEditor::*)(Cmiss_region *) >
 				(this, &wxSpectrumEditor::spectrum_region_chooser_callback);
 			spectrum_region_chooser->set_callback(spectrum_region_chooser_callback);
-
+			wxPanel *spectrum_filter_chooser_panel =
+				 XRCCTRL(*this, "wxSpectrumFilterChooserPanel", wxPanel);
+			Cmiss_graphics_filter_id filter =
+				Cmiss_graphics_filter_module_get_default_filter(spectrum_editor->filter_module);
+			filter_chooser =
+				 new Managed_object_chooser<Cmiss_graphics_filter, MANAGER_CLASS(Cmiss_graphics_filter)>
+				 (spectrum_filter_chooser_panel, filter,
+					 Cmiss_graphics_filter_module_get_manager(spectrum_editor->filter_module),
+						(MANAGER_CONDITIONAL_FUNCTION(Cmiss_graphics_filter) *)NULL, (void *)NULL,
+						spectrum_editor->user_interface);
+			Cmiss_graphics_filter_destroy(&filter);
 
 			XRCCTRL(*this, "wxSpectrumRangeMinText", wxTextCtrl)->Connect(wxEVT_KILL_FOCUS,
 				 wxCommandEventHandler(wxSpectrumEditor::OnSpectrumSettingRangeValueEntered),
@@ -981,6 +997,7 @@ public:
 
 	 ~wxSpectrumEditor()
 	 {
+		 	delete filter_chooser;
 			delete spectrum_object_listbox;
 			delete spectrum_region_chooser;
 	 };
@@ -1737,7 +1754,7 @@ void OnSpectrumAutorangePressed(wxCommandEvent &event)
 	 if (spectrum_editor)
 	 {
 			range_set = 0;
-			Scene_get_data_range_for_spectrum(spectrum_editor->autorange_scene, 0,
+			Scene_get_data_range_for_spectrum(spectrum_editor->autorange_scene, filter_chooser->get_object(),
 				 spectrum_editor->current_spectrum,
 				 &minimum, &maximum, &range_set);
 			if ( range_set )
@@ -2035,6 +2052,7 @@ Creates a spectrum_editor widget.
 				spectrum_editor->spectrum_manager_callback_id=(void *)NULL;
 				spectrum_editor->spectrum_manager = Cmiss_graphics_module_get_spectrum_manager(
 					graphics_module);
+				spectrum_editor->filter_module = Cmiss_graphics_module_get_filter_module(graphics_module);
 				spectrum_editor->root_region = Cmiss_region_access(root_region);
 				spectrum_editor->editorMaterial = (struct Graphical_material *)NULL;
 				spectrum_editor->labelMaterial = (struct Graphical_material *)NULL;
@@ -2208,6 +2226,8 @@ Creates a spectrum_editor widget.
 								}
 								 DEACCESS(Graphics_buffer_app)(&graphics_buffer);
 							}
+							DEACCESS(Light)(&viewer_light);
+							DEACCESS(Light_model)(&viewer_light_model);
 					 }
 				}
 			}
@@ -2318,6 +2338,7 @@ Destroys the <*spectrum_editor_address> and sets
 		(spectrum_editor = *spectrum_editor_address))
 	{
 		return_code = 1;
+		delete spectrum_editor->wx_spectrum_editor;
 		Cmiss_graphics_material_destroy(&spectrum_editor->editorMaterial);
 		Cmiss_graphics_material_destroy(&spectrum_editor->labelMaterial);
 		Cmiss_glyph_colour_bar_destroy(&spectrum_editor->colourBar);
@@ -2348,6 +2369,7 @@ Destroys the <*spectrum_editor_address> and sets
 			DEACCESS(Spectrum)(
 				&(spectrum_editor->edit_spectrum));
 		}
+		Cmiss_graphics_filter_module_destroy(&spectrum_editor->filter_module);
 		if (spectrum_editor->spectrum_manager_callback_id)
 		{
 			 MANAGER_DEREGISTER(Spectrum)(
@@ -2355,7 +2377,6 @@ Destroys the <*spectrum_editor_address> and sets
 					spectrum_editor->spectrum_manager);
 			 spectrum_editor->spectrum_manager_callback_id = (void *)NULL;
 		}
-		delete spectrum_editor->wx_spectrum_editor;
 		DEALLOCATE(*spectrum_editor_address);
 		*spectrum_editor_address = (struct Spectrum_editor *)NULL;
 	}

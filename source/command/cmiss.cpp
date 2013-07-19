@@ -2843,15 +2843,15 @@ static and referred to by gfx_create_Spectrum
 					{
 						spectrum_to_be_modified_copy=Cmiss_spectrum_create_private();
 						Cmiss_spectrum_set_name(spectrum_to_be_modified_copy, "dummy");
-						if (spectrum_to_be_modified)
+						if (spectrum_to_be_modified_copy)
 						{
 							option_table=CREATE(Option_table)();
 							Option_table_add_entry(option_table,"SPECTRUM_NAME",
-								(void *)spectrum_to_be_modified,command_data_void,
+								(void *)spectrum_to_be_modified_copy,command_data_void,
 								gfx_modify_Spectrum);
 							return_code=Option_table_parse(option_table,state);
 							DESTROY(Option_table)(&option_table);
-							DEACCESS(Spectrum)(&spectrum_to_be_modified);
+							DEACCESS(Spectrum)(&spectrum_to_be_modified_copy);
 						}
 						else
 						{
@@ -2884,6 +2884,8 @@ static and referred to by gfx_create_Spectrum
 							command_data->computed_field_package);
 					spectrum_command_data.spectrum_manager
 						= command_data->spectrum_manager;
+					Cmiss_graphics_filter_id filter =
+						Cmiss_graphics_filter_module_get_default_filter(command_data->filter_module);
 					option_table=CREATE(Option_table)();
 					Option_table_add_entry(option_table,"autorange",&autorange,NULL,
 						set_char_flag);
@@ -2895,6 +2897,8 @@ static and referred to by gfx_create_Spectrum
 						set_char_flag);
 					Option_table_add_entry(option_table,"field",&modify_spectrum_data,
 						&spectrum_command_data,gfx_modify_spectrum_settings_field);
+					Option_table_add_entry(option_table, "filter", &filter,
+						command_data->filter_module, set_Cmiss_graphics_filter);
 					Option_table_add_entry(option_table,"linear",&modify_spectrum_data,
 						&spectrum_command_data,gfx_modify_spectrum_settings_linear);
 					Option_table_add_entry(option_table,"log",&modify_spectrum_data,
@@ -2984,7 +2988,7 @@ static and referred to by gfx_create_Spectrum
 								/* Could also do all scenes */
 								range_set = 0;
 								Scene_get_data_range_for_spectrum(autorange_scene,
-									/*filter*/0, spectrum_to_be_modified
+									filter, spectrum_to_be_modified
 									/* Not spectrum_to_be_modified_copy as this ptr
 										identifies the valid graphics objects */,
 									&minimum, &maximum, &range_set);
@@ -3020,6 +3024,7 @@ static and referred to by gfx_create_Spectrum
 						DEACCESS(Spectrum_settings)(&(modify_spectrum_data.settings));
 					}
 					DEACCESS(Scene)(&autorange_scene);
+					Cmiss_graphics_filter_destroy(&filter);
 				}
 			}
 			else
