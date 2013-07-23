@@ -741,15 +741,9 @@ static int gfx_create_axes(struct Parse_state *state,
 static int gfx_create_colour_bar(struct Parse_state *state,
 	void *dummy_to_be_modified,void *command_data_void)
 {
-	char *font_name, *glyph_name,*number_format;
-	float bar_length,bar_radius,extend_length,tick_length;
-	int number_of_components,return_code,tick_divisions;
+	int return_code;
 	struct Cmiss_command_data *command_data;
-	struct Graphical_material *label_material,*material;
-	//struct Cmiss_font *font;
 	struct Option_table *option_table;
-	struct Spectrum *spectrum;
-	Triple bar_axis,bar_centre,side_axis;
 
 	ENTER(gfx_create_colour_bar);
 	USE_PARAMETER(dummy_to_be_modified);
@@ -758,13 +752,13 @@ static int gfx_create_colour_bar(struct Parse_state *state,
 		if (NULL != (command_data = (struct Cmiss_command_data *)command_data_void))
 		{
 			/* initialise defaults */
-			glyph_name = duplicate_string("colour_bar");
-			number_format = duplicate_string("%+.4e");
+			char *glyph_name = duplicate_string("colour_bar");
+			char *number_format = duplicate_string("%+.4e");
 			/* must access it now, because we deaccess it later */
-			label_material= Cmiss_graphics_material_module_get_default_material(command_data->material_module);
-			material= Cmiss_graphics_material_module_get_default_material(command_data->material_module);
-			spectrum=ACCESS(Spectrum)(command_data->default_spectrum);
-			number_of_components=3;
+			Cmiss_graphics_material_id label_material = Cmiss_graphics_material_module_get_default_material(command_data->material_module);
+			Cmiss_graphics_material_id material = 0;
+			Cmiss_spectrum_id spectrum = ACCESS(Spectrum)(command_data->default_spectrum);
+			int number_of_components=3;
 			double bar_centre[3] = { -0.9, 0.0, 0.5 };
 			double bar_axis[3] = { 0.0, 1.0, 0.0 };
 			double side_axis[3] = { 1.0, 0.0, 0.0 };
@@ -773,7 +767,7 @@ static int gfx_create_colour_bar(struct Parse_state *state,
 			double bar_radius = 0.06;
 			double tick_length = 0.04;
 			double tick_divisions = 10;
-			font_name = (char *)NULL;
+			char *font_name = (char *)NULL;
 
 			option_table=CREATE(Option_table)();
 			/* as */
@@ -820,6 +814,11 @@ static int gfx_create_colour_bar(struct Parse_state *state,
 				NULL,set_double);
 			if (0 != (return_code = Option_table_multi_parse(option_table, state)))
 			{
+				if (material)
+				{
+					display_message(WARNING_MESSAGE,
+						"gfx_create_colour_bar.  material option is not used; material is now taken from g_element graphic");
+				}
 				Cmiss_glyph_module_begin_change(command_data->glyph_module);
 				Cmiss_glyph_id glyph = Cmiss_glyph_module_find_glyph_by_name(command_data->glyph_module, glyph_name);
 				Cmiss_glyph_colour_bar_id colour_bar = 0;
@@ -2759,8 +2758,7 @@ static and referred to by gfx_create_Spectrum
 	char autorange, blue_to_red, blue_white_red, clear, lg_blue_to_red,
 		lg_red_to_blue, overlay_colour, overwrite_colour, red_to_blue;
 	const char *current_token;
-	int process, range_set, return_code;
-	float maximum, minimum;
+	int process, return_code;
 	struct Cmiss_command_data *command_data;
 	struct Modify_spectrum_data modify_spectrum_data;
 	struct Option_table *option_table;
@@ -2985,14 +2983,13 @@ static and referred to by gfx_create_Spectrum
 							}
 							if (autorange)
 							{
-								/* Could also do all scenes */
-								range_set = 0;
-								Scene_get_data_range_for_spectrum(autorange_scene,
+								double maximum, minimum;
+								int maxRanges = Cmiss_scene_get_spectrum_data_range(autorange_scene,
 									filter, spectrum_to_be_modified
 									/* Not spectrum_to_be_modified_copy as this ptr
 										identifies the valid graphics objects */,
-									&minimum, &maximum, &range_set);
-								if ( range_set )
+									/*valuesCount*/1, &minimum, &maximum);
+								if ( maxRanges >= 1 )
 								{
 									Spectrum_set_minimum_and_maximum(spectrum_to_be_modified_copy,
 										minimum, maximum );

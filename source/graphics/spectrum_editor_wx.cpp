@@ -1746,33 +1746,31 @@ USE_PARAMETER(event);
 
 void OnSpectrumAutorangePressed(wxCommandEvent &event)
 {
-	 float minimum, maximum;
-	 int range_set;
-
-	 ENTER(OnSpectrumAutorangePressed);
-	 USE_PARAMETER(event);
-	 if (spectrum_editor)
-	 {
-			range_set = 0;
-			Scene_get_data_range_for_spectrum(spectrum_editor->autorange_scene, filter_chooser->get_object(),
-				 spectrum_editor->current_spectrum,
-				 &minimum, &maximum, &range_set);
-			if ( range_set )
-			{
-				 Spectrum_set_minimum_and_maximum(
-						spectrum_editor->edit_spectrum,
-						minimum, maximum );
-				 spectrum_editor_wx_set_settings(spectrum_editor);
-				 spectrum_editor_wx_make_settings_list(spectrum_editor);
-				 make_colour_bar(spectrum_editor);
-			}
-	 }
+	USE_PARAMETER(event);
+	if (spectrum_editor)
+	{
+		double maximum, minimum;
+		int maxRanges = Cmiss_scene_get_spectrum_data_range(spectrum_editor->autorange_scene,
+			filter_chooser->get_object(), spectrum_editor->current_spectrum
+			/* Not spectrum_to_be_modified_copy as this ptr
+				identifies the valid graphics objects */,
+			/*valuesCount*/1, &minimum, &maximum);
+		if ( maxRanges >= 1 )
+		{
+			Spectrum_set_minimum_and_maximum(
+				spectrum_editor->edit_spectrum,
+				minimum, maximum );
+			spectrum_editor_wx_set_settings(spectrum_editor);
+			spectrum_editor_wx_make_settings_list(spectrum_editor);
+			make_colour_bar(spectrum_editor);
+		}
+	}
 	else
 	{
 		display_message(ERROR_MESSAGE,
 			"OnSpectrumAutorangePressed.  Invalid argument(s)");
 	}
-	 LEAVE;
+	LEAVE;
 }
 
 void OnSpectrumEditorCreateNewSpectrum(wxCommandEvent& event)
