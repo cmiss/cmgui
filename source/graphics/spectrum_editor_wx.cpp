@@ -472,6 +472,10 @@ Changes the currently chosen settings.
 							 {
 									spectrum_editor->spectrum_colour_mapping_choice->SetStringSelection(wxT("White to blue"));
 							 } break;
+							 case SPECTRUM_WHITE_TO_GREEN:
+							 {
+									spectrum_editor->spectrum_colour_mapping_choice->SetStringSelection(wxT("White to green"));
+							 } break;
 							 case SPECTRUM_STEP:
 							 {
 									spectrum_editor->spectrum_colour_mapping_choice->SetStringSelection(wxT("Step"));
@@ -1367,6 +1371,10 @@ Callback for colour settings
 			else if (strcmp(string_selection, "White to blue") == 0)
 			{
 				new_colour_mapping = SPECTRUM_WHITE_TO_BLUE;
+			}
+			else if (strcmp(string_selection, "White to green") == 0)
+			{
+				new_colour_mapping = SPECTRUM_WHITE_TO_GREEN;
 			}
 			else if (strcmp(string_selection, "Step") == 0)
 			{
