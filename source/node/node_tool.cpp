@@ -1734,7 +1734,7 @@ release.
 
 									double point_base_size[3], point_offset[3], point_scale_factors[3];
 									Cmiss_graphic_point_attributes_get_base_size(point_attributes, 3, point_base_size);
-									Cmiss_graphic_point_attributes_get_offset(point_attributes, 3, point_offset);
+									Cmiss_graphic_point_attributes_get_glyph_offset(point_attributes, 3, point_offset);
 									Cmiss_graphic_point_attributes_get_scale_factors(point_attributes, 3, point_scale_factors);
 									for (int i = 0; i < 3; ++i)
 									{

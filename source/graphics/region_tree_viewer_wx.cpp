@@ -2351,16 +2351,16 @@ void EnterGlyphOffset(wxCommandEvent &event)
 			Cmiss_graphic_get_point_attributes(region_tree_viewer->current_graphic);
 		Parse_state *temp_state = create_Parse_state(text_entry);
 		const int number_of_components = 3;
-		double point_offset[3] = { 0.0, 0.0, 0.0 };
-		set_double_vector(temp_state, point_offset, (void *)&number_of_components);
-		Cmiss_graphic_point_attributes_set_offset(point_attributes, number_of_components, point_offset);
+		double glyph_offset[3] = { 0.0, 0.0, 0.0 };
+		set_double_vector(temp_state, glyph_offset, (void *)&number_of_components);
+		Cmiss_graphic_point_attributes_set_glyph_offset(point_attributes, number_of_components, glyph_offset);
 		Region_tree_viewer_autoapply(region_tree_viewer->scene,
 			region_tree_viewer->edit_scene);
 		//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphic);
 		destroy_Parse_state(&temp_state);
-		Cmiss_graphic_point_attributes_get_offset(point_attributes, number_of_components, point_offset);
+		Cmiss_graphic_point_attributes_get_glyph_offset(point_attributes, number_of_components, glyph_offset);
 		char temp_string[100];
-		sprintf(temp_string, "%g,%g,%g", point_offset[0], point_offset[1], point_offset[2]);
+		sprintf(temp_string, "%g,%g,%g", glyph_offset[0], glyph_offset[1], glyph_offset[2]);
 		offsettextctrl->ChangeValue(wxString::FromAscii(temp_string));
 		Cmiss_graphic_point_attributes_destroy(&point_attributes);
 	}
@@ -3017,9 +3017,9 @@ void SetGraphic(Cmiss_graphic *graphic)
 				Cmiss_graphic_point_attributes_get_orientation_scale_field(point_attributes);
 			Cmiss_field_id signed_scale_field =
 				Cmiss_graphic_point_attributes_get_signed_scale_field(point_attributes);
-			double point_base_size[3], point_offset[3], point_scale_factors[3];
+			double point_base_size[3], glyph_offset[3], point_scale_factors[3];
 			Cmiss_graphic_point_attributes_get_base_size(point_attributes, 3, point_base_size);
-			Cmiss_graphic_point_attributes_get_offset(point_attributes, 3, point_offset);
+			Cmiss_graphic_point_attributes_get_glyph_offset(point_attributes, 3, glyph_offset);
 			Cmiss_graphic_point_attributes_get_scale_factors(point_attributes, 3, point_scale_factors);
 			Cmiss_glyph_repeat_mode glyph_repeat_mode =
 				Cmiss_graphic_point_attributes_get_glyph_repeat_mode(point_attributes);
@@ -3106,7 +3106,7 @@ void SetGraphic(Cmiss_graphic *graphic)
 			}
 
 			sprintf(temp_string,"%g,%g,%g",
-				point_offset[0], point_offset[1], point_offset[2]);
+				glyph_offset[0], glyph_offset[1], glyph_offset[2]);
 			offsettextctrl->SetValue(wxString::FromAscii(temp_string));
 			sprintf(temp_string,"%g*%g*%g",
 				point_base_size[0], point_base_size[1], point_base_size[2]);

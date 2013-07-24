@@ -195,7 +195,7 @@ int gfx_modify_scene_graphic(struct Parse_state *state,
 	double glyph_offset[3];
 	if (point_attributes)
 	{
-		Cmiss_graphic_point_attributes_get_offset(point_attributes, 3, glyph_offset);
+		Cmiss_graphic_point_attributes_get_glyph_offset(point_attributes, 3, glyph_offset);
 	}
 
 	/* glyph centre: note equal to negative of point offset! */
@@ -1002,7 +1002,7 @@ int gfx_modify_scene_graphic(struct Parse_state *state,
 					glyph_offset[i] = (glyph_centre[i] != 0.0) ? -glyph_centre[i] : 0.0;
 				}
 			}
-			Cmiss_graphic_point_attributes_set_offset(point_attributes, 3, glyph_offset);
+			Cmiss_graphic_point_attributes_set_glyph_offset(point_attributes, 3, glyph_offset);
 			Cmiss_graphic_point_attributes_set_base_size(point_attributes, 3, glyph_base_size);
 			Cmiss_graphic_point_attributes_set_scale_factors(point_attributes, 3, glyph_scale_factors);
 			Cmiss_graphic_point_attributes_set_signed_scale_field(point_attributes, signed_scale_field);
