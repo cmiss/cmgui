@@ -11081,7 +11081,6 @@ Executes a GFX MODIFY GRAPHICS_OBJECT command.
 {
 	int return_code;
 	struct Cmiss_command_data *command_data;
-	struct GT_object *graphics_object;
 	struct Graphical_material *material;
 	struct Option_table *option_table;
 	struct Spectrum *spectrum;
@@ -11090,13 +11089,14 @@ Executes a GFX MODIFY GRAPHICS_OBJECT command.
 	USE_PARAMETER(dummy_to_be_modified);
 	if (state&&(command_data=(struct Cmiss_command_data *)command_data_void))
 	{
-		graphics_object=(struct GT_object *)NULL;
 		if ((!state->current_token) || (!Parse_state_help_mode(state)))
 		{
 			Cmiss_glyph_id glyph = Cmiss_glyph_module_find_glyph_by_name(command_data->glyph_module, state->current_token);
-			if (glyph)
+			Cmiss_glyph_static *glyphStatic = dynamic_cast<Cmiss_glyph_static *>(glyph);
+			if (glyphStatic)
 			{
 				shift_Parse_state(state,1);
+				GT_object *graphics_object = glyphStatic->getGraphicsObject();
 				/* initialise defaults */
 				if (NULL != (material = get_GT_object_default_material(graphics_object)))
 				{
@@ -11115,7 +11115,6 @@ Executes a GFX MODIFY GRAPHICS_OBJECT command.
 				DESTROY(Option_table)(&option_table);
 				if (return_code)
 				{
-					Cmiss_glyph_static *glyphStatic = dynamic_cast<Cmiss_glyph_static *>(glyph);
 					if (glyphStatic)
 					{
 						GT_object *graphics_object = glyphStatic->getGraphicsObject();
@@ -11144,12 +11143,20 @@ Executes a GFX MODIFY GRAPHICS_OBJECT command.
 			{
 				if (state->current_token)
 				{
-					display_message(ERROR_MESSAGE,"Could not find object named '%s'",
-						state->current_token);
+					if (glyph)
+					{
+						display_message(ERROR_MESSAGE,"Cannot modify non-static glyph '%s'",
+							state->current_token);
+					}
+					else
+					{
+						display_message(ERROR_MESSAGE,"Could not find glyph named '%s'",
+							state->current_token);
+					}
 				}
 				else
 				{
-					display_message(ERROR_MESSAGE,"Missing graphics object name");
+					display_message(ERROR_MESSAGE,"Missing glyph name");
 				}
 				display_parse_state_location(state);
 				return_code=0;
