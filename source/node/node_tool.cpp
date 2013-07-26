@@ -1877,7 +1877,6 @@ release.
 										node_tool->rubber_band=CREATE(GT_object)(
 											"node_tool_rubber_band",g_POLYLINE,
 											node_tool->rubber_band_material);
-										ACCESS(GT_object)(node_tool->rubber_band);
 									}
 									Interaction_volume_make_polyline_extents(
 										temp_interaction_volume,node_tool->rubber_band);

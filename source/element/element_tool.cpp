@@ -491,7 +491,6 @@ release.
 //										element_tool->rubber_band=CREATE(GT_object)(
 //											"element_tool_rubber_band",g_POLYLINE,
 //											element_tool->rubber_band_material);
-//										ACCESS(GT_object)(element_tool->rubber_band);
 //									}
 //									Interaction_volume_make_polyline_extents(
 //										temp_interaction_volume,element_tool->rubber_band);

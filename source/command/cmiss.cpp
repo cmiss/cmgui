@@ -1534,7 +1534,6 @@ Executes a GFX CREATE FLOW_PARTICLES command.
 				else
 				{
 					graphics_object = CREATE(GT_object)(graphics_object_name, g_POINTSET, material);
-					ACCESS(GT_object)(graphics_object);
 					glyph = Cmiss_glyph_module_create_glyph_static(command_data->glyph_module, graphics_object);
 					Cmiss_glyph_set_managed(glyph, true);
 					Cmiss_glyph_set_name(glyph, graphics_object_name);
@@ -11115,20 +11114,9 @@ Executes a GFX MODIFY GRAPHICS_OBJECT command.
 				DESTROY(Option_table)(&option_table);
 				if (return_code)
 				{
-					if (glyphStatic)
-					{
-						GT_object *graphics_object = glyphStatic->getGraphicsObject();
-						set_GT_object_default_material(graphics_object, material);
-						set_GT_object_Spectrum(graphics_object, spectrum);
-						DEACCESS(GT_object)(&graphics_object);
-					}
-					else
-					{
-						display_message(ERROR_MESSAGE, "Cannot edit non-static glyph '%s'",
-							state->current_token);
-						display_parse_state_location(state);
-						return_code = 0;
-					}
+					set_GT_object_default_material(graphics_object, material);
+					set_GT_object_Spectrum(graphics_object, spectrum);
+					glyph->changed();
 				}
 				if (material)
 				{
@@ -11138,6 +11126,7 @@ Executes a GFX MODIFY GRAPHICS_OBJECT command.
 				{
 					DEACCESS(Spectrum)(&spectrum);
 				}
+				DEACCESS(GT_object)(&graphics_object);
 			}
 			else
 			{

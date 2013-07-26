@@ -871,7 +871,6 @@ int gfx_modify_scene_graphic(struct Parse_state *state,
 		{
 			Cmiss_glyph_repeat_mode glyph_repeat_mode = CMISS_GLYPH_REPEAT_NONE;
 			STRING_TO_ENUMERATOR(Cmiss_glyph_repeat_mode)(glyph_repeat_mode_string, &glyph_repeat_mode);
-			Cmiss_glyph_id glyph = 0;
 			if (legacy_graphic_type == LEGACY_GRAPHIC_POINT)
 			{
 				// scale factors and orientation were never used, and offset was in model units.
@@ -886,7 +885,12 @@ int gfx_modify_scene_graphic(struct Parse_state *state,
 				}
 			}
 
-			if (glyph_name && (0 != strcmp(glyph_name, "none")))
+			Cmiss_glyph_id glyph = 0;
+			if (glyph_name)
+			{
+				glyph = Cmiss_glyph_module_find_glyph_by_name(scene_command_data->glyph_module, glyph_name);
+			}
+			if (glyph_name && (!glyph) && (0 != strcmp(glyph_name, "none")))
 			{
 				if ((0 == strcmp(glyph_name, "mirror_arrow_solid")) ||
 					(0 == strcmp(glyph_name, "mirror_cone")) ||
@@ -979,9 +983,25 @@ int gfx_modify_scene_graphic(struct Parse_state *state,
 						glyph_repeat_mode = CMISS_GLYPH_REPEAT_AXES_3D;
 					}
 				}
-				else
+				else if (0 == strcmp(glyph_name, "cylinder6"))
 				{
-					glyph = Cmiss_glyph_module_find_glyph_by_name(scene_command_data->glyph_module, glyph_name);
+					// just using normal cylinder, default circle divisions
+					glyph = Cmiss_glyph_module_find_glyph_by_name(scene_command_data->glyph_module, "cylinder");
+				}
+				else if (0 == strcmp(glyph_name, "cylinder_hires"))
+				{
+					glyph = Cmiss_glyph_module_find_glyph_by_name(scene_command_data->glyph_module, "cylinder");
+					circle_discretization = 48;
+				}
+				else if (0 == strcmp(glyph_name, "cylinder_solid_hires"))
+				{
+					glyph = Cmiss_glyph_module_find_glyph_by_name(scene_command_data->glyph_module, "cylinder_solid");
+					circle_discretization = 48;
+				}
+				else if (0 == strcmp(glyph_name, "sphere_hires"))
+				{
+					glyph = Cmiss_glyph_module_find_glyph_by_name(scene_command_data->glyph_module, "sphere");
+					circle_discretization = 48;
 				}
 				if (!glyph)
 				{
