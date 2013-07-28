@@ -14329,7 +14329,7 @@ static int gfx_set_visibility(struct Parse_state *state,
 					char *graphic_name = Cmiss_graphic_get_name_internal(graphic);
 					if (strstr(graphic_name, part_graphic_name))
 					{
-						int visibility_flag = on_flag ? 1 : (off_flag ? 0 : !Cmiss_graphic_get_visibility_flag(graphic));
+						bool visibility_flag = on_flag ? true : (off_flag ? false : !Cmiss_graphic_get_visibility_flag(graphic));
 						Cmiss_graphic_set_visibility_flag(graphic, visibility_flag);
 						++number_matched;
 					}
@@ -14346,7 +14346,7 @@ static int gfx_set_visibility(struct Parse_state *state,
 			}
 			else
 			{
-				int visibility_flag = on_flag ? 1 : (off_flag ? 0 : !Cmiss_scene_get_visibility_flag(scene));
+				bool visibility_flag = on_flag ? true : (off_flag ? false : !Cmiss_scene_get_visibility_flag(scene));
 				Cmiss_scene_set_visibility_flag(scene, visibility_flag);
 			}
 			Cmiss_scene_destroy(&scene);

@@ -129,7 +129,6 @@ int gfx_modify_scene_graphic(struct Parse_state *state,
 		xi_discretization_mode_string = ENUMERATOR_STRING(Xi_discretization_mode)(xi_discretization_mode);
 	}
 	int number_of_components = 3;
-	int visibility = Cmiss_graphic_get_visibility_flag(graphic);
 	int number_of_valid_strings;
 	const char **valid_strings;
 	char *seed_nodeset_name = 0;
@@ -765,7 +764,8 @@ int gfx_modify_scene_graphic(struct Parse_state *state,
 	}
 
 	/* visible/invisible */
-	Option_table_add_switch(option_table, "visible", "invisible", &visibility);
+	int visibility_flag = static_cast<int>(Cmiss_graphic_get_visibility_flag(graphic));
+	Option_table_add_switch(option_table, "visible", "invisible", &visibility_flag);
 
 	/* deprecated: streamline width (replaced with line_base_size) */
 	double streamline_width = 0.0;
@@ -826,7 +826,7 @@ int gfx_modify_scene_graphic(struct Parse_state *state,
 			Cmiss_graphic_contours_set_decimation_threshold(contours, decimation_threshold);
 		}
 
-		Cmiss_graphic_set_visibility_flag(graphic, visibility);
+		Cmiss_graphic_set_visibility_flag(graphic, 0 != visibility_flag);
 
 		if (Cmiss_graphic_type_uses_attribute(graphic_type, CMISS_GRAPHIC_ATTRIBUTE_XI_DISCRETIZATION_MODE))
 		{

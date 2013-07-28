@@ -234,7 +234,6 @@ int gfx_define_graphics_filter_contents(struct Parse_state *state, void *graphic
 	struct Define_graphics_filter_data *filter_data = (struct Define_graphics_filter_data *)filter_data_void;
 	char *match_graphic_name, match_visibility_flags, *match_region_path;
 	enum Cmiss_graphic_type graphic_type;
-	int inverse;
 	const char **valid_strings = NULL, *graphic_type_string = NULL;
 	if (state && filter_data)
 	{
@@ -244,10 +243,10 @@ int gfx_define_graphics_filter_contents(struct Parse_state *state, void *graphic
 		match_visibility_flags = 0;
 		match_region_path = NULL;
 		graphic_type = CMISS_GRAPHIC_TYPE_INVALID;
-		inverse = 0;
+		int inverse = 0;
 		if (graphics_filter)
 		{
-			inverse = graphics_filter->isInverse();
+			inverse = static_cast<int>(graphics_filter->isInverse());
 		}
 		valid_strings = ENUMERATOR_GET_VALID_STRINGS(Cmiss_graphic_type)(
 			&number_of_valid_strings,
@@ -334,8 +333,7 @@ int gfx_define_graphics_filter_contents(struct Parse_state *state, void *graphic
 
 			if (graphics_filter)
 			{
-				Cmiss_graphics_filter_set_attribute_integer(graphics_filter,
-					CMISS_GRAPHICS_FILTER_ATTRIBUTE_IS_INVERSE, inverse);
+				Cmiss_graphics_filter_set_inverse(graphics_filter, 0 != inverse);
 				*graphics_filter_handle = graphics_filter;
 			}
 		}

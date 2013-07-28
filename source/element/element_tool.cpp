@@ -295,7 +295,7 @@ release.
 			}
 			else
 			{
-				Cmiss_graphics_filter_set_attribute_integer(combined_filter, CMISS_GRAPHICS_FILTER_ATTRIBUTE_IS_INVERSE, 1);
+				Cmiss_graphics_filter_set_inverse(combined_filter, true);
 			}
 			Cmiss_graphics_filter_module_destroy(&filter_module);
 			Cmiss_graphics_module_destroy(&graphics_module);

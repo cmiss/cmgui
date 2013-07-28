@@ -1916,8 +1916,8 @@ void AddGraphic(Cmiss_graphic_type graphic_type,
 		region_tree_viewer->edit_scene, graphic_type, graphic_to_copy);
 	if (graphic)
 	{
-		// make sure new graphic is visible
-		Cmiss_graphic_set_visibility_flag(graphic,1);
+		// make sure new graphic is visible (if copy)
+		Cmiss_graphic_set_visibility_flag(graphic, true);
 		// set domain and initial coordinate field if appropriate
 		if (domain_type != CMISS_FIELD_DOMAIN_TYPE_INVALID)
 		{
@@ -3919,7 +3919,7 @@ void OnItemMenu(wxTreeEvent &event)
 	event.Skip();
 }
 
-void SetVisibilityOfTreeId(wxTreeItemId current_item_id, int flag)
+void SetVisibilityOfTreeId(wxTreeItemId current_item_id, bool flag)
 {
 	struct Cmiss_region *region;
 	struct Cmiss_scene *scene;
@@ -3944,14 +3944,14 @@ void SetVisibilityOfTreeId(wxTreeItemId current_item_id, int flag)
 	}
 }
 
-void PropagateChanges(wxTreeItemId current_item_id, int flag)
+void PropagateChanges(wxTreeItemId current_item_id, bool flag)
 {
 	wxTreeItemIdValue cookie;
 	wxTreeItemId child_id = region_tree_viewer->testing_tree_ctrl->GetFirstChild(
 		current_item_id, cookie);
 	while (child_id.IsOk())
 	{
-			SetVisibilityOfTreeId(child_id,flag);
+			SetVisibilityOfTreeId(child_id, flag);
 			PropagateChanges(child_id, flag);
 			child_id = region_tree_viewer->testing_tree_ctrl->GetNextChild(
 				current_item_id, cookie);
@@ -3974,8 +3974,8 @@ void OnMenuSelectionOn(wxCommandEvent &event)
 	int num = static_cast<int>(region_tree_viewer->testing_tree_ctrl->GetSelections(array));
 	for (int i = 0; i < num; i ++)
 	{
-		SetVisibilityOfTreeId(array[i], 1);
-		PropagateChanges(array[i],1);
+		SetVisibilityOfTreeId(array[i], true);
+		PropagateChanges(array[i], true);
 	}
 }
 
@@ -3988,8 +3988,8 @@ void OnMenuSelectionOff(wxCommandEvent &event)
 	int num = static_cast<int>(region_tree_viewer->testing_tree_ctrl->GetSelections(array));
 	for (int i = 0; i < num; i ++)
 	{
-		SetVisibilityOfTreeId(array[i], 0);
-		PropagateChanges(array[i],0);
+		SetVisibilityOfTreeId(array[i], false);
+		PropagateChanges(array[i], false);
 	}
 }
 
@@ -4337,7 +4337,7 @@ static int Region_tree_viewer_add_graphic_item(
 		graphicalitemschecklist->Append(wxString::FromAscii(graphic_string));
 		if (Cmiss_graphic_get_visibility_flag(graphic))
 		{
-				graphicalitemschecklist->Check((graphicalitemschecklist->GetCount()-1),1);
+				graphicalitemschecklist->Check((graphicalitemschecklist->GetCount()-1), true);
 		}
 		DEALLOCATE(graphic_string);
 		return_code = 1;
@@ -4712,7 +4712,7 @@ static int Region_tree_viewer_add_graphic(
 		graphicchecklist->Append(wxString::FromAscii(graphic_string));
 		if (Cmiss_graphic_get_visibility_flag(graphic))
 		{
-			graphicchecklist->Check((graphicchecklist->GetCount()-1),1);
+			graphicchecklist->Check((graphicchecklist->GetCount()-1), true);
 		}
 		DEALLOCATE(graphic_string);
 		return_code = 1;
