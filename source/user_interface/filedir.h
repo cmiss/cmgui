@@ -175,9 +175,8 @@ Register a callback that gets called when the file dialog is cancelled.
 ==============================================================================*/
 
 #if defined (WX_USER_INTERFACE)
-int filedir_compressing_process_wx_compress(const char *com_file_name, const char *data_file_name,
-	 const char *elem_file_name, const char *node_file_name, int data_return_code, int elem_return_code,
-	 int node_return_code, const char *file_name, const char *temp_data ,const char *temp_elem, const char *temp_node);
+int filedir_compressing_process_wx_compress(const char *com_file_name, const char *exfile_name,
+	 int exfile_return_code, const char *file_name, const char *temp_exfile);
 /*******************************************************************************
 LAST MODIFIED : 17 Aug 2007
 
