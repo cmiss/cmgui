@@ -154,7 +154,7 @@ static int make_colour_bar(struct Spectrum_editor *spectrum_editor)
 			struct Colour white = {1.0, 1.0, 1.0};
 			Graphical_material_set_ambient(spectrum_editor->labelMaterial, &white );
 			Graphical_material_set_diffuse(spectrum_editor->labelMaterial, &white );
-			Cmiss_scene_viewer_set_background_colour_rgb(
+			Cmiss_scene_viewer_set_background_colour_component_rgb(
 				spectrum_editor->spectrum_editor_scene_viewer->core_scene_viewer, 0.0, 0.0, 0.0);
 		}
 		else if (spectrum_editor->viewer_type == 3)
@@ -162,7 +162,7 @@ static int make_colour_bar(struct Spectrum_editor *spectrum_editor)
 			struct Colour black = {0, 0, 0};
 			Graphical_material_set_ambient(spectrum_editor->labelMaterial, &black );
 			Graphical_material_set_diffuse(spectrum_editor->labelMaterial, &black );
-			Cmiss_scene_viewer_set_background_colour_rgb(
+			Cmiss_scene_viewer_set_background_colour_component_rgb(
 				spectrum_editor->spectrum_editor_scene_viewer->core_scene_viewer, 1.0, 1.0, 1.0);
 		}
 		spectrum_editor->colourBar->setLabelDivisions(labelDivisions);
