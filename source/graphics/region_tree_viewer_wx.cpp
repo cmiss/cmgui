@@ -356,7 +356,7 @@ DESCRIPTION :
 	struct Cmiss_region *root_region, *current_region;
 	enum Graphics_select_mode select_mode;
 	enum Cmiss_field_domain_type domain_type;
-	enum Xi_discretization_mode xi_discretization_mode;
+	enum Cmiss_element_point_sample_mode sample_mode;
 	enum Streamline_data_type streamline_data_type;
 	struct MANAGER(Spectrum) *spectrum_manager;
 	enum Cmiss_graphics_render_type render_type;
@@ -548,10 +548,10 @@ class wxRegionTreeViewer : public wxFrame
 	wxCheckListBox *scenechecklist,*graphicalitemschecklist;
 	wxListBox *scenelistbox,*graphicalitemslistbox;
 	wxStaticText *currentsceneobjecttext,
-		*isoscalartext, *glyphtext, *offsettext, *baseglyphsizetext, *selectmodetext,
-		*glyphscalefactorstext, *domaintypetext, *xidiscretizationmodetext,
+		*isoscalartext, *glyphtext, *offsettext, *baseglyphsizetext, *select_mode_text,
+		*glyphscalefactorstext, *domaintypetext, *sample_mode_text,
 		*tessellationtext, *glyph_repeat_mode_text, *labeloffsettext,
-		*densityfieldtext, *xitext,
+		*sample_density_field_text, *xitext,
 		*lineshapetext, *streamlineslengthtext, *streamvectortext,
 		*linewidthtext, *streamlinedatatypetext, *spectrumtext, *rendertypetext,
 		*staticlabeltext, *fonttext;
@@ -570,8 +570,8 @@ class wxRegionTreeViewer : public wxFrame
 		*glyph_repeat_mode_chooser_panel,
 		*orientation_scale_field_chooser_panel, *variable_scale_field_chooser_panel,
 		*label_chooser_panel, *font_chooser_panel, *select_mode_chooser_panel,
-		*domain_type_chooser_panel, *xi_discretization_mode_chooser_panel,
-		*native_discretization_field_chooser_panel, *density_field_chooser_panel,
+		*domain_type_chooser_panel, *sample_mode_chooser_panel,
+		*native_discretization_field_chooser_panel, *sample_density_field_chooser_panel,
 		*line_shape_chooser_panel, *stream_vector_chooser_panel,
 		*streamline_data_type_chooser_panel,
 		*streamlines_track_direction_chooser_panel, *spectrum_chooser_panel,
@@ -625,16 +625,16 @@ class wxRegionTreeViewer : public wxFrame
 	DEFINE_ENUMERATOR_TYPE_CLASS(Cmiss_field_domain_type);
 	Enumerator_chooser<ENUMERATOR_TYPE_CLASS(Cmiss_field_domain_type)>
 		*domain_type_chooser;
-	DEFINE_ENUMERATOR_TYPE_CLASS(Xi_discretization_mode);
-	Enumerator_chooser<ENUMERATOR_TYPE_CLASS(Xi_discretization_mode)>
-		*xi_discretization_mode_chooser;
+	DEFINE_ENUMERATOR_TYPE_CLASS(Cmiss_element_point_sample_mode);
+	Enumerator_chooser<ENUMERATOR_TYPE_CLASS(Cmiss_element_point_sample_mode)>
+		*sample_mode_chooser;
 	DEFINE_MANAGER_CLASS(Cmiss_tessellation);
 	Managed_object_chooser<Cmiss_tessellation,MANAGER_CLASS(Cmiss_tessellation)>
 	 *tessellation_chooser;
 	Managed_object_chooser<Computed_field,MANAGER_CLASS(Computed_field)>
 	*native_discretization_field_chooser;
 	Managed_object_chooser<Computed_field,MANAGER_CLASS(Computed_field)>
-	*xi_point_density_field_chooser;
+	*sample_density_field_chooser;
 	wxFeElementTextChooser *seed_element_chooser;
 	DEFINE_ENUMERATOR_TYPE_CLASS(Cmiss_graphic_line_attributes_shape);
 	Enumerator_chooser<ENUMERATOR_TYPE_CLASS(Cmiss_graphic_line_attributes_shape)>
@@ -779,9 +779,9 @@ public:
 	subgroup_field_chooser= NULL;
 	font_chooser=NULL;
 	domain_type_chooser = NULL;
-	xi_discretization_mode_chooser = NULL;
+	sample_mode_chooser = NULL;
 	native_discretization_field_chooser = NULL;
-	xi_point_density_field_chooser =NULL;
+	sample_density_field_chooser =NULL;
 	line_shape_chooser = NULL;
 	stream_vector_chooser = NULL;
 	streamline_data_type_chooser = NULL;
@@ -829,7 +829,7 @@ public:
 		wxCommandEventHandler(wxRegionTreeViewer::EnterStaticLabelText),
 		NULL, this);
 	XRCCTRL(*this,"XiTextCtrl", wxTextCtrl)->Connect(wxEVT_KILL_FOCUS,
-		wxCommandEventHandler(wxRegionTreeViewer::EnterSeedXi),
+		wxCommandEventHandler(wxRegionTreeViewer::EnterSampleLocation),
 		NULL, this);
 	XRCCTRL(*this,"StreamlinesLengthTextCtrl", wxTextCtrl)->Connect(wxEVT_KILL_FOCUS,
 		wxCommandEventHandler(wxRegionTreeViewer::EnterStreamlineLength),
@@ -877,10 +877,10 @@ public:
 		delete label_field_chooser;
 		delete subgroup_field_chooser;
 		delete domain_type_chooser;
-		delete xi_discretization_mode_chooser;
+		delete sample_mode_chooser;
 		delete tessellation_chooser;
 		delete native_discretization_field_chooser;
-		delete xi_point_density_field_chooser;
+		delete sample_density_field_chooser;
 		delete line_shape_chooser;
 		delete stream_vector_chooser;
 		delete streamline_data_type_chooser;
@@ -916,8 +916,8 @@ void Region_tree_viewer_wx_set_manager_in_choosers(struct Region_tree_viewer *re
 		 subgroup_field_chooser->set_manager(region_tree_viewer->field_manager);
 	if (native_discretization_field_chooser != NULL)
 			native_discretization_field_chooser->set_manager(region_tree_viewer->field_manager);
-	if (xi_point_density_field_chooser != NULL)
-			xi_point_density_field_chooser->set_manager(region_tree_viewer->field_manager);
+	if (sample_density_field_chooser != NULL)
+			sample_density_field_chooser->set_manager(region_tree_viewer->field_manager);
 	if (stream_vector_chooser != NULL)
 			stream_vector_chooser->set_manager(region_tree_viewer->field_manager);
 	if (texture_coord_field_chooser != NULL)
@@ -1165,6 +1165,65 @@ int font_callback(Cmiss_font *font)
 	return 1;
 }
 
+void show_sampling_widgets()
+{
+	sample_mode_text = XRCCTRL(*this,"SampleModeText",wxStaticText);
+	sample_mode_chooser_panel= XRCCTRL(*this,"SampleModeChooserPanel",wxPanel);
+	wxStaticText *nativediscretizationfieldtext=XRCCTRL(*this,"NativeDiscretizationFieldText",wxStaticText);
+	native_discretization_field_chooser_panel=XRCCTRL(*this, "NativeDiscretizationFieldChooserPanel",wxPanel);
+	sample_density_field_text=XRCCTRL(*this, "DensityFieldText",wxStaticText);
+	sample_density_field_chooser_panel=XRCCTRL(*this,"DensityFieldChooserPanel",wxPanel);
+	xitext=XRCCTRL(*this,"XiText",wxStaticText);
+	xitextctrl=XRCCTRL(*this,"XiTextCtrl",wxTextCtrl);
+	const int domain_dimension = Cmiss_graphic_get_domain_dimension(region_tree_viewer->current_graphic);
+	Cmiss_graphic_sampling_attributes_id sampling = Cmiss_graphic_get_sampling_attributes(region_tree_viewer->current_graphic);
+	Cmiss_element_point_sample_mode sample_mode = sampling ?
+		Cmiss_graphic_sampling_attributes_get_mode(sampling) : CMISS_ELEMENT_POINT_SAMPLE_MODE_INVALID;
+	if (sampling && (domain_dimension > 0))
+	{
+		sample_mode_text->Enable();
+		sample_mode_chooser_panel->Enable();
+	}
+	else
+	{
+		sample_mode_text->Disable();
+		sample_mode_chooser_panel->Disable();
+	}
+	if (sampling && (domain_dimension > 0) &&
+		(CMISS_ELEMENT_POINT_SAMPLE_CELL_POISSON == sample_mode))
+	{
+		sample_density_field_text->Enable();
+		sample_density_field_chooser_panel->Enable();
+	}
+	else
+	{
+		sample_density_field_text->Disable();
+		sample_density_field_chooser_panel->Disable();
+	}
+	if (sampling && (domain_dimension > 0) &&
+		(CMISS_ELEMENT_POINT_SAMPLE_SET_LOCATION == sample_mode))
+	{
+		xitext->Enable();
+		xitextctrl->Enable();
+	}
+	else
+	{
+		xitext->Disable();
+		xitextctrl->Disable();
+	}
+	if ((domain_dimension > 0) && (CMISS_ELEMENT_POINT_SAMPLE_SET_LOCATION != sample_mode))
+	{
+		nativediscretizationfieldtext->Enable();
+		native_discretization_field_chooser_panel->Enable();
+	}
+	else
+	{
+		nativediscretizationfieldtext->Disable();
+		native_discretization_field_chooser_panel->Disable();
+	}
+	Cmiss_graphic_sampling_attributes_destroy(&sampling);
+}
+
 /**
  * Callback from wxChooser<Domain Type> when choice is made.
  */
@@ -1206,73 +1265,7 @@ int domain_type_callback(enum Cmiss_field_domain_type domain_type)
 		facecheckbox->Disable();
 		facechoice->Disable();
 	}
-
-	xidiscretizationmodetext = XRCCTRL(*this,"XiDiscretizationModeText",wxStaticText);
-	xi_discretization_mode_chooser_panel= XRCCTRL(*this,"XiDiscretizationModeChooserPanel",wxPanel);
-	wxStaticText *nativediscretizationfieldtext=XRCCTRL(*this,"NativeDiscretizationFieldText",wxStaticText);
-	native_discretization_field_chooser_panel=XRCCTRL(*this, "NativeDiscretizationFieldChooserPanel",wxPanel);
-	densityfieldtext=XRCCTRL(*this, "DensityFieldText",wxStaticText);
-	density_field_chooser_panel=XRCCTRL(*this,"DensityFieldChooserPanel",wxPanel);
-	xitext=XRCCTRL(*this,"XiText",wxStaticText);
-	xitextctrl=XRCCTRL(*this,"XiTextCtrl",wxTextCtrl);
-	const Cmiss_graphic_type graphic_type = Cmiss_graphic_get_graphic_type(region_tree_viewer->current_graphic);
-	const int domain_dimension = Cmiss_graphic_get_domain_dimension(region_tree_viewer->current_graphic);
-	if ((CMISS_GRAPHIC_POINTS == graphic_type) || (CMISS_GRAPHIC_STREAMLINES == graphic_type))
-	{
-		Xi_discretization_mode xi_discretization_mode = XI_DISCRETIZATION_INVALID_MODE;
-		Cmiss_field *xi_point_density_field = 0;
-		Cmiss_graphic_get_xi_discretization(region_tree_viewer->current_graphic,
-			&xi_discretization_mode, &xi_point_density_field);
-		if (domain_dimension > 0)
-		{
-			xidiscretizationmodetext->Enable();
-			xi_discretization_mode_chooser_panel->Enable();
-		}
-		else
-		{
-			xidiscretizationmodetext->Disable();
-			xi_discretization_mode_chooser_panel->Disable();
-		}
-
-		if ((domain_dimension > 0) && (XI_DISCRETIZATION_EXACT_XI != xi_discretization_mode))
-		{
-			nativediscretizationfieldtext->Enable();
-			native_discretization_field_chooser_panel->Enable();
-		}
-		else
-		{
-			nativediscretizationfieldtext->Disable();
-			native_discretization_field_chooser_panel->Disable();
-		}
-		if ((domain_dimension > 0) && (
-			(XI_DISCRETIZATION_CELL_DENSITY == xi_discretization_mode)||
-			(XI_DISCRETIZATION_CELL_POISSON == xi_discretization_mode)))
-		{
-			densityfieldtext->Enable();
-			density_field_chooser_panel->Enable();
-		}
-		else
-		{
-			densityfieldtext->Disable();
-			density_field_chooser_panel->Disable();
-		}
-
-		Triple seed_xi;
-		char temp_string[100];
-		Cmiss_graphic_get_seed_xi(region_tree_viewer->current_graphic,seed_xi);
-		sprintf(temp_string,"%g,%g,%g",seed_xi[0],seed_xi[1],seed_xi[2]);
-		xitextctrl->SetValue(wxString::FromAscii(temp_string));
-		if ((domain_dimension > 0) && (XI_DISCRETIZATION_EXACT_XI == xi_discretization_mode))
-		{
-			xitext->Enable();
-			xitextctrl->Enable();
-		}
-		else
-		{
-			xitext->Disable();
-			xitextctrl->Disable();
-		}
-	}
+	show_sampling_widgets();
 
 	Region_tree_viewer_autoapply(region_tree_viewer->scene,
 	  region_tree_viewer->edit_scene);
@@ -1280,86 +1273,21 @@ int domain_type_callback(enum Cmiss_field_domain_type domain_type)
 	return 1;
  }
 
-int xi_discretization_mode_callback(enum Xi_discretization_mode xi_discretization_mode)
-/*******************************************************************************
-LAST MODIFIED : 22 March 2007
-
-DESCRIPTION :
-Callback from wxChooser<xi Discretization Mode> when choice is made.
-==============================================================================*/
+/** Callback from wxChooser<Cmiss_element_point_sample_mode> when choice is made. */
+int sample_mode_callback(enum Cmiss_element_point_sample_mode sample_mode)
 {
-	enum Xi_discretization_mode old_xi_discretization_mode;
-	struct Computed_field *old_xi_point_density_field, *xi_point_density_field;
+	Cmiss_graphic_sampling_attributes_id sampling = Cmiss_graphic_get_sampling_attributes(region_tree_viewer->current_graphic);
+	if (sampling)
+	{
+		Cmiss_graphic_sampling_attributes_set_mode(sampling, sample_mode);
+	}
+	Cmiss_graphic_sampling_attributes_destroy(&sampling);
+	show_sampling_widgets();
 
-	wxStaticText *nativediscretizationfieldtext=XRCCTRL(*this,"NativeDiscretizationFieldText",wxStaticText);
-	native_discretization_field_chooser_panel=XRCCTRL(*this, "NativeDiscretizationFieldChooserPanel",wxPanel);
-	densityfieldtext=XRCCTRL(*this, "DensityFieldText",wxStaticText);
-	density_field_chooser_panel=XRCCTRL(*this,"DensityFieldChooserPanel",wxPanel);
-	xitext=XRCCTRL(*this,"XiText",wxStaticText);
-	xitextctrl=XRCCTRL(*this,"XiTextCtrl",wxTextCtrl);
-	if (Cmiss_graphic_get_xi_discretization(
-			region_tree_viewer->current_graphic, &old_xi_discretization_mode,
-			&old_xi_point_density_field))
-		{
-			xi_point_density_field = old_xi_point_density_field;
-			if ((XI_DISCRETIZATION_CELL_DENSITY == xi_discretization_mode) ||
-				(XI_DISCRETIZATION_CELL_POISSON == xi_discretization_mode))
-			{
-				if (!xi_point_density_field)
-				{
-					/* get xi_point_density_field from widget */
-					xi_point_density_field=xi_point_density_field_chooser->get_object();
-				}
-			}
-			else
-			{
-				xi_point_density_field = (struct Computed_field *)NULL;
-			}
-			if (Cmiss_graphic_set_xi_discretization(
-				region_tree_viewer->current_graphic, xi_discretization_mode,
-				xi_point_density_field))
-			{
-				/* inform the client of the change */
-				Region_tree_viewer_autoapply(region_tree_viewer->scene,
-				 region_tree_viewer->edit_scene);
-				//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphic);
-			}
-			else
-			{
-				xi_discretization_mode = old_xi_discretization_mode;
-				xi_point_density_field = old_xi_point_density_field;
-				xi_discretization_mode_chooser->set_value(xi_discretization_mode);
-			}
-			if (XI_DISCRETIZATION_EXACT_XI != xi_discretization_mode)
-			{
-				FE_field *native_discretization_field=
-				Cmiss_graphic_get_native_discretization_field(region_tree_viewer->current_graphic);
-				nativediscretizationfieldtext->Enable();
-				native_discretization_field_chooser_panel->Enable();
-				xitext->Disable();
-				xitextctrl->Disable();
-				native_discretization_field_chooser_panel->Enable();
-			}
-			else
-			{
-				nativediscretizationfieldtext->Disable();
-				native_discretization_field_chooser_panel->Disable();
-				xitext->Enable();
-				xitextctrl->Enable();
-			}
-			if ((XI_DISCRETIZATION_CELL_DENSITY == xi_discretization_mode)||
-			   (XI_DISCRETIZATION_CELL_POISSON == xi_discretization_mode))
-			{
-				densityfieldtext->Enable();
-				density_field_chooser_panel->Enable();
-			}
-			else
-			{
-				densityfieldtext->Disable();
-				density_field_chooser_panel->Disable();
-			}
-		}
-
+	/* inform the client of the change */
+	Region_tree_viewer_autoapply(region_tree_viewer->scene,
+		region_tree_viewer->edit_scene);
+	//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphic);
 
 	return 1;
 }
@@ -1387,24 +1315,16 @@ Callback from wxChooser<Native discretization> when choice is made.
 	return 1;
 }
 
-int xi_point_density_callback(Computed_field *xi_point_density_field)
-/*******************************************************************************
-LAST MODIFIED : 22 March 2007
-
-DESCRIPTION :
-
-Callback from wxChooser<xi Point Denstiy Field> when choice is made.
-==============================================================================*/
+/** Callback from wxChooser<xi Point Denstiy Field> when choice is made. */
+int sample_density_callback(Computed_field *sample_density_field)
 {
-	enum Xi_discretization_mode xi_discretization_mode;
-	struct Computed_field *temp_xi_point_density_field;
+	Cmiss_graphic_sampling_attributes_id sampling = Cmiss_graphic_get_sampling_attributes(region_tree_viewer->current_graphic);
+	if (sampling)
+	{
+		Cmiss_graphic_sampling_attributes_set_density_field(sampling, sample_density_field);
+	}
+	Cmiss_graphic_sampling_attributes_destroy(&sampling);
 
-	Cmiss_graphic_get_xi_discretization(
-		region_tree_viewer->current_graphic, &xi_discretization_mode,
-		&temp_xi_point_density_field);
-		Cmiss_graphic_set_xi_discretization(
-		region_tree_viewer->current_graphic, xi_discretization_mode,
-		xi_point_density_field);
 	Region_tree_viewer_autoapply(region_tree_viewer->scene,
 	 region_tree_viewer->edit_scene);
 	//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphic);
@@ -2558,18 +2478,18 @@ void SeedElementChecked(wxCommandEvent &event)
 
 }
 
-void EnterSeedXi(wxCommandEvent &event)
+void EnterSampleLocation(wxCommandEvent &event)
 {
-	char temp_string[100];
-	static int number_of_components=3;
-	struct Parse_state *temp_state;
-	Triple seed_xi;
-
 	USE_PARAMETER(event);
+	Cmiss_graphic_sampling_attributes_id sampling =
+		Cmiss_graphic_get_sampling_attributes(region_tree_viewer->current_graphic);
 	xitext=XRCCTRL(*this,"XiText",wxStaticText);
 	xitextctrl=XRCCTRL(*this,"XiTextCtrl",wxTextCtrl);
-	if (Cmiss_graphic_get_seed_xi(
-				region_tree_viewer->current_graphic,seed_xi))
+	char temp_string[100];
+	const int number_of_components=3;
+	struct Parse_state *temp_state;
+	double sample_location[number_of_components];
+	if (CMISS_OK == Cmiss_graphic_sampling_attributes_get_location(sampling, number_of_components, sample_location))
 	{
 		/* Get the text string */
 		wxString wxTextEntry = xitextctrl->GetValue();
@@ -2580,10 +2500,8 @@ void EnterSeedXi(wxCommandEvent &event)
 			temp_state=create_Parse_state(text_entry);
 			if (temp_state)
 			{
-				set_float_vector(temp_state,seed_xi,
-					(void *)&number_of_components);
-				Cmiss_graphic_set_seed_xi(
-					region_tree_viewer->current_graphic,seed_xi);
+				set_double_vector(temp_state, sample_location, (void *)&number_of_components);
+				Cmiss_graphic_sampling_attributes_set_location(sampling, number_of_components, sample_location);
 				/* inform the client of the change */
 				Region_tree_viewer_autoapply(region_tree_viewer->scene,
 					region_tree_viewer->edit_scene);
@@ -2594,12 +2512,13 @@ void EnterSeedXi(wxCommandEvent &event)
 		else
 		{
 			display_message(ERROR_MESSAGE,
-			  "settings_editor_seed_xi_text_CB.  Missing text");
+				"settings_editor_seed_xi_text_CB.  Missing text");
 		}
 		/* always re-display the values actually set */
-		sprintf(temp_string,"%g,%g,%g",seed_xi[0],seed_xi[1],seed_xi[2]);
+		sprintf(temp_string,"%g,%g,%g", sample_location[0], sample_location[1], sample_location[2]);
 		xitextctrl->ChangeValue(wxString::FromAscii(temp_string));
 	}
+	Cmiss_graphic_sampling_attributes_destroy(&sampling);
 }
 
 void EnterStreamlineLength(wxCommandEvent &event)
@@ -2737,7 +2656,6 @@ void SetGraphic(Cmiss_graphic *graphic)
 	int error, line_width;
 	Cmiss_element_face_type face = CMISS_ELEMENT_FACE_INVALID;
 	char temp_string[100], *vector_temp_string;
-	enum Xi_discretization_mode xi_discretization_mode;
 	enum Cmiss_graphics_render_type render_type;
 	struct FE_element *seed_element;
 	struct FE_region *fe_region;
@@ -3276,7 +3194,7 @@ void SetGraphic(Cmiss_graphic *graphic)
 		/* Set the select_mode_chooser_panel*/
 		select_mode_chooser_panel =
 			XRCCTRL(*this, "SelectModeChooserPanel", wxPanel);
-		selectmodetext=XRCCTRL(*this,"SelectModeText",wxStaticText);
+		select_mode_text=XRCCTRL(*this,"SelectModeText",wxStaticText);
 		if (select_mode_chooser == NULL)
 		{
 			select_mode_chooser =
@@ -3293,7 +3211,7 @@ void SetGraphic(Cmiss_graphic *graphic)
 			select_mode_chooser->set_callback(select_mode_callback);
 		}
 		select_mode_chooser_panel->Show();
-		selectmodetext->Show();
+		select_mode_text->Show();
 		select_mode_chooser->set_value(Cmiss_graphic_get_select_mode(graphic));
 
 		domain_type_chooser_panel =
@@ -3334,10 +3252,6 @@ void SetGraphic(Cmiss_graphic *graphic)
 		/* element_points */
 		wxStaticText *nativediscretizationfieldtext=XRCCTRL(*this,"NativeDiscretizationFieldText",wxStaticText);
 		native_discretization_field_chooser_panel=XRCCTRL(*this, "NativeDiscretizationFieldChooserPanel",wxPanel);
-		xidiscretizationmodetext = XRCCTRL(*this,"XiDiscretizationModeText",wxStaticText);
-		xi_discretization_mode_chooser_panel= XRCCTRL(*this,"XiDiscretizationModeChooserPanel",wxPanel);
-		densityfieldtext=XRCCTRL(*this, "DensityFieldText",wxStaticText);
-		density_field_chooser_panel=XRCCTRL(*this,"DensityFieldChooserPanel",wxPanel);
 
 		struct FE_field *native_discretization_field =
 			Cmiss_graphic_get_native_discretization_field(graphic);
@@ -3380,76 +3294,61 @@ void SetGraphic(Cmiss_graphic *graphic)
 			native_discretization_field_chooser_panel->Disable();
 		}
 
-		if (Cmiss_graphic_type_uses_attribute(graphic_type,
-			CMISS_GRAPHIC_ATTRIBUTE_XI_DISCRETIZATION_MODE))
+		sample_mode_text = XRCCTRL(*this,"SampleModeText",wxStaticText);
+		sample_mode_chooser_panel= XRCCTRL(*this,"SampleModeChooserPanel",wxPanel);
+		sample_density_field_text=XRCCTRL(*this, "DensityFieldText",wxStaticText);
+		sample_density_field_chooser_panel=XRCCTRL(*this,"DensityFieldChooserPanel",wxPanel);
+		xitext=XRCCTRL(*this,"XiText",wxStaticText);
+		xitextctrl=XRCCTRL(*this,"XiTextCtrl",wxTextCtrl);
+		Cmiss_graphic_sampling_attributes_id sampling = Cmiss_graphic_get_sampling_attributes(graphic);
+		if (sampling)
 		{
-			Cmiss_field_id xi_point_density_field = 0;
-			Cmiss_graphic_get_xi_discretization(graphic,
-				&xi_discretization_mode, &xi_point_density_field);
-			if (xi_discretization_mode_chooser ==NULL)
+			Cmiss_element_point_sample_mode sample_mode = Cmiss_graphic_sampling_attributes_get_mode(sampling);
+			if (0 == sample_mode_chooser)
 			{
-				xi_discretization_mode_chooser =
-					new Enumerator_chooser<ENUMERATOR_TYPE_CLASS(Xi_discretization_mode)>
-					(xi_discretization_mode_chooser_panel, xi_discretization_mode,
-						(ENUMERATOR_CONDITIONAL_FUNCTION(Xi_discretization_mode) *)NULL,
+				sample_mode_chooser =
+					new Enumerator_chooser<ENUMERATOR_TYPE_CLASS(Cmiss_element_point_sample_mode)>
+					(sample_mode_chooser_panel, sample_mode,
+						(ENUMERATOR_CONDITIONAL_FUNCTION(Cmiss_element_point_sample_mode) *)NULL,
 						(void *)NULL, region_tree_viewer->user_interface);
-				xi_discretization_mode_chooser_panel->Fit();
-				Callback_base< enum Xi_discretization_mode > *xi_discretization_mode_callback =
-					new Callback_member_callback< enum Xi_discretization_mode,
-					wxRegionTreeViewer, int (wxRegionTreeViewer::*)(enum Xi_discretization_mode) >
-					(this, &wxRegionTreeViewer::xi_discretization_mode_callback);
-				xi_discretization_mode_chooser->set_callback(xi_discretization_mode_callback);
+				sample_mode_chooser_panel->Fit();
+				Callback_base< enum Cmiss_element_point_sample_mode > *sample_mode_callback =
+					new Callback_member_callback< enum Cmiss_element_point_sample_mode,
+					wxRegionTreeViewer, int (wxRegionTreeViewer::*)(enum Cmiss_element_point_sample_mode) >
+					(this, &wxRegionTreeViewer::sample_mode_callback);
+				sample_mode_chooser->set_callback(sample_mode_callback);
 			}
-			xi_discretization_mode_chooser_panel->Show();
-			xidiscretizationmodetext->Show();
-			xi_discretization_mode_chooser->set_value(xi_discretization_mode);
+			sample_mode_chooser_panel->Show();
+			sample_mode_text->Show();
+			sample_mode_chooser->set_value(sample_mode);
 
-			if (xi_point_density_field_chooser == NULL)
+			Cmiss_field_id sample_density_field = Cmiss_graphic_sampling_attributes_get_density_field(sampling);
+			if (sample_density_field_chooser == NULL)
 			{
-				xi_point_density_field_chooser =
+				sample_density_field_chooser =
 					new Managed_object_chooser<Computed_field,MANAGER_CLASS(Computed_field)>
-					(density_field_chooser_panel, xi_point_density_field, region_tree_viewer->field_manager,
+					(sample_density_field_chooser_panel, sample_density_field, region_tree_viewer->field_manager,
 						Computed_field_is_scalar, (void *)NULL,
 						region_tree_viewer->user_interface);
-				xi_point_density_field_chooser->include_null_item(true);
-				Callback_base< Computed_field* > *xi_point_density_callback =
+				sample_density_field_chooser->include_null_item(true);
+				Callback_base< Computed_field* > *sample_density_callback =
 					new Callback_member_callback< Computed_field*,
 					wxRegionTreeViewer, int (wxRegionTreeViewer::*)(Computed_field *) >
-					(this, &wxRegionTreeViewer::xi_point_density_callback);
-				xi_point_density_field_chooser->set_callback(xi_point_density_callback);
-				density_field_chooser_panel->Fit();
+					(this, &wxRegionTreeViewer::sample_density_callback);
+				sample_density_field_chooser->set_callback(sample_density_callback);
+				sample_density_field_chooser_panel->Fit();
 			}
-			densityfieldtext->Show();
-			density_field_chooser_panel->Show();
-			xi_point_density_field_chooser->set_object(xi_point_density_field);
+			sample_density_field_text->Show();
+			sample_density_field_chooser_panel->Show();
+			sample_density_field_chooser->set_object(sample_density_field);
 
-			if (XI_DISCRETIZATION_EXACT_XI != xi_discretization_mode)
-			{
-				native_discretization_field_chooser_panel->Enable();
-			}
-			else
-			{
-				native_discretization_field_chooser_panel->Disable();
-			}
-			if ((XI_DISCRETIZATION_CELL_DENSITY == xi_discretization_mode)||
-				(XI_DISCRETIZATION_CELL_POISSON == xi_discretization_mode))
-			{
-				densityfieldtext->Enable();
-				density_field_chooser_panel->Enable();
-			}
-			else
-			{
-				densityfieldtext->Disable();
-				density_field_chooser_panel->Disable();
-			}
+			double sample_location[3];
+			Cmiss_graphic_sampling_attributes_get_location(sampling, 3, sample_location);
+			sprintf(temp_string,"%g,%g,%g",sample_location[0],sample_location[1],sample_location[2]);
+			xitextctrl->SetValue(wxString::FromAscii(temp_string));
 		}
-		else
-		{
-			xidiscretizationmodetext->Hide();
-			xi_discretization_mode_chooser_panel->Hide();
-			densityfieldtext->Hide();
-			density_field_chooser_panel->Hide();
-		}
+		Cmiss_graphic_sampling_attributes_destroy(&sampling);
+		show_sampling_widgets();
 
 		/* seed element */
 		seed_element_panel = XRCCTRL(*this, "SeedElementPanel", wxPanel);
@@ -3490,36 +3389,6 @@ void SetGraphic(Cmiss_graphic *graphic)
 		{
 			seed_element_panel->Hide();
 			seedelementcheckbox->Hide();
-		}
-
-		/* seed xi */
-		xitext=XRCCTRL(*this,"XiText",wxStaticText);
-		xitextctrl=XRCCTRL(*this,"XiTextCtrl",wxTextCtrl);
-		/* for sampling points only */
-		if ((CMISS_GRAPHIC_POINTS == graphic_type) ||
-			(CMISS_GRAPHIC_STREAMLINES == graphic_type))
-		{
-			xitext->Show();
-			xitextctrl->Show();
-			Triple seed_xi;
-			Cmiss_graphic_get_seed_xi(region_tree_viewer->current_graphic,seed_xi);
-			sprintf(temp_string,"%g,%g,%g",seed_xi[0],seed_xi[1],seed_xi[2]);
-			xitextctrl->SetValue(wxString::FromAscii(temp_string));
-			if ((domain_dimension > 0) && (XI_DISCRETIZATION_EXACT_XI == xi_discretization_mode))
-			{
-				xitext->Enable();
-				xitextctrl->Enable();
-			}
-			else
-			{
-				xitext->Disable();
-				xitextctrl->Disable();
-			}
-		}
-		else
-		{
-			xitext->Hide();
-			xitextctrl->Hide();
 		}
 
 		streamvectortext = XRCCTRL(*this, "StreamVectorText",wxStaticText);
@@ -3676,8 +3545,10 @@ void SetGraphic(Cmiss_graphic *graphic)
 		}
 
 		wxStaticText *texturecoordinatestext = XRCCTRL(*this, "TextureCoordinatesText", wxStaticText);
-		texture_coordinates_chooser_panel = XRCCTRL(*this, "TextrueCoordinatesChooserPanel", wxPanel);
-		if (Cmiss_graphic_type_uses_attribute(graphic_type, CMISS_GRAPHIC_ATTRIBUTE_TEXTURE_COORDINATE_FIELD))
+		texture_coordinates_chooser_panel = XRCCTRL(*this, "TextureCoordinatesChooserPanel", wxPanel);
+		if ((graphic_type == CMISS_GRAPHIC_SURFACES) ||
+			(graphic_type == CMISS_GRAPHIC_CONTOURS) ||
+			(graphic_type == CMISS_GRAPHIC_LINES))
 		{
 			texture_coordinates_chooser_panel->Show();
 			texturecoordinatestext->Show();
@@ -3706,36 +3577,27 @@ void SetGraphic(Cmiss_graphic *graphic)
 			texturecoordinatestext->Hide();
 		}
 
-		/* render_type */
+		/* surface_render_type */
 		rendertypetext=XRCCTRL(*this, "RenderTypeText",wxStaticText);
 		render_type_chooser_panel=XRCCTRL(*this,"RenderTypeChooserPanel",wxPanel);
-		if (Cmiss_graphic_type_uses_attribute(graphic_type, CMISS_GRAPHIC_ATTRIBUTE_RENDER_TYPE))
+		rendertypetext->Show();
+		render_type_chooser_panel->Show();
+		render_type=Cmiss_graphic_get_render_type(graphic);
+		if (render_type_chooser == NULL)
 		{
-			/* set texture_coordinate field */
-			rendertypetext->Show();
-			render_type_chooser_panel->Show();
-			render_type=Cmiss_graphic_get_render_type(graphic);
-			if (render_type_chooser == NULL)
-			{
-				render_type_chooser =
-						new Enumerator_chooser<ENUMERATOR_TYPE_CLASS(Cmiss_graphics_render_type)>
-						(render_type_chooser_panel, render_type,
-							(ENUMERATOR_CONDITIONAL_FUNCTION(Cmiss_graphics_render_type) *)NULL,
-							(void *)NULL, region_tree_viewer->user_interface);
-				render_type_chooser_panel->Fit();
-				Callback_base< enum Cmiss_graphics_render_type > *render_type_callback =
-						new Callback_member_callback< enum Cmiss_graphics_render_type,
-						wxRegionTreeViewer, int (wxRegionTreeViewer::*)(enum Cmiss_graphics_render_type) >
-						(this, &wxRegionTreeViewer::render_type_callback);
-				render_type_chooser->set_callback(render_type_callback);
-			}
-			render_type_chooser->set_value(render_type);
+			render_type_chooser =
+					new Enumerator_chooser<ENUMERATOR_TYPE_CLASS(Cmiss_graphics_render_type)>
+					(render_type_chooser_panel, render_type,
+						(ENUMERATOR_CONDITIONAL_FUNCTION(Cmiss_graphics_render_type) *)NULL,
+						(void *)NULL, region_tree_viewer->user_interface);
+			render_type_chooser_panel->Fit();
+			Callback_base< enum Cmiss_graphics_render_type > *render_type_callback =
+					new Callback_member_callback< enum Cmiss_graphics_render_type,
+					wxRegionTreeViewer, int (wxRegionTreeViewer::*)(enum Cmiss_graphics_render_type) >
+					(this, &wxRegionTreeViewer::render_type_callback);
+			render_type_chooser->set_callback(render_type_callback);
 		}
-		else
-		{
-			rendertypetext->Hide();
-			render_type_chooser_panel->Hide();
-		}
+		render_type_chooser->set_value(render_type);
 
 		exteriorcheckbox=XRCCTRL(*this,"ExteriorCheckBox",wxCheckBox);
 		facecheckbox=XRCCTRL(*this, "FaceCheckBox",wxCheckBox);
@@ -4054,7 +3916,7 @@ BEGIN_EVENT_TABLE(wxRegionTreeViewer, wxFrame)
 	EVT_TEXT_ENTER(XRCID("OverlayTextCtrl"),wxRegionTreeViewer::OverlayEntered)
 	*/
 	EVT_CHECKBOX(XRCID("SeedElementCheckBox"),wxRegionTreeViewer::SeedElementChecked)
-	EVT_TEXT_ENTER(XRCID("XiTextCtrl"),wxRegionTreeViewer::EnterSeedXi)
+	EVT_TEXT_ENTER(XRCID("XiTextCtrl"),wxRegionTreeViewer::EnterSampleLocation)
 	EVT_TEXT_ENTER(XRCID("StreamlinesLengthTextCtrl"),wxRegionTreeViewer::EnterStreamlineLength)
 	EVT_TEXT_ENTER(XRCID("LineBaseSizeTextCtrl"),wxRegionTreeViewer::EnterLineBaseSize)
 	EVT_TEXT_ENTER(XRCID("LineScaleFactorsTextCtrl"), wxRegionTreeViewer::EnterLineScaleFactors)
@@ -4458,7 +4320,7 @@ DESCRIPTION :
 			region_tree_viewer->font_manager=Cmiss_graphics_module_get_font_manager(graphics_module);
 			region_tree_viewer->select_mode=(Graphics_select_mode)NULL;
 			region_tree_viewer->domain_type = CMISS_FIELD_DOMAIN_TYPE_INVALID;
-			region_tree_viewer->xi_discretization_mode= (Xi_discretization_mode)NULL;
+			region_tree_viewer->sample_mode= (Cmiss_element_point_sample_mode)NULL;
 			region_tree_viewer->streamline_data_type=(Streamline_data_type)NULL;
 			region_tree_viewer->spectrum_manager=spectrum_manager;
 			region_tree_viewer->render_type =(Cmiss_graphics_render_type)NULL;

@@ -500,12 +500,29 @@
 													<orient>wxHORIZONTAL</orient>
 													<object class="sizeritem">
 														<flag>wxALIGN_CENTRE_VERTICAL</flag>
-														<object class	="wxStaticText" name="XiDiscretizationModeText">
-															<label>Xi discretization mode:</label>
+														<object class	="wxStaticText" name="NativeDiscretizationFieldText">
+															<label>Native discretization field:</label>
 														</object>
 													</object>
 													<object class="sizeritem">
-														<object class	="wxPanel" name="XiDiscretizationModeChooserPanel">
+														<object class	="wxPanel" name="NativeDiscretizationFieldChooserPanel">
+															<size>300,30</size>
+														</object>
+													</object>
+												</object>
+											</object>
+
+											<object class="sizeritem">
+												<object class = "wxBoxSizer">
+													<orient>wxHORIZONTAL</orient>
+													<object class="sizeritem">
+														<flag>wxALIGN_CENTRE_VERTICAL</flag>
+														<object class	="wxStaticText" name="SampleModeText">
+															<label>Point sample mode:</label>
+														</object>
+													</object>
+													<object class="sizeritem">
+														<object class	="wxPanel" name="SampleModeChooserPanel">
 															<size>200,30</size>
 														</object>
 													</object>
@@ -513,29 +530,12 @@
 											</object>
 
 											<object class="sizeritem">
-				   								<object class = "wxBoxSizer">	
-													<orient>wxHORIZONTAL</orient>
-													<object class="sizeritem">
-														<flag>wxALIGN_CENTRE_VERTICAL</flag>
-														<object class	="wxStaticText" name="NativeDiscretizationFieldText"> 
-															<label>Native discretization field:</label>				  			
-	 													</object>
-													</object>
-													<object class="sizeritem">
-														<object class	="wxPanel" name="NativeDiscretizationFieldChooserPanel">
-															<size>300,30</size>
-	 													</object>
-													</object>
-												</object>
-											</object>
-
-											<object class="sizeritem">
-				   								<object class = "wxBoxSizer">	
+				   							<object class = "wxBoxSizer">	
 													<orient>wxHORIZONTAL</orient>
 													<object class="sizeritem">
 														<flag>wxALIGN_CENTRE_VERTICAL</flag>
 														<object class	="wxStaticText" name="DensityFieldText"> 
-															<label>Density field:</label>				  			
+															<label>Sample density field:</label>				  			
 	 													</object>
 													</object>
 													<object class="sizeritem">
@@ -547,12 +547,12 @@
 											</object>
 
 											<object class="sizeritem">
-				   								<object class = "wxBoxSizer">	
+				   							<object class = "wxBoxSizer">	
 													<orient>wxHORIZONTAL</orient>
 													<object class="sizeritem">
 														<flag>wxALIGN_CENTRE_VERTICAL</flag>
 														<object class	="wxStaticText" name="XiText"> 
-															<label>xi:</label>				  			
+															<label>Sample location:</label>				  			
 	 													</object>
 													</object>
 													<object class="sizeritem">
@@ -866,7 +866,7 @@
 	 													</object>
 													</object>
 													<object class="sizeritem">
-														<object class	="wxPanel" name="TextrueCoordinatesChooserPanel">
+														<object class	="wxPanel" name="TextureCoordinatesChooserPanel">
 															<size>300,30</size>
 	 													</object>
 													</object>

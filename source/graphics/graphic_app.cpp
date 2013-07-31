@@ -112,23 +112,7 @@ int gfx_modify_scene_graphic(struct Parse_state *state,
 	REACCESS(Cmiss_graphic)(&(modify_scene_data->graphic), graphic);
 
 	int return_code = 1;
-	Cmiss_graphics_coordinate_system coordinate_system = Cmiss_graphic_get_coordinate_system(graphic);
-	char *font_name = (char *)NULL;
-	Cmiss_field_id xi_point_density_field = 0;
 
-	enum Xi_discretization_mode xi_discretization_mode;
-	const char *xi_discretization_mode_string = 0;
-	if (Cmiss_graphic_type_uses_attribute(graphic_type, CMISS_GRAPHIC_ATTRIBUTE_XI_DISCRETIZATION_MODE))
-	{
-		Cmiss_graphic_get_xi_discretization(graphic,
-			&xi_discretization_mode, &xi_point_density_field);
-		if (xi_point_density_field)
-		{
-			ACCESS(Computed_field)(xi_point_density_field);
-		}
-		xi_discretization_mode_string = ENUMERATOR_STRING(Xi_discretization_mode)(xi_discretization_mode);
-	}
-	int number_of_components = 3;
 	int number_of_valid_strings;
 	const char **valid_strings;
 	char *seed_nodeset_name = 0;
@@ -141,6 +125,11 @@ int gfx_modify_scene_graphic(struct Parse_state *state,
 	Cmiss_graphic_line_attributes_id line_attributes = Cmiss_graphic_get_line_attributes(graphic);
 	Cmiss_field_id line_orientation_scale_field = 0;
 	Cmiss_graphic_point_attributes_id point_attributes = Cmiss_graphic_get_point_attributes(graphic);
+	Cmiss_graphic_sampling_attributes_id sampling =
+		((legacy_graphic_type == LEGACY_GRAPHIC_POINT) ||
+		(legacy_graphic_type == LEGACY_GRAPHIC_NODE_POINTS) ||
+		(legacy_graphic_type == LEGACY_GRAPHIC_DATA_POINTS)) ?
+		0 : Cmiss_graphic_get_sampling_attributes(graphic);
 
 	Cmiss_field_id isoscalar_field = 0;
 	int number_of_isovalues = 0;
@@ -175,19 +164,38 @@ int gfx_modify_scene_graphic(struct Parse_state *state,
 	Option_table_add_entry(option_table,"as", &name,
 		(void *)1,set_name);
 
-	/* cell_centres/cell_corners/cell_density/exact_xi */
-	if ((legacy_graphic_type != LEGACY_GRAPHIC_POINT) &&
-		(legacy_graphic_type != LEGACY_GRAPHIC_NODE_POINTS) &&
-		(legacy_graphic_type != LEGACY_GRAPHIC_DATA_POINTS) &&
-		Cmiss_graphic_type_uses_attribute(graphic_type, CMISS_GRAPHIC_ATTRIBUTE_XI_DISCRETIZATION_MODE))
+	/* element points sample mode: cell_centres/cell_corners/cell_density/set_location */
+	const char *sample_mode_string = 0;
+	if (sampling)
 	{
-		valid_strings = ENUMERATOR_GET_VALID_STRINGS(Xi_discretization_mode)(
+		Cmiss_element_point_sample_mode sample_mode = Cmiss_graphic_sampling_attributes_get_mode(sampling);
+		sample_mode_string = ENUMERATOR_STRING(Cmiss_element_point_sample_mode)(sample_mode);
+		valid_strings = ENUMERATOR_GET_VALID_STRINGS(Cmiss_element_point_sample_mode)(
 			&number_of_valid_strings,
-			(ENUMERATOR_CONDITIONAL_FUNCTION(Xi_discretization_mode) *)NULL,
+			(ENUMERATOR_CONDITIONAL_FUNCTION(Cmiss_element_point_sample_mode) *)NULL,
 			(void *)NULL);
 		Option_table_add_enumerator(option_table,number_of_valid_strings,
-			valid_strings,&xi_discretization_mode_string);
+			valid_strings,&sample_mode_string);
 		DEALLOCATE(valid_strings);
+	}
+
+	/* deprecated sample modes:
+	   cell_density, cell_random -> cell_poisson (with warnings)
+	   exact_xi -> set_location */
+	const char *old_sample_mode_strings[] = { "cell_density", "cell_random", "exact_xi" };
+	const enum Cmiss_element_point_sample_mode old_to_new_sample_mode[] =
+	{
+		CMISS_ELEMENT_POINT_SAMPLE_CELL_POISSON,
+		CMISS_ELEMENT_POINT_SAMPLE_CELL_POISSON,
+		CMISS_ELEMENT_POINT_SAMPLE_SET_LOCATION
+	};
+	const int old_sample_mode_strings_count =
+		sizeof(old_to_new_sample_mode) / sizeof(Cmiss_element_point_sample_mode);
+	const char *old_sample_mode_string = 0;
+	if (sampling)
+	{
+		Option_table_add_enumerator(option_table, old_sample_mode_strings_count,
+			old_sample_mode_strings, &old_sample_mode_string);
 	}
 
 	int three = 3;
@@ -236,6 +244,7 @@ int gfx_modify_scene_graphic(struct Parse_state *state,
 		&coordinate_field, &set_coordinate_field_data);
 
 	/* coordinate system */
+	Cmiss_graphics_coordinate_system coordinate_system = Cmiss_graphic_get_coordinate_system(graphic);
 	const char *coordinate_system_string =
 		ENUMERATOR_STRING(Cmiss_graphics_coordinate_system)(coordinate_system);
 	valid_strings = ENUMERATOR_GET_VALID_STRINGS(Cmiss_graphics_coordinate_system)(
@@ -266,15 +275,17 @@ int gfx_modify_scene_graphic(struct Parse_state *state,
 	Option_table_add_entry(option_table,"delete",
 		&(modify_scene_data->delete_flag),NULL,set_char_flag);
 
-	/* density */
-	Set_Computed_field_conditional_data set_xi_point_density_field_data;
-	set_xi_point_density_field_data.computed_field_manager = scene_command_data->computed_field_manager;
-	set_xi_point_density_field_data.conditional_function = Computed_field_is_scalar;
-	set_xi_point_density_field_data.conditional_function_user_data = (void *)NULL;
-	if (Cmiss_graphic_type_uses_attribute(graphic_type, CMISS_GRAPHIC_ATTRIBUTE_XI_DISCRETIZATION_MODE))
+	/* sample density */
+	Cmiss_field_id sample_density_field = 0;
+	Set_Computed_field_conditional_data set_sample_density_field_data;
+	set_sample_density_field_data.computed_field_manager = scene_command_data->computed_field_manager;
+	set_sample_density_field_data.conditional_function = Computed_field_is_scalar;
+	set_sample_density_field_data.conditional_function_user_data = (void *)NULL;
+	if (sampling)
 	{
+		sample_density_field = Cmiss_graphic_sampling_attributes_get_density_field(sampling);
 		Option_table_add_Computed_field_conditional_entry(option_table, "density",
-			&xi_point_density_field, &set_xi_point_density_field_data);
+			&sample_density_field, &set_sample_density_field_data);
 	}
 
 	/* discretization */
@@ -350,10 +361,10 @@ int gfx_modify_scene_graphic(struct Parse_state *state,
 	}
 
 	/* font */
-	if (Cmiss_graphic_type_uses_attribute(graphic_type, CMISS_GRAPHIC_ATTRIBUTE_LABEL_FIELD))
+	char *font_name = (char *)NULL;
+	if (point_attributes)
 	{
-		Option_table_add_name_entry(option_table, "font",
-			&font_name);
+		Option_table_add_name_entry(option_table, "font", &font_name);
 	}
 
 	/* glyph */
@@ -437,7 +448,7 @@ int gfx_modify_scene_graphic(struct Parse_state *state,
 	set_label_density_field_data.computed_field_manager = scene_command_data->computed_field_manager;
 	set_label_density_field_data.conditional_function = Computed_field_has_up_to_3_numerical_components;
 	set_label_density_field_data.conditional_function_user_data = (void *)NULL;
-	if (Cmiss_graphic_type_uses_attribute(graphic_type, CMISS_GRAPHIC_ATTRIBUTE_LABEL_FIELD))
+	if (point_attributes)
 	{
 		Option_table_add_Computed_field_conditional_entry(option_table, "ldensity",
 			&(graphic->label_density_field), &set_label_density_field_data);
@@ -584,17 +595,14 @@ int gfx_modify_scene_graphic(struct Parse_state *state,
 
 	/* render_type */
 	const char *render_type_string = 0;
-	if (Cmiss_graphic_type_uses_attribute(graphic_type, CMISS_GRAPHIC_ATTRIBUTE_RENDER_TYPE))
-	{
-		Cmiss_graphics_render_type render_type =  Cmiss_graphic_get_render_type(graphic);
-		render_type_string = ENUMERATOR_STRING(Cmiss_graphics_render_type)(render_type);
-		valid_strings = ENUMERATOR_GET_VALID_STRINGS(Cmiss_graphics_render_type)(
-			&number_of_valid_strings,
-			(ENUMERATOR_CONDITIONAL_FUNCTION(Cmiss_graphics_render_type) *)NULL, (void *)NULL);
-		Option_table_add_enumerator(option_table,number_of_valid_strings,
-			valid_strings,&render_type_string);
-		DEALLOCATE(valid_strings);
-	}
+	Cmiss_graphics_render_type render_type =  Cmiss_graphic_get_render_type(graphic);
+	render_type_string = ENUMERATOR_STRING(Cmiss_graphics_render_type)(render_type);
+	valid_strings = ENUMERATOR_GET_VALID_STRINGS(Cmiss_graphics_render_type)(
+		&number_of_valid_strings,
+		(ENUMERATOR_CONDITIONAL_FUNCTION(Cmiss_graphics_render_type) *)NULL, (void *)NULL);
+	Option_table_add_enumerator(option_table,number_of_valid_strings,
+		valid_strings,&render_type_string);
+	DEALLOCATE(valid_strings);
 
 	/* forward_track|reverse_track */
 	const char *streamlines_track_direction_string = 0;
@@ -716,7 +724,9 @@ int gfx_modify_scene_graphic(struct Parse_state *state,
 	set_texture_coordinate_field_data.computed_field_manager = scene_command_data->computed_field_manager;
 	set_texture_coordinate_field_data.conditional_function = Computed_field_has_up_to_3_numerical_components;
 	set_texture_coordinate_field_data.conditional_function_user_data = (void *)NULL;
-	if (Cmiss_graphic_type_uses_attribute(graphic_type, CMISS_GRAPHIC_ATTRIBUTE_TEXTURE_COORDINATE_FIELD))
+	if ((graphic_type == CMISS_GRAPHIC_SURFACES) ||
+		(graphic_type == CMISS_GRAPHIC_CONTOURS) ||
+		(graphic_type == CMISS_GRAPHIC_LINES))
 	{
 		Option_table_add_Computed_field_conditional_entry(option_table, "texture_coordinates",
 			&texture_coordinate_field, &set_texture_coordinate_field_data);
@@ -775,11 +785,16 @@ int gfx_modify_scene_graphic(struct Parse_state *state,
 			&streamline_width, NULL, set_double);
 	}
 
-	/* xi */
-	if (Cmiss_graphic_type_uses_attribute(graphic_type, CMISS_GRAPHIC_ATTRIBUTE_XI_DISCRETIZATION_MODE))
+	/* xi (sample location) */
+	double *sample_location = 0;
+	int sample_location_components = 0;
+	if (sampling)
 	{
-		Option_table_add_entry(option_table,"xi",
-			graphic->seed_xi,&number_of_components,set_float_vector);
+		sample_location_components = 3;
+		ALLOCATE(sample_location, double, sample_location_components);
+		Cmiss_graphic_sampling_attributes_get_location(sampling, sample_location_components, sample_location);
+		Option_table_add_variable_length_double_vector_entry(option_table, "xi",
+			&sample_location_components, &sample_location);
 	}
 
 	if ((return_code=Option_table_multi_parse(option_table,state)))
@@ -795,7 +810,12 @@ int gfx_modify_scene_graphic(struct Parse_state *state,
 		Cmiss_graphic_set_exterior(graphic, static_cast<int>(exterior_flag));
 		Cmiss_graphic_set_face(graphic, face_type);
 		Cmiss_graphic_set_tessellation(graphic, tessellation);
-		Cmiss_graphic_set_texture_coordinate_field(graphic, texture_coordinate_field);
+		if ((graphic_type == CMISS_GRAPHIC_SURFACES) ||
+			(graphic_type == CMISS_GRAPHIC_CONTOURS) ||
+			(graphic_type == CMISS_GRAPHIC_LINES))
+		{
+			Cmiss_graphic_set_texture_coordinate_field(graphic, texture_coordinate_field);
+		}
 		Cmiss_graphic_set_material(graphic, material);
 		Cmiss_graphic_set_selected_material(graphic, selected_material);
 
@@ -828,23 +848,35 @@ int gfx_modify_scene_graphic(struct Parse_state *state,
 
 		Cmiss_graphic_set_visibility_flag(graphic, 0 != visibility_flag);
 
-		if (Cmiss_graphic_type_uses_attribute(graphic_type, CMISS_GRAPHIC_ATTRIBUTE_XI_DISCRETIZATION_MODE))
+		if (sampling)
 		{
-			STRING_TO_ENUMERATOR(Xi_discretization_mode)(
-				xi_discretization_mode_string, &xi_discretization_mode);
-			if (((XI_DISCRETIZATION_CELL_DENSITY != xi_discretization_mode) &&
-				(XI_DISCRETIZATION_CELL_POISSON != xi_discretization_mode)) ||
-				xi_point_density_field)
+			Cmiss_element_point_sample_mode sample_mode;
+			STRING_TO_ENUMERATOR(Cmiss_element_point_sample_mode)(
+				sample_mode_string, &sample_mode);
+			if (old_sample_mode_string)
 			{
-				Cmiss_graphic_set_xi_discretization(graphic,
-					xi_discretization_mode, xi_point_density_field);
+				for (int i = 0; i < old_sample_mode_strings_count; ++i)
+				{
+					if (old_sample_mode_string == old_sample_mode_strings[i])
+					{
+						sample_mode = old_to_new_sample_mode[i];
+					}
+				}
+				if (CMISS_ELEMENT_POINT_SAMPLE_CELL_POISSON == sample_mode)
+				{
+					display_message(WARNING_MESSAGE, "Migrating obsolete sampling mode '%s' to cell_poisson", old_sample_mode_string);
+				}
 			}
-			else
+			if ((CMISS_ELEMENT_POINT_SAMPLE_CELL_POISSON == sample_mode) &&
+				(0 == sample_density_field))
 			{
 				display_message(ERROR_MESSAGE,
-					"No density field specified for cell_density|cell_poisson");
+					"No density field specified for sample mode 'cell_poisson'");
 				return_code = 0;
 			}
+			Cmiss_graphic_sampling_attributes_set_mode(sampling, sample_mode);
+			Cmiss_graphic_sampling_attributes_set_density_field(sampling, sample_density_field);
+			Cmiss_graphic_sampling_attributes_set_location(sampling, sample_location_components, sample_location);
 		}
 
 		if ((graphic_type != CMISS_GRAPHIC_LINES) &&
@@ -1058,12 +1090,9 @@ int gfx_modify_scene_graphic(struct Parse_state *state,
 			coordinate_system_string, &coordinate_system);
 		Cmiss_graphic_set_coordinate_system(graphic, coordinate_system);
 
-		if (Cmiss_graphic_type_uses_attribute(graphic_type, CMISS_GRAPHIC_ATTRIBUTE_RENDER_TYPE))
-		{
-			Cmiss_graphics_render_type render_type;
-			STRING_TO_ENUMERATOR(Cmiss_graphics_render_type)(render_type_string, &render_type);
-			Cmiss_graphic_set_render_type(graphic, render_type);
-		}
+		Cmiss_graphics_render_type render_type;
+		STRING_TO_ENUMERATOR(Cmiss_graphics_render_type)(render_type_string, &render_type);
+		Cmiss_graphic_set_render_type(graphic, render_type);
 
 		STRING_TO_ENUMERATOR(Graphics_select_mode)(select_mode_string, &select_mode);
 		Cmiss_graphic_set_select_mode(graphic, select_mode);
@@ -1228,7 +1257,11 @@ int gfx_modify_scene_graphic(struct Parse_state *state,
 	Cmiss_field_destroy(&subgroup_field);
 	Cmiss_field_destroy(&signed_scale_field);
 	Cmiss_field_destroy(&texture_coordinate_field);
-	Cmiss_field_destroy(&xi_point_density_field);
+	Cmiss_field_destroy(&sample_density_field);
+	if (sample_location)
+	{
+		DEALLOCATE(sample_location);
+	}
 	if (font_name)
 	{
 		DEALLOCATE(font_name);
@@ -1244,6 +1277,7 @@ int gfx_modify_scene_graphic(struct Parse_state *state,
 	Cmiss_graphic_streamlines_destroy(&streamlines);
 	Cmiss_graphic_line_attributes_destroy(&line_attributes);
 	Cmiss_graphic_point_attributes_destroy(&point_attributes);
+	Cmiss_graphic_sampling_attributes_destroy(&sampling);
 	Cmiss_spectrum_destroy(&spectrum);
 	Cmiss_tessellation_destroy(&tessellation);
 	Cmiss_graphics_material_destroy(&material);

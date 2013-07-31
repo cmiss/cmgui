@@ -119,7 +119,7 @@ Contains all the information carried by the element_point_viewer widget.
 	 wxGridSizer *element_point_grid_field;
 	 wxSize frame_size;
 	 wxTextCtrl *xitextctrl, *pointtextctrl, *discretizationtextctrl, *gridvaluetextctrl;
-	 wxPanel *xi_discretization_mode_chooser_panel;
+	 wxPanel *element_sample_mode_chooser_panel;
 	 int init_width, init_height, frame_width, frame_height;
 	 //  wxBoxSizer *sizer_1;
 #endif /* (WX_USER_INTERFACE) */
@@ -183,13 +183,13 @@ static int element_point_viewer_add_collpane(struct Computed_field *current_fiel
 Module functions
 ----------------
 */
-static int Element_point_viewer_refresh_xi_discretization_mode(
+static int Element_point_viewer_refresh_sample_mode(
 	 struct Element_point_viewer *element_point_viewer);
 /*******************************************************************************
 LAST MODIFIED : 13 June 2007
 
 DESCRIPTION :
-Updates the Xi_discretization_mode shown in the chooser to match that for the
+Updates the Cmiss_element_point_sample_mode shown in the chooser to match that for the
 current point.
 ==============================================================================*/
 
@@ -238,8 +238,8 @@ writes the discretization in use, otherwise N/A.
 					} break;
 				}
 				is_sensitive=is_editable=
-					(XI_DISCRETIZATION_EXACT_XI != element_point_viewer->
-						element_point_identifier.xi_discretization_mode);
+					(CMISS_ELEMENT_POINT_SAMPLE_SET_LOCATION != element_point_viewer->
+						element_point_identifier.sample_mode);
 				}
 				else
 				{
@@ -292,8 +292,8 @@ writes its number, otherwise N/A.
 			{
 				sprintf(temp_string,"%d",element_point_viewer->element_point_number);
 				is_sensitive=is_editable=
-					(XI_DISCRETIZATION_EXACT_XI != element_point_viewer->
-						element_point_identifier.xi_discretization_mode);
+					(CMISS_ELEMENT_POINT_SAMPLE_SET_LOCATION != element_point_viewer->
+						element_point_identifier.sample_mode);
 			}
 			else
 			{
@@ -363,8 +363,8 @@ value otherwise N/A.
 						sprintf(temp_string,"%g, %g, %g",xi[0],xi[1],xi[2]);
 					} break;
 				}
-				is_editable=(XI_DISCRETIZATION_EXACT_XI == element_point_viewer->
-					element_point_identifier.xi_discretization_mode);
+				is_editable=(CMISS_ELEMENT_POINT_SAMPLE_SET_LOCATION == element_point_viewer->
+					element_point_identifier.sample_mode);
 				is_sensitive=1;
 			}
 			else
@@ -610,8 +610,8 @@ is supplied.
 	if (element_point_identifier&&number_in_xi)
 	{
 		if (element_point_identifier->element&&field&&
-			(XI_DISCRETIZATION_CELL_CORNERS==
-				element_point_identifier->xi_discretization_mode)&&
+			(CMISS_ELEMENT_POINT_SAMPLE_CELL_CORNERS==
+				element_point_identifier->sample_mode)&&
 			Computed_field_get_native_discretization_in_element(field,
 				element_point_identifier->element,number_in_xi))
 		{
@@ -734,7 +734,7 @@ Ensures xi is correct for the currently selected element point, if any.
 		{
 			return_code = FE_element_get_numbered_xi_point(
 				element_point_viewer->element_point_identifier.element,
-				element_point_viewer->element_point_identifier.xi_discretization_mode,
+				element_point_viewer->element_point_identifier.sample_mode,
 				element_point_viewer->element_point_identifier.number_in_xi,
 				element_point_viewer->element_point_identifier.exact_xi,
 				(Cmiss_field_cache_id)0,
@@ -897,7 +897,7 @@ LAST MODIFIED : 30 May 2000
 
 DESCRIPTION :
 If there is a grid field defined for the element, gets its discretization and
-sets the Xi_discretization_mode to XI_DISCRETIZATION_CELL_CORNERS, otherwise
+sets the Cmiss_element_point_sample_mode to CMISS_ELEMENT_POINT_SAMPLE_CELL_CORNERS, otherwise
 leaves the current discretization/mode intact.
 ==============================================================================*/
 {
@@ -922,8 +922,8 @@ leaves the current discretization/mode intact.
 			get_FE_element_field_component_grid_map_number_in_xi(element,grid_fe_field,
 				/*component_number*/0,
 				element_point_viewer->element_point_identifier.number_in_xi);
-			element_point_viewer->element_point_identifier.xi_discretization_mode=
-				XI_DISCRETIZATION_CELL_CORNERS;
+			element_point_viewer->element_point_identifier.sample_mode=
+				CMISS_ELEMENT_POINT_SAMPLE_CELL_CORNERS;
 		}
 	}
 	else
@@ -1106,9 +1106,9 @@ class wxElementPointViewer : public wxFrame
 	 wxFeElementTextChooser *top_level_element_text_chooser;
 	 wxFrame *frame;
 	 wxTextCtrl *discretizationtextctrl, *pointtextctrl;
-	 DEFINE_ENUMERATOR_TYPE_CLASS(Xi_discretization_mode);
-	 Enumerator_chooser<ENUMERATOR_TYPE_CLASS(Xi_discretization_mode)>
-	 *xi_discretization_mode_chooser;
+	 DEFINE_ENUMERATOR_TYPE_CLASS(Cmiss_element_point_sample_mode);
+	 Enumerator_chooser<ENUMERATOR_TYPE_CLASS(Cmiss_element_point_sample_mode)>
+	 *element_sample_mode_chooser;
 	 DEFINE_MANAGER_CLASS(Computed_field);
 	 Managed_object_chooser<Computed_field,MANAGER_CLASS(Computed_field)>
 		*grid_field_chooser;
@@ -1149,26 +1149,26 @@ public:
 				 (this, &wxElementPointViewer::top_element_text_callback);
 			top_level_element_text_chooser->set_callback(top_element_text_callback);
 
-			element_point_viewer->xi_discretization_mode_chooser_panel=XRCCTRL(
+			element_point_viewer->element_sample_mode_chooser_panel=XRCCTRL(
 				 *this,"XiDiscretizationModePanel",wxPanel);
-			xi_discretization_mode_chooser = new Enumerator_chooser<ENUMERATOR_TYPE_CLASS(Xi_discretization_mode)>
-				 (element_point_viewer->xi_discretization_mode_chooser_panel,
-						element_point_viewer->element_point_identifier.xi_discretization_mode,
-						(ENUMERATOR_CONDITIONAL_FUNCTION(Xi_discretization_mode) *)NULL,
+			element_sample_mode_chooser = new Enumerator_chooser<ENUMERATOR_TYPE_CLASS(Cmiss_element_point_sample_mode)>
+				 (element_point_viewer->element_sample_mode_chooser_panel,
+						element_point_viewer->element_point_identifier.sample_mode,
+						(ENUMERATOR_CONDITIONAL_FUNCTION(Cmiss_element_point_sample_mode) *)NULL,
 						(void *)NULL, element_point_viewer->user_interface);
-			element_point_viewer->xi_discretization_mode_chooser_panel->Fit();
-			Callback_base< enum Xi_discretization_mode > *xi_discretization_mode_callback =
-				 new Callback_member_callback<enum Xi_discretization_mode,
-				 wxElementPointViewer, int(wxElementPointViewer::*)(enum Xi_discretization_mode)>
-				 (this, &wxElementPointViewer::xi_discretization_mode_callback);
-			xi_discretization_mode_chooser->set_callback(xi_discretization_mode_callback);
+			element_point_viewer->element_sample_mode_chooser_panel->Fit();
+			Callback_base< enum Cmiss_element_point_sample_mode > *element_sample_mode_callback =
+				 new Callback_member_callback<enum Cmiss_element_point_sample_mode,
+				 wxElementPointViewer, int(wxElementPointViewer::*)(enum Cmiss_element_point_sample_mode)>
+				 (this, &wxElementPointViewer::element_sample_mode_callback);
+			element_sample_mode_chooser->set_callback(element_sample_mode_callback);
 			if (element_point_viewer->element_point_identifier.element)
 			{
-				 element_point_viewer->xi_discretization_mode_chooser_panel->Enable(1);
+				 element_point_viewer->element_sample_mode_chooser_panel->Enable(1);
 			}
 			else
 			{
-				 element_point_viewer->xi_discretization_mode_chooser_panel->Enable(0);
+				 element_point_viewer->element_sample_mode_chooser_panel->Enable(0);
 			}
 
 			element_point_viewer->discretizationtextctrl = XRCCTRL(*this,"DiscretizationTextCtrl",wxTextCtrl);
@@ -1236,7 +1236,7 @@ public:
 	 {
 			delete element_text_chooser;
 			delete top_level_element_text_chooser;
-			delete xi_discretization_mode_chooser;
+			delete element_sample_mode_chooser;
 			delete grid_field_chooser;
 	 }
 
@@ -1271,8 +1271,8 @@ Callback from wxTextChooser when text is entered.
 						//				top_element_text_callback(
 						// 					 element_point_viewer->element_point_identifier.top_level_element);
 						element_point_viewer->element_point_number=0;
-						if (XI_DISCRETIZATION_CELL_CORNERS==
-							 element_point_viewer->element_point_identifier.xi_discretization_mode)
+						if (CMISS_ELEMENT_POINT_SAMPLE_CELL_CORNERS==
+							 element_point_viewer->element_point_identifier.sample_mode)
 						{
 							 Element_point_viewer_get_grid(element_point_viewer);
 						}
@@ -1332,8 +1332,8 @@ Callback from wxTextChooser when text is entered.
 						element_point_viewer->element_point_identifier.top_level_element=
 							 top_level_element;
 						/* get the element point at the centre of top_level_element */
-						element_point_viewer->element_point_identifier.xi_discretization_mode=
-							 XI_DISCRETIZATION_EXACT_XI;
+						element_point_viewer->element_point_identifier.sample_mode=
+							 CMISS_ELEMENT_POINT_SAMPLE_SET_LOCATION;
 						for (i=0;i<MAXIMUM_ELEMENT_XI_DIMENSIONS;i++)
 						{
 							 element_point_viewer->element_point_identifier.number_in_xi[i]=1;
@@ -1351,7 +1351,7 @@ Callback from wxTextChooser when text is entered.
 				 /* must be no element if no top_level_element */
 				 element_point_viewer->element_point_identifier.element =
 						(struct FE_element *)NULL;
-				 Element_point_viewer_refresh_xi_discretization_mode(element_point_viewer);
+				 Element_point_viewer_refresh_sample_mode(element_point_viewer);
 				 Element_point_viewer_refresh_discretization_text(element_point_viewer);
 				 Element_point_viewer_refresh_point_number_text(element_point_viewer);
 				 Element_point_viewer_refresh_xi_text(element_point_viewer);
@@ -1368,7 +1368,7 @@ Callback from wxTextChooser when text is entered.
 			return 1;
 }
 
-int xi_discretization_mode_callback(enum Xi_discretization_mode xi_discretization_mode)
+int element_sample_mode_callback(enum Cmiss_element_point_sample_mode sample_mode)
 /*******************************************************************************
 LAST MODIFIED : 22 March 2007
 
@@ -1384,15 +1384,15 @@ Callback from wxChooser<xi Discretization Mode> when choice is made.
 		/* store old identifier unless in case new one is invalid */
 		COPY(Element_point_ranges_identifier)(&temp_element_point_identifier,
 			&(element_point_viewer->element_point_identifier));
-		if (xi_discretization_mode)
+		if (sample_mode)
 		{
-			element_point_viewer->element_point_identifier.xi_discretization_mode=
-				xi_discretization_mode;
-			if (XI_DISCRETIZATION_CELL_CORNERS==xi_discretization_mode)
+			element_point_viewer->element_point_identifier.sample_mode=
+				sample_mode;
+			if (CMISS_ELEMENT_POINT_SAMPLE_CELL_CORNERS==sample_mode)
 			{
 				Element_point_viewer_get_grid(element_point_viewer);
 			}
-			else if (XI_DISCRETIZATION_EXACT_XI==xi_discretization_mode)
+			else if (CMISS_ELEMENT_POINT_SAMPLE_SET_LOCATION==sample_mode)
 			{
 				for (i=0;i<MAXIMUM_ELEMENT_XI_DIMENSIONS;i++)
 				{
@@ -1417,7 +1417,7 @@ Callback from wxChooser<xi Discretization Mode> when choice is made.
 					&(element_point_viewer->element_point_identifier),
 					&temp_element_point_identifier);
 				/* always restore mode to actual value in use */
-				Element_point_viewer_refresh_xi_discretization_mode(
+				Element_point_viewer_refresh_sample_mode(
 					element_point_viewer);
 			}
 		}
@@ -1425,7 +1425,7 @@ Callback from wxChooser<xi Discretization Mode> when choice is made.
 	else
 	{
 		display_message(ERROR_MESSAGE,
-			"Element_point_viewer_update_xi_discretization_mode.  "
+			"Element_point_viewer_update_sample_mode.  "
 			"Invalid argument(s)");
 	}
 	 return 1;
@@ -1860,8 +1860,8 @@ data, and then changes the correct value in the array structure.
 		value_string=tmpstr.mb_str(wxConvUTF8);
 		if (value_string)
 		{
-			if ((XI_DISCRETIZATION_CELL_CORNERS==element_point_field_viewer->
-				element_point_identifier.xi_discretization_mode)&&
+			if ((CMISS_ELEMENT_POINT_SAMPLE_CELL_CORNERS==element_point_field_viewer->
+				element_point_identifier.sample_mode)&&
 				Computed_field_get_native_discretization_in_element(field,element,
 					number_in_xi))
 			{
@@ -2001,12 +2001,12 @@ struct Computed_field *get_grid_field()
 	 return (grid_field);
 }
 
- void set_xi_discretization_mode_chooser_value(Element_point_viewer *element_point_viewer)
+ void set_element_sample_mode_chooser_value(Element_point_viewer *element_point_viewer)
 {
-	 if (xi_discretization_mode_chooser)
+	 if (element_sample_mode_chooser)
 	 {
-			xi_discretization_mode_chooser->set_value(element_point_viewer->
-				 element_point_identifier.xi_discretization_mode);
+			element_sample_mode_chooser->set_value(element_point_viewer->
+				 element_point_identifier.sample_mode);
 	 }
 }
 
@@ -2260,8 +2260,8 @@ fields.
 				element_point_viewer->element_point_identifier.top_level_element=
 					 (struct FE_element *)NULL;
 				element_point_viewer->element_copy=(struct FE_element *)NULL;
-				element_point_viewer->element_point_identifier.xi_discretization_mode=
-					 XI_DISCRETIZATION_EXACT_XI;
+				element_point_viewer->element_point_identifier.sample_mode=
+					 CMISS_ELEMENT_POINT_SAMPLE_SET_LOCATION;
 				//				element_point_viewer->time_object_callback = 0;
 				element_point_viewer->number_of_components=-1;
 				for (i=0;i<MAXIMUM_ELEMENT_XI_DIMENSIONS;i++)
@@ -2512,7 +2512,7 @@ Fills the widgets for choosing the element point with the current values.
 	{
 		return_code=1;
 		Element_point_viewer_refresh_elements(element_point_viewer);
-		Element_point_viewer_refresh_xi_discretization_mode(element_point_viewer);
+		Element_point_viewer_refresh_sample_mode(element_point_viewer);
 		Element_point_viewer_refresh_discretization_text(element_point_viewer);
 		Element_point_viewer_refresh_point_number_text(element_point_viewer);
 		Element_point_viewer_refresh_xi_text(element_point_viewer);
@@ -2610,7 +2610,7 @@ pass unmanaged elements in the element_point_identifier to this widget.
 				element_point_viewer->current_field=field;
 				FE_element_get_numbered_xi_point(
 					 element_point_identifier->element,
-					 element_point_identifier->xi_discretization_mode,
+					 element_point_identifier->sample_mode,
 					 element_point_identifier->number_in_xi,
 					 element_point_identifier->exact_xi,
 					 (Cmiss_field_cache_id)0,
@@ -2914,42 +2914,42 @@ the field value, otherwise N/A.
 } /* Element_point_viewer_refresh_grid_value_text */
 
 
-static int Element_point_viewer_refresh_xi_discretization_mode(
+static int Element_point_viewer_refresh_sample_mode(
 	 struct Element_point_viewer *element_point_viewer)
 /*******************************************************************************
 LAST MODIFIED : 19 March 2001
 
 DESCRIPTION :
-Updates the Xi_discretization_mode shown in the chooser to match that for the
+Updates the Cmiss_element_point_sample_mode shown in the chooser to match that for the
 current point.
 ==============================================================================*/
 {
 	int is_sensitive,return_code;
 
-	ENTER(Element_point_viewer_refresh_xi_discretization_mode);
+	ENTER(Element_point_viewer_refresh_sample_mode);
 	if (element_point_viewer)
 	{
 		return_code=1;
 		if (element_point_viewer->element_point_identifier.element)
 		{
 			 element_point_viewer->wx_element_point_viewer->
-					set_xi_discretization_mode_chooser_value(element_point_viewer);
+					set_element_sample_mode_chooser_value(element_point_viewer);
 			is_sensitive=1;
 		}
 		else
 		{
 			is_sensitive=0;
 		}
-		element_point_viewer->xi_discretization_mode_chooser_panel->Enable(is_sensitive);
+		element_point_viewer->element_sample_mode_chooser_panel->Enable(is_sensitive);
 	}
 	else
 	{
 		display_message(ERROR_MESSAGE,
-			"Element_point_viewer_refresh_xi_discretization_mode.  "
+			"Element_point_viewer_refresh_sample_mode.  "
 			"Invalid argument(s)");
 		return_code=0;
 	}
 	LEAVE;
 
 	return (return_code);
-} /* Element_point_viewer_refresh_xi_discretization_mode */
+} /* Element_point_viewer_refresh_sample_mode */

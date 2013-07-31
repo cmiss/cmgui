@@ -234,7 +234,7 @@ release.
 //												&start, &stop)) &&
 //											FE_element_get_numbered_xi_point(
 //												element_point_ranges_identifier.element,
-//												element_point_ranges_identifier.xi_discretization_mode,
+//												element_point_ranges_identifier.sample_mode,
 //												element_point_ranges_identifier.number_in_xi,
 //												element_point_ranges_identifier.exact_xi,
 //												(Cmiss_field_cache_id)0,

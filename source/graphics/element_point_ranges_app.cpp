@@ -22,8 +22,8 @@ returned in this location, for the calling function to use or destroy.
 ==============================================================================*/
 {
 	const char *current_token;
-	const char **valid_strings,*xi_discretization_mode_string;
-	enum Xi_discretization_mode xi_discretization_mode;
+	const char **valid_strings,*sample_mode_string;
+	enum Cmiss_element_point_sample_mode sample_mode;
 	float xi[MAXIMUM_ELEMENT_XI_DIMENSIONS];
 	int dimension, i, number_of_xi_points, number_of_valid_strings, return_code,
 		start, stop;
@@ -42,8 +42,8 @@ returned in this location, for the calling function to use or destroy.
 	{
 		element_point_ranges_identifier.element=(struct FE_element *)NULL;
 		element_point_ranges_identifier.top_level_element=(struct FE_element *)NULL;
-		element_point_ranges_identifier.xi_discretization_mode=
-			XI_DISCRETIZATION_EXACT_XI;
+		element_point_ranges_identifier.sample_mode=
+			CMISS_ELEMENT_POINT_SAMPLE_SET_LOCATION;
 		for (i=0;i<MAXIMUM_ELEMENT_XI_DIMENSIONS;i++)
 		{
 			element_point_ranges_identifier.exact_xi[i]=xi[i]=0.5;
@@ -180,27 +180,27 @@ returned in this location, for the calling function to use or destroy.
 						}
 					}
 				}
-				/* xi_discretization_mode */
+				/* sample_mode */
 				if (return_code)
 				{
 					option_table = CREATE(Option_table)();
-					xi_discretization_mode =
-						element_point_ranges_identifier.xi_discretization_mode;
-					xi_discretization_mode_string =
-						ENUMERATOR_STRING(Xi_discretization_mode)(xi_discretization_mode);
+					sample_mode =
+						element_point_ranges_identifier.sample_mode;
+					sample_mode_string =
+						ENUMERATOR_STRING(Cmiss_element_point_sample_mode)(sample_mode);
 					valid_strings=
-						Xi_discretization_mode_get_valid_strings_for_Element_point_ranges(
+						Cmiss_element_point_sample_mode_get_valid_strings_for_Element_point_ranges(
 							&number_of_valid_strings);
 					Option_table_add_enumerator(option_table,number_of_valid_strings,
-						valid_strings,&xi_discretization_mode_string);
+						valid_strings,&sample_mode_string);
 					DEALLOCATE(valid_strings);
 					return_code=Option_table_parse(option_table,state);
 					if (return_code)
 					{
-						STRING_TO_ENUMERATOR(Xi_discretization_mode)(
-							xi_discretization_mode_string, &xi_discretization_mode);
-						element_point_ranges_identifier.xi_discretization_mode =
-							xi_discretization_mode;
+						STRING_TO_ENUMERATOR(Cmiss_element_point_sample_mode)(
+							sample_mode_string, &sample_mode);
+						element_point_ranges_identifier.sample_mode =
+							sample_mode;
 					}
 					DESTROY(Option_table)(&option_table);
 				}
@@ -212,10 +212,10 @@ returned in this location, for the calling function to use or destroy.
 					{
 						element_point_ranges_identifier.number_in_xi[i]=1;
 					}
-					switch (element_point_ranges_identifier.xi_discretization_mode)
+					switch (element_point_ranges_identifier.sample_mode)
 					{
-						case XI_DISCRETIZATION_CELL_CORNERS:
-						case XI_DISCRETIZATION_CELL_CENTRES:
+						case CMISS_ELEMENT_POINT_SAMPLE_CELL_CORNERS:
+						case CMISS_ELEMENT_POINT_SAMPLE_CELL_CENTRES:
 						{
 							/* number_in_xi */
 							return_code=set_int_vector(state,
@@ -226,7 +226,7 @@ returned in this location, for the calling function to use or destroy.
 								/* check number_in_xi are all > 0 */
 								if ((!FE_element_get_xi_points(
 									element_point_ranges_identifier.element,
-									element_point_ranges_identifier.xi_discretization_mode,
+									element_point_ranges_identifier.sample_mode,
 									element_point_ranges_identifier.number_in_xi,
 									element_point_ranges_identifier.exact_xi,
 									(Cmiss_field_cache_id)0,
@@ -242,7 +242,7 @@ returned in this location, for the calling function to use or destroy.
 								}
 							}
 						} break;
-						case XI_DISCRETIZATION_EXACT_XI:
+						case CMISS_ELEMENT_POINT_SAMPLE_SET_LOCATION:
 						{
 							/* xi */
 							return_code=set_float_vector(state,(void *)xi,(void *)&dimension);
@@ -254,7 +254,7 @@ returned in this location, for the calling function to use or destroy.
 						default:
 						{
 							display_message(ERROR_MESSAGE,
-								"set_Element_point_ranges.  Invalid xi_discretization_mode");
+								"set_Element_point_ranges.  Invalid sample_mode");
 							return_code=0;
 						}
 					}
@@ -266,10 +266,10 @@ returned in this location, for the calling function to use or destroy.
 						&element_point_ranges_identifier);
 					if (element_point_ranges)
 					{
-						switch (element_point_ranges_identifier.xi_discretization_mode)
+						switch (element_point_ranges_identifier.sample_mode)
 						{
-							case XI_DISCRETIZATION_CELL_CORNERS:
-							case XI_DISCRETIZATION_CELL_CENTRES:
+							case CMISS_ELEMENT_POINT_SAMPLE_CELL_CORNERS:
+							case CMISS_ELEMENT_POINT_SAMPLE_CELL_CENTRES:
 							{
 								/* ranges */
 								if (set_Multi_range(state,
@@ -297,7 +297,7 @@ returned in this location, for the calling function to use or destroy.
 									return_code=0;
 								}
 							} break;
-							case XI_DISCRETIZATION_EXACT_XI:
+							case CMISS_ELEMENT_POINT_SAMPLE_SET_LOCATION:
 							{
 								if (!Multi_range_add_range(Element_point_ranges_get_ranges(element_point_ranges),0,0))
 								{
