@@ -500,12 +500,12 @@
 													<orient>wxHORIZONTAL</orient>
 													<object class="sizeritem">
 														<flag>wxALIGN_CENTRE_VERTICAL</flag>
-														<object class	="wxStaticText" name="NativeDiscretizationFieldText">
-															<label>Native discretization field:</label>
+														<object class	="wxStaticText" name="TessellationFieldText">
+															<label>Native tessellation field:</label>
 														</object>
 													</object>
 													<object class="sizeritem">
-														<object class	="wxPanel" name="NativeDiscretizationFieldChooserPanel">
+														<object class	="wxPanel" name="TessellationFieldChooserPanel">
 															<size>300,30</size>
 														</object>
 													</object>

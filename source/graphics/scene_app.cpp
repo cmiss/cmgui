@@ -54,7 +54,7 @@ int gfx_modify_scene_general(struct Parse_state *state,
 				"Option 'circle_discretization' is deprecated:  use tessellation option on individual graphics instead. "
 				"Option 'default_coordinate' is deprecated: use coordinate option on individual graphics instead. "
 				"Option 'element_discretization' is deprecated: use tessellation option on individual graphics instead. "
-				"Option 'native_discretization' is deprecated: use native_discretization option on individual graphics instead. ");
+				"Option 'native_discretization' is obsolete: use native_discretization option on individual graphics instead. ");
 			/* circle_discretization */
 			Option_table_add_entry(option_table, "circle_discretization",
 				(void *)&scene->circle_discretization, (void *)NULL,
@@ -76,16 +76,9 @@ int gfx_modify_scene_general(struct Parse_state *state,
 			Option_table_add_divisions_entry(option_table, "element_discretization",
 				&(scene->element_divisions), &(scene->element_divisions_size));
 			/* native_discretization */
-			Set_FE_field_conditional_FE_region_data native_discretization_field_conditional_data;
-			native_discretization_field_conditional_data.conditional_function =
-				(LIST_CONDITIONAL_FUNCTION(FE_field) *)NULL;
-			native_discretization_field_conditional_data.user_data = (void *)NULL;
-			native_discretization_field_conditional_data.fe_region =
-				Cmiss_region_get_FE_region(cmiss_region);
-			Option_table_add_entry(option_table, "native_discretization",
-				(void *)&scene->native_discretization_field,
-				(void *)&native_discretization_field_conditional_data,
-				set_FE_field_conditional_FE_region);
+			char *native_discretization_field_string = 0;
+			Option_table_add_string_entry(option_table, "native_discretization",
+				&native_discretization_field_string, " OBSOLETE");
 			return_code = Option_table_multi_parse(option_table, state);
 			DESTROY(Option_table)(&option_table);
 			if (return_code)
@@ -94,6 +87,14 @@ int gfx_modify_scene_general(struct Parse_state *state,
 				{
 					// silently use minimum of 12 otherwise sphere glyphs will look poor
 					scene->circle_discretization = 12;
+				}
+				if ((native_discretization_field_string) &&
+					(!fuzzy_string_compare_same_length(native_discretization_field_string, "none")))
+				{
+					display_parse_state_location(state);
+					display_message(WARNING_MESSAGE,
+						"Option 'native_discretization FIELD' on gfx modify g_element general has been removed.\n"
+						"Please move this option to individual graphics instead.");
 				}
 				if (clear_flag)
 				{
@@ -141,6 +142,10 @@ int gfx_modify_scene_general(struct Parse_state *state,
 				DEACCESS(Computed_field)(&default_coordinate_field);
 			}
 			Cmiss_scene_destroy(&scene);
+			if (native_discretization_field_string)
+			{
+				DEALLOCATE(native_discretization_field_string);
+			}
 		}
 		else
 		{
@@ -320,15 +325,6 @@ int Cmiss_scene_list_contents(struct Cmiss_scene *scene)
 				display_message(INFORMATION_MESSAGE, "%d", scene->element_divisions[i]);
 			}
 			display_message(INFORMATION_MESSAGE, "\"\n");
-		}
-		if (scene->native_discretization_field)
-		{
-			if (GET_NAME(FE_field)(scene->native_discretization_field,
-				&name))
-			{
-				display_message(INFORMATION_MESSAGE,"  Legacy native discretization field: %s\n",name);
-				DEALLOCATE(name);
-			}
 		}
 		if (0 < NUMBER_IN_LIST(Cmiss_graphic)(
 			scene->list_of_graphics))

@@ -525,14 +525,19 @@ int gfx_modify_scene_graphic(struct Parse_state *state,
 		DEALLOCATE(valid_strings);
 	}
 
-	/* native_discretization */
+	/* native_discretization (tessellation_field) */
+	Cmiss_field_id tessellation_field = Cmiss_graphic_get_tessellation_field(graphic);
+	Set_Computed_field_conditional_data set_tessellation_field_data;
+	set_tessellation_field_data.computed_field_manager = scene_command_data->computed_field_manager;
+	set_tessellation_field_data.conditional_function = (MANAGER_CONDITIONAL_FUNCTION(Computed_field) *)NULL;
+	set_tessellation_field_data.conditional_function_user_data = (void *)NULL;
 	if ((legacy_graphic_type != LEGACY_GRAPHIC_POINT) &&
 		(legacy_graphic_type != LEGACY_GRAPHIC_NODE_POINTS) &&
 		(legacy_graphic_type != LEGACY_GRAPHIC_DATA_POINTS))
 	{
-		Option_table_add_set_FE_field_from_FE_region(option_table,
-			"native_discretization", &(graphic->native_discretization_field),
-			Cmiss_region_get_FE_region(scene_command_data->region));
+		tessellation_field = Cmiss_graphic_get_tessellation_field(graphic);
+		Option_table_add_Computed_field_conditional_entry(option_table, "native_discretization",
+			&tessellation_field, &set_tessellation_field_data);
 	}
 
 	/* no_data/field_scalar/magnitude_scalar/travel_scalar */
@@ -810,6 +815,7 @@ int gfx_modify_scene_graphic(struct Parse_state *state,
 		Cmiss_graphic_set_exterior(graphic, static_cast<int>(exterior_flag));
 		Cmiss_graphic_set_face(graphic, face_type);
 		Cmiss_graphic_set_tessellation(graphic, tessellation);
+		Cmiss_graphic_set_tessellation_field(graphic, tessellation_field);
 		if ((graphic_type == CMISS_GRAPHIC_SURFACES) ||
 			(graphic_type == CMISS_GRAPHIC_CONTOURS) ||
 			(graphic_type == CMISS_GRAPHIC_LINES))
@@ -1256,6 +1262,7 @@ int gfx_modify_scene_graphic(struct Parse_state *state,
 	Cmiss_field_destroy(&stream_vector_field);
 	Cmiss_field_destroy(&subgroup_field);
 	Cmiss_field_destroy(&signed_scale_field);
+	Cmiss_field_destroy(&tessellation_field);
 	Cmiss_field_destroy(&texture_coordinate_field);
 	Cmiss_field_destroy(&sample_density_field);
 	if (sample_location)

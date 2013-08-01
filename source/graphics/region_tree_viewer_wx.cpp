@@ -556,8 +556,7 @@ class wxRegionTreeViewer : public wxFrame
 		*linewidthtext, *streamlinedatatypetext, *spectrumtext, *rendertypetext,
 		*staticlabeltext, *fonttext;
 	wxButton *sceneupbutton, scenedownbutton, *applybutton, *revertbutton, *tessellationbutton;
-	wxCheckBox *nativediscretizationcheckbox, *autocheckbox,
-		*exteriorcheckbox,*facecheckbox, *seedelementcheckbox;
+	wxCheckBox *autocheckbox, *exteriorcheckbox,*facecheckbox, *seedelementcheckbox;
 	wxRadioButton *isovaluelistradiobutton, *isovaluesequenceradiobutton;
 	wxPanel *isovalueoptionspane;
 	wxTextCtrl *nametextfield, *linescalefactorstextctrl, *isoscalartextctrl, *offsettextctrl,
@@ -571,7 +570,7 @@ class wxRegionTreeViewer : public wxFrame
 		*orientation_scale_field_chooser_panel, *variable_scale_field_chooser_panel,
 		*label_chooser_panel, *font_chooser_panel, *select_mode_chooser_panel,
 		*domain_type_chooser_panel, *sample_mode_chooser_panel,
-		*native_discretization_field_chooser_panel, *sample_density_field_chooser_panel,
+		*tessellation_field_chooser_panel, *sample_density_field_chooser_panel,
 		*line_shape_chooser_panel, *stream_vector_chooser_panel,
 		*streamline_data_type_chooser_panel,
 		*streamlines_track_direction_chooser_panel, *spectrum_chooser_panel,
@@ -630,9 +629,9 @@ class wxRegionTreeViewer : public wxFrame
 		*sample_mode_chooser;
 	DEFINE_MANAGER_CLASS(Cmiss_tessellation);
 	Managed_object_chooser<Cmiss_tessellation,MANAGER_CLASS(Cmiss_tessellation)>
-	 *tessellation_chooser;
+		*tessellation_chooser;
 	Managed_object_chooser<Computed_field,MANAGER_CLASS(Computed_field)>
-	*native_discretization_field_chooser;
+		*tessellation_field_chooser;
 	Managed_object_chooser<Computed_field,MANAGER_CLASS(Computed_field)>
 	*sample_density_field_chooser;
 	wxFeElementTextChooser *seed_element_chooser;
@@ -780,7 +779,7 @@ public:
 	font_chooser=NULL;
 	domain_type_chooser = NULL;
 	sample_mode_chooser = NULL;
-	native_discretization_field_chooser = NULL;
+	tessellation_field_chooser = NULL;
 	sample_density_field_chooser =NULL;
 	line_shape_chooser = NULL;
 	stream_vector_chooser = NULL;
@@ -879,7 +878,7 @@ public:
 		delete domain_type_chooser;
 		delete sample_mode_chooser;
 		delete tessellation_chooser;
-		delete native_discretization_field_chooser;
+		delete tessellation_field_chooser;
 		delete sample_density_field_chooser;
 		delete line_shape_chooser;
 		delete stream_vector_chooser;
@@ -914,8 +913,8 @@ void Region_tree_viewer_wx_set_manager_in_choosers(struct Region_tree_viewer *re
 			label_field_chooser->set_manager(region_tree_viewer->field_manager);
 	if (subgroup_field_chooser != NULL)
 		 subgroup_field_chooser->set_manager(region_tree_viewer->field_manager);
-	if (native_discretization_field_chooser != NULL)
-			native_discretization_field_chooser->set_manager(region_tree_viewer->field_manager);
+	if (tessellation_field_chooser != NULL)
+			tessellation_field_chooser->set_manager(region_tree_viewer->field_manager);
 	if (sample_density_field_chooser != NULL)
 			sample_density_field_chooser->set_manager(region_tree_viewer->field_manager);
 	if (stream_vector_chooser != NULL)
@@ -1169,8 +1168,8 @@ void show_sampling_widgets()
 {
 	sample_mode_text = XRCCTRL(*this,"SampleModeText",wxStaticText);
 	sample_mode_chooser_panel= XRCCTRL(*this,"SampleModeChooserPanel",wxPanel);
-	wxStaticText *nativediscretizationfieldtext=XRCCTRL(*this,"NativeDiscretizationFieldText",wxStaticText);
-	native_discretization_field_chooser_panel=XRCCTRL(*this, "NativeDiscretizationFieldChooserPanel",wxPanel);
+	wxStaticText *tessellation_field_text=XRCCTRL(*this,"TessellationFieldText",wxStaticText);
+	tessellation_field_chooser_panel=XRCCTRL(*this, "TessellationFieldChooserPanel",wxPanel);
 	sample_density_field_text=XRCCTRL(*this, "DensityFieldText",wxStaticText);
 	sample_density_field_chooser_panel=XRCCTRL(*this,"DensityFieldChooserPanel",wxPanel);
 	xitext=XRCCTRL(*this,"XiText",wxStaticText);
@@ -1213,13 +1212,13 @@ void show_sampling_widgets()
 	}
 	if ((domain_dimension > 0) && (CMISS_ELEMENT_POINT_SAMPLE_SET_LOCATION != sample_mode))
 	{
-		nativediscretizationfieldtext->Enable();
-		native_discretization_field_chooser_panel->Enable();
+		tessellation_field_text->Enable();
+		tessellation_field_chooser_panel->Enable();
 	}
 	else
 	{
-		nativediscretizationfieldtext->Disable();
-		native_discretization_field_chooser_panel->Disable();
+		tessellation_field_text->Disable();
+		tessellation_field_chooser_panel->Disable();
 	}
 	Cmiss_graphic_sampling_attributes_destroy(&sampling);
 }
@@ -1292,23 +1291,11 @@ int sample_mode_callback(enum Cmiss_element_point_sample_mode sample_mode)
 	return 1;
 }
 
-int native_discretization_callback(Computed_field *native_discretization_field)
-/*******************************************************************************
-LAST MODIFIED : 22 March 2007
-
-DESCRIPTION :
-Callback from wxChooser<Native discretization> when choice is made.
-==============================================================================*/
+/** Callback from wxChooser<tessellation field> when choice is made.*/
+int tessellation_field_callback(Computed_field *tessellation_field)
 {
-	FE_field *temp_native_discretization_field = NULL;
-
-	if (native_discretization_field)
-	{
-		Computed_field_get_type_finite_element(native_discretization_field,
-			&temp_native_discretization_field);
-	}
-	Cmiss_graphic_set_native_discretization_field(
-		region_tree_viewer->current_graphic, temp_native_discretization_field);
+	Cmiss_graphic_set_tessellation_field(
+		region_tree_viewer->current_graphic, tessellation_field);
 	Region_tree_viewer_autoapply(region_tree_viewer->scene,
 		region_tree_viewer->edit_scene);
 	//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphic);
@@ -3176,7 +3163,7 @@ void SetGraphic(Cmiss_graphic *graphic)
 			subgroup_field_chooser =
 				new Managed_object_chooser<Computed_field,MANAGER_CLASS(Computed_field)>
 				(subgroup_field_chooser_panel, subgroup_field, region_tree_viewer->field_manager,
-					(MANAGER_CONDITIONAL_FUNCTION(Computed_field) *)NULL , (void *)NULL,
+					Computed_field_is_scalar, (void *)NULL,
 					region_tree_viewer->user_interface);
 			Callback_base< Computed_field* > *subgroup_field_callback =
 				new Callback_member_callback< Computed_field*,
@@ -3249,50 +3236,30 @@ void SetGraphic(Cmiss_graphic *graphic)
 			DEACCESS(Cmiss_tessellation)(&tessellation);
 		}
 
-		/* element_points */
-		wxStaticText *nativediscretizationfieldtext=XRCCTRL(*this,"NativeDiscretizationFieldText",wxStaticText);
-		native_discretization_field_chooser_panel=XRCCTRL(*this, "NativeDiscretizationFieldChooserPanel",wxPanel);
+		wxStaticText *tessellation_field_text = XRCCTRL(*this, "TessellationFieldText", wxStaticText);
+		tessellation_field_chooser_panel = XRCCTRL(*this, "TessellationFieldChooserPanel", wxPanel);
 
-		struct FE_field *native_discretization_field =
-			Cmiss_graphic_get_native_discretization_field(graphic);
-		if (native_discretization_field_chooser==NULL)
+		Cmiss_field_id tessellation_field = Cmiss_graphic_get_tessellation_field(graphic);
+		if (tessellation_field_chooser == NULL)
 		{
-			native_discretization_field_chooser =
+			tessellation_field_chooser =
 				new Managed_object_chooser<Computed_field,MANAGER_CLASS(Computed_field)>
-				(native_discretization_field_chooser_panel,(Computed_field*)NULL,
+				(tessellation_field_chooser_panel,(Computed_field*)NULL,
 					region_tree_viewer->field_manager,
-					Computed_field_is_type_finite_element_iterator, (void *)NULL, region_tree_viewer->user_interface);
-			Callback_base< Computed_field* > *native_discretization_callback =
+					(MANAGER_CONDITIONAL_FUNCTION(Computed_field) *)NULL , (void *)NULL,
+					region_tree_viewer->user_interface);
+			Callback_base< Computed_field* > *tessellation_field_callback =
 				new Callback_member_callback< Computed_field*,
 				wxRegionTreeViewer, int (wxRegionTreeViewer::*)(Computed_field *) >
-				(this, &wxRegionTreeViewer::native_discretization_callback);
-			native_discretization_field_chooser->set_callback(native_discretization_callback);
-			native_discretization_field_chooser_panel->Fit();
-			native_discretization_field_chooser->include_null_item(true);
+				(this, &wxRegionTreeViewer::tessellation_field_callback);
+			tessellation_field_chooser->set_callback(tessellation_field_callback);
+			tessellation_field_chooser_panel->Fit();
+			tessellation_field_chooser->include_null_item(true);
 		}
-		nativediscretizationfieldtext->Show();
-		native_discretization_field_chooser_panel->Show();
-		if (domain_dimension > 0)
-		{
-			if (native_discretization_field != NULL)
-			{
-				native_discretization_field_chooser->set_object(
-					FIRST_OBJECT_IN_MANAGER_THAT(Computed_field)(
-						Computed_field_wraps_fe_field, native_discretization_field,
-						region_tree_viewer->field_manager));
-			}
-			else
-			{
-				native_discretization_field_chooser->set_object(NULL);
-			}
-			nativediscretizationfieldtext->Enable();
-			native_discretization_field_chooser_panel->Enable();
-		}
-		else
-		{
-			nativediscretizationfieldtext->Disable();
-			native_discretization_field_chooser_panel->Disable();
-		}
+		tessellation_field_text->Show();
+		tessellation_field_chooser_panel->Show();
+		tessellation_field_chooser->set_object(tessellation_field);
+		Cmiss_field_destroy(&tessellation_field);
 
 		sample_mode_text = XRCCTRL(*this,"SampleModeText",wxStaticText);
 		sample_mode_chooser_panel= XRCCTRL(*this,"SampleModeChooserPanel",wxPanel);
