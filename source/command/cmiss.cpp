@@ -12879,19 +12879,16 @@ static int gfx_read_region(struct Parse_state *state,
 	return return_code;
 }
 
+/**
+ * If a file is not specified a file selection box is presented to the user,
+ * otherwise the wavefront obj file is read.
+ */
 static int gfx_read_wavefront_obj(struct Parse_state *state,
 	void *dummy_to_be_modified,void *command_data_void)
-/*******************************************************************************
-LAST MODIFIED : 19 March 2001
-
-DESCRIPTION :
-If a file is not specified a file selection box is presented to the user,
-otherwise the wavefront obj file is read.
-==============================================================================*/
 {
 	char *file_name, *graphics_object_name,	*specified_graphics_object_name;
-	const char *render_type_string, **valid_strings;
-	enum Cmiss_graphics_render_type render_type;
+	const char *polygon_render_mode_string, **valid_strings;
+	enum Cmiss_graphic_polygon_render_mode polygon_render_mode;
 	float time;
 	int number_of_valid_strings, return_code;
 	struct Cmiss_command_data *command_data;
@@ -12915,14 +12912,14 @@ otherwise the wavefront obj file is read.
 			/* as */
 			Option_table_add_entry(option_table,"as",&specified_graphics_object_name,
 				(void *)1,set_name);
-			/* render_type */
-			render_type = CMISS_GRAPHICS_RENDER_TYPE_SHADED;
-			render_type_string = ENUMERATOR_STRING(Cmiss_graphics_render_type)(render_type);
-			valid_strings = ENUMERATOR_GET_VALID_STRINGS(Cmiss_graphics_render_type)(
+			/* polygon_render_mode */
+			polygon_render_mode = CMISS_GRAPHIC_POLYGON_RENDER_SHADED;
+			polygon_render_mode_string = ENUMERATOR_STRING(Cmiss_graphic_polygon_render_mode)(polygon_render_mode);
+			valid_strings = ENUMERATOR_GET_VALID_STRINGS(Cmiss_graphic_polygon_render_mode)(
 				&number_of_valid_strings,
-				(ENUMERATOR_CONDITIONAL_FUNCTION(Cmiss_graphics_render_type) *)NULL, (void *)NULL);
+				(ENUMERATOR_CONDITIONAL_FUNCTION(Cmiss_graphic_polygon_render_mode) *)NULL, (void *)NULL);
 			Option_table_add_enumerator(option_table,number_of_valid_strings,
-				valid_strings,&render_type_string);
+				valid_strings,&polygon_render_mode_string);
 			DEALLOCATE(valid_strings);
 			/* time */
 			Option_table_add_entry(option_table,"time",&time,NULL,set_float);
@@ -12934,7 +12931,7 @@ otherwise the wavefront obj file is read.
 			DESTROY(Option_table)(&option_table);
 			if (return_code)
 			{
-				STRING_TO_ENUMERATOR(Cmiss_graphics_render_type)(render_type_string, &render_type);
+				STRING_TO_ENUMERATOR(Cmiss_graphic_polygon_render_mode)(polygon_render_mode_string, &polygon_render_mode);
 				if (!file_name)
 				{
 					if (!(file_name = confirmation_get_read_filename(".obj",
@@ -12962,7 +12959,7 @@ otherwise the wavefront obj file is read.
 					{
 						return_code=file_read_voltex_graphics_object_from_obj(file_name,
 							command_data->io_stream_package,
-							graphics_object_name, render_type, time,
+							graphics_object_name, polygon_render_mode, time,
 							command_data->material_module,
 							command_data->glyph_module);
 					}

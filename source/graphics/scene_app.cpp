@@ -1,6 +1,7 @@
 
 #include "zinc/glyph.h"
 #include "zinc/graphicsmaterial.h"
+#include "zinc/status.h"
 #include "zinc/tessellation.h"
 #include "general/debug.h"
 #include "general/message.h"
@@ -121,7 +122,7 @@ int gfx_modify_scene_general(struct Parse_state *state,
 					}
 					else
 					{
-						return_code = Cmiss_scene_remove_all_graphics(scene);
+						return_code = (CMISS_OK == Cmiss_scene_remove_all_graphics(scene));
 					}
 				}
 				if (default_coordinate_field)

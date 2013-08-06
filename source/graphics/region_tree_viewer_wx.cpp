@@ -359,7 +359,7 @@ DESCRIPTION :
 	enum Cmiss_element_point_sample_mode sample_mode;
 	enum Streamline_data_type streamline_data_type;
 	struct MANAGER(Spectrum) *spectrum_manager;
-	enum Cmiss_graphics_render_type render_type;
+	enum Cmiss_graphic_polygon_render_mode polygon_render_mode;
 	struct FE_element *fe_element;
 #if defined (WX_USER_INTERFACE)
 	Transformation_editor *transformation_editor;
@@ -553,7 +553,7 @@ class wxRegionTreeViewer : public wxFrame
 		*tessellationtext, *glyph_repeat_mode_text, *labeloffsettext,
 		*sample_density_field_text, *xitext,
 		*lineshapetext, *streamlineslengthtext, *streamvectortext,
-		*linewidthtext, *streamlinedatatypetext, *spectrumtext, *rendertypetext,
+		*linewidthtext, *streamlinedatatypetext, *spectrumtext, *polygon_render_mode_text,
 		*staticlabeltext, *fonttext;
 	wxButton *sceneupbutton, scenedownbutton, *applybutton, *revertbutton, *tessellationbutton;
 	wxCheckBox *autocheckbox, *exteriorcheckbox,*facecheckbox, *seedelementcheckbox;
@@ -574,7 +574,7 @@ class wxRegionTreeViewer : public wxFrame
 		*line_shape_chooser_panel, *stream_vector_chooser_panel,
 		*streamline_data_type_chooser_panel,
 		*streamlines_track_direction_chooser_panel, *spectrum_chooser_panel,
-		*texture_coordinates_chooser_panel, *render_type_chooser_panel,
+		*texture_coordinates_chooser_panel, *polygon_render_mode_chooser_panel,
 		*seed_element_panel, *subgroup_field_chooser_panel, *tessellation_chooser_panel;
 	wxWindow *glyphbox,*glyphline;
 	wxChoice *facechoice, *add_graphic_choice;
@@ -648,9 +648,9 @@ class wxRegionTreeViewer : public wxFrame
 	*streamline_data_type_chooser;
 	Managed_object_chooser<Computed_field,MANAGER_CLASS(Computed_field)>
 	*texture_coord_field_chooser;
-	DEFINE_ENUMERATOR_TYPE_CLASS(Cmiss_graphics_render_type);
-	Enumerator_chooser<ENUMERATOR_TYPE_CLASS(Cmiss_graphics_render_type)>
-	*render_type_chooser;
+	DEFINE_ENUMERATOR_TYPE_CLASS(Cmiss_graphic_polygon_render_mode);
+	Enumerator_chooser<ENUMERATOR_TYPE_CLASS(Cmiss_graphic_polygon_render_mode)>
+	*polygon_render_mode_chooser;
 	DEFINE_ENUMERATOR_TYPE_CLASS(Cmiss_graphic_streamlines_track_direction);
 	Enumerator_chooser<ENUMERATOR_TYPE_CLASS(Cmiss_graphic_streamlines_track_direction)>
 		*streamlines_track_direction_chooser;
@@ -785,7 +785,7 @@ public:
 	stream_vector_chooser = NULL;
 	streamline_data_type_chooser = NULL;
 	texture_coord_field_chooser = NULL;
-	render_type_chooser = NULL;
+	polygon_render_mode_chooser = NULL;
 	seed_element_chooser = NULL;
 	streamlines_track_direction_chooser = 0;
 	graphicalitemschecklist = NULL;
@@ -884,7 +884,7 @@ public:
 		delete stream_vector_chooser;
 		delete streamline_data_type_chooser;
 		delete texture_coord_field_chooser;
-		delete render_type_chooser;
+		delete polygon_render_mode_chooser;
 		delete seed_element_chooser;
 		delete coordinate_system_chooser;
 		delete streamlines_track_direction_chooser;
@@ -1552,17 +1552,12 @@ Callback from wxChooser<Texture Coord Field> when choice is made.
 	return 1;
 }
 
-int render_type_callback(enum Cmiss_graphics_render_type render_type)
-/*******************************************************************************
-LAST MODIFIED : 26 March 2007
-
-DESCRIPTION :
-Callback from wxChooser<Render Type> when choice is made.
-==============================================================================*/
+/** Callback from wxChooser<Render Type> when choice is made. */
+int polygon_render_mode_callback(enum Cmiss_graphic_polygon_render_mode polygon_render_mode)
 {
-	Cmiss_graphic_set_render_type(
-		region_tree_viewer->current_graphic, render_type);
-			/* inform the client of the change */
+	Cmiss_graphic_set_polygon_render_mode(
+		region_tree_viewer->current_graphic, polygon_render_mode);
+	/* inform the client of the change */
 	Region_tree_viewer_autoapply(region_tree_viewer->scene,
 		region_tree_viewer->edit_scene);
 	//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphic);
@@ -2643,7 +2638,7 @@ void SetGraphic(Cmiss_graphic *graphic)
 	int error, line_width;
 	Cmiss_element_face_type face = CMISS_ELEMENT_FACE_INVALID;
 	char temp_string[100], *vector_temp_string;
-	enum Cmiss_graphics_render_type render_type;
+	enum Cmiss_graphic_polygon_render_mode polygon_render_mode;
 	struct FE_element *seed_element;
 	struct FE_region *fe_region;
 
@@ -3544,27 +3539,27 @@ void SetGraphic(Cmiss_graphic *graphic)
 			texturecoordinatestext->Hide();
 		}
 
-		/* surface_render_type */
-		rendertypetext=XRCCTRL(*this, "RenderTypeText",wxStaticText);
-		render_type_chooser_panel=XRCCTRL(*this,"RenderTypeChooserPanel",wxPanel);
-		rendertypetext->Show();
-		render_type_chooser_panel->Show();
-		render_type=Cmiss_graphic_get_render_type(graphic);
-		if (render_type_chooser == NULL)
+		/* polygon_render_mode */
+		polygon_render_mode_text=XRCCTRL(*this, "PolygonRenderModeText",wxStaticText);
+		polygon_render_mode_chooser_panel=XRCCTRL(*this,"PolygonRenderModeChooserPanel",wxPanel);
+		polygon_render_mode_text->Show();
+		polygon_render_mode_chooser_panel->Show();
+		polygon_render_mode=Cmiss_graphic_get_polygon_render_mode(graphic);
+		if (polygon_render_mode_chooser == NULL)
 		{
-			render_type_chooser =
-					new Enumerator_chooser<ENUMERATOR_TYPE_CLASS(Cmiss_graphics_render_type)>
-					(render_type_chooser_panel, render_type,
-						(ENUMERATOR_CONDITIONAL_FUNCTION(Cmiss_graphics_render_type) *)NULL,
+			polygon_render_mode_chooser =
+					new Enumerator_chooser<ENUMERATOR_TYPE_CLASS(Cmiss_graphic_polygon_render_mode)>
+					(polygon_render_mode_chooser_panel, polygon_render_mode,
+						(ENUMERATOR_CONDITIONAL_FUNCTION(Cmiss_graphic_polygon_render_mode) *)NULL,
 						(void *)NULL, region_tree_viewer->user_interface);
-			render_type_chooser_panel->Fit();
-			Callback_base< enum Cmiss_graphics_render_type > *render_type_callback =
-					new Callback_member_callback< enum Cmiss_graphics_render_type,
-					wxRegionTreeViewer, int (wxRegionTreeViewer::*)(enum Cmiss_graphics_render_type) >
-					(this, &wxRegionTreeViewer::render_type_callback);
-			render_type_chooser->set_callback(render_type_callback);
+			polygon_render_mode_chooser_panel->Fit();
+			Callback_base< enum Cmiss_graphic_polygon_render_mode > *polygon_render_mode_callback =
+					new Callback_member_callback< enum Cmiss_graphic_polygon_render_mode,
+					wxRegionTreeViewer, int (wxRegionTreeViewer::*)(enum Cmiss_graphic_polygon_render_mode) >
+					(this, &wxRegionTreeViewer::polygon_render_mode_callback);
+			polygon_render_mode_chooser->set_callback(polygon_render_mode_callback);
 		}
-		render_type_chooser->set_value(render_type);
+		polygon_render_mode_chooser->set_value(polygon_render_mode);
 
 		exteriorcheckbox=XRCCTRL(*this,"ExteriorCheckBox",wxCheckBox);
 		facecheckbox=XRCCTRL(*this, "FaceCheckBox",wxCheckBox);
@@ -4290,7 +4285,7 @@ DESCRIPTION :
 			region_tree_viewer->sample_mode= (Cmiss_element_point_sample_mode)NULL;
 			region_tree_viewer->streamline_data_type=(Streamline_data_type)NULL;
 			region_tree_viewer->spectrum_manager=spectrum_manager;
-			region_tree_viewer->render_type =(Cmiss_graphics_render_type)NULL;
+			region_tree_viewer->polygon_render_mode =(Cmiss_graphic_polygon_render_mode)NULL;
 			region_tree_viewer->fe_element =(FE_element *)NULL;
 			region_tree_viewer->root_region = root_region;
 			region_tree_viewer->current_region = NULL;
