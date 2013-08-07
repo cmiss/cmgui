@@ -57,8 +57,6 @@ struct Scene_viewer_app
 	/* list of callbacks requested by other objects when view changes */
 	struct LIST(CMISS_CALLBACK_ITEM(Scene_viewer_app_callback)) *sync_callback_list;
 	struct LIST(CMISS_CALLBACK_ITEM(Scene_viewer_app_callback)) *transform_callback_list;
-	/* list of callbacks requested by other objects when scene viewer destroyed */
-	struct LIST(CMISS_CALLBACK_ITEM(Scene_viewer_app_callback)) *destroy_callback_list;
 
 };
 

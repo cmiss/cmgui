@@ -166,11 +166,8 @@ struct Scene_viewer_app *CREATE(Scene_viewer_app)(struct Graphics_buffer_app *gr
 				CREATE(LIST(CMISS_CALLBACK_ITEM(Scene_viewer_app_callback)))();
 			scene_viewer->transform_callback_list=
 				CREATE(LIST(CMISS_CALLBACK_ITEM(Scene_viewer_app_callback)))();
-			scene_viewer->destroy_callback_list=
-				CREATE(LIST(CMISS_CALLBACK_ITEM(Scene_viewer_app_callback)))();
-			Cmiss_scene_viewer_add_repaint_required_callback(scene_viewer->core_scene_viewer, My_Cmiss_scene_viewer_callback, scene_viewer);
-//			scene_viewer->repaint_required_callback_list=
-//				CREATE(LIST(CMISS_CALLBACK_ITEM(Scene_viewer_callback)))();
+			Cmiss_scene_viewer_add_repaint_required_callback(scene_viewer->core_scene_viewer,
+				My_Cmiss_scene_viewer_callback, scene_viewer);
 			Graphics_buffer_app_add_initialise_callback(graphics_buffer,
 				Scene_viewer_app_initialise_callback, scene_viewer);
 			Graphics_buffer_app_add_resize_callback(graphics_buffer,
@@ -223,11 +220,7 @@ struct Scene_viewer_app *Scene_viewer_app_for_spectrum_create(struct Graphics_bu
 				CREATE(LIST(CMISS_CALLBACK_ITEM(Scene_viewer_app_callback)))();
 			scene_viewer->transform_callback_list=
 				CREATE(LIST(CMISS_CALLBACK_ITEM(Scene_viewer_app_callback)))();
-			scene_viewer->destroy_callback_list=
-				CREATE(LIST(CMISS_CALLBACK_ITEM(Scene_viewer_app_callback)))();
 			Cmiss_scene_viewer_add_repaint_required_callback(scene_viewer->core_scene_viewer, My_Cmiss_scene_viewer_callback, scene_viewer);
-//			scene_viewer->repaint_required_callback_list=
-//				CREATE(LIST(CMISS_CALLBACK_ITEM(Scene_viewer_callback)))();
 			Graphics_buffer_app_add_initialise_callback(graphics_buffer,
 				Scene_viewer_app_initialise_callback, scene_viewer);
 			Graphics_buffer_app_add_resize_callback(graphics_buffer,
@@ -255,15 +248,9 @@ int DESTROY(Scene_viewer_app)(struct Scene_viewer_app **scene_viewer_app_address
 				User_interface_get_event_dispatcher(scene_viewer->user_interface),
 				scene_viewer->idle_update_callback_id);
 		}
+		Cmiss_scene_viewer_remove_repaint_required_callback(scene_viewer->core_scene_viewer,
+			My_Cmiss_scene_viewer_callback, scene_viewer);
 		DESTROY(Scene_viewer)(&(scene_viewer->core_scene_viewer));
-		/* send the destroy callbacks */
-		if (scene_viewer->destroy_callback_list)
-		{
-			CMISS_CALLBACK_LIST_CALL(Scene_viewer_app_callback)(
-				scene_viewer->destroy_callback_list,scene_viewer,NULL);
-			DESTROY( LIST(CMISS_CALLBACK_ITEM(Scene_viewer_app_callback)))(
-				&scene_viewer->destroy_callback_list);
-		}
 		if (scene_viewer->sync_callback_list)
 		{
 			DESTROY(LIST(CMISS_CALLBACK_ITEM(Scene_viewer_app_callback)))(
@@ -337,13 +324,6 @@ DESCRIPTION :
 	}
 }
 
-int Scene_viewer_app_remove_destroy_callback(struct Scene_viewer_app *scene_viewer,
-	CMISS_CALLBACK_FUNCTION(Scene_viewer_app_callback) *function,void *user_data);
-
-
-int Scene_viewer_app_add_destroy_callback(struct Scene_viewer_app *scene_viewer,
-	CMISS_CALLBACK_FUNCTION(Scene_viewer_app_callback) *function,void *user_data);
-
 int Scene_viewer_app_destroy_from_package(
 	struct Scene_viewer_app *scene_viewer, void *package_void)
 /*******************************************************************************
@@ -357,9 +337,6 @@ DESCRIPTION :
 
 	if (scene_viewer && package)
 	{
-		Scene_viewer_app_remove_destroy_callback(scene_viewer,
-			Scene_viewer_app_destroy_remove_from_package, package);
-		printf("scene viewer app destroying with the package.\n");
 		DESTROY(Scene_viewer_app)(&scene_viewer);
 	}
 	return_code = 1;
@@ -920,8 +897,6 @@ Requests a full redraw immediately.
 		{
 			Graphics_buffer_app_swap_buffers(scene_viewer->graphics_buffer);
 		}
-		//-- CMISS_CALLBACK_LIST_CALL(Scene_viewer_callback)(
-		//-- 	scene_viewer->repaint_required_callback_list, scene_viewer, NULL);
 	}
 	else
 	{
@@ -963,7 +938,7 @@ and <transparency_layers> are used for just this render.
 			Scene_viewer_automatic_tumble(scene_viewer);
 			if(!scene_viewer->idle_update_callback_id)
 			{
-				scene_viewer->idle_update_callback_id = 0;Event_dispatcher_add_idle_callback(
+				scene_viewer->idle_update_callback_id = Event_dispatcher_add_idle_callback(
 					event_dispatcher, Scene_viewer_app_idle_update_callback, (void *)scene_viewer,
 					EVENT_DISPATCHER_IDLE_UPDATE_SCENE_VIEWER_PRIORITY);
 			}
@@ -1057,8 +1032,6 @@ Updates the scene_viewer.
 		{
 			Graphics_buffer_app_swap_buffers(scene_viewer->graphics_buffer);
 		}
-		//-- CMISS_CALLBACK_LIST_CALL(Scene_viewer_app_callback)(
-		//-- 	scene_viewer->repaint_required_callback_list, scene_viewer, NULL);
 		/* We don't want the idle callback to repeat so we return 0 */
 		repeat_idle = 0;
 	}
@@ -1385,82 +1358,6 @@ SCENE_VIEWER_SELECT mode. A NULL value indicates no tool.
 
 	return (return_code);
 } /* Scene_viewer_set_interactive_tool */
-
-int Scene_viewer_app_remove_destroy_callback(struct Scene_viewer_app *scene_viewer,
-	CMISS_CALLBACK_FUNCTION(Scene_viewer_app_callback) *function,void *user_data)
-/*******************************************************************************
-LAST MODIFIED : 19 February 2002
-
-DESCRIPTION :
-Removes the callback calling <function> with <user_data> from
-<scene_viewer>.
-==============================================================================*/
-{
-	int return_code;
-
-	ENTER(Scene_viewer_remove_destroy_callback);
-	if (scene_viewer&&function)
-	{
-		if (CMISS_CALLBACK_LIST_REMOVE_CALLBACK(Scene_viewer_app_callback)(
-			scene_viewer->destroy_callback_list,function,user_data))
-		{
-			return_code=1;
-		}
-		else
-		{
-			display_message(ERROR_MESSAGE,
-				"Scene_viewer_remove_destroy_callback.  Could not remove callback");
-			return_code=0;
-		}
-	}
-	else
-	{
-		display_message(ERROR_MESSAGE,
-			"Scene_viewer_remove_destroy_callback.  Invalid argument(s)");
-		return_code=0;
-	}
-	LEAVE;
-
-	return (return_code);
-} /* Scene_viewer_remove_destroy_callback */
-
-int Scene_viewer_app_add_destroy_callback(struct Scene_viewer_app *scene_viewer,
-	CMISS_CALLBACK_FUNCTION(Scene_viewer_app_callback) *function,void *user_data)
-/*******************************************************************************
-LAST MODIFIED : 19 February 2002
-
-DESCRIPTION :
-Adds a callback to the <scene_viewer> that is called back before the scene
-viewer is destroyed.
-==============================================================================*/
-{
-	int return_code;
-
-	ENTER(Scene_viewer_add_destroy_callback);
-	if (scene_viewer&&function)
-	{
-		if (CMISS_CALLBACK_LIST_ADD_CALLBACK(Scene_viewer_app_callback)(
-			scene_viewer->destroy_callback_list,function,user_data))
-		{
-			return_code=1;
-		}
-		else
-		{
-			display_message(ERROR_MESSAGE,
-				"Scene_viewer_add_destroy_callback.  Could not add callback");
-			return_code=0;
-		}
-	}
-	else
-	{
-		display_message(ERROR_MESSAGE,
-			"Scene_viewer_add_destroy_callback.  Invalid argument(s)");
-		return_code=0;
-	}
-	LEAVE;
-
-	return (return_code);
-} /* Scene_viewer_add_destroy_callback */
 
 void Scene_viewer_app_initialise_callback(struct Graphics_buffer_app *graphics_buffer,
 	void *dummy_void, void *scene_viewer_void)
