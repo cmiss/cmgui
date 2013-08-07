@@ -629,7 +629,7 @@ DESCRIPTION :
 							else
 							{
 								number_of_spectrum_components =
-									Spectrum_get_number_of_components(material_to_be_modified_copy->spectrum);
+									Spectrum_get_number_of_data_components(material_to_be_modified_copy->spectrum);
 								if ((colour_lookup_alpha_flag + colour_lookup_blue_flag +
 										colour_lookup_green_flag + colour_lookup_red_flag) ==
 									number_of_spectrum_components)

@@ -64,7 +64,7 @@ SET(APP_SRCS
     source/graphics/auxiliary_graphics_types_app.cpp
     source/graphics/light_app.cpp
     source/graphics/scene_app.cpp
-    source/graphics/spectrum_settings_app.cpp
+    source/graphics/spectrum_component_app.cpp
     source/graphics/spectrum_app.cpp
     source/graphics/colour_app.cpp
     source/graphics/material_app.cpp

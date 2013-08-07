@@ -165,7 +165,7 @@
 #include "graphics/spectrum_editor_wx.h"
 #include "graphics/spectrum_editor_dialog_wx.h"
 #endif /* defined (WX_USER_INTERFACE) */
-#include "graphics/spectrum_settings.h"
+#include "graphics/spectrum_component.h"
 #include "graphics/texture.h"
 #include "graphics/transform_tool.h"
 #include "graphics/userdef_objects.h"
@@ -294,7 +294,7 @@
 #include "graphics/texture_app.h"
 #include "graphics/colour_app.h"
 #include "graphics/scene_app.h"
-#include "graphics/spectrum_settings_app.h"
+#include "graphics/spectrum_component_app.h"
 #include "graphics/light_model_app.h"
 #include "graphics/light_app.h"
 #include "graphics/material_app.h"
@@ -2759,11 +2759,11 @@ static and referred to by gfx_create_Spectrum
 	const char *current_token;
 	int process, return_code;
 	struct Cmiss_command_data *command_data;
-	struct Modify_spectrum_data modify_spectrum_data;
+	struct Modify_spectrum_app_data modify_spectrum_data;
 	struct Option_table *option_table;
 	struct Scene *autorange_scene;
 	struct Spectrum *spectrum_to_be_modified,*spectrum_to_be_modified_copy;
-	struct Spectrum_command_data spectrum_command_data;
+
 
 	ENTER(gfx_modify_Spectrum);
 	if (state)
@@ -2871,16 +2871,14 @@ static and referred to by gfx_create_Spectrum
 					red_to_blue = 0;
 					blue_white_red = 0;
 					modify_spectrum_data.position = 0;
-					modify_spectrum_data.settings = (struct Spectrum_settings *)NULL;
-					modify_spectrum_data.spectrum_minimum = get_Spectrum_minimum(
+					modify_spectrum_data.component = (struct Cmiss_spectrum_component *)NULL;
+					modify_spectrum_data.spectrum_minimum = Cmiss_spectrum_get_minimum(
 						spectrum_to_be_modified_copy);
-					modify_spectrum_data.spectrum_maximum = get_Spectrum_maximum(
+					modify_spectrum_data.spectrum_maximum = Cmiss_spectrum_get_maximum(
 						spectrum_to_be_modified_copy);
 					modify_spectrum_data.computed_field_manager
 						= Computed_field_package_get_computed_field_manager(
 							command_data->computed_field_package);
-					spectrum_command_data.spectrum_manager
-						= command_data->spectrum_manager;
 					Cmiss_graphics_filter_id filter =
 						Cmiss_graphics_filter_module_get_default_filter(command_data->filter_module);
 					option_table=CREATE(Option_table)();
@@ -2893,13 +2891,13 @@ static and referred to by gfx_create_Spectrum
 					Option_table_add_entry(option_table,"clear",&clear,NULL,
 						set_char_flag);
 					Option_table_add_entry(option_table,"field",&modify_spectrum_data,
-						&spectrum_command_data,gfx_modify_spectrum_settings_field);
+						NULL,gfx_modify_spectrum_settings_field);
 					Option_table_add_entry(option_table, "filter", &filter,
 						command_data->filter_module, set_Cmiss_graphics_filter);
 					Option_table_add_entry(option_table,"linear",&modify_spectrum_data,
-						&spectrum_command_data,gfx_modify_spectrum_settings_linear);
+						NULL,gfx_modify_spectrum_settings_linear);
 					Option_table_add_entry(option_table,"log",&modify_spectrum_data,
-						&spectrum_command_data,gfx_modify_spectrum_settings_log);
+						NULL,gfx_modify_spectrum_settings_log);
 					Option_table_add_entry(option_table,"lg_blue_to_red",&lg_blue_to_red,
 						NULL,set_char_flag);
 					Option_table_add_entry(option_table,"lg_red_to_blue",&lg_red_to_blue,
@@ -2922,7 +2920,7 @@ static and referred to by gfx_create_Spectrum
 						{
 							if ( clear )
 							{
-								Spectrum_remove_all_settings(spectrum_to_be_modified_copy);
+								Cmiss_spectrum_remove_all_components(spectrum_to_be_modified_copy);
 							}
 							if (blue_to_red + blue_white_red +red_to_blue + lg_red_to_blue +
 								lg_blue_to_red > 1 )
@@ -2957,11 +2955,11 @@ static and referred to by gfx_create_Spectrum
 								Spectrum_set_simple_type(spectrum_to_be_modified_copy,
 									LOG_BLUE_TO_RED_SPECTRUM);
 							}
-							if ( modify_spectrum_data.settings )
+							if ( modify_spectrum_data.component )
 							{
 								/* add new settings */
-								return_code=Spectrum_add_settings(spectrum_to_be_modified_copy,
-									modify_spectrum_data.settings,
+								return_code=Spectrum_add_component(spectrum_to_be_modified_copy,
+									modify_spectrum_data.component,
 									modify_spectrum_data.position);
 							}
 							if (overlay_colour && overwrite_colour)
@@ -2972,12 +2970,12 @@ static and referred to by gfx_create_Spectrum
 							}
 							else if (overlay_colour)
 							{
-								Spectrum_set_opaque_colour_flag(spectrum_to_be_modified_copy,
+								Cmiss_spectrum_set_overwrite_material(spectrum_to_be_modified_copy,
 									0);
 							}
 							else if (overwrite_colour)
 							{
-								Spectrum_set_opaque_colour_flag(spectrum_to_be_modified_copy,
+								Cmiss_spectrum_set_overwrite_material(spectrum_to_be_modified_copy,
 									1);
 							}
 							if (autorange)
@@ -3015,9 +3013,9 @@ static and referred to by gfx_create_Spectrum
 					{
 						DESTROY(Option_table)(&option_table);
 					}
-					if ( modify_spectrum_data.settings )
+					if ( modify_spectrum_data.component )
 					{
-						DEACCESS(Spectrum_settings)(&(modify_spectrum_data.settings));
+						DEACCESS(Cmiss_spectrum_component)(&(modify_spectrum_data.component));
 					}
 					DEACCESS(Scene)(&autorange_scene);
 					Cmiss_graphics_filter_destroy(&filter);
@@ -8035,24 +8033,24 @@ Executes a GFX EXPORT WAVEFRONT command.
 } /* gfx_export_wavefront */
 
 #if defined (USE_OPENCASCADE)
-static struct Spectrum_settings *create_spectrum_component( Spectrum_settings_colour_mapping colour )
+static struct Cmiss_spectrum_component *create_spectrum_component( Cmiss_spectrum_component_colour_mapping colour )
 {
 	int component = 1;
-	struct Spectrum_settings *settings = CREATE(Spectrum_settings)();
-	Spectrum_settings_set_type(settings, SPECTRUM_LINEAR);
-	Spectrum_settings_set_colour_mapping(settings, colour);
-	Spectrum_settings_set_extend_above_flag(settings, 1);
-	Spectrum_settings_set_extend_below_flag(settings, 1);
-	Spectrum_settings_set_reverse_flag(settings, 0);
+	struct Cmiss_spectrum_component *settings = CREATE(Cmiss_spectrum_component)();
+	Cmiss_spectrum_component_set_interpolation_mode(settings, CMISS_SPECTRUM_COMPONENT_INTERPOLATION_LINEAR);
+	Cmiss_spectrum_component_set_colour_mapping(settings, colour);
+	Cmiss_spectrum_component_set_extend_above_flag(settings, true);
+	Cmiss_spectrum_component_set_extend_below_flag(settings, true);
+	Cmiss_spectrum_component_set_reverse_flag(settings, false);
 
-	if ( colour == SPECTRUM_RED )
+	if ( colour == CMISS_SPECTRUM_COMPONENT_COLOUR_MAPPING_RED )
 		component = 1;
-	else if ( colour == SPECTRUM_GREEN )
+	else if ( colour == CMISS_SPECTRUM_COMPONENT_COLOUR_MAPPING_GREEN )
 		component = 2;
 	else
 		component = 3;
 
-	Spectrum_settings_set_component_number( settings, component );
+	Cmiss_spectrum_component_set_field_component_lookup_number( settings, component );
 
 	return settings;
 }
@@ -8060,42 +8058,41 @@ static struct Spectrum_settings *create_spectrum_component( Spectrum_settings_co
 static int create_RGB_spectrum( struct Spectrum **spectrum, void *command_data_void )
 {
 	int return_code = 0, number_in_list = 0;
-	struct LIST(Spectrum_settings) *spectrum_settings_list;
-	struct Spectrum_settings *red_settings;
-	struct Spectrum_settings *green_settings;
-	struct Spectrum_settings *blue_settings;
+	struct LIST(Cmiss_spectrum_component) *spectrum_settings_list;
+	struct Cmiss_spectrum_component *red_settings;
+	struct Cmiss_spectrum_component *green_settings;
+	struct Cmiss_spectrum_component *blue_settings;
 	struct Cmiss_command_data *command_data = (struct Cmiss_command_data *)command_data_void;
 
 	if ( command_data && (NULL != ((*spectrum) = Cmiss_spectrum_create_private())) &&
 		Cmiss_spectrum_set_name(spectrum, "RGB"))
 	{
-		spectrum_settings_list = get_Spectrum_settings_list( (*spectrum) );
-		number_in_list = NUMBER_IN_LIST(Spectrum_settings)(spectrum_settings_list);
+		spectrum_settings_list = get_Cmiss_spectrum_component_list( (*spectrum) );
+		number_in_list = NUMBER_IN_LIST(Cmiss_spectrum_component)(spectrum_settings_list);
 		if ( number_in_list > 0 )
 		{
-			REMOVE_ALL_OBJECTS_FROM_LIST(Spectrum_settings)(spectrum_settings_list);
+			REMOVE_ALL_OBJECTS_FROM_LIST(Cmiss_spectrum_component)(spectrum_settings_list);
 		}
-		red_settings = create_spectrum_component( SPECTRUM_RED );
-		Spectrum_settings_add( red_settings, /* end of list = 0 */0,
+		red_settings = create_spectrum_component( CMISS_SPECTRUM_COMPONENT_COLOUR_MAPPING_RED );
+		Cmiss_spectrum_component_add( red_settings, /* end of list = 0 */0,
 			spectrum_settings_list );
 
-		green_settings = create_spectrum_component( SPECTRUM_GREEN );
-		Spectrum_settings_add( green_settings, /* end of list = 0 */0,
+		green_settings = create_spectrum_component( CMISS_SPECTRUM_COMPONENT_COLOUR_MAPPING_GREEN );
+		Cmiss_spectrum_component_add( green_settings, /* end of list = 0 */0,
 			spectrum_settings_list );
 
-		blue_settings = create_spectrum_component( SPECTRUM_BLUE );
-		Spectrum_settings_add( blue_settings, /* end of list = 0 */0,
+		blue_settings = create_spectrum_component( CMISS_SPECTRUM_COMPONENT_COLOUR_MAPPING_BLUE );
+		Cmiss_spectrum_component_add( blue_settings, /* end of list = 0 */0,
 			spectrum_settings_list );
 
 		Spectrum_calculate_range( (*spectrum) );
 		Spectrum_calculate_range( (*spectrum) );
 		Spectrum_set_minimum_and_maximum( (*spectrum), 0, 1);
-		Spectrum_set_opaque_colour_flag( (*spectrum), 0 );
+		Cmiss_spectrum_set_overwrite_material( (*spectrum), 0 );
 		if (!ADD_OBJECT_TO_MANAGER(Spectrum)( (*spectrum),
 				command_data->spectrum_manager))
 		{
-			DESTROY(Spectrum)(spectrum);
-			//DEACCESS(Spectrum)(&(command_data->default_spectrum));
+			Cmiss_spectrum_destroy(&command_data->spectrum_manager);
 		}
 		else
 		{
@@ -10178,12 +10175,12 @@ Executes a GFX LIST SPECTRUM.
 			{
 				if (spectrum)
 				{
-					return_code = Spectrum_list_contents(spectrum, (void *)NULL);
+					return_code = Spectrum_list_app_contents(spectrum, (void *)NULL);
 				}
 				else
 				{
 					return_code = FOR_EACH_OBJECT_IN_MANAGER(Spectrum)(
-						Spectrum_list_contents, (void *)NULL, spectrum_manager);
+						Spectrum_list_app_contents, (void *)NULL, spectrum_manager);
 				}
 			}
 		}

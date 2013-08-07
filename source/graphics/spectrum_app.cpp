@@ -1,5 +1,5 @@
-
-
+#include <stdlib.h>
+#include <stdio.h>
 #include "general/message.h"
 #include "general/mystring.h"
 #include "command/parser.h"
@@ -7,8 +7,8 @@
 #include "graphics/graphics_module.h"
 #include "graphics/spectrum.h"
 #include "graphics/render_gl.h"
-#include "graphics/spectrum_settings.h"
-#include "graphics/spectrum_settings_app.h"
+#include "graphics/spectrum_component.h"
+#include "graphics/spectrum_component_app.h"
 #include "graphics/scene_app.h"
 #include "user_interface/process_list_or_write_command.hpp"
 
@@ -355,7 +355,7 @@ to the comfile.
 {
 	char *line_prefix,*name;
 	int return_code;
-	struct Spectrum_settings_list_data list_data;
+	struct Cmiss_spectrum_component_list_data list_data;
 	ENTER(Spectrum_list_commands);
 	/* check the arguments */
 	if (spectrum)
@@ -376,7 +376,7 @@ to the comfile.
 				sprintf(line_prefix,"%s %s ",command_prefix,name);
 				process_message->process_command(INFORMATION_MESSAGE,line_prefix);
 				process_message->process_command(INFORMATION_MESSAGE,"clear");
-				if (spectrum->clear_colour_before_settings)
+				if (spectrum->overwrite_colour)
 				{
 					process_message->process_command(INFORMATION_MESSAGE," overwrite_colour");
 				}
@@ -389,21 +389,21 @@ to the comfile.
 					process_message->process_command(INFORMATION_MESSAGE,command_suffix);
 				}
 				process_message->process_command(INFORMATION_MESSAGE,";\n");
-				list_data.settings_string_detail=SPECTRUM_SETTINGS_STRING_COMPLETE;
+				list_data.component_string_detail=SPECTRUM_COMPONENT_STRING_COMPLETE;
 				list_data.line_prefix=line_prefix;
 				list_data.line_suffix=command_suffix;
 				return_code = process_message->write_enabled();
 				if (return_code == 0)
 				{
-					 return_code=FOR_EACH_OBJECT_IN_LIST(Spectrum_settings)(
-							Spectrum_settings_list_contents, (void *)&list_data,
-							spectrum->list_of_settings);
+					 return_code=FOR_EACH_OBJECT_IN_LIST(Cmiss_spectrum_component)(
+							Cmiss_spectrum_component_list_contents, (void *)&list_data,
+							spectrum->list_of_components);
 				}
 				else
 				{
-					 return_code=FOR_EACH_OBJECT_IN_LIST(Spectrum_settings)(
-							Spectrum_settings_write_contents, (void *)&list_data,
-							spectrum->list_of_settings);
+					 return_code=FOR_EACH_OBJECT_IN_LIST(Cmiss_spectrum_component)(
+							Cmiss_spectrum_component_write_contents, (void *)&list_data,
+							spectrum->list_of_components);
 				}
 				DEALLOCATE(line_prefix);
 				return_code=1;
@@ -522,3 +522,76 @@ Writes the properties of the <spectrum> to the command window.
 	 }
 	 return (return_code);
 }
+
+int Spectrum_list_app_contents(struct Spectrum *spectrum,void *dummy)
+/*******************************************************************************
+LAST MODIFIED : 18 May 2000
+
+DESCRIPTION :
+Writes the properties of the <spectrum> to the command window.
+==============================================================================*/
+{
+	enum Spectrum_simple_type simple_type;
+	int return_code;
+	struct Cmiss_spectrum_component_list_data list_data;
+
+	ENTER(Spectrum_list_app_contents);
+	/* check the arguments */
+	if (spectrum && (!dummy))
+	{
+		display_message(INFORMATION_MESSAGE,"spectrum : ");
+		display_message(INFORMATION_MESSAGE,spectrum->name);
+		display_message(INFORMATION_MESSAGE,"\n");
+		simple_type = Spectrum_get_simple_type(spectrum);
+		switch(simple_type)
+		{
+			case BLUE_TO_RED_SPECTRUM:
+			{
+				display_message(INFORMATION_MESSAGE,"  simple spectrum type: BLUE_TO_RED\n");
+			} break;
+			case RED_TO_BLUE_SPECTRUM:
+			{
+				display_message(INFORMATION_MESSAGE,"  simple spectrum type: RED_TO_BLUE\n");
+			} break;
+			case LOG_BLUE_TO_RED_SPECTRUM:
+			{
+				display_message(INFORMATION_MESSAGE,"  simple spectrum type: LOG_BLUE_TO_RED\n");
+			} break;
+			case LOG_RED_TO_BLUE_SPECTRUM:
+			{
+				display_message(INFORMATION_MESSAGE,"  simple spectrum type: LOG_RED_TO_BLUE\n");
+			} break;
+			case BLUE_WHITE_RED_SPECTRUM:
+			{
+				display_message(INFORMATION_MESSAGE,"  simple spectrum type: BLUE_WHITE_RED\n");
+			} break;
+			default:
+			{
+				display_message(INFORMATION_MESSAGE,"  simple spectrum type: UNKNOWN\n");
+			} break;
+		}
+		display_message(INFORMATION_MESSAGE,"  minimum=%.3g, maximum=%.3g\n",
+			spectrum->minimum,spectrum->maximum);
+		if (spectrum->overwrite_colour)
+		{
+			display_message(INFORMATION_MESSAGE,"  clear before component\n");
+		}
+		list_data.component_string_detail=SPECTRUM_COMPONENT_STRING_COMPLETE_PLUS;
+		list_data.line_prefix="  ";
+		list_data.line_suffix="";
+		return_code=FOR_EACH_OBJECT_IN_LIST(Cmiss_spectrum_component)(
+			Cmiss_spectrum_component_list_contents,(void *)&list_data,
+			spectrum->list_of_components);
+		display_message(INFORMATION_MESSAGE,"  access count=%d\n",
+			spectrum->access_count);
+		return_code=1;
+	}
+	else
+	{
+		display_message(ERROR_MESSAGE,"Spectrum_list_app_contents.  Invalid argument(s)");
+		return_code=0;
+	}
+	LEAVE;
+
+	return (return_code);
+} /* Spectrum_list_app_contents */

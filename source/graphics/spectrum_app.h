@@ -41,3 +41,31 @@ LAST MODIFIED : 28 October 1997
 DESCRIPTION :
 Executes a GFX DESTROY SPECTRUM command.
 */
+
+int Spectrum_list_app_contents(struct Spectrum *spectrum,void *dummy);
+/*******************************************************************************
+LAST MODIFIED : 5 August 1998
+
+DESCRIPTION :
+Writes the properties of the <spectrum> to the command window.
+==============================================================================*/
+
+
+int Spectrum_list_commands(struct Spectrum *spectrum,
+	const char *command_prefix,char *command_suffix);
+/*******************************************************************************
+LAST MODIFIED : 5 August 1998
+
+DESCRIPTION :
+Writes the properties of the <spectrum> to the command window in a
+form that can be directly pasted into a com file.
+==============================================================================*/
+
+int for_each_spectrum_list_or_write_commands(
+	struct Spectrum *spectrum,void *write_enabled_void);
+/*******************************************************************************
+LAST MODIFIED : 18 August 2007
+
+DESCRIPTION :
+For each spectrum in manager, list the spectrum commands to the command windows or write them out.
+==============================================================================*/
