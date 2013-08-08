@@ -498,12 +498,8 @@ int gfx_modify_scene_graphic(struct Parse_state *state,
 	}
 
 	/* line_width */
-	if ((legacy_graphic_type == LEGACY_GRAPHIC_NONE) ||
-		(legacy_graphic_type == LEGACY_GRAPHIC_ISO_SURFACES))
-	{
-		Option_table_add_int_non_negative_entry(option_table,"line_width",
-			&(graphic->line_width));
-	}
+	double line_width = Cmiss_graphic_get_render_line_width(graphic);
+	Option_table_add_positive_double_entry(option_table, "line_width", &line_width);
 
 	/* material */
 	Cmiss_graphics_material_id material = Cmiss_graphic_get_material(graphic);
@@ -573,6 +569,10 @@ int gfx_modify_scene_graphic(struct Parse_state *state,
 		Option_table_add_Computed_field_conditional_entry(option_table, "orientation",
 			&orientation_scale_field, &set_orientation_scale_field_data);
 	}
+
+	/* point_size */
+	double point_size = Cmiss_graphic_get_render_point_size(graphic);
+	Option_table_add_positive_double_entry(option_table, "point_size", &point_size);
 
 	/* position */
 	Option_table_add_entry(option_table,"position",
@@ -786,8 +786,7 @@ int gfx_modify_scene_graphic(struct Parse_state *state,
 	double streamline_width = 0.0;
 	if (graphic_type == CMISS_GRAPHIC_STREAMLINES)
 	{
-		Option_table_add_entry(option_table,"width",
-			&streamline_width, NULL, set_double);
+		Option_table_add_double_entry(option_table, "width", &streamline_width);
 	}
 
 	/* xi (sample location) */
@@ -823,6 +822,8 @@ int gfx_modify_scene_graphic(struct Parse_state *state,
 			Cmiss_graphic_set_texture_coordinate_field(graphic, texture_coordinate_field);
 		}
 		Cmiss_graphic_set_material(graphic, material);
+		Cmiss_graphic_set_render_line_width(graphic, line_width);
+		Cmiss_graphic_set_render_point_size(graphic, point_size);
 		Cmiss_graphic_set_selected_material(graphic, selected_material);
 
 		if (contours)

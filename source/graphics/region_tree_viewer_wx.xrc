@@ -822,24 +822,35 @@
 											</object>
 
 											<object class="sizeritem">
-				   								<object class = "wxBoxSizer">	
+				   							<object class = "wxBoxSizer">	
 													<orient>wxHORIZONTAL</orient>
 													<object class="sizeritem">
 														<flag>wxALIGN_CENTRE_VERTICAL</flag>
 														<object class	="wxStaticText" name="LineWidthText"> 
-															<label>Width:</label>				  			
+															<label>Line width:</label>				  			
 	 													</object>
 													</object>
 													<object class="sizeritem">
 														<object class	="wxTextCtrl" name="LineWidthTextCtrl">
-          													<style>wxTE_PROCESS_ENTER</style>
+          										<style>wxTE_PROCESS_ENTER</style>
 	 													</object>
+													</object>
+													<object class="sizeritem">
+														<flag>wxALIGN_CENTRE_VERTICAL</flag>
+														<object class	="wxStaticText" name="PointSizeText">
+															<label>  Point size:</label>
+														</object>
+													</object>
+													<object class="sizeritem">
+														<object class	="wxTextCtrl" name="PointSizeTextCtrl">
+															<style>wxTE_PROCESS_ENTER</style>
+														</object>
 													</object>
 												</object>
 											</object>
 
 											<object class="sizeritem">
-				   								<object class = "wxBoxSizer">	
+				   							<object class = "wxBoxSizer">	
 													<orient>wxHORIZONTAL</orient>
 													<object class="sizeritem">
 														<flag>wxALIGN_CENTRE_VERTICAL</flag>

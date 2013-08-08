@@ -828,21 +828,25 @@ Adds the given <token> to the <option_table>.  The <vector> is filled in with th
 <number_of_components>.
 ==============================================================================*/
 
+/**
+ * Adds the given <token> to the <option_table>.  If the <token> is specified
+ * then the token following is assigned to double <value>.
+ */
 int Option_table_add_double_entry(struct Option_table *option_table,
 	const char *token, double *value);
-/*******************************************************************************
-LAST MODIFIED : 8 October 2003
 
-DESCRIPTION :
-Adds the given <token> to the <option_table>.  If the <token> is specified then
-the token following is assigned to <value>.
-==============================================================================*/
-
-/***************************************************************************//**
+/**
  * Adds the given <token> to the <option_table>.  If the <token> is specified
  * then the token following is assigned to <value>. Value must be non negative.
  */
 int Option_table_add_non_negative_double_entry(struct Option_table *option_table,
+	const char *token, double *value);
+
+/**
+ * Adds the given <token> to the <option_table>.  If the <token> is specified
+ * then the token following is assigned to <value>. Value must be positive.
+ */
+int Option_table_add_positive_double_entry(struct Option_table *option_table,
 	const char *token, double *value);
 
 int Option_table_add_double_vector_entry(struct Option_table *option_table,

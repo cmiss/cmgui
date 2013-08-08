@@ -553,7 +553,8 @@ class wxRegionTreeViewer : public wxFrame
 		*tessellationtext, *glyph_repeat_mode_text, *labeloffsettext,
 		*sample_density_field_text, *xitext,
 		*lineshapetext, *streamlineslengthtext, *streamvectortext,
-		*linewidthtext, *streamlinedatatypetext, *spectrumtext, *polygon_render_mode_text,
+		*line_width_text, *streamlinedatatypetext, *spectrumtext,
+		*point_size_text, *polygon_render_mode_text,
 		*staticlabeltext, *fonttext;
 	wxButton *sceneupbutton, scenedownbutton, *applybutton, *revertbutton, *tessellationbutton;
 	wxCheckBox *autocheckbox, *exteriorcheckbox,*facecheckbox, *seedelementcheckbox;
@@ -562,8 +563,9 @@ class wxRegionTreeViewer : public wxFrame
 	wxTextCtrl *nametextfield, *linescalefactorstextctrl, *isoscalartextctrl, *offsettextctrl,
 		*baseglyphsizetextctrl,*glyphscalefactorstextctrl,
 		*xitextctrl,*streamlineslengthtextctrl,*linebasesizetextctrl,
-		*linewidthtextctrl,*isovaluesequencenumbertextctrl, *isovaluesequencefirsttextctrl,
-		*isovaluesequencelasttextctrl, *labeloffsettextctrl, *staticlabeltextctrl[3];
+		*line_width_text_ctrl,*isovaluesequencenumbertextctrl, *isovaluesequencefirsttextctrl,
+		*isovaluesequencelasttextctrl, *labeloffsettextctrl,
+		*point_size_text_ctrl, *staticlabeltextctrl[3];
 	wxPanel	*coordinate_field_chooser_panel, *coordinate_system_chooser_panel, *data_chooser_panel,
 		*line_orientation_scale_field_chooser_panel, *isoscalar_chooser_panel, *glyph_chooser_panel,
 		*glyph_repeat_mode_chooser_panel,
@@ -841,6 +843,9 @@ public:
 		NULL, this);
 	XRCCTRL(*this,"LineWidthTextCtrl", wxTextCtrl)->Connect(wxEVT_KILL_FOCUS,
 		wxCommandEventHandler(wxRegionTreeViewer::EnterLineWidth),
+		NULL, this);
+	XRCCTRL(*this,"PointSizeTextCtrl", wxTextCtrl)->Connect(wxEVT_KILL_FOCUS,
+		wxCommandEventHandler(wxRegionTreeViewer::EnterPointSize),
 		NULL, this);
 	frame=XRCCTRL(*this, "CmguiRegionTreeViewer", wxFrame);
 	currentsceneobjecttext=XRCCTRL(*this,"CurrentSceneObjectText",wxStaticText);
@@ -2544,37 +2549,44 @@ int streamlines_track_direction_callback(enum Cmiss_graphic_streamlines_track_di
 
 void EnterLineWidth(wxCommandEvent &event)
 {
-	char temp_string[50];
-	int line_width, new_line_width;
-
 	USE_PARAMETER(event);
-	linewidthtextctrl=XRCCTRL(*this,"LineWidthTextCtrl",wxTextCtrl);
-	line_width = Cmiss_graphic_get_line_width(region_tree_viewer->current_graphic);
-	new_line_width = line_width;
-	/* Get the text string */
-	wxString wxTextEntry = linewidthtextctrl->GetValue();
+	line_width_text_ctrl = XRCCTRL(*this, "LineWidthTextCtrl", wxTextCtrl);
+	double lineWidth;
+	wxString wxTextEntry = line_width_text_ctrl->GetValue();
 	const char *text_entry = wxTextEntry.mb_str(wxConvUTF8);
 	if (text_entry)
 	{
-		sscanf(text_entry,"%d",&new_line_width);
-		if (new_line_width != line_width)
-		{
-			Cmiss_graphic_set_line_width(
-				region_tree_viewer->current_graphic, new_line_width);
-			/* inform the client of the change */
-			Region_tree_viewer_autoapply(region_tree_viewer->scene,
-					  region_tree_viewer->edit_scene);
-			//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphic);
-		}
+		sscanf(text_entry, "%lf", &lineWidth);
+		Cmiss_graphic_set_render_line_width(region_tree_viewer->current_graphic, lineWidth);
+		Region_tree_viewer_autoapply(region_tree_viewer->scene,
+			region_tree_viewer->edit_scene);
 	}
-	else
+	/* redisplay actual value in use */
+	lineWidth = Cmiss_graphic_get_render_line_width(region_tree_viewer->current_graphic);
+	char temp_string[50];
+	sprintf(temp_string, "%g", lineWidth);
+	line_width_text_ctrl->SetValue(wxString::FromAscii(temp_string));
+}
+
+void EnterPointSize(wxCommandEvent &event)
+{
+	USE_PARAMETER(event);
+	point_size_text_ctrl = XRCCTRL(*this, "PointSizeTextCtrl", wxTextCtrl);
+	double pointSize;
+	wxString wxTextEntry = point_size_text_ctrl->GetValue();
+	const char *text_entry = wxTextEntry.mb_str(wxConvUTF8);
+	if (text_entry)
 	{
-		display_message(ERROR_MESSAGE,
-		 "settings_editor_line_width_text_CB.  Missing text");
+		sscanf(text_entry, "%lf", &pointSize);
+		Cmiss_graphic_set_render_point_size(region_tree_viewer->current_graphic, pointSize);
+		Region_tree_viewer_autoapply(region_tree_viewer->scene,
+			region_tree_viewer->edit_scene);
 	}
-	/* always restore streamline_width to actual value in use */
-	sprintf(temp_string,"%d",new_line_width);
-	linewidthtextctrl->SetValue(wxString::FromAscii(temp_string));
+	/* redisplay actual value in use */
+	pointSize = Cmiss_graphic_get_render_point_size(region_tree_viewer->current_graphic);
+	char temp_string[50];
+	sprintf(temp_string, "%g", pointSize);
+	point_size_text_ctrl->SetValue(wxString::FromAscii(temp_string));
 }
 
 void ExteriorChecked(wxCommandEvent &event)
@@ -2635,7 +2647,7 @@ void SetBothMaterialChooser(Cmiss_graphic *graphic)
 
 void SetGraphic(Cmiss_graphic *graphic)
 {
-	int error, line_width;
+	int error;
 	Cmiss_element_face_type face = CMISS_ELEMENT_FACE_INVALID;
 	char temp_string[100], *vector_temp_string;
 	enum Cmiss_graphic_polygon_render_mode polygon_render_mode;
@@ -3417,23 +3429,23 @@ void SetGraphic(Cmiss_graphic *graphic)
 		}
 		Cmiss_graphic_streamlines_destroy(&streamlines);
 
-		/* line_width */
-		linewidthtext=XRCCTRL(*this,"LineWidthText",wxStaticText);
-		linewidthtextctrl=XRCCTRL(*this,"LineWidthTextCtrl",wxTextCtrl);
-		if (CMISS_GRAPHIC_POINTS != graphic_type)
-		{
-			linewidthtext->Show();
-			linewidthtextctrl->Show();
-			line_width = Cmiss_graphic_get_line_width(graphic);
-			sprintf(temp_string,"%d",line_width);
-			linewidthtextctrl->SetValue(wxString::FromAscii(temp_string));
-			linewidthtextctrl->Enable();
-		}
-		else
-		{
-			linewidthtext->Hide();
-			linewidthtextctrl->Hide();
-		}
+		line_width_text=XRCCTRL(*this, "LineWidthText", wxStaticText);
+		line_width_text_ctrl=XRCCTRL(*this, "LineWidthTextCtrl", wxTextCtrl);
+		line_width_text->Show();
+		line_width_text_ctrl->Show();
+		double line_width = Cmiss_graphic_get_render_line_width(graphic);
+		sprintf(temp_string, "%g", line_width);
+		line_width_text_ctrl->SetValue(wxString::FromAscii(temp_string));
+		line_width_text_ctrl->Enable();
+
+		point_size_text=XRCCTRL(*this, "PointSizeText", wxStaticText);
+		point_size_text_ctrl=XRCCTRL(*this, "PointSizeTextCtrl", wxTextCtrl);
+		point_size_text->Show();
+		point_size_text_ctrl->Show();
+		double point_size = Cmiss_graphic_get_render_point_size(graphic);
+		sprintf(temp_string, "%g", point_size);
+		point_size_text_ctrl->SetValue(wxString::FromAscii(temp_string));
+		point_size_text_ctrl->Enable();
 
 		streamlinedatatypetext=XRCCTRL(*this, "StreamlineDataTypeText", wxStaticText);
 		streamline_data_type_chooser_panel = XRCCTRL(*this,"StreamlineDataTypeChooserPanel",wxPanel);
@@ -3883,6 +3895,7 @@ BEGIN_EVENT_TABLE(wxRegionTreeViewer, wxFrame)
 	EVT_TEXT_ENTER(XRCID("LineBaseSizeTextCtrl"),wxRegionTreeViewer::EnterLineBaseSize)
 	EVT_TEXT_ENTER(XRCID("LineScaleFactorsTextCtrl"), wxRegionTreeViewer::EnterLineScaleFactors)
 	EVT_TEXT_ENTER(XRCID("LineWidthTextCtrl"),wxRegionTreeViewer::EnterLineWidth)
+	EVT_TEXT_ENTER(XRCID("PointSizeTextCtrl"),wxRegionTreeViewer::EnterPointSize)
 	EVT_CHECKBOX(XRCID("ExteriorCheckBox"),wxRegionTreeViewer::ExteriorChecked)
 	EVT_CHECKBOX(XRCID("FaceCheckBox"),wxRegionTreeViewer::FaceChecked)
 	EVT_CHOICE(XRCID("FaceChoice"),wxRegionTreeViewer::FaceChosen)

@@ -14378,13 +14378,14 @@ Executes a GFX SET command.
 	{
 		if (state->current_token)
 		{
+			double point_size = 0.0;
 			option_table=CREATE(Option_table)();
 			Option_table_add_entry(option_table, "node_value", NULL,
 				command_data_void, gfx_set_FE_nodal_value);
-		 Option_table_add_entry(option_table, "order", NULL,
-			(void *)command_data->root_region, gfx_set_region_order);
-		 Option_table_add_entry(option_table, "point_size", &global_point_size,
-				NULL, set_float_positive);
+			Option_table_add_entry(option_table, "order", NULL,
+				(void *)command_data->root_region, gfx_set_region_order);
+			Option_table_add_positive_double_entry(option_table, "point_size",
+				&point_size);
 			Option_table_add_entry(option_table, "transformation", NULL,
 				command_data_void, gfx_set_transformation);
 #if defined (WX_USER_INTERFACE)
@@ -14394,6 +14395,11 @@ Executes a GFX SET command.
 			Option_table_add_entry(option_table, "visibility", NULL,
 				command_data_void, gfx_set_visibility);
 			return_code = Option_table_parse(option_table, state);
+			if (point_size != 0.0)
+			{
+				display_message(WARNING_MESSAGE, "Set option 'point_size' has been removed; set point_size on individual graphics using gfx modify g_element commands instead");
+				display_parse_state_location(state);
+			}
 			DESTROY(Option_table)(&option_table);
 		}
 		else

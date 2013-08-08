@@ -4226,89 +4226,119 @@ indicate that the double has been set.
 	return (return_code);
 } /* set_double_and_char_flag */
 
-int set_double_non_negative(struct Parse_state *state,void *value_address_void,
+/**
+ * A modifier function for setting a double to a non_negative value.
+ */
+int set_double_non_negative(struct Parse_state *state, void *value_address_void,
 	void *dummy_user_data)
-/*******************************************************************************
-LAST MODIFIED : 21 June 1999
-
-DESCRIPTION :
-A modifier function for setting a double to a non_negative value.
-==============================================================================*/
 {
-	const char *current_token;
-	double value,*value_address;
-	int return_code;
-
-	ENTER(set_double_non_negative);
+	int return_code = 0;
 	USE_PARAMETER(dummy_user_data);
-	if (state)
+	double *value_address = reinterpret_cast<double *>(value_address_void);
+	if (state && value_address)
 	{
-		current_token=state->current_token;
+		const char *current_token = state->current_token;
 		if (current_token != NULL)
 		{
-			if (strcmp(PARSER_HELP_STRING,current_token)&&
-				strcmp(PARSER_RECURSIVE_HELP_STRING,current_token))
+			if (!Parse_state_help_mode(state))
 			{
-				value_address = (double *)value_address_void;
-				if (value_address != NULL)
+				double value;
+				if (1 == sscanf(current_token," %lf ",&value))
 				{
-					if (1==sscanf(current_token," %lf ",&value))
+					/* make sure that the value is non-negative */
+					if (value >= 0.0)
 					{
-						/* make sure that the value value is non-negative */
-						if (value>=0)
-						{
-							*value_address=value;
-							return_code=shift_Parse_state(state,1);
-						}
-						else
-						{
-							display_message(ERROR_MESSAGE,
-								"Value must be a non_negative double: %s\n",current_token);
-							display_parse_state_location(state);
-							return_code=0;
-						}
+						*value_address = value;
+						return_code = shift_Parse_state(state, 1);
 					}
 					else
 					{
-						display_message(ERROR_MESSAGE,"Invalid non-negative double: %s",
-							current_token);
+						display_message(ERROR_MESSAGE,
+							"Value must be a non_negative double: %s\n", current_token);
 						display_parse_state_location(state);
-						return_code=0;
 					}
 				}
 				else
 				{
-					display_message(ERROR_MESSAGE,
-						"set_double_non_negative.  Missing value_address");
-					return_code=0;
+					display_message(ERROR_MESSAGE, "Invalid non-negative double: %s",
+						current_token);
+					display_parse_state_location(state);
 				}
 			}
 			else
 			{
-				display_message(INFORMATION_MESSAGE," #");
-				value_address=(double *)value_address_void;
-				if (value_address != NULL)
-				{
-					display_message(INFORMATION_MESSAGE,"[%lg]",*value_address);
-				}
-				display_message(INFORMATION_MESSAGE,"{>=0}");
-				return_code=1;
+				display_message(INFORMATION_MESSAGE," #[%lg]{>=0}", *value_address);
+				return_code = 1;
 			}
 		}
 		else
 		{
 			display_message(ERROR_MESSAGE,"Missing non-negative double");
 			display_parse_state_location(state);
-			return_code=0;
 		}
 	}
 	else
 	{
-		display_message(ERROR_MESSAGE,"set_double_non_negative.  Missing state");
-		return_code=0;
+		display_message(ERROR_MESSAGE,"set_double_non_negative.  Invalid argument(s)");
 	}
-	LEAVE;
+	return (return_code);
+}
 
+/**
+ * A modifier function for setting a double to a positive value.
+ */
+int set_double_positive(struct Parse_state *state, void *value_address_void,
+	void *dummy_user_data)
+{
+	int return_code = 0;
+	USE_PARAMETER(dummy_user_data);
+	double *value_address = reinterpret_cast<double *>(value_address_void);
+	if (state && value_address)
+	{
+		const char *current_token = state->current_token;
+		if (current_token != NULL)
+		{
+			if (!Parse_state_help_mode(state))
+			{
+				double value;
+				if (1 == sscanf(current_token," %lf ",&value))
+				{
+					/* make sure that the value is positive */
+					if (value > 0.0)
+					{
+						*value_address = value;
+						return_code = shift_Parse_state(state, 1);
+					}
+					else
+					{
+						display_message(ERROR_MESSAGE,
+							"Value must be a positive double: %s\n", current_token);
+						display_parse_state_location(state);
+					}
+				}
+				else
+				{
+					display_message(ERROR_MESSAGE, "Invalid positive double: %s",
+						current_token);
+					display_parse_state_location(state);
+				}
+			}
+			else
+			{
+				display_message(INFORMATION_MESSAGE," #[%lg]{>0}", *value_address);
+				return_code = 1;
+			}
+		}
+		else
+		{
+			display_message(ERROR_MESSAGE,"Missing positive double");
+			display_parse_state_location(state);
+		}
+	}
+	else
+	{
+		display_message(ERROR_MESSAGE,"set_double_positive.  Invalid argument(s)");
+	}
 	return (return_code);
 }
 
@@ -5664,17 +5694,8 @@ help mode is entered.
 
 int Option_table_add_double_entry(struct Option_table *option_table,
 	const char *token, double *value)
-/*******************************************************************************
-LAST MODIFIED : 8 October 2003
-
-DESCRIPTION :
-Adds the given <token> to the <option_table>.  If the <token> is specified then
-the token following is assigned to <value>.
-==============================================================================*/
 {
 	int return_code;
-
-	ENTER(Option_table_add_double_entry);
 	if (option_table && token && value)
 	{
 		return_code = Option_table_add_entry(option_table, token, value,
@@ -5686,17 +5707,13 @@ the token following is assigned to <value>.
 			"Option_table_add_double_entry.  Invalid argument(s)");
 		return_code=0;
 	}
-	LEAVE;
-
 	return (return_code);
-} /* Option_table_add_double_entry */
+}
 
 int Option_table_add_non_negative_double_entry(struct Option_table *option_table,
 	const char *token, double *value)
 {
 	int return_code;
-
-	ENTER(Option_table_add_non_negative_double_entry);
 	if (option_table && token && value)
 	{
 		return_code = Option_table_add_entry(option_table, token, value,
@@ -5708,8 +5725,24 @@ int Option_table_add_non_negative_double_entry(struct Option_table *option_table
 			"Option_table_add_non_negative_double_entry.  Invalid argument(s)");
 		return_code=0;
 	}
-	LEAVE;
+	return (return_code);
+}
 
+int Option_table_add_positive_double_entry(struct Option_table *option_table,
+	const char *token, double *value)
+{
+	int return_code;
+	if (option_table && token && value)
+	{
+		return_code = Option_table_add_entry(option_table, token, value,
+			NULL, set_double_positive);
+	}
+	else
+	{
+		display_message(ERROR_MESSAGE,
+			"Option_table_add_positive_double_entry.  Invalid argument(s)");
+		return_code=0;
+	}
 	return (return_code);
 }
 
