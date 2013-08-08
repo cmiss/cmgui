@@ -598,15 +598,15 @@ int gfx_modify_scene_graphic(struct Parse_state *state,
 			"range_number_of_iso_values", &range_number_of_isovalues);
 	}
 
-	/* polygon_render_mode: render_shaded|render_wireframe */
-	const char *polygon_render_mode_string = 0;
-	Cmiss_graphic_polygon_render_mode polygon_render_mode =  Cmiss_graphic_get_polygon_render_mode(graphic);
-	polygon_render_mode_string = ENUMERATOR_STRING(Cmiss_graphic_polygon_render_mode)(polygon_render_mode);
-	valid_strings = ENUMERATOR_GET_VALID_STRINGS(Cmiss_graphic_polygon_render_mode)(
+	/* render_polygon_mode: render_shaded|render_wireframe */
+	const char *render_polygon_mode_string = 0;
+	Cmiss_graphic_render_polygon_mode render_polygon_mode =  Cmiss_graphic_get_render_polygon_mode(graphic);
+	render_polygon_mode_string = ENUMERATOR_STRING(Cmiss_graphic_render_polygon_mode)(render_polygon_mode);
+	valid_strings = ENUMERATOR_GET_VALID_STRINGS(Cmiss_graphic_render_polygon_mode)(
 		&number_of_valid_strings,
-		(ENUMERATOR_CONDITIONAL_FUNCTION(Cmiss_graphic_polygon_render_mode) *)NULL, (void *)NULL);
+		(ENUMERATOR_CONDITIONAL_FUNCTION(Cmiss_graphic_render_polygon_mode) *)NULL, (void *)NULL);
 	Option_table_add_enumerator(option_table,number_of_valid_strings,
-		valid_strings,&polygon_render_mode_string);
+		valid_strings,&render_polygon_mode_string);
 	DEALLOCATE(valid_strings);
 
 	/* forward_track|reverse_track */
@@ -1097,9 +1097,9 @@ int gfx_modify_scene_graphic(struct Parse_state *state,
 			coordinate_system_string, &coordinate_system);
 		Cmiss_graphic_set_coordinate_system(graphic, coordinate_system);
 
-		Cmiss_graphic_polygon_render_mode polygon_render_mode;
-		STRING_TO_ENUMERATOR(Cmiss_graphic_polygon_render_mode)(polygon_render_mode_string, &polygon_render_mode);
-		Cmiss_graphic_set_polygon_render_mode(graphic, polygon_render_mode);
+		Cmiss_graphic_render_polygon_mode render_polygon_mode;
+		STRING_TO_ENUMERATOR(Cmiss_graphic_render_polygon_mode)(render_polygon_mode_string, &render_polygon_mode);
+		Cmiss_graphic_set_render_polygon_mode(graphic, render_polygon_mode);
 
 		STRING_TO_ENUMERATOR(Graphics_select_mode)(select_mode_string, &select_mode);
 		Cmiss_graphic_set_select_mode(graphic, select_mode);

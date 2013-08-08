@@ -854,12 +854,12 @@
 													<orient>wxHORIZONTAL</orient>
 													<object class="sizeritem">
 														<flag>wxALIGN_CENTRE_VERTICAL</flag>
-														<object class	="wxStaticText" name="PolygonRenderModeText"> 
+														<object class	="wxStaticText" name="RenderPolygonModeText"> 
 															<label>Polygon render mode:</label>
 	 													</object>
 													</object>
 													<object class="sizeritem">
-														<object class	="wxPanel" name="PolygonRenderModeChooserPanel">
+														<object class	="wxPanel" name="RenderPolygonModeChooserPanel">
 															<size>200,30</size>
 	 													</object>
 													</object>
