@@ -2474,8 +2474,8 @@ Parser commands for setting simple parameters applicable to the whole <window>.
 	const char **tool_names,*tool_name,*blending_mode_string,**valid_strings;
 	double depth_of_field, focal_depth, std_view_angle;
 	enum Scene_viewer_blending_mode blending_mode;
-	enum Scene_viewer_transparency_mode transparency_mode;
-	int antialias_mode,current_pane,i,layered_transparency,number_of_tools,
+	enum Cmiss_scene_viewer_transparency_mode transparency_mode;
+	int antialias_mode,current_pane,i,layered_transparency,number_of_tools, 
 		number_of_valid_strings,order_independent_transparency,pane_no,
 		perturb_lines,redraw,return_code,transparency_layers = 0;
 	struct Graphics_window *graphics_window;
@@ -2525,8 +2525,7 @@ Parser commands for setting simple parameters applicable to the whole <window>.
 				}
 				fast_transparency_flag=0;
 				slow_transparency_flag=0;
-				layered_transparency = 0;
-				order_independent_transparency = 0;
+				layered_transparency  =0;				order_independent_transparency = 0;
 #if defined (WX_USER_INTERFACE)
 				hide_time_editor_flag=0;
 				show_time_editor_flag=0;
@@ -2721,31 +2720,32 @@ Parser commands for setting simple parameters applicable to the whole <window>.
 						{
 							if (fast_transparency_flag)
 							{
-								transparency_mode=SCENE_VIEWER_FAST_TRANSPARENCY;
+								transparency_mode=CMISS_SCENE_VIEWER_TRANSPARENCY_FAST;
 							}
 							else if (layered_transparency)
 							{
-								transparency_mode=SCENE_VIEWER_LAYERED_TRANSPARENCY;
-								transparency_layers = layered_transparency;
+								display_message(ERROR_MESSAGE,"layered_transparency has been removed, please use "
+									"other type of transparency mode");
+								return_code = 0;
 							}
 							else if (order_independent_transparency)
 							{
-								transparency_mode=SCENE_VIEWER_ORDER_INDEPENDENT_TRANSPARENCY;
+								transparency_mode=CMISS_SCENE_VIEWER_TRANSPARENCY_ORDER_INDEPENDENT;
 								transparency_layers = order_independent_transparency;
 							}
 							else
 							{
-								transparency_mode=SCENE_VIEWER_SLOW_TRANSPARENCY;
+								transparency_mode=CMISS_SCENE_VIEWER_TRANSPARENCY_SLOW;
 							}
 							for (pane_no=0;pane_no<graphics_window->number_of_scene_viewers;
 								pane_no++)
 							{
-								Scene_viewer_set_transparency_mode(
+								Cmiss_scene_viewer_set_transparency_mode(
 									graphics_window->scene_viewer_array[pane_no]->core_scene_viewer,
 									transparency_mode);
-								if (layered_transparency||order_independent_transparency)
+								if (order_independent_transparency)
 								{
-									Scene_viewer_set_transparency_layers(
+									Cmiss_scene_viewer_set_transparency_layers(
 										graphics_window->scene_viewer_array[pane_no]->core_scene_viewer,
 										transparency_layers);
 								}
@@ -4421,12 +4421,12 @@ Sets the layout mode in effect on the <window>.
 	enum Scene_viewer_projection_mode projection_mode;
 	int new_layout,new_number_of_panes,pane_no,return_code;
 #if defined (WX_USER_INTERFACE)
-	enum Scene_viewer_transparency_mode transparency_mode;
+	enum Cmiss_scene_viewer_transparency_mode transparency_mode;
 	int perturb_lines;
 	struct Colour background_colour;
 	struct Graphics_buffer_app *graphics_buffer;
 	struct Scene_viewer_app *first_scene_viewer;
-	unsigned int transparency_layers;
+	int transparency_layers;
 #endif /* defined (WX_USER_INTERFACE) */
 #if defined (WX_USER_INTERFACE)
 	wxPanel* current_panel = NULL;
@@ -4533,13 +4533,12 @@ Sets the layout mode in effect on the <window>.
 								perturb_lines);
 							Scene_viewer_set_light_model(window->scene_viewer_array[pane_no]->core_scene_viewer,
 								Scene_viewer_get_light_model(first_scene_viewer->core_scene_viewer));
-							Scene_viewer_get_transparency_layers(first_scene_viewer->core_scene_viewer,
-								&transparency_layers);
-							Scene_viewer_set_transparency_layers(window->scene_viewer_array[pane_no]->core_scene_viewer,
+							transparency_layers = Cmiss_scene_viewer_get_transparency_layers(first_scene_viewer->core_scene_viewer);
+							Cmiss_scene_viewer_set_transparency_layers(window->scene_viewer_array[pane_no]->core_scene_viewer,
 								transparency_layers);
-							Scene_viewer_get_transparency_mode(first_scene_viewer->core_scene_viewer,
-								&transparency_mode);
-							Scene_viewer_set_transparency_mode(window->scene_viewer_array[pane_no]->core_scene_viewer,
+							transparency_mode = Cmiss_scene_viewer_get_transparency_mode(
+								first_scene_viewer->core_scene_viewer);
+							Cmiss_scene_viewer_set_transparency_mode(window->scene_viewer_array[pane_no]->core_scene_viewer,
 								transparency_mode);
 							Scene_viewer_set_antialias_mode(
 								window->scene_viewer_array[pane_no]->core_scene_viewer,window->antialias_mode);
@@ -6424,7 +6423,7 @@ Writes the properties of the <window> to the command window.
 	enum Scene_viewer_blending_mode blending_mode;
 	enum Scene_viewer_buffering_mode buffering_mode;
 	enum Scene_viewer_projection_mode projection_mode;
-	enum Scene_viewer_transparency_mode transparency_mode;
+	enum Cmiss_scene_viewer_transparency_mode transparency_mode;
 	enum Scene_viewer_viewport_mode viewport_mode;
 	int accumulation_buffer_depth,colour_buffer_depth,depth_buffer_depth,
 		height,pane_no,perturb_lines,return_code,width,
@@ -6633,14 +6632,13 @@ Writes the properties of the <window> to the command window.
 			display_message(INFORMATION_MESSAGE,"  Interactive tool: %s\n",name);
 			DEALLOCATE(name);
 		}
-		Scene_viewer_get_transparency_mode(scene_viewer, &transparency_mode);
+		transparency_mode = Cmiss_scene_viewer_get_transparency_mode(scene_viewer);
 		display_message(INFORMATION_MESSAGE,
-			"  Transparency mode: %s\n",Scene_viewer_transparency_mode_string(
+			"  Transparency mode: %s\n",Cmiss_scene_viewer_transparency_mode_string(
 				transparency_mode));
-		if ((transparency_mode == SCENE_VIEWER_LAYERED_TRANSPARENCY) ||
-			(transparency_mode == SCENE_VIEWER_ORDER_INDEPENDENT_TRANSPARENCY))
+		if (transparency_mode == CMISS_SCENE_VIEWER_TRANSPARENCY_ORDER_INDEPENDENT)
 		{
-			Scene_viewer_get_transparency_layers(scene_viewer, &transparency_layers);
+			transparency_layers = Cmiss_scene_viewer_get_transparency_layers(scene_viewer);
 			display_message(INFORMATION_MESSAGE,"    transparency_layers: %d\n",
 				transparency_layers);
 		}
@@ -6728,7 +6726,7 @@ and establishing the views in it to the command window to a com file.
 	enum Scene_viewer_blending_mode blending_mode;
 	enum Scene_viewer_buffering_mode buffering_mode;
 	enum Scene_viewer_projection_mode projection_mode;
-	enum Scene_viewer_transparency_mode transparency_mode;
+	enum Cmiss_scene_viewer_transparency_mode transparency_mode;
 	enum Scene_viewer_viewport_mode viewport_mode;
 	int height,i,pane_no,perturb_lines,return_code,width,undistort_on;
 	unsigned int antialias, transparency_layers;
@@ -6948,13 +6946,12 @@ and establishing the views in it to the command window to a com file.
 		{
 			process_message->process_command(INFORMATION_MESSAGE," depth_of_field 0.0");
 		}
-		Scene_viewer_get_transparency_mode(scene_viewer, &transparency_mode);
+		transparency_mode = Cmiss_scene_viewer_get_transparency_mode(scene_viewer);
 		process_message->process_command(INFORMATION_MESSAGE," %s",
-			Scene_viewer_transparency_mode_string(transparency_mode));
-		if ((transparency_mode == SCENE_VIEWER_LAYERED_TRANSPARENCY) ||
-			(transparency_mode == SCENE_VIEWER_ORDER_INDEPENDENT_TRANSPARENCY))
+			Cmiss_scene_viewer_transparency_mode_string(transparency_mode));
+		if (transparency_mode == CMISS_SCENE_VIEWER_TRANSPARENCY_ORDER_INDEPENDENT)
 		{
-			Scene_viewer_get_transparency_layers(scene_viewer, &transparency_layers);
+			transparency_layers = Cmiss_scene_viewer_get_transparency_layers(scene_viewer);
 			process_message->process_command(INFORMATION_MESSAGE," %d",transparency_layers);
 		}
 		Scene_viewer_get_blending_mode(window->scene_viewer_array[0]->core_scene_viewer,&blending_mode);
