@@ -15041,7 +15041,9 @@ Can also write individual groups with the <group> option.
 				 {
 						if (!(exfile_return_code = write_exregion_file_of_name(temp_exfile,
 							region, group, root_region,
-							/*write_elements*/1, /*write_nodes*/1, /*write_data*/1,
+							/*write_elements*/CMISS_FIELD_DOMAIN_ELEMENTS_1D|CMISS_FIELD_DOMAIN_ELEMENTS_2D|
+							CMISS_FIELD_DOMAIN_ELEMENTS_3D|CMISS_FIELD_DOMAIN_ELEMENTS_HIGHEST_DIMENSION,
+							/*write_nodes*/1, /*write_data*/1,
 							write_fields_mode, field_names.number_of_strings, field_names.strings,
 							time, write_criterion, write_recursion)))
 						{
@@ -15442,7 +15444,9 @@ Can also write individual element groups with the <group> option.
 				if (0 != (return_code = check_suffix(&file_name, ".exelem")))
 				{
 					return_code = write_exregion_file_of_name(file_name, region, group, root_region,
-						/*write_elements*/1, (int)nodes_flag, /*write_data*/(int)data_flag,
+						/*write_elements*/CMISS_FIELD_DOMAIN_ELEMENTS_1D|CMISS_FIELD_DOMAIN_ELEMENTS_2D|
+						CMISS_FIELD_DOMAIN_ELEMENTS_3D|CMISS_FIELD_DOMAIN_ELEMENTS_HIGHEST_DIMENSION,
+						(int)nodes_flag, /*write_data*/(int)data_flag,
 						write_fields_mode, field_names.number_of_strings, field_names.strings,
 						time, write_criterion, write_recursion);
 				}
