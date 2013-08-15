@@ -354,7 +354,7 @@ DESCRIPTION :
 	struct MANAGER(Computed_field) *field_manager;
 	struct MANAGER(Cmiss_font) *font_manager;
 	struct Cmiss_region *root_region, *current_region;
-	enum Graphics_select_mode select_mode;
+	enum Cmiss_graphic_select_mode select_mode;
 	enum Cmiss_field_domain_type domain_type;
 	enum Cmiss_element_point_sample_mode sample_mode;
 	enum Streamline_data_type streamline_data_type;
@@ -594,8 +594,8 @@ class wxRegionTreeViewer : public wxFrame
 	Enumerator_chooser<ENUMERATOR_TYPE_CLASS(Cmiss_graphic_type)>
 	*graphic_type_chooser;
 	*/
-	DEFINE_ENUMERATOR_TYPE_CLASS(Graphics_select_mode);
-	Enumerator_chooser<ENUMERATOR_TYPE_CLASS(Graphics_select_mode)>
+	DEFINE_ENUMERATOR_TYPE_CLASS(Cmiss_graphic_select_mode);
+	Enumerator_chooser<ENUMERATOR_TYPE_CLASS(Cmiss_graphic_select_mode)>
 	*select_mode_chooser;
 	Managed_object_chooser<Computed_field,MANAGER_CLASS(Computed_field)>
 	*data_field_chooser;
@@ -996,7 +996,7 @@ Callback from wxChooser<Selected Material> when choice is made.
 	return(1);
 }
 
-int select_mode_callback(enum Graphics_select_mode select_mode)
+int select_mode_callback(enum Cmiss_graphic_select_mode select_mode)
 /*******************************************************************************
 LAST MODIFIED : 19 March 2007
 
@@ -3192,15 +3192,15 @@ void SetGraphic(Cmiss_graphic *graphic)
 		if (select_mode_chooser == NULL)
 		{
 			select_mode_chooser =
-				new Enumerator_chooser<ENUMERATOR_TYPE_CLASS(Graphics_select_mode)>
+				new Enumerator_chooser<ENUMERATOR_TYPE_CLASS(Cmiss_graphic_select_mode)>
 				(select_mode_chooser_panel,
 					region_tree_viewer->select_mode,
-					(ENUMERATOR_CONDITIONAL_FUNCTION(Graphics_select_mode) *)NULL,
+					(ENUMERATOR_CONDITIONAL_FUNCTION(Cmiss_graphic_select_mode) *)NULL,
 					(void *)NULL, region_tree_viewer->user_interface);
 			select_mode_chooser_panel->Fit();
-			Callback_base< enum Graphics_select_mode > *select_mode_callback =
-				new Callback_member_callback< enum Graphics_select_mode,
-				wxRegionTreeViewer, int (wxRegionTreeViewer::*)(enum Graphics_select_mode) >
+			Callback_base< enum Cmiss_graphic_select_mode > *select_mode_callback =
+				new Callback_member_callback< enum Cmiss_graphic_select_mode,
+				wxRegionTreeViewer, int (wxRegionTreeViewer::*)(enum Cmiss_graphic_select_mode) >
 				(this, &wxRegionTreeViewer::select_mode_callback);
 			select_mode_chooser->set_callback(select_mode_callback);
 		}
@@ -4293,7 +4293,7 @@ DESCRIPTION :
 			region_tree_viewer->volume_texture_manager=volume_texture_manager;
 			region_tree_viewer->field_manager=(MANAGER(Computed_field)*)NULL;
 			region_tree_viewer->font_manager=Cmiss_graphics_module_get_font_manager(graphics_module);
-			region_tree_viewer->select_mode=(Graphics_select_mode)NULL;
+			region_tree_viewer->select_mode=(Cmiss_graphic_select_mode)NULL;
 			region_tree_viewer->domain_type = CMISS_FIELD_DOMAIN_TYPE_INVALID;
 			region_tree_viewer->sample_mode= (Cmiss_element_point_sample_mode)NULL;
 			region_tree_viewer->streamline_data_type=(Streamline_data_type)NULL;

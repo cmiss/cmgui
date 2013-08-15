@@ -675,11 +675,11 @@ int gfx_modify_scene_graphic(struct Parse_state *state,
 	}
 
 	/* select_mode */
-	enum Graphics_select_mode select_mode = Cmiss_graphic_get_select_mode(graphic);
-	const char *select_mode_string = ENUMERATOR_STRING(Graphics_select_mode)(select_mode);
-	valid_strings = ENUMERATOR_GET_VALID_STRINGS(Graphics_select_mode)(
+	enum Cmiss_graphic_select_mode select_mode = Cmiss_graphic_get_select_mode(graphic);
+	const char *select_mode_string = ENUMERATOR_STRING(Cmiss_graphic_select_mode)(select_mode);
+	valid_strings = ENUMERATOR_GET_VALID_STRINGS(Cmiss_graphic_select_mode)(
 		&number_of_valid_strings,
-		(ENUMERATOR_CONDITIONAL_FUNCTION(Graphics_select_mode) *)NULL,
+		(ENUMERATOR_CONDITIONAL_FUNCTION(Cmiss_graphic_select_mode) *)NULL,
 		(void *)NULL);
 	Option_table_add_enumerator(option_table,number_of_valid_strings,
 		valid_strings,&select_mode_string);
@@ -1101,7 +1101,7 @@ int gfx_modify_scene_graphic(struct Parse_state *state,
 		STRING_TO_ENUMERATOR(Cmiss_graphic_render_polygon_mode)(render_polygon_mode_string, &render_polygon_mode);
 		Cmiss_graphic_set_render_polygon_mode(graphic, render_polygon_mode);
 
-		STRING_TO_ENUMERATOR(Graphics_select_mode)(select_mode_string, &select_mode);
+		STRING_TO_ENUMERATOR(Cmiss_graphic_select_mode)(select_mode_string, &select_mode);
 		Cmiss_graphic_set_select_mode(graphic, select_mode);
 
 		if ((0 != element_divisions_size) || (0 != circle_discretization))
