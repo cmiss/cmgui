@@ -58,8 +58,8 @@ parsed settings. Note that the settings are ACCESSed once on valid return.
 			{
 				/* access since deaccessed in gfx_modify_spectrum */
 
-				Cmiss_spectrum_component_set_interpolation_mode(settings,CMISS_SPECTRUM_COMPONENT_INTERPOLATION_LINEAR);
-
+				Cmiss_spectrum_component_set_scale_type(settings,CMISS_SPECTRUM_COMPONENT_SCALE_LINEAR);
+				settings->is_field_lookup = false;
 				colour_mapping = Cmiss_spectrum_component_get_colour_mapping(settings);
 				ambient = 0;
 				amb_diff = 0;
@@ -81,7 +81,7 @@ parsed settings. Note that the settings are ACCESSed once on valid return.
 				colour_range[1] = 1.0;
 				range[0] = (FE_value)(modify_spectrum_data->spectrum_minimum);
 				range[1] = (FE_value)(modify_spectrum_data->spectrum_maximum);
-				component = Cmiss_spectrum_component_get_field_component_lookup_number(settings);
+				component = Cmiss_spectrum_component_get_field_component(settings);
 
 				option_table = CREATE(Option_table)();
 				/* band_ratio */
@@ -173,11 +173,13 @@ parsed settings. Note that the settings are ACCESSed once on valid return.
 					}
 					else if (extend_above)
 					{
-						Cmiss_spectrum_component_set_extend_above_flag(settings, true);
+						Cmiss_spectrum_component_set_attribute_boolean(settings,
+							CMISS_SPECTRUM_COMPONENT_ATTRIBUTE_IS_EXTEND_ABOVE, true);
 					}
 					else if (transparent_above)
 					{
-						Cmiss_spectrum_component_set_extend_above_flag(settings, false);
+						Cmiss_spectrum_component_set_attribute_boolean(settings,
+							CMISS_SPECTRUM_COMPONENT_ATTRIBUTE_IS_EXTEND_ABOVE, false);
 					}
 				}
 				if ( return_code )
@@ -190,16 +192,19 @@ parsed settings. Note that the settings are ACCESSed once on valid return.
 					}
 					else if (extend_below)
 					{
-						Cmiss_spectrum_component_set_extend_below_flag(settings, true);
+
+						Cmiss_spectrum_component_set_attribute_boolean(settings,
+							CMISS_SPECTRUM_COMPONENT_ATTRIBUTE_IS_EXTEND_BELOW, true);
 					}
 					else if (transparent_below)
 					{
-						Cmiss_spectrum_component_set_extend_below_flag(settings, false);
+						Cmiss_spectrum_component_set_attribute_boolean(settings,
+							CMISS_SPECTRUM_COMPONENT_ATTRIBUTE_IS_EXTEND_BELOW, false);
 					}
 				}
 				if ( return_code )
 				{
-					Cmiss_spectrum_component_set_field_component_lookup_number(settings,
+					Cmiss_spectrum_component_set_field_component(settings,
 						component);
 					Cmiss_spectrum_component_set_attribute_real(settings,
 						CMISS_SPECTRUM_COMPONENT_ATTRIBUTE_COLOUR_MINIMUM,
@@ -213,8 +218,8 @@ parsed settings. Note that the settings are ACCESSed once on valid return.
 					Cmiss_spectrum_component_set_attribute_real(settings,
 						CMISS_SPECTRUM_COMPONENT_ATTRIBUTE_RANGE_MAXIMUM,
 						range[1]);
-					Cmiss_spectrum_component_set_reverse_flag(settings,
-						reverse);
+					Cmiss_spectrum_component_set_attribute_boolean(settings,
+						CMISS_SPECTRUM_COMPONENT_ATTRIBUTE_IS_COLOUR_REVERSE, reverse);
 					Cmiss_spectrum_component_set_number_of_bands(settings,
 						number_of_bands);
 					black_band_int = (band_ratio * 1000.0 + 0.5);
@@ -297,8 +302,8 @@ parsed settings. Note that the settings are ACCESSed once on valid return.
 			settings=modify_spectrum_data->component=CREATE(Cmiss_spectrum_component)();
 			if (settings)
 			{
-				Cmiss_spectrum_component_set_interpolation_mode(settings,CMISS_SPECTRUM_COMPONENT_INTERPOLATION_LOG);
-
+				Cmiss_spectrum_component_set_scale_type(settings,CMISS_SPECTRUM_COMPONENT_SCALE_LOG);
+				settings->is_field_lookup = false;
 				colour_mapping = Cmiss_spectrum_component_get_colour_mapping(settings);
 				ambient = 0;
 				amb_diff = 0;
@@ -322,7 +327,7 @@ parsed settings. Note that the settings are ACCESSed once on valid return.
 				colour_range[1] = 1.0;
 				range[0] = (FE_value)(modify_spectrum_data->spectrum_minimum);
 				range[1] = (FE_value)(modify_spectrum_data->spectrum_maximum);
-				component = Cmiss_spectrum_component_get_field_component_lookup_number(settings);
+				component = Cmiss_spectrum_component_get_field_component(settings);
 				exaggeration =  Cmiss_spectrum_component_get_attribute_real(
 					settings, CMISS_SPECTRUM_COMPONENT_ATTRIBUTE_EXAGGERATION);
 
@@ -432,11 +437,13 @@ parsed settings. Note that the settings are ACCESSed once on valid return.
 					}
 					else if (extend_above)
 					{
-						Cmiss_spectrum_component_set_extend_above_flag(settings, true);
+						Cmiss_spectrum_component_set_attribute_boolean(settings,
+							CMISS_SPECTRUM_COMPONENT_ATTRIBUTE_IS_EXTEND_ABOVE, true);
 					}
 					else if (transparent_above)
 					{
-						Cmiss_spectrum_component_set_extend_above_flag(settings, false);
+						Cmiss_spectrum_component_set_attribute_boolean(settings,
+							CMISS_SPECTRUM_COMPONENT_ATTRIBUTE_IS_EXTEND_ABOVE, false);
 					}
 				}
 				if ( return_code )
@@ -449,11 +456,13 @@ parsed settings. Note that the settings are ACCESSed once on valid return.
 					}
 					else if (extend_below)
 					{
-						Cmiss_spectrum_component_set_extend_below_flag(settings, true);
+						Cmiss_spectrum_component_set_attribute_boolean(settings,
+							CMISS_SPECTRUM_COMPONENT_ATTRIBUTE_IS_EXTEND_BELOW, true);
 					}
 					else if (transparent_below)
 					{
-						Cmiss_spectrum_component_set_extend_below_flag(settings, false);
+						Cmiss_spectrum_component_set_attribute_boolean(settings,
+							CMISS_SPECTRUM_COMPONENT_ATTRIBUTE_IS_EXTEND_BELOW, false);
 					}
 				}
 				if ( return_code )
@@ -477,7 +486,7 @@ parsed settings. Note that the settings are ACCESSed once on valid return.
 				}
 				if ( return_code )
 				{
-					Cmiss_spectrum_component_set_field_component_lookup_number(settings,
+					Cmiss_spectrum_component_set_field_component(settings,
 						component);
 					Cmiss_spectrum_component_set_attribute_real(settings,
 						CMISS_SPECTRUM_COMPONENT_ATTRIBUTE_COLOUR_MINIMUM,
@@ -491,8 +500,8 @@ parsed settings. Note that the settings are ACCESSed once on valid return.
 					Cmiss_spectrum_component_set_attribute_real(settings,
 						CMISS_SPECTRUM_COMPONENT_ATTRIBUTE_RANGE_MAXIMUM,
 						range[1]);
-					Cmiss_spectrum_component_set_reverse_flag(settings,
-						reverse);
+					Cmiss_spectrum_component_set_attribute_boolean(settings,
+						CMISS_SPECTRUM_COMPONENT_ATTRIBUTE_IS_COLOUR_REVERSE, reverse);
 				}
 				/* Must set fix_maximum,fix_minimum after setting minimum and maximum range */
 				if ( return_code )
@@ -565,10 +574,11 @@ parsed settings. Note that the settings are ACCESSed once on valid return.
 			settings=modify_spectrum_data->component=CREATE(Cmiss_spectrum_component)();
 			if (settings)
 			{
-				Cmiss_spectrum_component_set_interpolation_mode(settings,CMISS_SPECTRUM_COMPONENT_INTERPOLATION_FIELD);
+				Cmiss_spectrum_component_set_scale_type(settings,CMISS_SPECTRUM_COMPONENT_SCALE_INVALID);
+				settings->is_field_lookup = true;
 
 				colour_mapping = Cmiss_spectrum_component_get_colour_mapping(settings);
-				component = Cmiss_spectrum_component_get_field_component_lookup_number(settings);
+				component = Cmiss_spectrum_component_get_field_component(settings);
 
 				input_field = (struct Computed_field *)NULL;
 				output_field = (struct Computed_field *)NULL;
@@ -641,7 +651,7 @@ parsed settings. Note that the settings are ACCESSed once on valid return.
 							output_field);
 						settings->changed = 1;
 					}
-					Cmiss_spectrum_component_set_field_component_lookup_number(settings,
+					Cmiss_spectrum_component_set_field_component(settings,
 						component);
 					Cmiss_spectrum_component_set_colour_mapping(settings,
 						colour_mapping);
@@ -735,13 +745,13 @@ included in the string. User must remember to DEALLOCATE the name afterwards.
 			sprintf(temp_string,"%i. ",component->position);
 			append_string(&component_string,temp_string,&error);
 		}
-		switch (component->component_interpolation)
+		switch (component->component_scale)
 		{
-			case CMISS_SPECTRUM_COMPONENT_INTERPOLATION_LINEAR:
+			case CMISS_SPECTRUM_COMPONENT_SCALE_LINEAR:
 			{
 				append_string(&component_string,"linear",&error);
 			} break;
-			case CMISS_SPECTRUM_COMPONENT_INTERPOLATION_LOG:
+			case CMISS_SPECTRUM_COMPONENT_SCALE_LOG:
 			{
 				sprintf(temp_string,"log exaggeration %g",fabs(component->exaggeration));
 				append_string(&component_string,temp_string,&error);
@@ -754,26 +764,29 @@ included in the string. User must remember to DEALLOCATE the name afterwards.
 					append_string(&component_string," right",&error);
 				}
 			} break;
-			case CMISS_SPECTRUM_COMPONENT_INTERPOLATION_FIELD:
+			case CMISS_SPECTRUM_COMPONENT_SCALE_INVALID:
 			{
-				append_string(&component_string,"field",&error);
-				append_string(&component_string," input ",&error);
-				name=(char *)NULL;
-				if (GET_NAME(Computed_field)(component->input_field,&name))
+				if (component->is_field_lookup)
 				{
-					/* put quotes around name if it contains special characters */
-					make_valid_token(&name);
-					append_string(&component_string,name,&error);
-					DEALLOCATE(name);
-				}
-				append_string(&component_string," output ",&error);
-				name=(char *)NULL;
-				if (GET_NAME(Computed_field)(component->output_field,&name))
-				{
-					/* put quotes around name if it contains special characters */
-					make_valid_token(&name);
-					append_string(&component_string,name,&error);
-					DEALLOCATE(name);
+					append_string(&component_string,"field",&error);
+					append_string(&component_string," input ",&error);
+					name=(char *)NULL;
+					if (GET_NAME(Computed_field)(component->input_field,&name))
+					{
+						/* put quotes around name if it contains special characters */
+						make_valid_token(&name);
+						append_string(&component_string,name,&error);
+						DEALLOCATE(name);
+					}
+					append_string(&component_string," output ",&error);
+					name=(char *)NULL;
+					if (GET_NAME(Computed_field)(component->output_field,&name))
+					{
+						/* put quotes around name if it contains special characters */
+						make_valid_token(&name);
+						append_string(&component_string,name,&error);
+						DEALLOCATE(name);
+					}
 				}
 			} break;
 			default:
@@ -805,8 +818,8 @@ included in the string. User must remember to DEALLOCATE the name afterwards.
 		{
 			append_string(&component_string," fix_minimum",&error);
 		}
-		if (component->component_interpolation == CMISS_SPECTRUM_COMPONENT_INTERPOLATION_LINEAR ||
-			component->component_interpolation == CMISS_SPECTRUM_COMPONENT_INTERPOLATION_LOG )
+		if (component->component_scale == CMISS_SPECTRUM_COMPONENT_SCALE_LINEAR ||
+			component->component_scale == CMISS_SPECTRUM_COMPONENT_SCALE_LOG )
 		{
 			switch (component->colour_mapping)
 			{

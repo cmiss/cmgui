@@ -2970,12 +2970,12 @@ static and referred to by gfx_create_Spectrum
 							}
 							else if (overlay_colour)
 							{
-								Cmiss_spectrum_set_overwrite_material(spectrum_to_be_modified_copy,
+								Cmiss_spectrum_set_material_overwrite(spectrum_to_be_modified_copy,
 									0);
 							}
 							else if (overwrite_colour)
 							{
-								Cmiss_spectrum_set_overwrite_material(spectrum_to_be_modified_copy,
+								Cmiss_spectrum_set_material_overwrite(spectrum_to_be_modified_copy,
 									1);
 							}
 							if (autorange)
@@ -8037,7 +8037,7 @@ static struct Cmiss_spectrum_component *create_spectrum_component( Cmiss_spectru
 {
 	int component = 1;
 	struct Cmiss_spectrum_component *settings = CREATE(Cmiss_spectrum_component)();
-	Cmiss_spectrum_component_set_interpolation_mode(settings, CMISS_SPECTRUM_COMPONENT_INTERPOLATION_LINEAR);
+	Cmiss_spectrum_component_set_scale_type(settings, CMISS_SPECTRUM_COMPONENT_SCALE_LINEAR);
 	Cmiss_spectrum_component_set_colour_mapping(settings, colour);
 	Cmiss_spectrum_component_set_extend_above_flag(settings, true);
 	Cmiss_spectrum_component_set_extend_below_flag(settings, true);
@@ -8050,7 +8050,7 @@ static struct Cmiss_spectrum_component *create_spectrum_component( Cmiss_spectru
 	else
 		component = 3;
 
-	Cmiss_spectrum_component_set_field_component_lookup_number( settings, component );
+	Cmiss_spectrum_component_set_field_component( settings, component );
 
 	return settings;
 }
@@ -8088,7 +8088,7 @@ static int create_RGB_spectrum( struct Spectrum **spectrum, void *command_data_v
 		Spectrum_calculate_range( (*spectrum) );
 		Spectrum_calculate_range( (*spectrum) );
 		Spectrum_set_minimum_and_maximum( (*spectrum), 0, 1);
-		Cmiss_spectrum_set_overwrite_material( (*spectrum), 0 );
+		Cmiss_spectrum_set_material_overwrite( (*spectrum), 0 );
 		if (!ADD_OBJECT_TO_MANAGER(Spectrum)( (*spectrum),
 				command_data->spectrum_manager))
 		{
