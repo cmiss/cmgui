@@ -354,13 +354,7 @@ DESCRIPTION :
 	struct MANAGER(Computed_field) *field_manager;
 	struct MANAGER(Cmiss_font) *font_manager;
 	struct Cmiss_region *root_region, *current_region;
-	enum Cmiss_graphic_select_mode select_mode;
-	enum Cmiss_field_domain_type domain_type;
-	enum Cmiss_element_point_sample_mode sample_mode;
-	enum Streamline_data_type streamline_data_type;
 	struct MANAGER(Spectrum) *spectrum_manager;
-	enum Cmiss_graphic_render_polygon_mode render_polygon_mode;
-	struct FE_element *fe_element;
 #if defined (WX_USER_INTERFACE)
 	Transformation_editor *transformation_editor;
 	wxRegionTreeViewer *wx_region_tree_viewer;
@@ -3193,8 +3187,7 @@ void SetGraphic(Cmiss_graphic *graphic)
 		{
 			select_mode_chooser =
 				new Enumerator_chooser<ENUMERATOR_TYPE_CLASS(Cmiss_graphic_select_mode)>
-				(select_mode_chooser_panel,
-					region_tree_viewer->select_mode,
+				(select_mode_chooser_panel, CMISS_GRAPHIC_SELECT_ON,
 					(ENUMERATOR_CONDITIONAL_FUNCTION(Cmiss_graphic_select_mode) *)NULL,
 					(void *)NULL, region_tree_viewer->user_interface);
 			select_mode_chooser_panel->Fit();
@@ -3215,10 +3208,9 @@ void SetGraphic(Cmiss_graphic *graphic)
 		{
 			domain_type_chooser =
 				new Enumerator_chooser<ENUMERATOR_TYPE_CLASS(Cmiss_field_domain_type)>
-				(domain_type_chooser_panel,
-					region_tree_viewer->domain_type,
+				(domain_type_chooser_panel, CMISS_FIELD_DOMAIN_POINT,
 					(ENUMERATOR_CONDITIONAL_FUNCTION(Cmiss_field_domain_type) *)NULL,
-					(void *)NULL, region_tree_viewer->user_interface);
+					(void *)NULL, region_tree_viewer->user_interface, /*is bitmask*/ true);
 			domain_type_chooser_panel->Fit();
 			Callback_base< enum Cmiss_field_domain_type > *domain_type_callback =
 				new Callback_member_callback< enum Cmiss_field_domain_type,
@@ -4293,13 +4285,7 @@ DESCRIPTION :
 			region_tree_viewer->volume_texture_manager=volume_texture_manager;
 			region_tree_viewer->field_manager=(MANAGER(Computed_field)*)NULL;
 			region_tree_viewer->font_manager=Cmiss_graphics_module_get_font_manager(graphics_module);
-			region_tree_viewer->select_mode=(Cmiss_graphic_select_mode)NULL;
-			region_tree_viewer->domain_type = CMISS_FIELD_DOMAIN_TYPE_INVALID;
-			region_tree_viewer->sample_mode= (Cmiss_element_point_sample_mode)NULL;
-			region_tree_viewer->streamline_data_type=(Streamline_data_type)NULL;
 			region_tree_viewer->spectrum_manager=spectrum_manager;
-			region_tree_viewer->render_polygon_mode =(Cmiss_graphic_render_polygon_mode)NULL;
-			region_tree_viewer->fe_element =(FE_element *)NULL;
 			region_tree_viewer->root_region = root_region;
 			region_tree_viewer->current_region = NULL;
 			region_tree_viewer->wx_region_tree_viewer = (wxRegionTreeViewer *)NULL;

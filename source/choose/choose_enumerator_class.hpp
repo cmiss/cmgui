@@ -57,15 +57,17 @@ DESCRIPTION :
 private:
 	Callback_base< typename Enumerator::Enumerator_type > *callback;
 	int first_value;
+	bool isBitMasks;
 
 public:
 	wxEnumeratorChooser<Enumerator>(wxPanel *parent,
 		int number_of_items, const char **item_names,
 		int first_value,
 		typename Enumerator::Enumerator_type current_value,
-		User_interface *user_interface) :
+		User_interface *user_interface, bool enum_is_bitmasks) :
 		wxChoice(parent, /*id*/-1, wxPoint(0,0), wxSize(-1,-1)),
-		first_value(first_value)
+		first_value(first_value),
+		isBitMasks(enum_is_bitmasks)
 	{
 		USE_PARAMETER(user_interface);
 		callback = NULL;
@@ -99,8 +101,22 @@ public:
 
 	typename Enumerator::Enumerator_type get_item()
 	{
-		return (static_cast<typename Enumerator::Enumerator_type>
-			(GetSelection() + first_value));
+		if (!isBitMasks)
+		{
+			return (static_cast<typename Enumerator::Enumerator_type>
+				(GetSelection() + first_value));
+		}
+		else
+		{
+			int index = GetSelection();
+			int enum_value = first_value;
+			while (index)
+			{
+				enum_value = enum_value << 1;
+				--index;
+			}
+			return static_cast<typename Enumerator::Enumerator_type>(enum_value);
+		}
 	}
 
 	int set_callback(Callback_base< typename Enumerator::Enumerator_type >
@@ -116,7 +132,23 @@ public:
 	{
 		unsigned int return_code;
 
-		SetSelection(new_value - first_value);
+		if (!isBitMasks)
+		{
+			SetSelection(new_value - first_value);
+		}
+		else
+		{
+			// handle enums that are linear increasing OR powers of 2
+			// requires appropriate increment operators being defined
+			int index = 0;
+			int enum_value = first_value;
+			while (enum_value < new_value)
+			{
+				enum_value = enum_value << 1;
+				++index;
+			}
+			SetSelection(index);
+		}
 
 		// Could check to see that the value was actually set
 		return_code = 1;
@@ -134,7 +166,7 @@ public:
 		{
 			Append(wxString::FromAscii(item_names[i]));
 		}
-		SetSelection(current_value);
+		set_item(current_value);
 		return 1;
 	}
 };
@@ -151,16 +183,19 @@ private:
   int number_of_items;
   const char **item_names;
 	int first_value;
+	bool isBitMasks;
 
 public:
 	Enumerator_chooser(wxPanel *parent,
 		typename Enumerator::Enumerator_type current_value,
 		typename Enumerator::Conditional_function *conditional_function,
 		void *conditional_function_user_data,
-		User_interface *user_interface) :
+		User_interface *user_interface,
+		bool enum_is_bitmasks = false/*bitmask_enum*/) :
 		enumerator(new Enumerator()), parent(parent),
 		conditional_function(conditional_function),
-		conditional_function_user_data(conditional_function_user_data)
+		conditional_function_user_data(conditional_function_user_data),
+		isBitMasks(enum_is_bitmasks)
 	{
 		chooser = (wxEnumeratorChooser<Enumerator> *)NULL;
 		update_callback = (Callback_base< typename Enumerator::Enumerator_type > *)NULL;
@@ -171,7 +206,7 @@ public:
 		{
 			chooser = new wxEnumeratorChooser<Enumerator>(parent,
 				number_of_items, item_names, first_value, current_value,
-				user_interface);
+				user_interface, /* bitmasks enum */ isBitMasks);
 			typedef int (Enumerator_chooser::*Member_function)(typename Enumerator::Enumerator_type);
 			Callback_base<typename Enumerator::Enumerator_type> *callback =
 				new Callback_member_callback< typename Enumerator::Enumerator_type,
