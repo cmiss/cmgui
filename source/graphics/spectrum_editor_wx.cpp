@@ -275,8 +275,7 @@ of the type spectrum_editor->settings_type.
 				 {
 						spectrum_editor->spectrum_settings_checklist->Append(wxString::FromAscii(settings_string));
 						num_children = spectrum_editor->spectrum_settings_checklist->GetCount();
-						if (Cmiss_spectrum_component_get_attribute_boolean(settings,
-							CMISS_SPECTRUM_COMPONENT_ATTRIBUTE_IS_ACTIVE))
+						if (Cmiss_spectrum_component_is_active(settings))
 						{
 							 spectrum_editor->spectrum_settings_checklist->Check(num_children-1, true);
 						}
@@ -438,8 +437,7 @@ Changes the currently chosen settings.
 				 if (spectrum_editor->spectrum_reverse_checkbox)
 				 {
 						spectrum_editor->spectrum_reverse_checkbox->SetValue(
-							Cmiss_spectrum_component_get_attribute_boolean(new_settings,
-								CMISS_SPECTRUM_COMPONENT_ATTRIBUTE_IS_COLOUR_REVERSE));
+							Cmiss_spectrum_component_is_colour_reverse(new_settings));
 				 }
 				 if (spectrum_editor->spectrum_colour_mapping_choice)
 				 {
@@ -496,8 +494,7 @@ Changes the currently chosen settings.
 
 				 if (spectrum_editor->spectrum_exaggeration_text)
 				 {
-						exaggeration = Cmiss_spectrum_component_get_attribute_real(
-							new_settings, CMISS_SPECTRUM_COMPONENT_ATTRIBUTE_EXAGGERATION);
+						exaggeration = Cmiss_spectrum_component_get_exaggeration(new_settings);
 						sprintf(temp_string,"%10g",fabs(exaggeration));
 						spectrum_editor->spectrum_exaggeration_text->SetValue(wxString::FromAscii(temp_string));
 						if (exaggeration >= 0.0)
@@ -550,8 +547,7 @@ Changes the currently chosen settings.
 				}
 				if (spectrum_editor->spectrum_editor_step_value_text)
 				{
-					step_value = Cmiss_spectrum_component_get_attribute_real(new_settings,
-						CMISS_SPECTRUM_COMPONENT_ATTRIBUTE_STEP_VALUE);
+					step_value = Cmiss_spectrum_component_get_step_value(new_settings);
 					sprintf(temp_string,"%10g",step_value);
 					spectrum_editor->spectrum_editor_step_value_text->SetValue(wxString::FromAscii(temp_string));
 				}
@@ -566,27 +562,23 @@ Changes the currently chosen settings.
 				if (spectrum_editor->spectrum_range_min_text)
 				{
 					sprintf(temp_string,"%10g",
-						Cmiss_spectrum_component_get_attribute_real(new_settings,
-							CMISS_SPECTRUM_COMPONENT_ATTRIBUTE_RANGE_MINIMUM));
+						Cmiss_spectrum_component_get_range_minimum(new_settings));
 					spectrum_editor->spectrum_range_min_text->SetValue(wxString::FromAscii(temp_string));
 				}
 				if (spectrum_editor->spectrum_range_max_text)
 				{
 					sprintf(temp_string,"%10g",
-						Cmiss_spectrum_component_get_attribute_real(new_settings,
-							CMISS_SPECTRUM_COMPONENT_ATTRIBUTE_RANGE_MAXIMUM));
+						Cmiss_spectrum_component_get_range_maximum(new_settings));
 					spectrum_editor->spectrum_range_max_text->SetValue(wxString::FromAscii(temp_string));
 				}
 				if (spectrum_editor->spectrum_extend_below_check)
 				{
-					 extend = Cmiss_spectrum_component_get_attribute_boolean(new_settings,
-							CMISS_SPECTRUM_COMPONENT_ATTRIBUTE_IS_EXTEND_BELOW);
+					 extend = Cmiss_spectrum_component_is_extend_below(new_settings);
 					 spectrum_editor->spectrum_extend_below_check->SetValue(extend);
 				}
 				if (spectrum_editor->spectrum_extend_above_check)
 				{
-					 extend = Cmiss_spectrum_component_get_attribute_boolean(new_settings,
-							CMISS_SPECTRUM_COMPONENT_ATTRIBUTE_IS_EXTEND_ABOVE);
+					 extend = Cmiss_spectrum_component_is_extend_above(new_settings);
 					 spectrum_editor->spectrum_extend_above_check->SetValue(extend);
 				}
 				if (spectrum_editor->spectrum_fix_maximum_check)
@@ -603,8 +595,7 @@ Changes the currently chosen settings.
 				}
 				if (spectrum_editor->spectrum_normalised_colour_range_min_text)
 				{					 sprintf(temp_string,"%10g",
-									 Cmiss_spectrum_component_get_attribute_real(new_settings,
-										 CMISS_SPECTRUM_COMPONENT_ATTRIBUTE_COLOUR_MINIMUM));
+									 Cmiss_spectrum_component_get_colour_minimum(new_settings));
 					 spectrum_editor->spectrum_normalised_colour_range_min_text->SetValue(wxString::FromAscii(temp_string));
 					 if (CMISS_SPECTRUM_COMPONENT_COLOUR_MAPPING_BANDED == colour_mapping
 							|| CMISS_SPECTRUM_COMPONENT_COLOUR_MAPPING_STEP == colour_mapping)
@@ -619,8 +610,7 @@ Changes the currently chosen settings.
 				if (spectrum_editor->spectrum_normalised_colour_range_max_text)
 				{
 					 sprintf(temp_string,"%10g",
-						 Cmiss_spectrum_component_get_attribute_real(new_settings,
-							 CMISS_SPECTRUM_COMPONENT_ATTRIBUTE_COLOUR_MAXIMUM));
+						 Cmiss_spectrum_component_get_colour_maximum(new_settings));
 					 spectrum_editor->spectrum_normalised_colour_range_max_text->SetValue(wxString::FromAscii(temp_string));
 					 if (CMISS_SPECTRUM_COMPONENT_COLOUR_MAPPING_BANDED == colour_mapping || CMISS_SPECTRUM_COMPONENT_COLOUR_MAPPING_STEP == colour_mapping)
 					 {
@@ -740,8 +730,7 @@ Called when a modify button - add, delete, up, down - is activated.
 							 /* copy current settings into new settings */
 							 return_code=COPY(Cmiss_spectrum_component)(settings,
 									spectrum_editor->current_settings);
-							 Cmiss_spectrum_component_set_attribute_boolean(settings,
-									CMISS_SPECTRUM_COMPONENT_ATTRIBUTE_IS_ACTIVE, true);
+							 Cmiss_spectrum_component_set_active(settings, true);
 						}
 						if (return_code&&Spectrum_add_component(
 									 spectrum_editor->edit_spectrum,settings,0))
@@ -898,12 +887,10 @@ Callback for when changes made in the settings editor.
 	if (spectrum_editor && new_settings)
 	{
 		/* keep visibility of current_settings */
-		 bool active = Cmiss_spectrum_component_get_attribute_boolean(spectrum_editor->current_settings,
-			  CMISS_SPECTRUM_COMPONENT_ATTRIBUTE_IS_ACTIVE);
+		 bool active = Cmiss_spectrum_component_is_active(spectrum_editor->current_settings);
 		 Cmiss_spectrum_component_modify(spectrum_editor->current_settings,new_settings,
 				get_Cmiss_spectrum_component_list( spectrum_editor->edit_spectrum ));
-		 Cmiss_spectrum_component_set_attribute_boolean(spectrum_editor->current_settings,
-			  CMISS_SPECTRUM_COMPONENT_ATTRIBUTE_IS_ACTIVE, active);
+		 Cmiss_spectrum_component_set_active(spectrum_editor->current_settings, active);
 		 spectrum_editor_wx_make_settings_list(spectrum_editor);
 		 Spectrum_calculate_range(spectrum_editor->edit_spectrum);
 		 make_colour_bar(spectrum_editor);
@@ -1104,11 +1091,9 @@ Callback for Spectrum settings.
 				 spectrum_editor->current_settings = temp_settings;
 			}
 			if (spectrum_editor->spectrum_settings_checklist->IsChecked(selection) !=
-				 static_cast<bool>(Cmiss_spectrum_component_get_attribute_boolean(temp_settings,
-					 CMISS_SPECTRUM_COMPONENT_ATTRIBUTE_IS_ACTIVE)))
+				 static_cast<bool>(Cmiss_spectrum_component_is_active(temp_settings)))
 			{
-				 Cmiss_spectrum_component_set_attribute_boolean(temp_settings,
-					  CMISS_SPECTRUM_COMPONENT_ATTRIBUTE_IS_ACTIVE,
+				Cmiss_spectrum_component_set_active(temp_settings,
 					  spectrum_editor->spectrum_settings_checklist->IsChecked(selection));
 				 spectrum_editor_wx_update_settings(spectrum_editor, temp_settings);
 			}
@@ -1191,8 +1176,7 @@ Callback for the range text widgets.
 			if (text)
 			{
 				sscanf(text,"%f",&new_parameter);
-				Cmiss_spectrum_component_set_attribute_real(settings,
-					CMISS_SPECTRUM_COMPONENT_ATTRIBUTE_RANGE_MINIMUM, new_parameter);
+				Cmiss_spectrum_component_set_range_minimum(settings, new_parameter);
 			}
 			else
 			{
@@ -1207,8 +1191,7 @@ Callback for the range text widgets.
 			if (text)
 			{
 				sscanf(text,"%f",&new_parameter);
-				Cmiss_spectrum_component_set_attribute_real(settings,
-					CMISS_SPECTRUM_COMPONENT_ATTRIBUTE_RANGE_MAXIMUM, new_parameter);
+				Cmiss_spectrum_component_set_range_maximum(settings, new_parameter);
 			}
 			else
 			{
@@ -1247,14 +1230,12 @@ Callback for the range text widgets.
 			if (spectrum_editor->spectrum_extend_above_check)
 			{
 
-				 Cmiss_spectrum_component_set_attribute_boolean(settings,
-					 CMISS_SPECTRUM_COMPONENT_ATTRIBUTE_IS_EXTEND_ABOVE,
+				Cmiss_spectrum_component_set_extend_above(settings,
 					 spectrum_editor->spectrum_extend_above_check->IsChecked());
 			}
 			if (spectrum_editor->spectrum_extend_below_check)
 			{
-				 Cmiss_spectrum_component_set_attribute_boolean(settings,
-					 CMISS_SPECTRUM_COMPONENT_ATTRIBUTE_IS_EXTEND_BELOW,
+				Cmiss_spectrum_component_set_extend_below(settings,
 					 spectrum_editor->spectrum_extend_below_check->IsChecked());
 			}
 			if (spectrum_editor->spectrum_fix_maximum_check)
@@ -1443,8 +1424,7 @@ Callback for the colour_value text widgets.
 		if (text)
 		{
 			sscanf(text,"%f",&new_parameter);
-			Cmiss_spectrum_component_set_attribute_real(settings,
-				CMISS_SPECTRUM_COMPONENT_ATTRIBUTE_COLOUR_MINIMUM, new_parameter);
+			Cmiss_spectrum_component_set_colour_minimum(settings, new_parameter);
 			text = NULL;
 		}
 		wxString max_string = spectrum_editor->spectrum_normalised_colour_range_max_text->GetValue();
@@ -1452,8 +1432,7 @@ Callback for the colour_value text widgets.
 		if (text)
 		{
 			sscanf(text,"%f",&new_parameter);
-			Cmiss_spectrum_component_set_attribute_real(settings,
-				CMISS_SPECTRUM_COMPONENT_ATTRIBUTE_COLOUR_MAXIMUM, new_parameter);
+			Cmiss_spectrum_component_set_colour_maximum(settings, new_parameter);
 		}
 		spectrum_editor_wx_update_settings(spectrum_editor, settings);
 		spectrum_editor_wx_set_settings(spectrum_editor);
@@ -1483,8 +1462,7 @@ Callback for the settings reverse toggle button.
 	 if (spectrum_editor &&
 			(settings = Cmiss_spectrum_get_component_at_position(spectrum_editor->edit_spectrum,selection+1)))
 	 {
-			 Cmiss_spectrum_component_set_attribute_boolean(settings,
-				 CMISS_SPECTRUM_COMPONENT_ATTRIBUTE_IS_COLOUR_REVERSE,
+			 Cmiss_spectrum_component_set_colour_reverse(settings,
 				 spectrum_editor->spectrum_reverse_checkbox->GetValue());
 			spectrum_editor_wx_update_settings(spectrum_editor, settings);
 			/* make sure the correct reverse flag is shown in case of error */
@@ -1588,11 +1566,9 @@ Callback for the exaggeration widgets.
 			new_parameter *= -1.0;
 		}
 		if(new_parameter !=
-			Cmiss_spectrum_component_get_attribute_real(settings,
-				CMISS_SPECTRUM_COMPONENT_ATTRIBUTE_EXAGGERATION))
+			Cmiss_spectrum_component_get_exaggeration(settings))
 		{
-			Cmiss_spectrum_component_set_attribute_real(settings,
-				CMISS_SPECTRUM_COMPONENT_ATTRIBUTE_EXAGGERATION, new_parameter);
+			Cmiss_spectrum_component_set_exaggeration(settings, new_parameter);
 			spectrum_editor_wx_update_settings(spectrum_editor, settings);
 		}
 		spectrum_editor_wx_set_settings(spectrum_editor);
@@ -1741,11 +1717,9 @@ USE_PARAMETER(event);
 				"OnSpectrumStepValueEntered.  Missing widget text");
 		}
 		if(new_parameter !=
-			Cmiss_spectrum_component_get_attribute_real(settings,
-				CMISS_SPECTRUM_COMPONENT_ATTRIBUTE_STEP_VALUE))
+			Cmiss_spectrum_component_get_step_value(settings))
 		{
-			Cmiss_spectrum_component_set_attribute_real(settings,
-				CMISS_SPECTRUM_COMPONENT_ATTRIBUTE_STEP_VALUE, new_parameter);
+			Cmiss_spectrum_component_set_step_value(settings, new_parameter);
 			spectrum_editor_wx_update_settings(spectrum_editor, settings);
 		}
 		spectrum_editor_wx_set_settings(spectrum_editor);

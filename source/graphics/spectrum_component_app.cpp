@@ -173,13 +173,11 @@ parsed settings. Note that the settings are ACCESSed once on valid return.
 					}
 					else if (extend_above)
 					{
-						Cmiss_spectrum_component_set_attribute_boolean(settings,
-							CMISS_SPECTRUM_COMPONENT_ATTRIBUTE_IS_EXTEND_ABOVE, true);
+						Cmiss_spectrum_component_set_extend_above(settings, true);
 					}
 					else if (transparent_above)
 					{
-						Cmiss_spectrum_component_set_attribute_boolean(settings,
-							CMISS_SPECTRUM_COMPONENT_ATTRIBUTE_IS_EXTEND_ABOVE, false);
+						Cmiss_spectrum_component_set_extend_above(settings, false);
 					}
 				}
 				if ( return_code )
@@ -193,41 +191,29 @@ parsed settings. Note that the settings are ACCESSed once on valid return.
 					else if (extend_below)
 					{
 
-						Cmiss_spectrum_component_set_attribute_boolean(settings,
-							CMISS_SPECTRUM_COMPONENT_ATTRIBUTE_IS_EXTEND_BELOW, true);
+						Cmiss_spectrum_component_set_extend_below(settings, true);
 					}
 					else if (transparent_below)
 					{
-						Cmiss_spectrum_component_set_attribute_boolean(settings,
-							CMISS_SPECTRUM_COMPONENT_ATTRIBUTE_IS_EXTEND_BELOW, false);
+						Cmiss_spectrum_component_set_extend_below(settings, false);
 					}
 				}
 				if ( return_code )
 				{
 					Cmiss_spectrum_component_set_field_component(settings,
 						component);
-					Cmiss_spectrum_component_set_attribute_real(settings,
-						CMISS_SPECTRUM_COMPONENT_ATTRIBUTE_COLOUR_MINIMUM,
-						colour_range[0]);
-					Cmiss_spectrum_component_set_attribute_real(settings,
-						CMISS_SPECTRUM_COMPONENT_ATTRIBUTE_COLOUR_MAXIMUM,
-						colour_range[1]);
-					Cmiss_spectrum_component_set_attribute_real(settings,
-						CMISS_SPECTRUM_COMPONENT_ATTRIBUTE_RANGE_MINIMUM,
-						range[0]);
-					Cmiss_spectrum_component_set_attribute_real(settings,
-						CMISS_SPECTRUM_COMPONENT_ATTRIBUTE_RANGE_MAXIMUM,
-						range[1]);
-					Cmiss_spectrum_component_set_attribute_boolean(settings,
-						CMISS_SPECTRUM_COMPONENT_ATTRIBUTE_IS_COLOUR_REVERSE, reverse);
+					Cmiss_spectrum_component_set_colour_minimum(settings,	colour_range[0]);
+					Cmiss_spectrum_component_set_colour_maximum(settings,	colour_range[1]);
+					Cmiss_spectrum_component_set_range_minimum(settings,	range[0]);
+					Cmiss_spectrum_component_set_range_maximum(settings,	range[1]);
+					Cmiss_spectrum_component_set_colour_reverse(settings, reverse);
 					Cmiss_spectrum_component_set_number_of_bands(settings,
 						number_of_bands);
 					black_band_int = (band_ratio * 1000.0 + 0.5);
 					Cmiss_spectrum_component_set_black_band_proportion(settings,
 						black_band_int);
 					/* Must set step value after setting minimum and maximum range */
-					Cmiss_spectrum_component_set_attribute_real(settings,
-						CMISS_SPECTRUM_COMPONENT_ATTRIBUTE_STEP_VALUE, step_value);
+					Cmiss_spectrum_component_set_step_value(settings, step_value);
 				}
 				/* Must set fix_maximum,fix_minimum after setting minimum and maximum range */
 				if ( return_code )
@@ -328,8 +314,7 @@ parsed settings. Note that the settings are ACCESSed once on valid return.
 				range[0] = (FE_value)(modify_spectrum_data->spectrum_minimum);
 				range[1] = (FE_value)(modify_spectrum_data->spectrum_maximum);
 				component = Cmiss_spectrum_component_get_field_component(settings);
-				exaggeration =  Cmiss_spectrum_component_get_attribute_real(
-					settings, CMISS_SPECTRUM_COMPONENT_ATTRIBUTE_EXAGGERATION);
+				exaggeration =  Cmiss_spectrum_component_get_exaggeration(settings);
 
 				option_table = CREATE(Option_table)();
 				/* band_ratio */
@@ -415,8 +400,7 @@ parsed settings. Note that the settings are ACCESSed once on valid return.
 					black_band_int = (band_ratio * 1000.0 + 0.5);
 					Cmiss_spectrum_component_set_black_band_proportion(settings,
 						black_band_int);
-					Cmiss_spectrum_component_set_attribute_real(settings,
-						CMISS_SPECTRUM_COMPONENT_ATTRIBUTE_STEP_VALUE, step_value);
+					Cmiss_spectrum_component_set_step_value(settings, step_value);
 				}
 				if ( return_code )
 				{
@@ -437,13 +421,11 @@ parsed settings. Note that the settings are ACCESSed once on valid return.
 					}
 					else if (extend_above)
 					{
-						Cmiss_spectrum_component_set_attribute_boolean(settings,
-							CMISS_SPECTRUM_COMPONENT_ATTRIBUTE_IS_EXTEND_ABOVE, true);
+						Cmiss_spectrum_component_set_extend_above(settings, true);
 					}
 					else if (transparent_above)
 					{
-						Cmiss_spectrum_component_set_attribute_boolean(settings,
-							CMISS_SPECTRUM_COMPONENT_ATTRIBUTE_IS_EXTEND_ABOVE, false);
+						Cmiss_spectrum_component_set_extend_above(settings, false);
 					}
 				}
 				if ( return_code )
@@ -456,13 +438,11 @@ parsed settings. Note that the settings are ACCESSed once on valid return.
 					}
 					else if (extend_below)
 					{
-						Cmiss_spectrum_component_set_attribute_boolean(settings,
-							CMISS_SPECTRUM_COMPONENT_ATTRIBUTE_IS_EXTEND_BELOW, true);
+						Cmiss_spectrum_component_set_extend_below(settings, true);
 					}
 					else if (transparent_below)
 					{
-						Cmiss_spectrum_component_set_attribute_boolean(settings,
-							CMISS_SPECTRUM_COMPONENT_ATTRIBUTE_IS_EXTEND_BELOW, false);
+						Cmiss_spectrum_component_set_extend_below(settings, false);
 					}
 				}
 				if ( return_code )
@@ -481,27 +461,21 @@ parsed settings. Note that the settings are ACCESSed once on valid return.
 					{
 						exaggeration = -fabs(exaggeration);
 					}
-					Cmiss_spectrum_component_set_attribute_real(settings,
-						CMISS_SPECTRUM_COMPONENT_ATTRIBUTE_EXAGGERATION, exaggeration);
+					Cmiss_spectrum_component_set_exaggeration(settings, exaggeration);
 				}
 				if ( return_code )
 				{
 					Cmiss_spectrum_component_set_field_component(settings,
 						component);
-					Cmiss_spectrum_component_set_attribute_real(settings,
-						CMISS_SPECTRUM_COMPONENT_ATTRIBUTE_COLOUR_MINIMUM,
+					Cmiss_spectrum_component_set_colour_minimum(settings,
 						colour_range[0]);
-					Cmiss_spectrum_component_set_attribute_real(settings,
-						CMISS_SPECTRUM_COMPONENT_ATTRIBUTE_COLOUR_MAXIMUM,
+					Cmiss_spectrum_component_set_colour_maximum(settings,
 						colour_range[1]);
-					Cmiss_spectrum_component_set_attribute_real(settings,
-						CMISS_SPECTRUM_COMPONENT_ATTRIBUTE_RANGE_MINIMUM,
+					Cmiss_spectrum_component_set_range_minimum(settings,
 						range[0]);
-					Cmiss_spectrum_component_set_attribute_real(settings,
-						CMISS_SPECTRUM_COMPONENT_ATTRIBUTE_RANGE_MAXIMUM,
+					Cmiss_spectrum_component_set_range_maximum(settings,
 						range[1]);
-					Cmiss_spectrum_component_set_attribute_boolean(settings,
-						CMISS_SPECTRUM_COMPONENT_ATTRIBUTE_IS_COLOUR_REVERSE, reverse);
+					Cmiss_spectrum_component_set_colour_reverse(settings, reverse);
 				}
 				/* Must set fix_maximum,fix_minimum after setting minimum and maximum range */
 				if ( return_code )
