@@ -5383,7 +5383,7 @@ static int gfx_convert_graphics(struct Parse_state *state,
 					"gfx_convert_graphics.  "
 					"Field %s does not exist.", coordinate_field_name);
 			}
-			if (0!=strcmp(scene_name,"default"))
+			if (scene_name && (0!=strcmp(scene_name,"default")))
 			{
 				input_region = Cmiss_region_find_subregion_at_path(command_data->root_region,
 					scene_name);

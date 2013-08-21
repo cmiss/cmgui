@@ -1994,7 +1994,9 @@ etc.) in all panes of the <window>.
 						scene_viewer = 0;
 						light_model=(struct Light_model *)NULL;
 				 }
-				Cmiss_graphics_filter_id filter = Cmiss_scene_viewer_get_filter(scene_viewer->core_scene_viewer);
+				 Cmiss_graphics_filter_id filter = 0;
+				 if (scene_viewer && scene_viewer->core_scene_viewer)
+					 filter = Cmiss_scene_viewer_get_filter(scene_viewer->core_scene_viewer);
 				light_to_add=(struct Light *)NULL;
 				light_to_remove=(struct Light *)NULL;
 				rotate_command_data.set=0;
