@@ -727,6 +727,7 @@ int Scene_viewer_app_default_input_callback(struct Scene_viewer_app *scene_viewe
 
 	if (scene_viewer)
 	{
+		Graphics_buffer_app_make_current(scene_viewer->graphics_buffer);
 		return_code = 1;
 		switch (scene_viewer->core_scene_viewer->input_mode)
 		{

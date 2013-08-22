@@ -1077,7 +1077,7 @@ void Graphics_buffer_create_buffer_wx(
 				DESTROY(Graphics_buffer_app)(&temp_buffer);
 			}
 			buffer->canvas = new wxGraphicsBuffer(parent,
-												  graphics_buffer_package->wxSharedContext,
+												  buffer->package->wxSharedContext,
 												  buffer, buffer->core_buffer->attrib_list);
 			wxBoxSizer *topsizer = new wxBoxSizer( wxVERTICAL );
 			topsizer->Add(buffer->canvas, wxSizerFlags(1).Align(wxALIGN_CENTER).Expand());
