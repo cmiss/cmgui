@@ -173,9 +173,9 @@ int WINAPI WinMain(HINSTANCE current_instance,HINSTANCE previous_instance,
 #endif /* !defined (WIN32_USER_INTERFACE)  && !defined (_MSC_VER)*/
 
 	/* display the version */
-	display_message(INFORMATION_MESSAGE, "%s version %s\n%s\n"
+	display_message(INFORMATION_MESSAGE, "%s version %s %s\n%s\n"
 		"Build information: %s %s\n", CMGUI_NAME_STRING, CMGUI_VERSION_STRING,
-		CMGUI_COPYRIGHT_STRING, CMGUI_BUILD_STRING,
+		CMGUI_DATETIME_STRING, CMGUI_COPYRIGHT_STRING, CMGUI_BUILD_STRING,
 		CMGUI_SVN_REVISION_STRING);
 
 #if defined (CARBON_USER_INTERFACE) || (defined (WX_USER_INTERFACE) && defined (DARWIN))
