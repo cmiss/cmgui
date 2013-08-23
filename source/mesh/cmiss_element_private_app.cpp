@@ -24,7 +24,7 @@ static int set_Cmiss_mesh(struct Parse_state *state, void *region_void, void *me
 	else if ((0 == strcmp(PARSER_HELP_STRING, current_token)) ||
 		(0 == strcmp(PARSER_RECURSIVE_HELP_STRING, current_token)))
 	{
-		display_message(INFORMATION_MESSAGE, " ELEMENT_GROUP_FIELD_NAME|[GROUP_NAME.]cmiss_mesh_1d|cmiss_mesh_2d|cmiss_mesh_3d[");
+		display_message(INFORMATION_MESSAGE, " ELEMENT_GROUP_FIELD_NAME|[GROUP_NAME.]mesh1d|mesh2d|mesh3d[");
 		if (*mesh_address)
 		{
 			char *mesh_name = Cmiss_mesh_get_name(*mesh_address);

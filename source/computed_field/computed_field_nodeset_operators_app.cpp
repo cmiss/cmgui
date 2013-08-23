@@ -58,7 +58,7 @@ int define_Computed_field_type_nodeset_operator(struct Parse_state *state,
 	Option_table_add_entry(option_table, "field", &source_field,
 		&set_source_field_data, set_Computed_field_conditional);
 	Option_table_add_string_entry(option_table, "nodeset", &nodeset_name,
-		" NODE_GROUP_FIELD_NAME|[GROUP_NAME.]cmiss_nodes|cmiss_data");
+		" NODE_GROUP_FIELD_NAME|[GROUP_NAME.]nodes|datapoints");
 	return_code = Option_table_multi_parse(option_table, state);
 	DESTROY(Option_table)(&option_table);
 	if (return_code)

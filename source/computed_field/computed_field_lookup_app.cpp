@@ -46,7 +46,7 @@ already) and allows its contents to be modified.
 	{
 		return_code = 1;
 		Cmiss_field_id source_field = 0;
-		char *nodeset_name = duplicate_string("cmiss_nodes");
+		char *nodeset_name = duplicate_string("nodes");
 		char node_flag = 0;
 		int node_identifier = 0;
 		if ((NULL != field_modify->get_field()) &&
@@ -67,7 +67,7 @@ already) and allows its contents to be modified.
 				if (!FE_region_contains_FE_node(fe_region, lookup_node))
 				{
 					DEALLOCATE(nodeset_name);
-					nodeset_name = duplicate_string("cmiss_data");
+					nodeset_name = duplicate_string("datapoints");
 				}
 				node_flag = 1;
 			}
@@ -86,7 +86,7 @@ already) and allows its contents to be modified.
 			&node_flag, set_int_and_char_flag);
 		/* the nodeset the node is from */
 		Option_table_add_string_entry(option_table, "nodeset", &nodeset_name,
-			" NODE_GROUP_FIELD_NAME|[GROUP_NAME.]cmiss_nodes|cmiss_data[cmiss_nodes]");
+			" NODE_GROUP_FIELD_NAME|[GROUP_NAME.]nodes|datapoints[nodes]");
 		return_code = Option_table_multi_parse(option_table,state);
 		DESTROY(Option_table)(&option_table);
 
@@ -155,7 +155,7 @@ contents to be modified.
 	{
 		return_code = 1;
 		Cmiss_field_id source_field = 0;
-		char *nodeset_name = duplicate_string("cmiss_nodes");
+		char *nodeset_name = duplicate_string("nodes");
 		char node_flag = 0;
 		int node_identifier = 0;
 		if ((NULL != field_modify->get_field()) &&
@@ -176,7 +176,7 @@ contents to be modified.
 				if (!FE_region_contains_FE_node(fe_region, lookup_node))
 				{
 					DEALLOCATE(nodeset_name);
-					nodeset_name = duplicate_string("cmiss_data");
+					nodeset_name = duplicate_string("datapoints");
 				}
 				node_flag = 1;
 			}
@@ -204,7 +204,7 @@ contents to be modified.
 			&node_flag, set_int_and_char_flag);
 		/* the nodeset the node is from */
 		Option_table_add_string_entry(option_table, "nodeset", &nodeset_name,
-			" NODE_GROUP_FIELD_NAME|[GROUP_NAME.]cmiss_nodes|cmiss_data[cmiss_nodes]");
+			" NODE_GROUP_FIELD_NAME|[GROUP_NAME.]nodes|datapoints[nodes]");
 		return_code = Option_table_multi_parse(option_table, state);
 		DESTROY(Option_table)(&option_table);
 

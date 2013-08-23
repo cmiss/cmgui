@@ -73,7 +73,7 @@ int gfx_modify_scene_graphic(struct Parse_state *state,
 			Cmiss_graphic_set_domain_type(graphic, CMISS_FIELD_DOMAIN_DATA);
 			break;
 		case LEGACY_GRAPHIC_ELEMENT_POINTS:
-			Cmiss_graphic_set_domain_type(graphic, CMISS_FIELD_DOMAIN_ELEMENTS_HIGHEST_DIMENSION);
+			Cmiss_graphic_set_domain_type(graphic, CMISS_FIELD_DOMAIN_MESH_HIGHEST_DIMENSION);
 			break;
 		default:
 			// do nothing
@@ -671,7 +671,7 @@ int gfx_modify_scene_graphic(struct Parse_state *state,
 	if (graphic_type == CMISS_GRAPHIC_STREAMLINES)
 	{
 		Option_table_add_string_entry(option_table, "seed_nodeset", &seed_nodeset_name,
-			" NODE_GROUP_FIELD_NAME|[GROUP_NAME.]cmiss_nodes|cmiss_data|none");
+			" NODE_GROUP_FIELD_NAME|[GROUP_NAME.]nodes|datapoints|none");
 	}
 
 	/* select_mode */
@@ -741,9 +741,9 @@ int gfx_modify_scene_graphic(struct Parse_state *state,
 	const char *use_element_type_strings[] = { "use_elements", "use_faces", "use_lines" };
 	const enum Cmiss_field_domain_type use_element_type_to_domain_type[] =
 	{
-		CMISS_FIELD_DOMAIN_ELEMENTS_HIGHEST_DIMENSION,
-		CMISS_FIELD_DOMAIN_ELEMENTS_2D,
-		CMISS_FIELD_DOMAIN_ELEMENTS_1D
+		CMISS_FIELD_DOMAIN_MESH_HIGHEST_DIMENSION,
+		CMISS_FIELD_DOMAIN_MESH_2D,
+		CMISS_FIELD_DOMAIN_MESH_1D
 	};
 	const char *use_element_type_string = 0;
 	if ((legacy_graphic_type == LEGACY_GRAPHIC_ISO_SURFACES) ||

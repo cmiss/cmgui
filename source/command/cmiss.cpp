@@ -1810,11 +1810,11 @@ static int gfx_create_gauss_points(struct Parse_state *state,
 		Option_table_add_string_entry(option_table, "gauss_location_field",
 			&gauss_location_field_name, " FIELD_NAME");
 		Option_table_add_string_entry(option_table, "gauss_point_nodeset", &gauss_point_nodeset_name,
-			" NODE_GROUP_FIELD_NAME|[GROUP_NAME.]cmiss_nodes|cmiss_data|none");
+			" NODE_GROUP_FIELD_NAME|[GROUP_NAME.]nodes|datapoints|none");
 		Option_table_add_string_entry(option_table, "gauss_weight_field",
 			&gauss_weight_field_name, " FIELD_NAME");
 		Option_table_add_string_entry(option_table, "mesh", &mesh_name,
-			" ELEMENT_GROUP_FIELD_NAME|[GROUP_REGION_NAME.]cmiss_mesh_1d|cmiss_mesh_2d|cmiss_mesh_3d");
+			" ELEMENT_GROUP_FIELD_NAME|[GROUP_REGION_NAME.]mesh_1d|mesh_2d|mesh_3d");
 		Option_table_add_int_positive_entry(option_table, "order", &order);
 		Option_table_add_set_Cmiss_region(option_table, "region", root_region, &region);
 		return_code = Option_table_multi_parse(option_table, state);
@@ -6312,7 +6312,7 @@ Executes a GFX DESTROY MATERIAL command.
 
 /***************************************************************************//**
  * Executes a GFX DESTROY NODES/DATA command.
- * If <use_data_flag> is set, work with cmiss_data, otherwise cmiss_nodes.
+ * If <use_data_flag> is set, work with datapoints, otherwise nodes.
  */
 static int gfx_destroy_nodes(struct Parse_state *state,
 	void *use_data, void *command_data_void)
@@ -11528,7 +11528,7 @@ static int set_Cmiss_nodal_derivatives(struct Parse_state *state,
 
 /***************************************************************************//**
  * Executes a GFX MODIFY NODES/DATA command.
- * If <use_data_flag> is set, use cmiss_data, otherwise cmiss_nodes.
+ * If <use_data_flag> is set, use datapoints, otherwise nodes.
  */
 static int gfx_modify_nodes(struct Parse_state *state,
 	void *use_data, void *command_data_void)
@@ -15041,8 +15041,8 @@ Can also write individual groups with the <group> option.
 				 {
 						if (!(exfile_return_code = write_exregion_file_of_name(temp_exfile,
 							region, group, root_region,
-							/*write_elements*/CMISS_FIELD_DOMAIN_ELEMENTS_1D|CMISS_FIELD_DOMAIN_ELEMENTS_2D|
-							CMISS_FIELD_DOMAIN_ELEMENTS_3D|CMISS_FIELD_DOMAIN_ELEMENTS_HIGHEST_DIMENSION,
+							/*write_elements*/CMISS_FIELD_DOMAIN_MESH_1D|CMISS_FIELD_DOMAIN_MESH_2D|
+							CMISS_FIELD_DOMAIN_MESH_3D|CMISS_FIELD_DOMAIN_MESH_HIGHEST_DIMENSION,
 							/*write_nodes*/1, /*write_data*/1,
 							write_fields_mode, field_names.number_of_strings, field_names.strings,
 							time, write_criterion, write_recursion)))
@@ -15444,8 +15444,8 @@ Can also write individual element groups with the <group> option.
 				if (0 != (return_code = check_suffix(&file_name, ".exelem")))
 				{
 					return_code = write_exregion_file_of_name(file_name, region, group, root_region,
-						/*write_elements*/CMISS_FIELD_DOMAIN_ELEMENTS_1D|CMISS_FIELD_DOMAIN_ELEMENTS_2D|
-						CMISS_FIELD_DOMAIN_ELEMENTS_3D|CMISS_FIELD_DOMAIN_ELEMENTS_HIGHEST_DIMENSION,
+						/*write_elements*/CMISS_FIELD_DOMAIN_MESH_1D|CMISS_FIELD_DOMAIN_MESH_2D|
+						CMISS_FIELD_DOMAIN_MESH_3D|CMISS_FIELD_DOMAIN_MESH_HIGHEST_DIMENSION,
 						(int)nodes_flag, /*write_data*/(int)data_flag,
 						write_fields_mode, field_names.number_of_strings, field_names.strings,
 						time, write_criterion, write_recursion);

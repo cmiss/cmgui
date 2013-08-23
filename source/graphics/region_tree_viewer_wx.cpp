@@ -1237,8 +1237,8 @@ int domain_type_callback(enum Cmiss_field_domain_type domain_type)
 	exteriorcheckbox=XRCCTRL(*this,"ExteriorCheckBox",wxCheckBox);
 	facecheckbox=XRCCTRL(*this, "FaceCheckBox",wxCheckBox);
 	facechoice=XRCCTRL(*this, "FaceChoice",wxChoice);
-	if ((CMISS_FIELD_DOMAIN_ELEMENTS_1D == domain_type) ||
-		(CMISS_FIELD_DOMAIN_ELEMENTS_2D == domain_type))
+	if ((CMISS_FIELD_DOMAIN_MESH_1D == domain_type) ||
+		(CMISS_FIELD_DOMAIN_MESH_2D == domain_type))
 	{
 		exteriorcheckbox->Enable();
 		facecheckbox->Enable();
@@ -1876,23 +1876,23 @@ void AddGraphicChoice(wxCommandEvent &event)
 			graphic_type = CMISS_GRAPHIC_POINTS;
 			break;
 		case ADD_GRAPHIC_TYPE_ELEMENT_POINTS:
-			domain_type = CMISS_FIELD_DOMAIN_ELEMENTS_HIGHEST_DIMENSION;
+			domain_type = CMISS_FIELD_DOMAIN_MESH_HIGHEST_DIMENSION;
 			graphic_type = CMISS_GRAPHIC_POINTS;
 			break;
 		case ADD_GRAPHIC_TYPE_LINES:
-			domain_type = CMISS_FIELD_DOMAIN_ELEMENTS_1D;
+			domain_type = CMISS_FIELD_DOMAIN_MESH_1D;
 			graphic_type = CMISS_GRAPHIC_LINES;
 			break;
 		case ADD_GRAPHIC_TYPE_SURFACES:
-			domain_type = CMISS_FIELD_DOMAIN_ELEMENTS_2D;
+			domain_type = CMISS_FIELD_DOMAIN_MESH_2D;
 			graphic_type = CMISS_GRAPHIC_SURFACES;
 			break;
 		case ADD_GRAPHIC_TYPE_CONTOURS:
 			graphic_type = CMISS_GRAPHIC_CONTOURS;
-			domain_type = CMISS_FIELD_DOMAIN_ELEMENTS_3D;
+			domain_type = CMISS_FIELD_DOMAIN_MESH_3D;
 			break;
 		case ADD_GRAPHIC_TYPE_STREAMLINES:
-			domain_type = CMISS_FIELD_DOMAIN_ELEMENTS_HIGHEST_DIMENSION;
+			domain_type = CMISS_FIELD_DOMAIN_MESH_HIGHEST_DIMENSION;
 			graphic_type = CMISS_GRAPHIC_STREAMLINES;
 			break;
 		case ADD_GRAPHIC_TYPE_INVALID:
@@ -3572,8 +3572,8 @@ void SetGraphic(Cmiss_graphic *graphic)
 		exteriorcheckbox->Show();
 		facecheckbox->Show();
 		facechoice->Show();
-		if ((CMISS_FIELD_DOMAIN_ELEMENTS_1D == domain_type) ||
-			(CMISS_FIELD_DOMAIN_ELEMENTS_2D == domain_type))
+		if ((CMISS_FIELD_DOMAIN_MESH_1D == domain_type) ||
+			(CMISS_FIELD_DOMAIN_MESH_2D == domain_type))
 		{
 			exteriorcheckbox->Enable();
 			facecheckbox->Enable();
