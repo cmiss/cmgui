@@ -226,7 +226,7 @@ int WINAPI WinMain(HINSTANCE current_instance,HINSTANCE previous_instance,
 			if (NULL != (command_data = Cmiss_context_get_default_command_interpreter(context)))
 			{
 				Cmiss_command_data_set_cmgui_string(command_data, CMGUI_NAME_STRING,
-					CMGUI_VERSION_STRING, "CMGUI_DATE_STRING", CMGUI_COPYRIGHT_STRING, CMGUI_BUILD_STRING,
+					CMGUI_VERSION_STRING, CMGUI_DATETIME_STRING, CMGUI_COPYRIGHT_STRING, CMGUI_BUILD_STRING,
 					CMGUI_SVN_REVISION_STRING);
 				Cmiss_command_data_main_loop(command_data);
 				Cmiss_command_data_destroy(&command_data);
