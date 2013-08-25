@@ -524,7 +524,7 @@ LAST MODIFIED : 17 January 2003
 DESCRIPTION :
 ==============================================================================*/
 {
-	char data_flag, element_flag, face_flag, line_flag, node_flag, *region_path, *sort_by_field_name;
+	char data_flag, element_flag, face_flag, line_flag, node_flag, *sort_by_field_name;
 	FE_value time;
 	int data_offset, element_offset, face_offset, line_offset, node_offset,
 		return_code;
@@ -538,7 +538,8 @@ DESCRIPTION :
 	USE_PARAMETER(dummy_to_be_modified);
 	if (state && (command_data = (struct Cmiss_command_data *)command_data_void))
 	{
-		region_path = Cmiss_region_get_root_region_path();
+		Cmiss_region_id region = Cmiss_region_access(command_data->root_region);
+		Cmiss_field_group_id group = 0;
 		data_flag = 0;
 		data_offset = 0;
 		element_flag = 0;
@@ -571,8 +572,7 @@ DESCRIPTION :
 		Option_table_add_entry(option_table, "face_offset", &face_offset,
 			&face_flag, set_int_and_char_flag);
 		/* group */
-		Option_table_add_entry(option_table, "group", &region_path,
-			command_data->root_region, set_Cmiss_region_path);
+		Option_table_add_region_or_group_entry(option_table, "group", &region, &group);
 		/* line_offset */
 		Option_table_add_entry(option_table, "line_offset", &line_offset,
 			&line_flag, set_int_and_char_flag);
@@ -587,9 +587,7 @@ DESCRIPTION :
 
 		if (0 != (return_code = Option_table_multi_parse(option_table, state)))
 		{
-			if (Cmiss_region_get_region_from_path_deprecated(command_data->root_region,
-				region_path, &region) &&
-				(fe_region = Cmiss_region_get_FE_region(region)))
+			if (region && (fe_region = Cmiss_region_get_FE_region(region)))
 			{
 				if (sort_by_field_name)
 				{
@@ -618,57 +616,91 @@ DESCRIPTION :
 				{
 					FE_region_begin_change(fe_region);
 					int highest_dimension = FE_region_get_highest_dimension(fe_region);
+					Cmiss_field_module_id field_module = Cmiss_region_get_field_module(region);
 					if (element_flag)
 					{
 						if (highest_dimension > 0)
 						{
+							Cmiss_mesh_id mesh = Cmiss_field_module_find_mesh_by_dimension(
+								field_module,highest_dimension);
+							Cmiss_field_element_group_id element_group =
+								Cmiss_field_group_get_element_group(group, mesh);
 							if (!FE_region_change_element_identifiers(fe_region,
-								highest_dimension, element_offset, sort_by_field, time))
+								highest_dimension, element_offset, sort_by_field, time,
+								element_group))
 							{
 								return_code = 0;
 							}
+							Cmiss_field_element_group_destroy(&element_group);
+							Cmiss_mesh_destroy(&mesh);
 						}
 						else
 						{
 							display_message(WARNING_MESSAGE,
-								"gfx change identifier:  No elements found in region %s",region_path);
+								"gfx change identifier:  No elements found in region");
 						}
 					}
 					if (face_flag && (highest_dimension > 2))
 					{
+						Cmiss_mesh_id mesh = Cmiss_field_module_find_mesh_by_dimension(
+							field_module,2);
+						Cmiss_field_element_group_id element_group =
+							Cmiss_field_group_get_element_group(group, mesh);
 						if (!FE_region_change_element_identifiers(fe_region,
-							/*dimension*/2,	face_offset, sort_by_field, time))
+							/*dimension*/2,	face_offset, sort_by_field, time,
+							element_group))
 						{
 							return_code = 0;
 						}
+						Cmiss_field_element_group_destroy(&element_group);
+						Cmiss_mesh_destroy(&mesh);
 					}
 					if (line_flag && (highest_dimension > 1))
 					{
+						Cmiss_mesh_id mesh = Cmiss_field_module_find_mesh_by_dimension(
+							field_module,1);
+						Cmiss_field_element_group_id element_group =
+							Cmiss_field_group_get_element_group(group, mesh);
 						if (!FE_region_change_element_identifiers(fe_region,
-							/*dimension*/1, line_offset, sort_by_field, time))
+							/*dimension*/1, line_offset, sort_by_field, time,
+							element_group))
 						{
 							return_code = 0;
 						}
+						Cmiss_field_element_group_destroy(&element_group);
+						Cmiss_mesh_destroy(&mesh);
 					}
 					if (node_flag)
 					{
+						Cmiss_nodeset_id nodeset = Cmiss_field_module_find_nodeset_by_name(
+							field_module, "nodes");
+						Cmiss_field_node_group_id node_group =
+							Cmiss_field_group_get_node_group(group, nodeset);
 						if (!FE_region_change_node_identifiers(fe_region,
-							node_offset, sort_by_field, time))
+							node_offset, sort_by_field, time, node_group))
 						{
 							return_code = 0;
 						}
+						Cmiss_field_node_group_destroy(&node_group);
+						Cmiss_nodeset_destroy(&nodeset);
 					}
 					if (data_flag)
 					{
 						if (NULL != (data_fe_region=FE_region_get_data_FE_region(fe_region)))
 						{
+							Cmiss_nodeset_id nodeset = Cmiss_field_module_find_nodeset_by_name(
+								field_module, "datapoints");
+							Cmiss_field_node_group_id node_group =
+								Cmiss_field_group_get_node_group(group, nodeset);
 							FE_region_begin_change(data_fe_region);
 							if (!FE_region_change_node_identifiers(data_fe_region,
-								data_offset, sort_by_field, time))
+								data_offset, sort_by_field, time, node_group))
 							{
 								return_code = 0;
 							}
 							FE_region_end_change(data_fe_region);
+							Cmiss_field_node_group_destroy(&node_group);
+							Cmiss_nodeset_destroy(&nodeset);
 						}
 						else
 						{
@@ -677,6 +709,7 @@ DESCRIPTION :
 							return_code = 0;
 						}
 					}
+					Cmiss_field_module_destroy(&field_module);
 					FE_region_end_change(fe_region);
 				}
 			}
@@ -688,7 +721,6 @@ DESCRIPTION :
 			}
 		}
 		DESTROY(Option_table)(&option_table);
-		DEALLOCATE(region_path);
 		if (sort_by_field)
 		{
 			DEACCESS(Computed_field)(&sort_by_field);
@@ -697,6 +729,8 @@ DESCRIPTION :
 		{
 			DEALLOCATE(sort_by_field_name);
 		}
+		Cmiss_field_group_destroy(&group);
+		Cmiss_region_destroy(&region);
 	}
 	else
 	{
@@ -12227,7 +12261,7 @@ int offset_region_identifier(Cmiss_region_id region, char element_flag, int elem
 		{
 			if (!FE_region_change_element_identifiers(fe_region,
 				highest_dimension, element_offset,
-				(struct Computed_field *)NULL, /*time*/0))
+				(struct Computed_field *)NULL, /*time*/0, /*element_group*/ 0))
 			{
 				return_code = 0;
 			}
@@ -12236,7 +12270,7 @@ int offset_region_identifier(Cmiss_region_id region, char element_flag, int elem
 		{
 			if (!FE_region_change_element_identifiers(fe_region,
 				/*dimension*/2, face_offset,
-				(struct Computed_field *)NULL, /*time*/0))
+				(struct Computed_field *)NULL, /*time*/0, /*element_group*/ 0))
 			{
 				return_code = 0;
 			}
@@ -12245,7 +12279,7 @@ int offset_region_identifier(Cmiss_region_id region, char element_flag, int elem
 		{
 			if (!FE_region_change_element_identifiers(fe_region,
 				/*dimension*/1, line_offset,
-				(struct Computed_field *)NULL, /*time*/0))
+				(struct Computed_field *)NULL, /*time*/0, /*element_group*/ 0))
 			{
 				return_code = 0;
 			}
@@ -12255,7 +12289,8 @@ int offset_region_identifier(Cmiss_region_id region, char element_flag, int elem
 			if (!use_data)
 			{
 				if (!FE_region_change_node_identifiers(fe_region,
-					node_offset, (struct Computed_field *)NULL, /*time*/0))
+					node_offset, (struct Computed_field *)NULL, /*time*/0,
+					/*node group*/0))
 				{
 					return_code = 0;
 				}
@@ -12265,7 +12300,8 @@ int offset_region_identifier(Cmiss_region_id region, char element_flag, int elem
 				struct FE_region *data_fe_region = FE_region_get_data_FE_region(fe_region);
 				FE_region_begin_change(data_fe_region);
 				if (!FE_region_change_node_identifiers(data_fe_region,
-					node_offset, (struct Computed_field *)NULL, /*time*/0))
+					node_offset, (struct Computed_field *)NULL, /*time*/0,
+					/*node group*/0))
 				{
 					return_code = 0;
 				}
