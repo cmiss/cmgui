@@ -755,16 +755,11 @@ static int gfx_create_axes(struct Parse_state *state,
 	USE_PARAMETER(dummy_user_data_void);
 	display_message(WARNING_MESSAGE,
 		"The 'gfx create axes' command has been removed. These are now drawn as\n"
-		"'point' graphics in the scene editor using an axis or arrow glyph with\n"
-		"repeat mode REPEAT_AXES_3D, and the desired labels. You will need to set\n"
-		"the base size to get the correct axis length and width, e.g. 1*0.1*0.1,\n"
-		"the label offset to (1.1,0,0), the offset to move them in multiples of the\n"
-		"first base size, and the material. Once set up, enter the command:\n"
-		"'gfx list g_element REGION_PATH commands'\n"
-		"to list the commands needed to reproduce the view. Example:\n"
-		"gfx modify g_element \"/\" point as axes LOCAL glyph axis REPEAT_AXES_3D "
-		"size \"1*0.1*0.1\" centre 0,0,0 font default label_offset \"1.1,0,0\" "
-		"label_text x & y & z material default;");
+		"point graphics using built-in axes glyphs. Create these in the scene editor\n"
+		"and list commands to reproduce the view with:\n"
+		"  gfx list g_element REGION_PATH commands\n"
+		"Alternatively directly add with commands (e.g. for root region):\n"
+		"  gfx modify g_element \"/\" point glyph axes_xyz size 1.0;\n");
 	return 1;
 }
 
