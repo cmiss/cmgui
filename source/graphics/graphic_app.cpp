@@ -333,7 +333,7 @@ int gfx_modify_scene_graphic(struct Parse_state *state,
 	}
 
 	/* exterior */
-	char exterior_flag = static_cast<char>(Cmiss_graphic_get_exterior(graphic));
+	char exterior_flag = static_cast<char>(Cmiss_graphic_is_exterior(graphic));
 	if ((legacy_graphic_type != LEGACY_GRAPHIC_POINT) &&
 		(legacy_graphic_type != LEGACY_GRAPHIC_NODE_POINTS) &&
 		(legacy_graphic_type != LEGACY_GRAPHIC_DATA_POINTS))
@@ -811,7 +811,7 @@ int gfx_modify_scene_graphic(struct Parse_state *state,
 		Cmiss_graphic_set_coordinate_field(graphic, coordinate_field);
 		Cmiss_graphic_set_data_field(graphic, data_field);
 		bool use_spectrum = (0 != data_field);
-		Cmiss_graphic_set_exterior(graphic, static_cast<int>(exterior_flag));
+		Cmiss_graphic_set_exterior(graphic, (0 != exterior_flag));
 		Cmiss_graphic_set_face(graphic, face_type);
 		Cmiss_graphic_set_tessellation(graphic, tessellation);
 		Cmiss_graphic_set_tessellation_field(graphic, tessellation_field);

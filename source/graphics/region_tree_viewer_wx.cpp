@@ -3584,14 +3584,7 @@ void SetGraphic(Cmiss_graphic *graphic)
 			facecheckbox->Disable();
 			facechoice->Disable();
 		}
-		if (Cmiss_graphic_get_exterior(graphic))
-		{
-			exteriorcheckbox->SetValue(1);
-		}
-		else
-		{
-			exteriorcheckbox->SetValue(0);
-		}
+		exteriorcheckbox->SetValue(Cmiss_graphic_is_exterior(graphic));
 		face = Cmiss_graphic_get_face(graphic);
 		if (face >= CMISS_ELEMENT_FACE_XI1_0)
 		{
