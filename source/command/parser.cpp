@@ -4394,7 +4394,7 @@ int set_double_product(struct Parse_state *state, void *values_void,
 					{
 						display_message(INFORMATION_MESSAGE, "*");
 					}
-					display_message(INFORMATION_MESSAGE, "%g");
+					display_message(INFORMATION_MESSAGE, "%g", values[i]);
 				}
 				display_message(INFORMATION_MESSAGE, "]");
 			}
