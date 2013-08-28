@@ -17840,14 +17840,43 @@ Initialise all the subcomponents of cmgui and create the Cmiss_command_data
 		command_data->material_module = Cmiss_graphics_module_get_material_module(command_data->graphics_module);
 		if (command_data->material_module)
 		{
-			Cmiss_graphics_material_module_define_standard_materials(command_data->material_module);
-			if (NULL != (material = Cmiss_graphics_material_module_get_default_material(command_data->material_module)))
-			{
-				Graphical_material_set_alpha(material, 1.0);
-				Cmiss_graphics_material_destroy(&material);
-			}
 			Cmiss_graphics_material_module_define_standard_materials(
 				command_data->material_module);
+			Cmiss_graphics_material_id material = Cmiss_graphics_material_module_create_material(
+				command_data->material_module);
+			Cmiss_graphics_material_set_name(material, "gray50");
+			double material_colour[3] = { 0.50, 0.50, 0.50};
+			Cmiss_graphics_material_set_attribute_real3(material,
+				CMISS_GRAPHICS_MATERIAL_ATTRIBUTE_AMBIENT, &material_colour[0]);
+			Cmiss_graphics_material_set_attribute_real3(material,
+				CMISS_GRAPHICS_MATERIAL_ATTRIBUTE_DIFFUSE, &material_colour[0]);
+			Cmiss_graphics_material_set_attribute_real3(material,
+				CMISS_GRAPHICS_MATERIAL_ATTRIBUTE_EMISSION, &material_colour[0]);
+			Cmiss_graphics_material_set_attribute_real3(material,
+				CMISS_GRAPHICS_MATERIAL_ATTRIBUTE_SPECULAR, &material_colour[0]);
+			Cmiss_graphics_material_set_attribute_real(material,
+				CMISS_GRAPHICS_MATERIAL_ATTRIBUTE_ALPHA, 1.0);
+			Cmiss_graphics_material_set_attribute_real(material,
+				CMISS_GRAPHICS_MATERIAL_ATTRIBUTE_SHININESS, 0.2);
+			Cmiss_graphics_material_set_managed(material, true);
+			Cmiss_graphics_material_destroy(&material);
+			material = Cmiss_graphics_material_module_create_material(
+				command_data->material_module);
+			Cmiss_graphics_material_set_name(material, "transparent_gray50");
+			Cmiss_graphics_material_set_attribute_real3(material,
+				CMISS_GRAPHICS_MATERIAL_ATTRIBUTE_AMBIENT, &material_colour[0]);
+			Cmiss_graphics_material_set_attribute_real3(material,
+				CMISS_GRAPHICS_MATERIAL_ATTRIBUTE_DIFFUSE, &material_colour[0]);
+			Cmiss_graphics_material_set_attribute_real3(material,
+				CMISS_GRAPHICS_MATERIAL_ATTRIBUTE_EMISSION, &material_colour[0]);
+			Cmiss_graphics_material_set_attribute_real3(material,
+				CMISS_GRAPHICS_MATERIAL_ATTRIBUTE_SPECULAR, &material_colour[0]);
+			Cmiss_graphics_material_set_attribute_real(material,
+				CMISS_GRAPHICS_MATERIAL_ATTRIBUTE_ALPHA, 0.0);
+			Cmiss_graphics_material_set_attribute_real(material,
+				CMISS_GRAPHICS_MATERIAL_ATTRIBUTE_SHININESS, 0.2);
+			Cmiss_graphics_material_set_managed(material, true);
+			Cmiss_graphics_material_destroy(&material);
 		}
 		command_data->filter_module =
 				Cmiss_graphics_module_get_filter_module(command_data->graphics_module);
