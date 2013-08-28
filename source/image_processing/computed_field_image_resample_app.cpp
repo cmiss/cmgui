@@ -1,4 +1,4 @@
-
+#include "zinc/fieldimageprocessing.h"
 #include "general/debug.h"
 #include "general/message.h"
 #include "command/parser.h"
