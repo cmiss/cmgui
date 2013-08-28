@@ -18,6 +18,7 @@
 #include "graphics/glyph.hpp"
 #include "graphics/graphic.h"
 #include "graphics/scene.h"
+#include "graphics/scene_coordinate_system.hpp"
 #include "graphics/tessellation.hpp"
 #include "computed_field/computed_field_finite_element.h"
 #include "graphics/auxiliary_graphics_types_app.h"
@@ -26,7 +27,6 @@
 #include "graphics/spectrum_app.h"
 #include "graphics/font.h"
 #include "graphics/scene_app.h"
-#include "graphics/graphics_coordinate_system.hpp"
 #include "graphics/material_app.h"
 #include "finite_element/finite_element_region_app.h"
 #include "graphics/tessellation_app.hpp"
@@ -244,12 +244,12 @@ int gfx_modify_scene_graphic(struct Parse_state *state,
 		&coordinate_field, &set_coordinate_field_data);
 
 	/* coordinate system */
-	Cmiss_graphics_coordinate_system coordinate_system = Cmiss_graphic_get_coordinate_system(graphic);
+	Cmiss_scene_coordinate_system coordinate_system = Cmiss_graphic_get_coordinate_system(graphic);
 	const char *coordinate_system_string =
-		ENUMERATOR_STRING(Cmiss_graphics_coordinate_system)(coordinate_system);
-	valid_strings = ENUMERATOR_GET_VALID_STRINGS(Cmiss_graphics_coordinate_system)(
+		ENUMERATOR_STRING(Cmiss_scene_coordinate_system)(coordinate_system);
+	valid_strings = ENUMERATOR_GET_VALID_STRINGS(Cmiss_scene_coordinate_system)(
 		&number_of_valid_strings,
-		(ENUMERATOR_CONDITIONAL_FUNCTION(Cmiss_graphics_coordinate_system) *)NULL,
+		(ENUMERATOR_CONDITIONAL_FUNCTION(Cmiss_scene_coordinate_system) *)NULL,
 		(void *)NULL);
 	Option_table_add_enumerator(option_table, number_of_valid_strings,
 		valid_strings, &coordinate_system_string);
@@ -1023,7 +1023,7 @@ int gfx_modify_scene_graphic(struct Parse_state *state,
 			}
 		}
 
-		STRING_TO_ENUMERATOR(Cmiss_graphics_coordinate_system)(
+		STRING_TO_ENUMERATOR(Cmiss_scene_coordinate_system)(
 			coordinate_system_string, &coordinate_system);
 		Cmiss_graphic_set_coordinate_system(graphic, coordinate_system);
 

@@ -10,7 +10,6 @@
 #include "graphics/transform_tool.h"
 #include "user_interface/event_dispatcher.h"
 #include "graphics/graphics_library.h"
-#include "graphics/graphics_coordinate_system.hpp"
 
 int Scene_viewer_app_input_select(struct Scene_viewer_app *scene_viewer,
 	struct Graphics_buffer_input *input);

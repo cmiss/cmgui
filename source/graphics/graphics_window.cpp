@@ -84,7 +84,6 @@ interest and set scene_viewer values directly.
 #include "graphics/light.h"
 #include "graphics/light_model.h"
 #include "graphics/scene.h"
-#include "graphics/graphics_coordinate_system.hpp"
 #include "graphics/graphics_filter.hpp"
 #include "graphics/scene.hpp"
 #include "graphics/scene_viewer.h"

@@ -56,10 +56,10 @@ equivalent to the scene_viewer assigned to it.
 #include "general/mystring.h"
 #include "graphics/graphics_window.h"
 #include "graphics/scene.h"
+#include "graphics/scene_coordinate_system.hpp"
 #include "graphics/scene_viewer.h"
 #include "general/message.h"
 #include "computed_field/computed_field_scene_viewer_projection.h"
-#include "graphics/graphics_coordinate_system.hpp"
 #include "command/parser.h"
 #include "graphics/scene_viewer_app.h"
 // insert app headers here
@@ -80,15 +80,15 @@ const char computed_field_scene_viewer_projection_type_string[] = "window_projec
 
 int Computed_field_get_type_scene_viewer_projection(struct Computed_field *field,
 	struct Scene_viewer **scene_viewer, char **graphics_window_name, int *pane_number,
-	enum Cmiss_graphics_coordinate_system *from_coordinate_system,
-	enum Cmiss_graphics_coordinate_system *to_coordinate_system);
+	enum Cmiss_scene_coordinate_system *from_coordinate_system,
+	enum Cmiss_scene_coordinate_system *to_coordinate_system);
 
 /* For gfx command */
 struct Computed_field *Computed_field_create_scene_viewer_projection_with_window_name(
 	struct Cmiss_field_module *field_module, struct Scene_viewer *scene_viewer,
 	const char *graphics_window_name, int pane_number,
-	enum Cmiss_graphics_coordinate_system from_coordinate_system,
-	enum Cmiss_graphics_coordinate_system to_coordinate_system)
+	enum Cmiss_scene_coordinate_system from_coordinate_system,
+	enum Cmiss_scene_coordinate_system to_coordinate_system)
 {
 	Computed_field *field = NULL;
 	if (scene_viewer)
@@ -135,8 +135,8 @@ already) and allows its contents to be modified.
 		/* get valid parameters for projection field */
 		pane_number = 1;
 		graphics_window = (struct Graphics_window *)NULL;
-		Cmiss_graphics_coordinate_system from_coordinate_system = CMISS_GRAPHICS_COORDINATE_SYSTEM_INVALID;
-		Cmiss_graphics_coordinate_system to_coordinate_system = CMISS_GRAPHICS_COORDINATE_SYSTEM_INVALID;
+		Cmiss_scene_coordinate_system from_coordinate_system = CMISS_SCENE_COORDINATE_SYSTEM_INVALID;
+		Cmiss_scene_coordinate_system to_coordinate_system = CMISS_SCENE_COORDINATE_SYSTEM_INVALID;
 		if ((NULL != field_modify->get_field()) &&
 			(computed_field_scene_viewer_projection_type_string == Computed_field_get_type_string(field_modify->get_field())))
 		{
@@ -161,9 +161,9 @@ already) and allows its contents to be modified.
 			char *from_coordinate_system_string = 0;
 			char *to_coordinate_system_string = 0;
 			int number_of_valid_strings = 0;
-			const char **valid_strings = ENUMERATOR_GET_VALID_STRINGS(Cmiss_graphics_coordinate_system)(
+			const char **valid_strings = ENUMERATOR_GET_VALID_STRINGS(Cmiss_scene_coordinate_system)(
 				&number_of_valid_strings,
-				(ENUMERATOR_CONDITIONAL_FUNCTION(Cmiss_graphics_coordinate_system) *)NULL,
+				(ENUMERATOR_CONDITIONAL_FUNCTION(Cmiss_scene_coordinate_system) *)NULL,
 				(void *)NULL);
 			std::string all_coordinate_systems = " ";
 			for (int i = 0; i < number_of_valid_strings; i++)
@@ -197,9 +197,9 @@ already) and allows its contents to be modified.
 			{
 				if (from_coordinate_system_string)
 				{
-					STRING_TO_ENUMERATOR(Cmiss_graphics_coordinate_system)(from_coordinate_system_string,
+					STRING_TO_ENUMERATOR(Cmiss_scene_coordinate_system)(from_coordinate_system_string,
 						&from_coordinate_system);
-					if (CMISS_GRAPHICS_COORDINATE_SYSTEM_INVALID == from_coordinate_system)
+					if (CMISS_SCENE_COORDINATE_SYSTEM_INVALID == from_coordinate_system)
 					{
 						display_message(ERROR_MESSAGE,
 							"gfx define field ~ window_projection:  Invalid coordinate system %s", from_coordinate_system_string);
@@ -214,9 +214,9 @@ already) and allows its contents to be modified.
 				}
 				if (to_coordinate_system_string)
 				{
-					STRING_TO_ENUMERATOR(Cmiss_graphics_coordinate_system)(to_coordinate_system_string,
+					STRING_TO_ENUMERATOR(Cmiss_scene_coordinate_system)(to_coordinate_system_string,
 						&to_coordinate_system);
-					if (CMISS_GRAPHICS_COORDINATE_SYSTEM_INVALID == to_coordinate_system)
+					if (CMISS_SCENE_COORDINATE_SYSTEM_INVALID == to_coordinate_system)
 					{
 						display_message(ERROR_MESSAGE,
 							"gfx define field ~ window_projection:  Invalid coordinate system %s", to_coordinate_system_string);

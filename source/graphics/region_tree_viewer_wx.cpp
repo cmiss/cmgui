@@ -92,7 +92,7 @@ codes used to build scene editor with wxWidgets.
 #include "graphics/scene.h"
 #include "graphics/graphic.h"
 #include "graphics/graphics_module.h"
-#include "graphics/graphics_coordinate_system.hpp"
+#include "graphics/scene_coordinate_system.hpp"
 #include "graphics/tessellation.hpp"
 #include "graphics/region_tree_viewer_wx.xrch"
 
@@ -634,8 +634,8 @@ class wxRegionTreeViewer : public wxFrame
 	DEFINE_ENUMERATOR_TYPE_CLASS(Cmiss_graphic_line_attributes_shape);
 	Enumerator_chooser<ENUMERATOR_TYPE_CLASS(Cmiss_graphic_line_attributes_shape)>
 		*line_shape_chooser;
-	DEFINE_ENUMERATOR_TYPE_CLASS(Cmiss_graphics_coordinate_system);
-	Enumerator_chooser<ENUMERATOR_TYPE_CLASS(Cmiss_graphics_coordinate_system)>
+	DEFINE_ENUMERATOR_TYPE_CLASS(Cmiss_scene_coordinate_system);
+	Enumerator_chooser<ENUMERATOR_TYPE_CLASS(Cmiss_scene_coordinate_system)>
 	*coordinate_system_chooser;
 	Managed_object_chooser<Computed_field,MANAGER_CLASS(Computed_field)>
 	*stream_vector_chooser;
@@ -749,18 +749,18 @@ public:
 	wxPanel *coordinate_system_chooser_panel =
 		XRCCTRL(*this, "CoordinateSystemChooserPanel", wxPanel);
 	coordinate_system_chooser =
-		new Enumerator_chooser<ENUMERATOR_TYPE_CLASS(Cmiss_graphics_coordinate_system)>
+		new Enumerator_chooser<ENUMERATOR_TYPE_CLASS(Cmiss_scene_coordinate_system)>
 		(coordinate_system_chooser_panel,
-			CMISS_GRAPHICS_COORDINATE_SYSTEM_LOCAL,
-				(ENUMERATOR_CONDITIONAL_FUNCTION(Cmiss_graphics_coordinate_system) *)NULL,
+			CMISS_SCENE_COORDINATE_SYSTEM_LOCAL,
+				(ENUMERATOR_CONDITIONAL_FUNCTION(Cmiss_scene_coordinate_system) *)NULL,
 				(void *)NULL, region_tree_viewer->user_interface);
 	coordinate_system_chooser_panel->Fit();
-	Callback_base< enum Cmiss_graphics_coordinate_system > *coordinate_system_callback =
-		new Callback_member_callback< enum Cmiss_graphics_coordinate_system,
-				wxRegionTreeViewer, int (wxRegionTreeViewer::*)(enum Cmiss_graphics_coordinate_system) >
+	Callback_base< enum Cmiss_scene_coordinate_system > *coordinate_system_callback =
+		new Callback_member_callback< enum Cmiss_scene_coordinate_system,
+				wxRegionTreeViewer, int (wxRegionTreeViewer::*)(enum Cmiss_scene_coordinate_system) >
 		(this, &wxRegionTreeViewer::Region_tree_viewer_coordinate_system_callback);
 	coordinate_system_chooser->set_callback(coordinate_system_callback);
-	coordinate_system_chooser->set_value(CMISS_GRAPHICS_COORDINATE_SYSTEM_LOCAL);
+	coordinate_system_chooser->set_value(CMISS_SCENE_COORDINATE_SYSTEM_LOCAL);
 	coordinate_system_chooser_panel->Fit();
 
 	select_mode_chooser = NULL;
@@ -942,7 +942,7 @@ Callback from wxChooser<Coordinate Field> when choice is made.
 	}
 
 int Region_tree_viewer_coordinate_system_callback(
-	enum Cmiss_graphics_coordinate_system coordinate_system)
+	enum Cmiss_scene_coordinate_system coordinate_system)
 /*******************************************************************************
 LAST MODIFIED : 19 March 2007
 
@@ -2686,7 +2686,7 @@ void SetGraphic(Cmiss_graphic *graphic)
 	coordinatefieldstatictext->Show();
 	Cmiss_field_destroy(&temp_coordinate_field);
 
-	enum Cmiss_graphics_coordinate_system coordinate_system;
+	enum Cmiss_scene_coordinate_system coordinate_system;
 	coordinate_system = Cmiss_graphic_get_coordinate_system(
 		region_tree_viewer->current_graphic);
 	coordinate_system_chooser->set_value(coordinate_system);
