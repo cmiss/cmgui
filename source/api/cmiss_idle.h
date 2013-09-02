@@ -41,8 +41,8 @@ The public interface to idle callbacks
  * the terms of any one of the MPL, the GPL or the LGPL.
  *
  * ***** END LICENSE BLOCK ***** */
-#ifndef __API_CMISS_IDLE_H__
-#define __API_CMISS_IDLE_H__
+#ifndef __API_CMZN_IDLE_H__
+#define __API_CMZN_IDLE_H__
 
 #ifdef __cplusplus
 extern "C" {
@@ -101,4 +101,4 @@ Destroys the idle package object.
 #ifdef __cplusplus
 } /* extern "C" */
 #endif /* __cplusplus */
-#endif /* __API_CMISS_IDLE_H__ */
+#endif /* __API_CMZN_IDLE_H__ */

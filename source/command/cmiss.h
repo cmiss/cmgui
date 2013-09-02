@@ -43,8 +43,8 @@ This should only be included in cmgui.c and command/cmiss.c
  * the terms of any one of the MPL, the GPL or the LGPL.
  *
  * ***** END LICENSE BLOCK ***** */
-#if !defined (COMMAND_CMISS_H)
-#define COMMAND_CMISS_H
+#if !defined (COMMAND_CMZN_H)
+#define COMMAND_CMZN_H
 
 #include "command/command.h"
 #include "context/context.h"
@@ -132,7 +132,7 @@ int cmiss_set_command(const char *command_string,void *command_data_void);
 LAST MODIFIED : 27 April 1999
 
 DESCRIPTION:
-Sets the <command_string> in the command box of the CMISS command_window, ready
+Sets the <command_string> in the command box of the CMZN command_window, ready
 for editing or entering. If there is no command_window, does nothing.
 ==============================================================================*/
 
@@ -269,4 +269,4 @@ int cmzn_command_data_set_cmgui_string(struct cmzn_command_data *command_data,
 int cmzn_command_data_process_command_line(int argc, char *argv[],
 	struct Cmgui_command_line_options *command_line_options);
 
-#endif /* !defined (COMMAND_CMISS_H) */
+#endif /* !defined (COMMAND_CMZN_H) */

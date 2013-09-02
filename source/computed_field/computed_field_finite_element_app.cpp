@@ -314,7 +314,7 @@ int define_Computed_field_type_cmiss_number(struct Parse_state *state,
 LAST MODIFIED : 24 August 2006
 
 DESCRIPTION :
-Converts <field> into type COMPUTED_FIELD_CMISS_NUMBER.
+Converts <field> into type COMPUTED_FIELD_CMZN_NUMBER.
 ==============================================================================*/
 {
 	Computed_field_modify_data *field_modify;
@@ -717,7 +717,7 @@ int define_Computed_field_type_find_mesh_location(struct Parse_state *state,
 				mesh = cmzn_field_find_mesh_location_get_mesh(find_mesh_location_field);
 				source_field = cmzn_field_get_source_field(field_modify->get_field(), 1);
 				mesh_field = cmzn_field_get_source_field(field_modify->get_field(), 2);
-				find_nearest_flag = (CMISS_FIELD_FIND_MESH_LOCATION_SEARCH_MODE_FIND_EXACT !=
+				find_nearest_flag = (CMZN_FIELD_FIND_MESH_LOCATION_SEARCH_MODE_FIND_EXACT !=
 					cmzn_field_find_mesh_location_get_search_mode(find_mesh_location_field));
 				cmzn_field_find_mesh_location_destroy(&find_mesh_location_field);
 			}
@@ -770,8 +770,8 @@ int define_Computed_field_type_find_mesh_location(struct Parse_state *state,
 					{
 						cmzn_field_find_mesh_location_id find_mesh_location_field = cmzn_field_cast_find_mesh_location(field);
 						cmzn_field_find_mesh_location_set_search_mode(find_mesh_location_field,
-							(find_nearest_flag ? CMISS_FIELD_FIND_MESH_LOCATION_SEARCH_MODE_FIND_NEAREST
-							: CMISS_FIELD_FIND_MESH_LOCATION_SEARCH_MODE_FIND_EXACT));
+							(find_nearest_flag ? CMZN_FIELD_FIND_MESH_LOCATION_SEARCH_MODE_FIND_NEAREST
+							: CMZN_FIELD_FIND_MESH_LOCATION_SEARCH_MODE_FIND_EXACT));
 						cmzn_field_find_mesh_location_destroy(&find_mesh_location_field);
 						return_code = field_modify->update_field_and_deaccess(field);
 						field = 0;

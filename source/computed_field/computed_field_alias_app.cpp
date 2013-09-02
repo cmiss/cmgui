@@ -72,7 +72,7 @@ int define_Computed_field_type_alias(Parse_state *state,
 
 			if (original_field_path_and_name)
 			{
-				if (original_field_path_and_name[0] == CMISS_REGION_PATH_SEPARATOR_CHAR)
+				if (original_field_path_and_name[0] == CMZN_REGION_PATH_SEPARATOR_CHAR)
 				{
 					// absolute path
 					root_region = computed_field_alias_package->root_region;

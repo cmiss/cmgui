@@ -20,7 +20,7 @@ int gfx_minimise(struct Parse_state *state, void *dummy_to_be_modified,
 	cmzn_region_id root_region = reinterpret_cast<cmzn_region_id>(root_region_void);
 	if (state && root_region)
 	{
-		enum cmzn_optimisation_method optimisation_method = CMISS_OPTIMISATION_METHOD_QUASI_NEWTON;
+		enum cmzn_optimisation_method optimisation_method = CMZN_OPTIMISATION_METHOD_QUASI_NEWTON;
 		int maxIters = 100; // default value
 		int showReport = 1; // output solution report by default
 		const char *optimisation_method_string = 0;
@@ -96,7 +96,7 @@ int gfx_minimise(struct Parse_state *state, void *dummy_to_be_modified,
 				cmzn_field_destroy(&objectiveField);
 			}
 			if (!cmzn_optimisation_set_attribute_integer(optimisation,
-				CMISS_OPTIMISATION_ATTRIBUTE_MAXIMUM_ITERATIONS, maxIters))
+				CMZN_OPTIMISATION_ATTRIBUTE_MAXIMUM_ITERATIONS, maxIters))
 			{
 				display_message(ERROR_MESSAGE, "gfx minimise:  Invalid maximum_iterations %d", maxIters);
 				return_code = 0;

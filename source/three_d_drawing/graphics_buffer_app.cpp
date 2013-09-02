@@ -125,10 +125,10 @@ struct Graphics_buffer_app_package
 #endif /* defined (WX_USER_INTERFACE) */
 };
 
-FULL_DECLARE_CMISS_CALLBACK_TYPES(Graphics_buffer_callback, \
+FULL_DECLARE_CMZN_CALLBACK_TYPES(Graphics_buffer_callback, \
 	struct Graphics_buffer_app *, void *);
 
-FULL_DECLARE_CMISS_CALLBACK_TYPES(Graphics_buffer_input_callback, \
+FULL_DECLARE_CMZN_CALLBACK_TYPES(Graphics_buffer_input_callback, \
 	struct Graphics_buffer_app *, struct Graphics_buffer_input *);
 
 /*******************************************************************************
@@ -146,13 +146,13 @@ struct Graphics_buffer_app
 
 	struct Graphics_buffer *core_buffer;
 
-	struct LIST(CMISS_CALLBACK_ITEM(Graphics_buffer_callback))
+	struct LIST(CMZN_CALLBACK_ITEM(Graphics_buffer_callback))
 		  *initialise_callback_list;
-	struct LIST(CMISS_CALLBACK_ITEM(Graphics_buffer_callback))
+	struct LIST(CMZN_CALLBACK_ITEM(Graphics_buffer_callback))
 		  *resize_callback_list;
-	struct LIST(CMISS_CALLBACK_ITEM(Graphics_buffer_callback))
+	struct LIST(CMZN_CALLBACK_ITEM(Graphics_buffer_callback))
 		  *expose_callback_list;
-	struct LIST(CMISS_CALLBACK_ITEM(Graphics_buffer_input_callback))
+	struct LIST(CMZN_CALLBACK_ITEM(Graphics_buffer_input_callback))
 		  *input_callback_list;
 
 #if defined (GTK_USER_INTERFACE)
@@ -260,14 +260,14 @@ static LRESULT CALLBACK Graphics_buffer_callback_proc(HWND window, UINT message_
 	WPARAM first_message, LPARAM second_message);
 #endif /* defined (WIN32_USER_INTERFACE) */
 
-DEFINE_CMISS_CALLBACK_MODULE_FUNCTIONS(Graphics_buffer_callback, void)
+DEFINE_CMZN_CALLBACK_MODULE_FUNCTIONS(Graphics_buffer_callback, void)
 
-DEFINE_CMISS_CALLBACK_FUNCTIONS(Graphics_buffer_callback, \
+DEFINE_CMZN_CALLBACK_FUNCTIONS(Graphics_buffer_callback, \
 	struct Graphics_buffer_app *,void *)
 
-DEFINE_CMISS_CALLBACK_MODULE_FUNCTIONS(Graphics_buffer_input_callback, void)
+DEFINE_CMZN_CALLBACK_MODULE_FUNCTIONS(Graphics_buffer_input_callback, void)
 
-DEFINE_CMISS_CALLBACK_FUNCTIONS(Graphics_buffer_input_callback, \
+DEFINE_CMZN_CALLBACK_FUNCTIONS(Graphics_buffer_input_callback, \
 	struct Graphics_buffer_app *, struct Graphics_buffer_input *)
 
 DECLARE_OBJECT_FUNCTIONS(Graphics_buffer_app)
@@ -295,13 +295,13 @@ contained in the this module only.
 		buffer->package = package;
 		buffer->core_buffer = CREATE(Graphics_buffer)(package->core_package, type, buffering_mode, stereo_mode);
 		buffer->initialise_callback_list=
-			CREATE(LIST(CMISS_CALLBACK_ITEM(Graphics_buffer_callback)))();
+			CREATE(LIST(CMZN_CALLBACK_ITEM(Graphics_buffer_callback)))();
 		buffer->resize_callback_list=
-			CREATE(LIST(CMISS_CALLBACK_ITEM(Graphics_buffer_callback)))();
+			CREATE(LIST(CMZN_CALLBACK_ITEM(Graphics_buffer_callback)))();
 		buffer->expose_callback_list=
-			CREATE(LIST(CMISS_CALLBACK_ITEM(Graphics_buffer_callback)))();
+			CREATE(LIST(CMZN_CALLBACK_ITEM(Graphics_buffer_callback)))();
 		buffer->input_callback_list=
-			CREATE(LIST(CMISS_CALLBACK_ITEM(Graphics_buffer_input_callback)))();
+			CREATE(LIST(CMZN_CALLBACK_ITEM(Graphics_buffer_input_callback)))();
 
 #if defined (GTK_USER_INTERFACE)
 
@@ -430,7 +430,7 @@ public:
 		/* must always be here */
 		wxPaintDC dc(this);
 
-		CMISS_CALLBACK_LIST_CALL(Graphics_buffer_callback)(
+		CMZN_CALLBACK_LIST_CALL(Graphics_buffer_callback)(
 			graphics_buffer->expose_callback_list, graphics_buffer, NULL);
 	}
 
@@ -442,7 +442,7 @@ public:
 		Graphics_buffer_set_height(graphics_buffer->core_buffer, event.GetSize().GetHeight());
 		Graphics_buffer_set_width(graphics_buffer->core_buffer, event.GetSize().GetWidth());
 
-		CMISS_CALLBACK_LIST_CALL(Graphics_buffer_callback)(
+		CMZN_CALLBACK_LIST_CALL(Graphics_buffer_callback)(
 			graphics_buffer->resize_callback_list, graphics_buffer, NULL);
 	}
 
@@ -456,14 +456,14 @@ public:
 		input->button_number = 0;
 		input->position_x = cursor_x;
 		input->position_y = cursor_y;
-		CMISS_CALLBACK_LIST_CALL(Graphics_buffer_input_callback)(
+		CMZN_CALLBACK_LIST_CALL(Graphics_buffer_input_callback)(
 			graphics_buffer->input_callback_list, graphics_buffer, input);
 	}
 
 	void OnKeyUp( wxKeyEvent& event )
 	{
 		struct Graphics_buffer_input input;
-		input.type = CMISS_SCENE_VIEWER_INPUT_KEY_RELEASE;
+		input.type = CMZN_SCENE_VIEWER_INPUT_KEY_RELEASE;
 		key_code = event.GetKeyCode();
 		input.key_code = key_code;
 		int input_modifier = 0;
@@ -488,7 +488,7 @@ public:
 	void OnKeyDown( wxKeyEvent& event )
 	{
 		struct Graphics_buffer_input input;
-		input.type = CMISS_SCENE_VIEWER_INPUT_KEY_PRESS;
+		input.type = CMZN_SCENE_VIEWER_INPUT_KEY_PRESS;
 		key_code = event.GetKeyCode();
 		input.key_code = key_code;
 		int input_modifier = 0;
@@ -515,7 +515,7 @@ public:
 		int input_modifier, return_code = 1;
 		struct Graphics_buffer_input input;
 
-		input.type = CMISS_SCENE_VIEWER_INPUT_INVALID;
+		input.type = CMZN_SCENE_VIEWER_INPUT_INVALID;
 		input.button_number = 0;
 		input.key_code = key_code;
 		cursor_x = input.position_x = event.GetX();
@@ -541,7 +541,7 @@ public:
 
 		if (event.Dragging())
 		{
-			input.type = CMISS_SCENE_VIEWER_INPUT_MOTION_NOTIFY;
+			input.type = CMZN_SCENE_VIEWER_INPUT_MOTION_NOTIFY;
 			if (event.LeftIsDown())
 			{
 				input_modifier |= GRAPHICS_BUFFER_INPUT_MODIFIER_BUTTON1;
@@ -554,7 +554,7 @@ public:
 				input.key_code = 0;
 				this->SetFocus();
 			}
-			input.type = CMISS_SCENE_VIEWER_INPUT_BUTTON_PRESS;
+			input.type = CMZN_SCENE_VIEWER_INPUT_BUTTON_PRESS;
 			switch (event.GetButton())
 			{
 				case wxMOUSE_BTN_LEFT:
@@ -580,7 +580,7 @@ public:
 		}
 		else if (event.ButtonUp())
 		{
-			input.type = CMISS_SCENE_VIEWER_INPUT_BUTTON_RELEASE;
+			input.type = CMZN_SCENE_VIEWER_INPUT_BUTTON_RELEASE;
 			switch (event.GetButton())
 			{
 				case wxMOUSE_BTN_LEFT:
@@ -615,7 +615,7 @@ public:
 
 		if (return_code)
 		{
-			CMISS_CALLBACK_LIST_CALL(Graphics_buffer_input_callback)(
+			CMZN_CALLBACK_LIST_CALL(Graphics_buffer_input_callback)(
 				graphics_buffer->input_callback_list, graphics_buffer, &input);
 		}
 	}
@@ -1132,7 +1132,7 @@ if there are no more initialise events pending.
 		}
 		graphics_buffer->gldrawable = gtk_widget_get_gl_drawable(graphics_buffer->glarea);
 #endif /* defined (GTK_USER_INTERFACE) */
-		CMISS_CALLBACK_LIST_CALL(Graphics_buffer_callback)(
+		CMZN_CALLBACK_LIST_CALL(Graphics_buffer_callback)(
 			graphics_buffer->initialise_callback_list, graphics_buffer, NULL);
 	}
 	else
@@ -1162,7 +1162,7 @@ if there are no more resize events pending.
 	USE_PARAMETER(allocation);
 	if (widget && (graphics_buffer = (struct Graphics_buffer *)graphics_buffer_void))
 	{
-		CMISS_CALLBACK_LIST_CALL(Graphics_buffer_callback)(
+		CMZN_CALLBACK_LIST_CALL(Graphics_buffer_callback)(
 			graphics_buffer->resize_callback_list, graphics_buffer, NULL);
 	}
 	else
@@ -1194,7 +1194,7 @@ if there are no more expose events pending.
 	{
 		if (0 == expose_event->count)
 		{
-			CMISS_CALLBACK_LIST_CALL(Graphics_buffer_callback)(
+			CMZN_CALLBACK_LIST_CALL(Graphics_buffer_callback)(
 				graphics_buffer->expose_callback_list, graphics_buffer, NULL);
 		}
 	}
@@ -1279,7 +1279,7 @@ returned to the scene.
 			(input_modifier);
 		if (return_code)
 		{
-			CMISS_CALLBACK_LIST_CALL(Graphics_buffer_input_callback)(
+			CMZN_CALLBACK_LIST_CALL(Graphics_buffer_input_callback)(
 				graphics_buffer->input_callback_list, graphics_buffer, &input);
 		}
 	}
@@ -1387,7 +1387,7 @@ returned to the scene.
 		(input_modifier);
 	if (return_code)
 	{
-		CMISS_CALLBACK_LIST_CALL(Graphics_buffer_input_callback)(
+		CMZN_CALLBACK_LIST_CALL(Graphics_buffer_input_callback)(
 			graphics_buffer->input_callback_list, graphics_buffer, &input);
 	}
 	LEAVE;
@@ -1462,7 +1462,7 @@ returned to the scene.
 		}
 		if (return_code)
 		{
-			CMISS_CALLBACK_LIST_CALL(Graphics_buffer_input_callback)(
+			CMZN_CALLBACK_LIST_CALL(Graphics_buffer_input_callback)(
 				graphics_buffer->input_callback_list, graphics_buffer, &input);
 		}
 	}
@@ -1538,7 +1538,7 @@ returned to the scene.
 			(input_modifier);
 		if (return_code)
 		{
-			CMISS_CALLBACK_LIST_CALL(Graphics_buffer_input_callback)(
+			CMZN_CALLBACK_LIST_CALL(Graphics_buffer_input_callback)(
 				graphics_buffer->input_callback_list, graphics_buffer, &input);
 		}
 
@@ -1597,11 +1597,11 @@ it to share graphics contexts.
 		char env_buffer[1024];
 		char *cmiss_intel_single_context_force_clipping = NULL;
 		int force_clipping_int;
-		if (GetEnvironmentVariable("CMISS_INTEL_SINGLE_CONTEXT_FORCE_CLIPPING",
+		if (GetEnvironmentVariable("CMZN_INTEL_SINGLE_CONTEXT_FORCE_CLIPPING",
 			env_buffer, sizeof(env_buffer))
 			&& (cmiss_intel_single_context_force_clipping = env_buffer))
 #else /* defined (WIN32_SYSTEM) */
-		cmiss_intel_single_context_force_clipping = getenv("CMISS_INTEL_SINGLE_CONTEXT_FORCE_CLIPPING");
+		cmiss_intel_single_context_force_clipping = getenv("CMZN_INTEL_SINGLE_CONTEXT_FORCE_CLIPPING");
 		if (cmiss_intel_single_context_force_clipping)
 #endif /* defined (WIN32_SYSTEM) */
 		{
@@ -3346,7 +3346,7 @@ mode with zinc.
 				  }
 
 				  Graphics_buffer_expose_data expose_data;
-				  CMISS_CALLBACK_LIST_CALL(Graphics_buffer_callback)(
+				  CMZN_CALLBACK_LIST_CALL(Graphics_buffer_callback)(
 					  buffer->expose_callback_list, buffer, &expose_data);
 			  }
 			  if (buffer->type == GRAPHICS_BUFFER_WIN32_COPY_PBUFFER_TYPE)
@@ -3649,7 +3649,7 @@ mode with zinc.
 		  printf ("Graphics_buffer_handle_windows_event WM_SIZING\n");
 #endif /* defined (DEBUG_CODE) */
 
-		  CMISS_CALLBACK_LIST_CALL(Graphics_buffer_callback)(
+		  CMZN_CALLBACK_LIST_CALL(Graphics_buffer_callback)(
 			  buffer->resize_callback_list, buffer, NULL);
 		  return_code=1;
 	  } break;
@@ -3782,7 +3782,7 @@ DESCRIPTION:
 			printf("WM_PAINT\n");
 #endif /* defined (DEBUG_CODE) */
 			BeginPaint(window, &ps);
-			CMISS_CALLBACK_LIST_CALL(Graphics_buffer_callback)(
+			CMZN_CALLBACK_LIST_CALL(Graphics_buffer_callback)(
 				graphics_buffer->expose_callback_list, graphics_buffer, NULL);
 			EndPaint(window, &ps);
 			return_code=TRUE;
@@ -3790,7 +3790,7 @@ DESCRIPTION:
 		case WM_SIZING:
 		{
 			BeginPaint(window, &ps);
-			CMISS_CALLBACK_LIST_CALL(Graphics_buffer_callback)(
+			CMZN_CALLBACK_LIST_CALL(Graphics_buffer_callback)(
 				graphics_buffer->resize_callback_list, graphics_buffer, NULL);
 			EndPaint(window, &ps);
 			return_code=TRUE;
@@ -4052,7 +4052,7 @@ DESCRIPTION :
 		{
 			input.input_modifier = static_cast<enum Graphics_buffer_input_modifier>
 				(input_modifier);
-			CMISS_CALLBACK_LIST_CALL(Graphics_buffer_input_callback)(
+			CMZN_CALLBACK_LIST_CALL(Graphics_buffer_input_callback)(
 				buffer->input_callback_list, buffer, &input);
 		}
 	}
@@ -4086,7 +4086,7 @@ DESCRIPTION :
 
 	if (graphics_buffer = (struct Graphics_buffer *)buffer_void)
 	{
-		CMISS_CALLBACK_LIST_CALL(Graphics_buffer_callback)(
+		CMZN_CALLBACK_LIST_CALL(Graphics_buffer_callback)(
 			graphics_buffer->expose_callback_list, graphics_buffer, NULL);
 
 		result = noErr;
@@ -4118,9 +4118,9 @@ DESCRIPTION :
 	if (graphics_buffer = (struct Graphics_buffer *)buffer_void)
 	{
 		aglSetWindowRef(graphics_buffer->aglContext, graphics_buffer->theWindow);
-		CMISS_CALLBACK_LIST_CALL(Graphics_buffer_callback)(
+		CMZN_CALLBACK_LIST_CALL(Graphics_buffer_callback)(
 			graphics_buffer->resize_callback_list, graphics_buffer, NULL);
-		CMISS_CALLBACK_LIST_CALL(Graphics_buffer_callback)(
+		CMZN_CALLBACK_LIST_CALL(Graphics_buffer_callback)(
 			graphics_buffer->expose_callback_list, graphics_buffer, NULL);
 
 		result = noErr;
@@ -5597,7 +5597,7 @@ Activates the graphics <buffer>.
 } /* Graphics_buffer_awaken */
 
 int Graphics_buffer_add_initialise_callback(struct Graphics_buffer_app *buffer,
-	CMISS_CALLBACK_FUNCTION(Graphics_buffer_callback) initialise_callback, void *user_data)
+	CMZN_CALLBACK_FUNCTION(Graphics_buffer_callback) initialise_callback, void *user_data)
 /*******************************************************************************
 LAST MODIFIED : 1 July 2002
 
@@ -5610,7 +5610,7 @@ Adds an initialise callback to the graphics <buffer>.
 	ENTER(Graphics_buffer_awaken);
 	if (buffer)
 	{
-		return_code = CMISS_CALLBACK_LIST_ADD_CALLBACK(Graphics_buffer_callback)(
+		return_code = CMZN_CALLBACK_LIST_ADD_CALLBACK(Graphics_buffer_callback)(
 			buffer->initialise_callback_list, initialise_callback,
 			user_data);
 	}
@@ -5626,7 +5626,7 @@ Adds an initialise callback to the graphics <buffer>.
 } /* Graphics_buffer_add_initialise_callback */
 
 int Graphics_buffer_add_resize_callback(struct Graphics_buffer_app *buffer,
-	CMISS_CALLBACK_FUNCTION(Graphics_buffer_callback) resize_callback, void *user_data)
+	CMZN_CALLBACK_FUNCTION(Graphics_buffer_callback) resize_callback, void *user_data)
 /*******************************************************************************
 LAST MODIFIED : 1 July 2002
 
@@ -5639,7 +5639,7 @@ Adds an resize callback to the graphics <buffer>.
 	ENTER(Graphics_buffer_awaken);
 	if (buffer)
 	{
-		return_code = CMISS_CALLBACK_LIST_ADD_CALLBACK(Graphics_buffer_callback)(
+		return_code = CMZN_CALLBACK_LIST_ADD_CALLBACK(Graphics_buffer_callback)(
 			buffer->resize_callback_list, resize_callback,
 			user_data);
 	}
@@ -5655,7 +5655,7 @@ Adds an resize callback to the graphics <buffer>.
 } /* Graphics_buffer_add_resize_callback */
 
 int Graphics_buffer_app_add_expose_callback(struct Graphics_buffer_app *buffer,
-	CMISS_CALLBACK_FUNCTION(Graphics_buffer_callback) expose_callback, void *user_data)
+	CMZN_CALLBACK_FUNCTION(Graphics_buffer_callback) expose_callback, void *user_data)
 /*******************************************************************************
 LAST MODIFIED : 1 July 2002
 
@@ -5668,7 +5668,7 @@ Adds an expose callback to the graphics <buffer>.
 	ENTER(Graphics_buffer_awaken);
 	if (buffer)
 	{
-		return_code = CMISS_CALLBACK_LIST_ADD_CALLBACK(Graphics_buffer_callback)(
+		return_code = CMZN_CALLBACK_LIST_ADD_CALLBACK(Graphics_buffer_callback)(
 			buffer->expose_callback_list, expose_callback,
 			user_data);
 	}
@@ -5684,7 +5684,7 @@ Adds an expose callback to the graphics <buffer>.
 } /* Graphics_buffer_add_expose_callback */
 
 int Graphics_buffer_app_add_input_callback(struct Graphics_buffer_app *buffer,
-	CMISS_CALLBACK_FUNCTION(Graphics_buffer_input_callback) input_callback,
+	CMZN_CALLBACK_FUNCTION(Graphics_buffer_input_callback) input_callback,
 	void *user_data)
 /*******************************************************************************
 LAST MODIFIED : 1 July 2002
@@ -5698,7 +5698,7 @@ Adds an input callback to the graphics <buffer>.
 	ENTER(Graphics_buffer_awaken);
 	if (buffer)
 	{
-		return_code = CMISS_CALLBACK_LIST_ADD_CALLBACK(Graphics_buffer_input_callback)(
+		return_code = CMZN_CALLBACK_LIST_ADD_CALLBACK(Graphics_buffer_input_callback)(
 			buffer->input_callback_list, input_callback,
 			user_data);
 	}
@@ -5759,22 +5759,22 @@ x==============================================================================*
 
 		if (buffer->initialise_callback_list)
 		{
-			DESTROY(LIST(CMISS_CALLBACK_ITEM(Graphics_buffer_callback)))(
+			DESTROY(LIST(CMZN_CALLBACK_ITEM(Graphics_buffer_callback)))(
 				&buffer->initialise_callback_list);
 		}
 		if (buffer->resize_callback_list)
 		{
-			DESTROY(LIST(CMISS_CALLBACK_ITEM(Graphics_buffer_callback)))(
+			DESTROY(LIST(CMZN_CALLBACK_ITEM(Graphics_buffer_callback)))(
 				&buffer->resize_callback_list);
 		}
 		if (buffer->expose_callback_list)
 		{
-			DESTROY(LIST(CMISS_CALLBACK_ITEM(Graphics_buffer_callback)))(
+			DESTROY(LIST(CMZN_CALLBACK_ITEM(Graphics_buffer_callback)))(
 				&buffer->expose_callback_list);
 		}
 		if (buffer->input_callback_list)
 		{
-			DESTROY(LIST(CMISS_CALLBACK_ITEM(Graphics_buffer_input_callback)))(
+			DESTROY(LIST(CMZN_CALLBACK_ITEM(Graphics_buffer_input_callback)))(
 				&buffer->input_callback_list);
 		}
 #if defined (WIN32_USER_INTERFACE)
@@ -5871,7 +5871,7 @@ int Graphics_buffer_app_is_visible(struct Graphics_buffer_app *buffer)
 }
 
 int Graphics_buffer_app_add_initialise_callback(struct Graphics_buffer_app *buffer,
-	CMISS_CALLBACK_FUNCTION(Graphics_buffer_callback) initialise_callback, void *user_data)
+	CMZN_CALLBACK_FUNCTION(Graphics_buffer_callback) initialise_callback, void *user_data)
 /*******************************************************************************
 LAST MODIFIED : 1 July 2002
 
@@ -5884,7 +5884,7 @@ Adds an initialise callback to the graphics <buffer>.
 	ENTER(Graphics_buffer_awaken);
 	if (buffer)
 	{
-		return_code = CMISS_CALLBACK_LIST_ADD_CALLBACK(Graphics_buffer_callback)(
+		return_code = CMZN_CALLBACK_LIST_ADD_CALLBACK(Graphics_buffer_callback)(
 			buffer->initialise_callback_list, initialise_callback,
 			user_data);
 	}
@@ -5900,7 +5900,7 @@ Adds an initialise callback to the graphics <buffer>.
 } /* Graphics_buffer_add_initialise_callback */
 
 int Graphics_buffer_app_add_resize_callback(struct Graphics_buffer_app *buffer,
-	CMISS_CALLBACK_FUNCTION(Graphics_buffer_callback) resize_callback, void *user_data)
+	CMZN_CALLBACK_FUNCTION(Graphics_buffer_callback) resize_callback, void *user_data)
 /*******************************************************************************
 LAST MODIFIED : 1 July 2002
 
@@ -5912,7 +5912,7 @@ Adds an resize callback to the graphics <buffer>.
 
 	if (buffer)
 	{
-		return_code = CMISS_CALLBACK_LIST_ADD_CALLBACK(Graphics_buffer_callback)(
+		return_code = CMZN_CALLBACK_LIST_ADD_CALLBACK(Graphics_buffer_callback)(
 			buffer->resize_callback_list, resize_callback,
 			user_data);
 	}

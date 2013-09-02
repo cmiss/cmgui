@@ -270,25 +270,25 @@ release.
 				if (element_tool->select_lines_enabled)
 				{
 					element_filter = cmzn_graphics_filter_module_create_filter_domain_type(
-						filter_module, CMISS_FIELD_DOMAIN_MESH_1D);
+						filter_module, CMZN_FIELD_DOMAIN_MESH_1D);
 					cmzn_graphics_filter_operator_append_operand(or_filter, element_filter);
 					cmzn_graphics_filter_destroy(&element_filter);
 				}
 				if (element_tool->select_faces_enabled)
 				{
 					element_filter = cmzn_graphics_filter_module_create_filter_domain_type(
-						filter_module, CMISS_FIELD_DOMAIN_MESH_2D);
+						filter_module, CMZN_FIELD_DOMAIN_MESH_2D);
 					cmzn_graphics_filter_operator_append_operand(or_filter, element_filter);
 					cmzn_graphics_filter_destroy(&element_filter);
 				}
 				if (element_tool->select_elements_enabled)
 				{
 					element_filter = cmzn_graphics_filter_module_create_filter_domain_type(
-						filter_module, CMISS_FIELD_DOMAIN_MESH_HIGHEST_DIMENSION);
+						filter_module, CMZN_FIELD_DOMAIN_MESH_HIGHEST_DIMENSION);
 					cmzn_graphics_filter_operator_append_operand(or_filter, element_filter);
 					cmzn_graphics_filter_destroy(&element_filter);
 					element_filter = cmzn_graphics_filter_module_create_filter_domain_type(
-						filter_module, CMISS_FIELD_DOMAIN_MESH_3D);
+						filter_module, CMZN_FIELD_DOMAIN_MESH_3D);
 					cmzn_graphics_filter_operator_append_operand(or_filter, element_filter);
 					cmzn_graphics_filter_destroy(&element_filter);
 				}

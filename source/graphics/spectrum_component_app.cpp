@@ -58,7 +58,7 @@ parsed settings. Note that the settings are ACCESSed once on valid return.
 			{
 				/* access since deaccessed in gfx_modify_spectrum */
 
-				cmzn_spectrum_component_set_scale_type(settings,CMISS_SPECTRUM_COMPONENT_SCALE_LINEAR);
+				cmzn_spectrum_component_set_scale_type(settings,CMZN_SPECTRUM_COMPONENT_SCALE_LINEAR);
 				settings->is_field_lookup = false;
 				colour_mapping = cmzn_spectrum_component_get_colour_mapping(settings);
 				ambient = 0;
@@ -288,7 +288,7 @@ parsed settings. Note that the settings are ACCESSed once on valid return.
 			settings=modify_spectrum_data->component=CREATE(cmzn_spectrum_component)();
 			if (settings)
 			{
-				cmzn_spectrum_component_set_scale_type(settings,CMISS_SPECTRUM_COMPONENT_SCALE_LOG);
+				cmzn_spectrum_component_set_scale_type(settings,CMZN_SPECTRUM_COMPONENT_SCALE_LOG);
 				settings->is_field_lookup = false;
 				colour_mapping = cmzn_spectrum_component_get_colour_mapping(settings);
 				ambient = 0;
@@ -548,7 +548,7 @@ parsed settings. Note that the settings are ACCESSed once on valid return.
 			settings=modify_spectrum_data->component=CREATE(cmzn_spectrum_component)();
 			if (settings)
 			{
-				cmzn_spectrum_component_set_scale_type(settings,CMISS_SPECTRUM_COMPONENT_SCALE_INVALID);
+				cmzn_spectrum_component_set_scale_type(settings,CMZN_SPECTRUM_COMPONENT_SCALE_INVALID);
 				settings->is_field_lookup = true;
 
 				colour_mapping = cmzn_spectrum_component_get_colour_mapping(settings);
@@ -721,11 +721,11 @@ included in the string. User must remember to DEALLOCATE the name afterwards.
 		}
 		switch (component->component_scale)
 		{
-			case CMISS_SPECTRUM_COMPONENT_SCALE_LINEAR:
+			case CMZN_SPECTRUM_COMPONENT_SCALE_LINEAR:
 			{
 				append_string(&component_string,"linear",&error);
 			} break;
-			case CMISS_SPECTRUM_COMPONENT_SCALE_LOG:
+			case CMZN_SPECTRUM_COMPONENT_SCALE_LOG:
 			{
 				sprintf(temp_string,"log exaggeration %g",fabs(component->exaggeration));
 				append_string(&component_string,temp_string,&error);
@@ -738,7 +738,7 @@ included in the string. User must remember to DEALLOCATE the name afterwards.
 					append_string(&component_string," right",&error);
 				}
 			} break;
-			case CMISS_SPECTRUM_COMPONENT_SCALE_INVALID:
+			case CMZN_SPECTRUM_COMPONENT_SCALE_INVALID:
 			{
 				if (component->is_field_lookup)
 				{
@@ -776,11 +776,11 @@ included in the string. User must remember to DEALLOCATE the name afterwards.
 		sprintf(temp_string," range %g %g",component->minimum,
 			component->maximum);
 		append_string(&component_string,temp_string,&error);
-		if ((component->extend_above)&&(component->colour_mapping!=CMISS_SPECTRUM_COMPONENT_COLOUR_MAPPING_STEP))
+		if ((component->extend_above)&&(component->colour_mapping!=CMZN_SPECTRUM_COMPONENT_COLOUR_MAPPING_STEP))
 		{
 			append_string(&component_string," extend_above",&error);
 		}
-		if ((component->extend_below)&&(component->colour_mapping!=CMISS_SPECTRUM_COMPONENT_COLOUR_MAPPING_STEP))
+		if ((component->extend_below)&&(component->colour_mapping!=CMZN_SPECTRUM_COMPONENT_COLOUR_MAPPING_STEP))
 		{
 			append_string(&component_string," extend_below",&error);
 		}
@@ -792,20 +792,20 @@ included in the string. User must remember to DEALLOCATE the name afterwards.
 		{
 			append_string(&component_string," fix_minimum",&error);
 		}
-		if (component->component_scale == CMISS_SPECTRUM_COMPONENT_SCALE_LINEAR ||
-			component->component_scale == CMISS_SPECTRUM_COMPONENT_SCALE_LOG )
+		if (component->component_scale == CMZN_SPECTRUM_COMPONENT_SCALE_LINEAR ||
+			component->component_scale == CMZN_SPECTRUM_COMPONENT_SCALE_LOG )
 		{
 			switch (component->colour_mapping)
 			{
-				case CMISS_SPECTRUM_COMPONENT_COLOUR_MAPPING_ALPHA:
-				case CMISS_SPECTRUM_COMPONENT_COLOUR_MAPPING_BLUE:
-				case CMISS_SPECTRUM_COMPONENT_COLOUR_MAPPING_GREEN:
-				case CMISS_SPECTRUM_COMPONENT_COLOUR_MAPPING_MONOCHROME:
-				case CMISS_SPECTRUM_COMPONENT_COLOUR_MAPPING_RAINBOW:
-				case CMISS_SPECTRUM_COMPONENT_COLOUR_MAPPING_RED:
-				case CMISS_SPECTRUM_COMPONENT_COLOUR_MAPPING_WHITE_TO_BLUE:
-				case CMISS_SPECTRUM_COMPONENT_COLOUR_MAPPING_WHITE_TO_RED:
-				case CMISS_SPECTRUM_COMPONENT_COLOUR_MAPPING_WHITE_TO_GREEN:
+				case CMZN_SPECTRUM_COMPONENT_COLOUR_MAPPING_ALPHA:
+				case CMZN_SPECTRUM_COMPONENT_COLOUR_MAPPING_BLUE:
+				case CMZN_SPECTRUM_COMPONENT_COLOUR_MAPPING_GREEN:
+				case CMZN_SPECTRUM_COMPONENT_COLOUR_MAPPING_MONOCHROME:
+				case CMZN_SPECTRUM_COMPONENT_COLOUR_MAPPING_RAINBOW:
+				case CMZN_SPECTRUM_COMPONENT_COLOUR_MAPPING_RED:
+				case CMZN_SPECTRUM_COMPONENT_COLOUR_MAPPING_WHITE_TO_BLUE:
+				case CMZN_SPECTRUM_COMPONENT_COLOUR_MAPPING_WHITE_TO_RED:
+				case CMZN_SPECTRUM_COMPONENT_COLOUR_MAPPING_WHITE_TO_GREEN:
 				{
 					sprintf(temp_string," %s colour_range %g %g",
 						ENUMERATOR_STRING(cmzn_spectrum_component_colour_mapping)(component->colour_mapping),
@@ -815,14 +815,14 @@ included in the string. User must remember to DEALLOCATE the name afterwards.
 				default:
 				{
 				} break;
-				case CMISS_SPECTRUM_COMPONENT_COLOUR_MAPPING_BANDED:
+				case CMZN_SPECTRUM_COMPONENT_COLOUR_MAPPING_BANDED:
 				{
 					sprintf(temp_string," banded number_of_bands %d band_ratio %g",
 						component->number_of_bands,
 						(ZnReal)(component->black_band_proportion)/1000.0);
 					append_string(&component_string,temp_string,&error);
 				} break;
-				case CMISS_SPECTRUM_COMPONENT_COLOUR_MAPPING_STEP:
+				case CMZN_SPECTRUM_COMPONENT_COLOUR_MAPPING_STEP:
 				{
 					sprintf(temp_string," step_texture step_value %g",component->step_value);
 					append_string(&component_string,temp_string,&error);

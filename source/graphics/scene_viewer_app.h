@@ -9,13 +9,13 @@
 
 #define Scene_viewer_set_interactive_tool_by_name cmzn_scene_viewer_set_interactive_tool_by_name
 
-DECLARE_CMISS_CALLBACK_TYPES(cmzn_scene_viewer_app_module_callback, \
+DECLARE_CMZN_CALLBACK_TYPES(cmzn_scene_viewer_app_module_callback, \
 	struct cmzn_scene_viewer_app_module *, void *, void);
 
-DECLARE_CMISS_CALLBACK_TYPES(Scene_viewer_app_callback, \
+DECLARE_CMZN_CALLBACK_TYPES(Scene_viewer_app_callback, \
 	struct Scene_viewer_app *, void *, void);
 
-DECLARE_CMISS_CALLBACK_TYPES(Scene_viewer_app_input_callback, \
+DECLARE_CMZN_CALLBACK_TYPES(Scene_viewer_app_input_callback, \
 	struct Scene_viewer_app *, struct Graphics_buffer_input *, int);
 
 struct cmzn_scene_viewer_app_module
@@ -35,7 +35,7 @@ The default data used to create cmzn_scene_viewers.
 	/* List of scene_viewers created with this package,
 		generally all scene_viewers that are not in graphics windows */
 	struct LIST(Scene_viewer_app) *scene_viewer_app_list;
-	struct LIST(CMISS_CALLBACK_ITEM(cmzn_scene_viewer_app_module_callback))
+	struct LIST(CMZN_CALLBACK_ITEM(cmzn_scene_viewer_app_module_callback))
 		*destroy_callback_list;
 };
 
@@ -53,10 +53,10 @@ struct Scene_viewer_app
 	struct Interactive_tool *interactive_tool;
 	struct MANAGER(Interactive_tool) *interactive_tool_manager;
 	/* Callbacks that are told about input (mouse clicks etc.) into the scene_viewer */
-	struct LIST(CMISS_CALLBACK_ITEM(Scene_viewer_app_input_callback)) *input_callback_list;
+	struct LIST(CMZN_CALLBACK_ITEM(Scene_viewer_app_input_callback)) *input_callback_list;
 	/* list of callbacks requested by other objects when view changes */
-	struct LIST(CMISS_CALLBACK_ITEM(Scene_viewer_app_callback)) *sync_callback_list;
-	struct LIST(CMISS_CALLBACK_ITEM(Scene_viewer_app_callback)) *transform_callback_list;
+	struct LIST(CMZN_CALLBACK_ITEM(Scene_viewer_app_callback)) *sync_callback_list;
+	struct LIST(CMZN_CALLBACK_ITEM(Scene_viewer_app_callback)) *transform_callback_list;
 
 };
 
@@ -82,7 +82,7 @@ particular scene_viewer intended.
 
 
 int Scene_viewer_app_add_sync_callback(struct Scene_viewer_app *scene_viewer,
-	CMISS_CALLBACK_FUNCTION(Scene_viewer_app_callback) *function,void *user_data);
+	CMZN_CALLBACK_FUNCTION(Scene_viewer_app_callback) *function,void *user_data);
 /*******************************************************************************
 LAST MODIFIED : 5 July 2000
 
@@ -90,7 +90,7 @@ DESCRIPTION :
 ==============================================================================*/
 
 int Scene_viewer_app_remove_sync_callback(struct Scene_viewer_app *scene_viewer,
-	CMISS_CALLBACK_FUNCTION(Scene_viewer_app_callback) *function,void *user_data);
+	CMZN_CALLBACK_FUNCTION(Scene_viewer_app_callback) *function,void *user_data);
 /*******************************************************************************
 LAST MODIFIED : 5 July 2000
 
@@ -100,7 +100,7 @@ Removes the callback calling <function> with <user_data> from
 ==============================================================================*/
 
 int Scene_viewer_app_add_transform_callback(struct Scene_viewer_app *scene_viewer,
-	CMISS_CALLBACK_FUNCTION(Scene_viewer_app_callback) *function,void *user_data);
+	CMZN_CALLBACK_FUNCTION(Scene_viewer_app_callback) *function,void *user_data);
 /*******************************************************************************
 LAST MODIFIED : 5 July 2000
 
@@ -108,7 +108,7 @@ DESCRIPTION :
 ==============================================================================*/
 
 int Scene_viewer_app_remove_transform_callback(struct Scene_viewer_app *scene_viewer,
-	CMISS_CALLBACK_FUNCTION(Scene_viewer_app_callback) *function,void *user_data);
+	CMZN_CALLBACK_FUNCTION(Scene_viewer_app_callback) *function,void *user_data);
 /*******************************************************************************
 LAST MODIFIED : 5 July 2000
 

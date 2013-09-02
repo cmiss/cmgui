@@ -190,7 +190,7 @@ Sets <path> of chosen region in the <chooser>.
 		child_name = cmzn_region_get_name(child_region);
 
 		ALLOCATE(child_path, char, strlen(current_path) + strlen(child_name) + 2);
-		sprintf(child_path, "%s%c%s", current_path, CMISS_REGION_PATH_SEPARATOR_CHAR,
+		sprintf(child_path, "%s%c%s", current_path, CMZN_REGION_PATH_SEPARATOR_CHAR,
 			child_name);
 		Append(wxString::FromAscii(child_path));
 		if (!strcmp(child_path, initial_path))

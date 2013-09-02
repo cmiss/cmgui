@@ -87,7 +87,7 @@ int set_cmzn_graphics_filter_source_data(struct Parse_state *state,
 
 enum cmzn_graphics_filter_type cmzn_graphics_filter_get_type(cmzn_graphics_filter_id graphics_filter)
 {
-	enum cmzn_graphics_filter_type filter_type = CMISS_GRAPHICS_FILTER_TYPE_INVALID;
+	enum cmzn_graphics_filter_type filter_type = CMZN_GRAPHICS_FILTER_TYPE_INVALID;
 	if (graphics_filter)
 	{
 		filter_type = graphics_filter->getType();
@@ -111,7 +111,7 @@ int gfx_define_graphics_filter_operator_or(struct Parse_state *state, void *grap
 		}
 		else
 		{
-			filter_type = CMISS_GRAPHICS_FILTER_TYPE_OPERATOR_OR;
+			filter_type = CMZN_GRAPHICS_FILTER_TYPE_OPERATOR_OR;
 		}
 		struct Option_table *option_table = CREATE(Option_table)();
 		Option_table_add_help(option_table," define an operator_or filter, multiple filters defined earlier "
@@ -121,7 +121,7 @@ int gfx_define_graphics_filter_operator_or(struct Parse_state *state, void *grap
 		Option_table_add_entry(option_table, NULL, filter_data,
 			NULL, set_cmzn_graphics_filter_source_data);
 		return_code = Option_table_multi_parse(option_table, state);
-		if (return_code && (filter_type == CMISS_GRAPHICS_FILTER_TYPE_OPERATOR_OR))
+		if (return_code && (filter_type == CMZN_GRAPHICS_FILTER_TYPE_OPERATOR_OR))
 		{
 			if (!graphics_filter)
 			{
@@ -177,7 +177,7 @@ int gfx_define_graphics_filter_operator_and(struct Parse_state *state, void *gra
 		}
 		else
 		{
-			filter_type = CMISS_GRAPHICS_FILTER_TYPE_OPERATOR_AND;
+			filter_type = CMZN_GRAPHICS_FILTER_TYPE_OPERATOR_AND;
 		}
 		struct Option_table *option_table = CREATE(Option_table)();
 		Option_table_add_help(option_table," define an operator_and filter, multiple filters defined earlier "
@@ -187,7 +187,7 @@ int gfx_define_graphics_filter_operator_and(struct Parse_state *state, void *gra
 		Option_table_add_entry(option_table, NULL, filter_data,
 			NULL, set_cmzn_graphics_filter_source_data);
 		return_code = Option_table_multi_parse(option_table, state);
-		if (return_code && (filter_type == CMISS_GRAPHICS_FILTER_TYPE_OPERATOR_AND))
+		if (return_code && (filter_type == CMZN_GRAPHICS_FILTER_TYPE_OPERATOR_AND))
 		{
 			if (!graphics_filter)
 			{
@@ -242,7 +242,7 @@ int gfx_define_graphics_filter_contents(struct Parse_state *state, void *graphic
 		match_graphic_name = NULL;
 		match_visibility_flags = 0;
 		match_region_path = NULL;
-		graphic_type = CMISS_GRAPHIC_TYPE_INVALID;
+		graphic_type = CMZN_GRAPHIC_TYPE_INVALID;
 		int inverse = 0;
 		if (graphics_filter)
 		{

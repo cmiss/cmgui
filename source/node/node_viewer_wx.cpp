@@ -328,7 +328,7 @@ after a collapsible pane is opened/closed.
 			const char *value_string = wxValueString.mb_str(wxConvUTF8);
 			if (value_string != NULL)
 			{
-				int result = !CMISS_OK;
+				int result = !CMZN_OK;
 				cmzn_field_module_id field_module = cmzn_field_get_field_module(field);
 				cmzn_field_module_begin_change(field_module);
 				cmzn_field_cache_id field_cache = cmzn_field_module_create_cache(field_module);
@@ -338,10 +338,10 @@ after a collapsible pane is opened/closed.
 				enum cmzn_field_value_type valueType = cmzn_field_get_value_type(field);
 				switch (valueType)
 				{
-				case CMISS_FIELD_VALUE_TYPE_REAL:
+				case CMZN_FIELD_VALUE_TYPE_REAL:
 					{
 						cmzn_field_id assignField = 0;
-						if ((nodal_value_type != CMISS_NODAL_VALUE) || (version != 1))
+						if ((nodal_value_type != CMZN_NODAL_VALUE) || (version != 1))
 						{
 							assignField = cmzn_field_module_create_node_value(field_module, field, nodal_value_type, version);
 						}
@@ -351,7 +351,7 @@ after a collapsible pane is opened/closed.
 						}
 						const int numberOfComponents = cmzn_field_get_number_of_components(field);
 						double *values = new double[numberOfComponents];
-						if (CMISS_OK == cmzn_field_evaluate_real(assignField, field_cache, numberOfComponents, values))
+						if (CMZN_OK == cmzn_field_evaluate_real(assignField, field_cache, numberOfComponents, values))
 						{
 							sscanf(value_string, FE_VALUE_INPUT_STRING, &values[component_number - 1]);
 							result = cmzn_field_assign_real(field, field_cache, numberOfComponents, values);
@@ -359,7 +359,7 @@ after a collapsible pane is opened/closed.
 						delete[] values;
 						cmzn_field_destroy(&assignField);
 					} break;
-				case CMISS_FIELD_VALUE_TYPE_STRING:
+				case CMZN_FIELD_VALUE_TYPE_STRING:
 					{
 						result = cmzn_field_assign_string(field, field_cache, value_string);
 					} break;
@@ -371,7 +371,7 @@ after a collapsible pane is opened/closed.
 				cmzn_field_module_end_change(field_module);
 				cmzn_field_module_destroy(&field_module);
 
-				if (result != CMISS_OK)
+				if (result != CMZN_OK)
 				{
 					display_message(ERROR_MESSAGE, "Cannot set this field's value");
 				}
@@ -568,7 +568,7 @@ int Node_viewer_update_collpane(struct Node_viewer *node_viewer)
 		{
 			if (!node_viewer->time_notifier_callback)
 			{
-				if (CMISS_OK == cmzn_time_notifier_add_callback(node_viewer->time_notifier,
+				if (CMZN_OK == cmzn_time_notifier_add_callback(node_viewer->time_notifier,
 					node_field_time_change_callback, (void *)node_viewer))
 				{
 					node_viewer->time_notifier_callback = 1;
@@ -691,7 +691,7 @@ struct Node_viewer *Node_viewer_create(
 			node_viewer->node_viewer_address = node_viewer_address;
 			node_viewer->domain_type = domain_type;
 			node_viewer->fe_region = cmzn_region_get_FE_region(root_region);
-			if (domain_type == CMISS_FIELD_DOMAIN_DATA)
+			if (domain_type == CMZN_FIELD_DOMAIN_DATA)
 			{
 				node_viewer->fe_region = FE_region_get_data_FE_region(node_viewer->fe_region);
 			}
@@ -908,7 +908,7 @@ char *node_viewer_get_component_value_string(Node_viewer *node_viewer, cmzn_fiel
 			// must be numeric
 			cmzn_field_module_begin_change(field_module);
 			cmzn_field_id useField = 0;
-			if ((nodal_value_type != CMISS_NODAL_VALUE) || (version != 1))
+			if ((nodal_value_type != CMZN_NODAL_VALUE) || (version != 1))
 			{
 				useField = cmzn_field_module_create_node_value(field_module, field, nodal_value_type, version);
 			}
@@ -918,7 +918,7 @@ char *node_viewer_get_component_value_string(Node_viewer *node_viewer, cmzn_fiel
 			}
 			const int numberOfComponents = cmzn_field_get_number_of_components(field);
 			double *values = new double[numberOfComponents];
-			if (CMISS_OK == cmzn_field_evaluate_real(useField, field_cache, numberOfComponents, values))
+			if (CMZN_OK == cmzn_field_evaluate_real(useField, field_cache, numberOfComponents, values))
 			{
 				char temp_string[VALUE_STRING_SIZE];
 				sprintf(temp_string, FE_VALUE_INPUT_STRING, values[component_number-1]);
@@ -988,14 +988,14 @@ static int node_viewer_setup_components(
 	};
 	const cmzn_nodal_value_type_label all_nodal_value_types[] =
 	{
-		{ CMISS_NODAL_VALUE, "value" },
-		{ CMISS_NODAL_D_DS1, "d/ds1" },
-		{ CMISS_NODAL_D_DS2, "d/ds2" },
-		{ CMISS_NODAL_D_DS3, "d/ds3" },
-		{ CMISS_NODAL_D2_DS1DS2, "d2/ds1ds2" },
-		{ CMISS_NODAL_D2_DS1DS3, "d2/ds1ds3" },
-		{ CMISS_NODAL_D2_DS2DS3, "d2/ds2ds3" },
-		{ CMISS_NODAL_D3_DS1DS2DS3, "d3/ds1ds2ds3" }
+		{ CMZN_NODAL_VALUE, "value" },
+		{ CMZN_NODAL_D_DS1, "d/ds1" },
+		{ CMZN_NODAL_D_DS2, "d/ds2" },
+		{ CMZN_NODAL_D_DS3, "d/ds3" },
+		{ CMZN_NODAL_D2_DS1DS2, "d2/ds1ds2" },
+		{ CMZN_NODAL_D2_DS1DS3, "d2/ds1ds3" },
+		{ CMZN_NODAL_D2_DS2DS3, "d2/ds2ds3" },
+		{ CMZN_NODAL_D3_DS1DS2DS3, "d3/ds1ds2ds3" }
 	};
 	const int all_nodal_value_types_count = sizeof(all_nodal_value_types) / sizeof(cmzn_nodal_value_type_label);
 	int return_code = 0;
@@ -1008,7 +1008,7 @@ static int node_viewer_setup_components(
 		cmzn_node_template_id nodeTemplate = 0;
 		enum cmzn_nodal_value_type nodal_value_types[8];
 		const char *nodal_value_labels[8];
-		nodal_value_types[0] = CMISS_NODAL_VALUE;
+		nodal_value_types[0] = CMZN_NODAL_VALUE;
 		nodal_value_labels[0] = "value";
 		int number_of_nodal_value_types = 1;
 		if (feField)
@@ -1106,7 +1106,7 @@ in this region only.
 			{
 				node_viewer->fe_region = cmzn_region_get_FE_region(region);
 
-				if (node_viewer->domain_type = CMISS_FIELD_DOMAIN_DATA)
+				if (node_viewer->domain_type = CMZN_FIELD_DOMAIN_DATA)
 				{
 					node_viewer->fe_region = FE_region_get_data_FE_region(
 						node_viewer->fe_region);

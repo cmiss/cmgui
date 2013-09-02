@@ -215,13 +215,13 @@ struct User_interface_module *User_interface_module_create(
 				UI_module->interactive_tool_manager);
 			UI_module->node_tool=CREATE(Node_tool)(
 				UI_module->interactive_tool_manager,
-				root_region, CMISS_FIELD_DOMAIN_NODES,
+				root_region, CMZN_FIELD_DOMAIN_NODES,
 				defaultMaterial,
 				UI_module->user_interface,
 				UI_module->default_time_keeper_app);
 			UI_module->data_tool=CREATE(Node_tool)(
 				UI_module->interactive_tool_manager,
-				root_region, CMISS_FIELD_DOMAIN_DATA,
+				root_region, CMZN_FIELD_DOMAIN_DATA,
 				defaultMaterial,
 				UI_module->user_interface,
 				UI_module->default_time_keeper_app);

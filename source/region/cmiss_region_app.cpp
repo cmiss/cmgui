@@ -247,7 +247,7 @@ static int set_region_path_and_or_field_name(struct Parse_state *state,
 			&name_data->region, &name_data->region_path, &name_data->name))
 		{
 			ACCESS(cmzn_region)(name_data->region);
-			if (!name_data->name || (NULL == strchr(name_data->name, CMISS_REGION_PATH_SEPARATOR_CHAR)))
+			if (!name_data->name || (NULL == strchr(name_data->name, CMZN_REGION_PATH_SEPARATOR_CHAR)))
 			{
 				return_code = shift_Parse_state(state, 1);
 			}

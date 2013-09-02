@@ -101,7 +101,7 @@ Executes a GFX DEFINE FONT command.
 						{
 							STRING_TO_ENUMERATOR(cmzn_font_render_type)(render_type_string,
 								&render_type);
-							if (CMISS_FONT_RENDER_TYPE_INVALID == render_type)
+							if (CMZN_FONT_RENDER_TYPE_INVALID == render_type)
 							{
 								display_message(ERROR_MESSAGE,
 									"gfx_define_font:  Invalid font type %s", render_type_string);
@@ -118,7 +118,7 @@ Executes a GFX DEFINE FONT command.
 						{
 							STRING_TO_ENUMERATOR(cmzn_font_type)(font_type_string,
 								&font_type);
-							if (CMISS_FONT_TYPE_INVALID == font_type)
+							if (CMZN_FONT_TYPE_INVALID == font_type)
 							{
 								display_message(ERROR_MESSAGE,
 									"gfx_define_font:  Invalid true type %s", font_type_string);

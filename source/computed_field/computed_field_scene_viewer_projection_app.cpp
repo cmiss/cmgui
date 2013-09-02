@@ -135,8 +135,8 @@ already) and allows its contents to be modified.
 		/* get valid parameters for projection field */
 		pane_number = 1;
 		graphics_window = (struct Graphics_window *)NULL;
-		cmzn_scene_coordinate_system from_coordinate_system = CMISS_SCENE_COORDINATE_SYSTEM_INVALID;
-		cmzn_scene_coordinate_system to_coordinate_system = CMISS_SCENE_COORDINATE_SYSTEM_INVALID;
+		cmzn_scene_coordinate_system from_coordinate_system = CMZN_SCENE_COORDINATE_SYSTEM_INVALID;
+		cmzn_scene_coordinate_system to_coordinate_system = CMZN_SCENE_COORDINATE_SYSTEM_INVALID;
 		if ((NULL != field_modify->get_field()) &&
 			(computed_field_scene_viewer_projection_type_string == Computed_field_get_type_string(field_modify->get_field())))
 		{
@@ -199,7 +199,7 @@ already) and allows its contents to be modified.
 				{
 					STRING_TO_ENUMERATOR(cmzn_scene_coordinate_system)(from_coordinate_system_string,
 						&from_coordinate_system);
-					if (CMISS_SCENE_COORDINATE_SYSTEM_INVALID == from_coordinate_system)
+					if (CMZN_SCENE_COORDINATE_SYSTEM_INVALID == from_coordinate_system)
 					{
 						display_message(ERROR_MESSAGE,
 							"gfx define field ~ window_projection:  Invalid coordinate system %s", from_coordinate_system_string);
@@ -216,7 +216,7 @@ already) and allows its contents to be modified.
 				{
 					STRING_TO_ENUMERATOR(cmzn_scene_coordinate_system)(to_coordinate_system_string,
 						&to_coordinate_system);
-					if (CMISS_SCENE_COORDINATE_SYSTEM_INVALID == to_coordinate_system)
+					if (CMZN_SCENE_COORDINATE_SYSTEM_INVALID == to_coordinate_system)
 					{
 						display_message(ERROR_MESSAGE,
 							"gfx define field ~ window_projection:  Invalid coordinate system %s", to_coordinate_system_string);

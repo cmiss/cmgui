@@ -507,7 +507,7 @@ options for the various types.
 					{
 						cmzn_field_module *field_module = cmzn_field_module_create(region);
 						if (field_name && (strlen(field_name) > 0) &&
-							(strchr(field_name, CMISS_REGION_PATH_SEPARATOR_CHAR)	== NULL))
+							(strchr(field_name, CMZN_REGION_PATH_SEPARATOR_CHAR)	== NULL))
 						{
 							shift_Parse_state(state,1);
 							cmzn_field_module_set_field_name(field_module, field_name);
@@ -567,7 +567,7 @@ options for the various types.
 					Computed_field_modify_data field_modify(field_module);
 					help_option_table = CREATE(Option_table)();
 					Option_table_add_entry(help_option_table,
-						"[REGION_PATH" CMISS_REGION_PATH_SEPARATOR_STRING "]FIELD_NAME",
+						"[REGION_PATH" CMZN_REGION_PATH_SEPARATOR_STRING "]FIELD_NAME",
 						(void *)&field_modify, computed_field_package_void,
 						define_Computed_field_coordinate_system);
 					return_code=Option_table_parse(help_option_table,state);

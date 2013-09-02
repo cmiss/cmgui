@@ -2722,7 +2722,7 @@ DESCRIPTION :
 			number_of_nodes = new_value;
 			cmzn_field_module_id field_module = cmzn_region_get_field_module(emoter_dialog->shared->region);
 			cmzn_field_module_begin_change(field_module);
-			cmzn_nodeset_id master_nodeset = cmzn_field_module_find_nodeset_by_domain_type(field_module, CMISS_FIELD_DOMAIN_NODES);
+			cmzn_nodeset_id master_nodeset = cmzn_field_module_find_nodeset_by_domain_type(field_module, CMZN_FIELD_DOMAIN_NODES);
 			if (emoter_dialog->minimum_nodeset_group)
 			{
 				cmzn_nodeset_group_remove_all_nodes(emoter_dialog->minimum_nodeset_group);

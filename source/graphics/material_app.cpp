@@ -173,7 +173,7 @@ int set_Material_image_texture(struct Parse_state *state,void *material_image_te
 						{
 							cmzn_field_module *field_module = cmzn_region_get_field_module(region);
 							if (field_name && (strlen(field_name) > 0) &&
-								(strchr(field_name, CMISS_REGION_PATH_SEPARATOR_CHAR)	== NULL))
+								(strchr(field_name, CMZN_REGION_PATH_SEPARATOR_CHAR)	== NULL))
 							{
 								temp_field = cmzn_field_module_find_field_by_name(field_module,
 									field_name);

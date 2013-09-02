@@ -55,7 +55,6 @@ Commands for comfiles.
 #include "comfile/comfile.h"
 #if defined (WX_USER_INTERFACE)
 #include "comfile/comfile_window_wx.h"
-#include "command/cmiss.h"
 #endif /* WX_USER_INTERFACE */
 #include "command/command.h"
 #include "general/mystring.h"

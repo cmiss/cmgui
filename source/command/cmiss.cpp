@@ -443,7 +443,7 @@ to change the interactive tool settings.
  * @param filename_address  Pointer to filename from which drive letter
  * and path are extracted, and replaced with filename only.
  */
-void CMISS_set_directory_and_filename_WIN32(char **filename_address,
+void CMZN_set_directory_and_filename_WIN32(char **filename_address,
 	struct cmzn_command_data *command_data)
 {
 	if ((!filename_address) || (!(*filename_address)) || (!command_data))
@@ -1019,7 +1019,7 @@ static int process_modify_element_group(cmzn_field_group_id group,
 		cmzn_nodeset_group_id remove_nodeset_group = 0;
 		if (manage_nodes)
 		{
-			cmzn_nodeset_id master_nodeset = cmzn_field_module_find_nodeset_by_domain_type(field_module, CMISS_FIELD_DOMAIN_NODES);
+			cmzn_nodeset_id master_nodeset = cmzn_field_module_find_nodeset_by_domain_type(field_module, CMZN_FIELD_DOMAIN_NODES);
 			cmzn_field_node_group_id modify_node_group = cmzn_field_group_get_node_group(group, master_nodeset);
 			if ((!modify_node_group) && add_flag)
 				modify_node_group = cmzn_field_group_create_node_group(group, master_nodeset);
@@ -1325,7 +1325,7 @@ static int gfx_create_group(struct Parse_state *state,
 							case 2: // data
 							{
 								cmzn_nodeset_id master_nodeset = cmzn_field_module_find_nodeset_by_domain_type(field_module,
-									(object_type == 1) ? CMISS_FIELD_DOMAIN_NODES : CMISS_FIELD_DOMAIN_DATA);
+									(object_type == 1) ? CMZN_FIELD_DOMAIN_NODES : CMZN_FIELD_DOMAIN_DATA);
 								cmzn_field_node_group_id node_group = cmzn_field_group_create_node_group(group, master_nodeset);
 								cmzn_nodeset_group_id modify_nodeset_group = cmzn_field_node_group_get_nodeset(node_group);
 								cmzn_node_iterator_id iter = cmzn_nodeset_create_node_iterator(master_nodeset);
@@ -2276,7 +2276,7 @@ Executes a GFX CREATE NODE_VIEWER command.
 					if (NULL != (command_data->node_viewer = Node_viewer_create(
 						&(command_data->node_viewer),
 						"Node Viewer",
-						command_data->root_region, CMISS_FIELD_DOMAIN_NODES,
+						command_data->root_region, CMZN_FIELD_DOMAIN_NODES,
 						command_data->graphics_module,
 						command_data->default_time_keeper_app)))
 					{
@@ -2353,7 +2353,7 @@ Executes a GFX CREATE DATA_VIEWER command.
 					if (NULL != (command_data->node_viewer = Node_viewer_create(
 						&(command_data->node_viewer),
 						"Data Viewer",
-						command_data->root_region, CMISS_FIELD_DOMAIN_DATA,
+						command_data->root_region, CMZN_FIELD_DOMAIN_DATA,
 						command_data->graphics_module,
 						command_data->default_time_keeper_app)))
 					{
@@ -2700,7 +2700,7 @@ Executes a GFX CREATE SNAKE command.
 				cmzn_mesh_group_id mesh_group = 0;
 				if (group)
 				{
-					cmzn_nodeset_id master_nodeset = cmzn_field_module_find_nodeset_by_domain_type(field_module, CMISS_FIELD_DOMAIN_NODES);
+					cmzn_nodeset_id master_nodeset = cmzn_field_module_find_nodeset_by_domain_type(field_module, CMZN_FIELD_DOMAIN_NODES);
 					cmzn_field_node_group_id node_group = cmzn_field_group_get_node_group(group, master_nodeset);
 					if (!node_group)
 						node_group = cmzn_field_group_create_node_group(group, master_nodeset);
@@ -3713,7 +3713,7 @@ Modifies the properties of a texture.
 							current_token, &region, &region_path, &field_name))
 						{
 							if (field_name && (strlen(field_name) > 0) &&
-								(strchr(field_name, CMISS_REGION_PATH_SEPARATOR_CHAR)	== NULL))
+								(strchr(field_name, CMZN_REGION_PATH_SEPARATOR_CHAR)	== NULL))
 							{
 								field_manager = cmzn_region_get_Computed_field_manager(region);
 								Computed_field *existing_field =
@@ -4405,7 +4405,7 @@ Executes a GFX CREATE TEXTURE command.
 					{
 						cmzn_field_module *field_module = cmzn_region_get_field_module(region);
 						if (field_name && (strlen(field_name) > 0) &&
-							(strchr(field_name, CMISS_REGION_PATH_SEPARATOR_CHAR)	== NULL))
+							(strchr(field_name, CMZN_REGION_PATH_SEPARATOR_CHAR)	== NULL))
 						{
 							Computed_field *existing_field =
 								FIND_BY_IDENTIFIER_IN_MANAGER(Computed_field,name)(
@@ -4720,14 +4720,14 @@ Executes a GFX CREATE WINDOW command.
 							cmzn_graphics_material_module_get_default_material(command_data->material_module);
 						Node_tool_set_execute_command(CREATE(Node_tool)(
 								interactive_tool_manager,
-								command_data->root_region, CMISS_FIELD_DOMAIN_NODES,
+								command_data->root_region, CMZN_FIELD_DOMAIN_NODES,
 								defaultMaterial,
 								command_data->user_interface,
 								command_data->default_time_keeper_app),
 								command_data->execute_command);
 						Node_tool_set_execute_command(CREATE(Node_tool)(
 								interactive_tool_manager,
-								command_data->root_region, CMISS_FIELD_DOMAIN_DATA,
+								command_data->root_region, CMZN_FIELD_DOMAIN_DATA,
 								defaultMaterial,
 								command_data->user_interface,
 								command_data->default_time_keeper_app),
@@ -8066,15 +8066,15 @@ static struct cmzn_spectrum_component *create_spectrum_component( cmzn_spectrum_
 {
 	int component = 1;
 	struct cmzn_spectrum_component *settings = CREATE(cmzn_spectrum_component)();
-	cmzn_spectrum_component_set_scale_type(settings, CMISS_SPECTRUM_COMPONENT_SCALE_LINEAR);
+	cmzn_spectrum_component_set_scale_type(settings, CMZN_SPECTRUM_COMPONENT_SCALE_LINEAR);
 	cmzn_spectrum_component_set_colour_mapping(settings, colour);
 	cmzn_spectrum_component_set_extend_above(settings, true);
 	cmzn_spectrum_component_set_extend_below_flag(settings, true);
 	cmzn_spectrum_component_set_colour_reverse(settings, false);
 
-	if ( colour == CMISS_SPECTRUM_COMPONENT_COLOUR_MAPPING_RED )
+	if ( colour == CMZN_SPECTRUM_COMPONENT_COLOUR_MAPPING_RED )
 		component = 1;
-	else if ( colour == CMISS_SPECTRUM_COMPONENT_COLOUR_MAPPING_GREEN )
+	else if ( colour == CMZN_SPECTRUM_COMPONENT_COLOUR_MAPPING_GREEN )
 		component = 2;
 	else
 		component = 3;
@@ -8102,15 +8102,15 @@ static int create_RGB_spectrum( struct Spectrum **spectrum, void *command_data_v
 		{
 			REMOVE_ALL_OBJECTS_FROM_LIST(cmzn_spectrum_component)(spectrum_settings_list);
 		}
-		red_settings = create_spectrum_component( CMISS_SPECTRUM_COMPONENT_COLOUR_MAPPING_RED );
+		red_settings = create_spectrum_component( CMZN_SPECTRUM_COMPONENT_COLOUR_MAPPING_RED );
 		cmzn_spectrum_component_add( red_settings, /* end of list = 0 */0,
 			spectrum_settings_list );
 
-		green_settings = create_spectrum_component( CMISS_SPECTRUM_COMPONENT_COLOUR_MAPPING_GREEN );
+		green_settings = create_spectrum_component( CMZN_SPECTRUM_COMPONENT_COLOUR_MAPPING_GREEN );
 		cmzn_spectrum_component_add( green_settings, /* end of list = 0 */0,
 			spectrum_settings_list );
 
-		blue_settings = create_spectrum_component( CMISS_SPECTRUM_COMPONENT_COLOUR_MAPPING_BLUE );
+		blue_settings = create_spectrum_component( CMZN_SPECTRUM_COMPONENT_COLOUR_MAPPING_BLUE );
 		cmzn_spectrum_component_add( blue_settings, /* end of list = 0 */0,
 			spectrum_settings_list );
 
@@ -8747,7 +8747,7 @@ int gfx_evaluate(struct Parse_state *state, void *dummy_to_be_modified,
 						if (node_region_path || data_region_path)
 						{
 							cmzn_nodeset_id nodeset = cmzn_field_module_find_nodeset_by_domain_type(
-								field_module, node_region_path ? CMISS_FIELD_DOMAIN_NODES : CMISS_FIELD_DOMAIN_DATA);
+								field_module, node_region_path ? CMZN_FIELD_DOMAIN_NODES : CMZN_FIELD_DOMAIN_DATA);
 							if (group)
 							{
 								cmzn_field_node_group_id node_group = cmzn_field_group_get_node_group(group, nodeset);
@@ -9077,7 +9077,7 @@ Executes a GFX LIST FIELD.
 					path_length = strlen(region_path_and_name.region_path);
 					if (path_length > 0)
 					{
-						path_length += strlen(CMISS_REGION_PATH_SEPARATOR_STRING);
+						path_length += strlen(CMZN_REGION_PATH_SEPARATOR_STRING);
 					}
 				}
 				else
@@ -9093,7 +9093,7 @@ Executes a GFX LIST FIELD.
 						if (path_length > 0)
 						{
 							strcat(command_prefix_plus_region_path,region_path_and_name.region_path);
-							strcat(command_prefix_plus_region_path,CMISS_REGION_PATH_SEPARATOR_STRING);
+							strcat(command_prefix_plus_region_path,CMZN_REGION_PATH_SEPARATOR_STRING);
 						}
 					}
 					if (field)
@@ -9409,7 +9409,7 @@ use node_manager and node_selection.
 		{
 			cmzn_field_module_id field_module = cmzn_region_get_field_module(region);
 			cmzn_nodeset_id master_nodeset = cmzn_field_module_find_nodeset_by_domain_type(field_module,
-				use_data ? CMISS_FIELD_DOMAIN_DATA : CMISS_FIELD_DOMAIN_NODES);
+				use_data ? CMZN_FIELD_DOMAIN_DATA : CMZN_FIELD_DOMAIN_NODES);
 			cmzn_nodeset_group_id selection_nodeset_group = 0;
 			if (selected_flag)
 			{
@@ -9680,7 +9680,7 @@ Executes a GFX LIST REGION command.
 			{
 				region = root_region;
 				display_message(INFORMATION_MESSAGE,
-					"Region " CMISS_REGION_PATH_SEPARATOR_STRING ":\n");
+					"Region " CMZN_REGION_PATH_SEPARATOR_STRING ":\n");
 			}
 			if (return_code)
 			{
@@ -11011,7 +11011,7 @@ static int gfx_modify_field(struct Parse_state *state,
 				/* Write out the help */
 				Option_table *help_option_table = CREATE(Option_table)();
 				Option_table_add_entry(help_option_table,
-					"[REGION_PATH" CMISS_REGION_PATH_SEPARATOR_STRING "]FIELD_NAME",
+					"[REGION_PATH" CMZN_REGION_PATH_SEPARATOR_STRING "]FIELD_NAME",
 					(void *)NULL, (void *)command_data->root_region, gfx_modify_field_subcommands);
 				return_code = Option_table_parse(help_option_table,state);
 				DESTROY(Option_table)(&help_option_table);
@@ -11325,7 +11325,7 @@ static int gfx_modify_node_group(struct Parse_state *state,
 			{
 				cmzn_field_module_id field_module = cmzn_region_get_field_module(region);
 				cmzn_nodeset_id master_nodeset = cmzn_field_module_find_nodeset_by_domain_type(field_module,
-					use_data ? CMISS_FIELD_DOMAIN_DATA : CMISS_FIELD_DOMAIN_NODES);
+					use_data ? CMZN_FIELD_DOMAIN_DATA : CMZN_FIELD_DOMAIN_NODES);
 				cmzn_nodeset_group_id selection_nodeset_group = 0;
 				if (selected_flag)
 				{
@@ -11509,7 +11509,7 @@ static int set_cmzn_nodal_derivatives(struct Parse_state *state,
 				// stop when derivatives not recognised
 				enum cmzn_nodal_value_type nodal_value_type =
 					cmzn_nodal_value_type_enum_from_string(state->current_token);
-				if (nodal_value_type != CMISS_NODAL_VALUE_TYPE_INVALID)
+				if (nodal_value_type != CMZN_NODAL_VALUE_TYPE_INVALID)
 				{
 					enum cmzn_nodal_value_type *temp;
 					if (REALLOCATE(temp, derivatives_data->derivatives, enum cmzn_nodal_value_type,
@@ -11671,7 +11671,7 @@ static int gfx_modify_nodes(struct Parse_state *state,
 				return_code = 0;
 			}
 			cmzn_nodeset_id nodeset = cmzn_field_module_find_nodeset_by_domain_type(field_module,
-				use_data ? CMISS_FIELD_DOMAIN_DATA : CMISS_FIELD_DOMAIN_NODES);
+				use_data ? CMZN_FIELD_DOMAIN_DATA : CMZN_FIELD_DOMAIN_NODES);
 			cmzn_node_template_id node_template = cmzn_nodeset_create_node_template(nodeset);
 			if (define_field_name)
 			{
@@ -12208,7 +12208,7 @@ instruction to read in the mesh.
 #if defined (WX_USER_INTERFACE) && defined (WIN32_SYSTEM)
 			if (file_name)
 			{
-				 CMISS_set_directory_and_filename_WIN32(&file_name, command_data);
+				 CMZN_set_directory_and_filename_WIN32(&file_name, command_data);
 			}
 #endif /* defined (WIN32_SYSTEM)*/
 				if (return_code)
@@ -12395,7 +12395,7 @@ user, otherwise the elements file is read.
 #if defined (WX_USER_INTERFACE) && defined (WIN32_SYSTEM)
 			if (file_name)
 			{
-				 CMISS_set_directory_and_filename_WIN32(&file_name, command_data);
+				 CMZN_set_directory_and_filename_WIN32(&file_name, command_data);
 			}
 #endif /* defined (WIN32_SYSTEM)*/
 
@@ -12603,7 +12603,7 @@ If the <use_data> flag is set, then read data, otherwise nodes.
 #if defined (WX_USER_INTERFACE) && defined (WIN32_SYSTEM)
 			if (file_name)
 			{
-				 CMISS_set_directory_and_filename_WIN32(&file_name, command_data);
+				 CMZN_set_directory_and_filename_WIN32(&file_name, command_data);
 			}
 #endif /* defined (WIN32_SYSTEM)*/
 					/* open the file */
@@ -12941,7 +12941,7 @@ static int gfx_read_wavefront_obj(struct Parse_state *state,
 			Option_table_add_entry(option_table,"as",&specified_graphics_object_name,
 				(void *)1,set_name);
 			/* render_polygon_mode */
-			render_polygon_mode = CMISS_GRAPHIC_RENDER_POLYGON_SHADED;
+			render_polygon_mode = CMZN_GRAPHIC_RENDER_POLYGON_SHADED;
 			render_polygon_mode_string = ENUMERATOR_STRING(cmzn_graphic_render_polygon_mode)(render_polygon_mode);
 			valid_strings = ENUMERATOR_GET_VALID_STRINGS(cmzn_graphic_render_polygon_mode)(
 				&number_of_valid_strings,
@@ -15020,11 +15020,11 @@ Can also write individual groups with the <group> option.
 #if defined (WX_USER_INTERFACE) && defined (WIN32_SYSTEM)
 					if (com_file_name)
 					{
-						CMISS_set_directory_and_filename_WIN32(&com_file_name, command_data);
+						CMZN_set_directory_and_filename_WIN32(&com_file_name, command_data);
 					}
 					if (exfile_name)
 					{
-						CMISS_set_directory_and_filename_WIN32(&exfile_name, command_data);
+						CMZN_set_directory_and_filename_WIN32(&exfile_name, command_data);
 					}
 #endif /* defined (WX_USER_INTERFACE) && defined (WIN32_SYSTEM) */
 				}
@@ -15072,8 +15072,8 @@ Can also write individual groups with the <group> option.
 				 {
 						if (!(exfile_return_code = write_exregion_file_of_name(temp_exfile,
 							region, group, root_region,
-							/*write_elements*/CMISS_FIELD_DOMAIN_MESH_1D|CMISS_FIELD_DOMAIN_MESH_2D|
-							CMISS_FIELD_DOMAIN_MESH_3D|CMISS_FIELD_DOMAIN_MESH_HIGHEST_DIMENSION,
+							/*write_elements*/CMZN_FIELD_DOMAIN_MESH_1D|CMZN_FIELD_DOMAIN_MESH_2D|
+							CMZN_FIELD_DOMAIN_MESH_3D|CMZN_FIELD_DOMAIN_MESH_HIGHEST_DIMENSION,
 							/*write_nodes*/1, /*write_data*/1,
 							write_fields_mode, field_names.number_of_strings, field_names.strings,
 							time, write_criterion, write_recursion)))
@@ -15465,7 +15465,7 @@ Can also write individual element groups with the <group> option.
 #if defined (WX_USER_INTERFACE) && defined (WIN32_SYSTEM)
 				if (file_name)
 				{
-					CMISS_set_directory_and_filename_WIN32(&file_name, command_data);
+					CMZN_set_directory_and_filename_WIN32(&file_name, command_data);
 				}
 #endif /* defined (WX_USER_INTERFACE) && (WIN32_SYSTEM) */
 			}
@@ -15475,8 +15475,8 @@ Can also write individual element groups with the <group> option.
 				if (0 != (return_code = check_suffix(&file_name, ".exelem")))
 				{
 					return_code = write_exregion_file_of_name(file_name, region, group, root_region,
-						/*write_elements*/CMISS_FIELD_DOMAIN_MESH_1D|CMISS_FIELD_DOMAIN_MESH_2D|
-						CMISS_FIELD_DOMAIN_MESH_3D|CMISS_FIELD_DOMAIN_MESH_HIGHEST_DIMENSION,
+						/*write_elements*/CMZN_FIELD_DOMAIN_MESH_1D|CMZN_FIELD_DOMAIN_MESH_2D|
+						CMZN_FIELD_DOMAIN_MESH_3D|CMZN_FIELD_DOMAIN_MESH_HIGHEST_DIMENSION,
 						(int)nodes_flag, /*write_data*/(int)data_flag,
 						write_fields_mode, field_names.number_of_strings, field_names.strings,
 						time, write_criterion, write_recursion);
@@ -15654,7 +15654,7 @@ If <use_data> is set, writing data, otherwise writing nodes.
 #if defined (WX_USER_INTERFACE) && defined (WIN32_SYSTEM)
 				if (file_name)
 				{
-					 CMISS_set_directory_and_filename_WIN32(&file_name, command_data);
+					 CMZN_set_directory_and_filename_WIN32(&file_name, command_data);
 				}
 #endif /* defined (WX_USER_INTERFACE) && defined (WIN32_SYSTEM) */
 			}
@@ -15743,7 +15743,7 @@ Executes a GFX WRITE TEXTURE command.
 						cmzn_field_module *field_module = cmzn_region_get_field_module(region);
 						return_code=1;
 						if (field_name && (strlen(field_name) > 0) &&
-							(strchr(field_name, CMISS_REGION_PATH_SEPARATOR_CHAR)	== NULL))
+							(strchr(field_name, CMZN_REGION_PATH_SEPARATOR_CHAR)	== NULL))
 						{
 							struct Computed_field *temp_field =
 								cmzn_field_module_find_field_by_name(field_module, field_name);
@@ -17039,7 +17039,7 @@ int cmiss_set_command(const char *command_string,void *command_data_void)
 LAST MODIFIED : 17 May 2003
 
 DESCRIPTION:
-Sets the <command_string> in the command box of the CMISS command_window, ready
+Sets the <command_string> in the command box of the CMZN command_window, ready
 for editing and entering. If there is no command_window, does nothing.
 ==============================================================================*/
 {
@@ -17764,7 +17764,7 @@ Initialise all the subcomponents of cmgui and create the cmzn_command_data
 		{
 			command_data->examples_directory = examples_directory;
 		}
-		else if (NULL != (examples_environment = getenv("CMISS_EXAMPLES")))
+		else if (NULL != (examples_environment = getenv("CMZN_EXAMPLES")))
 		{
 			command_data->examples_directory = duplicate_string(examples_environment);
 		}
@@ -17847,34 +17847,34 @@ Initialise all the subcomponents of cmgui and create the cmzn_command_data
 			cmzn_graphics_material_set_name(material, "gray50");
 			double material_colour[3] = { 0.50, 0.50, 0.50};
 			cmzn_graphics_material_set_attribute_real3(material,
-				CMISS_GRAPHICS_MATERIAL_ATTRIBUTE_AMBIENT, &material_colour[0]);
+				CMZN_GRAPHICS_MATERIAL_ATTRIBUTE_AMBIENT, &material_colour[0]);
 			cmzn_graphics_material_set_attribute_real3(material,
-				CMISS_GRAPHICS_MATERIAL_ATTRIBUTE_DIFFUSE, &material_colour[0]);
+				CMZN_GRAPHICS_MATERIAL_ATTRIBUTE_DIFFUSE, &material_colour[0]);
 			cmzn_graphics_material_set_attribute_real3(material,
-				CMISS_GRAPHICS_MATERIAL_ATTRIBUTE_EMISSION, &material_colour[0]);
+				CMZN_GRAPHICS_MATERIAL_ATTRIBUTE_EMISSION, &material_colour[0]);
 			cmzn_graphics_material_set_attribute_real3(material,
-				CMISS_GRAPHICS_MATERIAL_ATTRIBUTE_SPECULAR, &material_colour[0]);
+				CMZN_GRAPHICS_MATERIAL_ATTRIBUTE_SPECULAR, &material_colour[0]);
 			cmzn_graphics_material_set_attribute_real(material,
-				CMISS_GRAPHICS_MATERIAL_ATTRIBUTE_ALPHA, 1.0);
+				CMZN_GRAPHICS_MATERIAL_ATTRIBUTE_ALPHA, 1.0);
 			cmzn_graphics_material_set_attribute_real(material,
-				CMISS_GRAPHICS_MATERIAL_ATTRIBUTE_SHININESS, 0.2);
+				CMZN_GRAPHICS_MATERIAL_ATTRIBUTE_SHININESS, 0.2);
 			cmzn_graphics_material_set_managed(material, true);
 			cmzn_graphics_material_destroy(&material);
 			material = cmzn_graphics_material_module_create_material(
 				command_data->material_module);
 			cmzn_graphics_material_set_name(material, "transparent_gray50");
 			cmzn_graphics_material_set_attribute_real3(material,
-				CMISS_GRAPHICS_MATERIAL_ATTRIBUTE_AMBIENT, &material_colour[0]);
+				CMZN_GRAPHICS_MATERIAL_ATTRIBUTE_AMBIENT, &material_colour[0]);
 			cmzn_graphics_material_set_attribute_real3(material,
-				CMISS_GRAPHICS_MATERIAL_ATTRIBUTE_DIFFUSE, &material_colour[0]);
+				CMZN_GRAPHICS_MATERIAL_ATTRIBUTE_DIFFUSE, &material_colour[0]);
 			cmzn_graphics_material_set_attribute_real3(material,
-				CMISS_GRAPHICS_MATERIAL_ATTRIBUTE_EMISSION, &material_colour[0]);
+				CMZN_GRAPHICS_MATERIAL_ATTRIBUTE_EMISSION, &material_colour[0]);
 			cmzn_graphics_material_set_attribute_real3(material,
-				CMISS_GRAPHICS_MATERIAL_ATTRIBUTE_SPECULAR, &material_colour[0]);
+				CMZN_GRAPHICS_MATERIAL_ATTRIBUTE_SPECULAR, &material_colour[0]);
 			cmzn_graphics_material_set_attribute_real(material,
-				CMISS_GRAPHICS_MATERIAL_ATTRIBUTE_ALPHA, 0.0);
+				CMZN_GRAPHICS_MATERIAL_ATTRIBUTE_ALPHA, 0.0);
 			cmzn_graphics_material_set_attribute_real(material,
-				CMISS_GRAPHICS_MATERIAL_ATTRIBUTE_SHININESS, 0.2);
+				CMZN_GRAPHICS_MATERIAL_ATTRIBUTE_SHININESS, 0.2);
 			cmzn_graphics_material_set_managed(material, true);
 			cmzn_graphics_material_destroy(&material);
 		}

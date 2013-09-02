@@ -40,8 +40,8 @@ DESCRIPTION :
  * the terms of any one of the MPL, the GPL or the LGPL.
  *
  * ***** END LICENSE BLOCK ***** */
-#if !defined (CMISS_REGION_CHOOSER_WX_HPP)
-#define CMISS_REGION_CHOOSER_WX_HPP
+#if !defined (CMZN_REGION_CHOOSER_WX_HPP)
+#define CMZN_REGION_CHOOSER_WX_HPP
 
 #include "wx/wx.h"
 #include "general/callback_class.hpp"
@@ -124,4 +124,4 @@ private:
 	static void RegionChange(struct cmzn_region *root_region,
 		struct cmzn_region_changes *region_changes, void *region_chooser_void);
 };
-#endif /* !defined (CMISS_REGION_CHOOSER_H) */
+#endif /* !defined (CMZN_REGION_CHOOSER_H) */

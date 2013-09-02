@@ -4,7 +4,7 @@ FILE : graphics_window.cpp
 LAST MODIFIED : 9 May 2007
 
 DESCRIPTION:
-Code for opening, closing and working a CMISS 3D display window.
+Code for opening, closing and working a CMZN 3D display window.
 
 Have get/set routines for parameters specific to window and/or which have
 widgets that are automatically updated if you set them. Use these functions
@@ -759,7 +759,7 @@ int set_image_field(struct Parse_state *state,void *field_address_void,
 							cmzn_field_module *field_module = cmzn_region_get_field_module(region);
 							return_code=1;
 							if (field_name && (strlen(field_name) > 0) &&
-								(strchr(field_name, CMISS_REGION_PATH_SEPARATOR_CHAR)	== NULL))
+								(strchr(field_name, CMZN_REGION_PATH_SEPARATOR_CHAR)	== NULL))
 							{
 								temp_field = cmzn_field_module_find_field_by_name(field_module,
 									field_name);
@@ -2721,7 +2721,7 @@ Parser commands for setting simple parameters applicable to the whole <window>.
 						{
 							if (fast_transparency_flag)
 							{
-								transparency_mode=CMISS_SCENE_VIEWER_TRANSPARENCY_FAST;
+								transparency_mode=CMZN_SCENE_VIEWER_TRANSPARENCY_FAST;
 							}
 							else if (layered_transparency)
 							{
@@ -2731,12 +2731,12 @@ Parser commands for setting simple parameters applicable to the whole <window>.
 							}
 							else if (order_independent_transparency)
 							{
-								transparency_mode=CMISS_SCENE_VIEWER_TRANSPARENCY_ORDER_INDEPENDENT;
+								transparency_mode=CMZN_SCENE_VIEWER_TRANSPARENCY_ORDER_INDEPENDENT;
 								transparency_layers = order_independent_transparency;
 							}
 							else
 							{
-								transparency_mode=CMISS_SCENE_VIEWER_TRANSPARENCY_SLOW;
+								transparency_mode=CMZN_SCENE_VIEWER_TRANSPARENCY_SLOW;
 							}
 							for (pane_no=0;pane_no<graphics_window->number_of_scene_viewers;
 								pane_no++)
@@ -6637,7 +6637,7 @@ Writes the properties of the <window> to the command window.
 		display_message(INFORMATION_MESSAGE,
 			"  Transparency mode: %s\n",cmzn_scene_viewer_transparency_mode_string(
 				transparency_mode));
-		if (transparency_mode == CMISS_SCENE_VIEWER_TRANSPARENCY_ORDER_INDEPENDENT)
+		if (transparency_mode == CMZN_SCENE_VIEWER_TRANSPARENCY_ORDER_INDEPENDENT)
 		{
 			transparency_layers = cmzn_scene_viewer_get_transparency_layers(scene_viewer);
 			display_message(INFORMATION_MESSAGE,"    transparency_layers: %d\n",
@@ -6950,7 +6950,7 @@ and establishing the views in it to the command window to a com file.
 		transparency_mode = cmzn_scene_viewer_get_transparency_mode(scene_viewer);
 		process_message->process_command(INFORMATION_MESSAGE," %s",
 			cmzn_scene_viewer_transparency_mode_string(transparency_mode));
-		if (transparency_mode == CMISS_SCENE_VIEWER_TRANSPARENCY_ORDER_INDEPENDENT)
+		if (transparency_mode == CMZN_SCENE_VIEWER_TRANSPARENCY_ORDER_INDEPENDENT)
 		{
 			transparency_layers = cmzn_scene_viewer_get_transparency_layers(scene_viewer);
 			process_message->process_command(INFORMATION_MESSAGE," %d",transparency_layers);

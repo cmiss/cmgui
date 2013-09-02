@@ -238,7 +238,7 @@ writes the discretization in use, otherwise N/A.
 					} break;
 				}
 				is_sensitive=is_editable=
-					(CMISS_ELEMENT_POINT_SAMPLE_SET_LOCATION != element_point_viewer->
+					(CMZN_ELEMENT_POINT_SAMPLE_SET_LOCATION != element_point_viewer->
 						element_point_identifier.sample_mode);
 				}
 				else
@@ -292,7 +292,7 @@ writes its number, otherwise N/A.
 			{
 				sprintf(temp_string,"%d",element_point_viewer->element_point_number);
 				is_sensitive=is_editable=
-					(CMISS_ELEMENT_POINT_SAMPLE_SET_LOCATION != element_point_viewer->
+					(CMZN_ELEMENT_POINT_SAMPLE_SET_LOCATION != element_point_viewer->
 						element_point_identifier.sample_mode);
 			}
 			else
@@ -363,7 +363,7 @@ value otherwise N/A.
 						sprintf(temp_string,"%g, %g, %g",xi[0],xi[1],xi[2]);
 					} break;
 				}
-				is_editable=(CMISS_ELEMENT_POINT_SAMPLE_SET_LOCATION == element_point_viewer->
+				is_editable=(CMZN_ELEMENT_POINT_SAMPLE_SET_LOCATION == element_point_viewer->
 					element_point_identifier.sample_mode);
 				is_sensitive=1;
 			}
@@ -610,7 +610,7 @@ is supplied.
 	if (element_point_identifier&&number_in_xi)
 	{
 		if (element_point_identifier->element&&field&&
-			(CMISS_ELEMENT_POINT_SAMPLE_CELL_CORNERS==
+			(CMZN_ELEMENT_POINT_SAMPLE_CELL_CORNERS==
 				element_point_identifier->sample_mode)&&
 			Computed_field_get_native_discretization_in_element(field,
 				element_point_identifier->element,number_in_xi))
@@ -897,7 +897,7 @@ LAST MODIFIED : 30 May 2000
 
 DESCRIPTION :
 If there is a grid field defined for the element, gets its discretization and
-sets the cmzn_element_point_sample_mode to CMISS_ELEMENT_POINT_SAMPLE_CELL_CORNERS, otherwise
+sets the cmzn_element_point_sample_mode to CMZN_ELEMENT_POINT_SAMPLE_CELL_CORNERS, otherwise
 leaves the current discretization/mode intact.
 ==============================================================================*/
 {
@@ -923,7 +923,7 @@ leaves the current discretization/mode intact.
 				/*component_number*/0,
 				element_point_viewer->element_point_identifier.number_in_xi);
 			element_point_viewer->element_point_identifier.sample_mode=
-				CMISS_ELEMENT_POINT_SAMPLE_CELL_CORNERS;
+				CMZN_ELEMENT_POINT_SAMPLE_CELL_CORNERS;
 		}
 	}
 	else
@@ -1265,13 +1265,13 @@ Callback from wxTextChooser when text is entered.
 									element_point_viewer->element_point_identifier.element,
 									element_point_viewer->element_point_identifier.top_level_element,
 									(LIST_CONDITIONAL_FUNCTION(FE_element) *)NULL, (void *)NULL,
-									/*face_number*/CMISS_ELEMENT_FACE_ALL, element_to_top_level);
+									/*face_number*/CMZN_ELEMENT_FACE_ALL, element_to_top_level);
 						top_level_element_text_chooser->set_object(
 							 element_point_viewer->element_point_identifier.top_level_element);
 						//				top_element_text_callback(
 						// 					 element_point_viewer->element_point_identifier.top_level_element);
 						element_point_viewer->element_point_number=0;
-						if (CMISS_ELEMENT_POINT_SAMPLE_CELL_CORNERS==
+						if (CMZN_ELEMENT_POINT_SAMPLE_CELL_CORNERS==
 							 element_point_viewer->element_point_identifier.sample_mode)
 						{
 							 Element_point_viewer_get_grid(element_point_viewer);
@@ -1333,7 +1333,7 @@ Callback from wxTextChooser when text is entered.
 							 top_level_element;
 						/* get the element point at the centre of top_level_element */
 						element_point_viewer->element_point_identifier.sample_mode=
-							 CMISS_ELEMENT_POINT_SAMPLE_SET_LOCATION;
+							 CMZN_ELEMENT_POINT_SAMPLE_SET_LOCATION;
 						for (i=0;i<MAXIMUM_ELEMENT_XI_DIMENSIONS;i++)
 						{
 							 element_point_viewer->element_point_identifier.number_in_xi[i]=1;
@@ -1388,11 +1388,11 @@ Callback from wxChooser<xi Discretization Mode> when choice is made.
 		{
 			element_point_viewer->element_point_identifier.sample_mode=
 				sample_mode;
-			if (CMISS_ELEMENT_POINT_SAMPLE_CELL_CORNERS==sample_mode)
+			if (CMZN_ELEMENT_POINT_SAMPLE_CELL_CORNERS==sample_mode)
 			{
 				Element_point_viewer_get_grid(element_point_viewer);
 			}
-			else if (CMISS_ELEMENT_POINT_SAMPLE_SET_LOCATION==sample_mode)
+			else if (CMZN_ELEMENT_POINT_SAMPLE_SET_LOCATION==sample_mode)
 			{
 				for (i=0;i<MAXIMUM_ELEMENT_XI_DIMENSIONS;i++)
 				{
@@ -1860,7 +1860,7 @@ data, and then changes the correct value in the array structure.
 		value_string=tmpstr.mb_str(wxConvUTF8);
 		if (value_string)
 		{
-			if ((CMISS_ELEMENT_POINT_SAMPLE_CELL_CORNERS==element_point_field_viewer->
+			if ((CMZN_ELEMENT_POINT_SAMPLE_CELL_CORNERS==element_point_field_viewer->
 				element_point_identifier.sample_mode)&&
 				Computed_field_get_native_discretization_in_element(field,element,
 					number_in_xi))
@@ -2261,7 +2261,7 @@ fields.
 					 (struct FE_element *)NULL;
 				element_point_viewer->element_copy=(struct FE_element *)NULL;
 				element_point_viewer->element_point_identifier.sample_mode=
-					 CMISS_ELEMENT_POINT_SAMPLE_SET_LOCATION;
+					 CMZN_ELEMENT_POINT_SAMPLE_SET_LOCATION;
 				//				element_point_viewer->time_object_callback = 0;
 				element_point_viewer->number_of_components=-1;
 				for (i=0;i<MAXIMUM_ELEMENT_XI_DIMENSIONS;i++)

@@ -122,7 +122,7 @@ int gfx_modify_scene_general(struct Parse_state *state,
 					}
 					else
 					{
-						return_code = (CMISS_OK == cmzn_scene_remove_all_graphics(scene));
+						return_code = (CMZN_OK == cmzn_scene_remove_all_graphics(scene));
 					}
 				}
 				if (default_coordinate_field)
@@ -588,7 +588,7 @@ cmzn_graphic* cmzn_scene_create_graphic_app(cmzn_scene *scene,
 		cmzn_scene_set_minimum_graphic_defaults(scene, graphic);
 		cmzn_graphic_line_attributes_id line_attributes = cmzn_graphic_get_line_attributes(graphic);
 		cmzn_graphic_point_attributes_id point_attributes = cmzn_graphic_get_point_attributes(graphic);
-		if (graphic_type == CMISS_GRAPHIC_STREAMLINES)
+		if (graphic_type == CMZN_GRAPHIC_STREAMLINES)
 		{
 			// use previous default of 1.0 for streamline width
 			const double one = 1.0;

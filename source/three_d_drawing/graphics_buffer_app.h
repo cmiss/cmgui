@@ -44,10 +44,10 @@ struct Graphics_buffer_app_package;
 
 struct Graphics_buffer_app;
 
-DECLARE_CMISS_CALLBACK_TYPES(Graphics_buffer_callback, \
+DECLARE_CMZN_CALLBACK_TYPES(Graphics_buffer_callback, \
 	struct Graphics_buffer_app *, void *, void);
 
-DECLARE_CMISS_CALLBACK_TYPES(Graphics_buffer_input_callback, \
+DECLARE_CMZN_CALLBACK_TYPES(Graphics_buffer_input_callback, \
 	struct Graphics_buffer_app *, struct Graphics_buffer_input *, void);
 
 /*
@@ -226,10 +226,10 @@ void Graphics_buffer_reset_multisample_framebuffer(struct Graphics_buffer_app *b
 int Graphics_buffer_app_awaken(struct Graphics_buffer_app *buffer);
 
 int Graphics_buffer_app_add_expose_callback(struct Graphics_buffer_app *buffer,
-	CMISS_CALLBACK_FUNCTION(Graphics_buffer_callback) expose_callback, void *user_data);
+	CMZN_CALLBACK_FUNCTION(Graphics_buffer_callback) expose_callback, void *user_data);
 
 int Graphics_buffer_app_add_input_callback(struct Graphics_buffer_app *buffer,
-	CMISS_CALLBACK_FUNCTION(Graphics_buffer_input_callback) input_callback,
+	CMZN_CALLBACK_FUNCTION(Graphics_buffer_input_callback) input_callback,
 	void *user_data);
 
 /*******************************************************************************
@@ -317,7 +317,7 @@ Activates the graphics <buffer>.
 ==============================================================================*/
 
 int Graphics_buffer_app_add_initialise_callback(struct Graphics_buffer_app *buffer,
-	CMISS_CALLBACK_FUNCTION(Graphics_buffer_callback) initialise_callback, void *user_data);
+	CMZN_CALLBACK_FUNCTION(Graphics_buffer_callback) initialise_callback, void *user_data);
 /*******************************************************************************
 LAST MODIFIED : 1 July 2002
 
@@ -326,7 +326,7 @@ Adds an initialise callback to the graphics <buffer>.
 ==============================================================================*/
 
 int Graphics_buffer_app_add_resize_callback(struct Graphics_buffer_app *buffer,
-	CMISS_CALLBACK_FUNCTION(Graphics_buffer_callback) resize_callback, void *user_data);
+	CMZN_CALLBACK_FUNCTION(Graphics_buffer_callback) resize_callback, void *user_data);
 /*******************************************************************************
 LAST MODIFIED : 1 July 2002
 
@@ -335,7 +335,7 @@ Adds an resize callback to the graphics <buffer>.
 ==============================================================================*/
 
 int Graphics_buffer_app_add_expose_callback(struct Graphics_buffer_app *buffer,
-	CMISS_CALLBACK_FUNCTION(Graphics_buffer_callback) expose_callback, void *user_data);
+	CMZN_CALLBACK_FUNCTION(Graphics_buffer_callback) expose_callback, void *user_data);
 /*******************************************************************************
 LAST MODIFIED : 1 July 2002
 
@@ -344,7 +344,7 @@ Adds an expose callback to the graphics <buffer>.
 ==============================================================================*/
 
 int Graphics_buffer_app_add_input_callback(struct Graphics_buffer_app *buffer,
-	CMISS_CALLBACK_FUNCTION(Graphics_buffer_input_callback) input_callback, void *user_data);
+	CMZN_CALLBACK_FUNCTION(Graphics_buffer_input_callback) input_callback, void *user_data);
 /*******************************************************************************
 LAST MODIFIED : 1 July 2002
 

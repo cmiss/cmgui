@@ -43,7 +43,7 @@ returned in this location, for the calling function to use or destroy.
 		element_point_ranges_identifier.element=(struct FE_element *)NULL;
 		element_point_ranges_identifier.top_level_element=(struct FE_element *)NULL;
 		element_point_ranges_identifier.sample_mode=
-			CMISS_ELEMENT_POINT_SAMPLE_SET_LOCATION;
+			CMZN_ELEMENT_POINT_SAMPLE_SET_LOCATION;
 		for (i=0;i<MAXIMUM_ELEMENT_XI_DIMENSIONS;i++)
 		{
 			element_point_ranges_identifier.exact_xi[i]=xi[i]=0.5;
@@ -214,8 +214,8 @@ returned in this location, for the calling function to use or destroy.
 					}
 					switch (element_point_ranges_identifier.sample_mode)
 					{
-						case CMISS_ELEMENT_POINT_SAMPLE_CELL_CORNERS:
-						case CMISS_ELEMENT_POINT_SAMPLE_CELL_CENTRES:
+						case CMZN_ELEMENT_POINT_SAMPLE_CELL_CORNERS:
+						case CMZN_ELEMENT_POINT_SAMPLE_CELL_CENTRES:
 						{
 							/* number_in_xi */
 							return_code=set_int_vector(state,
@@ -242,7 +242,7 @@ returned in this location, for the calling function to use or destroy.
 								}
 							}
 						} break;
-						case CMISS_ELEMENT_POINT_SAMPLE_SET_LOCATION:
+						case CMZN_ELEMENT_POINT_SAMPLE_SET_LOCATION:
 						{
 							/* xi */
 							return_code=set_float_vector(state,(void *)xi,(void *)&dimension);
@@ -268,8 +268,8 @@ returned in this location, for the calling function to use or destroy.
 					{
 						switch (element_point_ranges_identifier.sample_mode)
 						{
-							case CMISS_ELEMENT_POINT_SAMPLE_CELL_CORNERS:
-							case CMISS_ELEMENT_POINT_SAMPLE_CELL_CENTRES:
+							case CMZN_ELEMENT_POINT_SAMPLE_CELL_CORNERS:
+							case CMZN_ELEMENT_POINT_SAMPLE_CELL_CENTRES:
 							{
 								/* ranges */
 								if (set_Multi_range(state,
@@ -297,7 +297,7 @@ returned in this location, for the calling function to use or destroy.
 									return_code=0;
 								}
 							} break;
-							case CMISS_ELEMENT_POINT_SAMPLE_SET_LOCATION:
+							case CMZN_ELEMENT_POINT_SAMPLE_SET_LOCATION:
 							{
 								if (!Multi_range_add_range(Element_point_ranges_get_ranges(element_point_ranges),0,0))
 								{
