@@ -1151,7 +1151,7 @@ public:
 			char *initial_path;
 		   initial_path = Cmiss_region_get_root_region_path();
 		   region_chooser = new wxRegionChooser(graphics_window_region_chooser_panel,
-		   	graphics_window->root_region, initial_path);
+			graphics_window->root_region, initial_path);
 			DEALLOCATE(initial_path);
 			Callback_base< Cmiss_region* > *graphics_window_region_callback =
 				 new Callback_member_callback< Cmiss_region*,
@@ -2476,7 +2476,7 @@ Parser commands for setting simple parameters applicable to the whole <window>.
 	double depth_of_field, focal_depth, std_view_angle;
 	enum Scene_viewer_blending_mode blending_mode;
 	enum Cmiss_scene_viewer_transparency_mode transparency_mode;
-	int antialias_mode,current_pane,i,layered_transparency,number_of_tools, 
+	int antialias_mode,current_pane,i,layered_transparency,number_of_tools,
 		number_of_valid_strings,order_independent_transparency,pane_no,
 		perturb_lines,redraw,return_code,transparency_layers = 0;
 	struct Graphics_window *graphics_window;
@@ -2856,7 +2856,7 @@ view angle, interest point etc.
 			if ((window=(struct Graphics_window *)window_void)&&
 				 (window->scene_viewer_array != NULL) &&
 				 (scene_viewer=window->scene_viewer_array[window->current_pane])&&
-				 Scene_viewer_get_lookat_parameters(scene_viewer->core_scene_viewer,
+				 Cmiss_scene_viewer_get_lookat_parameters(scene_viewer->core_scene_viewer,
 					&(eye[0]),&(eye[1]),&(eye[2]),
 					&(lookat[0]),&(lookat[1]),&(lookat[2]),&(up[0]),&(up[1]),&(up[2]))&&
 				Scene_viewer_get_viewing_volume(scene_viewer->core_scene_viewer,&left,&right,
@@ -3010,7 +3010,7 @@ view angle, interest point etc.
 						}
 						else
 						{
-							Scene_viewer_set_lookat_parameters_non_skew(scene_viewer->core_scene_viewer,
+							Cmiss_scene_viewer_set_lookat_parameters_non_skew(scene_viewer->core_scene_viewer,
 								eye[0],eye[1],eye[2],lookat[0],lookat[1],lookat[2],
 								up[0],up[1],up[2]);
 						}
@@ -3715,7 +3715,7 @@ it.
 										 window->scene_viewer_array[pane_no]->core_scene_viewer, 1.5);
 									Scene_viewer_set_zoom_rate(
 										 window->scene_viewer_array[pane_no]->core_scene_viewer, 2.0);
-									if (Scene_viewer_get_lookat_parameters(
+									if (Cmiss_scene_viewer_get_lookat_parameters(
 												 window->scene_viewer_array[0]->core_scene_viewer,
 												 &(eye[0]),&(eye[1]),&(eye[2]),
 												 &(lookat[0]),&(lookat[1]),&(lookat[2]),
@@ -4444,7 +4444,7 @@ Sets the layout mode in effect on the <window>.
 		{
 #if defined (WX_USER_INTERFACE)
 			first_scene_viewer = window->scene_viewer_array[0];
-			Scene_viewer_get_lookat_parameters(first_scene_viewer->core_scene_viewer,
+			Cmiss_scene_viewer_get_lookat_parameters(first_scene_viewer->core_scene_viewer,
 				&(eye[0]),&(eye[1]),&(eye[2]),
 				&(lookat[0]),&(lookat[1]),&(lookat[2]),&(up[0]),&(up[1]),&(up[2]));
 			Scene_viewer_get_viewing_volume(first_scene_viewer->core_scene_viewer,
@@ -4659,7 +4659,7 @@ Sets the layout mode in effect on the <window>.
 						window->default_zoom_rate);
 				}
 				/* set the plan view in pane 0 */
-				if (Scene_viewer_get_lookat_parameters(window->scene_viewer_array[0]->core_scene_viewer,
+				if (Cmiss_scene_viewer_get_lookat_parameters(window->scene_viewer_array[0]->core_scene_viewer,
 					&(eye[0]),&(eye[1]),&(eye[2]),
 					&(lookat[0]),&(lookat[1]),&(lookat[2]),&(up[0]),&(up[1]),&(up[2]))&&
 					axis_number_to_axis_vector(window->ortho_up_axis,up)&&
@@ -4714,7 +4714,7 @@ Sets the layout mode in effect on the <window>.
 				}
 				/* four views, 3 tied together as front, side and plan views */
 				/* set the plan view in pane 1 */
-				if (Scene_viewer_get_lookat_parameters(window->scene_viewer_array[1]->core_scene_viewer,
+				if (Cmiss_scene_viewer_get_lookat_parameters(window->scene_viewer_array[1]->core_scene_viewer,
 						&(eye[0]),&(eye[1]),&(eye[2]),
 						&(lookat[0]),&(lookat[1]),&(lookat[2]),&(up[0]),&(up[1]),&(up[2]))&&
 					axis_number_to_axis_vector(window->ortho_up_axis,up)&&
@@ -4779,7 +4779,7 @@ Sets the layout mode in effect on the <window>.
 					(GRAPHICS_WINDOW_LAYOUT_FRONT_SIDE==layout_mode))
 				{
 					/* set the front view in pane 0 */
-					if (Scene_viewer_get_lookat_parameters(window->scene_viewer_array[0]->core_scene_viewer,
+					if (Cmiss_scene_viewer_get_lookat_parameters(window->scene_viewer_array[0]->core_scene_viewer,
 						&(eye[0]),&(eye[1]),&(eye[2]),
 						&(lookat[0]),&(lookat[1]),&(lookat[2]),&(up[0]),&(up[1]),&(up[2]))&&
 						axis_number_to_axis_vector(window->ortho_up_axis,up)&&
@@ -6028,7 +6028,7 @@ current layout_mode, the function adjusts the view in all the panes tied to
 			Scene_viewer_get_viewing_volume(window->scene_viewer_array[pane_no]->core_scene_viewer,
 				&left,&right,&bottom,&top,&(near_plane[pane_no]),&(far_plane[pane_no]));
 		}
-		return_code=(Scene_viewer_get_lookat_parameters(
+		return_code=(Cmiss_scene_viewer_get_lookat_parameters(
 			window->scene_viewer_array[changed_pane]->core_scene_viewer,&(eye[0]),&(eye[1]),&(eye[2]),
 			&(lookat[0]),&(lookat[1]),&(lookat[2]),&(up[0]),&(up[1]),&(up[2]))&&
 			Scene_viewer_get_viewing_volume(window->scene_viewer_array[changed_pane]->core_scene_viewer,
@@ -6562,7 +6562,7 @@ Writes the properties of the <window> to the command window.
 			else
 			{
 				/* parallel/perspective: write eye and interest points and up-vector */
-				Scene_viewer_get_lookat_parameters(scene_viewer,
+				Cmiss_scene_viewer_get_lookat_parameters(scene_viewer,
 					&(eye[0]),&(eye[1]),&(eye[2]),&(lookat[0]),&(lookat[1]),&(lookat[2]),
 					&(up[0]),&(up[1]),&(up[2]));
 				view[0] = lookat[0] - eye[0];
@@ -6862,7 +6862,7 @@ and establishing the views in it to the command window to a com file.
 			else
 			{
 				/* parallel/perspective: write eye and interest points and up-vector */
-				Scene_viewer_get_lookat_parameters(scene_viewer,
+				Cmiss_scene_viewer_get_lookat_parameters(scene_viewer,
 					&(eye[0]),&(eye[1]),&(eye[2]),&(lookat[0]),&(lookat[1]),&(lookat[2]),
 					&(up[0]),&(up[1]),&(up[2]));
 				Scene_viewer_get_viewing_volume(scene_viewer,&left,&right,

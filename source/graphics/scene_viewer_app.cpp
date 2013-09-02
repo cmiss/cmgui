@@ -766,7 +766,7 @@ int Scene_viewer_app_default_input_callback(struct Scene_viewer_app *scene_viewe
 				}
 				else
 				{
-					Cmiss_scene_viewer_input_viewport_transform(scene_viewer->core_scene_viewer, input);
+					Cmiss_scene_viewer_process_input(scene_viewer->core_scene_viewer, input);
 				}
 			}
 			else
@@ -811,7 +811,7 @@ int Scene_viewer_app_default_input_callback(struct Scene_viewer_app *scene_viewe
 			}
 			else
 			{
-				Cmiss_scene_viewer_input_viewport_transform(scene_viewer->core_scene_viewer, input);
+				Cmiss_scene_viewer_process_input(scene_viewer->core_scene_viewer, input);
 			}
 		} break;
 		default:
