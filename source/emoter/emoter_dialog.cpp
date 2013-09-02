@@ -99,7 +99,7 @@ DESCRIPTION :
 		movie_playing;
 	FE_value time;
 	struct Colour viewer_background_colour;
-	struct Cmiss_region *region;
+	struct cmzn_region *region;
 	struct Emoter_slider *active_slider, **sliders;
 	struct Execute_command *execute_command;
 	struct Graphics_buffer_app_package *graphics_buffer_package;
@@ -174,7 +174,7 @@ DESCRIPTION :
 	FE_value time_minimum, time_maximum;
 	struct Shared_emoter_slider_data *shared;
 	void *curve_manager_callback_id;
-	Cmiss_nodeset_group_id minimum_nodeset_group;
+	cmzn_nodeset_group_id minimum_nodeset_group;
 	struct Shell_list_item *shell_list_item;
 	struct Movie_graphics *movie;
 	struct Emoter_dialog **dialog_address;
@@ -214,7 +214,7 @@ Updates the node locations for the <emoter_slider>
 	float euler_angles[3];
 	gtMatrix transformation; /* 4 x 4 */
 	int i,j,k,offset,return_code,versions;
-	struct Cmiss_region *input_sequence;
+	struct cmzn_region *input_sequence;
 	struct FE_field *field;
 	struct FE_node *node;
 	struct FE_region *fe_region;
@@ -228,7 +228,7 @@ Updates the node locations for the <emoter_slider>
 		em_object=shared_data->em_object;
 		if (0<em_object->n_nodes)
 		{
-			if ((fe_region=Cmiss_region_get_FE_region(shared_data->region))&&
+			if ((fe_region=cmzn_region_get_FE_region(shared_data->region))&&
 				(node=FE_region_get_FE_node_from_identifier(fe_region,
 				(em_object->index)[0]))&&(field=get_FE_node_default_coordinate_field(node)))
 			{
@@ -240,13 +240,13 @@ Updates the node locations for the <emoter_slider>
 					if ((input_file = CREATE(IO_stream)(shared_data->io_stream_package))
 						&& (IO_stream_open_for_read(input_file, input_filename)))
 					{
-						input_sequence = Cmiss_region_create_region(shared_data->region);
+						input_sequence = cmzn_region_create_region(shared_data->region);
 						if (read_exregion_file(input_sequence, input_file,
 							(struct FE_import_time_index *)NULL))
 						{
-							if (Cmiss_region_can_merge(shared_data->region, input_sequence))
+							if (cmzn_region_can_merge(shared_data->region, input_sequence))
 							{
-								if (!Cmiss_region_merge(shared_data->region, input_sequence))
+								if (!cmzn_region_merge(shared_data->region, input_sequence))
 								{
 									display_message(ERROR_MESSAGE,
 										"Error merging elements from file: %s", input_filename);
@@ -267,7 +267,7 @@ Updates the node locations for the <emoter_slider>
 								"Unable to parse node file %s", input_filename);
 							return_code=0;
 						}
-						DEACCESS(Cmiss_region)(&input_sequence);
+						DEACCESS(cmzn_region)(&input_sequence);
 						IO_stream_close(input_file);
 						DESTROY(IO_stream)(&input_file);
 					}
@@ -291,9 +291,9 @@ Updates the node locations for the <emoter_slider>
 					transformation[3][0] = shared_data->weights[0];
 					transformation[3][1] = shared_data->weights[1];
 					transformation[3][2] = shared_data->weights[2];
-					Cmiss_scene *scene = Cmiss_region_get_scene_internal(shared_data->region);
-					Cmiss_scene_set_transformation(scene, &transformation);
-					Cmiss_scene_destroy(&scene);
+					cmzn_scene *scene = cmzn_region_get_scene_internal(shared_data->region);
+					cmzn_scene_set_transformation(scene, &transformation);
+					cmzn_scene_destroy(&scene);
 				}
 				i=0;
 				offset=em_object->m;
@@ -967,9 +967,9 @@ Callback for the emoter dialog - tidies up all details - mem etc
 		/* Destroy shared slider data */
 		DEALLOCATE(emoter_dialog->shared->weights);
 		DEALLOCATE(emoter_dialog->shared->sliders);
-		DEACCESS(Cmiss_region)(&emoter_dialog->shared->region);
+		DEACCESS(cmzn_region)(&emoter_dialog->shared->region);
 		destroy_EM_Object(&(emoter_dialog->shared->em_object));
-		Cmiss_nodeset_group_destroy(&emoter_dialog->minimum_nodeset_group);
+		cmzn_nodeset_group_destroy(&emoter_dialog->minimum_nodeset_group);
 		destroy_Shell_list_item(&(emoter_dialog->shell_list_item));
 
 		DEALLOCATE(emoter_dialog->shared);
@@ -2720,20 +2720,20 @@ DESCRIPTION :
 		if (node_numbers)
 		{
 			number_of_nodes = new_value;
-			Cmiss_field_module_id field_module = Cmiss_region_get_field_module(emoter_dialog->shared->region);
-			Cmiss_field_module_begin_change(field_module);
-			Cmiss_nodeset_id master_nodeset = Cmiss_field_module_find_nodeset_by_domain_type(field_module, CMISS_FIELD_DOMAIN_NODES);
+			cmzn_field_module_id field_module = cmzn_region_get_field_module(emoter_dialog->shared->region);
+			cmzn_field_module_begin_change(field_module);
+			cmzn_nodeset_id master_nodeset = cmzn_field_module_find_nodeset_by_domain_type(field_module, CMISS_FIELD_DOMAIN_NODES);
 			if (emoter_dialog->minimum_nodeset_group)
 			{
-				Cmiss_nodeset_group_remove_all_nodes(emoter_dialog->minimum_nodeset_group);
+				cmzn_nodeset_group_remove_all_nodes(emoter_dialog->minimum_nodeset_group);
 			}
 			else
 			{
-				Cmiss_field_id minimum_node_group_field = Cmiss_field_module_create_node_group(field_module, master_nodeset);
-				Cmiss_field_node_group_id minimum_node_group = Cmiss_field_cast_node_group(minimum_node_group_field);
-				emoter_dialog->minimum_nodeset_group = Cmiss_field_node_group_get_nodeset(minimum_node_group);
-				Cmiss_field_node_group_destroy(&minimum_node_group);
-				Cmiss_field_destroy(&minimum_node_group_field);
+				cmzn_field_id minimum_node_group_field = cmzn_field_module_create_node_group(field_module, master_nodeset);
+				cmzn_field_node_group_id minimum_node_group = cmzn_field_cast_node_group(minimum_node_group_field);
+				emoter_dialog->minimum_nodeset_group = cmzn_field_node_group_get_nodeset(minimum_node_group);
+				cmzn_field_node_group_destroy(&minimum_node_group);
+				cmzn_field_destroy(&minimum_node_group_field);
 				if (!emoter_dialog->minimum_nodeset_group)
 				{
 					display_message(ERROR_MESSAGE,
@@ -2747,18 +2747,18 @@ DESCRIPTION :
 				{
 					if ( node_numbers[i] != -1 )
 					{
-						Cmiss_node_id node = Cmiss_nodeset_find_node_by_identifier(master_nodeset, node_numbers[i]);
-						if ((0 == node) || !Cmiss_nodeset_group_add_node(emoter_dialog->minimum_nodeset_group, node))
+						cmzn_node_id node = cmzn_nodeset_find_node_by_identifier(master_nodeset, node_numbers[i]);
+						if ((0 == node) || !cmzn_nodeset_group_add_node(emoter_dialog->minimum_nodeset_group, node))
 						{
 							display_message(ERROR_MESSAGE,
 								"emoter_set_mode_limit.  Unable to add node %d", i);
 						}
-						Cmiss_node_destroy(&node);
+						cmzn_node_destroy(&node);
 					}
 				}
 			}
-			Cmiss_nodeset_destroy(&master_nodeset);
-			Cmiss_field_module_end_change(field_module);
+			cmzn_nodeset_destroy(&master_nodeset);
+			cmzn_field_module_end_change(field_module);
 		}
 	}
 	else
@@ -3148,7 +3148,7 @@ Create emoter controls.
 		emoter_dialog->movie = (struct Movie_graphics *)NULL;
 		emoter_dialog->movie_loop = 1;
 		emoter_dialog->movie_every_frame = 1;
-		emoter_dialog->minimum_nodeset_group = (Cmiss_nodeset_group_id)0;
+		emoter_dialog->minimum_nodeset_group = (cmzn_nodeset_group_id)0;
 		emoter_dialog->shell_list_item = (struct Shell_list_item *)NULL;
 		emoter_dialog->autoplay_timeout =
 			(struct Event_dispatcher_timeout_callback *)NULL;
@@ -3298,8 +3298,8 @@ int gfx_create_emoter(struct Parse_state *state,void *dummy_to_be_modified,
 		create_emoter_slider_data_void)&&
 		(create_emoter_slider_data->emoter_dialog_address))
 	{
-		struct Cmiss_region *region =
-			ACCESS(Cmiss_region)(create_emoter_slider_data->root_region);
+		struct cmzn_region *region =
+			ACCESS(cmzn_region)(create_emoter_slider_data->root_region);
 		index_nodes = (int *)NULL;
 		number_of_index_nodes = 0;
 		minimum_nodeset_flag = 0;
@@ -3311,7 +3311,7 @@ int gfx_create_emoter(struct Parse_state *state,void *dummy_to_be_modified,
 			" BASIS_FILE_NAME");
 		Option_table_add_char_flag_entry(option_table, "minimum_nodeset",
 			&minimum_nodeset_flag);
-		Option_table_add_set_Cmiss_region(option_table, "region",
+		Option_table_add_set_cmzn_region(option_table, "region",
 			create_emoter_slider_data->root_region, &region);
 		Option_table_add_switch(option_table, "transform_graphics",
 			"transform_nodes", &transform_graphics);
@@ -3335,7 +3335,7 @@ int gfx_create_emoter(struct Parse_state *state,void *dummy_to_be_modified,
 			if (return_code)
 			{
 				em_object=(struct EM_Object *)NULL;
-				fe_region = Cmiss_region_get_FE_region(region);
+				fe_region = cmzn_region_get_FE_region(region);
 				if (fe_region)
 				{
 					number_of_index_nodes = FE_region_get_number_of_FE_nodes(fe_region);
@@ -3400,7 +3400,7 @@ int gfx_create_emoter(struct Parse_state *state,void *dummy_to_be_modified,
 								shared_emoter_slider_data->number_of_sliders = 0;
 								shared_emoter_slider_data->number_of_modes=number_of_modes;
 								shared_emoter_slider_data->mode_limit = number_of_modes;
-								shared_emoter_slider_data->region = ACCESS(Cmiss_region)(region);
+								shared_emoter_slider_data->region = ACCESS(cmzn_region)(region);
 								shared_emoter_slider_data->show_solid_body_motion = 1;
 								shared_emoter_slider_data->curve_manager
 									= create_emoter_slider_data->curve_manager;
@@ -3474,7 +3474,7 @@ int gfx_create_emoter(struct Parse_state *state,void *dummy_to_be_modified,
 		{
 			DEALLOCATE(basis_file_name);
 		}
-		DEACCESS(Cmiss_region)(&region);
+		DEACCESS(cmzn_region)(&region);
 	}
 	else
 	{

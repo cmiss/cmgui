@@ -39,7 +39,7 @@ int Computed_field_get_type_cubic_texture_coordinates(struct Computed_field *fie
 	struct Computed_field **source_field);
 
 struct Computed_field *Computed_field_create_cubic_texture_coordinates(
-	struct Cmiss_field_module *field_module,
+	struct cmzn_field_module *field_module,
 	struct Computed_field *source_field);
 
 int define_Computed_field_type_normalise(struct Parse_state *state,
@@ -91,7 +91,7 @@ already) and allows its contents to be modified.
 			if (return_code)
 			{
 				return_code = field_modify->update_field_and_deaccess(
-					Cmiss_field_module_create_normalise(field_modify->get_field_module(),
+					cmzn_field_module_create_normalise(field_modify->get_field_module(),
 						source_field));
 			}
 			if (!return_code)
@@ -265,7 +265,7 @@ already) and allows its contents to be modified.
 						if (return_code)
 						{
 							return_code = field_modify->update_field_and_deaccess(
-								Cmiss_field_module_create_cross_product(field_modify->get_field_module(),
+								cmzn_field_module_create_cross_product(field_modify->get_field_module(),
 									number_of_source_fields, source_fields));
 						}
 						for (i = 0; i < number_of_source_fields; i++)
@@ -367,7 +367,7 @@ already) and allows its contents to be modified.
 				if (return_code)
 				{
 					return_code = field_modify->update_field_and_deaccess(
-						Cmiss_field_module_create_dot_product(field_modify->get_field_module(),
+						cmzn_field_module_create_dot_product(field_modify->get_field_module(),
 							source_fields[0], source_fields[1]));
 				}
 				if (!return_code)
@@ -461,7 +461,7 @@ already) and allows its contents to be modified.
 			if (return_code)
 			{
 				return_code = field_modify->update_field_and_deaccess(
-					Cmiss_field_module_create_magnitude(field_modify->get_field_module(),
+					cmzn_field_module_create_magnitude(field_modify->get_field_module(),
 						source_field));
 			}
 			if (!return_code)
@@ -520,14 +520,14 @@ already) and allows its contents to be modified.
 		set_source_field_data.conditional_function =
 			Computed_field_has_numerical_components;
 		set_source_field_data.conditional_function_user_data = (void *)NULL;
-		Cmiss_field_id source_field = 0;
+		cmzn_field_id source_field = 0;
 		double *weights = 0;
 		int number_of_weights = 0;
 		if ((NULL != field_modify->get_field()) &&
 			(computed_field_sum_components_type_string ==
 				Computed_field_get_type_string(field_modify->get_field())))
 		{
-			source_field = Cmiss_field_get_source_field(field_modify->get_field(), 1);
+			source_field = cmzn_field_get_source_field(field_modify->get_field(), 1);
 		}
 		if (return_code)
 		{
@@ -557,7 +557,7 @@ already) and allows its contents to be modified.
 					{
 						if (source_field)
 						{
-							number_of_weights = Cmiss_field_get_number_of_components(source_field);
+							number_of_weights = cmzn_field_get_number_of_components(source_field);
 							ALLOCATE(weights, double, number_of_weights);
 							for (int i = 0; i < number_of_weights; i++)
 							{
@@ -603,21 +603,21 @@ already) and allows its contents to be modified.
 						break;
 					}
 				}
-				Cmiss_field_id field = 0;
+				cmzn_field_id field = 0;
 				if (weighted)
 				{
-					Cmiss_region_id region = field_modify->get_region();
-					Cmiss_field_module *temp_field_module = Cmiss_field_module_create(region);
-					Cmiss_field_module_set_field_name(temp_field_module, "tempweights");
-					Computed_field *weights_field = Cmiss_field_module_create_constant(temp_field_module,
+					cmzn_region_id region = field_modify->get_region();
+					cmzn_field_module *temp_field_module = cmzn_field_module_create(region);
+					cmzn_field_module_set_field_name(temp_field_module, "tempweights");
+					Computed_field *weights_field = cmzn_field_module_create_constant(temp_field_module,
 						/*number_of_components*/number_of_weights, weights);
-					Cmiss_field_module_destroy(&temp_field_module);
-					field = Cmiss_field_module_create_dot_product(field_modify->get_field_module(), source_field, weights_field);
-					Cmiss_field_destroy(&weights_field);
+					cmzn_field_module_destroy(&temp_field_module);
+					field = cmzn_field_module_create_dot_product(field_modify->get_field_module(), source_field, weights_field);
+					cmzn_field_destroy(&weights_field);
 				}
 				else
 				{
-					field = Cmiss_field_module_create_sum_components(field_modify->get_field_module(), source_field);
+					field = cmzn_field_module_create_sum_components(field_modify->get_field_module(), source_field);
 				}
 				return_code = field_modify->update_field_and_deaccess(field);
 			}

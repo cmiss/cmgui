@@ -14,7 +14,7 @@
 class Computed_field_lookup_package : public Computed_field_type_package
 {
 public:
-	struct Cmiss_region *root_region;
+	struct cmzn_region *root_region;
 };
 
 const char computed_field_nodal_lookup_type_string[] = "nodal_lookup";
@@ -45,7 +45,7 @@ already) and allows its contents to be modified.
 		computed_field_lookup_package_void))
 	{
 		return_code = 1;
-		Cmiss_field_id source_field = 0;
+		cmzn_field_id source_field = 0;
 		char *nodeset_name = duplicate_string("nodes");
 		char node_flag = 0;
 		int node_identifier = 0;
@@ -53,7 +53,7 @@ already) and allows its contents to be modified.
 			(computed_field_nodal_lookup_type_string ==
 				Computed_field_get_type_string(field_modify->get_field())))
 		{
-			Cmiss_node_id lookup_node = 0;
+			cmzn_node_id lookup_node = 0;
 			return_code = Computed_field_get_type_nodal_lookup(field_modify->get_field(),
 				&source_field, &lookup_node);
 			if (source_field)
@@ -92,8 +92,8 @@ already) and allows its contents to be modified.
 
 		if (return_code && node_flag)
 		{
-			Cmiss_nodeset_id nodeset = Cmiss_field_module_find_nodeset_by_name(field_modify->get_field_module(), nodeset_name);
-			Cmiss_node_id node = Cmiss_nodeset_find_node_by_identifier(nodeset, node_identifier);
+			cmzn_nodeset_id nodeset = cmzn_field_module_find_nodeset_by_name(field_modify->get_field_module(), nodeset_name);
+			cmzn_node_id node = cmzn_nodeset_find_node_by_identifier(nodeset, node_identifier);
 			if (node)
 			{
 				return_code = field_modify->update_field_and_deaccess(
@@ -106,8 +106,8 @@ already) and allows its contents to be modified.
 					"define field nodal lookup.  Invalid node %d", node_identifier);
 				return_code = 0;
 			}
-			Cmiss_node_destroy(&node);
-			Cmiss_nodeset_destroy(&nodeset);
+			cmzn_node_destroy(&node);
+			cmzn_nodeset_destroy(&nodeset);
 		}
 		else
 		{
@@ -154,7 +154,7 @@ contents to be modified.
 				computed_field_lookup_package_void))
 	{
 		return_code = 1;
-		Cmiss_field_id source_field = 0;
+		cmzn_field_id source_field = 0;
 		char *nodeset_name = duplicate_string("nodes");
 		char node_flag = 0;
 		int node_identifier = 0;
@@ -162,7 +162,7 @@ contents to be modified.
 			(computed_field_quaternion_SLERP_type_string ==
 				Computed_field_get_type_string(field_modify->get_field())))
 		{
-			Cmiss_node_id lookup_node = 0;
+			cmzn_node_id lookup_node = 0;
 			return_code = Computed_field_get_type_quaternion_SLERP(field_modify->get_field(),
 				 &source_field, &lookup_node);
 			if (source_field)
@@ -210,8 +210,8 @@ contents to be modified.
 
 		if (return_code && node_flag)
 		{
-			Cmiss_nodeset_id nodeset = Cmiss_field_module_find_nodeset_by_name(field_modify->get_field_module(), nodeset_name);
-			Cmiss_node_id node = Cmiss_nodeset_find_node_by_identifier(nodeset, node_identifier);
+			cmzn_nodeset_id nodeset = cmzn_field_module_find_nodeset_by_name(field_modify->get_field_module(), nodeset_name);
+			cmzn_node_id node = cmzn_nodeset_find_node_by_identifier(nodeset, node_identifier);
 			if (node)
 			{
 				return_code = field_modify->update_field_and_deaccess(
@@ -224,8 +224,8 @@ contents to be modified.
 					"define field quaternion_SLERP.  Invalid node %d", node_identifier);
 				return_code = 0;
 			}
-			Cmiss_node_destroy(&node);
-			Cmiss_nodeset_destroy(&nodeset);
+			cmzn_node_destroy(&node);
+			cmzn_nodeset_destroy(&nodeset);
 		}
 		else
 		{
@@ -253,7 +253,7 @@ contents to be modified.
 
 int Computed_field_register_types_lookup(
 	struct Computed_field_package *computed_field_package,
-	struct Cmiss_region *root_region)
+	struct cmzn_region *root_region)
 /*******************************************************************************
 LAST MODIFIED : 25 August 2006
 

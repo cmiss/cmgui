@@ -226,7 +226,7 @@ read from or written to.
 ==============================================================================*/
 {
 	struct Event_dispatcher *event_dispatcher;
-	Cmiss_native_socket_t descriptor;
+	cmzn_native_socket_t descriptor;
 	struct Fdio_callback_data read_data;
 	struct Fdio_callback_data write_data;
 #if defined(USE_GENERIC_EVENT_DISPATCHER)
@@ -247,10 +247,10 @@ read from or written to.
 DECLARE_OBJECT_FUNCTIONS(Fdio)
 FULL_DECLARE_INDEXED_LIST_TYPE(Fdio);
 DECLARE_INDEXED_LIST_MODULE_FUNCTIONS(Fdio,
-	descriptor,Cmiss_native_socket_t,compare_int)
+	descriptor,cmzn_native_socket_t,compare_int)
 DECLARE_INDEXED_LIST_FUNCTIONS(Fdio)
 DECLARE_FIND_BY_IDENTIFIER_IN_INDEXED_LIST_FUNCTION(Fdio,
-	descriptor,Cmiss_native_socket_t,compare_int)
+	descriptor,cmzn_native_socket_t,compare_int)
 
 /*
 Module functions
@@ -2493,7 +2493,7 @@ the application is notified by the operating system of a closure event.
 }
 
 Fdio_id Fdio_package_create_Fdio(Fdio_package_id package,
-	Cmiss_native_socket_t descriptor)
+	cmzn_native_socket_t descriptor)
 /*******************************************************************************
 LAST MODIFIED : 16 May, 2005
 
@@ -2563,7 +2563,7 @@ This function sets the callback and user data for a given callback_data structur
 ==============================================================================*/
 
 Fdio_id Event_dispatcher_create_Fdio(struct Event_dispatcher *dispatcher,
-	Cmiss_native_socket_t descriptor)
+	cmzn_native_socket_t descriptor)
 /*******************************************************************************
 LAST MODIFIED : 28 February 2005
 
@@ -2571,7 +2571,7 @@ DESCRIPTION :
 Creates a new Fdio, given an event dispatcher.
 ==============================================================================*/
 {
-	struct Cmiss_fdio *io;
+	struct cmzn_fdio *io;
 
 	ENTER(CREATE(Event_dispatcher_create_fdio));
 
@@ -2791,7 +2791,7 @@ This function sets the callback and user data for a given callback_data structur
 
 #elif defined(WIN32_USER_INTERFACE)
 Fdio_id Event_dispatcher_create_Fdio(struct Event_dispatcher *dispatcher,
-	Cmiss_native_socket_t descriptor)
+	cmzn_native_socket_t descriptor)
 /*******************************************************************************
 LAST MODIFIED : 28 February 2005
 
@@ -2944,7 +2944,7 @@ previously set will be cancelled.
 #elif defined(WX_USER_INTERFACE)
 
 Fdio_id Event_dispatcher_create_Fdio(struct Event_dispatcher *dispatcher,
-	Cmiss_native_socket_t descriptor)
+	cmzn_native_socket_t descriptor)
 /*******************************************************************************
 LAST MODIFIED : 16 May 2005
 
@@ -3100,7 +3100,7 @@ previously set will be cancelled.
 #elif defined(USE_GTK_MAIN_STEP)
 
 Fdio_id Event_dispatcher_create_Fdio(struct Event_dispatcher *dispatcher,
-	Cmiss_native_socket_t descriptor)
+	cmzn_native_socket_t descriptor)
 /*******************************************************************************
 LAST MODIFIED : 16 May 2005
 
@@ -3299,7 +3299,7 @@ previously set will be cancelled.
 #elif defined(CARBON_USER_INTERFACE)
 
 Fdio_id Event_dispatcher_create_Fdio(struct Event_dispatcher *dispatcher,
-	Cmiss_native_socket_t descriptor)
+	cmzn_native_socket_t descriptor)
 /*******************************************************************************
 LAST MODIFIED : 16 May 2005
 
@@ -3455,7 +3455,7 @@ previously set will be cancelled.
 #elif defined(USE_GTK_MAIN_STEP)
 
 Fdio_id Event_dispatcher_create_Fdio(struct Event_dispatcher *dispatcher,
-	Cmiss_native_socket_t descriptor)
+	cmzn_native_socket_t descriptor)
 /*******************************************************************************
 LAST MODIFIED : 16 May 2005
 
@@ -3654,7 +3654,7 @@ previously set will be cancelled.
 #elif defined(USE_XTAPP_CONTEXT)
 
 Fdio_id Event_dispatcher_create_Fdio(struct Event_dispatcher *dispatcher,
-	Cmiss_native_socket_t descriptor)
+	cmzn_native_socket_t descriptor)
 /*******************************************************************************
 LAST MODIFIED : 16 May 2005
 

@@ -44,8 +44,8 @@
 #include "icon/cmiss_icon.xpm"
 #include "general/debug.h"
 
-TessellationItem::TessellationItem(wxWindow* parent, MANAGER(Cmiss_tessellation) *tessellation_manager_in,
-	Cmiss_tessellation *tessellation_in) :
+TessellationItem::TessellationItem(wxWindow* parent, MANAGER(cmzn_tessellation) *tessellation_manager_in,
+	cmzn_tessellation *tessellation_in) :
 	wxPanel(parent, -1)
 {
 	tessellation_manager = tessellation_manager_in;
@@ -54,7 +54,7 @@ TessellationItem::TessellationItem(wxWindow* parent, MANAGER(Cmiss_tessellation)
 	refinementChanged = 0;
 	divisionsChanged = 0;
 	circleDivisionsChanged = 0;
-	char *name = Cmiss_tessellation_get_name(tessellation);
+	char *name = cmzn_tessellation_get_name(tessellation);
 	SetName(wxString::FromAscii(name));
 	wxSizer *Sizer = parent->GetSizer();
 
@@ -134,12 +134,12 @@ void TessellationItem::set_callback()
 void TessellationItem::update_divisions_string_for_dialog()
 {
 	int i = 0;
-	int number_of_divisions = Cmiss_tessellation_get_minimum_divisions(tessellation, 0, 0);
+	int number_of_divisions = cmzn_tessellation_get_minimum_divisions(tessellation, 0, 0);
 	wxString temp;
 	if (number_of_divisions > 0)
 	{
 		int *divisions = new int[number_of_divisions];
-		Cmiss_tessellation_get_minimum_divisions(tessellation,
+		cmzn_tessellation_get_minimum_divisions(tessellation,
 				number_of_divisions, divisions);
 		temp.Printf(wxString::FromAscii("%d"), divisions[0]);
 		for (i = 1; i < number_of_divisions; i++)
@@ -160,12 +160,12 @@ void TessellationItem::update_divisions_string_for_dialog()
 void TessellationItem::update_refinement_string_for_dialog()
 {
 	int i = 0;
-	int number_of_refinements = Cmiss_tessellation_get_refinement_factors(tessellation, 0, 0);
+	int number_of_refinements = cmzn_tessellation_get_refinement_factors(tessellation, 0, 0);
 	wxString temp;
 	if (number_of_refinements > 0)
 	{
 		int *refinements = new int[number_of_refinements];
-		Cmiss_tessellation_get_refinement_factors(tessellation,
+		cmzn_tessellation_get_refinement_factors(tessellation,
 				number_of_refinements, refinements);
 		temp.Printf(wxString::FromAscii("%d"), refinements[0]);
 		for (i = 1; i < number_of_refinements; i++)
@@ -185,7 +185,7 @@ void TessellationItem::update_refinement_string_for_dialog()
 
 void TessellationItem::update_circle_divisions_string_for_dialog()
 {
-	int circleDivisions = Cmiss_tessellation_get_circle_divisions(tessellation);
+	int circleDivisions = cmzn_tessellation_get_circle_divisions(tessellation);
 	char temp_char[20];
 	sprintf(temp_char, "%d", circleDivisions);
 	wxString temp(temp_char);
@@ -265,14 +265,14 @@ void TessellationItem::OnTessellationApplyPressed(wxCommandEvent& event)
 {
 	USE_PARAMETER(event);
 
-	MANAGER_BEGIN_CACHE(Cmiss_tessellation)(tessellation_manager);
+	MANAGER_BEGIN_CACHE(cmzn_tessellation)(tessellation_manager);
 	if (refinementChanged)
 	{
 		wxString temp = refinementTextCtrl->GetValue();
 		int size = 0, *values = NULL;
 		if (string_to_divisions(temp.mb_str(wxConvUTF8), &values, &size))
 		{
-			Cmiss_tessellation_set_refinement_factors(tessellation, size, values);
+			cmzn_tessellation_set_refinement_factors(tessellation, size, values);
 		}
 		if (values)
 		{
@@ -283,9 +283,9 @@ void TessellationItem::OnTessellationApplyPressed(wxCommandEvent& event)
 	if (labelChanged)
 	{
 		wxString temp = tessellationLabel->GetValue();
-		if (!Cmiss_tessellation_set_name(tessellation, temp.mb_str(wxConvUTF8)))
+		if (!cmzn_tessellation_set_name(tessellation, temp.mb_str(wxConvUTF8)))
 		{
-			char *name = Cmiss_tessellation_get_name(tessellation);
+			char *name = cmzn_tessellation_get_name(tessellation);
 			tessellationLabel->ChangeValue(wxString::FromAscii(name));
 			DEALLOCATE(name);
 		}
@@ -301,7 +301,7 @@ void TessellationItem::OnTessellationApplyPressed(wxCommandEvent& event)
 		int size = 0, *values = NULL;
 		if (string_to_divisions(temp.mb_str(wxConvUTF8), &values, &size))
 		{
-			Cmiss_tessellation_set_minimum_divisions(tessellation, size, values);
+			cmzn_tessellation_set_minimum_divisions(tessellation, size, values);
 		}
 		if (values)
 		{
@@ -315,19 +315,19 @@ void TessellationItem::OnTessellationApplyPressed(wxCommandEvent& event)
 		int circleDivisions = atoi(temp.mb_str(wxConvUTF8));
 		if (circleDivisions > 0)
 		{
-			Cmiss_tessellation_set_circle_divisions(tessellation, circleDivisions);
+			cmzn_tessellation_set_circle_divisions(tessellation, circleDivisions);
 		}
 		circleDivisionsChanged = 0;
 	}
 	applyButton->Disable();
-	MANAGER_END_CACHE(Cmiss_tessellation)(tessellation_manager);
+	MANAGER_END_CACHE(cmzn_tessellation)(tessellation_manager);
 }
 
 void TessellationItem::update_global()
 {
 	update_refinement_string_for_dialog();
 	update_divisions_string_for_dialog();
-	char *name = Cmiss_tessellation_get_name(tessellation);
+	char *name = cmzn_tessellation_get_name(tessellation);
 	tessellationLabel->ChangeValue(wxString::FromAscii(name));
 	SetName(wxString::FromAscii(name));
 	DEALLOCATE(name);
@@ -337,26 +337,26 @@ void TessellationItem::update_global()
 	applyButton->Disable();
 }
 
-int TessellationDialog_add_managed_object(Cmiss_tessellation *tessellation, void *Tdlg_void)
+int TessellationDialog_add_managed_object(cmzn_tessellation *tessellation, void *Tdlg_void)
 {
 	TessellationDialog *Tdlg = (TessellationDialog *)Tdlg_void;
 	int return_code = Tdlg->add_managed_object(tessellation);
 	return return_code;
 }
 
-void TessellationManagerCallback(struct MANAGER_MESSAGE(Cmiss_tessellation) *message,
+void TessellationManagerCallback(struct MANAGER_MESSAGE(cmzn_tessellation) *message,
 	void *TessellationDialog_void)
 {
 	TessellationDialog *dialog = (TessellationDialog *)TessellationDialog_void;
 	dialog->manager_callback(message);
 }
 
-TessellationDialog::TessellationDialog(Cmiss_tessellation_module *tessellation_module_in, wxWindow* parent,
+TessellationDialog::TessellationDialog(cmzn_tessellation_module *tessellation_module_in, wxWindow* parent,
 		int id, const wxPoint& pos, const wxSize& size):
 	wxDialog(parent, id, wxString::FromAscii("Tessellation Editor"), pos, size, wxDEFAULT_FRAME_STYLE|wxDIALOG_NO_PARENT)
 {
 		tessellation_module = tessellation_module_in;
-		tessellation_manager = Cmiss_tessellation_module_get_manager(tessellation_module);
+		tessellation_manager = cmzn_tessellation_module_get_manager(tessellation_module);
 	sizer_1_staticbox = new wxStaticBox(this, -1, wxEmptyString);
 	label_1 = new wxStaticText(this, wxID_ANY, wxT("Tessellation\n"), wxDefaultPosition,
 		wxDefaultSize, wxALIGN_CENTRE);
@@ -377,14 +377,14 @@ TessellationDialog::TessellationDialog(Cmiss_tessellation_module *tessellation_m
 	itemMap.clear();
 	create_managed_objects_table();
 	tessellation_manager_callback_id =
-	MANAGER_REGISTER(Cmiss_tessellation)(TessellationManagerCallback,
+	MANAGER_REGISTER(cmzn_tessellation)(TessellationManagerCallback,
 	(void *)this, tessellation_manager);
 	addNewButton->Connect(wxEVT_COMMAND_BUTTON_CLICKED,
 	wxCommandEventHandler(TessellationDialog::OnTessellationDialogAddNewPressed),
 	NULL, this);
 }
 
-int TessellationDialog::add_managed_object(Cmiss_tessellation *tessellation)
+int TessellationDialog::add_managed_object(cmzn_tessellation *tessellation)
 {
 	TessellationItem *objectPanel = new TessellationItem(TessellationItemsPanel,
 			tessellation_manager, tessellation);
@@ -401,7 +401,7 @@ int TessellationDialog::add_managed_object(Cmiss_tessellation *tessellation)
 
 void TessellationDialog::create_managed_objects_table()
 {
-	FOR_EACH_OBJECT_IN_MANAGER(Cmiss_tessellation)(
+	FOR_EACH_OBJECT_IN_MANAGER(cmzn_tessellation)(
 		TessellationDialog_add_managed_object, (void *)this,	tessellation_manager);
 	wxSizer *sizer = TessellationItemsPanel->GetSizer();
 	sizer->Detach(addNewButton);
@@ -438,25 +438,25 @@ void TessellationDialog::do_layout()
 void TessellationDialog::OnTessellationDialogAddNewPressed(wxCommandEvent &event)
 {
 	USE_PARAMETER(event);
-	MANAGER_BEGIN_CACHE(Cmiss_tessellation)(tessellation_manager);
-	Cmiss_tessellation *new_tessellation =
-		Cmiss_tessellation_module_create_tessellation(tessellation_module);
-	Cmiss_tessellation_set_managed(new_tessellation, true);
-	Cmiss_tessellation_destroy(&new_tessellation);
-	MANAGER_END_CACHE(Cmiss_tessellation)(tessellation_manager);
+	MANAGER_BEGIN_CACHE(cmzn_tessellation)(tessellation_manager);
+	cmzn_tessellation *new_tessellation =
+		cmzn_tessellation_module_create_tessellation(tessellation_module);
+	cmzn_tessellation_set_managed(new_tessellation, true);
+	cmzn_tessellation_destroy(&new_tessellation);
+	MANAGER_END_CACHE(cmzn_tessellation)(tessellation_manager);
 }
 
-void TessellationDialog::manager_callback(struct MANAGER_MESSAGE(Cmiss_tessellation) *message)
+void TessellationDialog::manager_callback(struct MANAGER_MESSAGE(cmzn_tessellation) *message)
 {
 	wxSizer *sizer = TessellationItemsPanel->GetSizer();
-	std::map<Cmiss_tessellation *, TessellationItem *>::iterator pos;
+	std::map<cmzn_tessellation *, TessellationItem *>::iterator pos;
 	wxSize oldSize = GetSizer()->GetMinSize();
 	int change_flags = 0;
 	for (pos = itemMap.begin(); pos != itemMap.end();)
 	{
-		change_flags = MANAGER_MESSAGE_GET_OBJECT_CHANGE(Cmiss_tessellation)(
+		change_flags = MANAGER_MESSAGE_GET_OBJECT_CHANGE(cmzn_tessellation)(
 			message, pos->first);
-		if (change_flags & MANAGER_CHANGE_RESULT(Cmiss_tessellation))
+		if (change_flags & MANAGER_CHANGE_RESULT(cmzn_tessellation))
 		{
 			TessellationItem *itemPanel = pos->second;
 			if (itemPanel)
@@ -465,7 +465,7 @@ void TessellationDialog::manager_callback(struct MANAGER_MESSAGE(Cmiss_tessellat
 			}
 			++pos;
 		}
-		else if (change_flags & MANAGER_CHANGE_REMOVE(Cmiss_tessellation))
+		else if (change_flags & MANAGER_CHANGE_REMOVE(cmzn_tessellation))
 		{
 			sizer->Detach(pos->second);
 			sizer->Layout();
@@ -477,14 +477,14 @@ void TessellationDialog::manager_callback(struct MANAGER_MESSAGE(Cmiss_tessellat
 			++pos;
 		}
 	}
-	struct LIST(Cmiss_tessellation) *changed_tessellation_list =
-		MANAGER_MESSAGE_GET_CHANGE_LIST(Cmiss_tessellation)(message,
-			MANAGER_CHANGE_ADD(Cmiss_tessellation));
+	struct LIST(cmzn_tessellation) *changed_tessellation_list =
+		MANAGER_MESSAGE_GET_CHANGE_LIST(cmzn_tessellation)(message,
+			MANAGER_CHANGE_ADD(cmzn_tessellation));
 	if (changed_tessellation_list)
 	{
-		FOR_EACH_OBJECT_IN_LIST(Cmiss_tessellation)(
+		FOR_EACH_OBJECT_IN_LIST(cmzn_tessellation)(
 			TessellationDialog_add_managed_object, (void *)this, changed_tessellation_list);
-		DESTROY_LIST(Cmiss_tessellation)(&changed_tessellation_list);
+		DESTROY_LIST(cmzn_tessellation)(&changed_tessellation_list);
 		sizer->Detach(addNewButton);
 		sizer->Add(addNewButton, 0 ,wxALIGN_LEFT|wxALIGN_BOTTOM, 0);
 	}

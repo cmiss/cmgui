@@ -47,9 +47,9 @@ DESCRIPTION :
 #include "general/message.h"
 
 wxRegionChooser::wxRegionChooser(wxWindow *parent,
-	Cmiss_region *root_region, const char *initial_path) :
+	cmzn_region *root_region, const char *initial_path) :
 	wxChoice(parent, /*id*/-1, wxPoint(0,0), wxSize(-1,-1)),
-	root_region(ACCESS(Cmiss_region)(root_region))
+	root_region(ACCESS(cmzn_region)(root_region))
 /*******************************************************************************
 LAST MODIFIED : 22 February 2007
 
@@ -62,7 +62,7 @@ DESCRIPTION :
 	Connect(wxEVT_COMMAND_CHOICE_SELECTED,
 		wxCommandEventHandler(wxRegionChooser::OnChoiceSelected));
 
-	Cmiss_region_add_callback(root_region,
+	cmzn_region_add_callback(root_region,
 		wxRegionChooser::RegionChange, this);
 
 	wxBoxSizer *sizer = new wxBoxSizer( wxHORIZONTAL );
@@ -81,9 +81,9 @@ LAST MODIFIED : 22 February 2007
 DESCRIPTION :
 ==============================================================================*/
 {
-	Cmiss_region_remove_callback(root_region,
+	cmzn_region_remove_callback(root_region,
 		wxRegionChooser::RegionChange, this);
-	DEACCESS(Cmiss_region)(&root_region);
+	DEACCESS(cmzn_region)(&root_region);
 	if (callback)
 		delete callback;
 }
@@ -105,7 +105,7 @@ Up to the calling function to DEALLOCATE the returned path.
 	return (return_name);
 }
 
-Cmiss_region *wxRegionChooser::get_region()
+cmzn_region *wxRegionChooser::get_region()
 /*******************************************************************************
 LAST MODIFIED : 22 February 2007
 
@@ -113,19 +113,19 @@ DESCRIPTION :
 Returns to <region_address> the region chosen in the <chooser>.
 ==============================================================================*/
 {
-	Cmiss_region *child_region = NULL;
+	cmzn_region *child_region = NULL;
 	wxString tmpstr = GetString(GetSelection());
-	Cmiss_region_get_region_from_path_deprecated(root_region,
+	cmzn_region_get_region_from_path_deprecated(root_region,
 		tmpstr.mb_str(wxConvUTF8), &child_region);
 	return (child_region);
 }
 
-int wxRegionChooser::set_region(struct Cmiss_region *region)
+int wxRegionChooser::set_region(struct cmzn_region *region)
 {
 	char *path = NULL;
 	if (region)
 	{
-		char *temp_path = Cmiss_region_get_path(region);
+		char *temp_path = cmzn_region_get_path(region);
 		int string_length = strlen(temp_path);
 		if (strcmp(temp_path, "/") && (string_length > 1))
 		{
@@ -173,7 +173,7 @@ Sets <path> of chosen region in the <chooser>.
 	return (found);
 }
 
-int wxRegionChooser::append_children(Cmiss_region *current_region,
+int wxRegionChooser::append_children(cmzn_region *current_region,
 	const char *current_path, const char *initial_path)
 /*******************************************************************************
 LAST MODIFIED : 22 February 2007
@@ -184,10 +184,10 @@ Sets <path> of chosen region in the <chooser>.
 {
 	char *child_name, *child_path;
 
-	Cmiss_region *child_region = Cmiss_region_get_first_child(current_region);
+	cmzn_region *child_region = cmzn_region_get_first_child(current_region);
 	while (NULL != child_region)
 	{
-		child_name = Cmiss_region_get_name(child_region);
+		child_name = cmzn_region_get_name(child_region);
 
 		ALLOCATE(child_path, char, strlen(current_path) + strlen(child_name) + 2);
 		sprintf(child_path, "%s%c%s", current_path, CMISS_REGION_PATH_SEPARATOR_CHAR,
@@ -203,12 +203,12 @@ Sets <path> of chosen region in the <chooser>.
 
 		DEALLOCATE(child_name);
 		DEALLOCATE(child_path);
-		Cmiss_region_reaccess_next_sibling(&child_region);
+		cmzn_region_reaccess_next_sibling(&child_region);
 	}
 	return 1;
 }
 
-int wxRegionChooser::build_main_menu(Cmiss_region *root_region,
+int wxRegionChooser::build_main_menu(cmzn_region *root_region,
 	const char *initial_path)
 /*******************************************************************************
 LAST MODIFIED : 22 February 2007
@@ -222,7 +222,7 @@ is selected.
 	char *root_path;
 	Clear();
 
-	root_path = Cmiss_region_get_root_region_path();
+	root_path = cmzn_region_get_root_region_path();
 	Append(wxString::FromAscii(root_path));
 	if (!strcmp(root_path, initial_path))
 	{
@@ -240,8 +240,8 @@ is selected.
 	return 1;
 }
 
-void wxRegionChooser::RegionChange(struct Cmiss_region *root_region,
-	struct Cmiss_region_changes *region_changes, void *region_chooser_void)
+void wxRegionChooser::RegionChange(struct cmzn_region *root_region,
+	struct cmzn_region_changes *region_changes, void *region_chooser_void)
 /*******************************************************************************
 LAST MODIFIED : 22 February 2007
 

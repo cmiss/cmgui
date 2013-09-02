@@ -68,12 +68,12 @@ Global types
 ------------
 */
 
-struct Cmiss_command_data;
+struct cmzn_command_data;
 /*******************************************************************************
 LAST MODIFIED : 12 August 2002
 
 DESCRIPTION :
-Shifted the Cmiss_command_data to be internal to cmiss.c
+Shifted the cmzn_command_data to be internal to cmiss.c
 ==============================================================================*/
 
 struct Cmgui_command_line_options
@@ -136,14 +136,14 @@ Sets the <command_string> in the command box of the CMISS command_window, ready
 for editing or entering. If there is no command_window, does nothing.
 ==============================================================================*/
 
-struct Cmiss_command_data *CREATE(Cmiss_command_data)(struct Cmiss_context_app *context,
+struct cmzn_command_data *CREATE(cmzn_command_data)(struct cmzn_context_app *context,
 	struct User_interface_module *UI_module);
 
 /*******************************************************************************
 LAST MODIFIED : 19 December 2002
 
 DESCRIPTION :
-Initialise all the subcomponents of cmgui and create the Cmiss_command_data
+Initialise all the subcomponents of cmgui and create the cmzn_command_data
 ==============================================================================*/
 
 /*******************************************************************************
@@ -153,8 +153,8 @@ Initialise all the subcomponents of cmgui and create the Cmiss_command_data
  * @param command_data  The command data to obtain a new reference to.
  * @return  New command data reference with incremented reference count.
  */
-struct Cmiss_command_data * Cmiss_command_data_access(
-	struct Cmiss_command_data * command_data);
+struct cmzn_command_data * cmzn_command_data_access(
+	struct cmzn_command_data * command_data);
 
 /***************************************************************************//**
  * Destroys reference to the command data and sets pointer/handle to NULL.
@@ -163,10 +163,10 @@ struct Cmiss_command_data * Cmiss_command_data_access(
  * @param command_data_address  Address of command data reference.
  * @return  1 on success, 0 if invalid arguments.
  */
-int Cmiss_command_data_destroy(
-	struct Cmiss_command_data **command_data_address);
+int cmzn_command_data_destroy(
+	struct cmzn_command_data **command_data_address);
 
-int Cmiss_command_data_main_loop(struct Cmiss_command_data *command_data);
+int cmzn_command_data_main_loop(struct cmzn_command_data *command_data);
 /*******************************************************************************
 LAST MODIFIED : 19 December 2002
 
@@ -174,8 +174,8 @@ DESCRIPTION :
 Process events until some events request the program to finish.
 ==============================================================================*/
 
-struct Cmiss_region *Cmiss_command_data_get_root_region(
-	struct Cmiss_command_data *command_data);
+struct cmzn_region *cmzn_command_data_get_root_region(
+	struct cmzn_command_data *command_data);
 /*******************************************************************************
 LAST MODIFIED : 18 April 2003
 
@@ -183,8 +183,8 @@ DESCRIPTION :
 Returns the root region from the <command_data>.
 ==============================================================================*/
 
-struct Execute_command *Cmiss_command_data_get_execute_command(
-	struct Cmiss_command_data *command_data);
+struct Execute_command *cmzn_command_data_get_execute_command(
+	struct cmzn_command_data *command_data);
 /*******************************************************************************
 LAST MODIFIED : 28 May 2003
 
@@ -193,8 +193,8 @@ Returns the execute command structure from the <command_data>, useful for
 executing cmiss commands from C.
 ==============================================================================*/
 
-struct IO_stream_package *Cmiss_command_data_get_IO_stream_package(
-	struct Cmiss_command_data *command_data);
+struct IO_stream_package *cmzn_command_data_get_IO_stream_package(
+	struct cmzn_command_data *command_data);
 /*******************************************************************************
 LAST MODIFIED : 16 September 2004
 
@@ -202,8 +202,8 @@ DESCRIPTION :
 Returns the io_stream_package structure from the <command_data>
 ==============================================================================*/
 
-struct Cmiss_fdio_package* Cmiss_command_data_get_fdio_package(
-	struct Cmiss_command_data *command_data);
+struct cmzn_fdio_package* cmzn_command_data_get_fdio_package(
+	struct cmzn_command_data *command_data);
 /*******************************************************************************
 LAST MODIFIED : 10 March 2005
 
@@ -211,8 +211,8 @@ DESCRIPTION :
 Gets an Fdio_package for this <command_data>
 ==============================================================================*/
 
-struct Cmiss_idle_package* Cmiss_command_data_get_idle_package(
-	struct Cmiss_command_data *command_data);
+struct cmzn_idle_package* cmzn_command_data_get_idle_package(
+	struct cmzn_command_data *command_data);
 /*******************************************************************************
 LAST MODIFIED : 21 March 2005
 
@@ -220,8 +220,8 @@ DESCRIPTION :
 Gets an Idle_package for this <command_data>
 ==============================================================================*/
 
-struct User_interface *Cmiss_command_data_get_user_interface(
-	struct Cmiss_command_data *command_data);
+struct User_interface *cmzn_command_data_get_user_interface(
+	struct cmzn_command_data *command_data);
 /*******************************************************************************
 LAST MODIFIED : 25 January 2006
 
@@ -229,8 +229,8 @@ DESCRIPTION :
 Gets the user_interface for this <command_data>
 ==============================================================================*/
 
-struct MANAGER(Graphics_window) *Cmiss_command_data_get_graphics_window_manager(
-	struct Cmiss_command_data *command_data);
+struct MANAGER(Graphics_window) *cmzn_command_data_get_graphics_window_manager(
+	struct cmzn_command_data *command_data);
 /*******************************************************************************
 LAST MODIFIED : 26 January 2007
 
@@ -244,7 +244,7 @@ will be NULL.
  * Set various strings which are important to the wxwidgets about box.
  * It will not do anything if wxwidget is not in use.
  *
- * @param command_data  Pointer to a Cmiss_command_data object.
+ * @param command_data  Pointer to a cmzn_command_data object.
  * @param name_string  Given name of the current build.
  * @param version_string  Version of the current build.
  * @param date_string  Date of build of the current build.
@@ -254,7 +254,7 @@ will be NULL.
  * @return  user_interface_module if successfully create the user interface,
  *    otherwise NULL.
  */
-int Cmiss_command_data_set_cmgui_string(struct Cmiss_command_data *command_data,
+int cmzn_command_data_set_cmgui_string(struct cmzn_command_data *command_data,
 	const char *name_string, const char *version_string,const char *date_string,
 	const char *copyright_string, const char *build_string, const char *revision_string);
 
@@ -266,7 +266,7 @@ int Cmiss_command_data_set_cmgui_string(struct Cmiss_command_data *command_data,
  * @param command_line_options  pointer to command line options object.
  * @return  1 if successfully called otherwise 0.
  */
-int Cmiss_command_data_process_command_line(int argc, char *argv[],
+int cmzn_command_data_process_command_line(int argc, char *argv[],
 	struct Cmgui_command_line_options *command_line_options);
 
 #endif /* !defined (COMMAND_CMISS_H) */

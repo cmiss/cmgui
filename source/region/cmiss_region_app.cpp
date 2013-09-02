@@ -8,32 +8,32 @@
 #include "region/cmiss_region.h"
 #include "region/cmiss_region_app.h"
 
-int set_Cmiss_region(struct Parse_state *state, void *region_address_void,
+int set_cmzn_region(struct Parse_state *state, void *region_address_void,
 	void *root_region_void)
 {
 	const char *current_token;
 	int return_code;
-	struct Cmiss_region *region, **region_address, *root_region;
+	struct cmzn_region *region, **region_address, *root_region;
 
-	ENTER(set_Cmiss_region);
-	if (state && (root_region = static_cast<struct Cmiss_region *>(root_region_void)) &&
-		(region_address = static_cast<struct Cmiss_region **>(region_address_void)))
+	ENTER(set_cmzn_region);
+	if (state && (root_region = static_cast<struct cmzn_region *>(root_region_void)) &&
+		(region_address = static_cast<struct cmzn_region **>(region_address_void)))
 	{
 		if ((current_token = state->current_token))
 		{
 			if (!Parse_state_help_mode(state))
 			{
-				region = Cmiss_region_find_subregion_at_path(root_region, current_token);
+				region = cmzn_region_find_subregion_at_path(root_region, current_token);
 				if (region)
 				{
-					Cmiss_region_destroy(region_address);
+					cmzn_region_destroy(region_address);
 					*region_address = region;
 					return_code = shift_Parse_state(state, 1);
 				}
 				else
 				{
 					display_message(ERROR_MESSAGE,
-						"set_Cmiss_region:  Could not find subregion %s", current_token);
+						"set_cmzn_region:  Could not find subregion %s", current_token);
 					display_parse_state_location(state);
 					return_code = 0;
 				}
@@ -43,7 +43,7 @@ int set_Cmiss_region(struct Parse_state *state, void *region_address_void,
 				display_message(INFORMATION_MESSAGE," PATH_TO_REGION");
 				if (*region_address)
 				{
-					char *path = Cmiss_region_get_path(*region_address);
+					char *path = cmzn_region_get_path(*region_address);
 					display_message(INFORMATION_MESSAGE, "[%s]", path);
 					DEALLOCATE(path);
 				}
@@ -59,7 +59,7 @@ int set_Cmiss_region(struct Parse_state *state, void *region_address_void,
 	}
 	else
 	{
-		display_message(ERROR_MESSAGE, "set_Cmiss_region.  Missing state");
+		display_message(ERROR_MESSAGE, "set_cmzn_region.  Missing state");
 		return_code = 0;
 	}
 	LEAVE;
@@ -67,22 +67,22 @@ int set_Cmiss_region(struct Parse_state *state, void *region_address_void,
 	return (return_code);
 }
 
-int Option_table_add_set_Cmiss_region(struct Option_table *option_table,
-	const char *token, struct Cmiss_region *root_region,
-	struct Cmiss_region **region_address)
+int Option_table_add_set_cmzn_region(struct Option_table *option_table,
+	const char *token, struct cmzn_region *root_region,
+	struct cmzn_region **region_address)
 {
 	int return_code;
 
-	ENTER(Option_table_add_set_Cmiss_region);
+	ENTER(Option_table_add_set_cmzn_region);
 	if (option_table && root_region && region_address)
 	{
 		return_code = Option_table_add_entry(option_table, token,
-			(void *)region_address, (void *)root_region, set_Cmiss_region);
+			(void *)region_address, (void *)root_region, set_cmzn_region);
 	}
 	else
 	{
 		display_message(ERROR_MESSAGE,
-			"Option_table_add_set_Cmiss_region.  Invalid argument(s)");
+			"Option_table_add_set_cmzn_region.  Invalid argument(s)");
 		return_code = 0;
 	}
 	LEAVE;
@@ -90,29 +90,29 @@ int Option_table_add_set_Cmiss_region(struct Option_table *option_table,
 	return (return_code);
 }
 
-int set_Cmiss_region_path(struct Parse_state *state, void *path_address_void,
+int set_cmzn_region_path(struct Parse_state *state, void *path_address_void,
 	void *root_region_void)
 /*******************************************************************************
 LAST MODIFIED : 13 January 2003
 
 DESCRIPTION :
-Modifier function for entering a path to a Cmiss_region, starting at
+Modifier function for entering a path to a cmzn_region, starting at
 <root_region>.
 ==============================================================================*/
 {
 	const char *current_token;
 	char **path_address;
 	int return_code;
-	struct Cmiss_region *region, *root_region;
+	struct cmzn_region *region, *root_region;
 
-	ENTER(set_Cmiss_region_path);
-	if (state && (root_region = (struct Cmiss_region *)root_region_void))
+	ENTER(set_cmzn_region_path);
+	if (state && (root_region = (struct cmzn_region *)root_region_void))
 	{
 		if ((current_token = state->current_token))
 		{
 			if (!Parse_state_help_mode(state))
 			{
-				region = Cmiss_region_find_subregion_at_path(
+				region = cmzn_region_find_subregion_at_path(
 					root_region, current_token);
 				if (region)
 				{
@@ -129,17 +129,17 @@ Modifier function for entering a path to a Cmiss_region, starting at
 						else
 						{
 							display_message(ERROR_MESSAGE,
-								"set_Cmiss_region_path.  Could not allocate memory for path");
+								"set_cmzn_region_path.  Could not allocate memory for path");
 							return_code = 0;
 						}
 					}
 					else
 					{
 						display_message(ERROR_MESSAGE,
-							"set_Cmiss_region_path.  Missing path_address");
+							"set_cmzn_region_path.  Missing path_address");
 						return_code = 0;
 					}
-					DEACCESS(Cmiss_region)(&region);
+					DEACCESS(cmzn_region)(&region);
 				}
 				else
 				{
@@ -168,16 +168,16 @@ Modifier function for entering a path to a Cmiss_region, starting at
 	}
 	else
 	{
-		display_message(ERROR_MESSAGE, "set_Cmiss_region_path.  Missing state");
+		display_message(ERROR_MESSAGE, "set_cmzn_region_path.  Missing state");
 		return_code = 0;
 	}
 	LEAVE;
 
 	return (return_code);
-} /* set_Cmiss_region_path */
+} /* set_cmzn_region_path */
 
-int Option_table_add_set_Cmiss_region_path(struct Option_table *option_table,
-	const char *entry_string, struct Cmiss_region *root_region, char **path_address)
+int Option_table_add_set_cmzn_region_path(struct Option_table *option_table,
+	const char *entry_string, struct cmzn_region *root_region, char **path_address)
 /*******************************************************************************
 LAST MODIFIED : 13 March 2003
 
@@ -188,22 +188,22 @@ region path in <path_address> relative to the <root_region>.
 {
 	int return_code = 0;
 
-	ENTER(Option_table_add_set_Cmiss_region_path);
+	ENTER(Option_table_add_set_cmzn_region_path);
 	if (option_table && entry_string && root_region && path_address)
 	{
 		return_code = Option_table_add_entry(option_table, entry_string,
 			(void *)path_address, (void *)root_region,
-			set_Cmiss_region_path);
+			set_cmzn_region_path);
 	}
 	else
 	{
 		display_message(ERROR_MESSAGE,
-			"Option_table_add_set_Cmiss_region_path.  Invalid argument(s)");
+			"Option_table_add_set_cmzn_region_path.  Invalid argument(s)");
 	}
 	LEAVE;
 
 	return (return_code);
-} /* Option_table_add_set_Cmiss_region_path */
+} /* Option_table_add_set_cmzn_region_path */
 
 
 
@@ -215,7 +215,7 @@ region path in <path_address> relative to the <root_region>.
  *   /heart/coordinates = region path and field name
  *   heart              = region path only
  *   coordinates        = field name only
- * @param region_path_and_name a struct Cmiss_region_path_and_name which if
+ * @param region_path_and_name a struct cmzn_region_path_and_name which if
  *   set contains an ACCESSed region and allocated path and name which caller
  *   is required to clean up. Name may be NULL if path is fully resolved.
  */
@@ -224,12 +224,12 @@ static int set_region_path_and_or_field_name(struct Parse_state *state,
 {
 	const char *current_token;
 	int return_code;
-	struct Cmiss_region_path_and_name *name_data;
-	struct Cmiss_region *root_region;
+	struct cmzn_region_path_and_name *name_data;
+	struct cmzn_region *root_region;
 
 	ENTER(set_region_path_and_or_field_name);
-	if (state && (name_data = (struct Cmiss_region_path_and_name *)region_path_and_name_void) &&
-		(root_region = (struct Cmiss_region *)root_region_void))
+	if (state && (name_data = (struct cmzn_region_path_and_name *)region_path_and_name_void) &&
+		(root_region = (struct cmzn_region *)root_region_void))
 	{
 		current_token = state->current_token;
 		if (!current_token)
@@ -243,10 +243,10 @@ static int set_region_path_and_or_field_name(struct Parse_state *state,
 			display_message(INFORMATION_MESSAGE, " REGION_PATH|REGION_PATH/FIELD_NAME|FIELD_NAME");
 			return_code = 1;
 		}
-		else if (Cmiss_region_get_partial_region_path(root_region, current_token,
+		else if (cmzn_region_get_partial_region_path(root_region, current_token,
 			&name_data->region, &name_data->region_path, &name_data->name))
 		{
-			ACCESS(Cmiss_region)(name_data->region);
+			ACCESS(cmzn_region)(name_data->region);
 			if (!name_data->name || (NULL == strchr(name_data->name, CMISS_REGION_PATH_SEPARATOR_CHAR)))
 			{
 				return_code = shift_Parse_state(state, 1);
@@ -278,8 +278,8 @@ static int set_region_path_and_or_field_name(struct Parse_state *state,
 
 int Option_table_add_region_path_and_or_field_name_entry(
 	struct Option_table *option_table, char *token,
-	struct Cmiss_region_path_and_name *region_path_and_name,
-	struct Cmiss_region *root_region)
+	struct cmzn_region_path_and_name *region_path_and_name,
+	struct cmzn_region *root_region)
 {
 	int return_code;
 
@@ -302,11 +302,11 @@ int Option_table_add_region_path_and_or_field_name_entry(
 	return (return_code);
 } /* Option_table_add_region_path_and_or_field_name_entry */
 
-int set_Cmiss_region_or_group(struct Parse_state *state,
+int set_cmzn_region_or_group(struct Parse_state *state,
 	void *region_address_void, void *group_address_void)
 {
-	Cmiss_region_id *region_address = reinterpret_cast<Cmiss_region_id*>(region_address_void);
-	Cmiss_field_group_id *group_address = reinterpret_cast<Cmiss_field_group_id*>(group_address_void);
+	cmzn_region_id *region_address = reinterpret_cast<cmzn_region_id*>(region_address_void);
+	cmzn_field_group_id *group_address = reinterpret_cast<cmzn_field_group_id*>(group_address_void);
 	if (!(state && region_address && *region_address && group_address && !*group_address))
 		return 0;
 	const char *current_token = state->current_token;
@@ -325,18 +325,18 @@ int set_Cmiss_region_or_group(struct Parse_state *state,
 	{
 		char *region_path = 0;
 		char *field_name = 0;
-		Cmiss_region_id output_region = 0;
-		if (Cmiss_region_get_partial_region_path(*region_address, current_token,
+		cmzn_region_id output_region = 0;
+		if (cmzn_region_get_partial_region_path(*region_address, current_token,
 			&output_region, &region_path, &field_name) && output_region)
 		{
-			Cmiss_region_access(output_region);
-			Cmiss_region_destroy(region_address);
+			cmzn_region_access(output_region);
+			cmzn_region_destroy(region_address);
 			*region_address = output_region;
 			if (field_name)
 			{
-				Cmiss_field *field = FIND_BY_IDENTIFIER_IN_MANAGER(Computed_field,name)(
-					field_name, Cmiss_region_get_Computed_field_manager(output_region));
-				*group_address = Cmiss_field_cast_group(field);
+				cmzn_field *field = FIND_BY_IDENTIFIER_IN_MANAGER(Computed_field,name)(
+					field_name, cmzn_region_get_Computed_field_manager(output_region));
+				*group_address = cmzn_field_cast_group(field);
 				if (0 == *group_address)
 				{
 					return_code = 0;
@@ -363,8 +363,8 @@ int set_Cmiss_region_or_group(struct Parse_state *state,
 }
 
 int Option_table_add_region_or_group_entry(struct Option_table *option_table,
-	const char *token, Cmiss_region_id *region_address,
-	Cmiss_field_group_id *group_address)
+	const char *token, cmzn_region_id *region_address,
+	cmzn_field_group_id *group_address)
 {
 	if (!(option_table && region_address && *region_address && group_address))
 	{
@@ -372,5 +372,5 @@ int Option_table_add_region_or_group_entry(struct Option_table *option_table,
 		return 0;
 	}
 	return Option_table_add_entry(option_table, token,
-		(void *)region_address, (void *)group_address, set_Cmiss_region_or_group);
+		(void *)region_address, (void *)group_address, set_cmzn_region_or_group);
 }

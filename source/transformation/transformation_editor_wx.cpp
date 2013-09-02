@@ -52,7 +52,7 @@ Create a cpp class that act as a transformation editor for the wx widgets.
 #include "command/parser.h"
 
 Transformation_editor::Transformation_editor(wxPanel *parent, const char *panel_name,
-	 struct Cmiss_scene *scene, int *auto_apply)
+	 struct cmzn_scene *scene, int *auto_apply)
 /*******************************************************************************
 LAST MODIFIED : 5 March 2008
 
@@ -748,7 +748,7 @@ provoked then use this colour editor to do the settings.
 	 LEAVE;
 }
 
-void Transformation_editor::set_scene(struct Cmiss_scene *scene)
+void Transformation_editor::set_scene(struct cmzn_scene *scene)
 {
 	 current_scene = scene;
 }
@@ -918,7 +918,7 @@ void Transformation_editor::ApplyTransformation(int force_apply)
 	 {
 			if (*auto_apply_flag || force_apply)
 			{
-				 Cmiss_scene_set_transformation(current_scene,
+				 cmzn_scene_set_transformation(current_scene,
 					 &transformation_editor_transformation_matrix);
 			}
 			else

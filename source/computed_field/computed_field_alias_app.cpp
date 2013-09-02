@@ -11,17 +11,17 @@ const char computed_field_alias_type_string[] = "alias";
 class Computed_field_alias_package : public Computed_field_type_package
 {
 public:
-	Cmiss_region *root_region;
+	cmzn_region *root_region;
 
-	Computed_field_alias_package(Cmiss_region *root_region)
+	Computed_field_alias_package(cmzn_region *root_region)
 	  : root_region(root_region)
 	{
-		ACCESS(Cmiss_region)(root_region);
+		ACCESS(cmzn_region)(root_region);
 	}
 
 	~Computed_field_alias_package()
 	{
-		DEACCESS(Cmiss_region)(&root_region);
+		DEACCESS(cmzn_region)(&root_region);
 	}
 };
 
@@ -64,10 +64,10 @@ int define_Computed_field_type_alias(Parse_state *state,
 		/* no errors,not asking for help */
 		if (return_code)
 		{
-			Cmiss_region *root_region = NULL;
+			cmzn_region *root_region = NULL;
 			char *region_path = NULL;
 			char *remainder = NULL;
-			Cmiss_region *region = NULL;
+			cmzn_region *region = NULL;
 			Computed_field *original_field = (Computed_field *)NULL;
 
 			if (original_field_path_and_name)
@@ -82,10 +82,10 @@ int define_Computed_field_type_alias(Parse_state *state,
 					// relative path
 					root_region = field_modify->get_region();
 				}
-				if (Cmiss_region_get_partial_region_path(root_region,
+				if (cmzn_region_get_partial_region_path(root_region,
 					original_field_path_and_name, &region, &region_path, &remainder))
 				{
-					if (!(original_field = Cmiss_region_find_field_by_name(region, remainder)))
+					if (!(original_field = cmzn_region_find_field_by_name(region, remainder)))
 					{
 						display_message(ERROR_MESSAGE,
 							"gfx define field alias:  Could not find field %s", original_field_path_and_name);
@@ -108,7 +108,7 @@ int define_Computed_field_type_alias(Parse_state *state,
 			if (return_code)
 			{
 				return_code = field_modify->update_field_and_deaccess(
-					Cmiss_field_module_create_alias(field_modify->get_field_module(),
+					cmzn_field_module_create_alias(field_modify->get_field_module(),
 						original_field));
 			}
 			if (original_field)
@@ -142,7 +142,7 @@ int define_Computed_field_type_alias(Parse_state *state,
 
 int Computed_field_register_type_alias(
 	struct Computed_field_package *computed_field_package,
-	struct Cmiss_region *root_region)
+	struct cmzn_region *root_region)
 {
 	int return_code;
 	Computed_field_alias_package *computed_field_alias_package =

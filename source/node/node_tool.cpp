@@ -109,7 +109,7 @@ class wxNodeTool;
 
 
 static int Node_tool_set_region(struct Node_tool *node_tool,
-	struct Cmiss_region *region, Cmiss_field_group_id group);
+	struct cmzn_region *region, cmzn_field_group_id group);
 
 struct Node_tool
 /*******************************************************************************
@@ -123,12 +123,12 @@ changes in node position and derivatives etc.
 	struct Execute_command *execute_command;
 	struct MANAGER(Interactive_tool) *interactive_tool_manager;
 	struct Interactive_tool *interactive_tool;
-	Cmiss_field_domain_type domain_type; // nodes or data
+	cmzn_field_domain_type domain_type; // nodes or data
 	/* The root region */
-	struct Cmiss_region *root_region;
+	struct cmzn_region *root_region;
 	/* The region we are working in */
-	struct Cmiss_region *region;
-	Cmiss_field_group_id group_field;
+	struct cmzn_region *region;
+	cmzn_field_group_id group_field;
 	struct FE_region *fe_region;
 	/* needed for destroy button */
 	struct MANAGER(FE_element) *element_manager;
@@ -158,8 +158,8 @@ changes in node position and derivatives etc.
 	int picked_node_was_unselected;
 	int motion_detected;
 
-	struct Cmiss_scene *scene;
-	struct Cmiss_graphic *graphic;
+	struct cmzn_scene *scene;
+	struct cmzn_graphic *graphic;
 	void *computed_field_manager_callback_id;
 	struct Interaction_volume *last_interaction_volume;
 	struct GT_object *rubber_band;
@@ -193,7 +193,7 @@ finishing points on the near and far plane. The exact amount is in proportion
 to its position between these two planes.
 ==============================================================================*/
 {
-	Cmiss_field_cache_id field_cache;
+	cmzn_field_cache_id field_cache;
 	/* the actual coordinate change calculated from the drag at the last picked
 		 node */
 	double delta1,delta2,delta3;
@@ -231,7 +231,7 @@ to its position between these two planes.
 
 struct Node_tool_element_constraint_function_data
 {
-	Cmiss_field_cache_id field_cache;
+	cmzn_field_cache_id field_cache;
 	struct FE_element *element, *found_element;
 	FE_value xi[MAXIMUM_ELEMENT_XI_DIMENSIONS];
 	struct Computed_field *coordinate_field;
@@ -256,25 +256,25 @@ static int Node_tool_refresh_element_dimension_text(
 	 struct Node_tool *node_tool);
 #endif /*defined (WX_USER_INTERFACE)*/
 
-static int Cmiss_field_group_destroy_all_nodes(Cmiss_field_group_id group, void *domain_type_address_void)
+static int cmzn_field_group_destroy_all_nodes(cmzn_field_group_id group, void *domain_type_address_void)
 {
 	int return_code = 0;
-	Cmiss_field_domain_type *domain_type_address = (Cmiss_field_domain_type *)domain_type_address_void;
+	cmzn_field_domain_type *domain_type_address = (cmzn_field_domain_type *)domain_type_address_void;
 	if (group && domain_type_address)
 	{
-		Cmiss_field_module_id field_module = Cmiss_field_get_field_module(Cmiss_field_group_base_cast(group));
-		Cmiss_nodeset_id master_nodeset =
-			Cmiss_field_module_find_nodeset_by_domain_type(field_module, *domain_type_address);
-		Cmiss_field_node_group_id node_group = Cmiss_field_group_get_node_group(group, master_nodeset);
-		Cmiss_nodeset_destroy(&master_nodeset);
+		cmzn_field_module_id field_module = cmzn_field_get_field_module(cmzn_field_group_base_cast(group));
+		cmzn_nodeset_id master_nodeset =
+			cmzn_field_module_find_nodeset_by_domain_type(field_module, *domain_type_address);
+		cmzn_field_node_group_id node_group = cmzn_field_group_get_node_group(group, master_nodeset);
+		cmzn_nodeset_destroy(&master_nodeset);
 		if (node_group)
 		{
-			Cmiss_nodeset_group_id nodeset_group = Cmiss_field_node_group_get_nodeset(node_group);
-			Cmiss_nodeset_destroy_all_nodes(Cmiss_nodeset_group_base_cast(nodeset_group));
-			Cmiss_nodeset_group_destroy(&nodeset_group);
-			Cmiss_field_node_group_destroy(&node_group);
+			cmzn_nodeset_group_id nodeset_group = cmzn_field_node_group_get_nodeset(node_group);
+			cmzn_nodeset_destroy_all_nodes(cmzn_nodeset_group_base_cast(nodeset_group));
+			cmzn_nodeset_group_destroy(&nodeset_group);
+			cmzn_field_node_group_destroy(&node_group);
 		}
-		Cmiss_field_module_destroy(&field_module);
+		cmzn_field_module_destroy(&field_module);
 		return_code = 1;
 	}
 	return return_code;
@@ -286,25 +286,25 @@ int Node_tool_destroy_selected_nodes(struct Node_tool *node_tool)
 	if (node_tool->region)
 	{
 		return_code = 1;
-		Cmiss_scene *root_scene = Cmiss_region_get_scene_internal(
+		cmzn_scene *root_scene = cmzn_region_get_scene_internal(
 			node_tool->root_region);
-		Cmiss_field_group_id selection_group = Cmiss_scene_get_selection_group(root_scene);
+		cmzn_field_group_id selection_group = cmzn_scene_get_selection_group(root_scene);
 		if (selection_group)
 		{
-			Cmiss_field_group_for_each_group_hierarchical(selection_group,
-				Cmiss_field_group_destroy_all_nodes, (void *)&(node_tool->domain_type));
+			cmzn_field_group_for_each_group_hierarchical(selection_group,
+				cmzn_field_group_destroy_all_nodes, (void *)&(node_tool->domain_type));
 			if (node_tool->domain_type == CMISS_FIELD_DOMAIN_DATA)
 			{
-				Cmiss_field_group_clear_region_tree_data(selection_group);
+				cmzn_field_group_clear_region_tree_data(selection_group);
 			}
 			else
 			{
-				Cmiss_field_group_clear_region_tree_node(selection_group);
+				cmzn_field_group_clear_region_tree_node(selection_group);
 			}
-			Cmiss_field_group_destroy(&selection_group);
+			cmzn_field_group_destroy(&selection_group);
 		}
-		Cmiss_scene_flush_tree_selections(root_scene);
-		Cmiss_scene_destroy(&root_scene);
+		cmzn_scene_flush_tree_selections(root_scene);
+		cmzn_scene_destroy(&root_scene);
 	}
 	return return_code;
 }
@@ -552,11 +552,11 @@ DESCRIPTION :
 		data->found_element = data->element;
 		return_code = Computed_field_find_element_xi(data->coordinate_field,
 			data->field_cache, point, /*number_of_values*/3, &(data->found_element),
-			data->xi, (Cmiss_mesh_id)0, /*propagate_field*/0, /*find_nearest_location*/1);
-		Cmiss_field_cache_set_mesh_location(data->field_cache, data->found_element,
-			Cmiss_element_get_dimension(data->found_element), data->xi);
-		Cmiss_field_evaluate_real(data->coordinate_field, data->field_cache,
-			Cmiss_field_get_number_of_components(data->coordinate_field), point);
+			data->xi, (cmzn_mesh_id)0, /*propagate_field*/0, /*find_nearest_location*/1);
+		cmzn_field_cache_set_mesh_location(data->field_cache, data->found_element,
+			cmzn_element_get_dimension(data->found_element), data->xi);
+		cmzn_field_evaluate_real(data->coordinate_field, data->field_cache,
+			cmzn_field_get_number_of_components(data->coordinate_field), point);
 	}
 	else
 	{
@@ -592,8 +592,8 @@ static int FE_node_calculate_delta_position(struct FE_node *node,
 		coordinates[0]=0.0;
 		coordinates[1]=0.0;
 		coordinates[2]=0.0;
-		Cmiss_field_cache_set_node(edit_info->field_cache, node);
-		if (Cmiss_field_evaluate_real(edit_info->rc_coordinate_field,
+		cmzn_field_cache_set_node(edit_info->field_cache, node);
+		if (cmzn_field_evaluate_real(edit_info->rc_coordinate_field,
 			edit_info->field_cache, 3, coordinates))
 		{
 			initial_coordinates[0] = coordinates[0];
@@ -611,8 +611,8 @@ static int FE_node_calculate_delta_position(struct FE_node *node,
 					 edit_info->nearest_element_coordinate_field)
 				{
 					// need a new field cache for constraint as
-					Cmiss_field_module_id constraint_field_module = Cmiss_field_get_field_module(edit_info->nearest_element_coordinate_field);
-					constraint_data.field_cache = Cmiss_field_module_create_cache(constraint_field_module);;
+					cmzn_field_module_id constraint_field_module = cmzn_field_get_field_module(edit_info->nearest_element_coordinate_field);
+					constraint_data.field_cache = cmzn_field_module_create_cache(constraint_field_module);;
 					constraint_data.element = edit_info->nearest_element;
 					constraint_data.found_element = edit_info->nearest_element;
 					constraint_data.coordinate_field = edit_info->nearest_element_coordinate_field;
@@ -626,8 +626,8 @@ static int FE_node_calculate_delta_position(struct FE_node *node,
 					coordinates[0] = placement_coordinates[0];
 					coordinates[1] = placement_coordinates[1];
 					coordinates[2] = placement_coordinates[2];
-					Cmiss_field_cache_destroy(&constraint_data.field_cache);
-					Cmiss_field_module_destroy(&constraint_field_module);
+					cmzn_field_cache_destroy(&constraint_data.field_cache);
+					cmzn_field_module_destroy(&constraint_field_module);
 				}
 				else
 				{
@@ -661,11 +661,11 @@ static int FE_node_calculate_delta_position(struct FE_node *node,
 				{
 					/* get delta of coordinate_field from change of rc_coordinate_field */
 					return_code =
-						Cmiss_field_evaluate_real(edit_info->coordinate_field,
+						cmzn_field_evaluate_real(edit_info->coordinate_field,
 							edit_info->field_cache, 3, initial_coordinates) &&
-						Cmiss_field_assign_real(edit_info->rc_coordinate_field,
+						cmzn_field_assign_real(edit_info->rc_coordinate_field,
 							edit_info->field_cache, 3, coordinates) &&
-						Cmiss_field_evaluate_real(edit_info->coordinate_field,
+						cmzn_field_evaluate_real(edit_info->coordinate_field,
 							edit_info->field_cache, 3, final_coordinates);
 					edit_info->delta1 = final_coordinates[0] - initial_coordinates[0];
 					edit_info->delta2 = final_coordinates[1] - initial_coordinates[1];
@@ -676,7 +676,7 @@ static int FE_node_calculate_delta_position(struct FE_node *node,
 					edit_info->delta1 = coordinates[0] - initial_coordinates[0];
 					edit_info->delta2 = coordinates[1] - initial_coordinates[1];
 					edit_info->delta3 = coordinates[2] - initial_coordinates[2];
-					return_code = Cmiss_field_assign_real(edit_info->rc_coordinate_field,
+					return_code = cmzn_field_assign_real(edit_info->rc_coordinate_field,
 						edit_info->field_cache, 3, coordinates);
 				}
 				/* may be some application for not editing element_xi field value */
@@ -736,17 +736,17 @@ static int FE_node_edit_position(struct FE_node *node,
 			coordinates[0]=0.0;
 			coordinates[1]=0.0;
 			coordinates[2]=0.0;
-			Cmiss_field_cache_set_node(edit_info->field_cache, node);
+			cmzn_field_cache_set_node(edit_info->field_cache, node);
 			/* If the field we are changing isn't defined at this node then we
 				don't complain and just do nothing */
-			if (Cmiss_field_evaluate_real(edit_info->coordinate_field, edit_info->field_cache, 3, coordinates))
+			if (cmzn_field_evaluate_real(edit_info->coordinate_field, edit_info->field_cache, 3, coordinates))
 			{
 				if (return_code)
 				{
 					coordinates[0] += edit_info->delta1;
 					coordinates[1] += edit_info->delta2;
 					coordinates[2] += edit_info->delta3;
-					if (!Cmiss_field_assign_real(edit_info->coordinate_field, edit_info->field_cache, 3, coordinates))
+					if (!cmzn_field_assign_real(edit_info->coordinate_field, edit_info->field_cache, 3, coordinates))
 					{
 						return_code=0;
 					}
@@ -809,10 +809,10 @@ NOTE: currently does not tolerate having a variable_scale_field.
 		coordinates[0]=0.0;
 		coordinates[1]=0.0;
 		coordinates[2]=0.0;
-		Cmiss_field_cache_set_node(edit_info->field_cache, node);
-		if (Cmiss_field_evaluate_real(edit_info->wrapper_orientation_scale_field, edit_info->field_cache,
+		cmzn_field_cache_set_node(edit_info->field_cache, node);
+		if (cmzn_field_evaluate_real(edit_info->wrapper_orientation_scale_field, edit_info->field_cache,
 				number_of_orientation_scale_components, orientation_scale) &&
-			Cmiss_field_evaluate_real(edit_info->rc_coordinate_field, edit_info->field_cache,
+			cmzn_field_evaluate_real(edit_info->rc_coordinate_field, edit_info->field_cache,
 				3, coordinates) &&
 			make_glyph_orientation_scale_axes(number_of_orientation_scale_components,
 				orientation_scale, a, b, c, size))
@@ -895,7 +895,7 @@ NOTE: currently does not tolerate having a variable_scale_field.
 			}
 			if (return_code)
 			{
-				if (!Cmiss_field_assign_real(edit_info->wrapper_orientation_scale_field, edit_info->field_cache,
+				if (!cmzn_field_assign_real(edit_info->wrapper_orientation_scale_field, edit_info->field_cache,
 					number_of_orientation_scale_components, orientation_scale))
 				{
 					return_code=0;
@@ -904,7 +904,7 @@ NOTE: currently does not tolerate having a variable_scale_field.
 					edit_info->wrapper_orientation_scale_field)
 				{
 					/* get delta values from the orientation_scale_field */
-					if (Cmiss_field_evaluate_real(edit_info->orientation_scale_field, edit_info->field_cache,
+					if (cmzn_field_evaluate_real(edit_info->orientation_scale_field, edit_info->field_cache,
 						number_of_orientation_scale_components, orientation_scale))
 					{
 						number_of_orientation_scale_components=
@@ -1015,8 +1015,8 @@ static int FE_node_edit_vector(struct FE_node *node,
 		if ((node != edit_info->last_picked_node)&&(
 			FE_region_contains_FE_node(edit_info->fe_region, node)))
 		{
-			Cmiss_field_cache_set_node(edit_info->field_cache, node);
-			if (Cmiss_field_evaluate_real(edit_info->orientation_scale_field, edit_info->field_cache,
+			cmzn_field_cache_set_node(edit_info->field_cache, node);
+			if (cmzn_field_evaluate_real(edit_info->orientation_scale_field, edit_info->field_cache,
 				number_of_orientation_scale_components, orientation_scale))
 			{
 				switch (number_of_orientation_scale_components)
@@ -1051,7 +1051,7 @@ static int FE_node_edit_vector(struct FE_node *node,
 				}
 				if (return_code)
 				{
-					if (!Cmiss_field_assign_real(edit_info->orientation_scale_field, edit_info->field_cache,
+					if (!cmzn_field_assign_real(edit_info->orientation_scale_field, edit_info->field_cache,
 						number_of_orientation_scale_components, orientation_scale))
 					{
 						return_code=0;
@@ -1081,7 +1081,7 @@ static int FE_node_edit_vector(struct FE_node *node,
 
 static int Node_tool_define_field_at_node_from_picked_coordinates(
 	struct Node_tool *node_tool,struct FE_node *node,
-	Cmiss_field_cache_id field_cache)
+	cmzn_field_cache_id field_cache)
 /*******************************************************************************
 LAST MODIFIED : 29 September 2000
 
@@ -1104,22 +1104,22 @@ object's coordinate field.
 		{
 			time = 0;
 		}
-		Cmiss_field_id rc_coordinate_field =
+		cmzn_field_id rc_coordinate_field =
 			Computed_field_begin_wrap_coordinate_field(node_tool->coordinate_field);
 		if (rc_coordinate_field != 0)
 		{
-			Cmiss_field_id picked_coordinate_field =
-				Cmiss_graphic_get_coordinate_field(node_tool->graphic);
-			Cmiss_field_id rc_picked_coordinate_field = Computed_field_begin_wrap_coordinate_field(
+			cmzn_field_id picked_coordinate_field =
+				cmzn_graphic_get_coordinate_field(node_tool->graphic);
+			cmzn_field_id rc_picked_coordinate_field = Computed_field_begin_wrap_coordinate_field(
 				picked_coordinate_field);
 
-			Cmiss_field_cache_set_node(field_cache, node);
-			Cmiss_field_cache_set_time(field_cache, time);
-			if (Cmiss_field_evaluate_real(rc_picked_coordinate_field, field_cache,
+			cmzn_field_cache_set_node(field_cache, node);
+			cmzn_field_cache_set_time(field_cache, time);
+			if (cmzn_field_evaluate_real(rc_picked_coordinate_field, field_cache,
 				3, coordinates))
 			{
 				if (Node_tool_define_field_at_node(node_tool,node) &&
-					Cmiss_field_assign_real(rc_coordinate_field, field_cache, 3, coordinates))
+					cmzn_field_assign_real(rc_coordinate_field, field_cache, 3, coordinates))
 				{
 					return_code=1;
 				}
@@ -1138,7 +1138,7 @@ object's coordinate field.
 				return_code=0;
 			}
 			Computed_field_end_wrap(&rc_picked_coordinate_field);
-			Cmiss_field_destroy(&picked_coordinate_field);
+			cmzn_field_destroy(&picked_coordinate_field);
 			Computed_field_end_wrap(&rc_coordinate_field);
 		}
 		else
@@ -1162,7 +1162,7 @@ object's coordinate field.
 } /* Node_tool_define_field_at_node_from_picked_coordinates */
 
 static struct FE_node *Node_tool_create_node_at_interaction_volume(
-	struct Node_tool *node_tool, Cmiss_scene *top_scene,
+	struct Node_tool *node_tool, cmzn_scene *top_scene,
 	struct Interaction_volume *interaction_volume,
 	struct FE_element *nearest_element, struct Computed_field *element_coordinate_field)
 /*******************************************************************************
@@ -1185,8 +1185,8 @@ try to enforce that the node is created on that element.
 	struct FE_node *merged_node, *node;
 
 	merged_node = (struct FE_node *)NULL;
-	Cmiss_scene *scene = 0;
-	Cmiss_graphic *graphic = 0;
+	cmzn_scene *scene = 0;
+	cmzn_graphic *graphic = 0;
 	if (!node_tool || !interaction_volume)
 	{
 		display_message(ERROR_MESSAGE,
@@ -1206,24 +1206,24 @@ try to enforce that the node is created on that element.
 		}
 		else
 		{
-			Cmiss_field_module_id field_module = Cmiss_region_get_field_module(node_tool->region);
-			Cmiss_field_module_begin_change(field_module);
-			Cmiss_field_cache_id field_cache = Cmiss_field_module_create_cache(field_module);
+			cmzn_field_module_id field_module = cmzn_region_get_field_module(node_tool->region);
+			cmzn_field_module_begin_change(field_module);
+			cmzn_field_cache_id field_cache = cmzn_field_module_create_cache(field_module);
 			node_tool_coordinate_field=node_tool->coordinate_field;
-			scene = Cmiss_region_get_scene_internal(node_tool->region);
+			scene = cmzn_region_get_scene_internal(node_tool->region);
 			if (top_scene && scene)
 			{
-				graphic = Cmiss_scene_get_first_graphic(scene);
+				graphic = cmzn_scene_get_first_graphic(scene);
 				while (graphic)
 				{
-					if ((CMISS_GRAPHIC_POINTS == Cmiss_graphic_get_graphic_type(graphic)) &&
-						(Cmiss_graphic_get_domain_type(graphic) == node_tool->domain_type))
+					if ((CMISS_GRAPHIC_POINTS == cmzn_graphic_get_graphic_type(graphic)) &&
+						(cmzn_graphic_get_domain_type(graphic) == node_tool->domain_type))
 					{
 						break;
 					}
-					Cmiss_graphic_id ref_graphic = graphic;
-					graphic = Cmiss_scene_get_next_graphic(scene, ref_graphic);
-					Cmiss_graphic_destroy(&ref_graphic);
+					cmzn_graphic_id ref_graphic = graphic;
+					graphic = cmzn_scene_get_next_graphic(scene, ref_graphic);
+					cmzn_graphic_destroy(&ref_graphic);
 				}
 			}
 			rc_coordinate_field=
@@ -1237,9 +1237,9 @@ try to enforce that the node is created on that element.
 				/* get new node coordinates from interaction_volume */
 				if (nearest_element && element_coordinate_field)
 				{
-					Cmiss_field_module_id constraint_field_module = Cmiss_field_get_field_module(element_coordinate_field);
+					cmzn_field_module_id constraint_field_module = cmzn_field_get_field_module(element_coordinate_field);
 					/* field_module used for field_cache should be the on of coordinate_field */
-					constraint_data.field_cache = Cmiss_field_module_create_cache(constraint_field_module);
+					constraint_data.field_cache = cmzn_field_module_create_cache(constraint_field_module);
 					constraint_data.element = nearest_element;
 					constraint_data.found_element = nearest_element;
 					constraint_data.coordinate_field = element_coordinate_field;
@@ -1250,8 +1250,8 @@ try to enforce that the node is created on that element.
 					Interaction_volume_get_placement_point(interaction_volume,
 						node_coordinates, Node_tool_element_constraint_function,
 						&constraint_data);
-					Cmiss_field_cache_destroy(&constraint_data.field_cache);
-					Cmiss_field_module_destroy(&constraint_field_module);
+					cmzn_field_cache_destroy(&constraint_data.field_cache);
+					cmzn_field_module_destroy(&constraint_field_module);
 				}
 				else
 				{
@@ -1273,9 +1273,9 @@ try to enforce that the node is created on that element.
 				else
 				{
 					ACCESS(FE_node)(node);
-					Cmiss_field_cache_set_node(field_cache, node);
+					cmzn_field_cache_set_node(field_cache, node);
 					if (!Node_tool_define_field_at_node(node_tool,node) ||
-						!Cmiss_field_assign_real(rc_coordinate_field, field_cache, 3, coordinates) ||
+						!cmzn_field_assign_real(rc_coordinate_field, field_cache, 3, coordinates) ||
 						(nearest_element && constraint_data.found_element && node_tool->element_xi_field &&
 							!FE_node_define_and_set_element_xi(node, node_tool->element_xi_field,
 								constraint_data.found_element, constraint_data.xi)) ||
@@ -1289,39 +1289,39 @@ try to enforce that the node is created on that element.
 					{
 						if (node_tool->group_field)
 						{
-							Cmiss_field_module_id field_module = Cmiss_region_get_field_module(node_tool->region);
-							Cmiss_nodeset_id master_nodeset =
-								Cmiss_field_module_find_nodeset_by_domain_type(field_module, node_tool->domain_type);
-							Cmiss_field_module_begin_change(field_module);
-							Cmiss_field_node_group_id modify_node_group =
-								Cmiss_field_group_get_node_group(node_tool->group_field, master_nodeset);
+							cmzn_field_module_id field_module = cmzn_region_get_field_module(node_tool->region);
+							cmzn_nodeset_id master_nodeset =
+								cmzn_field_module_find_nodeset_by_domain_type(field_module, node_tool->domain_type);
+							cmzn_field_module_begin_change(field_module);
+							cmzn_field_node_group_id modify_node_group =
+								cmzn_field_group_get_node_group(node_tool->group_field, master_nodeset);
 							if (!modify_node_group)
 							{
-								modify_node_group = Cmiss_field_group_create_node_group(node_tool->group_field, master_nodeset);
+								modify_node_group = cmzn_field_group_create_node_group(node_tool->group_field, master_nodeset);
 							}
-							Cmiss_nodeset_group_id modify_nodeset_group = Cmiss_field_node_group_get_nodeset(modify_node_group);
-							if (!Cmiss_nodeset_contains_node(Cmiss_nodeset_group_base_cast(modify_nodeset_group), merged_node))
+							cmzn_nodeset_group_id modify_nodeset_group = cmzn_field_node_group_get_nodeset(modify_node_group);
+							if (!cmzn_nodeset_contains_node(cmzn_nodeset_group_base_cast(modify_nodeset_group), merged_node))
 							{
-								if (!Cmiss_nodeset_group_add_node(modify_nodeset_group, merged_node))
+								if (!cmzn_nodeset_group_add_node(modify_nodeset_group, merged_node))
 								{
 									display_message(ERROR_MESSAGE,
-										"gfx modify ngroup:  Could not add node %d", Cmiss_node_get_identifier(node));
+										"gfx modify ngroup:  Could not add node %d", cmzn_node_get_identifier(node));
 								}
 							}
-							Cmiss_field_module_end_change(field_module);
-							Cmiss_nodeset_group_destroy(&modify_nodeset_group);
-							Cmiss_field_node_group_destroy(&modify_node_group);
-							Cmiss_nodeset_destroy(&master_nodeset);
-							Cmiss_field_module_destroy(&field_module);
+							cmzn_field_module_end_change(field_module);
+							cmzn_nodeset_group_destroy(&modify_nodeset_group);
+							cmzn_field_node_group_destroy(&modify_node_group);
+							cmzn_nodeset_destroy(&master_nodeset);
+							cmzn_field_module_destroy(&field_module);
 						}
 					}
 					DEACCESS(FE_node)(&node);
 				}
 				Computed_field_end_wrap(&rc_coordinate_field);
 			}
-			Cmiss_field_cache_destroy(&field_cache);
-			Cmiss_field_module_end_change(field_module);
-			Cmiss_field_module_destroy(&field_module);
+			cmzn_field_cache_destroy(&field_cache);
+			cmzn_field_module_end_change(field_module);
+			cmzn_field_module_destroy(&field_module);
 		}
 	}
 	if (node_tool)
@@ -1329,17 +1329,17 @@ try to enforce that the node is created on that element.
 		/* only need following if editing; in which case need all of them */
 		if ((!merged_node) || (!scene))
 		{
-			Cmiss_scene_destroy(&scene);
-			Cmiss_graphic_destroy(&graphic);
+			cmzn_scene_destroy(&scene);
+			cmzn_graphic_destroy(&graphic);
 		}
-		REACCESS(Cmiss_scene)(&(node_tool->scene),
+		REACCESS(cmzn_scene)(&(node_tool->scene),
 			scene);
-		REACCESS(Cmiss_graphic)(&(node_tool->graphic),
+		REACCESS(cmzn_graphic)(&(node_tool->graphic),
 			graphic);
 	}
 	if (scene)
 	{
-		Cmiss_scene_destroy(&scene);
+		cmzn_scene_destroy(&scene);
 	}
 
 	return (merged_node);
@@ -1363,10 +1363,10 @@ Resets current edit. Called on button release or when tool deactivated.
 		REACCESS(Interaction_volume)(
 			&(node_tool->last_interaction_volume),
 			(struct Interaction_volume *)NULL);
-		REACCESS(Cmiss_scene)(&(node_tool->scene),
-			(struct Cmiss_scene *)NULL);
-		REACCESS(Cmiss_graphic)(&(node_tool->graphic),
-			(struct Cmiss_graphic *)NULL);
+		REACCESS(cmzn_scene)(&(node_tool->scene),
+			(struct cmzn_scene *)NULL);
+		REACCESS(cmzn_graphic)(&(node_tool->graphic),
+			(struct cmzn_graphic *)NULL);
 	}
 	else
 	{
@@ -1382,30 +1382,30 @@ int Node_tool_set_picked_node(struct Node_tool *node_tool, struct FE_node *picke
 	{
 		if (node_tool->scene)
 		{
-			Cmiss_field_module_id field_module = Cmiss_region_get_field_module(Cmiss_scene_get_region(node_tool->scene));
-			Cmiss_field_module_begin_change(field_module);
-			Cmiss_field_group_id selection_group = Cmiss_scene_get_or_create_selection_group(node_tool->scene);
+			cmzn_field_module_id field_module = cmzn_region_get_field_module(cmzn_scene_get_region(node_tool->scene));
+			cmzn_field_module_begin_change(field_module);
+			cmzn_field_group_id selection_group = cmzn_scene_get_or_create_selection_group(node_tool->scene);
 			if (selection_group)
 			{
-				Cmiss_nodeset_id master_nodeset = Cmiss_field_module_find_nodeset_by_domain_type(
+				cmzn_nodeset_id master_nodeset = cmzn_field_module_find_nodeset_by_domain_type(
 					field_module, node_tool->domain_type);
 				if (master_nodeset)
 				{
-					Cmiss_field_node_group_id node_group = Cmiss_field_group_get_node_group(selection_group, master_nodeset);
+					cmzn_field_node_group_id node_group = cmzn_field_group_get_node_group(selection_group, master_nodeset);
 					if (!node_group)
 					{
-						node_group = Cmiss_field_group_create_node_group(selection_group, master_nodeset);
+						node_group = cmzn_field_group_create_node_group(selection_group, master_nodeset);
 					}
-					Cmiss_nodeset_group_id nodeset_group = Cmiss_field_node_group_get_nodeset(node_group);
-					Cmiss_nodeset_group_add_node(nodeset_group, picked_node);
-					Cmiss_nodeset_group_destroy(&nodeset_group);
-					Cmiss_field_node_group_destroy(&node_group);
-					Cmiss_nodeset_destroy(&master_nodeset);
+					cmzn_nodeset_group_id nodeset_group = cmzn_field_node_group_get_nodeset(node_group);
+					cmzn_nodeset_group_add_node(nodeset_group, picked_node);
+					cmzn_nodeset_group_destroy(&nodeset_group);
+					cmzn_field_node_group_destroy(&node_group);
+					cmzn_nodeset_destroy(&master_nodeset);
 				}
 			}
-			Cmiss_field_group_destroy(&selection_group);
-			Cmiss_field_module_end_change(field_module);
-			Cmiss_field_module_destroy(&field_module);
+			cmzn_field_group_destroy(&selection_group);
+			cmzn_field_module_end_change(field_module);
+			cmzn_field_module_destroy(&field_module);
 		}
 	}
 	else
@@ -1434,21 +1434,21 @@ release.
 	int clear_selection,input_modifier,return_code,shift_pressed;
 	struct FE_element *nearest_element;
 	struct FE_node *picked_node;
-	struct Cmiss_scene *top_scene = NULL, *scene = 0;
-	struct Cmiss_graphic *graphic = NULL, *graphic_element = NULL;
+	struct cmzn_scene *top_scene = NULL, *scene = 0;
+	struct cmzn_graphic *graphic = NULL, *graphic_element = NULL;
 	struct Interaction_volume *interaction_volume,*temp_interaction_volume;
 	struct Node_tool *node_tool;
-	Cmiss_scene_picker_id scene_picker = 0;
+	cmzn_scene_picker_id scene_picker = 0;
 
 	if (device_id&&event&&(node_tool=
 		(struct Node_tool *)node_tool_void))
 	{
-		Cmiss_region_begin_hierarchical_change(node_tool->root_region);
+		cmzn_region_begin_hierarchical_change(node_tool->root_region);
 		interaction_volume=Interactive_event_get_interaction_volume(event);
 		scene = Interactive_event_get_scene(event);
 		if (scene != 0)
 		{
-			scene_picker = Cmiss_scene_create_picker(scene);
+			scene_picker = cmzn_scene_create_picker(scene);
 			event_type=Interactive_event_get_type(event);
 			input_modifier=Interactive_event_get_input_modifier(event);
 			shift_pressed=(INTERACTIVE_EVENT_MODIFIER_SHIFT & input_modifier);
@@ -1459,8 +1459,8 @@ release.
 					/* interaction only works with first mouse button */
 					if (1==Interactive_event_get_button_number(event))
 					{
-						Cmiss_graphic *nearest_graphic = NULL, *nearest_node_graphic = NULL;
-						Cmiss_scene_picker_set_interaction_volume(scene_picker,
+						cmzn_graphic *nearest_graphic = NULL, *nearest_node_graphic = NULL;
+						cmzn_scene_picker_set_interaction_volume(scene_picker,
 							interaction_volume);
 						REACCESS(Interaction_volume)(&(node_tool->last_interaction_volume),
 							interaction_volume);
@@ -1470,81 +1470,81 @@ release.
 						{
 							if (node_tool->domain_type == CMISS_FIELD_DOMAIN_DATA)
 							{
-								picked_node = Cmiss_scene_picker_get_nearest_data(scene_picker);
-								nearest_node_graphic = Cmiss_scene_picker_get_nearest_data_graphic(scene_picker);
+								picked_node = cmzn_scene_picker_get_nearest_data(scene_picker);
+								nearest_node_graphic = cmzn_scene_picker_get_nearest_data_graphic(scene_picker);
 							}
 							else
 							{
-								picked_node = Cmiss_scene_picker_get_nearest_node(scene_picker);
-								nearest_node_graphic = Cmiss_scene_picker_get_nearest_node_graphic(scene_picker);
+								picked_node = cmzn_scene_picker_get_nearest_node(scene_picker);
+								nearest_node_graphic = cmzn_scene_picker_get_nearest_node_graphic(scene_picker);
 							}
 						}
 
 						if (node_tool->constrain_to_surface)
 						{
-							nearest_graphic = Cmiss_scene_picker_get_nearest_graphic(scene_picker);
-							if (nearest_graphic && CMISS_GRAPHIC_SURFACES == Cmiss_graphic_get_graphic_type(nearest_graphic))
+							nearest_graphic = cmzn_scene_picker_get_nearest_graphic(scene_picker);
+							if (nearest_graphic && CMISS_GRAPHIC_SURFACES == cmzn_graphic_get_graphic_type(nearest_graphic))
 							{
-								nearest_element = Cmiss_scene_picker_get_nearest_element(scene_picker);
-								Cmiss_node_destroy(&picked_node);
+								nearest_element = cmzn_scene_picker_get_nearest_element(scene_picker);
+								cmzn_node_destroy(&picked_node);
 							}
 							if (picked_node && nearest_element)
 							{
-								Cmiss_node_destroy(&picked_node);
+								cmzn_node_destroy(&picked_node);
 							}
 						}
 
 						if (picked_node)
 						{
-							Cmiss_region_id temp_region = FE_region_get_Cmiss_region(FE_node_get_FE_region(picked_node));
-							top_scene = Cmiss_region_get_scene_internal(temp_region);
-							Cmiss_field_module_id field_module = Cmiss_region_get_field_module(temp_region);
-							Cmiss_field_module_begin_change(field_module);
-							Cmiss_field_cache_id field_cache = Cmiss_field_module_create_cache(field_module);
+							cmzn_region_id temp_region = FE_region_get_cmzn_region(FE_node_get_FE_region(picked_node));
+							top_scene = cmzn_region_get_scene_internal(temp_region);
+							cmzn_field_module_id field_module = cmzn_region_get_field_module(temp_region);
+							cmzn_field_module_begin_change(field_module);
+							cmzn_field_cache_id field_cache = cmzn_field_module_create_cache(field_module);
 							node_tool->picked_node_was_unselected=1;
-							Cmiss_field_group_id selection_group = Cmiss_scene_get_selection_group(top_scene);
+							cmzn_field_group_id selection_group = cmzn_scene_get_selection_group(top_scene);
 							if (selection_group)
 							{
-								Cmiss_nodeset_id master_nodeset = Cmiss_field_module_find_nodeset_by_domain_type(
+								cmzn_nodeset_id master_nodeset = cmzn_field_module_find_nodeset_by_domain_type(
 									field_module, node_tool->domain_type);
-								Cmiss_field_node_group_id node_group = Cmiss_field_group_get_node_group(selection_group, master_nodeset);
-								Cmiss_nodeset_destroy(&master_nodeset);
+								cmzn_field_node_group_id node_group = cmzn_field_group_get_node_group(selection_group, master_nodeset);
+								cmzn_nodeset_destroy(&master_nodeset);
 								if (node_group)
 								{
-									Cmiss_nodeset_group_id nodeset_group = Cmiss_field_node_group_get_nodeset(node_group);
+									cmzn_nodeset_group_id nodeset_group = cmzn_field_node_group_get_nodeset(node_group);
 									node_tool->picked_node_was_unselected =
-										!Cmiss_nodeset_contains_node(Cmiss_nodeset_group_base_cast(nodeset_group), picked_node);
-									Cmiss_nodeset_group_destroy(&nodeset_group);
-									Cmiss_field_node_group_destroy(&node_group);
+										!cmzn_nodeset_contains_node(cmzn_nodeset_group_base_cast(nodeset_group), picked_node);
+									cmzn_nodeset_group_destroy(&nodeset_group);
+									cmzn_field_node_group_destroy(&node_group);
 								}
-								Cmiss_field_group_destroy(&selection_group);
+								cmzn_field_group_destroy(&selection_group);
 							}
-							REACCESS(Cmiss_scene)(&(node_tool->scene),
+							REACCESS(cmzn_scene)(&(node_tool->scene),
 								scene);
-							REACCESS(Cmiss_graphic)(&(node_tool->graphic),nearest_node_graphic);
+							REACCESS(cmzn_graphic)(&(node_tool->graphic),nearest_node_graphic);
 							if (node_tool->define_enabled)
 							{
-								Cmiss_field_cache_set_node(field_cache, picked_node);
-								if (!Cmiss_field_is_defined_at_location(node_tool->coordinate_field, field_cache))
+								cmzn_field_cache_set_node(field_cache, picked_node);
+								if (!cmzn_field_is_defined_at_location(node_tool->coordinate_field, field_cache))
 								{
 									Node_tool_define_field_at_node_from_picked_coordinates(
 										node_tool, picked_node, field_cache);
 								}
 							}
-							Cmiss_field_cache_destroy(&field_cache);
-							Cmiss_field_module_end_change(field_module);
-							Cmiss_field_module_destroy(&field_module);
-							Cmiss_scene_destroy(&top_scene);
+							cmzn_field_cache_destroy(&field_cache);
+							cmzn_field_module_end_change(field_module);
+							cmzn_field_module_destroy(&field_module);
+							cmzn_scene_destroy(&top_scene);
 						}
 						else
 						{
 							if (node_tool->create_enabled)
 							{
 								/* Find the intersection of the element and the interaction volume */
-								Cmiss_field_id nearest_element_coordinate_field = 0;
+								cmzn_field_id nearest_element_coordinate_field = 0;
 								if (nearest_element)
 								{
-									nearest_element_coordinate_field = Cmiss_graphic_get_coordinate_field(nearest_graphic);
+									nearest_element_coordinate_field = cmzn_graphic_get_coordinate_field(nearest_graphic);
 								}
 								/* If we are creating on elements and no element was selected then
 										don't create */
@@ -1566,7 +1566,7 @@ release.
 								{
 									node_tool->picked_node_was_unselected=0;
 								}
-								Cmiss_field_destroy(&nearest_element_coordinate_field);
+								cmzn_field_destroy(&nearest_element_coordinate_field);
 							}
 							else
 							{
@@ -1583,19 +1583,19 @@ release.
 						{
 							if (node_tool->root_region)
 							{
-								Cmiss_scene *root_scene = Cmiss_region_get_scene_internal(
+								cmzn_scene *root_scene = cmzn_region_get_scene_internal(
 									node_tool->root_region);
-								Cmiss_field_group_id root_group = Cmiss_scene_get_selection_group(root_scene);
+								cmzn_field_group_id root_group = cmzn_scene_get_selection_group(root_scene);
 								if (root_group)
 								{
 									if (node_tool->domain_type == CMISS_FIELD_DOMAIN_NODES)
-										Cmiss_field_group_clear_region_tree_node(root_group);
+										cmzn_field_group_clear_region_tree_node(root_group);
 									else
-										Cmiss_field_group_clear_region_tree_data(root_group);
-									Cmiss_field_group_destroy(&root_group);
+										cmzn_field_group_clear_region_tree_data(root_group);
+									cmzn_field_group_destroy(&root_group);
 								}
-								//Cmiss_scene_flush_tree_selections(root_scene);
-								Cmiss_scene_destroy(&root_scene);
+								//cmzn_scene_flush_tree_selections(root_scene);
+								cmzn_scene_destroy(&root_scene);
 							}
 						}
 						if (picked_node)
@@ -1603,13 +1603,13 @@ release.
 							Node_tool_set_picked_node(node_tool, picked_node);
 						}
 						if (picked_node)
-							Cmiss_node_destroy(&picked_node);
+							cmzn_node_destroy(&picked_node);
 						if (nearest_graphic)
-							Cmiss_graphic_destroy(&nearest_graphic);
+							cmzn_graphic_destroy(&nearest_graphic);
 						if (nearest_node_graphic)
-							Cmiss_graphic_destroy(&nearest_node_graphic);
+							cmzn_graphic_destroy(&nearest_node_graphic);
 						if (nearest_element)
-							Cmiss_element_destroy(&nearest_element);
+							cmzn_element_destroy(&nearest_element);
 					}
 					node_tool->motion_detected=0;
 				} break;
@@ -1621,7 +1621,7 @@ release.
 							(1==Interactive_event_get_button_number(event))))
 					{
 						nearest_element = (struct FE_element *)NULL;
-						Cmiss_field_id nearest_element_coordinate_field = 0;
+						cmzn_field_id nearest_element_coordinate_field = 0;
 						if (INTERACTIVE_EVENT_MOTION_NOTIFY==event_type)
 						{
 							node_tool->motion_detected=1;
@@ -1630,19 +1630,19 @@ release.
 						{
 							if (node_tool->constrain_to_surface)
 							{
-								if ( 0 != (nearest_element=Cmiss_scene_picker_get_nearest_element(scene_picker)))
+								if ( 0 != (nearest_element=cmzn_scene_picker_get_nearest_element(scene_picker)))
 								{
-									Cmiss_graphic *nearest_element_graphic =
-										Cmiss_scene_picker_get_nearest_element_graphic(scene_picker);
+									cmzn_graphic *nearest_element_graphic =
+										cmzn_scene_picker_get_nearest_element_graphic(scene_picker);
 									nearest_element_coordinate_field =
-										Cmiss_graphic_get_coordinate_field(nearest_element_graphic);
-									Cmiss_graphic_destroy(&nearest_element_graphic);
+										cmzn_graphic_get_coordinate_field(nearest_element_graphic);
+									cmzn_graphic_destroy(&nearest_element_graphic);
 								}
 							}
-							Cmiss_region_id temp_region = Cmiss_scene_get_region(node_tool->scene);
-							Cmiss_field_module_id field_module = Cmiss_region_get_field_module(temp_region);
-							Cmiss_field_module_begin_change(field_module);
-							Cmiss_field_cache_id field_cache = Cmiss_field_module_create_cache(field_module);
+							cmzn_region_id temp_region = cmzn_scene_get_region(node_tool->scene);
+							cmzn_field_module_id field_module = cmzn_region_get_field_module(temp_region);
+							cmzn_field_module_begin_change(field_module);
+							cmzn_field_cache_id field_cache = cmzn_field_module_create_cache(field_module);
 							if (node_tool->create_enabled &&
 								node_tool->streaming_create_enabled &&
 								(INTERACTIVE_EVENT_MOTION_NOTIFY == event_type))
@@ -1684,16 +1684,16 @@ release.
 								edit_info.nearest_element = nearest_element;
 								edit_info.nearest_element_coordinate_field =
 									nearest_element_coordinate_field;
-								Cmiss_field_cache_set_time(field_cache, edit_info.time);
+								cmzn_field_cache_set_time(field_cache, edit_info.time);
 								/* get coordinate field to edit */
-								Cmiss_field_id coordinate_field = 0;
+								cmzn_field_id coordinate_field = 0;
 								if (node_tool->define_enabled)
 								{
-									coordinate_field = Cmiss_field_access(node_tool->coordinate_field);
+									coordinate_field = cmzn_field_access(node_tool->coordinate_field);
 								}
 								else
 								{
-									coordinate_field = Cmiss_graphic_get_coordinate_field(node_tool->graphic);
+									coordinate_field = cmzn_graphic_get_coordinate_field(node_tool->graphic);
 								}
 								edit_info.coordinate_field=coordinate_field;
 								/* get coordinate_field in RC coordinates */
@@ -1713,14 +1713,14 @@ release.
 								}
 								else
 								{
-									Cmiss_graphic_point_attributes_id point_attributes =
-										Cmiss_graphic_get_point_attributes(node_tool->graphic);
+									cmzn_graphic_point_attributes_id point_attributes =
+										cmzn_graphic_get_point_attributes(node_tool->graphic);
 									if (!point_attributes)
 									{
 										return_code = 0;
 									}
-									Cmiss_field_id orientation_scale_field =
-										Cmiss_graphic_point_attributes_get_orientation_scale_field(point_attributes);
+									cmzn_field_id orientation_scale_field =
+										cmzn_graphic_point_attributes_get_orientation_scale_field(point_attributes);
 									if (orientation_scale_field)
 									{
 										edit_info.orientation_scale_field = orientation_scale_field;
@@ -1728,23 +1728,23 @@ release.
 											Computed_field_begin_wrap_orientation_scale_field(
 												orientation_scale_field, edit_info.rc_coordinate_field);
 									}
-									Cmiss_field_id signed_scale_field =
-										Cmiss_graphic_point_attributes_get_signed_scale_field(point_attributes);
+									cmzn_field_id signed_scale_field =
+										cmzn_graphic_point_attributes_get_signed_scale_field(point_attributes);
 									edit_info.variable_scale_field = signed_scale_field;
 
 									double point_base_size[3], point_offset[3], point_scale_factors[3];
-									Cmiss_graphic_point_attributes_get_base_size(point_attributes, 3, point_base_size);
-									Cmiss_graphic_point_attributes_get_glyph_offset(point_attributes, 3, point_offset);
-									Cmiss_graphic_point_attributes_get_scale_factors(point_attributes, 3, point_scale_factors);
+									cmzn_graphic_point_attributes_get_base_size(point_attributes, 3, point_base_size);
+									cmzn_graphic_point_attributes_get_glyph_offset(point_attributes, 3, point_offset);
+									cmzn_graphic_point_attributes_get_scale_factors(point_attributes, 3, point_scale_factors);
 									for (int i = 0; i < 3; ++i)
 									{
 										edit_info.glyph_centre[i] = static_cast<GLfloat>(point_offset[i]);
 										edit_info.glyph_size[i] = static_cast<GLfloat>(point_base_size[i]);
 										edit_info.glyph_scale_factors[i] = static_cast<GLfloat>(point_scale_factors[i]);
 									}
-									Cmiss_field_destroy(&orientation_scale_field);
-									Cmiss_field_destroy(&signed_scale_field);
-									Cmiss_graphic_point_attributes_destroy(&point_attributes);
+									cmzn_field_destroy(&orientation_scale_field);
+									cmzn_field_destroy(&signed_scale_field);
+									cmzn_graphic_point_attributes_destroy(&point_attributes);
 								}
 								/* work out transformation information */
 								/* best we can do is use world coordinates;
@@ -1767,17 +1767,17 @@ release.
 								}*/
 								if (return_code)
 								{
-									Cmiss_field_group_id selection_group = Cmiss_scene_get_selection_group(node_tool->scene);
+									cmzn_field_group_id selection_group = cmzn_scene_get_selection_group(node_tool->scene);
 									if (node_tool->scene && selection_group)
 									{
-										Cmiss_nodeset_id master_nodeset = Cmiss_field_module_find_nodeset_by_domain_type(
+										cmzn_nodeset_id master_nodeset = cmzn_field_module_find_nodeset_by_domain_type(
 											field_module, node_tool->domain_type);
-										edit_info.fe_region=Cmiss_region_get_FE_region(temp_region);
-										Cmiss_field_node_group_id node_group = Cmiss_field_group_get_node_group(selection_group, master_nodeset);
-										Cmiss_nodeset_destroy(&master_nodeset);
+										edit_info.fe_region=cmzn_region_get_FE_region(temp_region);
+										cmzn_field_node_group_id node_group = cmzn_field_group_get_node_group(selection_group, master_nodeset);
+										cmzn_nodeset_destroy(&master_nodeset);
 										if (node_group)
 										{
-											Cmiss_nodeset_group_id nodeset_group = Cmiss_field_node_group_get_nodeset(node_group);
+											cmzn_nodeset_group_id nodeset_group = cmzn_field_node_group_get_nodeset(node_group);
 											/* edit vectors if non-constant orientation_scale field */
 											if (((NODE_TOOL_EDIT_AUTOMATIC == node_tool->edit_mode)
 													|| (NODE_TOOL_EDIT_VECTOR == node_tool->edit_mode))
@@ -1790,14 +1790,14 @@ release.
 												if (FE_node_calculate_delta_vector(
 														node_tool->last_picked_node, (void *) &edit_info))
 												{
-													Cmiss_node_iterator_id iterator =
-														Cmiss_nodeset_create_node_iterator(Cmiss_nodeset_group_base_cast(nodeset_group));
-													Cmiss_node_id edit_node = 0;
-													while (0 != (edit_node = Cmiss_node_iterator_next_non_access(iterator)))
+													cmzn_node_iterator_id iterator =
+														cmzn_nodeset_create_node_iterator(cmzn_nodeset_group_base_cast(nodeset_group));
+													cmzn_node_id edit_node = 0;
+													while (0 != (edit_node = cmzn_node_iterator_next_non_access(iterator)))
 													{
 														FE_node_edit_vector(edit_node, &edit_info);
 													}
-													Cmiss_node_iterator_destroy(&iterator);
+													cmzn_node_iterator_destroy(&iterator);
 												}
 											}
 											else
@@ -1807,14 +1807,14 @@ release.
 													/* edit position */
 													if (FE_node_calculate_delta_position(node_tool->last_picked_node, &edit_info))
 													{
-														Cmiss_node_iterator_id iterator =
-															Cmiss_nodeset_create_node_iterator(Cmiss_nodeset_group_base_cast(nodeset_group));
-														Cmiss_node_id edit_node = 0;
-														while (0 != (edit_node = Cmiss_node_iterator_next_non_access(iterator)))
+														cmzn_node_iterator_id iterator =
+															cmzn_nodeset_create_node_iterator(cmzn_nodeset_group_base_cast(nodeset_group));
+														cmzn_node_id edit_node = 0;
+														while (0 != (edit_node = cmzn_node_iterator_next_non_access(iterator)))
 														{
 															FE_node_edit_position(edit_node, &edit_info);
 														}
-														Cmiss_node_iterator_destroy(&iterator);
+														cmzn_node_iterator_destroy(&iterator);
 													}
 												}
 												else
@@ -1824,10 +1824,10 @@ release.
 													return_code = 0;
 												}
 											}
-											Cmiss_field_node_group_destroy(&node_group);
-											Cmiss_nodeset_group_destroy(&nodeset_group);
+											cmzn_field_node_group_destroy(&node_group);
+											cmzn_nodeset_group_destroy(&nodeset_group);
 										}
-										Cmiss_field_group_destroy(&selection_group);
+										cmzn_field_group_destroy(&selection_group);
 									}
 									else
 									{
@@ -1840,7 +1840,7 @@ release.
 										&(edit_info.wrapper_orientation_scale_field));
 								}
 								Computed_field_end_wrap(&(edit_info.rc_coordinate_field));
-								Cmiss_field_destroy(&coordinate_field);
+								cmzn_field_destroy(&coordinate_field);
 							}
 							else
 							{
@@ -1851,14 +1851,14 @@ release.
 								{
 									struct LIST(FE_node) *temp_node_list = CREATE(LIST(FE_node))();
 									ADD_OBJECT_TO_LIST(FE_node)(node_tool->last_picked_node, temp_node_list);
-									Cmiss_scene_remove_selection_from_node_list(node_tool->scene,
+									cmzn_scene_remove_selection_from_node_list(node_tool->scene,
 										temp_node_list, (node_tool->domain_type == CMISS_FIELD_DOMAIN_DATA));
 									DESTROY(LIST(FE_node))(&temp_node_list);
 								}
 							}
-							Cmiss_field_cache_destroy(&field_cache);
-							Cmiss_field_module_end_change(field_module);
-							Cmiss_field_module_destroy(&field_module);
+							cmzn_field_cache_destroy(&field_cache);
+							cmzn_field_module_end_change(field_module);
+							cmzn_field_module_destroy(&field_module);
 						}
 						else if (node_tool->motion_detected)
 						{
@@ -1890,23 +1890,23 @@ release.
 								}
 								if (INTERACTIVE_EVENT_BUTTON_RELEASE==event_type)
 								{
-									Cmiss_scene_picker_set_interaction_volume(scene_picker,
+									cmzn_scene_picker_set_interaction_volume(scene_picker,
 										temp_interaction_volume);
 									if (node_tool->root_region)
 									{
-										Cmiss_scene_id region_scene = Cmiss_region_get_scene_internal(
+										cmzn_scene_id region_scene = cmzn_region_get_scene_internal(
 											node_tool->root_region);
-										Cmiss_field_group_id selection_group =
-											Cmiss_scene_get_or_create_selection_group(region_scene);
+										cmzn_field_group_id selection_group =
+											cmzn_scene_get_or_create_selection_group(region_scene);
 										if (selection_group)
 										{
 											if (node_tool->domain_type == CMISS_FIELD_DOMAIN_DATA)
-												Cmiss_scene_picker_add_picked_data_to_group(scene_picker, selection_group);
+												cmzn_scene_picker_add_picked_data_to_group(scene_picker, selection_group);
 											else
-												Cmiss_scene_picker_add_picked_nodes_to_group(scene_picker, selection_group);
-											Cmiss_field_group_destroy(&selection_group);
+												cmzn_scene_picker_add_picked_nodes_to_group(scene_picker, selection_group);
+											cmzn_field_group_destroy(&selection_group);
 										}
-										Cmiss_scene_destroy(&region_scene);
+										cmzn_scene_destroy(&region_scene);
 									}
 								}
 								DEACCESS(Interaction_volume)(&temp_interaction_volume);
@@ -1926,18 +1926,18 @@ release.
 								{
 									time = 0;
 								}
-								Cmiss_field_module_id field_module = Cmiss_field_get_field_module(node_tool->command_field);
-								Cmiss_field_cache_id field_cache = Cmiss_field_module_create_cache(field_module);
-								Cmiss_field_cache_set_time(field_cache, time);
-								Cmiss_field_cache_set_node(field_cache, node_tool->last_picked_node);
-								char *command_string = Cmiss_field_evaluate_string(node_tool->command_field, field_cache);
+								cmzn_field_module_id field_module = cmzn_field_get_field_module(node_tool->command_field);
+								cmzn_field_cache_id field_cache = cmzn_field_module_create_cache(field_module);
+								cmzn_field_cache_set_time(field_cache, time);
+								cmzn_field_cache_set_node(field_cache, node_tool->last_picked_node);
+								char *command_string = cmzn_field_evaluate_string(node_tool->command_field, field_cache);
 								if (command_string)
 								{
 									Execute_command_execute_string(node_tool->execute_command, command_string);
 									DEALLOCATE(command_string);
 								}
-								Cmiss_field_cache_destroy(&field_cache);
-								Cmiss_field_module_destroy(&field_module);
+								cmzn_field_cache_destroy(&field_cache);
+								cmzn_field_module_destroy(&field_module);
 							}
 							Node_tool_reset((void *)node_tool);
 						}
@@ -1947,9 +1947,9 @@ release.
 							REACCESS(Interaction_volume)(
 								&(node_tool->last_interaction_volume),interaction_volume);
 						}
-						Cmiss_field_destroy(&nearest_element_coordinate_field);
+						cmzn_field_destroy(&nearest_element_coordinate_field);
 						if (nearest_element)
-							Cmiss_element_destroy(&nearest_element);
+							cmzn_element_destroy(&nearest_element);
 					}
 				} break;
 				default:
@@ -1962,14 +1962,14 @@ release.
 		}
 		if (node_tool->root_region)
 		{
-			Cmiss_scene *root_scene = Cmiss_region_get_scene_internal(
+			cmzn_scene *root_scene = cmzn_region_get_scene_internal(
 				node_tool->root_region);
-			Cmiss_scene_flush_tree_selections(root_scene);
-			Cmiss_scene_destroy(&root_scene);
+			cmzn_scene_flush_tree_selections(root_scene);
+			cmzn_scene_destroy(&root_scene);
 		}
-		Cmiss_region_end_hierarchical_change(node_tool->root_region);
+		cmzn_region_end_hierarchical_change(node_tool->root_region);
 		if (scene_picker)
-			Cmiss_scene_picker_destroy(&scene_picker);
+			cmzn_scene_picker_destroy(&scene_picker);
 	}
 	else
 	{
@@ -2126,11 +2126,11 @@ public:
 		wxStaticText *subgroup_field_text=XRCCTRL(*this,"SubgroupFieldText",wxStaticText);
 		wxPanel *subgroup_field_chooser_panel = XRCCTRL(*this,"SubgroupFieldChooserPanel",wxPanel);
 
-		Cmiss_field_id subgroup_field = Cmiss_field_group_base_cast(node_tool->group_field);
+		cmzn_field_id subgroup_field = cmzn_field_group_base_cast(node_tool->group_field);
 		subgroup_field_chooser =
 			new Managed_object_chooser<Computed_field,MANAGER_CLASS(Computed_field)>
 			(subgroup_field_chooser_panel, subgroup_field, node_tool->computed_field_manager,
-				Cmiss_field_is_type_group, (void *)NULL,
+				cmzn_field_is_type_group, (void *)NULL,
 				node_tool->user_interface);
 		Callback_base< Computed_field* > *subgroup_field_callback =
 			new Callback_member_callback< Computed_field*,
@@ -2160,13 +2160,13 @@ public:
 	  wxPanel *region_chooser_panel =
 		 XRCCTRL(*this, "RegionChooserPanel", wxPanel);
 	  char *initial_path;
-	  initial_path = Cmiss_region_get_root_region_path();
+	  initial_path = cmzn_region_get_root_region_path();
 	  region_chooser = new wxRegionChooser(region_chooser_panel,
 		  node_tool->root_region, initial_path);
 	  DEALLOCATE(initial_path);
-	  Callback_base<Cmiss_region* > *Node_tool_wx_region_callback =
-		  new Callback_member_callback< Cmiss_region*,
-		  wxNodeTool, int (wxNodeTool::*)(Cmiss_region *) >
+	  Callback_base<cmzn_region* > *Node_tool_wx_region_callback =
+		  new Callback_member_callback< cmzn_region*,
+		  wxNodeTool, int (wxNodeTool::*)(cmzn_region *) >
 		  (this, &wxNodeTool::Node_tool_wx_region_callback);
 	  region_chooser->set_callback(Node_tool_wx_region_callback);
 	  if (node_tool->region != NULL)
@@ -2266,13 +2266,13 @@ DESCRIPTION :
 Callback from wxChooser<Computed_field> when choice is made.
 ==============================================================================*/
 	{
-		Cmiss_field_group_id subgroup_field = Cmiss_field_cast_group(field);
+		cmzn_field_group_id subgroup_field = cmzn_field_cast_group(field);
 		Node_tool_set_region(node_tool, node_tool->region, subgroup_field);
-		Cmiss_field_group_destroy(&subgroup_field);
+		cmzn_field_group_destroy(&subgroup_field);
 		return 1;
 	}
 
-	int Node_tool_wx_region_callback(Cmiss_region *region)
+	int Node_tool_wx_region_callback(cmzn_region *region)
 /*******************************************************************************
 LAST MODIFIED : 9 February 2007
 
@@ -2392,14 +2392,14 @@ Set the selected option in the Coordinate Field chooser.
 						(LIST_CONDITIONAL_FUNCTION(FE_field) *)NULL,(void *)NULL,
 						fe_field_list)))
 		{
-			Cmiss_scene *scene = Cmiss_region_get_scene_internal(node_tool->region);
+			cmzn_scene *scene = cmzn_region_get_scene_internal(node_tool->region);
 			if (scene)
 			{
-				Cmiss_field_group_id selection_group = Cmiss_scene_get_selection_group(scene);
+				cmzn_field_group_id selection_group = cmzn_scene_get_selection_group(scene);
 				if (selection_group)
 				{
 					node_list = FE_node_list_from_region_and_selection_group(
-						node_tool->region, NULL, Cmiss_field_group_base_cast(selection_group),
+						node_tool->region, NULL, cmzn_field_group_base_cast(selection_group),
 						NULL, 0, (node_tool->domain_type == CMISS_FIELD_DOMAIN_DATA));
 					FE_region_begin_change(node_tool->fe_region);
 					FE_region_undefine_FE_field_in_FE_node_list(
@@ -2408,10 +2408,10 @@ Set the selected option in the Coordinate Field chooser.
 						"Field could not be undefined in %d node(s) "
 						"because in-use by elements", number_in_elements);
 					FE_region_end_change(node_tool->fe_region);
-					Cmiss_field_group_destroy(&selection_group);
+					cmzn_field_group_destroy(&selection_group);
 					DESTROY(LIST(FE_node))(&node_list);
 				}
-				Cmiss_scene_destroy(&scene);
+				cmzn_scene_destroy(&scene);
 			}
 		}
 		else
@@ -2586,7 +2586,7 @@ void wx_Node_tool_set_region_path(char *path)
 	}
 }
 
-struct Cmiss_region *wx_Node_tool_get_region()
+struct cmzn_region *wx_Node_tool_get_region()
 {
 	 if (region_chooser)
 	 {
@@ -2598,7 +2598,7 @@ struct Cmiss_region *wx_Node_tool_get_region()
 	 }
 }
 
-void wx_Node_tool_set_region(struct Cmiss_region *new_region)
+void wx_Node_tool_set_region(struct cmzn_region *new_region)
 {
 	if (region_chooser != NULL)
 	{
@@ -2634,7 +2634,7 @@ void wx_Node_tool_set_field_chooser_manager()
 	}
 }
 
-void setSubgroup(Cmiss_field_id field)
+void setSubgroup(cmzn_field_id field)
 {
 	if (subgroup_field_chooser != NULL)
 	{
@@ -2778,8 +2778,8 @@ Adds the just created element to the fe_region, adding faces as necessary.
 	ENTER(node_tool_add_element);
 	if (node_tool && node_tool->fe_region && node_tool->element)
 	{
-		Cmiss_field_module_id field_module = Cmiss_region_get_field_module(node_tool->region);
-		Cmiss_field_module_begin_change(field_module);
+		cmzn_field_module_id field_module = cmzn_region_get_field_module(node_tool->region);
+		cmzn_field_module_begin_change(field_module);
 
 		FE_region_begin_define_faces(node_tool->fe_region, /*all dimensions*/-1);
 		return_code = FE_region_merge_FE_element_and_faces_and_nodes(
@@ -2788,61 +2788,61 @@ Adds the just created element to the fe_region, adding faces as necessary.
 		if (return_code && node_tool->group_field)
 		{
 			// add element to group
-			const int dimension = Cmiss_element_get_dimension(node_tool->element);
-			Cmiss_mesh_id master_mesh = Cmiss_field_module_find_mesh_by_dimension(field_module, dimension);
-			Cmiss_field_element_group_id modify_element_group =
-				Cmiss_field_group_get_element_group(node_tool->group_field, master_mesh);
+			const int dimension = cmzn_element_get_dimension(node_tool->element);
+			cmzn_mesh_id master_mesh = cmzn_field_module_find_mesh_by_dimension(field_module, dimension);
+			cmzn_field_element_group_id modify_element_group =
+				cmzn_field_group_get_element_group(node_tool->group_field, master_mesh);
 			if (!modify_element_group)
 			{
-				modify_element_group = Cmiss_field_group_create_element_group(node_tool->group_field, master_mesh);
+				modify_element_group = cmzn_field_group_create_element_group(node_tool->group_field, master_mesh);
 			}
-			Cmiss_mesh_group_id modify_mesh_group = Cmiss_field_element_group_get_mesh(modify_element_group);
-			Cmiss_mesh_group_add_element(modify_mesh_group, node_tool->element);
-			Cmiss_mesh_group_destroy(&modify_mesh_group);
-			Cmiss_field_element_group_destroy(&modify_element_group);
-			Cmiss_mesh_destroy(&master_mesh);
+			cmzn_mesh_group_id modify_mesh_group = cmzn_field_element_group_get_mesh(modify_element_group);
+			cmzn_mesh_group_add_element(modify_mesh_group, node_tool->element);
+			cmzn_mesh_group_destroy(&modify_mesh_group);
+			cmzn_field_element_group_destroy(&modify_element_group);
+			cmzn_mesh_destroy(&master_mesh);
 
 			if (1 < dimension)
 			{
 				// add faces to group
-				Cmiss_mesh_id master_face_mesh = Cmiss_field_module_find_mesh_by_dimension(field_module, dimension - 1);
-				Cmiss_field_element_group_id face_element_group = Cmiss_field_group_get_element_group(node_tool->group_field, master_face_mesh);
+				cmzn_mesh_id master_face_mesh = cmzn_field_module_find_mesh_by_dimension(field_module, dimension - 1);
+				cmzn_field_element_group_id face_element_group = cmzn_field_group_get_element_group(node_tool->group_field, master_face_mesh);
 				if (!face_element_group)
 				{
-					face_element_group = Cmiss_field_group_create_element_group(node_tool->group_field, master_face_mesh);
+					face_element_group = cmzn_field_group_create_element_group(node_tool->group_field, master_face_mesh);
 				}
-				Cmiss_mesh_group_id face_mesh_group = Cmiss_field_element_group_get_mesh(face_element_group);
-				Cmiss_mesh_group_add_element_faces(face_mesh_group, node_tool->element);
-				Cmiss_mesh_group_destroy(&face_mesh_group);
-				Cmiss_field_element_group_destroy(&face_element_group);
-				Cmiss_mesh_destroy(&master_face_mesh);
+				cmzn_mesh_group_id face_mesh_group = cmzn_field_element_group_get_mesh(face_element_group);
+				cmzn_mesh_group_add_element_faces(face_mesh_group, node_tool->element);
+				cmzn_mesh_group_destroy(&face_mesh_group);
+				cmzn_field_element_group_destroy(&face_element_group);
+				cmzn_mesh_destroy(&master_face_mesh);
 
 				if (2 < dimension)
 				{
 					// add lines to group
-					Cmiss_mesh_id master_line_mesh = Cmiss_field_module_find_mesh_by_dimension(field_module, dimension - 2);
-					Cmiss_field_element_group_id line_element_group = Cmiss_field_group_get_element_group(node_tool->group_field, master_line_mesh);
+					cmzn_mesh_id master_line_mesh = cmzn_field_module_find_mesh_by_dimension(field_module, dimension - 2);
+					cmzn_field_element_group_id line_element_group = cmzn_field_group_get_element_group(node_tool->group_field, master_line_mesh);
 					if (!line_element_group)
 					{
-						line_element_group = Cmiss_field_group_create_element_group(node_tool->group_field, master_line_mesh);
+						line_element_group = cmzn_field_group_create_element_group(node_tool->group_field, master_line_mesh);
 					}
-					Cmiss_mesh_group_id line_mesh_group = Cmiss_field_element_group_get_mesh(line_element_group);
+					cmzn_mesh_group_id line_mesh_group = cmzn_field_element_group_get_mesh(line_element_group);
 					int number_of_faces = 0;
 					get_FE_element_number_of_faces(node_tool->element, &number_of_faces);
 					FE_element *face_element = 0;
 					for (int i = 0; i < number_of_faces; ++i)
 					{
 						get_FE_element_face(node_tool->element, i, &face_element);
-						Cmiss_mesh_group_add_element_faces(line_mesh_group, face_element);
+						cmzn_mesh_group_add_element_faces(line_mesh_group, face_element);
 					}
-					Cmiss_mesh_group_destroy(&line_mesh_group);
-					Cmiss_field_element_group_destroy(&line_element_group);
-					Cmiss_mesh_destroy(&master_line_mesh);
+					cmzn_mesh_group_destroy(&line_mesh_group);
+					cmzn_field_element_group_destroy(&line_element_group);
+					cmzn_mesh_destroy(&master_line_mesh);
 				}
 			}
 		}
-		Cmiss_field_module_end_change(field_module);
-		Cmiss_field_module_destroy(&field_module);
+		cmzn_field_module_end_change(field_module);
+		cmzn_field_module_destroy(&field_module);
 		Node_tool_end_element_creation(node_tool);
 	}
 	else
@@ -2877,37 +2877,37 @@ static void Node_tool_Computed_field_change(
 	node_tool =	(struct Node_tool *)node_tool_void;
 	if (message && node_tool && node_tool->element_create_enabled)
 	{
-		Cmiss_scene *scene = Cmiss_region_get_scene_internal(node_tool->region);
+		cmzn_scene *scene = cmzn_region_get_scene_internal(node_tool->region);
 		if (scene)
 		{
-			Cmiss_field_group_id selection_group = Cmiss_scene_get_selection_group(scene);
+			cmzn_field_group_id selection_group = cmzn_scene_get_selection_group(scene);
 			changed_field_list =
 				MANAGER_MESSAGE_GET_CHANGE_LIST(Computed_field)(message,
 					MANAGER_CHANGE_RESULT(Computed_field));
 			if (selection_group && changed_field_list && Computed_field_or_ancestor_satisfies_condition(
-				Cmiss_field_group_base_cast(selection_group), Computed_field_is_in_list, (void *)changed_field_list))
+				cmzn_field_group_base_cast(selection_group), Computed_field_is_in_list, (void *)changed_field_list))
 			{
-				Cmiss_field_module_id field_module = Cmiss_region_get_field_module(node_tool->region);
-				Cmiss_field_node_group_id node_group = NULL;
-				Cmiss_nodeset_id master_nodeset = Cmiss_field_module_find_nodeset_by_domain_type(
+				cmzn_field_module_id field_module = cmzn_region_get_field_module(node_tool->region);
+				cmzn_field_node_group_id node_group = NULL;
+				cmzn_nodeset_id master_nodeset = cmzn_field_module_find_nodeset_by_domain_type(
 					field_module, node_tool->domain_type);
-				Cmiss_field_module_destroy(&field_module);
-				node_group = Cmiss_field_group_get_node_group(selection_group, master_nodeset);
-				Cmiss_nodeset_destroy(&master_nodeset);
-				Cmiss_node_id node = 0;
+				cmzn_field_module_destroy(&field_module);
+				node_group = cmzn_field_group_get_node_group(selection_group, master_nodeset);
+				cmzn_nodeset_destroy(&master_nodeset);
+				cmzn_node_id node = 0;
 				if (node_group)
 				{
-					Cmiss_nodeset_group_id nodeset_group = Cmiss_field_node_group_get_nodeset(node_group);
+					cmzn_nodeset_group_id nodeset_group = cmzn_field_node_group_get_nodeset(node_group);
 					/* make sure there is only one node selected in group */
-					if (1 == Cmiss_nodeset_get_size(Cmiss_nodeset_group_base_cast(nodeset_group)))
+					if (1 == cmzn_nodeset_get_size(cmzn_nodeset_group_base_cast(nodeset_group)))
 					{
-						Cmiss_node_iterator_id iterator = Cmiss_nodeset_create_node_iterator(
-							Cmiss_nodeset_group_base_cast(nodeset_group));
-						node = Cmiss_node_iterator_next(iterator);
-						Cmiss_node_iterator_destroy(&iterator);
+						cmzn_node_iterator_id iterator = cmzn_nodeset_create_node_iterator(
+							cmzn_nodeset_group_base_cast(nodeset_group));
+						node = cmzn_node_iterator_next(iterator);
+						cmzn_node_iterator_destroy(&iterator);
 					}
-					Cmiss_nodeset_group_destroy(&nodeset_group);
-					Cmiss_field_node_group_destroy(&node_group);
+					cmzn_nodeset_group_destroy(&nodeset_group);
+					cmzn_field_node_group_destroy(&node_group);
 				}
 				if (node)
 				{
@@ -3016,13 +3016,13 @@ static void Node_tool_Computed_field_change(
 						display_message(ERROR_MESSAGE,
 								"Element creator: Selected node not from current region");
 					}
-					Cmiss_node_destroy(&node);
+					cmzn_node_destroy(&node);
 				}
 			}
-			Cmiss_scene_destroy(&scene);
+			cmzn_scene_destroy(&scene);
 			if (selection_group)
 			{
-				Cmiss_field_group_destroy(&selection_group);
+				cmzn_field_group_destroy(&selection_group);
 			}
 		}
 	}
@@ -3092,7 +3092,7 @@ node selection.
 } /* node_tool _set_create_enabled */
 
 static int Node_tool_set_region(struct Node_tool *node_tool,
-	struct Cmiss_region *region, Cmiss_field_group_id group)
+	struct cmzn_region *region, cmzn_field_group_id group)
 /*******************************************************************************
 LAST MODIFIED : 8 September 2008
 
@@ -3117,7 +3117,7 @@ in this region only.
 			node_tool->region = region;
 			if (region)
 			{
-				node_tool->fe_region = Cmiss_region_get_FE_region(region);
+				node_tool->fe_region = cmzn_region_get_FE_region(region);
 				if (node_tool->domain_type == CMISS_FIELD_DOMAIN_DATA)
 				{
 					node_tool->fe_region = FE_region_get_data_FE_region(node_tool->fe_region);
@@ -3133,7 +3133,7 @@ in this region only.
 					node_tool->computed_field_manager);
 				node_tool->computed_field_manager_callback_id=NULL;
 			}
-			node_tool->computed_field_manager = Cmiss_region_get_Computed_field_manager(
+			node_tool->computed_field_manager = cmzn_region_get_Computed_field_manager(
 				node_tool->region);
 			if (node_tool->element_create_enabled && node_tool->computed_field_manager)
 			{
@@ -3151,16 +3151,16 @@ in this region only.
 		if (node_tool->group_field != group)
 		{
 			if (node_tool->group_field)
-				Cmiss_field_group_destroy(&node_tool->group_field);
+				cmzn_field_group_destroy(&node_tool->group_field);
 			if (group)
 			{
-				Cmiss_field_access(Cmiss_field_group_base_cast(group));
+				cmzn_field_access(cmzn_field_group_base_cast(group));
 				node_tool->group_field = group;
 			}
 #if defined (WX_USER_INTERFACE)
 			if (node_tool->wx_node_tool)
 			{
-				node_tool->wx_node_tool->setSubgroup(Cmiss_field_group_base_cast(node_tool->group_field));
+				node_tool->wx_node_tool->setSubgroup(cmzn_field_group_base_cast(node_tool->group_field));
 			}
 #endif
 		}
@@ -3178,7 +3178,7 @@ in this region only.
 
 struct Node_tool *CREATE(Node_tool)(
 	struct MANAGER(Interactive_tool) *interactive_tool_manager,
-	struct Cmiss_region *root_region, Cmiss_field_domain_type domain_type,
+	struct cmzn_region *root_region, cmzn_field_domain_type domain_type,
 	struct Graphical_material *rubber_band_material,
 	struct User_interface *user_interface,
 	struct Time_keeper_app *time_keeper_app)
@@ -3192,21 +3192,21 @@ struct Node_tool *CREATE(Node_tool)(
 	node_tool=(struct Node_tool *)NULL;
 	if (interactive_tool_manager&&root_region&&
 		(NULL != (computed_field_manager=
-			Cmiss_region_get_Computed_field_manager(root_region)))
+			cmzn_region_get_Computed_field_manager(root_region)))
 		&&rubber_band_material&&user_interface)
 	{
-		initial_path = Cmiss_region_get_root_region_path();
+		initial_path = cmzn_region_get_root_region_path();
 		if (ALLOCATE(node_tool,struct Node_tool,1))
 		{
 			node_tool->execute_command=NULL;
 			node_tool->interactive_tool_manager=interactive_tool_manager;
 			node_tool->root_region=root_region;
-			node_tool->region=(struct Cmiss_region *)NULL;
-			node_tool->group_field = (Cmiss_field_group_id)NULL;
+			node_tool->region=(struct cmzn_region *)NULL;
+			node_tool->group_field = (cmzn_field_group_id)NULL;
 			node_tool->fe_region=(struct FE_region *)NULL;
 			node_tool->domain_type = domain_type;
 			node_tool->rubber_band_material=
-				Cmiss_graphics_material_access(rubber_band_material);
+				cmzn_graphics_material_access(rubber_band_material);
 			node_tool->user_interface=user_interface;
 			node_tool->time_keeper_app = (struct Time_keeper_app *)NULL;
 			node_tool->computed_field_manager_callback_id = NULL;
@@ -3249,7 +3249,7 @@ struct Node_tool *CREATE(Node_tool)(
 				tool_display_name="Node tool";
 			}
 #if defined (WX_USER_INTERFACE) /* switch (USER_INTERFACE) */
-			node_tool->computed_field_manager=Cmiss_region_get_Computed_field_manager(root_region);
+			node_tool->computed_field_manager=cmzn_region_get_Computed_field_manager(root_region);
 			node_tool->wx_node_tool = (wxNodeTool *)NULL;
 			/* Set defaults until we have some sort of region chooser */
 			node_tool->tool_position=wxPoint(0,0);
@@ -3269,8 +3269,8 @@ struct Node_tool *CREATE(Node_tool)(
 				node_tool->interactive_tool_manager);
 			node_tool->last_picked_node=(struct FE_node *)NULL;
 
-			node_tool->scene=(struct Cmiss_scene *)NULL;
-			node_tool->graphic=(struct Cmiss_graphic *)NULL;
+			node_tool->scene=(struct cmzn_scene *)NULL;
+			node_tool->graphic=(struct cmzn_graphic *)NULL;
 
 			node_tool->last_interaction_volume=(struct Interaction_volume *)NULL;
 			node_tool->rubber_band=(struct GT_object *)NULL;
@@ -3321,9 +3321,9 @@ structure itself.
 			DEACCESS(FE_element)(&node_tool->template_element);
 		}
 		REACCESS(GT_object)(&(node_tool->rubber_band),(struct GT_object *)NULL);
-		Cmiss_graphics_material_destroy(&(node_tool->rubber_band_material));
+		cmzn_graphics_material_destroy(&(node_tool->rubber_band_material));
 		if (node_tool->last_picked_node)
-			Cmiss_node_destroy(&(node_tool->last_picked_node));
+			cmzn_node_destroy(&(node_tool->last_picked_node));
 		if (node_tool->time_keeper_app)
 		{
 			DEACCESS(Time_keeper_app)(&(node_tool->time_keeper_app));
@@ -3334,18 +3334,18 @@ structure itself.
 		}
 		if (node_tool->graphic)
 		{
-			Cmiss_graphic_destroy(&(node_tool->graphic));
+			cmzn_graphic_destroy(&(node_tool->graphic));
 		}
 		if (node_tool->scene)
 		{
-			Cmiss_scene_destroy(&(node_tool->scene));
+			cmzn_scene_destroy(&(node_tool->scene));
 		}
 #if defined (WX_USER_INTERFACE)
 		if (node_tool->wx_node_tool)
 			 node_tool->wx_node_tool->Destroy();
 #endif /*(WX_USER_INTERFACE)*/
 		if (node_tool->group_field)
-			Cmiss_field_group_destroy(&node_tool->group_field);
+			cmzn_field_group_destroy(&node_tool->group_field);
 		DEALLOCATE(*node_tool_address);
 		return_code=1;
 	}
@@ -4399,8 +4399,8 @@ Which tool that is being modified is passed in <node_tool_void>.
 #endif /*(WX_USER_INTERFACE)*/
 	struct Computed_field *coordinate_field, *command_field, *element_xi_field;
 	struct Option_table *option_table;
-	Cmiss_field_group_id group;
-	Cmiss_region_id region;
+	cmzn_field_group_id group;
+	cmzn_region_id region;
 
 	ENTER(Node_tool_execute_command_with_parse_state);
 	if (state)
@@ -4433,7 +4433,7 @@ Which tool that is being modified is passed in <node_tool_void>.
 			coordinate_field=Node_tool_get_coordinate_field(node_tool);
 			if (coordinate_field)
 			{
-				coordinate_field_name = Cmiss_field_get_name(coordinate_field);
+				coordinate_field_name = cmzn_field_get_name(coordinate_field);
 			}
 			create_enabled=Node_tool_get_create_enabled(node_tool);
 			define_enabled=Node_tool_get_define_enabled(node_tool);
@@ -4447,12 +4447,12 @@ Which tool that is being modified is passed in <node_tool_void>.
 			command_field=Node_tool_get_command_field(node_tool);
 			if (command_field)
 			{
-				command_field_name = Cmiss_field_get_name(command_field);
+				command_field_name = cmzn_field_get_name(command_field);
 			}
 			element_xi_field=Node_tool_get_element_xi_field(node_tool);
 			if (element_xi_field)
 			{
-				xi_field_name = Cmiss_field_get_name(element_xi_field);
+				xi_field_name = cmzn_field_get_name(element_xi_field);
 			}
 #if defined (WX_USER_INTERFACE)
 		if (node_tool && (node_tool->domain_type == CMISS_FIELD_DOMAIN_NODES))
@@ -4465,7 +4465,7 @@ Which tool that is being modified is passed in <node_tool_void>.
 		}
 		if (node_tool)
 		{
-			region = Cmiss_region_access(node_tool->root_region);
+			region = cmzn_region_access(node_tool->root_region);
 		}
 		option_table=CREATE(Option_table)();
 		/* coordinate_field */
@@ -4588,11 +4588,11 @@ Which tool that is being modified is passed in <node_tool_void>.
 			}
 		} /* parse error,help */
 		DESTROY(Option_table)(&option_table);
-		Cmiss_region_destroy(&region);
+		cmzn_region_destroy(&region);
 		DEALLOCATE(dummy_region_string);
 		if (group)
 		{
-			Cmiss_field_group_destroy(&group);
+			cmzn_field_group_destroy(&group);
 		}
 		if (coordinate_field_name)
 			DEALLOCATE(coordinate_field_name);

@@ -68,7 +68,7 @@ Global functions
 
 struct Element_point_tool *CREATE(Element_point_tool)(
 	struct MANAGER(Interactive_tool) *interactive_tool_manager,
-	struct Cmiss_region *region,
+	struct cmzn_region *region,
 	struct Element_point_ranges_selection *element_point_ranges_selection,
 	struct Graphical_material *rubber_band_material,
 	struct User_interface *user_interface,

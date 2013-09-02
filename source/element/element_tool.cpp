@@ -77,7 +77,7 @@ Interactive tool for selecting elements with mouse and other devices.
 #include "choose/choose_manager_class.hpp"
 #endif /* defined (WX_USER_INTERFACE)*/
 #include <map>
-typedef std::multimap<Cmiss_region *, Cmiss_element_id> Region_element_map;
+typedef std::multimap<cmzn_region *, cmzn_element_id> Region_element_map;
 
 /*
 Module variables
@@ -107,9 +107,9 @@ struct Element_tool
 	struct MANAGER(Interactive_tool) *interactive_tool_manager;
 	struct Interactive_tool *interactive_tool;
 	/* needed for destroy button */
-	struct Cmiss_region *region;
+	struct cmzn_region *region;
 	struct Element_point_ranges_selection *element_point_ranges_selection;
-	Cmiss_graphics_material *rubber_band_material;
+	cmzn_graphics_material *rubber_band_material;
 	struct Time_keeper_app *time_keeper_app;
 	struct User_interface *user_interface;
 	/* user-settable flags */
@@ -121,7 +121,7 @@ struct Element_tool
 	struct FE_element *last_picked_element;
 	struct Interaction_volume *last_interaction_volume;
 	struct GT_object *rubber_band;
-	struct Cmiss_scene *scene;
+	struct cmzn_scene *scene;
 
 #if defined (WX_USER_INTERFACE)
 	wxElementTool *wx_element_tool;
@@ -134,28 +134,28 @@ Module functions
 ----------------
 */
 
-static int Cmiss_field_group_destroy_all_elements(Cmiss_field_group_id group, void *dummy_void)
+static int cmzn_field_group_destroy_all_elements(cmzn_field_group_id group, void *dummy_void)
 {
 	USE_PARAMETER(dummy_void);
 	int return_code = 0;
 	if (group)
 	{
-		Cmiss_field_module_id field_module = Cmiss_field_get_field_module(Cmiss_field_group_base_cast(group));
+		cmzn_field_module_id field_module = cmzn_field_get_field_module(cmzn_field_group_base_cast(group));
 		for (int i = 1; i <= 3; i++)
 		{
-			Cmiss_mesh_id master_mesh =
-				Cmiss_field_module_find_mesh_by_dimension(field_module, /*dimension*/i);
-			Cmiss_field_element_group_id element_group = Cmiss_field_group_get_element_group(group, master_mesh);
-			Cmiss_mesh_destroy(&master_mesh);
+			cmzn_mesh_id master_mesh =
+				cmzn_field_module_find_mesh_by_dimension(field_module, /*dimension*/i);
+			cmzn_field_element_group_id element_group = cmzn_field_group_get_element_group(group, master_mesh);
+			cmzn_mesh_destroy(&master_mesh);
 			if (element_group)
 			{
-				Cmiss_mesh_group_id mesh_group = Cmiss_field_element_group_get_mesh(element_group);
-				Cmiss_mesh_destroy_all_elements(Cmiss_mesh_group_base_cast(mesh_group));
-				Cmiss_mesh_group_destroy(&mesh_group);
-				Cmiss_field_element_group_destroy(&element_group);
+				cmzn_mesh_group_id mesh_group = cmzn_field_element_group_get_mesh(element_group);
+				cmzn_mesh_destroy_all_elements(cmzn_mesh_group_base_cast(mesh_group));
+				cmzn_mesh_group_destroy(&mesh_group);
+				cmzn_field_element_group_destroy(&element_group);
 			}
 		}
-		Cmiss_field_module_destroy(&field_module);
+		cmzn_field_module_destroy(&field_module);
 		return_code = 1;
 	}
 	return return_code;
@@ -167,18 +167,18 @@ int Element_tool_destroy_selected_elements(struct Element_tool *element_tool)
 	if (element_tool->region)
 	{
 		return_code = 1;
-		Cmiss_scene *root_scene = Cmiss_region_get_scene_internal(
+		cmzn_scene *root_scene = cmzn_region_get_scene_internal(
 			element_tool->region);
-		Cmiss_field_group_id selection_group = Cmiss_scene_get_selection_group(root_scene);
+		cmzn_field_group_id selection_group = cmzn_scene_get_selection_group(root_scene);
 		if (selection_group)
 		{
-			return_code = Cmiss_field_group_for_each_group_hierarchical(selection_group,
-				Cmiss_field_group_destroy_all_elements, /*user_data*/(void *)0);
-			Cmiss_field_group_clear_region_tree_element(selection_group);
-			Cmiss_scene_flush_tree_selections(root_scene);
-			Cmiss_field_group_destroy(&selection_group);
+			return_code = cmzn_field_group_for_each_group_hierarchical(selection_group,
+				cmzn_field_group_destroy_all_elements, /*user_data*/(void *)0);
+			cmzn_field_group_clear_region_tree_element(selection_group);
+			cmzn_scene_flush_tree_selections(root_scene);
+			cmzn_field_group_destroy(&selection_group);
 		}
-		Cmiss_scene_destroy(&root_scene);
+		cmzn_scene_destroy(&root_scene);
 	}
 	return return_code;
 }
@@ -200,8 +200,8 @@ Resets current edit. Called on button release or when tool deactivated.
 	{
 		REACCESS(FE_element)(&(element_tool->last_picked_element),
 			(struct FE_element *)NULL);
-		REACCESS(Cmiss_scene)(&(element_tool->scene),
-			(struct Cmiss_scene *)NULL);
+		REACCESS(cmzn_scene)(&(element_tool->scene),
+			(struct cmzn_scene *)NULL);
 		REACCESS(Interaction_volume)(
 			&(element_tool->last_interaction_volume),
 			(struct Interaction_volume *)NULL);
@@ -239,68 +239,68 @@ release.
 	struct Element_tool *element_tool;
 	struct Interaction_volume *interaction_volume,*temp_interaction_volume;
 
-	struct Cmiss_scene *scene = 0;
+	struct cmzn_scene *scene = 0;
 	FE_value_triple *xi_points;
-	Cmiss_scene_picker_id scene_picker = 0;
+	cmzn_scene_picker_id scene_picker = 0;
 
 	ENTER(Element_tool_interactive_event_handler);
 	if (device_id&&event&&(element_tool=
 		(struct Element_tool *)element_tool_void))
 	{
-		Cmiss_region_begin_hierarchical_change(element_tool->region);
+		cmzn_region_begin_hierarchical_change(element_tool->region);
 		interaction_volume=Interactive_event_get_interaction_volume(event);
 		scene=Interactive_event_get_scene(event);
 		if (scene != 0)
 		{
-			scene_picker = Cmiss_scene_create_picker(scene);
+			scene_picker = cmzn_scene_create_picker(scene);
 			event_type=Interactive_event_get_type(event);
 			input_modifier=Interactive_event_get_input_modifier(event);
 			shift_pressed=(INTERACTIVE_EVENT_MODIFIER_SHIFT & input_modifier);
-			Cmiss_graphics_module *graphics_module = Cmiss_scene_get_graphics_module(scene);
-			Cmiss_graphics_filter_module_id filter_module = Cmiss_graphics_module_get_filter_module(graphics_module);
-			Cmiss_graphics_filter_module_begin_change(filter_module);
-			Cmiss_graphics_filter_id combined_filter = Cmiss_graphics_filter_module_create_filter_operator_or(
+			cmzn_graphics_module *graphics_module = cmzn_scene_get_graphics_module(scene);
+			cmzn_graphics_filter_module_id filter_module = cmzn_graphics_module_get_filter_module(graphics_module);
+			cmzn_graphics_filter_module_begin_change(filter_module);
+			cmzn_graphics_filter_id combined_filter = cmzn_graphics_filter_module_create_filter_operator_or(
 				filter_module);
 			if ((element_tool->select_elements_enabled)||(element_tool->select_faces_enabled)||
 				(element_tool->select_lines_enabled))
 			{
-				Cmiss_graphics_filter_id element_filter = 0;
-				Cmiss_graphics_filter_operator_id or_filter = Cmiss_graphics_filter_cast_operator(
+				cmzn_graphics_filter_id element_filter = 0;
+				cmzn_graphics_filter_operator_id or_filter = cmzn_graphics_filter_cast_operator(
 					combined_filter);
 				if (element_tool->select_lines_enabled)
 				{
-					element_filter = Cmiss_graphics_filter_module_create_filter_domain_type(
+					element_filter = cmzn_graphics_filter_module_create_filter_domain_type(
 						filter_module, CMISS_FIELD_DOMAIN_MESH_1D);
-					Cmiss_graphics_filter_operator_append_operand(or_filter, element_filter);
-					Cmiss_graphics_filter_destroy(&element_filter);
+					cmzn_graphics_filter_operator_append_operand(or_filter, element_filter);
+					cmzn_graphics_filter_destroy(&element_filter);
 				}
 				if (element_tool->select_faces_enabled)
 				{
-					element_filter = Cmiss_graphics_filter_module_create_filter_domain_type(
+					element_filter = cmzn_graphics_filter_module_create_filter_domain_type(
 						filter_module, CMISS_FIELD_DOMAIN_MESH_2D);
-					Cmiss_graphics_filter_operator_append_operand(or_filter, element_filter);
-					Cmiss_graphics_filter_destroy(&element_filter);
+					cmzn_graphics_filter_operator_append_operand(or_filter, element_filter);
+					cmzn_graphics_filter_destroy(&element_filter);
 				}
 				if (element_tool->select_elements_enabled)
 				{
-					element_filter = Cmiss_graphics_filter_module_create_filter_domain_type(
+					element_filter = cmzn_graphics_filter_module_create_filter_domain_type(
 						filter_module, CMISS_FIELD_DOMAIN_MESH_HIGHEST_DIMENSION);
-					Cmiss_graphics_filter_operator_append_operand(or_filter, element_filter);
-					Cmiss_graphics_filter_destroy(&element_filter);
-					element_filter = Cmiss_graphics_filter_module_create_filter_domain_type(
+					cmzn_graphics_filter_operator_append_operand(or_filter, element_filter);
+					cmzn_graphics_filter_destroy(&element_filter);
+					element_filter = cmzn_graphics_filter_module_create_filter_domain_type(
 						filter_module, CMISS_FIELD_DOMAIN_MESH_3D);
-					Cmiss_graphics_filter_operator_append_operand(or_filter, element_filter);
-					Cmiss_graphics_filter_destroy(&element_filter);
+					cmzn_graphics_filter_operator_append_operand(or_filter, element_filter);
+					cmzn_graphics_filter_destroy(&element_filter);
 				}
-				Cmiss_graphics_filter_operator_destroy(&or_filter);
+				cmzn_graphics_filter_operator_destroy(&or_filter);
 			}
 			else
 			{
-				Cmiss_graphics_filter_set_inverse(combined_filter, true);
+				cmzn_graphics_filter_set_inverse(combined_filter, true);
 			}
-			Cmiss_graphics_module_destroy(&graphics_module);
+			cmzn_graphics_module_destroy(&graphics_module);
 			// Possible optimisation: don't pick streamlines
-			Cmiss_scene_picker_set_graphics_filter(scene_picker, combined_filter);
+			cmzn_scene_picker_set_graphics_filter(scene_picker, combined_filter);
 			switch (event_type)
 			{
 			case INTERACTIVE_EVENT_BUTTON_PRESS:
@@ -308,12 +308,12 @@ release.
 					/* interaction only works with first mouse button */
 					if (1==Interactive_event_get_button_number(event))
 					{
-						Cmiss_scene_picker_set_interaction_volume(scene_picker,
+						cmzn_scene_picker_set_interaction_volume(scene_picker,
 							interaction_volume);
 						if (scene_picker != 0)
 						{
 							element_tool->picked_element_was_unselected=1;
-							picked_element = Cmiss_scene_picker_get_nearest_element(scene_picker);
+							picked_element = cmzn_scene_picker_get_nearest_element(scene_picker);
 							if (0 != picked_element)
 							{
 								/* Open command_field of picked_element in browser */
@@ -347,40 +347,40 @@ release.
 											/*???debug*/printf(" %g",xi[i]);
 										}
 										/*???debug*/printf("\n");
-										Cmiss_field_module_id field_module = Cmiss_field_get_field_module(element_tool->command_field);
-										Cmiss_field_cache_id field_cache = Cmiss_field_module_create_cache(field_module);
-										Cmiss_field_cache_set_time(field_cache, time);
-										Cmiss_field_cache_set_mesh_location(field_cache, picked_element, element_dimension, xi);
-										char *command_string = Cmiss_field_evaluate_string(element_tool->command_field, field_cache);
+										cmzn_field_module_id field_module = cmzn_field_get_field_module(element_tool->command_field);
+										cmzn_field_cache_id field_cache = cmzn_field_module_create_cache(field_module);
+										cmzn_field_cache_set_time(field_cache, time);
+										cmzn_field_cache_set_mesh_location(field_cache, picked_element, element_dimension, xi);
+										char *command_string = cmzn_field_evaluate_string(element_tool->command_field, field_cache);
 										if (command_string)
 										{
 											Execute_command_execute_string(element_tool->execute_command, command_string);
 											DEALLOCATE(command_string);
 										}
-										Cmiss_field_cache_destroy(&field_cache);
-										Cmiss_field_module_destroy(&field_module);
+										cmzn_field_cache_destroy(&field_cache);
+										cmzn_field_module_destroy(&field_module);
 										DEALLOCATE(xi_points);
 									}
 								}
-								Cmiss_field_group_id group = Cmiss_scene_get_selection_group(scene);
+								cmzn_field_group_id group = cmzn_scene_get_selection_group(scene);
 								if (group)
 								{
-									Cmiss_region_id temp_region = Cmiss_scene_get_region(scene);
-									Cmiss_field_module_id field_module = Cmiss_region_get_field_module(temp_region);
-									int dimension = Cmiss_element_get_dimension(picked_element);
-									Cmiss_mesh_id master_mesh = Cmiss_field_module_find_mesh_by_dimension(field_module, dimension);
-									Cmiss_field_element_group_id element_group = Cmiss_field_group_get_element_group(group, master_mesh);
-									Cmiss_mesh_destroy(&master_mesh);
+									cmzn_region_id temp_region = cmzn_scene_get_region(scene);
+									cmzn_field_module_id field_module = cmzn_region_get_field_module(temp_region);
+									int dimension = cmzn_element_get_dimension(picked_element);
+									cmzn_mesh_id master_mesh = cmzn_field_module_find_mesh_by_dimension(field_module, dimension);
+									cmzn_field_element_group_id element_group = cmzn_field_group_get_element_group(group, master_mesh);
+									cmzn_mesh_destroy(&master_mesh);
 									if (element_group)
 									{
-										Cmiss_mesh_group_id mesh_group = Cmiss_field_element_group_get_mesh(element_group);
+										cmzn_mesh_group_id mesh_group = cmzn_field_element_group_get_mesh(element_group);
 										element_tool->picked_element_was_unselected =
-											!Cmiss_mesh_contains_element(Cmiss_mesh_group_base_cast(mesh_group), picked_element);
-										Cmiss_mesh_group_destroy(&mesh_group);
-										Cmiss_field_element_group_destroy(&element_group);
+											!cmzn_mesh_contains_element(cmzn_mesh_group_base_cast(mesh_group), picked_element);
+										cmzn_mesh_group_destroy(&mesh_group);
+										cmzn_field_element_group_destroy(&element_group);
 									}
-									Cmiss_field_group_destroy(&group);
-									Cmiss_field_module_destroy(&field_module);
+									cmzn_field_group_destroy(&group);
+									cmzn_field_module_destroy(&field_module);
 								}
 							}
 							REACCESS(FE_element)(&(element_tool->last_picked_element),
@@ -393,56 +393,56 @@ release.
 							{
 								if (element_tool->region)
 								{
-									Cmiss_scene *root_scene =
-										Cmiss_region_get_scene_internal(element_tool->region);
-									Cmiss_field_group_id root_group =
-										Cmiss_scene_get_selection_group(root_scene);
+									cmzn_scene *root_scene =
+										cmzn_region_get_scene_internal(element_tool->region);
+									cmzn_field_group_id root_group =
+										cmzn_scene_get_selection_group(root_scene);
 									if (root_group)
 									{
-										Cmiss_field_group_clear_region_tree_element(root_group);
-										Cmiss_field_group_destroy(&root_group);
+										cmzn_field_group_clear_region_tree_element(root_group);
+										cmzn_field_group_destroy(&root_group);
 									}
-									Cmiss_scene_destroy(&root_scene);
+									cmzn_scene_destroy(&root_scene);
 								}
 							}
 							if (picked_element)
 							{
-								Cmiss_region_id temp_region = FE_region_get_Cmiss_region(
+								cmzn_region_id temp_region = FE_region_get_cmzn_region(
 									FE_element_get_FE_region(picked_element));
-								Cmiss_scene_id tempScene = Cmiss_region_get_scene_internal(temp_region);
-								REACCESS(Cmiss_scene)(&(element_tool->scene),
+								cmzn_scene_id tempScene = cmzn_region_get_scene_internal(temp_region);
+								REACCESS(cmzn_scene)(&(element_tool->scene),
 									tempScene);
-								Cmiss_scene_destroy(&tempScene);
-								Cmiss_region *sub_region = NULL;
-								Cmiss_field_group_id sub_group = NULL;
-								Cmiss_mesh_group_id mesh_group = 0;
+								cmzn_scene_destroy(&tempScene);
+								cmzn_region *sub_region = NULL;
+								cmzn_field_group_id sub_group = NULL;
+								cmzn_mesh_group_id mesh_group = 0;
 								if (element_tool->scene)
 								{
-									sub_region = Cmiss_scene_get_region(element_tool->scene);
-									sub_group = Cmiss_scene_get_or_create_selection_group(element_tool->scene);
+									sub_region = cmzn_scene_get_region(element_tool->scene);
+									sub_group = cmzn_scene_get_or_create_selection_group(element_tool->scene);
 									if (sub_group)
 									{
-										int dimension = Cmiss_element_get_dimension(picked_element);
-										Cmiss_field_module_id field_module = Cmiss_region_get_field_module(sub_region);
-										Cmiss_mesh_id temp_mesh =
-											Cmiss_field_module_find_mesh_by_dimension(field_module, dimension);
-										Cmiss_field_element_group_id element_group = Cmiss_field_group_get_element_group(sub_group, temp_mesh);
+										int dimension = cmzn_element_get_dimension(picked_element);
+										cmzn_field_module_id field_module = cmzn_region_get_field_module(sub_region);
+										cmzn_mesh_id temp_mesh =
+											cmzn_field_module_find_mesh_by_dimension(field_module, dimension);
+										cmzn_field_element_group_id element_group = cmzn_field_group_get_element_group(sub_group, temp_mesh);
 										if (!element_group)
-											element_group = Cmiss_field_group_create_element_group(sub_group, temp_mesh);
-										mesh_group = Cmiss_field_element_group_get_mesh(element_group);
-										Cmiss_field_element_group_destroy(&element_group);
-										Cmiss_mesh_destroy(&temp_mesh);
-										Cmiss_field_module_destroy(&field_module);
+											element_group = cmzn_field_group_create_element_group(sub_group, temp_mesh);
+										mesh_group = cmzn_field_element_group_get_mesh(element_group);
+										cmzn_field_element_group_destroy(&element_group);
+										cmzn_mesh_destroy(&temp_mesh);
+										cmzn_field_module_destroy(&field_module);
 									}
 								}
 								if (mesh_group)
 								{
-									Cmiss_mesh_group_add_element(mesh_group, picked_element);
-									Cmiss_mesh_group_destroy(&mesh_group);
+									cmzn_mesh_group_add_element(mesh_group, picked_element);
+									cmzn_mesh_group_destroy(&mesh_group);
 								}
 								if (sub_group)
 								{
-									Cmiss_field_group_destroy(&sub_group);
+									cmzn_field_group_destroy(&sub_group);
 								}
 							}
 						}
@@ -470,8 +470,8 @@ release.
 							{
 								struct LIST(FE_element) *temp_element_list = CREATE(LIST(FE_element))();
 								ADD_OBJECT_TO_LIST(FE_element)(element_tool->last_picked_element, temp_element_list);
-								Cmiss_scene_remove_selection_from_element_list_of_dimension(element_tool->scene,
-									temp_element_list, Cmiss_element_get_dimension(element_tool->last_picked_element));
+								cmzn_scene_remove_selection_from_element_list_of_dimension(element_tool->scene,
+									temp_element_list, cmzn_element_get_dimension(element_tool->last_picked_element));
 								DESTROY(LIST(FE_element))(&temp_element_list);
 							}
 						}
@@ -501,21 +501,21 @@ release.
 //								}
 //								if (INTERACTIVE_EVENT_BUTTON_RELEASE==event_type)
 								{
-									Cmiss_scene_picker_set_interaction_volume(scene_picker,
+									cmzn_scene_picker_set_interaction_volume(scene_picker,
 										temp_interaction_volume);
 									if (element_tool->region)
 									{
-										Cmiss_scene_id region_scene = Cmiss_region_get_scene_internal(
+										cmzn_scene_id region_scene = cmzn_region_get_scene_internal(
 											element_tool->region);
-										Cmiss_field_group_id selection_group =
-											Cmiss_scene_get_or_create_selection_group(region_scene);
+										cmzn_field_group_id selection_group =
+											cmzn_scene_get_or_create_selection_group(region_scene);
 										if (selection_group)
 										{
-											Cmiss_scene_picker_add_picked_elements_to_group(scene_picker,
+											cmzn_scene_picker_add_picked_elements_to_group(scene_picker,
 												selection_group);
-											Cmiss_field_group_destroy(&selection_group);
+											cmzn_field_group_destroy(&selection_group);
 										}
-										Cmiss_scene_destroy(&region_scene);
+										cmzn_scene_destroy(&region_scene);
 									}
 								}
 								DEACCESS(Interaction_volume)(&temp_interaction_volume);
@@ -533,20 +533,20 @@ release.
 						"Element_tool_interactive_event_handler.  Unknown event type");
 				} break;
 			}
-			Cmiss_scene_picker_set_graphics_filter(scene_picker, static_cast<Cmiss_graphics_filter_id>(0));
-			Cmiss_graphics_filter_destroy(&combined_filter);
-			Cmiss_graphics_filter_module_end_change(filter_module);
-			Cmiss_graphics_filter_module_destroy(&filter_module);
-			Cmiss_scene_picker_destroy(&scene_picker);
+			cmzn_scene_picker_set_graphics_filter(scene_picker, static_cast<cmzn_graphics_filter_id>(0));
+			cmzn_graphics_filter_destroy(&combined_filter);
+			cmzn_graphics_filter_module_end_change(filter_module);
+			cmzn_graphics_filter_module_destroy(&filter_module);
+			cmzn_scene_picker_destroy(&scene_picker);
 		}
 		if (element_tool->region)
 		{
-			Cmiss_scene *root_scene = Cmiss_region_get_scene_internal(
+			cmzn_scene *root_scene = cmzn_region_get_scene_internal(
 				element_tool->region);
-			Cmiss_scene_flush_tree_selections(root_scene);
-			Cmiss_scene_destroy(&root_scene);
+			cmzn_scene_flush_tree_selections(root_scene);
+			cmzn_scene_destroy(&root_scene);
 		}
-		Cmiss_region_end_hierarchical_change(element_tool->region);
+		cmzn_region_end_hierarchical_change(element_tool->region);
 	}
 	else
 	{
@@ -633,7 +633,7 @@ public:
 		if (element_tool->region)
 		{
 			computed_field_manager=
-				Cmiss_region_get_Computed_field_manager(element_tool->region);
+				cmzn_region_get_Computed_field_manager(element_tool->region);
 		}
 		else
 		{
@@ -859,9 +859,9 @@ Copies the state of one element tool to another.WX only
 
 struct Element_tool *CREATE(Element_tool)(
 	struct MANAGER(Interactive_tool) *interactive_tool_manager,
-	struct Cmiss_region *region,
+	struct cmzn_region *region,
 	struct Element_point_ranges_selection *element_point_ranges_selection,
-	Cmiss_graphics_material *rubber_band_material,
+	cmzn_graphics_material *rubber_band_material,
 	struct User_interface *user_interface,
 	struct Time_keeper_app *time_keeper_app)
 /*******************************************************************************
@@ -878,7 +878,7 @@ Selects elements in <element_selection> in response to interactive_events.
 	ENTER(CREATE(Element_tool));
 	element_tool=(struct Element_tool *)NULL;
 	if (interactive_tool_manager && region &&(NULL != (computed_field_manager=
-		Cmiss_region_get_Computed_field_manager(region)))
+		cmzn_region_get_Computed_field_manager(region)))
 		&&rubber_band_material&&user_interface)
 	{
 		if (ALLOCATE(element_tool,struct Element_tool,1))
@@ -889,10 +889,10 @@ Selects elements in <element_selection> in response to interactive_events.
 			element_tool->element_point_ranges_selection=
 				element_point_ranges_selection;
 			element_tool->rubber_band_material=
-				Cmiss_graphics_material_access(rubber_band_material);
+				cmzn_graphics_material_access(rubber_band_material);
 			element_tool->user_interface=user_interface;
 			element_tool->time_keeper_app = (struct Time_keeper_app *)NULL;
-			element_tool->scene=(struct Cmiss_scene *)NULL;
+			element_tool->scene=(struct cmzn_scene *)NULL;
 			if (time_keeper_app)
 			{
 				element_tool->time_keeper_app = ACCESS(Time_keeper_app)(time_keeper_app);
@@ -970,7 +970,7 @@ structure itself.
 		REACCESS(Interaction_volume)(&(element_tool->last_interaction_volume),
 			(struct Interaction_volume *)NULL);
 		REACCESS(GT_object)(&(element_tool->rubber_band),(struct GT_object *)NULL);
-		Cmiss_graphics_material_destroy(&(element_tool->rubber_band_material));
+		cmzn_graphics_material_destroy(&(element_tool->rubber_band_material));
 		if (element_tool->time_keeper_app)
 		{
 			DEACCESS(Time_keeper_app)(&(element_tool->time_keeper_app));

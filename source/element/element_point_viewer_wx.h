@@ -74,7 +74,7 @@ Global Functions
 
 struct Element_point_viewer *CREATE(Element_point_viewer)(
 	struct Element_point_viewer **element_point_viewer_address,
-	struct Cmiss_region *region,
+	struct cmzn_region *region,
 	struct Element_point_ranges_selection *element_point_ranges_selection,
 	struct Computed_field_package *computed_field_package,
 	struct Time_object *time_object,

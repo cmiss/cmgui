@@ -138,9 +138,9 @@ int WINAPI WinMain(HINSTANCE current_instance,HINSTANCE previous_instance,
 #endif /* !defined (WIN32_USER_INTERFACE)  && !defined (_MSC_VER)*/
 {
 	int return_code = 0;
-	struct Cmiss_context_app *context = NULL;
+	struct cmzn_context_app *context = NULL;
 	struct User_interface_module *UI_module = NULL;
-	struct Cmiss_command_data *command_data;
+	struct cmzn_command_data *command_data;
 
 #if !defined (WIN32_USER_INTERFACE) && !defined (_MSC_VER)
 	ENTER(main);
@@ -184,16 +184,16 @@ int WINAPI WinMain(HINSTANCE current_instance,HINSTANCE previous_instance,
 	GetCurrentProcess(&PSN);
 	TransformProcessType(&PSN,kProcessTransformToForegroundApplication);
 #endif
-	context = Cmiss_context_app_create("default");
+	context = cmzn_context_app_create("default");
 #if defined (WX_USER_INTERFACE)
 	int wx_entry_started = 0;
 #endif
 	if (context)
 	{
 #if defined (WX_USER_INTERFACE) || (!defined (WIN32_USER_INTERFACE) && !defined (_MSC_VER))
-		UI_module = Cmiss_context_create_user_interface(context, argc, argv, NULL);
+		UI_module = cmzn_context_create_user_interface(context, argc, argv, NULL);
 #else /* !defined (WIN32_USER_INTERFACE)  && !defined (_MSC_VER)*/
-		UI_module = Cmiss_context_create_user_interface(context, argc, argv, current_instance,
+		UI_module = cmzn_context_create_user_interface(context, argc, argv, current_instance,
 			previous_instance, command_line, initial_main_window_state, NULL);
 #endif /* !defined (WIN32_USER_INTERFACE)  && !defined (_MSC_VER)*/
 		if (UI_module)
@@ -223,13 +223,13 @@ int WINAPI WinMain(HINSTANCE current_instance,HINSTANCE previous_instance,
 				}
 			}
 #endif
-			if (NULL != (command_data = Cmiss_context_get_default_command_interpreter(context)))
+			if (NULL != (command_data = cmzn_context_get_default_command_interpreter(context)))
 			{
-				Cmiss_command_data_set_cmgui_string(command_data, CMGUI_NAME_STRING,
+				cmzn_command_data_set_cmgui_string(command_data, CMGUI_NAME_STRING,
 					CMGUI_VERSION_STRING, CMGUI_DATETIME_STRING, CMGUI_COPYRIGHT_STRING, CMGUI_BUILD_STRING,
 					CMGUI_SVN_REVISION_STRING);
-				Cmiss_command_data_main_loop(command_data);
-				Cmiss_command_data_destroy(&command_data);
+				cmzn_command_data_main_loop(command_data);
+				cmzn_command_data_destroy(&command_data);
 				return_code = 0;
 			}
 			else
@@ -242,7 +242,7 @@ int WINAPI WinMain(HINSTANCE current_instance,HINSTANCE previous_instance,
 		{
 			return_code = 1;
 		}
-		Cmiss_context_app_destroy(&context);
+		cmzn_context_app_destroy(&context);
 		Context_internal_cleanup();
 #if defined (WX_USER_INTERFACE)
 		if (wx_entry_started)

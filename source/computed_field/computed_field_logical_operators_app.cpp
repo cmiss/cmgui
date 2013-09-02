@@ -117,7 +117,7 @@ already) and allows its contents to be modified.
 				if (return_code)
 				{
 					return_code = field_modify->update_field_and_deaccess(
-						Cmiss_field_module_create_or(field_modify->get_field_module(),
+						cmzn_field_module_create_or(field_modify->get_field_module(),
 							source_fields[0], source_fields[1]));
 				}
 				if (!return_code)
@@ -223,7 +223,7 @@ already) and allows its contents to be modified.
 				if (return_code)
 				{
 					return_code = field_modify->update_field_and_deaccess(
-						Cmiss_field_module_create_and(field_modify->get_field_module(),
+						cmzn_field_module_create_and(field_modify->get_field_module(),
 							source_fields[0], source_fields[1]));
 				}
 				if (!return_code)
@@ -329,7 +329,7 @@ already) and allows its contents to be modified.
 				if (return_code)
 				{
 					return_code = field_modify->update_field_and_deaccess(
-						Cmiss_field_module_create_xor(field_modify->get_field_module(),
+						cmzn_field_module_create_xor(field_modify->get_field_module(),
 							source_fields[0], source_fields[1]));
 				}
 				if (!return_code)
@@ -436,7 +436,7 @@ already) and allows its contents to be modified.
 				if (return_code)
 				{
 					return_code = field_modify->update_field_and_deaccess(
-						Cmiss_field_module_create_equal_to(field_modify->get_field_module(),
+						cmzn_field_module_create_equal_to(field_modify->get_field_module(),
 							source_fields[0], source_fields[1]));
 				}
 				if (!return_code)
@@ -788,12 +788,12 @@ int define_Computed_field_type_not(struct Parse_state *state,
 	Computed_field_modify_data *field_modify = reinterpret_cast<Computed_field_modify_data *>(field_modify_void);
 	if (state && field_modify)
 	{
-		Cmiss_field_id source_field = 0;
+		cmzn_field_id source_field = 0;
 		if ((NULL != field_modify->get_field()) &&
 			(computed_field_not_type_string ==
 			 Computed_field_get_type_string(field_modify->get_field())))
 		{
-			source_field = Cmiss_field_get_source_field(field_modify->get_field(), 1);
+			source_field = cmzn_field_get_source_field(field_modify->get_field(), 1);
 		}
 
 		Option_table *option_table = CREATE(Option_table)();
@@ -810,9 +810,9 @@ int define_Computed_field_type_not(struct Parse_state *state,
 		if (return_code)
 		{
 			return_code = field_modify->update_field_and_deaccess(
-				Cmiss_field_module_create_not(field_modify->get_field_module(), source_field));
+				cmzn_field_module_create_not(field_modify->get_field_module(), source_field));
 		}
-		Cmiss_field_destroy(&source_field);
+		cmzn_field_destroy(&source_field);
 	}
 	else
 	{

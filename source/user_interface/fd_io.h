@@ -52,16 +52,16 @@ extern "C" {
 #include "zinc/fdio.h"
 
 /* Map private names to public function names. */
-#define Fdio_package Cmiss_fdio_package
-#define Fdio_package_id Cmiss_fdio_package_id
-#define Fdio Cmiss_fdio
-#define Fdio_id Cmiss_fdio_id
-#define destroy_Fdio_package DESTROY(Cmiss_fdio_package)
-#define Fdio_package_create_Fdio Cmiss_fdio_package_create_Cmiss_fdio
-#define destroy_Fdio DESTROY(Cmiss_fdio)
-#define Fdio_callback Cmiss_fdio_callback
-#define Fdio_set_read_callback Cmiss_fdio_set_read_callback
-#define Fdio_set_write_callback Cmiss_fdio_set_write_callback
+#define Fdio_package cmzn_fdio_package
+#define Fdio_package_id cmzn_fdio_package_id
+#define Fdio cmzn_fdio
+#define Fdio_id cmzn_fdio_id
+#define destroy_Fdio_package DESTROY(cmzn_fdio_package)
+#define Fdio_package_create_Fdio cmzn_fdio_package_create_cmzn_fdio
+#define destroy_Fdio DESTROY(cmzn_fdio)
+#define Fdio_callback cmzn_fdio_callback
+#define Fdio_set_read_callback cmzn_fdio_set_read_callback
+#define Fdio_set_write_callback cmzn_fdio_set_write_callback
 
 /* Forward declaration to avoid cycle... */
 struct Event_dispatcher;
@@ -71,10 +71,10 @@ Fdio_package_id CREATE(Fdio_package)(struct Event_dispatcher *event_dispatcher);
 LAST MODIFIED : 15 February 2005
 
 DESCRIPTION :
-Creates a new Cmiss_IO_package, given an event dispatcher.
+Creates a new cmzn_IO_package, given an event dispatcher.
 ==============================================================================*/
 
-int DESTROY(Fdio)(Cmiss_fdio_id* handle);
+int DESTROY(Fdio)(cmzn_fdio_id* handle);
 
 #ifdef __cplusplus
 }

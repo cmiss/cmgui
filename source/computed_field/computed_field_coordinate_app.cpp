@@ -76,7 +76,7 @@ already) and allows its contents to be modified.
 			if (return_code)
 			{
 				return_code = field_modify->update_field_and_deaccess(
-					Cmiss_field_module_create_coordinate_transformation(
+					cmzn_field_module_create_coordinate_transformation(
 						field_modify->get_field_module(), source_field));
 			}
 			if (!return_code)
@@ -173,7 +173,7 @@ already) and allows its contents to be modified.
 			if (return_code)
 			{
 				return_code = field_modify->update_field_and_deaccess(
-					Cmiss_field_module_create_vector_coordinate_transformation(
+					cmzn_field_module_create_vector_coordinate_transformation(
 						field_modify->get_field_module(), vector_field, coordinate_field));
 			}
 			if (!return_code)

@@ -204,7 +204,7 @@ update in case it has changed, and writes the new object string in the widget.
 		if (current_object)
 		{
 			char object_name[30];
-			sprintf(object_name, "%d", Cmiss_element_get_identifier(current_object));
+			sprintf(object_name, "%d", cmzn_element_get_identifier(current_object));
 			if (strcmp(object_name,current_string))
 			{
 				SetValue(wxString::FromAscii(object_name));

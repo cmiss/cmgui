@@ -49,13 +49,13 @@ Widgets for editing a graphical material.
 #include "user_interface/user_interface.h"
 
 #define MATERIAL_NUM_FORMAT "%6.4" MATERIAL_PRECISION_STRING
-struct Cmiss_graphics_module;
+struct cmzn_graphics_module;
 struct Graphics_buffer_app_package;
 struct Material_editor;
 
 int material_editor_bring_up_editor(struct Material_editor **material_editor_address,
-	struct Cmiss_region *root_region,
-	struct Cmiss_graphics_module *graphics_module,
+	struct cmzn_region *root_region,
+	struct cmzn_graphics_module *graphics_module,
 	Graphics_buffer_app_package *graphics_buffer_package,
 	struct User_interface *user_interface);
 /*******************************************************************************

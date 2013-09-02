@@ -17,14 +17,14 @@
 class Computed_field_integration_package : public Computed_field_type_package
 {
 public:
-	Cmiss_region *root_region;
+	cmzn_region *root_region;
 };
 
 const char computed_field_xi_texture_coordinates_type_string[] = "xi_texture_coordinates";
 const char computed_field_integration_type_string[] = "integration";
 
 int Computed_field_get_type_integration(Computed_field *field,
-	Cmiss_mesh_id *mesh_address, FE_element **seed_element,
+	cmzn_mesh_id *mesh_address, FE_element **seed_element,
 	Computed_field **integrand, int *magnitude_coordinates,
 	Computed_field **coordinate_field);
 
@@ -44,23 +44,23 @@ and allows its contents to be modified.
 	USE_PARAMETER(computed_field_integration_package_void);
 	if (state && field_modify)
 	{
-		Cmiss_region_id region = field_modify->get_region();
-		Cmiss_mesh_id mesh = 0;
-		Cmiss_field_id coordinate_field = 0;
-		Cmiss_field_id integrand = 0;
+		cmzn_region_id region = field_modify->get_region();
+		cmzn_mesh_id mesh = 0;
+		cmzn_field_id coordinate_field = 0;
+		cmzn_field_id integrand = 0;
 		int magnitude_coordinates_flag = 0;
 		int seed_element_identifier = 0;
 		float time_update = 0;
 		if ((NULL != field_modify->get_field()) &&
 			Computed_field_is_type_integration(field_modify->get_field()))
 		{
-			Cmiss_element_id seed_element;
+			cmzn_element_id seed_element;
 			return_code = Computed_field_get_type_integration(field_modify->get_field(),
 				&mesh, &seed_element, &integrand, &magnitude_coordinates_flag, &coordinate_field);
 			if (seed_element)
 			{
-				seed_element_identifier = Cmiss_element_get_identifier(seed_element);
-				Cmiss_element_destroy(&seed_element);
+				seed_element_identifier = cmzn_element_get_identifier(seed_element);
+				cmzn_element_destroy(&seed_element);
 			}
 		}
 		if (coordinate_field)
@@ -76,8 +76,8 @@ and allows its contents to be modified.
 			/* Make a default integrand of one */
 			double value = 1.0;
 			// use temporary field module to supply different defaults
-			Cmiss_field_module *temp_field_module = Cmiss_field_module_create(region);
-			Cmiss_field_module_set_field_name(temp_field_module, "constant_1.0");
+			cmzn_field_module *temp_field_module = cmzn_field_module_create(region);
+			cmzn_field_module_set_field_name(temp_field_module, "constant_1.0");
 			integrand = Computed_field_create_constant(temp_field_module,
 				/*number_of_components*/1, &value);
 			if (NULL == integrand)
@@ -86,7 +86,7 @@ and allows its contents to be modified.
 					"define_Computed_field_type_integration.  Unable to create constant integrand");
 				return_code = 0;
 			}
-			Cmiss_field_module_destroy(&temp_field_module);
+			cmzn_field_module_destroy(&temp_field_module);
 		}
 		char *group_name = 0;
 
@@ -123,18 +123,18 @@ and allows its contents to be modified.
 
 		if (return_code && !mesh)
 		{
-			int dimension = FE_region_get_highest_dimension(Cmiss_region_get_FE_region(region));
-			mesh = Cmiss_field_module_find_mesh_by_dimension(field_modify->get_field_module(), dimension);
+			int dimension = FE_region_get_highest_dimension(cmzn_region_get_FE_region(region));
+			mesh = cmzn_field_module_find_mesh_by_dimension(field_modify->get_field_module(), dimension);
 			if (group_name)
 			{
-				Cmiss_field_id group_field = Cmiss_field_module_find_field_by_name(field_modify->get_field_module(), group_name);
-				Cmiss_field_group_id group = Cmiss_field_cast_group(group_field);
-				Cmiss_field_element_group_id element_group = Cmiss_field_group_get_element_group(group, mesh);
-				Cmiss_mesh_destroy(&mesh);
-				mesh = Cmiss_mesh_group_base_cast(Cmiss_field_element_group_get_mesh(element_group));
-				Cmiss_field_element_group_destroy(&element_group);
-				Cmiss_field_group_destroy(&group);
-				Cmiss_field_destroy(&group_field);
+				cmzn_field_id group_field = cmzn_field_module_find_field_by_name(field_modify->get_field_module(), group_name);
+				cmzn_field_group_id group = cmzn_field_cast_group(group_field);
+				cmzn_field_element_group_id element_group = cmzn_field_group_get_element_group(group, mesh);
+				cmzn_mesh_destroy(&mesh);
+				mesh = cmzn_mesh_group_base_cast(cmzn_field_element_group_get_mesh(element_group));
+				cmzn_field_element_group_destroy(&element_group);
+				cmzn_field_group_destroy(&group);
+				cmzn_field_destroy(&group_field);
 			}
 		}
 		if (return_code && !mesh)
@@ -152,10 +152,10 @@ and allows its contents to be modified.
 			display_message(ERROR_MESSAGE, "You must specify an integrand field.");
 			return_code = 0;
 		}
-		Cmiss_element_id seed_element = 0;
+		cmzn_element_id seed_element = 0;
 		if (return_code)
 		{
-			seed_element = Cmiss_mesh_find_element_by_identifier(mesh, seed_element_identifier);
+			seed_element = cmzn_mesh_find_element_by_identifier(mesh, seed_element_identifier);
 			if (!seed_element)
 			{
 				display_message(ERROR_MESSAGE, "Could not find seed_element %d in mesh.", seed_element_identifier);
@@ -183,10 +183,10 @@ and allows its contents to be modified.
 		{
 			DEALLOCATE(group_name);
 		}
-		Cmiss_element_destroy(&seed_element);
-		Cmiss_mesh_destroy(&mesh);
-		Cmiss_field_destroy(&coordinate_field);
-		Cmiss_field_destroy(&integrand);
+		cmzn_element_destroy(&seed_element);
+		cmzn_mesh_destroy(&mesh);
+		cmzn_field_destroy(&coordinate_field);
+		cmzn_field_destroy(&integrand);
 	}
 	else
 	{
@@ -215,8 +215,8 @@ and allows its contents to be modified.
 	USE_PARAMETER(computed_field_integration_package_void);
 	if (state && field_modify)
 	{
-		Cmiss_region_id region = field_modify->get_region();
-		Cmiss_mesh_id mesh = 0;
+		cmzn_region_id region = field_modify->get_region();
+		cmzn_mesh_id mesh = 0;
 		int seed_element_identifier = 0;
 		char *group_name = 0;
 
@@ -233,18 +233,18 @@ and allows its contents to be modified.
 
 		if (return_code && !mesh)
 		{
-			int dimension = FE_region_get_highest_dimension(Cmiss_region_get_FE_region(region));
-			mesh = Cmiss_field_module_find_mesh_by_dimension(field_modify->get_field_module(), dimension);
+			int dimension = FE_region_get_highest_dimension(cmzn_region_get_FE_region(region));
+			mesh = cmzn_field_module_find_mesh_by_dimension(field_modify->get_field_module(), dimension);
 			if (group_name)
 			{
-				Cmiss_field_id group_field = Cmiss_field_module_find_field_by_name(field_modify->get_field_module(), group_name);
-				Cmiss_field_group_id group = Cmiss_field_cast_group(group_field);
-				Cmiss_field_element_group_id element_group = Cmiss_field_group_get_element_group(group, mesh);
-				Cmiss_mesh_destroy(&mesh);
-				mesh = Cmiss_mesh_group_base_cast(Cmiss_field_element_group_get_mesh(element_group));
-				Cmiss_field_element_group_destroy(&element_group);
-				Cmiss_field_group_destroy(&group);
-				Cmiss_field_destroy(&group_field);
+				cmzn_field_id group_field = cmzn_field_module_find_field_by_name(field_modify->get_field_module(), group_name);
+				cmzn_field_group_id group = cmzn_field_cast_group(group_field);
+				cmzn_field_element_group_id element_group = cmzn_field_group_get_element_group(group, mesh);
+				cmzn_mesh_destroy(&mesh);
+				mesh = cmzn_mesh_group_base_cast(cmzn_field_element_group_get_mesh(element_group));
+				cmzn_field_element_group_destroy(&element_group);
+				cmzn_field_group_destroy(&group);
+				cmzn_field_destroy(&group_field);
 			}
 		}
 		if (return_code && !mesh)
@@ -252,10 +252,10 @@ and allows its contents to be modified.
 			display_message(ERROR_MESSAGE, "Must specify mesh.");
 			return_code = 0;
 		}
-		Cmiss_element_id seed_element = 0;
+		cmzn_element_id seed_element = 0;
 		if (return_code)
 		{
-			seed_element = Cmiss_mesh_find_element_by_identifier(mesh, seed_element_identifier);
+			seed_element = cmzn_mesh_find_element_by_identifier(mesh, seed_element_identifier);
 			if (!seed_element)
 			{
 				display_message(ERROR_MESSAGE, "Could not find seed_element %d in mesh.", seed_element_identifier);
@@ -263,7 +263,7 @@ and allows its contents to be modified.
 			}
 		}
 		// use temporary field module to supply different defaults
-		Cmiss_field_id coordinate_field = FIRST_OBJECT_IN_MANAGER_THAT(Computed_field)(
+		cmzn_field_id coordinate_field = FIRST_OBJECT_IN_MANAGER_THAT(Computed_field)(
 			Computed_field_is_type_xi_coordinates, (void *)NULL,
 			field_modify->get_field_manager());
 		if (coordinate_field)
@@ -282,11 +282,11 @@ and allows its contents to be modified.
 			return_code = 0;
 		}
 		double value = 1.0;
-		Cmiss_field_module *temp_field_module = Cmiss_field_module_create(region);
-		Cmiss_field_module_set_field_name(temp_field_module, "constant_1.0");
+		cmzn_field_module *temp_field_module = cmzn_field_module_create(region);
+		cmzn_field_module_set_field_name(temp_field_module, "constant_1.0");
 		Computed_field *integrand = Computed_field_create_constant(temp_field_module,
 			/*number_of_components*/1, &value);
-		Cmiss_field_module_destroy(&temp_field_module);
+		cmzn_field_module_destroy(&temp_field_module);
 		if (NULL == integrand)
 		{
 			display_message(ERROR_MESSAGE,
@@ -303,10 +303,10 @@ and allows its contents to be modified.
 		{
 			DEALLOCATE(group_name);
 		}
-		Cmiss_element_destroy(&seed_element);
-		Cmiss_mesh_destroy(&mesh);
-		Cmiss_field_destroy(&coordinate_field);
-		Cmiss_field_destroy(&integrand);
+		cmzn_element_destroy(&seed_element);
+		cmzn_mesh_destroy(&mesh);
+		cmzn_field_destroy(&coordinate_field);
+		cmzn_field_destroy(&integrand);
 	}
 	else
 	{
@@ -321,7 +321,7 @@ and allows its contents to be modified.
 
 int Computed_field_register_types_integration(
 	Computed_field_package *computed_field_package,
-	Cmiss_region *root_region)
+	cmzn_region *root_region)
 /*******************************************************************************
 LAST MODIFIED : 24 August 2006
 

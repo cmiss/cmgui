@@ -33,8 +33,8 @@ void Scene_viewer_app_graphics_buffer_input_callback(
 FULL_DECLARE_LIST_TYPE(Scene_viewer_app);
 
 // Callback functions:
-FULL_DECLARE_CMISS_CALLBACK_TYPES(Cmiss_scene_viewer_app_module_callback, \
-	struct Cmiss_scene_viewer_app_module *, void *);
+FULL_DECLARE_CMISS_CALLBACK_TYPES(cmzn_scene_viewer_app_module_callback, \
+	struct cmzn_scene_viewer_app_module *, void *);
 
 FULL_DECLARE_CMISS_CALLBACK_TYPES(Scene_viewer_app_callback, \
 	struct Scene_viewer_app *, void *);
@@ -42,14 +42,14 @@ FULL_DECLARE_CMISS_CALLBACK_TYPES(Scene_viewer_app_callback, \
 FULL_DECLARE_CMISS_CALLBACK_TYPES(Scene_viewer_app_input_callback,
 	struct Scene_viewer_app *, struct Graphics_buffer_input *);
 
-DEFINE_CMISS_CALLBACK_MODULE_FUNCTIONS(Cmiss_scene_viewer_app_module_callback, void);
+DEFINE_CMISS_CALLBACK_MODULE_FUNCTIONS(cmzn_scene_viewer_app_module_callback, void);
 
 DEFINE_CMISS_CALLBACK_MODULE_FUNCTIONS(Scene_viewer_app_callback, void);
 
 DEFINE_CMISS_CALLBACK_MODULE_FUNCTIONS(Scene_viewer_app_input_callback, int);
 
-DEFINE_CMISS_CALLBACK_FUNCTIONS(Cmiss_scene_viewer_app_module_callback, \
-	struct Cmiss_scene_viewer_app_module *,void *);
+DEFINE_CMISS_CALLBACK_FUNCTIONS(cmzn_scene_viewer_app_module_callback, \
+	struct cmzn_scene_viewer_app_module *,void *);
 
 DEFINE_CMISS_CALLBACK_FUNCTIONS(Scene_viewer_app_callback, \
 	struct Scene_viewer_app *,void *)
@@ -57,26 +57,26 @@ DEFINE_CMISS_CALLBACK_FUNCTIONS(Scene_viewer_app_callback, \
 DEFINE_CMISS_CALLBACK_FUNCTIONS(Scene_viewer_app_input_callback,
 	struct Scene_viewer_app *,struct Graphics_buffer_input *);
 
-struct Cmiss_scene_viewer_app_module *CREATE(Cmiss_scene_viewer_app_module)(
+struct cmzn_scene_viewer_app_module *CREATE(cmzn_scene_viewer_app_module)(
 	struct Graphics_buffer_app_package *graphics_buffer_package,
-	Cmiss_graphics_module_id graphics_module,
-	Cmiss_scene_id scene,
+	cmzn_graphics_module_id graphics_module,
+	cmzn_scene_id scene,
 	struct User_interface *user_interface)
 {
-	struct Cmiss_scene_viewer_app_module *scene_viewer_module;
+	struct cmzn_scene_viewer_app_module *scene_viewer_module;
 	if (graphics_buffer_package&&graphics_module&&scene&&user_interface)
 	{
 		/* allocate memory for the scene_viewer structure */
-		if (ALLOCATE(scene_viewer_module,struct Cmiss_scene_viewer_app_module,1))
+		if (ALLOCATE(scene_viewer_module,struct cmzn_scene_viewer_app_module,1))
 		{
 			scene_viewer_module->access_count = 1;
 			scene_viewer_module->graphics_buffer_package = graphics_buffer_package;
 			scene_viewer_module->core_scene_viewer_module =
-				Cmiss_graphics_module_get_scene_viewer_module(graphics_module);
+				cmzn_graphics_module_get_scene_viewer_module(graphics_module);
 			scene_viewer_module->user_interface = user_interface;
 			scene_viewer_module->scene_viewer_app_list = CREATE(LIST(Scene_viewer_app))();
 			scene_viewer_module->destroy_callback_list=
-					CREATE(LIST(CMISS_CALLBACK_ITEM(Cmiss_scene_viewer_app_module_callback)))();
+					CREATE(LIST(CMISS_CALLBACK_ITEM(cmzn_scene_viewer_app_module_callback)))();
 		}
 		else
 		{
@@ -94,11 +94,11 @@ struct Cmiss_scene_viewer_app_module *CREATE(Cmiss_scene_viewer_app_module)(
 	return (scene_viewer_module);
 }
 
-int DESTROY(Cmiss_scene_viewer_app_module)(
-	struct Cmiss_scene_viewer_app_module **scene_viewer_app_package_address)
+int DESTROY(cmzn_scene_viewer_app_module)(
+	struct cmzn_scene_viewer_app_module **scene_viewer_app_package_address)
 {
 	int return_code = 0;
-	struct Cmiss_scene_viewer_app_module *scene_viewer_app_package = 0;
+	struct cmzn_scene_viewer_app_module *scene_viewer_app_package = 0;
 	if (scene_viewer_app_package_address &&
 		( 0 != (scene_viewer_app_package = *scene_viewer_app_package_address)))
 	{
@@ -106,14 +106,14 @@ int DESTROY(Cmiss_scene_viewer_app_module)(
 		/* send the destroy callbacks */
 		if (scene_viewer_app_package->destroy_callback_list)
 		{
-			CMISS_CALLBACK_LIST_CALL(Cmiss_scene_viewer_app_module_callback)(
+			CMISS_CALLBACK_LIST_CALL(cmzn_scene_viewer_app_module_callback)(
 				scene_viewer_app_package->destroy_callback_list,scene_viewer_app_package,NULL);
-			DESTROY( LIST(CMISS_CALLBACK_ITEM(Cmiss_scene_viewer_app_module_callback)))(
+			DESTROY( LIST(CMISS_CALLBACK_ITEM(cmzn_scene_viewer_app_module_callback)))(
 				&scene_viewer_app_package->destroy_callback_list);
 		}
 		if (scene_viewer_app_package->core_scene_viewer_module)
 		{
-			Cmiss_scene_viewer_module_destroy(&scene_viewer_app_package->core_scene_viewer_module);
+			cmzn_scene_viewer_module_destroy(&scene_viewer_app_package->core_scene_viewer_module);
 		}
 		if (scene_viewer_app_package->scene_viewer_app_list)
 		{
@@ -126,15 +126,15 @@ int DESTROY(Cmiss_scene_viewer_app_module)(
 	return return_code;
 }
 
-void My_Cmiss_scene_viewer_callback(Cmiss_scene_viewer_id /* scene_viewer */,
+void My_cmzn_scene_viewer_callback(cmzn_scene_viewer_id /* scene_viewer */,
 		void * /*callback_data*/, void *user_data)
 {
 	Scene_viewer_app_redraw((struct Scene_viewer_app *)user_data);
 }
 
 struct Scene_viewer_app *CREATE(Scene_viewer_app)(struct Graphics_buffer_app *graphics_buffer,
-	Cmiss_scene_viewer_module_id scene_viewer_module,
-	Cmiss_graphics_filter_id filter, struct Cmiss_scene *scene,
+	cmzn_scene_viewer_module_id scene_viewer_module,
+	cmzn_graphics_filter_id filter, struct cmzn_scene *scene,
 	struct User_interface *user_interface)
 {
 	struct Scene_viewer_app *scene_viewer = 0;
@@ -146,13 +146,13 @@ struct Scene_viewer_app *CREATE(Scene_viewer_app)(struct Graphics_buffer_app *gr
 			scene_viewer->graphics_buffer = ACCESS(Graphics_buffer_app)(graphics_buffer);
 			scene_viewer->core_scene_viewer = create_Scene_viewer_from_package(
 				Graphics_buffer_app_get_core_buffer(graphics_buffer), scene_viewer_module);
-			Cmiss_scene_viewer_set_scene(scene_viewer->core_scene_viewer, scene);
-			Cmiss_scene_viewer_set_filter(scene_viewer->core_scene_viewer, filter);
+			cmzn_scene_viewer_set_scene(scene_viewer->core_scene_viewer, scene);
+			cmzn_scene_viewer_set_filter(scene_viewer->core_scene_viewer, filter);
 			scene_viewer->user_interface = user_interface;
 			scene_viewer->idle_update_callback_id = (struct Event_dispatcher_idle_callback *)NULL;
 			/* no current interactive_tool */
 			scene_viewer->interactive_tool=(struct Interactive_tool *)NULL;
-			/* Currently only set when created from a Cmiss_scene_viewer_module
+			/* Currently only set when created from a cmzn_scene_viewer_module
 				to avoid changing the interface */
 			scene_viewer->interactive_tool_manager = 0;
 			scene_viewer->input_callback_list=
@@ -165,8 +165,8 @@ struct Scene_viewer_app *CREATE(Scene_viewer_app)(struct Graphics_buffer_app *gr
 				CREATE(LIST(CMISS_CALLBACK_ITEM(Scene_viewer_app_callback)))();
 			scene_viewer->transform_callback_list=
 				CREATE(LIST(CMISS_CALLBACK_ITEM(Scene_viewer_app_callback)))();
-			Cmiss_scene_viewer_add_repaint_required_callback(scene_viewer->core_scene_viewer,
-				My_Cmiss_scene_viewer_callback, scene_viewer);
+			cmzn_scene_viewer_add_repaint_required_callback(scene_viewer->core_scene_viewer,
+				My_cmzn_scene_viewer_callback, scene_viewer);
 			Graphics_buffer_app_add_initialise_callback(graphics_buffer,
 				Scene_viewer_app_initialise_callback, scene_viewer);
 			Graphics_buffer_app_add_resize_callback(graphics_buffer,
@@ -186,7 +186,7 @@ struct Scene_viewer_app *Scene_viewer_app_for_spectrum_create(struct Graphics_bu
 	struct Colour *background_colour,
 	struct Light *default_light,
 	struct Light_model *default_light_model,
-	Cmiss_graphics_filter_id filter, struct Cmiss_scene *scene,
+	cmzn_graphics_filter_id filter, struct cmzn_scene *scene,
 	struct User_interface *user_interface)
 {
 	struct Scene_viewer_app *scene_viewer = 0;
@@ -201,12 +201,12 @@ struct Scene_viewer_app *Scene_viewer_app_for_spectrum_create(struct Graphics_bu
 				default_light,
 				default_light_model,
 				filter);
-			Cmiss_scene_viewer_set_scene(scene_viewer->core_scene_viewer, scene);
+			cmzn_scene_viewer_set_scene(scene_viewer->core_scene_viewer, scene);
 			scene_viewer->user_interface = user_interface;
 			scene_viewer->idle_update_callback_id = (struct Event_dispatcher_idle_callback *)NULL;
 			/* no current interactive_tool */
 			scene_viewer->interactive_tool=(struct Interactive_tool *)NULL;
-			/* Currently only set when created from a Cmiss_scene_viewer_module
+			/* Currently only set when created from a cmzn_scene_viewer_module
 				to avoid changing the interface */
 			scene_viewer->interactive_tool_manager = 0;
 			scene_viewer->input_callback_list=
@@ -219,7 +219,7 @@ struct Scene_viewer_app *Scene_viewer_app_for_spectrum_create(struct Graphics_bu
 				CREATE(LIST(CMISS_CALLBACK_ITEM(Scene_viewer_app_callback)))();
 			scene_viewer->transform_callback_list=
 				CREATE(LIST(CMISS_CALLBACK_ITEM(Scene_viewer_app_callback)))();
-			Cmiss_scene_viewer_add_repaint_required_callback(scene_viewer->core_scene_viewer, My_Cmiss_scene_viewer_callback, scene_viewer);
+			cmzn_scene_viewer_add_repaint_required_callback(scene_viewer->core_scene_viewer, My_cmzn_scene_viewer_callback, scene_viewer);
 			Graphics_buffer_app_add_initialise_callback(graphics_buffer,
 				Scene_viewer_app_initialise_callback, scene_viewer);
 			Graphics_buffer_app_add_resize_callback(graphics_buffer,
@@ -247,8 +247,8 @@ int DESTROY(Scene_viewer_app)(struct Scene_viewer_app **scene_viewer_app_address
 				User_interface_get_event_dispatcher(scene_viewer->user_interface),
 				scene_viewer->idle_update_callback_id);
 		}
-		Cmiss_scene_viewer_remove_repaint_required_callback(scene_viewer->core_scene_viewer,
-			My_Cmiss_scene_viewer_callback, scene_viewer);
+		cmzn_scene_viewer_remove_repaint_required_callback(scene_viewer->core_scene_viewer,
+			My_cmzn_scene_viewer_callback, scene_viewer);
 		DESTROY(Scene_viewer)(&(scene_viewer->core_scene_viewer));
 		if (scene_viewer->sync_callback_list)
 		{
@@ -313,7 +313,7 @@ LAST MODIFIED : 19 April 2007
 DESCRIPTION :
 ==============================================================================*/
 {
-	struct Cmiss_scene_viewer_app_module *package = (struct Cmiss_scene_viewer_app_module *)package_void;
+	struct cmzn_scene_viewer_app_module *package = (struct cmzn_scene_viewer_app_module *)package_void;
 
 	USE_PARAMETER(dummy_void);
 	if (scene_viewer && package)
@@ -332,7 +332,7 @@ DESCRIPTION :
 ==============================================================================*/
 {
 	int return_code;
-	struct Cmiss_scene_viewer_app_module *package = (struct Cmiss_scene_viewer_app_module *)package_void;
+	struct cmzn_scene_viewer_app_module *package = (struct cmzn_scene_viewer_app_module *)package_void;
 
 	if (scene_viewer && package)
 	{
@@ -549,8 +549,8 @@ from this.
 	return (return_code);
 }
 
-int Cmiss_scene_viewer_module_update_Interactive_tool(
-	struct Cmiss_scene_viewer_app_module *cmiss_scene_viewer_module,
+int cmzn_scene_viewer_module_update_Interactive_tool(
+	struct cmzn_scene_viewer_app_module *cmiss_scene_viewer_module,
 	struct Interactive_tool *interactive_tool)
 /*******************************************************************************
 LAST MODIFIED : 26 April 2007
@@ -565,7 +565,7 @@ particular scene_viewer intended.
 {
 	int return_code;
 
-	ENTER(Cmiss_scene_viewer_module_update_Interactive_tool);
+	ENTER(cmzn_scene_viewer_module_update_Interactive_tool);
 	if (cmiss_scene_viewer_module)
 	{
 		return_code = FOR_EACH_OBJECT_IN_LIST(Scene_viewer_app)(
@@ -575,13 +575,13 @@ particular scene_viewer intended.
 	else
 	{
 		display_message(ERROR_MESSAGE,
-			"Cmiss_scene_viewer_module_update_Interactive_tool.  Missing scene_viewer");
+			"cmzn_scene_viewer_module_update_Interactive_tool.  Missing scene_viewer");
 		return_code = 0;
 	}
 	LEAVE;
 
 	return (return_code);
-} /* Cmiss_scene_viewer_module_update_Interactive_tool */
+} /* cmzn_scene_viewer_module_update_Interactive_tool */
 
 int Scene_viewer_automatic_tumble(struct Scene_viewer_app *scene_viewer)
 /*******************************************************************************
@@ -766,7 +766,7 @@ int Scene_viewer_app_default_input_callback(struct Scene_viewer_app *scene_viewe
 				}
 				else
 				{
-					Cmiss_scene_viewer_process_input(scene_viewer->core_scene_viewer, input);
+					cmzn_scene_viewer_process_input(scene_viewer->core_scene_viewer, input);
 				}
 			}
 			else
@@ -811,7 +811,7 @@ int Scene_viewer_app_default_input_callback(struct Scene_viewer_app *scene_viewe
 			}
 			else
 			{
-				Cmiss_scene_viewer_process_input(scene_viewer->core_scene_viewer, input);
+				cmzn_scene_viewer_process_input(scene_viewer->core_scene_viewer, input);
 			}
 		} break;
 		default:
@@ -892,7 +892,7 @@ Requests a full redraw immediately.
 			}
 		}
 		Graphics_buffer_app_make_current(scene_viewer->graphics_buffer);
-		return_code = Cmiss_scene_viewer_render_scene(scene_viewer->core_scene_viewer);
+		return_code = cmzn_scene_viewer_render_scene(scene_viewer->core_scene_viewer);
 		if (scene_viewer->core_scene_viewer->swap_buffers)
 		{
 			Graphics_buffer_app_swap_buffers(scene_viewer->graphics_buffer);
@@ -980,7 +980,7 @@ extensions can get the updated frame from the backbuffer.
 	{
 		Graphics_buffer_app_make_current(scene_viewer->graphics_buffer);
 		/* always do a full redraw */
-		return_code = Cmiss_scene_viewer_render_scene(scene_viewer->core_scene_viewer);
+		return_code = cmzn_scene_viewer_render_scene(scene_viewer->core_scene_viewer);
 	}
 	else
 	{
@@ -1027,7 +1027,7 @@ Updates the scene_viewer.
 			scene_viewer->core_scene_viewer->tumble_angle = 0.0;
 		}
 		Graphics_buffer_app_make_current(scene_viewer->graphics_buffer);
-		Cmiss_scene_viewer_render_scene(scene_viewer->core_scene_viewer);
+		cmzn_scene_viewer_render_scene(scene_viewer->core_scene_viewer);
 		if (scene_viewer->core_scene_viewer->swap_buffers)
 		{
 			Graphics_buffer_app_swap_buffers(scene_viewer->graphics_buffer);

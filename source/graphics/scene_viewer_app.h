@@ -7,10 +7,10 @@
 
 #include "interaction/interactive_tool.h"
 
-#define Scene_viewer_set_interactive_tool_by_name Cmiss_scene_viewer_set_interactive_tool_by_name
+#define Scene_viewer_set_interactive_tool_by_name cmzn_scene_viewer_set_interactive_tool_by_name
 
-DECLARE_CMISS_CALLBACK_TYPES(Cmiss_scene_viewer_app_module_callback, \
-	struct Cmiss_scene_viewer_app_module *, void *, void);
+DECLARE_CMISS_CALLBACK_TYPES(cmzn_scene_viewer_app_module_callback, \
+	struct cmzn_scene_viewer_app_module *, void *, void);
 
 DECLARE_CMISS_CALLBACK_TYPES(Scene_viewer_app_callback, \
 	struct Scene_viewer_app *, void *, void);
@@ -18,16 +18,16 @@ DECLARE_CMISS_CALLBACK_TYPES(Scene_viewer_app_callback, \
 DECLARE_CMISS_CALLBACK_TYPES(Scene_viewer_app_input_callback, \
 	struct Scene_viewer_app *, struct Graphics_buffer_input *, int);
 
-struct Cmiss_scene_viewer_app_module
+struct cmzn_scene_viewer_app_module
 /*******************************************************************************
 LAST MODIFIED : 19 January 2007
 
 DESCRIPTION:
-The default data used to create Cmiss_scene_viewers.
+The default data used to create cmzn_scene_viewers.
 ==============================================================================*/
 {
 	int access_count;
-	struct Cmiss_scene_viewer_module *core_scene_viewer_module;
+	struct cmzn_scene_viewer_module *core_scene_viewer_module;
 	struct Graphics_buffer_app_package *graphics_buffer_package;
 	struct User_interface *user_interface;
 	struct MANAGER(Interactive_tool) *interactive_tool_manager;
@@ -35,7 +35,7 @@ The default data used to create Cmiss_scene_viewers.
 	/* List of scene_viewers created with this package,
 		generally all scene_viewers that are not in graphics windows */
 	struct LIST(Scene_viewer_app) *scene_viewer_app_list;
-	struct LIST(CMISS_CALLBACK_ITEM(Cmiss_scene_viewer_app_module_callback))
+	struct LIST(CMISS_CALLBACK_ITEM(cmzn_scene_viewer_app_module_callback))
 		*destroy_callback_list;
 };
 
@@ -67,7 +67,7 @@ PROTOTYPE_LIST_FUNCTIONS(Scene_viewer_app);
 int Scene_viewer_set_interactive_tool(struct Scene_viewer_app *scene_viewer,
 	struct Interactive_tool *interactive_tool);
 
-int Cmiss_scene_viewer_module_update_Interactive_tool(Cmiss_scene_viewer_app_module *cmiss_scene_viewer_module,
+int cmzn_scene_viewer_module_update_Interactive_tool(cmzn_scene_viewer_app_module *cmiss_scene_viewer_module,
 	struct Interactive_tool *interactive_tool);
 /*******************************************************************************
 LAST MODIFIED : 26 April 2007
@@ -148,24 +148,24 @@ int Scene_viewer_app_redraw_now_with_overrides(struct Scene_viewer_app *scene_vi
 int Scene_viewer_app_redraw_now_without_swapbuffers(
 	struct Scene_viewer_app *scene_viewer);
 
-struct Cmiss_scene_viewer_app_module *CREATE(Cmiss_scene_viewer_app_module)(
+struct cmzn_scene_viewer_app_module *CREATE(cmzn_scene_viewer_app_module)(
 	struct Graphics_buffer_app_package *graphics_buffer_package,
-	Cmiss_graphics_module_id graphics_module,
-	Cmiss_scene_id scene,
+	cmzn_graphics_module_id graphics_module,
+	cmzn_scene_id scene,
 	struct User_interface *user_interface);
 
-int DESTROY(Cmiss_scene_viewer_app_module)(struct Cmiss_scene_viewer_app_module **scene_viewer_app_package_address);
+int DESTROY(cmzn_scene_viewer_app_module)(struct cmzn_scene_viewer_app_module **scene_viewer_app_package_address);
 
 struct Scene_viewer_app *CREATE(Scene_viewer_app)(struct Graphics_buffer_app *graphics_buffer,
-	Cmiss_scene_viewer_module_id scene_viewer_module,
-	Cmiss_graphics_filter_id filter, struct Cmiss_scene *scene,
+	cmzn_scene_viewer_module_id scene_viewer_module,
+	cmzn_graphics_filter_id filter, struct cmzn_scene *scene,
 	struct User_interface *user_interface);
 
 struct Scene_viewer_app *Scene_viewer_app_for_spectrum_create(struct Graphics_buffer_app *graphics_buffer,
 	struct Colour *background_colour,
 	struct Light *default_light,
 	struct Light_model *default_light_model,
-	Cmiss_graphics_filter_id filter, struct Cmiss_scene *scene,
+	cmzn_graphics_filter_id filter, struct cmzn_scene *scene,
 	struct User_interface *user_interface);
 
 int DESTROY(Scene_viewer_app)(struct Scene_viewer_app **scene_viewer_app_address);

@@ -355,7 +355,7 @@ to the comfile.
 {
 	char *line_prefix,*name;
 	int return_code;
-	struct Cmiss_spectrum_component_list_data list_data;
+	struct cmzn_spectrum_component_list_data list_data;
 	ENTER(Spectrum_list_commands);
 	/* check the arguments */
 	if (spectrum)
@@ -395,14 +395,14 @@ to the comfile.
 				return_code = process_message->write_enabled();
 				if (return_code == 0)
 				{
-					 return_code=FOR_EACH_OBJECT_IN_LIST(Cmiss_spectrum_component)(
-							Cmiss_spectrum_component_list_contents, (void *)&list_data,
+					 return_code=FOR_EACH_OBJECT_IN_LIST(cmzn_spectrum_component)(
+							cmzn_spectrum_component_list_contents, (void *)&list_data,
 							spectrum->list_of_components);
 				}
 				else
 				{
-					 return_code=FOR_EACH_OBJECT_IN_LIST(Cmiss_spectrum_component)(
-							Cmiss_spectrum_component_write_contents, (void *)&list_data,
+					 return_code=FOR_EACH_OBJECT_IN_LIST(cmzn_spectrum_component)(
+							cmzn_spectrum_component_write_contents, (void *)&list_data,
 							spectrum->list_of_components);
 				}
 				DEALLOCATE(line_prefix);
@@ -533,7 +533,7 @@ Writes the properties of the <spectrum> to the command window.
 {
 	enum Spectrum_simple_type simple_type;
 	int return_code;
-	struct Cmiss_spectrum_component_list_data list_data;
+	struct cmzn_spectrum_component_list_data list_data;
 
 	ENTER(Spectrum_list_app_contents);
 	/* check the arguments */
@@ -579,8 +579,8 @@ Writes the properties of the <spectrum> to the command window.
 		list_data.component_string_detail=SPECTRUM_COMPONENT_STRING_COMPLETE_PLUS;
 		list_data.line_prefix="  ";
 		list_data.line_suffix="";
-		return_code=FOR_EACH_OBJECT_IN_LIST(Cmiss_spectrum_component)(
-			Cmiss_spectrum_component_list_contents,(void *)&list_data,
+		return_code=FOR_EACH_OBJECT_IN_LIST(cmzn_spectrum_component)(
+			cmzn_spectrum_component_list_contents,(void *)&list_data,
 			spectrum->list_of_components);
 		display_message(INFORMATION_MESSAGE,"  access count=%d\n",
 			spectrum->access_count);

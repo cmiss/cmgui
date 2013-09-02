@@ -46,17 +46,17 @@ DESCRIPTION :
 #include "wx/wx.h"
 #include "general/callback_class.hpp"
 
-struct Cmiss_region;
+struct cmzn_region;
 
 class wxRegionChooser : public wxChoice
 {
 private:
-	Cmiss_region *root_region;
-	Callback_base<Cmiss_region*> *callback;
+	cmzn_region *root_region;
+	Callback_base<cmzn_region*> *callback;
 
 public:
 	wxRegionChooser(wxWindow *parent, 
-		Cmiss_region *root_region, const char *initial_path);
+		cmzn_region *root_region, const char *initial_path);
 /*******************************************************************************
 LAST MODIFIED : 14 February 2007
 
@@ -70,7 +70,7 @@ LAST MODIFIED : 9 January 2003
 DESCRIPTION :
 ==============================================================================*/
 
-	int set_callback(Callback_base<Cmiss_region*> *callback_object)
+	int set_callback(Callback_base<cmzn_region*> *callback_object)
 	{
 		if (callback)
 			delete callback;
@@ -87,7 +87,7 @@ Gets <path> of chosen region in the <chooser>.
 Up to the calling function to DEALLOCATE the returned path.
 ==============================================================================*/
 
-	Cmiss_region *get_region();
+	cmzn_region *get_region();
 /*******************************************************************************
 LAST MODIFIED : 22 February 2007
 
@@ -95,7 +95,7 @@ DESCRIPTION :
 Returns to <region_address> the region chosen in the <chooser>.
 ==============================================================================*/
 
-	int set_region(struct Cmiss_region *region);
+	int set_region(struct cmzn_region *region);
 /*******************************************************************************
 LAST MODIFIED : 22 February 2007
 
@@ -116,12 +116,12 @@ private:
 	
 	int notify_callback();
 
-	int build_main_menu(Cmiss_region *root_region,
+	int build_main_menu(cmzn_region *root_region,
 		const char *initial_path);
-	int append_children(Cmiss_region *current_region,
+	int append_children(cmzn_region *current_region,
 		const char *current_path, const char *initial_path);
 
-	static void RegionChange(struct Cmiss_region *root_region,
-		struct Cmiss_region_changes *region_changes, void *region_chooser_void);
+	static void RegionChange(struct cmzn_region *root_region,
+		struct cmzn_region_changes *region_changes, void *region_chooser_void);
 };
 #endif /* !defined (CMISS_REGION_CHOOSER_H) */

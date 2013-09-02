@@ -41,7 +41,7 @@ DESCRIPTION :
 Contains data for gfx define field commands.
 Also contains the computed_field_manger from the root region; this will be
 removed once code using it has been converted to get the field manager directly
-from the appropriate Cmiss_region.
+from the appropriate cmzn_region.
 ==============================================================================*/
 {
 	struct MANAGER(Computed_field) *computed_field_manager;
@@ -59,7 +59,7 @@ Creates a Computed_field_package which is used by the rest of the program to
 access everything to do with computed fields.
 The root_region's computed_field_manager is passed in to support old code that
 expects it to be in the package. This is temporary until all code gets the true
-manager from the respective Cmiss_region.
+manager from the respective cmzn_region.
 ==============================================================================*/
 {
 	struct Computed_field_package *computed_field_package = NULL;
@@ -394,8 +394,8 @@ to modify it if it was.
 	{
 		if (NULL != (current_token=state->current_token))
 		{
-			Cmiss_field_module *field_module = field_modify->get_field_module();
-			coordinate_system = Cmiss_field_module_get_coordinate_system(field_module);
+			cmzn_field_module *field_module = field_modify->get_field_module();
+			coordinate_system = cmzn_field_module_get_coordinate_system(field_module);
 			/* read the optional cooordinate_system NAME [focus #] parameter */
 			if (strcmp(PARSER_HELP_STRING,current_token)&&
 				strcmp(PARSER_RECURSIVE_HELP_STRING,current_token))
@@ -409,7 +409,7 @@ to modify it if it was.
 					DESTROY(Option_table)(&option_table);
 					if (return_code)
 					{
-						Cmiss_field_module_set_coordinate_system(field_module, coordinate_system);
+						cmzn_field_module_set_coordinate_system(field_module, coordinate_system);
 						return_code = define_Computed_field_type(state, field_modify_void,
 							computed_field_package_void);
 					}
@@ -487,10 +487,10 @@ options for the various types.
 	const char *current_token;
 	int return_code;
 	struct Option_table *help_option_table;
-	struct Cmiss_region *region, *root_region;
+	struct cmzn_region *region, *root_region;
 
 	ENTER(define_Computed_field);
-	if (state && (root_region = (struct Cmiss_region *)root_region_void))
+	if (state && (root_region = (struct cmzn_region *)root_region_void))
 	{
 		if (computed_field_package_void)
 		{
@@ -502,20 +502,20 @@ options for the various types.
 				{
 					char *field_name = NULL;
 					char *region_path = NULL;
-					if (Cmiss_region_get_partial_region_path(root_region,
+					if (cmzn_region_get_partial_region_path(root_region,
 						current_token, &region, &region_path, &field_name))
 					{
-						Cmiss_field_module *field_module = Cmiss_field_module_create(region);
+						cmzn_field_module *field_module = cmzn_field_module_create(region);
 						if (field_name && (strlen(field_name) > 0) &&
 							(strchr(field_name, CMISS_REGION_PATH_SEPARATOR_CHAR)	== NULL))
 						{
 							shift_Parse_state(state,1);
-							Cmiss_field_module_set_field_name(field_module, field_name);
-							Computed_field *existing_field = Cmiss_field_module_find_field_by_name(field_module, field_name);
+							cmzn_field_module_set_field_name(field_module, field_name);
+							Computed_field *existing_field = cmzn_field_module_find_field_by_name(field_module, field_name);
 							if (existing_field)
 							{
-								Cmiss_field_module_set_replace_field(field_module, existing_field);
-								Cmiss_field_module_set_coordinate_system(field_module, existing_field->coordinate_system);
+								cmzn_field_module_set_replace_field(field_module, existing_field);
+								cmzn_field_module_set_coordinate_system(field_module, existing_field->coordinate_system);
 							}
 							Computed_field_modify_data field_modify(field_module);
 							return_code = define_Computed_field_coordinate_system(state,
@@ -523,15 +523,15 @@ options for the various types.
 							// set coordinate system if only it has changed
 							if (existing_field)
 							{
-								struct Coordinate_system new_coordinate_system = Cmiss_field_module_get_coordinate_system(field_module);
+								struct Coordinate_system new_coordinate_system = cmzn_field_module_get_coordinate_system(field_module);
 								if (!Coordinate_systems_match(&(existing_field->coordinate_system), &new_coordinate_system))
 								{
 									Computed_field_set_coordinate_system(existing_field, &new_coordinate_system);
 									Computed_field_changed(existing_field);
 								}
-								Cmiss_field_destroy(&existing_field);
+								cmzn_field_destroy(&existing_field);
 							}
-							Cmiss_field_module_destroy(&field_module);
+							cmzn_field_module_destroy(&field_module);
 						}
 						else
 						{
@@ -562,8 +562,8 @@ options for the various types.
 				else
 				{
 					/* Write out the help */
-					Cmiss_field_module *field_module =
-						Cmiss_field_module_create(root_region);
+					cmzn_field_module *field_module =
+						cmzn_field_module_create(root_region);
 					Computed_field_modify_data field_modify(field_module);
 					help_option_table = CREATE(Option_table)();
 					Option_table_add_entry(help_option_table,
@@ -572,7 +572,7 @@ options for the various types.
 						define_Computed_field_coordinate_system);
 					return_code=Option_table_parse(help_option_table,state);
 					DESTROY(Option_table)(&help_option_table);
-					Cmiss_field_module_destroy(&field_module);
+					cmzn_field_module_destroy(&field_module);
 					return_code = 1;
 				}
 			}

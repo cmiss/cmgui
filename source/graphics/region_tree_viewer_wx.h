@@ -29,12 +29,12 @@ Global functions
 
 struct Region_tree_viewer *CREATE(Region_tree_viewer)(
 	struct Region_tree_viewer **region_tree_viewer_address,
-	struct Cmiss_graphics_module *graphics_module,
-	struct Cmiss_region *root_region,
+	struct cmzn_graphics_module *graphics_module,
+	struct cmzn_region *root_region,
 	struct MANAGER(Graphical_material) *graphical_material_manager,
 	struct Graphical_material *default_material,
-	struct Cmiss_font *default_font,
-	Cmiss_glyph_module *glyphModule,
+	struct cmzn_font *default_font,
+	cmzn_glyph_module *glyphModule,
 	struct MANAGER(Spectrum) *spectrum_manager,
 	struct MANAGER(VT_volume_texture) *volume_texture_manager,
 	struct User_interface *user_interface);

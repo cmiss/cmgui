@@ -11,7 +11,7 @@
 
 char computed_field_canny_edge_detection_image_filter_type_string[] = "canny_edge_detection_filter";
 
-int Cmiss_field_get_type_canny_edge_detection_image_filter(struct Computed_field *field,
+int cmzn_field_get_type_canny_edge_detection_image_filter(struct Computed_field *field,
 	struct Computed_field **source_field, double *variance, double *maximumError,
 	double *upperThreshold, double *lowerThreshold);
 
@@ -52,7 +52,7 @@ already) and allows its contents to be modified.
 				Computed_field_get_type_string(field_modify->get_field())))
 		{
 			return_code =
-				Cmiss_field_get_type_canny_edge_detection_image_filter(field_modify->get_field(), &source_field,
+				cmzn_field_get_type_canny_edge_detection_image_filter(field_modify->get_field(), &source_field,
 				  &variance, &maximumError, &upperThreshold, &lowerThreshold);
 		}
 		if (return_code)
@@ -103,7 +103,7 @@ already) and allows its contents to be modified.
 			if (return_code)
 			{
 				return_code = field_modify->update_field_and_deaccess(
-					Cmiss_field_module_create_canny_edge_detection_image_filter(
+					cmzn_field_module_create_canny_edge_detection_image_filter(
 						field_modify->get_field_module(), source_field, variance,
 						maximumError, upperThreshold, lowerThreshold));
 			}

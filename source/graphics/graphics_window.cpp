@@ -174,7 +174,7 @@ Contains information for a graphics window.
 	int manager_change_status;
 
 	struct Graphics_buffer_app_package *graphics_buffer_package;
-	Cmiss_scene_viewer_module_id scene_viewer_module;
+	cmzn_scene_viewer_module_id scene_viewer_module;
 #if defined (GTK_USER_INTERFACE)
 	GtkWidget *shell_window;
 #if GTK_MAJOR_VERSION >= 2
@@ -240,10 +240,10 @@ Contains information for a graphics window.
 	double time_step;
 	/* not sure if graphics window should keep pointer to scene - could just get
 		 it from scene_viewers; could even be different in each scene_viewer */
-	Cmiss_scene *scene;
+	cmzn_scene *scene;
 	/* graphics window does not need to keep managers now that changes handled
 		 by scene_viewer */
-	Cmiss_graphics_filter_module_id filter_module;
+	cmzn_graphics_filter_module_id filter_module;
 	/* interaction */
 	struct MANAGER(Interactive_tool) *interactive_tool_manager;
 	/* Note: interactive_tool is NOT accessed by graphics_window; the chooser
@@ -253,7 +253,7 @@ Contains information for a graphics window.
 		the reference is kept so that the callbacks can be undone */
 	struct Time_keeper_app *time_keeper_app;
 	struct User_interface *user_interface;
-	Cmiss_region_id root_region;
+	cmzn_region_id root_region;
 	/* the number of objects accessing this window. The window cannot be removed
 		from manager unless it is 1 (ie. only the manager is accessing it) */
 	int access_count;
@@ -724,7 +724,7 @@ int set_image_field(struct Parse_state *state,void *field_address_void,
 {
 	const char *current_token;
 	int return_code = 0;
-	struct Cmiss_region *root_region = NULL;
+	struct cmzn_region *root_region = NULL;
 	struct Computed_field *temp_field = NULL, **field_address = NULL;
 
 	ENTER(set_image_field);
@@ -737,7 +737,7 @@ int set_image_field(struct Parse_state *state,void *field_address_void,
 				strcmp(PARSER_RECURSIVE_HELP_STRING,current_token))
 			{
 				field_address=(struct Computed_field **)field_address_void;
-				root_region = (struct Cmiss_region *)root_region_void;
+				root_region = (struct cmzn_region *)root_region_void;
 				if (field_address	&& root_region)
 				{
 					if (fuzzy_string_compare(current_token,"NONE"))
@@ -751,17 +751,17 @@ int set_image_field(struct Parse_state *state,void *field_address_void,
 					}
 					else
 					{
-						struct Cmiss_region *region = NULL;
+						struct cmzn_region *region = NULL;
 						char *region_path = NULL, *field_name = NULL;
-						if (Cmiss_region_get_partial_region_path(root_region,
+						if (cmzn_region_get_partial_region_path(root_region,
 							current_token, &region, &region_path, &field_name))
 						{
-							Cmiss_field_module *field_module = Cmiss_region_get_field_module(region);
+							cmzn_field_module *field_module = cmzn_region_get_field_module(region);
 							return_code=1;
 							if (field_name && (strlen(field_name) > 0) &&
 								(strchr(field_name, CMISS_REGION_PATH_SEPARATOR_CHAR)	== NULL))
 							{
-								temp_field = Cmiss_field_module_find_field_by_name(field_module,
+								temp_field = cmzn_field_module_find_field_by_name(field_module,
 									field_name);
 								if (temp_field &&
 										!Computed_field_is_image_type(temp_field,NULL))
@@ -773,7 +773,7 @@ int set_image_field(struct Parse_state *state,void *field_address_void,
 									return_code=0;
 								}
 							}
-							Cmiss_field_module_destroy(&field_module);
+							cmzn_field_module_destroy(&field_module);
 						}
 						if (region_path)
 							DEALLOCATE(region_path);
@@ -811,7 +811,7 @@ int set_image_field(struct Parse_state *state,void *field_address_void,
 					temp_field= *field_address;
 					if (temp_field)
 					{
-						char *temp_name = Cmiss_field_get_name(temp_field);
+						char *temp_name = cmzn_field_get_name(temp_field);
 						display_message(INFORMATION_MESSAGE,"[%s]",temp_name);
 						DEALLOCATE(temp_name);
 					}
@@ -881,7 +881,7 @@ the changes are to be applied to all panes.
 					(scene_viewer=window->scene_viewer_array[window->current_pane]))
 				{
 					Scene_viewer_get_background_colour(scene_viewer->core_scene_viewer,&background_colour);
-					image_field = Cmiss_field_image_base_cast(
+					image_field = cmzn_field_image_base_cast(
 						Scene_viewer_get_background_image_field(scene_viewer->core_scene_viewer));
 					Scene_viewer_get_background_texture_info(scene_viewer->core_scene_viewer,
 						&(texture_placement[0]),&(texture_placement[1]),
@@ -962,14 +962,14 @@ the changes are to be applied to all panes.
 							scene_viewer=window->scene_viewer_array[pane_no];
 							Scene_viewer_set_background_colour(scene_viewer->core_scene_viewer,
 								&background_colour);
-							Cmiss_field_image_id image = Cmiss_field_cast_image(image_field);
+							cmzn_field_image_id image = cmzn_field_cast_image(image_field);
 							Scene_viewer_set_background_image_field(scene_viewer->core_scene_viewer, image);
 							if ((texture_placement[2] == 0.0) && (texture_placement[3] == 0.0))
 							{
 								if (image_field)
 								{
 									/* Get the default size from the texture itself */
-									Texture_get_original_size(Cmiss_field_image_get_texture(image),
+									Texture_get_original_size(cmzn_field_image_get_texture(image),
 										&pixelsx, &pixelsy, &pixelsz);
 									texture_placement[2] = pixelsx;
 									texture_placement[3] = pixelsy;
@@ -986,7 +986,7 @@ the changes are to be applied to all panes.
 									texture_placement[2],texture_placement[3],
 									undistort_on,max_pixels_per_polygon);
 							}
-							Cmiss_field_image_destroy(&image);
+							cmzn_field_image_destroy(&image);
 						}
 						Graphics_window_update_now(window);
 					}
@@ -1115,8 +1115,8 @@ class wxGraphicsWindow : public wxFrame
 	 int up_choices;
 	 int choices;
 	 wxPanel *time_editor_panel;
-	 DEFINE_MANAGER_CLASS(Cmiss_graphics_filter);
-	 Managed_object_chooser<Cmiss_graphics_filter,MANAGER_CLASS(Cmiss_graphics_filter)>
+	 DEFINE_MANAGER_CLASS(cmzn_graphics_filter);
+	 Managed_object_chooser<cmzn_graphics_filter,MANAGER_CLASS(cmzn_graphics_filter)>
 	 *graphics_window_filter_chooser;
 	 wxRegionChooser *region_chooser;
 public:
@@ -1133,29 +1133,29 @@ public:
 			time_editor_panel = NULL;
 			wxPanel *graphics_window_filter_chooser_panel =
 				 XRCCTRL(*this, "GraphicsWindowFilterChooserPanel", wxPanel);
-			Cmiss_graphics_filter_id filter = Cmiss_graphics_filter_module_get_default_filter(graphics_window->filter_module);
+			cmzn_graphics_filter_id filter = cmzn_graphics_filter_module_get_default_filter(graphics_window->filter_module);
 			graphics_window_filter_chooser =
-				 new Managed_object_chooser<Cmiss_graphics_filter, MANAGER_CLASS(Cmiss_graphics_filter)>
+				 new Managed_object_chooser<cmzn_graphics_filter, MANAGER_CLASS(cmzn_graphics_filter)>
 				 (graphics_window_filter_chooser_panel, filter,
-					 Cmiss_graphics_filter_module_get_manager(graphics_window->filter_module),
-						(MANAGER_CONDITIONAL_FUNCTION(Cmiss_graphics_filter) *)NULL, (void *)NULL,
+					 cmzn_graphics_filter_module_get_manager(graphics_window->filter_module),
+						(MANAGER_CONDITIONAL_FUNCTION(cmzn_graphics_filter) *)NULL, (void *)NULL,
 						graphics_window->user_interface);
-			Cmiss_graphics_filter_destroy(&filter);
-			Callback_base< Cmiss_graphics_filter* > *graphics_window_filter_callback =
-				 new Callback_member_callback< Cmiss_graphics_filter*,
-				 wxGraphicsWindow, int (wxGraphicsWindow::*)(Cmiss_graphics_filter *) >
+			cmzn_graphics_filter_destroy(&filter);
+			Callback_base< cmzn_graphics_filter* > *graphics_window_filter_callback =
+				 new Callback_member_callback< cmzn_graphics_filter*,
+				 wxGraphicsWindow, int (wxGraphicsWindow::*)(cmzn_graphics_filter *) >
 				 (this, &wxGraphicsWindow::graphics_window_filter_callback);
 			graphics_window_filter_chooser->set_callback(graphics_window_filter_callback);
 			wxPanel *graphics_window_region_chooser_panel =
 				 XRCCTRL(*this, "GraphicsWindowRegionChooserPanel", wxPanel);
 			char *initial_path;
-		   initial_path = Cmiss_region_get_root_region_path();
+		   initial_path = cmzn_region_get_root_region_path();
 		   region_chooser = new wxRegionChooser(graphics_window_region_chooser_panel,
 			graphics_window->root_region, initial_path);
 			DEALLOCATE(initial_path);
-			Callback_base< Cmiss_region* > *graphics_window_region_callback =
-				 new Callback_member_callback< Cmiss_region*,
-				 wxGraphicsWindow, int (wxGraphicsWindow::*)(Cmiss_region *) >
+			Callback_base< cmzn_region* > *graphics_window_region_callback =
+				 new Callback_member_callback< cmzn_region*,
+				 wxGraphicsWindow, int (wxGraphicsWindow::*)(cmzn_region *) >
 				 (this, &wxGraphicsWindow::graphics_window_region_callback);
 			region_chooser->set_callback(graphics_window_region_callback);
 
@@ -1192,7 +1192,7 @@ public:
 			delete region_chooser;
 	 };
 
-int graphics_window_region_callback(Cmiss_region *region)
+int graphics_window_region_callback(cmzn_region *region)
 /*******************************************************************************
 LAST MODIFIED : 9 February 2007
 
@@ -1206,20 +1206,20 @@ Callback from wxChooser<Scene> when choice is made.
 	if ((graphics_window->scene_viewer_array) &&
 		(scene_viewer = graphics_window->scene_viewer_array[0]))
 	{
-		Cmiss_scene_id scene = Cmiss_region_get_scene_internal(region);
+		cmzn_scene_id scene = cmzn_region_get_scene_internal(region);
 		for (pane_no=0;pane_no<graphics_window->number_of_scene_viewers;
 			pane_no++)
 		{
 			scene_viewer=graphics_window->scene_viewer_array[pane_no];
 			if (scene)
 			{
-				Cmiss_scene_destroy(&(graphics_window->scene));
-				graphics_window->scene = Cmiss_scene_access(scene);
-				Cmiss_scene_viewer_set_scene(scene_viewer->core_scene_viewer,scene);
+				cmzn_scene_destroy(&(graphics_window->scene));
+				graphics_window->scene = cmzn_scene_access(scene);
+				cmzn_scene_viewer_set_scene(scene_viewer->core_scene_viewer,scene);
 				Graphics_window_update_now(graphics_window);
 			}
 		}
-		Cmiss_scene_destroy(&scene);
+		cmzn_scene_destroy(&scene);
 		return 1;
 	}
 	else
@@ -1228,7 +1228,7 @@ Callback from wxChooser<Scene> when choice is made.
 	 }
 }
 
-int graphics_window_filter_callback(Cmiss_graphics_filter_id filter)
+int graphics_window_filter_callback(cmzn_graphics_filter_id filter)
 /*******************************************************************************
 LAST MODIFIED : 9 February 2007
 
@@ -1248,7 +1248,7 @@ Callback from wxChooser<Scene> when choice is made.
 			scene_viewer=graphics_window->scene_viewer_array[pane_no];
 			if (filter)
 			{
-				Cmiss_scene_viewer_set_filter(scene_viewer->core_scene_viewer,filter);
+				cmzn_scene_viewer_set_filter(scene_viewer->core_scene_viewer,filter);
 				Graphics_window_update_now(graphics_window);
 			}
 		}
@@ -1260,12 +1260,12 @@ Callback from wxChooser<Scene> when choice is made.
 	 }
 }
 
-void graphics_window_set_region_chooser_selected_item(Cmiss_region_id region)
+void graphics_window_set_region_chooser_selected_item(cmzn_region_id region)
 {
 	 region_chooser->set_region(region);
 }
 
-void graphics_window_set_filter_chooser_selected_item(Cmiss_graphics_filter_id filter)
+void graphics_window_set_filter_chooser_selected_item(cmzn_graphics_filter_id filter)
 {
 	graphics_window_filter_chooser->set_object(filter);
 }
@@ -1960,7 +1960,7 @@ etc.) in all panes of the <window>.
 	struct Light_model *light_model;
 	struct Modify_graphics_window_data *modify_graphics_window_data;
 	struct Option_table *option_table;
-	Cmiss_scene *scene;
+	cmzn_scene *scene;
 	struct Scene_viewer_app *scene_viewer;
 	static struct Set_vector_with_help_data
 		rotate_command_data={4," AXIS_X AXIS_Y AXIS_Z ANGLE",0};
@@ -1985,17 +1985,17 @@ etc.) in all panes of the <window>.
 					 {
 						 ACCESS(Light_model)(light_model);
 					 }
-					 scene=Cmiss_scene_access(window->scene);
+					 scene=cmzn_scene_access(window->scene);
 				 }
 				 else
 				 {
-						scene=(Cmiss_scene *)NULL;
+						scene=(cmzn_scene *)NULL;
 						scene_viewer = 0;
 						light_model=(struct Light_model *)NULL;
 				 }
-				 Cmiss_graphics_filter_id filter = 0;
+				 cmzn_graphics_filter_id filter = 0;
 				 if (scene_viewer && scene_viewer->core_scene_viewer)
-					 filter = Cmiss_scene_viewer_get_filter(scene_viewer->core_scene_viewer);
+					 filter = cmzn_scene_viewer_get_filter(scene_viewer->core_scene_viewer);
 				light_to_add=(struct Light *)NULL;
 				light_to_remove=(struct Light *)NULL;
 				rotate_command_data.set=0;
@@ -2020,7 +2020,7 @@ etc.) in all panes of the <window>.
 					modify_graphics_window_data->root_region, set_Scene);
 				/* filter */
 				Option_table_add_entry(option_table, "filter", &filter,
-					modify_graphics_window_data->filter_module, set_Cmiss_graphics_filter);
+					modify_graphics_window_data->filter_module, set_cmzn_graphics_filter);
 				/* update */
 				Option_table_add_char_flag_entry(option_table, "update",
 					&update_flag);
@@ -2078,8 +2078,8 @@ etc.) in all panes of the <window>.
 							}
 							if (scene)
 							{
-								Cmiss_scene_viewer_set_scene(scene_viewer->core_scene_viewer,scene);
-								Cmiss_region_id region = Cmiss_scene_get_region(scene);
+								cmzn_scene_viewer_set_scene(scene_viewer->core_scene_viewer,scene);
+								cmzn_region_id region = cmzn_scene_get_region(scene);
 #if defined (WX_USER_INTERFACE)
 								window->wx_graphics_window->
 									 graphics_window_set_region_chooser_selected_item(region);
@@ -2087,7 +2087,7 @@ etc.) in all panes of the <window>.
 							}
 							if (filter)
 							{
-								Cmiss_scene_viewer_set_filter(scene_viewer->core_scene_viewer,filter);
+								cmzn_scene_viewer_set_filter(scene_viewer->core_scene_viewer,filter);
 								window->wx_graphics_window->
 									graphics_window_set_filter_chooser_selected_item(filter);
 							}
@@ -2095,8 +2095,8 @@ etc.) in all panes of the <window>.
 						if (scene)
 						{
 							/* maintain pointer to scene in graphics_window */
-							Cmiss_scene_destroy(&(window->scene));
-							window->scene = Cmiss_scene_access(scene);
+							cmzn_scene_destroy(&(window->scene));
+							window->scene = cmzn_scene_access(scene);
 						}
 						if (view_all_flag)
 						{
@@ -2116,11 +2116,11 @@ etc.) in all panes of the <window>.
 				DESTROY(Option_table)(&option_table);
 				if (filter)
 				{
-					Cmiss_graphics_filter_destroy(&filter);
+					cmzn_graphics_filter_destroy(&filter);
 				}
 				if (scene)
 				{
-					Cmiss_scene_destroy(&scene);
+					cmzn_scene_destroy(&scene);
 				}
 				if (light_model)
 				{
@@ -2475,7 +2475,7 @@ Parser commands for setting simple parameters applicable to the whole <window>.
 	const char **tool_names,*tool_name,*blending_mode_string,**valid_strings;
 	double depth_of_field, focal_depth, std_view_angle;
 	enum Scene_viewer_blending_mode blending_mode;
-	enum Cmiss_scene_viewer_transparency_mode transparency_mode;
+	enum cmzn_scene_viewer_transparency_mode transparency_mode;
 	int antialias_mode,current_pane,i,layered_transparency,number_of_tools,
 		number_of_valid_strings,order_independent_transparency,pane_no,
 		perturb_lines,redraw,return_code,transparency_layers = 0;
@@ -2741,12 +2741,12 @@ Parser commands for setting simple parameters applicable to the whole <window>.
 							for (pane_no=0;pane_no<graphics_window->number_of_scene_viewers;
 								pane_no++)
 							{
-								Cmiss_scene_viewer_set_transparency_mode(
+								cmzn_scene_viewer_set_transparency_mode(
 									graphics_window->scene_viewer_array[pane_no]->core_scene_viewer,
 									transparency_mode);
 								if (order_independent_transparency)
 								{
-									Cmiss_scene_viewer_set_transparency_layers(
+									cmzn_scene_viewer_set_transparency_layers(
 										graphics_window->scene_viewer_array[pane_no]->core_scene_viewer,
 										transparency_layers);
 								}
@@ -2856,7 +2856,7 @@ view angle, interest point etc.
 			if ((window=(struct Graphics_window *)window_void)&&
 				 (window->scene_viewer_array != NULL) &&
 				 (scene_viewer=window->scene_viewer_array[window->current_pane])&&
-				 Cmiss_scene_viewer_get_lookat_parameters(scene_viewer->core_scene_viewer,
+				 cmzn_scene_viewer_get_lookat_parameters(scene_viewer->core_scene_viewer,
 					&(eye[0]),&(eye[1]),&(eye[2]),
 					&(lookat[0]),&(lookat[1]),&(lookat[2]),&(up[0]),&(up[1]),&(up[2]))&&
 				Scene_viewer_get_viewing_volume(scene_viewer->core_scene_viewer,&left,&right,
@@ -3010,7 +3010,7 @@ view angle, interest point etc.
 						}
 						else
 						{
-							Cmiss_scene_viewer_set_lookat_parameters_non_skew(scene_viewer->core_scene_viewer,
+							cmzn_scene_viewer_set_lookat_parameters_non_skew(scene_viewer->core_scene_viewer,
 								eye[0],eye[1],eye[2],lookat[0],lookat[1],lookat[2],
 								up[0],up[1],up[2]);
 						}
@@ -3179,12 +3179,12 @@ struct Graphics_window *CREATE(Graphics_window)(const char *name,
 	int minimum_colour_buffer_depth, int minimum_depth_buffer_depth,
 	int minimum_accumulation_buffer_depth,
 	struct Graphics_buffer_app_package *graphics_buffer_package,
-	Cmiss_graphics_filter_module_id filter_module,Cmiss_scene *scene,
+	cmzn_graphics_filter_module_id filter_module,cmzn_scene *scene,
 	struct MANAGER(Interactive_tool) *interactive_tool_manager,
 	struct Time_keeper_app *default_time_keeper_app,
 	struct User_interface *user_interface,
-	Cmiss_region_id root_region,
-	Cmiss_scene_viewer_module_id scene_viewer_module)
+	cmzn_region_id root_region,
+	cmzn_scene_viewer_module_id scene_viewer_module)
 /*******************************************************************************
 LAST MODIFIED : 6 May 2004
 
@@ -3227,16 +3227,16 @@ it.
 			strcpy((char *)window->name,name);
 			/* initialize the fields of the window structure */
 			window->access_count=0;
-			window->scene_viewer_module = Cmiss_scene_viewer_module_access(scene_viewer_module);
+			window->scene_viewer_module = cmzn_scene_viewer_module_access(scene_viewer_module);
 			window->eye_spacing=0.25;
 			window->std_view_angle=40.0;
-			window->root_region = Cmiss_region_access(root_region);
+			window->root_region = cmzn_region_access(root_region);
 			window->graphics_window_manager=
 				(struct MANAGER(Graphics_window) *)NULL;
 			window->manager_change_status = MANAGER_CHANGE_NONE(Graphics_window);
 			window->graphics_buffer_package = graphics_buffer_package;
-			window->filter_module=Cmiss_graphics_filter_module_access(filter_module);
-			window->scene=Cmiss_scene_access(scene);
+			window->filter_module=cmzn_graphics_filter_module_access(filter_module);
+			window->scene=cmzn_scene_access(scene);
 			window->time_keeper_app = ACCESS(Time_keeper_app)(default_time_keeper_app);
 			window->interactive_tool_manager=interactive_tool_manager;
 			window->interactive_tool=
@@ -3679,11 +3679,11 @@ it.
 									window->number_of_scene_viewers))
 						{
 							 pane_no = 0;
-							 Cmiss_graphics_filter_id filter = Cmiss_graphics_filter_module_get_default_filter(
+							 cmzn_graphics_filter_id filter = cmzn_graphics_filter_module_get_default_filter(
 								 window->filter_module);
 							 window->scene_viewer_array[pane_no] = CREATE(Scene_viewer_app)(graphics_buffer,
 								window->scene_viewer_module, filter, window->scene, user_interface);
-							 Cmiss_graphics_filter_destroy(&filter);
+							 cmzn_graphics_filter_destroy(&filter);
 							 if (window->scene_viewer_array[pane_no])
 							 {
 									ortho_up_axis=window->ortho_up_axis;
@@ -3715,7 +3715,7 @@ it.
 										 window->scene_viewer_array[pane_no]->core_scene_viewer, 1.5);
 									Scene_viewer_set_zoom_rate(
 										 window->scene_viewer_array[pane_no]->core_scene_viewer, 2.0);
-									if (Cmiss_scene_viewer_get_lookat_parameters(
+									if (cmzn_scene_viewer_get_lookat_parameters(
 												 window->scene_viewer_array[0]->core_scene_viewer,
 												 &(eye[0]),&(eye[1]),&(eye[2]),
 												 &(lookat[0]),&(lookat[1]),&(lookat[2]),
@@ -3958,7 +3958,7 @@ Graphics_window_destroy_CB.
 #endif /* !defined (WX_USER_INTERFACE) */
 		if (window->filter_module)
 		{
-			Cmiss_graphics_filter_module_destroy(&window->filter_module);
+			cmzn_graphics_filter_module_destroy(&window->filter_module);
 		}
 #if defined (WX_USER_INTERFACE)
 		if (window->interactive_tool_manager)
@@ -3976,7 +3976,7 @@ Graphics_window_destroy_CB.
 		gtk_widget_destroy (window->shell_window);
 #endif /* switch (USER_INTERFACE) */
 		/* no longer accessing scene */
-		Cmiss_scene_destroy(&(window->scene));
+		cmzn_scene_destroy(&(window->scene));
 		/* Time keeper callback will be removed throught the destructor of
 			 the wx_graphics_window along with the scene viewer so that
 			 whenever user closes the window, the scene viewer and the
@@ -3993,9 +3993,9 @@ Graphics_window_destroy_CB.
 		}
 		if (window->root_region)
 		{
-		 Cmiss_region_destroy(&window->root_region);
+		 cmzn_region_destroy(&window->root_region);
 		}
-		Cmiss_scene_viewer_module_destroy(&window->scene_viewer_module);
+		cmzn_scene_viewer_module_destroy(&window->scene_viewer_module);
 #if defined (WX_USER_INTERFACE)
 		if (window->wx_graphics_window)
 		{
@@ -4422,7 +4422,7 @@ Sets the layout mode in effect on the <window>.
 	enum Scene_viewer_projection_mode projection_mode;
 	int new_layout,new_number_of_panes,pane_no,return_code;
 #if defined (WX_USER_INTERFACE)
-	enum Cmiss_scene_viewer_transparency_mode transparency_mode;
+	enum cmzn_scene_viewer_transparency_mode transparency_mode;
 	int perturb_lines;
 	struct Colour background_colour;
 	struct Graphics_buffer_app *graphics_buffer;
@@ -4444,7 +4444,7 @@ Sets the layout mode in effect on the <window>.
 		{
 #if defined (WX_USER_INTERFACE)
 			first_scene_viewer = window->scene_viewer_array[0];
-			Cmiss_scene_viewer_get_lookat_parameters(first_scene_viewer->core_scene_viewer,
+			cmzn_scene_viewer_get_lookat_parameters(first_scene_viewer->core_scene_viewer,
 				&(eye[0]),&(eye[1]),&(eye[2]),
 				&(lookat[0]),&(lookat[1]),&(lookat[2]),&(up[0]),&(up[1]),&(up[2]));
 			Scene_viewer_get_viewing_volume(first_scene_viewer->core_scene_viewer,
@@ -4490,11 +4490,11 @@ Sets the layout mode in effect on the <window>.
 					if (graphics_buffer)
 					{
 						Scene_viewer_get_background_colour(first_scene_viewer->core_scene_viewer,&background_colour);
-						Cmiss_graphics_filter_id filter = Cmiss_scene_viewer_get_filter(first_scene_viewer->core_scene_viewer);
+						cmzn_graphics_filter_id filter = cmzn_scene_viewer_get_filter(first_scene_viewer->core_scene_viewer);
 						window->scene_viewer_array[pane_no]=
 							CREATE(Scene_viewer_app)(graphics_buffer,	window->scene_viewer_module,
 								filter,window->scene, window->user_interface);
-						Cmiss_graphics_filter_destroy(&filter);
+						cmzn_graphics_filter_destroy(&filter);
 						if (window->scene_viewer_array[pane_no])
 						{
 							Scene_viewer_set_interactive_tool(
@@ -4534,12 +4534,12 @@ Sets the layout mode in effect on the <window>.
 								perturb_lines);
 							Scene_viewer_set_light_model(window->scene_viewer_array[pane_no]->core_scene_viewer,
 								Scene_viewer_get_light_model(first_scene_viewer->core_scene_viewer));
-							transparency_layers = Cmiss_scene_viewer_get_transparency_layers(first_scene_viewer->core_scene_viewer);
-							Cmiss_scene_viewer_set_transparency_layers(window->scene_viewer_array[pane_no]->core_scene_viewer,
+							transparency_layers = cmzn_scene_viewer_get_transparency_layers(first_scene_viewer->core_scene_viewer);
+							cmzn_scene_viewer_set_transparency_layers(window->scene_viewer_array[pane_no]->core_scene_viewer,
 								transparency_layers);
-							transparency_mode = Cmiss_scene_viewer_get_transparency_mode(
+							transparency_mode = cmzn_scene_viewer_get_transparency_mode(
 								first_scene_viewer->core_scene_viewer);
-							Cmiss_scene_viewer_set_transparency_mode(window->scene_viewer_array[pane_no]->core_scene_viewer,
+							cmzn_scene_viewer_set_transparency_mode(window->scene_viewer_array[pane_no]->core_scene_viewer,
 								transparency_mode);
 							Scene_viewer_set_antialias_mode(
 								window->scene_viewer_array[pane_no]->core_scene_viewer,window->antialias_mode);
@@ -4659,7 +4659,7 @@ Sets the layout mode in effect on the <window>.
 						window->default_zoom_rate);
 				}
 				/* set the plan view in pane 0 */
-				if (Cmiss_scene_viewer_get_lookat_parameters(window->scene_viewer_array[0]->core_scene_viewer,
+				if (cmzn_scene_viewer_get_lookat_parameters(window->scene_viewer_array[0]->core_scene_viewer,
 					&(eye[0]),&(eye[1]),&(eye[2]),
 					&(lookat[0]),&(lookat[1]),&(lookat[2]),&(up[0]),&(up[1]),&(up[2]))&&
 					axis_number_to_axis_vector(window->ortho_up_axis,up)&&
@@ -4714,7 +4714,7 @@ Sets the layout mode in effect on the <window>.
 				}
 				/* four views, 3 tied together as front, side and plan views */
 				/* set the plan view in pane 1 */
-				if (Cmiss_scene_viewer_get_lookat_parameters(window->scene_viewer_array[1]->core_scene_viewer,
+				if (cmzn_scene_viewer_get_lookat_parameters(window->scene_viewer_array[1]->core_scene_viewer,
 						&(eye[0]),&(eye[1]),&(eye[2]),
 						&(lookat[0]),&(lookat[1]),&(lookat[2]),&(up[0]),&(up[1]),&(up[2]))&&
 					axis_number_to_axis_vector(window->ortho_up_axis,up)&&
@@ -4779,7 +4779,7 @@ Sets the layout mode in effect on the <window>.
 					(GRAPHICS_WINDOW_LAYOUT_FRONT_SIDE==layout_mode))
 				{
 					/* set the front view in pane 0 */
-					if (Cmiss_scene_viewer_get_lookat_parameters(window->scene_viewer_array[0]->core_scene_viewer,
+					if (cmzn_scene_viewer_get_lookat_parameters(window->scene_viewer_array[0]->core_scene_viewer,
 						&(eye[0]),&(eye[1]),&(eye[2]),
 						&(lookat[0]),&(lookat[1]),&(lookat[2]),&(up[0]),&(up[1]),&(up[2]))&&
 						axis_number_to_axis_vector(window->ortho_up_axis,up)&&
@@ -5020,7 +5020,7 @@ Must call Graphics_window_view_changed after changing tied pane.
 	return (return_code);
 } /* Graphics_window_set_projection_mode */
 
-Cmiss_scene *Graphics_window_get_Scene(struct Graphics_window *window)
+cmzn_scene *Graphics_window_get_Scene(struct Graphics_window *window)
 /*******************************************************************************
 LAST MODIFIED : 6 October 1998
 
@@ -5030,7 +5030,7 @@ Returns the Scene for the <graphics_window>.
 	Graphics_window_set_time
 ==============================================================================*/
 {
-	Cmiss_scene *scene;
+	cmzn_scene *scene;
 
 	ENTER(Graphics_window_get_Scene);
 	if (window)
@@ -5040,7 +5040,7 @@ Returns the Scene for the <graphics_window>.
 	else
 	{
 		display_message(ERROR_MESSAGE,"Graphics_window_get_Scene.  Missing window");
-		scene=(Cmiss_scene *)NULL;
+		scene=(cmzn_scene *)NULL;
 	}
 	LEAVE;
 
@@ -5951,10 +5951,10 @@ with commands for setting these.
 	if (window && window->scene_viewer_array)
 	{
 		return_code = 1;
-		Cmiss_graphics_filter_id filter = Cmiss_scene_viewer_get_filter((window->scene_viewer_array[0]->core_scene_viewer));
-		Cmiss_scene_get_global_graphics_range(window->scene, filter,
+		cmzn_graphics_filter_id filter = cmzn_scene_viewer_get_filter((window->scene_viewer_array[0]->core_scene_viewer));
+		cmzn_scene_get_global_graphics_range(window->scene, filter,
 			&centre_x, &centre_y, &centre_z, &size_x, &size_y, &size_z);
-		Cmiss_graphics_filter_destroy(&filter);
+		cmzn_graphics_filter_destroy(&filter);
 		radius = 0.5*sqrt(size_x*size_x + size_y*size_y + size_z*size_z);
 		if (0 == radius)
 		{
@@ -6028,7 +6028,7 @@ current layout_mode, the function adjusts the view in all the panes tied to
 			Scene_viewer_get_viewing_volume(window->scene_viewer_array[pane_no]->core_scene_viewer,
 				&left,&right,&bottom,&top,&(near_plane[pane_no]),&(far_plane[pane_no]));
 		}
-		return_code=(Cmiss_scene_viewer_get_lookat_parameters(
+		return_code=(cmzn_scene_viewer_get_lookat_parameters(
 			window->scene_viewer_array[changed_pane]->core_scene_viewer,&(eye[0]),&(eye[1]),&(eye[2]),
 			&(lookat[0]),&(lookat[1]),&(lookat[2]),&(up[0]),&(up[1]),&(up[2]))&&
 			Scene_viewer_get_viewing_volume(window->scene_viewer_array[changed_pane]->core_scene_viewer,
@@ -6424,7 +6424,7 @@ Writes the properties of the <window> to the command window.
 	enum Scene_viewer_blending_mode blending_mode;
 	enum Scene_viewer_buffering_mode buffering_mode;
 	enum Scene_viewer_projection_mode projection_mode;
-	enum Cmiss_scene_viewer_transparency_mode transparency_mode;
+	enum cmzn_scene_viewer_transparency_mode transparency_mode;
 	enum Scene_viewer_viewport_mode viewport_mode;
 	int accumulation_buffer_depth,colour_buffer_depth,depth_buffer_depth,
 		height,pane_no,perturb_lines,return_code,width,
@@ -6446,21 +6446,21 @@ Writes the properties of the <window> to the command window.
 				Scene_viewer_buffering_mode_string(buffering_mode));
 		}
 		/* image */
-		Cmiss_region_id region = Cmiss_scene_get_region(window->scene);
-		name = Cmiss_region_get_relative_path(region, window->root_region);
+		cmzn_region_id region = cmzn_scene_get_region(window->scene);
+		name = cmzn_region_get_relative_path(region, window->root_region);
 		if (name)
 		{
 			display_message(INFORMATION_MESSAGE,"  scene: %s\n",name);
 			DEALLOCATE(name);
 		}
-		Cmiss_graphics_filter_id filter = Cmiss_scene_viewer_get_filter(window->scene_viewer_array[0]->core_scene_viewer);
-		name = Cmiss_graphics_filter_get_name(filter);
+		cmzn_graphics_filter_id filter = cmzn_scene_viewer_get_filter(window->scene_viewer_array[0]->core_scene_viewer);
+		name = cmzn_graphics_filter_get_name(filter);
 		if (name)
 		{
 			display_message(INFORMATION_MESSAGE,"  filter: %s\n",name);
 			DEALLOCATE(name);
 		}
-		Cmiss_graphics_filter_destroy(&filter);
+		cmzn_graphics_filter_destroy(&filter);
 		if (GET_NAME(Light_model)(
 			Scene_viewer_get_light_model(window->scene_viewer_array[0]->core_scene_viewer),&name))
 		{
@@ -6491,10 +6491,10 @@ Writes the properties of the <window> to the command window.
 			display_message(INFORMATION_MESSAGE,
 				"    background colour R G B: %g %g %g\n",
 				colour.red,colour.green,colour.blue);
-			Cmiss_field_image_id image_field=
+			cmzn_field_image_id image_field=
 				Scene_viewer_get_background_image_field(scene_viewer);
-			texture = Cmiss_field_image_get_texture(image_field);
-			Cmiss_field_image_destroy(&image_field);
+			texture = cmzn_field_image_get_texture(image_field);
+			cmzn_field_image_destroy(&image_field);
 			if (texture && Scene_viewer_get_background_texture_info(scene_viewer,
 					&left,&top,&texture_width,&texture_height,&undistort_on,
 					&max_pixels_per_polygon)&&
@@ -6562,7 +6562,7 @@ Writes the properties of the <window> to the command window.
 			else
 			{
 				/* parallel/perspective: write eye and interest points and up-vector */
-				Cmiss_scene_viewer_get_lookat_parameters(scene_viewer,
+				cmzn_scene_viewer_get_lookat_parameters(scene_viewer,
 					&(eye[0]),&(eye[1]),&(eye[2]),&(lookat[0]),&(lookat[1]),&(lookat[2]),
 					&(up[0]),&(up[1]),&(up[2]));
 				view[0] = lookat[0] - eye[0];
@@ -6633,13 +6633,13 @@ Writes the properties of the <window> to the command window.
 			display_message(INFORMATION_MESSAGE,"  Interactive tool: %s\n",name);
 			DEALLOCATE(name);
 		}
-		transparency_mode = Cmiss_scene_viewer_get_transparency_mode(scene_viewer);
+		transparency_mode = cmzn_scene_viewer_get_transparency_mode(scene_viewer);
 		display_message(INFORMATION_MESSAGE,
-			"  Transparency mode: %s\n",Cmiss_scene_viewer_transparency_mode_string(
+			"  Transparency mode: %s\n",cmzn_scene_viewer_transparency_mode_string(
 				transparency_mode));
 		if (transparency_mode == CMISS_SCENE_VIEWER_TRANSPARENCY_ORDER_INDEPENDENT)
 		{
-			transparency_layers = Cmiss_scene_viewer_get_transparency_layers(scene_viewer);
+			transparency_layers = cmzn_scene_viewer_get_transparency_layers(scene_viewer);
 			display_message(INFORMATION_MESSAGE,"    transparency_layers: %d\n",
 				transparency_layers);
 		}
@@ -6727,7 +6727,7 @@ and establishing the views in it to the command window to a com file.
 	enum Scene_viewer_blending_mode blending_mode;
 	enum Scene_viewer_buffering_mode buffering_mode;
 	enum Scene_viewer_projection_mode projection_mode;
-	enum Cmiss_scene_viewer_transparency_mode transparency_mode;
+	enum cmzn_scene_viewer_transparency_mode transparency_mode;
 	enum Scene_viewer_viewport_mode viewport_mode;
 	int height,i,pane_no,perturb_lines,return_code,width,undistort_on;
 	unsigned int antialias, transparency_layers;
@@ -6756,8 +6756,8 @@ and establishing the views in it to the command window to a com file.
 		/* image */
 		process_message->process_command(INFORMATION_MESSAGE,"gfx modify window %s image",
 			window->name);
-		Cmiss_region_id region = Cmiss_scene_get_region(window->scene);
-		name = Cmiss_region_get_relative_path(region, window->root_region);
+		cmzn_region_id region = cmzn_scene_get_region(window->scene);
+		name = cmzn_region_get_relative_path(region, window->root_region);
 		if (name)
 		{
 			/* put quotes around name if it contains special characters */
@@ -6765,15 +6765,15 @@ and establishing the views in it to the command window to a com file.
 			process_message->process_command(INFORMATION_MESSAGE," scene %s",name);
 			DEALLOCATE(name);
 		}
-		Cmiss_graphics_filter_id filter = Cmiss_scene_viewer_get_filter(window->scene_viewer_array[0]->core_scene_viewer);
-		name = Cmiss_graphics_filter_get_name(filter);
+		cmzn_graphics_filter_id filter = cmzn_scene_viewer_get_filter(window->scene_viewer_array[0]->core_scene_viewer);
+		name = cmzn_graphics_filter_get_name(filter);
 		if (name)
 		{
 			make_valid_token(&name);
 			process_message->process_command(INFORMATION_MESSAGE," filter %s",name);
 			DEALLOCATE(name);
 		}
-		Cmiss_graphics_filter_destroy(&filter);
+		cmzn_graphics_filter_destroy(&filter);
 		if (GET_NAME(Light_model)(
 			Scene_viewer_get_light_model(window->scene_viewer_array[0]->core_scene_viewer),&name))
 		{
@@ -6807,10 +6807,10 @@ and establishing the views in it to the command window to a com file.
 			Scene_viewer_get_background_colour(scene_viewer,&colour);
 			process_message->process_command(INFORMATION_MESSAGE,
 				" colour %g %g %g",colour.red,colour.green,colour.blue);
-			Cmiss_field_image_id image_field=
+			cmzn_field_image_id image_field=
 				Scene_viewer_get_background_image_field(scene_viewer);
-			texture = Cmiss_field_image_get_texture(image_field);
-			Cmiss_field_image_destroy(&image_field);
+			texture = cmzn_field_image_get_texture(image_field);
+			cmzn_field_image_destroy(&image_field);
 			if (texture &&	Scene_viewer_get_background_texture_info(scene_viewer,
 					&left,&top,&texture_width,&texture_height,&undistort_on,
 					&max_pixels_per_polygon)&&
@@ -6862,7 +6862,7 @@ and establishing the views in it to the command window to a com file.
 			else
 			{
 				/* parallel/perspective: write eye and interest points and up-vector */
-				Cmiss_scene_viewer_get_lookat_parameters(scene_viewer,
+				cmzn_scene_viewer_get_lookat_parameters(scene_viewer,
 					&(eye[0]),&(eye[1]),&(eye[2]),&(lookat[0]),&(lookat[1]),&(lookat[2]),
 					&(up[0]),&(up[1]),&(up[2]));
 				Scene_viewer_get_viewing_volume(scene_viewer,&left,&right,
@@ -6947,12 +6947,12 @@ and establishing the views in it to the command window to a com file.
 		{
 			process_message->process_command(INFORMATION_MESSAGE," depth_of_field 0.0");
 		}
-		transparency_mode = Cmiss_scene_viewer_get_transparency_mode(scene_viewer);
+		transparency_mode = cmzn_scene_viewer_get_transparency_mode(scene_viewer);
 		process_message->process_command(INFORMATION_MESSAGE," %s",
-			Cmiss_scene_viewer_transparency_mode_string(transparency_mode));
+			cmzn_scene_viewer_transparency_mode_string(transparency_mode));
 		if (transparency_mode == CMISS_SCENE_VIEWER_TRANSPARENCY_ORDER_INDEPENDENT)
 		{
-			transparency_layers = Cmiss_scene_viewer_get_transparency_layers(scene_viewer);
+			transparency_layers = cmzn_scene_viewer_get_transparency_layers(scene_viewer);
 			process_message->process_command(INFORMATION_MESSAGE," %d",transparency_layers);
 		}
 		Scene_viewer_get_blending_mode(window->scene_viewer_array[0]->core_scene_viewer,&blending_mode);

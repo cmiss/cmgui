@@ -118,7 +118,7 @@
 												<object class ="sizeritem">
 													<flag>wxEXPAND</flag>
 													<option>1</option>
-													<object class="wxCheckListBox" name="CmissGraphicListBox">
+													<object class="wxCheckListBox" name="cmznGraphicListBox">
 														<style>wxLB_HSCROLL</style>
 													</object>
 												</object>

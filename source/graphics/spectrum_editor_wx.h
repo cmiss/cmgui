@@ -61,12 +61,12 @@ Global Functions
 struct Spectrum_editor *CREATE(Spectrum_editor)(
 	 struct Spectrum_editor_dialog **spectrum_editor_dialog_address,
 	 struct Spectrum *spectrum,
-	 struct Cmiss_font *font,
+	 struct cmzn_font *font,
 	 struct Graphics_buffer_app_package *graphics_buffer_package,
 	 struct User_interface *user_interface,
-	 struct Cmiss_graphics_module *graphics_module,
-	 Cmiss_region_id root_region,
-	 struct Cmiss_region *spectrum_region);
+	 struct cmzn_graphics_module *graphics_module,
+	 cmzn_region_id root_region,
+	 struct cmzn_region *spectrum_region);
 /*******************************************************************************
 LAST MODIFIED : 4 May 2004
 

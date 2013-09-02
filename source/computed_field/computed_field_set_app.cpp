@@ -89,13 +89,13 @@ wrapper for field and add it to the manager.
 							}
 						}
 
-						Cmiss_region *region =
+						cmzn_region *region =
 							Computed_field_manager_get_region(set_field_data->computed_field_manager);
-						Cmiss_field_module *temp_field_module = Cmiss_field_module_create(region);
-						Cmiss_field_module_set_field_name(temp_field_module, "constants");
+						cmzn_field_module *temp_field_module = cmzn_field_module_create(region);
+						cmzn_field_module_set_field_name(temp_field_module, "constants");
 						selected_field = Computed_field_create_constant(temp_field_module,
 							number_of_values, values);
-						Cmiss_field_module_destroy(&temp_field_module);
+						cmzn_field_module_destroy(&temp_field_module);
 
 						DEALLOCATE(values);
 						DEALLOCATE(command_string);

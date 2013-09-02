@@ -23,7 +23,7 @@ returned in this location, for the calling function to use or destroy.
 {
 	const char *current_token;
 	const char **valid_strings,*sample_mode_string;
-	enum Cmiss_element_point_sample_mode sample_mode;
+	enum cmzn_element_point_sample_mode sample_mode;
 	float xi[MAXIMUM_ELEMENT_XI_DIMENSIONS];
 	int dimension, i, number_of_xi_points, number_of_valid_strings, return_code,
 		start, stop;
@@ -187,9 +187,9 @@ returned in this location, for the calling function to use or destroy.
 					sample_mode =
 						element_point_ranges_identifier.sample_mode;
 					sample_mode_string =
-						ENUMERATOR_STRING(Cmiss_element_point_sample_mode)(sample_mode);
+						ENUMERATOR_STRING(cmzn_element_point_sample_mode)(sample_mode);
 					valid_strings=
-						Cmiss_element_point_sample_mode_get_valid_strings_for_Element_point_ranges(
+						cmzn_element_point_sample_mode_get_valid_strings_for_Element_point_ranges(
 							&number_of_valid_strings);
 					Option_table_add_enumerator(option_table,number_of_valid_strings,
 						valid_strings,&sample_mode_string);
@@ -197,7 +197,7 @@ returned in this location, for the calling function to use or destroy.
 					return_code=Option_table_parse(option_table,state);
 					if (return_code)
 					{
-						STRING_TO_ENUMERATOR(Cmiss_element_point_sample_mode)(
+						STRING_TO_ENUMERATOR(cmzn_element_point_sample_mode)(
 							sample_mode_string, &sample_mode);
 						element_point_ranges_identifier.sample_mode =
 							sample_mode;
@@ -229,7 +229,7 @@ returned in this location, for the calling function to use or destroy.
 									element_point_ranges_identifier.sample_mode,
 									element_point_ranges_identifier.number_in_xi,
 									element_point_ranges_identifier.exact_xi,
-									(Cmiss_field_cache_id)0,
+									(cmzn_field_cache_id)0,
 									/*coordinate_field*/(struct Computed_field *)NULL,
 									/*density_field*/(struct Computed_field *)NULL,
 									&number_of_xi_points,

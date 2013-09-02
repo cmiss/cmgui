@@ -17,16 +17,16 @@ int gfx_minimise(struct Parse_state *state, void *dummy_to_be_modified,
 {
 	int return_code;
 	USE_PARAMETER(dummy_to_be_modified);
-	Cmiss_region_id root_region = reinterpret_cast<Cmiss_region_id>(root_region_void);
+	cmzn_region_id root_region = reinterpret_cast<cmzn_region_id>(root_region_void);
 	if (state && root_region)
 	{
-		enum Cmiss_optimisation_method optimisation_method = CMISS_OPTIMISATION_METHOD_QUASI_NEWTON;
+		enum cmzn_optimisation_method optimisation_method = CMISS_OPTIMISATION_METHOD_QUASI_NEWTON;
 		int maxIters = 100; // default value
 		int showReport = 1; // output solution report by default
 		const char *optimisation_method_string = 0;
 		Multiple_strings independentFieldNames;
 		Multiple_strings objectiveFieldNames;
-		Cmiss_region_id region = Cmiss_region_access(root_region);
+		cmzn_region_id region = cmzn_region_access(root_region);
 
 		Option_table *option_table = CREATE(Option_table)();
 		/* independent field(s) */
@@ -40,12 +40,12 @@ int gfx_minimise(struct Parse_state *state, void *dummy_to_be_modified,
 			NULL, set_int_positive);
 		/* method */
 		optimisation_method_string =
-			ENUMERATOR_STRING(Cmiss_optimisation_method)(optimisation_method);
+			ENUMERATOR_STRING(cmzn_optimisation_method)(optimisation_method);
 		int number_of_valid_strings = 0;
 		const char **valid_strings;
-		valid_strings = ENUMERATOR_GET_VALID_STRINGS(Cmiss_optimisation_method)(
+		valid_strings = ENUMERATOR_GET_VALID_STRINGS(cmzn_optimisation_method)(
 			&number_of_valid_strings,
-			(ENUMERATOR_CONDITIONAL_FUNCTION(Cmiss_optimisation_method) *)NULL,
+			(ENUMERATOR_CONDITIONAL_FUNCTION(cmzn_optimisation_method) *)NULL,
 			(void *)NULL);
 		Option_table_add_enumerator(option_table, number_of_valid_strings,
 			valid_strings, &optimisation_method_string);
@@ -56,46 +56,46 @@ int gfx_minimise(struct Parse_state *state, void *dummy_to_be_modified,
 		Option_table_add_multiple_strings_entry(option_table, "objective_fields",
 			&objectiveFieldNames, "FIELD_NAME [& FIELD_NAME [& ...]]");
 		/* region */
-		Option_table_add_set_Cmiss_region(option_table, "region", root_region, &region);
+		Option_table_add_set_cmzn_region(option_table, "region", root_region, &region);
 		/* flag whether to show or hide the optimisation output */
 		Option_table_add_switch(option_table, "show_output", "hide_output", &showReport);
 		return_code = Option_table_multi_parse(option_table, state);
 		if (return_code)
 		{
-			Cmiss_field_module_id fieldModule = Cmiss_region_get_field_module(region);
-			Cmiss_optimisation_id optimisation = Cmiss_field_module_create_optimisation(fieldModule);
-			STRING_TO_ENUMERATOR(Cmiss_optimisation_method)(
+			cmzn_field_module_id fieldModule = cmzn_region_get_field_module(region);
+			cmzn_optimisation_id optimisation = cmzn_field_module_create_optimisation(fieldModule);
+			STRING_TO_ENUMERATOR(cmzn_optimisation_method)(
 				optimisation_method_string, &optimisation_method);
-			if (!Cmiss_optimisation_set_method(optimisation, optimisation_method))
+			if (!cmzn_optimisation_set_method(optimisation, optimisation_method))
 			{
 				display_message(ERROR_MESSAGE, "gfx minimise:  Invalid optimisation method");
 				return_code = 0;
 			}
 			for (int i = 0; i < independentFieldNames.number_of_strings; i++)
 			{
-				Cmiss_field_id independentField = Cmiss_field_module_find_field_by_name(
+				cmzn_field_id independentField = cmzn_field_module_find_field_by_name(
 					fieldModule, independentFieldNames.strings[i]);
-				if (!Cmiss_optimisation_add_independent_field(optimisation, independentField))
+				if (!cmzn_optimisation_add_independent_field(optimisation, independentField))
 				{
 					display_message(ERROR_MESSAGE, "gfx minimise:  Invalid or unrecognised independent field '%s'",
 						independentFieldNames.strings[i]);
 					return_code = 0;
 				}
-				Cmiss_field_destroy(&independentField);
+				cmzn_field_destroy(&independentField);
 			}
 			for (int i = 0; i < objectiveFieldNames.number_of_strings; i++)
 			{
-				Cmiss_field_id objectiveField = Cmiss_field_module_find_field_by_name(
+				cmzn_field_id objectiveField = cmzn_field_module_find_field_by_name(
 					fieldModule, objectiveFieldNames.strings[i]);
-				if (!Cmiss_optimisation_add_objective_field(optimisation, objectiveField))
+				if (!cmzn_optimisation_add_objective_field(optimisation, objectiveField))
 				{
 					display_message(ERROR_MESSAGE, "gfx minimise:  Invalid or unrecognised objective field '%s'",
 						objectiveFieldNames.strings[i]);
 					return_code = 0;
 				}
-				Cmiss_field_destroy(&objectiveField);
+				cmzn_field_destroy(&objectiveField);
 			}
-			if (!Cmiss_optimisation_set_attribute_integer(optimisation,
+			if (!cmzn_optimisation_set_attribute_integer(optimisation,
 				CMISS_OPTIMISATION_ATTRIBUTE_MAXIMUM_ITERATIONS, maxIters))
 			{
 				display_message(ERROR_MESSAGE, "gfx minimise:  Invalid maximum_iterations %d", maxIters);
@@ -103,10 +103,10 @@ int gfx_minimise(struct Parse_state *state, void *dummy_to_be_modified,
 			}
 			if (return_code)
 			{
-				return_code = Cmiss_optimisation_optimise(optimisation);
+				return_code = cmzn_optimisation_optimise(optimisation);
 				if (showReport)
 				{
-					char *report = Cmiss_optimisation_get_solution_report(optimisation);
+					char *report = cmzn_optimisation_get_solution_report(optimisation);
 					if (report)
 					{
 						display_message_string(INFORMATION_MESSAGE, report);
@@ -118,8 +118,8 @@ int gfx_minimise(struct Parse_state *state, void *dummy_to_be_modified,
 					display_message(ERROR_MESSAGE, "gfx minimise.  Optimisation failed.");
 				}
 			}
-			Cmiss_optimisation_destroy(&optimisation);
-			Cmiss_field_module_destroy(&fieldModule);
+			cmzn_optimisation_destroy(&optimisation);
+			cmzn_field_module_destroy(&fieldModule);
 		}
 		DESTROY(Option_table)(&option_table);
 		if (independentFieldNames.strings)
@@ -138,7 +138,7 @@ int gfx_minimise(struct Parse_state *state, void *dummy_to_be_modified,
 			}
 			DEALLOCATE(objectiveFieldNames.strings);
 		}
-		Cmiss_region_destroy(&region);
+		cmzn_region_destroy(&region);
 	}
 	else
 	{

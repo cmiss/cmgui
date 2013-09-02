@@ -4,7 +4,7 @@
  * parsed graphic. Note that the graphic are ACCESSed once on valid return.
  */
 int gfx_modify_scene_graphic(struct Parse_state *state,
-	enum Cmiss_graphic_type graphic_type, const char *help_text,
+	enum cmzn_graphic_type graphic_type, const char *help_text,
 	struct Modify_scene_data *modify_scene_data,
 	struct Scene_command_data *scene_command_data);
 

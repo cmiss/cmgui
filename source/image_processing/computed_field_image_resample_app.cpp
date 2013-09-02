@@ -11,7 +11,7 @@
 
 const char computed_field_image_resample_type_string[] = "image_resample";
 
-int Cmiss_field_get_type_image_resample(struct Computed_field *field,
+int cmzn_field_get_type_image_resample(struct Computed_field *field,
 	struct Computed_field **source_field, int *dimension, int **sizes);
 
 int define_Computed_field_type_image_resample(struct Parse_state *state,
@@ -43,7 +43,7 @@ already) and allows its contents to be modified.
 			(computed_field_image_resample_type_string ==
 				Computed_field_get_type_string(field_modify->get_field())))
 		{
-			return_code=Cmiss_field_get_type_image_resample(field_modify->get_field(),
+			return_code=cmzn_field_get_type_image_resample(field_modify->get_field(),
 				&source_field, &original_dimension, &original_sizes);
 			ACCESS(Computed_field)(source_field);
 		}
@@ -123,7 +123,7 @@ already) and allows its contents to be modified.
 			if (return_code)
 			{
 				return_code = field_modify->update_field_and_deaccess(
-					Cmiss_field_module_create_image_resample(field_modify->get_field_module(),
+					cmzn_field_module_create_image_resample(field_modify->get_field_module(),
 						source_field, dimension, sizes));
 			}
 

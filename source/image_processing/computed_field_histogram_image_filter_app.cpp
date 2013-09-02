@@ -11,7 +11,7 @@
 
 const char computed_field_histogram_image_filter_type_string[] = "histogram_filter";
 
-int Cmiss_field_get_type_histogram_image_filter(struct Computed_field *field,
+int cmzn_field_get_type_histogram_image_filter(struct Computed_field *field,
 	struct Computed_field **source_field, int **numberOfBins, double *marginalScale,
 	double **histogramMinimum, double **histogramMaximum);
 
@@ -50,7 +50,7 @@ already) and allows its contents to be modified.
 				Computed_field_get_type_string(field_modify->get_field())))
 		{
 			return_code =
-				Cmiss_field_get_type_histogram_image_filter(field_modify->get_field(), &source_field,
+				cmzn_field_get_type_histogram_image_filter(field_modify->get_field(), &source_field,
 					&numberOfBins, &marginalScale, &histogramMinimum, &histogramMaximum);
 			original_number_of_components = source_field->number_of_components;
 		}
@@ -187,7 +187,7 @@ already) and allows its contents to be modified.
 				if (return_code)
 				{
 					return_code = field_modify->update_field_and_deaccess(
-						Cmiss_field_module_create_histogram_image_filter(
+						cmzn_field_module_create_histogram_image_filter(
 							field_modify->get_field_module(),
 							source_field, numberOfBins, marginalScale, histogramMinimum, histogramMaximum));
 				}

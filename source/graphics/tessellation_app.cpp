@@ -104,19 +104,19 @@ int gfx_define_tessellation_contents(struct Parse_state *state, void *tessellati
 	void *tessellation_module_void)
 {
 	int return_code = 1;
-	Cmiss_tessellation_module *tessellation_module =
-		reinterpret_cast<Cmiss_tessellation_module *>(tessellation_module_void);
+	cmzn_tessellation_module *tessellation_module =
+		reinterpret_cast<cmzn_tessellation_module *>(tessellation_module_void);
 	if (state && tessellation_module)
 	{
-		Cmiss_tessellation *tessellation = (Cmiss_tessellation *)tessellation_void; // can be null
+		cmzn_tessellation *tessellation = (cmzn_tessellation *)tessellation_void; // can be null
 		int circleDivisions = 0;
 		int minimum_divisions_size = 1;
 		int refinement_factors_size = 1;
 		if (tessellation)
 		{
-			circleDivisions = Cmiss_tessellation_get_circle_divisions(tessellation);
-			minimum_divisions_size = Cmiss_tessellation_get_minimum_divisions(tessellation, 0, 0);
-			refinement_factors_size = Cmiss_tessellation_get_refinement_factors(tessellation, 0, 0);
+			circleDivisions = cmzn_tessellation_get_circle_divisions(tessellation);
+			minimum_divisions_size = cmzn_tessellation_get_minimum_divisions(tessellation, 0, 0);
+			refinement_factors_size = cmzn_tessellation_get_refinement_factors(tessellation, 0, 0);
 		}
 		int *minimum_divisions;
 		int *refinement_factors;
@@ -124,8 +124,8 @@ int gfx_define_tessellation_contents(struct Parse_state *state, void *tessellati
 		ALLOCATE(refinement_factors, int, refinement_factors_size);
 		if (tessellation)
 		{
-			Cmiss_tessellation_get_minimum_divisions(tessellation, minimum_divisions_size, minimum_divisions);
-			Cmiss_tessellation_get_refinement_factors(tessellation, refinement_factors_size, refinement_factors);
+			cmzn_tessellation_get_minimum_divisions(tessellation, minimum_divisions_size, minimum_divisions);
+			cmzn_tessellation_get_refinement_factors(tessellation, refinement_factors_size, refinement_factors);
 		}
 		else
 		{
@@ -155,9 +155,9 @@ int gfx_define_tessellation_contents(struct Parse_state *state, void *tessellati
 		if (return_code && tessellation)
 		{
 			return_code =
-				Cmiss_tessellation_set_minimum_divisions(tessellation, minimum_divisions_size, minimum_divisions) &&
-				Cmiss_tessellation_set_refinement_factors(tessellation, refinement_factors_size, refinement_factors) &&
-				((circleDivisions < 3) || Cmiss_tessellation_set_circle_divisions(tessellation, circleDivisions));
+				cmzn_tessellation_set_minimum_divisions(tessellation, minimum_divisions_size, minimum_divisions) &&
+				cmzn_tessellation_set_refinement_factors(tessellation, refinement_factors_size, refinement_factors) &&
+				((circleDivisions < 3) || cmzn_tessellation_set_circle_divisions(tessellation, circleDivisions));
 		}
 		DEALLOCATE(minimum_divisions);
 		DEALLOCATE(refinement_factors);
@@ -172,16 +172,16 @@ int gfx_define_tessellation_contents(struct Parse_state *state, void *tessellati
 }
 
 /***************************************************************************//**
- * @see Option_table_add_Cmiss_tessellation_entry
+ * @see Option_table_add_cmzn_tessellation_entry
  */
-int set_Cmiss_tessellation(struct Parse_state *state,
+int set_cmzn_tessellation(struct Parse_state *state,
 	void *tessellation_address_void, void *tessellation_module_void)
 {
 	int return_code = 1;
 
-	Cmiss_tessellation **tessellation_address = (Cmiss_tessellation **)tessellation_address_void;
-	Cmiss_tessellation_module *tessellation_module =
-		reinterpret_cast<Cmiss_tessellation_module *>(tessellation_module_void);
+	cmzn_tessellation **tessellation_address = (cmzn_tessellation **)tessellation_address_void;
+	cmzn_tessellation_module *tessellation_module =
+		reinterpret_cast<cmzn_tessellation_module *>(tessellation_module_void);
 	if (state && tessellation_address && tessellation_module)
 	{
 		const char *current_token = state->current_token;
@@ -190,10 +190,10 @@ int set_Cmiss_tessellation(struct Parse_state *state,
 			if (strcmp(PARSER_HELP_STRING,current_token)&&
 				strcmp(PARSER_RECURSIVE_HELP_STRING,current_token))
 			{
-				Cmiss_tessellation *tessellation = NULL;
+				cmzn_tessellation *tessellation = NULL;
 				if (!fuzzy_string_compare(current_token, "NONE"))
 				{
-					tessellation = Cmiss_tessellation_module_find_tessellation_by_name(tessellation_module, current_token);
+					tessellation = cmzn_tessellation_module_find_tessellation_by_name(tessellation_module, current_token);
 					if (!tessellation)
 					{
 						display_message(ERROR_MESSAGE, "Unknown tessellation : %s", current_token);
@@ -203,18 +203,18 @@ int set_Cmiss_tessellation(struct Parse_state *state,
 				}
 				if (return_code)
 				{
-					REACCESS(Cmiss_tessellation)(tessellation_address, tessellation);
+					REACCESS(cmzn_tessellation)(tessellation_address, tessellation);
 					shift_Parse_state(state,1);
 				}
 				if (tessellation)
-					Cmiss_tessellation_destroy(&tessellation);
+					cmzn_tessellation_destroy(&tessellation);
 			}
 			else
 			{
-				char *name = Cmiss_tessellation_get_name(*tessellation_address);
+				char *name = cmzn_tessellation_get_name(*tessellation_address);
 				display_message(INFORMATION_MESSAGE," TESSELLATION_NAME|none[%s]",
 					(*tessellation_address) ? name : "none");
-				Cmiss_deallocate(name);
+				cmzn_deallocate(name);
 			}
 		}
 		else
@@ -227,27 +227,27 @@ int set_Cmiss_tessellation(struct Parse_state *state,
 	else
 	{
 		display_message(ERROR_MESSAGE,
-			"set_Cmiss_tessellation.  Invalid argument(s)");
+			"set_cmzn_tessellation.  Invalid argument(s)");
 		return_code = 0;
 	}
 	return (return_code);
 }
 
-int Option_table_add_Cmiss_tessellation_entry(struct Option_table *option_table,
-	const char *token, struct Cmiss_tessellation_module *tessellation_module,
-	struct Cmiss_tessellation **tessellation_address)
+int Option_table_add_cmzn_tessellation_entry(struct Option_table *option_table,
+	const char *token, struct cmzn_tessellation_module *tessellation_module,
+	struct cmzn_tessellation **tessellation_address)
 {
 	int return_code;
 	if (option_table && token && tessellation_module && tessellation_address)
 	{
 		return_code = Option_table_add_entry(option_table, token,
 			(void *)tessellation_address, (void *)tessellation_module,
-			set_Cmiss_tessellation);
+			set_cmzn_tessellation);
 	}
 	else
 	{
 		display_message(ERROR_MESSAGE,
-			"Option_table_add_Cmiss_tessellation_entry.  Invalid argument(s)");
+			"Option_table_add_cmzn_tessellation_entry.  Invalid argument(s)");
 		return_code = 0;
 	}
 	LEAVE;
@@ -261,8 +261,8 @@ int gfx_define_tessellation(struct Parse_state *state, void *dummy_to_be_modifie
 	int return_code = 1;
 
 	USE_PARAMETER(dummy_to_be_modified);
-	Cmiss_tessellation_module *tessellation_module =
-		reinterpret_cast<Cmiss_tessellation_module *>(tessellation_module_void);
+	cmzn_tessellation_module *tessellation_module =
+		reinterpret_cast<cmzn_tessellation_module *>(tessellation_module_void);
 	if (state && tessellation_module)
 	{
 		const char *current_token = state->current_token;
@@ -271,24 +271,24 @@ int gfx_define_tessellation(struct Parse_state *state, void *dummy_to_be_modifie
 			if (strcmp(PARSER_HELP_STRING, current_token) &&
 				strcmp(PARSER_RECURSIVE_HELP_STRING, current_token))
 			{
-				Cmiss_tessellation_module_begin_change(tessellation_module);
-				Cmiss_tessellation *tessellation =
-					Cmiss_tessellation_module_find_tessellation_by_name(tessellation_module, current_token);
+				cmzn_tessellation_module_begin_change(tessellation_module);
+				cmzn_tessellation *tessellation =
+					cmzn_tessellation_module_find_tessellation_by_name(tessellation_module, current_token);
 				if (!tessellation)
 				{
-					tessellation = Cmiss_tessellation_module_create_tessellation(tessellation_module);
-					Cmiss_tessellation_set_name(tessellation, current_token);
+					tessellation = cmzn_tessellation_module_create_tessellation(tessellation_module);
+					cmzn_tessellation_set_name(tessellation, current_token);
 				}
 				shift_Parse_state(state,1);
 				if (tessellation)
 				{
 					// set managed state for all tessellations created or edited otherwise
 					// cleaned up at end of command.
-					Cmiss_tessellation_set_managed(tessellation, true);
+					cmzn_tessellation_set_managed(tessellation, true);
 					return_code = gfx_define_tessellation_contents(state, (void *)tessellation, tessellation_module_void);
 				}
-				Cmiss_tessellation_destroy(&tessellation);
-				Cmiss_tessellation_module_end_change(tessellation_module);
+				cmzn_tessellation_destroy(&tessellation);
+				cmzn_tessellation_module_end_change(tessellation_module);
 			}
 			else
 			{
@@ -321,20 +321,20 @@ int gfx_destroy_tessellation(struct Parse_state *state,
 {
 	int return_code;
 	USE_PARAMETER(dummy_to_be_modified);
-	Cmiss_tessellation_module *tessellation_module =
-		reinterpret_cast<Cmiss_tessellation_module *>(tessellation_module_void);
+	cmzn_tessellation_module *tessellation_module =
+		reinterpret_cast<cmzn_tessellation_module *>(tessellation_module_void);
 	if (state && tessellation_module)
 	{
-		Cmiss_tessellation *tessellation = NULL;
+		cmzn_tessellation *tessellation = NULL;
 		Option_table *option_table = CREATE(Option_table)();
 		Option_table_add_entry(option_table, /*token*/(const char *)NULL,
-			(void *)&tessellation, tessellation_module_void, set_Cmiss_tessellation);
+			(void *)&tessellation, tessellation_module_void, set_cmzn_tessellation);
 		return_code = Option_table_multi_parse(option_table,state);
 		if (return_code)
 		{
 			if (tessellation)
 			{
-				Cmiss_tessellation_set_managed(tessellation, false);
+				cmzn_tessellation_set_managed(tessellation, false);
 				//-- if (tessellation->access_count > 2)
 				//-- {
 				//-- 	display_message(INFORMATION_MESSAGE, "Tessellation marked for destruction when no longer in use.\n");
@@ -349,7 +349,7 @@ int gfx_destroy_tessellation(struct Parse_state *state,
 		}
 		if (tessellation)
 		{
-			Cmiss_tessellation_destroy(&tessellation);
+			cmzn_tessellation_destroy(&tessellation);
 		}
 		DESTROY(Option_table)(&option_table);
 	}
@@ -367,30 +367,30 @@ int gfx_list_tessellation(struct Parse_state *state,
 {
 	int return_code;
 	USE_PARAMETER(dummy_to_be_modified);
-	Cmiss_tessellation_module *tessellation_module =
-		reinterpret_cast<Cmiss_tessellation_module *>(tessellation_module_void);
+	cmzn_tessellation_module *tessellation_module =
+		reinterpret_cast<cmzn_tessellation_module *>(tessellation_module_void);
 	if (state && tessellation_module)
 	{
-		Cmiss_tessellation *tessellation = NULL;
+		cmzn_tessellation *tessellation = NULL;
 		Option_table *option_table = CREATE(Option_table)();
 		Option_table_add_entry(option_table, /*token*/(const char *)NULL,
-			(void *)&tessellation, tessellation_module_void, set_Cmiss_tessellation);
+			(void *)&tessellation, tessellation_module_void, set_cmzn_tessellation);
 		return_code = Option_table_multi_parse(option_table,state);
 		if (return_code)
 		{
 			if (tessellation)
 			{
-				return_code = list_Cmiss_tessellation_iterator(tessellation, (void *)NULL);
+				return_code = list_cmzn_tessellation_iterator(tessellation, (void *)NULL);
 			}
 			else
 			{
-				return_code = FOR_EACH_OBJECT_IN_MANAGER(Cmiss_tessellation)(list_Cmiss_tessellation_iterator,
-					(void *)NULL, Cmiss_tessellation_module_get_manager(tessellation_module));
+				return_code = FOR_EACH_OBJECT_IN_MANAGER(cmzn_tessellation)(list_cmzn_tessellation_iterator,
+					(void *)NULL, cmzn_tessellation_module_get_manager(tessellation_module));
 			}
 		}
 		if (tessellation)
 		{
-			Cmiss_tessellation_destroy(&tessellation);
+			cmzn_tessellation_destroy(&tessellation);
 		}
 		DESTROY(Option_table)(&option_table);
 	}

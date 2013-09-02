@@ -23,9 +23,9 @@ Executes a GFX DEFINE FONT command.
 {
 	const char *current_token, *font_name;
 	int return_code;
-	Cmiss_font_module_id font_module = 0;
+	cmzn_font_module_id font_module = 0;
 
-	if (state && (font_module = (Cmiss_font_module_id)font_module_void))
+	if (state && (font_module = (cmzn_font_module_id)font_module_void))
 	{
 		if (NULL != (current_token = state->current_token))
 		{
@@ -36,22 +36,22 @@ Executes a GFX DEFINE FONT command.
 				if (shift_Parse_state(state,1)&&
 					(current_token=state->current_token))
 				{
-					Cmiss_font_id font = Cmiss_font_module_find_font_by_name(
+					cmzn_font_id font = cmzn_font_module_find_font_by_name(
 						font_module, font_name);
 					if (!font)
 					{
-						font = Cmiss_font_module_create_font(font_module);
-						Cmiss_font_set_name(font, font_name);
+						font = cmzn_font_module_create_font(font_module);
+						cmzn_font_set_name(font, font_name);
 					}
-					Cmiss_font_render_type render_type = Cmiss_font_get_render_type(font);
-					Cmiss_font_type font_type = Cmiss_font_get_font_type(font);
-					char *render_type_string = Cmiss_font_render_type_enum_to_string(render_type);
-					char *font_type_string = Cmiss_font_type_enum_to_string(font_type);
+					cmzn_font_render_type render_type = cmzn_font_get_render_type(font);
+					cmzn_font_type font_type = cmzn_font_get_font_type(font);
+					char *render_type_string = cmzn_font_render_type_enum_to_string(render_type);
+					char *font_type_string = cmzn_font_type_enum_to_string(font_type);
 					int number_of_valid_strings_render_type = 0;
 					int number_of_valid_strings_font_type = 0;
-					const char **valid_render_type_strings = ENUMERATOR_GET_VALID_STRINGS(Cmiss_font_render_type)(
+					const char **valid_render_type_strings = ENUMERATOR_GET_VALID_STRINGS(cmzn_font_render_type)(
 						&number_of_valid_strings_render_type,
-						(ENUMERATOR_CONDITIONAL_FUNCTION(Cmiss_font_render_type) *)NULL,
+						(ENUMERATOR_CONDITIONAL_FUNCTION(cmzn_font_render_type) *)NULL,
 						(void *)NULL);
 					std::string all_render_types = " ";
 					for (int i = 0; i < number_of_valid_strings_render_type; i++)
@@ -62,9 +62,9 @@ Executes a GFX DEFINE FONT command.
 						all_render_types += valid_render_type_strings[i];
 					}
 					const char *all_render_types_help = all_render_types.c_str();
-					const char **valid_font_font_type_strings = ENUMERATOR_GET_VALID_STRINGS(Cmiss_font_type)(
+					const char **valid_font_font_type_strings = ENUMERATOR_GET_VALID_STRINGS(cmzn_font_type)(
 						&number_of_valid_strings_font_type,
-						(ENUMERATOR_CONDITIONAL_FUNCTION(Cmiss_font_type) *)NULL,
+						(ENUMERATOR_CONDITIONAL_FUNCTION(cmzn_font_type) *)NULL,
 						(void *)NULL);
 					std::string all_font_font_types = " ";
 					for (int i = 0; i < number_of_valid_strings_font_type; i++)
@@ -79,8 +79,8 @@ Executes a GFX DEFINE FONT command.
 					struct Option_table *option_table = CREATE(Option_table)();
 					int bold_flag = 0;
 					int italic_flag = 0;
-					float depth = (float)Cmiss_font_get_depth(font);
-					int size = Cmiss_font_get_size(font);
+					float depth = (float)cmzn_font_get_depth(font);
+					int size = cmzn_font_get_size(font);
 					/* bold */
 					Option_table_add_entry(option_table, "bold",
 						(void *)&bold_flag, NULL, set_char_flag);
@@ -99,7 +99,7 @@ Executes a GFX DEFINE FONT command.
 					{
 						if (render_type_string)
 						{
-							STRING_TO_ENUMERATOR(Cmiss_font_render_type)(render_type_string,
+							STRING_TO_ENUMERATOR(cmzn_font_render_type)(render_type_string,
 								&render_type);
 							if (CMISS_FONT_RENDER_TYPE_INVALID == render_type)
 							{
@@ -116,7 +116,7 @@ Executes a GFX DEFINE FONT command.
 						}
 						if (font_type_string)
 						{
-							STRING_TO_ENUMERATOR(Cmiss_font_type)(font_type_string,
+							STRING_TO_ENUMERATOR(cmzn_font_type)(font_type_string,
 								&font_type);
 							if (CMISS_FONT_TYPE_INVALID == font_type)
 							{
@@ -133,18 +133,18 @@ Executes a GFX DEFINE FONT command.
 						}
 						if (font)
 						{
-							Cmiss_font_set_bold(font, bold_flag);
-							Cmiss_font_set_italic(font, italic_flag);
-							Cmiss_font_set_depth(font, depth);
-							Cmiss_font_set_size(font, size);
-							Cmiss_font_set_font_type(font, font_type);
-							Cmiss_font_set_render_type(font, render_type);
+							cmzn_font_set_bold(font, bold_flag);
+							cmzn_font_set_italic(font, italic_flag);
+							cmzn_font_set_depth(font, depth);
+							cmzn_font_set_size(font, size);
+							cmzn_font_set_font_type(font, font_type);
+							cmzn_font_set_render_type(font, render_type);
 						}
 
 					}
 					DEALLOCATE(valid_render_type_strings);
 					DEALLOCATE(valid_font_font_type_strings);
-					Cmiss_font_destroy(&font);
+					cmzn_font_destroy(&font);
 					DEALLOCATE(render_type_string);
 					DEALLOCATE(font_type_string);
 					DESTROY(Option_table)(&option_table);

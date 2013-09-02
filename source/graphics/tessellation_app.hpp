@@ -19,19 +19,19 @@ int Option_table_add_divisions_entry(struct Option_table *option_table,
 
 /***************************************************************************//**
  * Adds an entry to the <option_table> under the given <token> that selects a
- * Cmiss_tessellation from the tessellation_module.
+ * cmzn_tessellation from the tessellation_module.
  * @param tessellation_module  Module owning tessellations.
  * @param tessellation_address  Address of tessellation pointer which must be
  * NULL or ACCESSed.
  */
-int Option_table_add_Cmiss_tessellation_entry(struct Option_table *option_table,
-	const char *token, struct Cmiss_tessellation_module *tessellation_module,
-	struct Cmiss_tessellation **tessellation_address);
+int Option_table_add_cmzn_tessellation_entry(struct Option_table *option_table,
+	const char *token, struct cmzn_tessellation_module *tessellation_module,
+	struct cmzn_tessellation **tessellation_address);
 
 /***************************************************************************//**
  * gfx define tessellation command.
  * @param state  Command parse state.
- * @param tessellation_module_void  Cmiss_tessellation_module.
+ * @param tessellation_module_void  cmzn_tessellation_module.
  */
 int gfx_define_tessellation(struct Parse_state *state, void *dummy_to_be_modified,
 	void *tessellation_module_void);
@@ -39,7 +39,7 @@ int gfx_define_tessellation(struct Parse_state *state, void *dummy_to_be_modifie
 /***************************************************************************//**
  * gfx destroy tessellation command.
  * @param state  Command parse state.
- * @param tessellation_module_void  Cmiss_tessellation_module.
+ * @param tessellation_module_void  cmzn_tessellation_module.
  */
 int gfx_destroy_tessellation(struct Parse_state *state, void *dummy_to_be_modified,
 	void *tessellation_module_void);
@@ -47,7 +47,7 @@ int gfx_destroy_tessellation(struct Parse_state *state, void *dummy_to_be_modifi
 /***************************************************************************//**
  * gfx list tessellation command.
  * @param state  Command parse state.
- * @param tessellation_module_void  Cmiss_tessellation_module.
+ * @param tessellation_module_void  cmzn_tessellation_module.
  */
 int gfx_list_tessellation(struct Parse_state *state, void *dummy_to_be_modified,
 	void *tessellation_module_void);

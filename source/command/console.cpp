@@ -81,7 +81,7 @@ DESCRIPTION :
 {
 	char *command_prompt;
 	struct Event_dispatcher *event_dispatcher;
-	Cmiss_native_socket_t fd;
+	cmzn_native_socket_t fd;
 	Fdio_id console_fdio;
 	struct Execute_command *execute_command;
 }; /* struct Console */

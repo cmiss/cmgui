@@ -13,11 +13,11 @@
 // insert app headers here
 #include "mesh/cmiss_element_private_app.hpp"
 
-Computed_field *Computed_field_create_compose(Cmiss_field_module *field_module,
+Computed_field *Computed_field_create_compose(cmzn_field_module *field_module,
 	struct Computed_field *texture_coordinate_field,
 	struct Computed_field *find_element_xi_field,
 	struct Computed_field *calculate_values_field,
-	Cmiss_mesh_id search_mesh,
+	cmzn_mesh_id search_mesh,
 	int find_nearest, int use_point_five_when_out_of_bounds);
 
 int define_Computed_field_type_compose(struct Parse_state *state,
@@ -45,11 +45,11 @@ already) and allows its contents to be modified.
 			computed_field_compose_package_void))
 	{
 		return_code = 1;
-		Cmiss_mesh_id mesh = 0;
+		cmzn_mesh_id mesh = 0;
 		char *search_group_name = 0;
-		Cmiss_field_id calculate_values_field = 0;
-		Cmiss_field_id find_element_xi_field = 0;
-		Cmiss_field_id texture_coordinates_field = 0;
+		cmzn_field_id calculate_values_field = 0;
+		cmzn_field_id find_element_xi_field = 0;
+		cmzn_field_id texture_coordinates_field = 0;
 		char find_nearest_flag = 0;
 		char find_exact_flag = 0;
 		char use_point_five_when_out_of_bounds_flag = 0;
@@ -71,8 +71,8 @@ already) and allows its contents to be modified.
 					&find_nearest, &use_point_five_when_out_of_bounds);
 				if (mesh)
 				{
-					Cmiss_mesh_access(mesh);
-					element_dimension = Cmiss_mesh_get_dimension(mesh);
+					cmzn_mesh_access(mesh);
+					element_dimension = cmzn_mesh_get_dimension(mesh);
 				}
 			}
 		}
@@ -158,18 +158,18 @@ already) and allows its contents to be modified.
 
 			if (return_code && !mesh)
 			{
-				mesh = Cmiss_field_module_find_mesh_by_dimension(
+				mesh = cmzn_field_module_find_mesh_by_dimension(
 					field_modify->get_field_module(), element_dimension);
 				if (search_group_name)
 				{
-					Cmiss_field_id group_field = Cmiss_field_module_find_field_by_name(field_modify->get_field_module(), search_group_name);
-					Cmiss_field_group_id group = Cmiss_field_cast_group(group_field);
-					Cmiss_field_element_group_id element_group = Cmiss_field_group_get_element_group(group, mesh);
-					Cmiss_mesh_destroy(&mesh);
-					mesh = Cmiss_mesh_group_base_cast(Cmiss_field_element_group_get_mesh(element_group));
-					Cmiss_field_element_group_destroy(&element_group);
-					Cmiss_field_group_destroy(&group);
-					Cmiss_field_destroy(&group_field);
+					cmzn_field_id group_field = cmzn_field_module_find_field_by_name(field_modify->get_field_module(), search_group_name);
+					cmzn_field_group_id group = cmzn_field_cast_group(group_field);
+					cmzn_field_element_group_id element_group = cmzn_field_group_get_element_group(group, mesh);
+					cmzn_mesh_destroy(&mesh);
+					mesh = cmzn_mesh_group_base_cast(cmzn_field_element_group_get_mesh(element_group));
+					cmzn_field_element_group_destroy(&element_group);
+					cmzn_field_group_destroy(&group);
+					cmzn_field_destroy(&group_field);
 				}
 			}
 			if (return_code && !mesh)
@@ -229,7 +229,7 @@ already) and allows its contents to be modified.
 						"define_Computed_field_type_compose.  Failed");
 				}
 			}
-			Cmiss_mesh_destroy(&mesh);
+			cmzn_mesh_destroy(&mesh);
 			if (calculate_values_field)
 			{
 				DEACCESS(Computed_field)(&calculate_values_field);
@@ -262,7 +262,7 @@ already) and allows its contents to be modified.
 
 int Computed_field_register_types_compose(
 	struct Computed_field_package *computed_field_package,
-	struct Cmiss_region *root_region)
+	struct cmzn_region *root_region)
 /*******************************************************************************
 LAST MODIFIED : 24 August 2006
 

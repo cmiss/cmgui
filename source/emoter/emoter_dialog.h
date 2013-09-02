@@ -70,7 +70,7 @@ DESCRIPTION :
 ==============================================================================*/
 {
 	struct Execute_command *execute_command;
-	struct Cmiss_region *root_region;
+	struct cmzn_region *root_region;
 	struct MANAGER(FE_basis) *basis_manager;
 #if defined (USE_CMGUI_GRAPHICS_WINDOW)
 	struct MANAGER(Graphics_window) *graphics_window_manager;

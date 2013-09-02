@@ -70,23 +70,23 @@ DESCRIPTION :
 
 #if defined (WX_USER_INTERFACE) || (!defined (WIN32_USER_INTERFACE) && !defined (_MSC_VER))
 struct User_interface_module *User_interface_module_create(
-	struct Cmiss_context_app *context, int in_argc, char *in_argv[])
+	struct cmzn_context_app *context, int in_argc, char *in_argv[])
 #else
 struct User_interface_module *User_interface_module_create(
-	struct Cmiss_context_app *context, int in_argc, char *in_argv[],
+	struct cmzn_context_app *context, int in_argc, char *in_argv[],
 	HINSTANCE current_instance, HINSTANCE previous_instance,
 	LPSTR command_line,int initial_main_window_state)
 #endif
 {
 	struct User_interface_module *UI_module = NULL;
-	Cmiss_region *root_region = NULL;;
-	struct Cmiss_graphics_module *graphics_module = NULL;
+	cmzn_region *root_region = NULL;;
+	struct cmzn_graphics_module *graphics_module = NULL;
 	int visual_id = 0;
 
 	if (context && ALLOCATE(UI_module, struct User_interface_module, 1))
 	{
-		root_region = Cmiss_context_get_default_region(Cmiss_context_app_get_core_context(context));
-		graphics_module = Cmiss_context_get_graphics_module(Cmiss_context_app_get_core_context(context));
+		root_region = cmzn_context_get_default_region(cmzn_context_app_get_core_context(context));
+		graphics_module = cmzn_context_get_graphics_module(cmzn_context_app_get_core_context(context));
 		UI_module->event_dispatcher = NULL;
 #if defined (USE_CMGUI_GRAPHICS_WINDOW)
 		UI_module->graphics_window_manager = NULL;
@@ -120,7 +120,7 @@ struct User_interface_module *User_interface_module_create(
 		UI_module->cleanup_argc = in_argc;
 		UI_module->cleanup_argv = NULL;
 		struct Cmgui_command_line_options command_line_options;
-		Cmiss_command_data_process_command_line(in_argc, in_argv,
+		cmzn_command_data_process_command_line(in_argc, in_argv,
 			&command_line_options);
 		visual_id = command_line_options.visual_id_number;
 		if (0 < in_argc)
@@ -137,7 +137,7 @@ struct User_interface_module *User_interface_module_create(
 
 		if ((!command_line_options.command_list_flag) && (!command_line_options.write_help_flag))
 		{
-			if (NULL != (UI_module->event_dispatcher = Cmiss_context_app_get_default_event_dispatcher(
+			if (NULL != (UI_module->event_dispatcher = cmzn_context_app_get_default_event_dispatcher(
 				context)))
 			{
 				if (!command_line_options.no_display_flag)
@@ -199,16 +199,16 @@ struct User_interface_module *User_interface_module_create(
 		/* graphics window manager.  Note there is no default window. */
 		UI_module->graphics_window_manager=CREATE(MANAGER(Graphics_window))();
 #endif /* defined (USE_CMGUI_GRAPHICS_WINDOW) */
-		Cmiss_time_keeper *time_keeper = Cmiss_context_get_default_time_keeper(Cmiss_context_app_get_core_context(context));
+		cmzn_time_keeper *time_keeper = cmzn_context_get_default_time_keeper(cmzn_context_app_get_core_context(context));
 		UI_module->default_time_keeper_app = new Time_keeper_app(time_keeper, UI_module->event_dispatcher);
-		Cmiss_time_keeper_destroy(&time_keeper);
+		cmzn_time_keeper_destroy(&time_keeper);
 		UI_module->interactive_tool_manager=CREATE(MANAGER(Interactive_tool))();
 		if (UI_module->user_interface)
 		{
-			struct Cmiss_graphics_material_module *material_module =
-				Cmiss_graphics_module_get_material_module(graphics_module);
-			Cmiss_graphics_material_id defaultMaterial =
-				Cmiss_graphics_material_module_get_default_material(material_module);
+			struct cmzn_graphics_material_module *material_module =
+				cmzn_graphics_module_get_material_module(graphics_module);
+			cmzn_graphics_material_id defaultMaterial =
+				cmzn_graphics_material_module_get_default_material(material_module);
 			UI_module->transform_tool=create_Interactive_tool_transform(
 				UI_module->user_interface);
 			ADD_OBJECT_TO_MANAGER(Interactive_tool)(UI_module->transform_tool,
@@ -228,7 +228,7 @@ struct User_interface_module *User_interface_module_create(
 			UI_module->element_tool=CREATE(Element_tool)(
 				UI_module->interactive_tool_manager,
 				root_region,
-				Cmiss_context_get_element_point_ranges_selection(Cmiss_context_app_get_core_context(context)),
+				cmzn_context_get_element_point_ranges_selection(cmzn_context_app_get_core_context(context)),
 				defaultMaterial,
 				UI_module->user_interface,
 				UI_module->default_time_keeper_app);
@@ -236,7 +236,7 @@ struct User_interface_module *User_interface_module_create(
 			UI_module->cad_tool=CREATE(Cad_tool)(
 				UI_module->interactive_tool_manager,
 				root_region,
-				Cmiss_context_get_element_point_ranges_selection(context),
+				cmzn_context_get_element_point_ranges_selection(context),
 				defaultMaterial,
 				UI_module->user_interface,
 				UI_module->default_time_keeper_app);
@@ -244,12 +244,12 @@ struct User_interface_module *User_interface_module_create(
 			UI_module->element_point_tool=CREATE(Element_point_tool)(
 				UI_module->interactive_tool_manager,
 				root_region,
-				Cmiss_context_get_element_point_ranges_selection(Cmiss_context_app_get_core_context(context)),
+				cmzn_context_get_element_point_ranges_selection(cmzn_context_app_get_core_context(context)),
 				defaultMaterial,
 				UI_module->user_interface,
 				UI_module->default_time_keeper_app);
-			Cmiss_graphics_material_destroy(&defaultMaterial);
-			Cmiss_graphics_material_module_destroy(&material_module);
+			cmzn_graphics_material_destroy(&defaultMaterial);
+			cmzn_graphics_material_module_destroy(&material_module);
 		}
 		if (UI_module->user_interface)
 		{
@@ -275,17 +275,17 @@ struct User_interface_module *User_interface_module_create(
 		{
 			if (graphics_module)
 			{
-				Cmiss_scene_id default_scene =
-					Cmiss_graphics_module_get_scene(graphics_module, root_region);
-				UI_module->scene_viewer_module = CREATE(Cmiss_scene_viewer_app_module)(
+				cmzn_scene_id default_scene =
+					cmzn_graphics_module_get_scene(graphics_module, root_region);
+				UI_module->scene_viewer_module = CREATE(cmzn_scene_viewer_app_module)(
 					UI_module->graphics_buffer_package, graphics_module, default_scene,
 					UI_module->user_interface);
-				Cmiss_scene_destroy(&default_scene);
+				cmzn_scene_destroy(&default_scene);
 			}
 		}
 #endif /* defined (USE_CMGUI_GRAPHICS_WINDOW) */
-		Cmiss_region_destroy(&root_region);
-		Cmiss_graphics_module_destroy(&graphics_module);
+		cmzn_region_destroy(&root_region);
+		cmzn_graphics_module_destroy(&graphics_module);
 	}
 	else
 	{
@@ -326,7 +326,7 @@ int User_interface_module_destroy(
 #if defined (USE_CMGUI_GRAPHICS_WINDOW)
 			if (UI_module->scene_viewer_module)
 			{
-				DESTROY(Cmiss_scene_viewer_app_module)(&UI_module->scene_viewer_module);
+				DESTROY(cmzn_scene_viewer_app_module)(&UI_module->scene_viewer_module);
 			}
 #endif /* defined (USE_CMGUI_GRAPHICS_WINDOW) */
 #if defined (USE_CMGUI_GRAPHICS_WINDOW)

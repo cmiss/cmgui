@@ -37,7 +37,7 @@ Set the <environment_map> to face materials.
 					face_no=0;
 					while (return_code&&(face_no<6)&&
 						((environment_map->face_material)[face_no]=
-						Cmiss_graphics_material_access(FIND_BY_IDENTIFIER_IN_MANAGER(Graphical_material,name)(
+						cmzn_graphics_material_access(FIND_BY_IDENTIFIER_IN_MANAGER(Graphical_material,name)(
 						state->current_token,graphical_material_manager)))&&
 						shift_Parse_state(state,1))
 					{

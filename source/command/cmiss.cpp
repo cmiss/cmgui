@@ -309,7 +309,7 @@ Module types
 */
 
 
-struct Cmiss_command_data
+struct cmzn_command_data
 /*******************************************************************************
 LAST MODIFIED : 12 August 2002
 
@@ -340,11 +340,11 @@ DESCRIPTION :
 	struct LIST(Io_device) *device_list;
 #endif /* defined (SELECT_DESCRIPTORS) */
 	/* list of glyphs = simple graphics objects with only geometry */
-	Cmiss_glyph_module_id glyph_module;
+	cmzn_glyph_module_id glyph_module;
 #if defined (WX_USER_INTERFACE)
 	struct MANAGER(Comfile_window) *comfile_window_manager;
 #endif /* defined (WX_USER_INTERFACE)*/
-	struct Cmiss_region *root_region;
+	struct cmzn_region *root_region;
 	struct Computed_field_package *computed_field_package;
 	struct MANAGER(Environment_map) *environment_map_manager;
 	struct MANAGER(FE_basis) *basis_manager;
@@ -352,7 +352,7 @@ DESCRIPTION :
 	/* Always want the entry for graphics_buffer_package even if it will
 		not be available on this implementation */
 	struct Graphics_buffer_app_package *graphics_buffer_package;
-	struct Cmiss_scene_viewer_app_module *scene_viewer_module;
+	struct cmzn_scene_viewer_app_module *scene_viewer_module;
 #if defined (USE_CMGUI_GRAPHICS_WINDOW)
 	struct MANAGER(Graphics_window) *graphics_window_manager;
 #endif /* defined (USE_CMGUI_GRAPHICS_WINDOW) */
@@ -362,10 +362,10 @@ DESCRIPTION :
 	struct Light *default_light;
 	Light_model_module *light_model_module;
 	struct Light_model *default_light_model;
-	struct Cmiss_graphics_material_module *material_module;
-	struct Cmiss_graphics_filter_module *filter_module;
-	struct Cmiss_font *default_font;
-	struct Cmiss_tessellation_module *tessellation_module;
+	struct cmzn_graphics_material_module *material_module;
+	struct cmzn_graphics_filter_module *filter_module;
+	struct cmzn_font *default_font;
+	struct cmzn_tessellation_module *tessellation_module;
 	struct MANAGER(Curve) *curve_manager;
 	struct MANAGER(Scene) *scene_manager;
 	struct Scene *default_scene;
@@ -388,8 +388,8 @@ DESCRIPTION :
 	struct Region_tree_viewer *region_tree_viewer;
 	struct Spectrum_editor_dialog *spectrum_editor_dialog;
 #endif /* defined (WX_USER_INTERFACE) */
-	struct Cmiss_graphics_module *graphics_module;
-}; /* struct Cmiss_command_data */
+	struct cmzn_graphics_module *graphics_module;
+}; /* struct cmzn_command_data */
 
 typedef struct
 /*******************************************************************************
@@ -444,7 +444,7 @@ to change the interactive tool settings.
  * and path are extracted, and replaced with filename only.
  */
 void CMISS_set_directory_and_filename_WIN32(char **filename_address,
-	struct Cmiss_command_data *command_data)
+	struct cmzn_command_data *command_data)
 {
 	if ((!filename_address) || (!(*filename_address)) || (!command_data))
 	{
@@ -479,7 +479,7 @@ void CMISS_set_directory_and_filename_WIN32(char **filename_address,
 
 #endif /*(WX_USER_INTERFACE)*/
 
-static int set_command_prompt(const char *prompt, struct Cmiss_command_data *command_data)
+static int set_command_prompt(const char *prompt, struct cmzn_command_data *command_data)
 /*******************************************************************************
 LAST MODIFIED : 26 June 2002
 
@@ -528,18 +528,18 @@ DESCRIPTION :
 	FE_value time;
 	int data_offset, element_offset, face_offset, line_offset, node_offset,
 		return_code;
-	struct Cmiss_command_data *command_data;
-	struct Cmiss_region *region;
+	struct cmzn_command_data *command_data;
+	struct cmzn_region *region;
 	struct Computed_field *sort_by_field;
 	struct FE_region *data_fe_region, *fe_region;
 	struct Option_table *option_table;
 
 	ENTER(gfx_change_identifier);
 	USE_PARAMETER(dummy_to_be_modified);
-	if (state && (command_data = (struct Cmiss_command_data *)command_data_void))
+	if (state && (command_data = (struct cmzn_command_data *)command_data_void))
 	{
-		Cmiss_region_id region = Cmiss_region_access(command_data->root_region);
-		Cmiss_field_group_id group = 0;
+		cmzn_region_id region = cmzn_region_access(command_data->root_region);
+		cmzn_field_group_id group = 0;
 		data_flag = 0;
 		data_offset = 0;
 		element_flag = 0;
@@ -587,18 +587,18 @@ DESCRIPTION :
 
 		if (0 != (return_code = Option_table_multi_parse(option_table, state)))
 		{
-			if (region && (fe_region = Cmiss_region_get_FE_region(region)))
+			if (region && (fe_region = cmzn_region_get_FE_region(region)))
 			{
 				if (sort_by_field_name)
 				{
-					Cmiss_field_module_id field_module = Cmiss_region_get_field_module(region);
-					sort_by_field = Cmiss_field_module_find_field_by_name(field_module,
+					cmzn_field_module_id field_module = cmzn_region_get_field_module(region);
+					sort_by_field = cmzn_field_module_find_field_by_name(field_module,
 						sort_by_field_name);
 					if (sort_by_field)
 					{
 						if (!Computed_field_has_numerical_components(sort_by_field, NULL))
 						{
-							Cmiss_field_destroy(&sort_by_field);
+							cmzn_field_destroy(&sort_by_field);
 							return_code = 0;
 							display_message(ERROR_MESSAGE,
 								"gfx_change_identifier.  Sort by field does not have numerical components");
@@ -610,29 +610,29 @@ DESCRIPTION :
 						display_message(ERROR_MESSAGE,
 							"gfx_change_identifier.  Sort by field cannot be found");
 					}
-					Cmiss_field_module_destroy(&field_module);
+					cmzn_field_module_destroy(&field_module);
 				}
 				if (return_code)
 				{
 					FE_region_begin_change(fe_region);
 					int highest_dimension = FE_region_get_highest_dimension(fe_region);
-					Cmiss_field_module_id field_module = Cmiss_region_get_field_module(region);
+					cmzn_field_module_id field_module = cmzn_region_get_field_module(region);
 					if (element_flag)
 					{
 						if (highest_dimension > 0)
 						{
-							Cmiss_mesh_id mesh = Cmiss_field_module_find_mesh_by_dimension(
+							cmzn_mesh_id mesh = cmzn_field_module_find_mesh_by_dimension(
 								field_module,highest_dimension);
-							Cmiss_field_element_group_id element_group =
-								Cmiss_field_group_get_element_group(group, mesh);
+							cmzn_field_element_group_id element_group =
+								cmzn_field_group_get_element_group(group, mesh);
 							if (!FE_region_change_element_identifiers(fe_region,
 								highest_dimension, element_offset, sort_by_field, time,
 								element_group))
 							{
 								return_code = 0;
 							}
-							Cmiss_field_element_group_destroy(&element_group);
-							Cmiss_mesh_destroy(&mesh);
+							cmzn_field_element_group_destroy(&element_group);
+							cmzn_mesh_destroy(&mesh);
 						}
 						else
 						{
@@ -642,56 +642,56 @@ DESCRIPTION :
 					}
 					if (face_flag && (highest_dimension > 2))
 					{
-						Cmiss_mesh_id mesh = Cmiss_field_module_find_mesh_by_dimension(
+						cmzn_mesh_id mesh = cmzn_field_module_find_mesh_by_dimension(
 							field_module,2);
-						Cmiss_field_element_group_id element_group =
-							Cmiss_field_group_get_element_group(group, mesh);
+						cmzn_field_element_group_id element_group =
+							cmzn_field_group_get_element_group(group, mesh);
 						if (!FE_region_change_element_identifiers(fe_region,
 							/*dimension*/2,	face_offset, sort_by_field, time,
 							element_group))
 						{
 							return_code = 0;
 						}
-						Cmiss_field_element_group_destroy(&element_group);
-						Cmiss_mesh_destroy(&mesh);
+						cmzn_field_element_group_destroy(&element_group);
+						cmzn_mesh_destroy(&mesh);
 					}
 					if (line_flag && (highest_dimension > 1))
 					{
-						Cmiss_mesh_id mesh = Cmiss_field_module_find_mesh_by_dimension(
+						cmzn_mesh_id mesh = cmzn_field_module_find_mesh_by_dimension(
 							field_module,1);
-						Cmiss_field_element_group_id element_group =
-							Cmiss_field_group_get_element_group(group, mesh);
+						cmzn_field_element_group_id element_group =
+							cmzn_field_group_get_element_group(group, mesh);
 						if (!FE_region_change_element_identifiers(fe_region,
 							/*dimension*/1, line_offset, sort_by_field, time,
 							element_group))
 						{
 							return_code = 0;
 						}
-						Cmiss_field_element_group_destroy(&element_group);
-						Cmiss_mesh_destroy(&mesh);
+						cmzn_field_element_group_destroy(&element_group);
+						cmzn_mesh_destroy(&mesh);
 					}
 					if (node_flag)
 					{
-						Cmiss_nodeset_id nodeset = Cmiss_field_module_find_nodeset_by_name(
+						cmzn_nodeset_id nodeset = cmzn_field_module_find_nodeset_by_name(
 							field_module, "nodes");
-						Cmiss_field_node_group_id node_group =
-							Cmiss_field_group_get_node_group(group, nodeset);
+						cmzn_field_node_group_id node_group =
+							cmzn_field_group_get_node_group(group, nodeset);
 						if (!FE_region_change_node_identifiers(fe_region,
 							node_offset, sort_by_field, time, node_group))
 						{
 							return_code = 0;
 						}
-						Cmiss_field_node_group_destroy(&node_group);
-						Cmiss_nodeset_destroy(&nodeset);
+						cmzn_field_node_group_destroy(&node_group);
+						cmzn_nodeset_destroy(&nodeset);
 					}
 					if (data_flag)
 					{
 						if (NULL != (data_fe_region=FE_region_get_data_FE_region(fe_region)))
 						{
-							Cmiss_nodeset_id nodeset = Cmiss_field_module_find_nodeset_by_name(
+							cmzn_nodeset_id nodeset = cmzn_field_module_find_nodeset_by_name(
 								field_module, "datapoints");
-							Cmiss_field_node_group_id node_group =
-								Cmiss_field_group_get_node_group(group, nodeset);
+							cmzn_field_node_group_id node_group =
+								cmzn_field_group_get_node_group(group, nodeset);
 							FE_region_begin_change(data_fe_region);
 							if (!FE_region_change_node_identifiers(data_fe_region,
 								data_offset, sort_by_field, time, node_group))
@@ -699,8 +699,8 @@ DESCRIPTION :
 								return_code = 0;
 							}
 							FE_region_end_change(data_fe_region);
-							Cmiss_field_node_group_destroy(&node_group);
-							Cmiss_nodeset_destroy(&nodeset);
+							cmzn_field_node_group_destroy(&node_group);
+							cmzn_nodeset_destroy(&nodeset);
 						}
 						else
 						{
@@ -709,7 +709,7 @@ DESCRIPTION :
 							return_code = 0;
 						}
 					}
-					Cmiss_field_module_destroy(&field_module);
+					cmzn_field_module_destroy(&field_module);
 					FE_region_end_change(fe_region);
 				}
 			}
@@ -729,8 +729,8 @@ DESCRIPTION :
 		{
 			DEALLOCATE(sort_by_field_name);
 		}
-		Cmiss_field_group_destroy(&group);
-		Cmiss_region_destroy(&region);
+		cmzn_field_group_destroy(&group);
+		cmzn_region_destroy(&region);
 	}
 	else
 	{
@@ -771,22 +771,22 @@ static int gfx_create_colour_bar(struct Parse_state *state,
 	void *dummy_to_be_modified,void *command_data_void)
 {
 	int return_code;
-	struct Cmiss_command_data *command_data;
+	struct cmzn_command_data *command_data;
 	struct Option_table *option_table;
 
 	ENTER(gfx_create_colour_bar);
 	USE_PARAMETER(dummy_to_be_modified);
 	if (state)
 	{
-		if (NULL != (command_data = (struct Cmiss_command_data *)command_data_void))
+		if (NULL != (command_data = (struct cmzn_command_data *)command_data_void))
 		{
 			/* initialise defaults */
 			char *glyph_name = duplicate_string("colour_bar");
 			char *number_format = duplicate_string("%+.4e");
 			/* must access it now, because we deaccess it later */
-			Cmiss_graphics_material_id label_material = Cmiss_graphics_material_module_get_default_material(command_data->material_module);
-			Cmiss_graphics_material_id material = 0;
-			Cmiss_spectrum_id spectrum = ACCESS(Spectrum)(command_data->default_spectrum);
+			cmzn_graphics_material_id label_material = cmzn_graphics_material_module_get_default_material(command_data->material_module);
+			cmzn_graphics_material_id material = 0;
+			cmzn_spectrum_id spectrum = ACCESS(Spectrum)(command_data->default_spectrum);
 			int number_of_components=3;
 			double bar_centre[3] = { -0.9, 0.0, 0.5 };
 			double bar_axis[3] = { 0.0, 1.0, 0.0 };
@@ -848,24 +848,24 @@ static int gfx_create_colour_bar(struct Parse_state *state,
 					display_message(WARNING_MESSAGE,
 						"gfx_create_colour_bar.  material option is not used; material is now taken from g_element graphic");
 				}
-				Cmiss_glyph_module_begin_change(command_data->glyph_module);
-				Cmiss_glyph_id glyph = Cmiss_glyph_module_find_glyph_by_name(command_data->glyph_module, glyph_name);
-				Cmiss_glyph_colour_bar_id colour_bar = 0;
+				cmzn_glyph_module_begin_change(command_data->glyph_module);
+				cmzn_glyph_id glyph = cmzn_glyph_module_find_glyph_by_name(command_data->glyph_module, glyph_name);
+				cmzn_glyph_colour_bar_id colour_bar = 0;
 				if (glyph)
 				{
-					colour_bar = Cmiss_glyph_cast_colour_bar(glyph);
+					colour_bar = cmzn_glyph_cast_colour_bar(glyph);
 					if (0 == colour_bar)
 					{
 						display_message(ERROR_MESSAGE, "Glyph '%s' is not a colour bar", glyph_name);
 						return_code = 0;
 					}
-					Cmiss_glyph_destroy(&glyph);
+					cmzn_glyph_destroy(&glyph);
 				}
 				else
 				{
-					colour_bar = Cmiss_glyph_module_create_colour_bar(command_data->glyph_module, spectrum);
-					Cmiss_glyph_set_name(Cmiss_glyph_colour_bar_base_cast(colour_bar), glyph_name);
-					Cmiss_glyph_set_managed(Cmiss_glyph_colour_bar_base_cast(colour_bar), true);
+					colour_bar = cmzn_glyph_module_create_colour_bar(command_data->glyph_module, spectrum);
+					cmzn_glyph_set_name(cmzn_glyph_colour_bar_base_cast(colour_bar), glyph_name);
+					cmzn_glyph_set_managed(cmzn_glyph_colour_bar_base_cast(colour_bar), true);
 				}
 				if (colour_bar)
 				{
@@ -885,21 +885,21 @@ static int gfx_create_colour_bar(struct Parse_state *state,
 							side_axis[i] *= (bar_radius * 2.0 / magnitude);
 						}
 					}
-					Cmiss_glyph_colour_bar_set_axis(colour_bar, 3, bar_axis);
-					Cmiss_glyph_colour_bar_set_centre(colour_bar, 3, bar_centre);
-					Cmiss_glyph_colour_bar_set_extend_length(colour_bar, extend_length);
-					Cmiss_glyph_colour_bar_set_label_divisions(colour_bar, tick_divisions);
-					Cmiss_glyph_colour_bar_set_label_material(colour_bar, label_material);
-					Cmiss_glyph_colour_bar_set_number_format(colour_bar, number_format);
-					Cmiss_glyph_colour_bar_set_side_axis(colour_bar, 3, side_axis);
-					Cmiss_glyph_colour_bar_set_tick_length(colour_bar, tick_length);
-					Cmiss_glyph_colour_bar_destroy(&colour_bar);
+					cmzn_glyph_colour_bar_set_axis(colour_bar, 3, bar_axis);
+					cmzn_glyph_colour_bar_set_centre(colour_bar, 3, bar_centre);
+					cmzn_glyph_colour_bar_set_extend_length(colour_bar, extend_length);
+					cmzn_glyph_colour_bar_set_label_divisions(colour_bar, tick_divisions);
+					cmzn_glyph_colour_bar_set_label_material(colour_bar, label_material);
+					cmzn_glyph_colour_bar_set_number_format(colour_bar, number_format);
+					cmzn_glyph_colour_bar_set_side_axis(colour_bar, 3, side_axis);
+					cmzn_glyph_colour_bar_set_tick_length(colour_bar, tick_length);
+					cmzn_glyph_colour_bar_destroy(&colour_bar);
 				}
-				Cmiss_glyph_module_end_change(command_data->glyph_module);
+				cmzn_glyph_module_end_change(command_data->glyph_module);
 			} /* parse error, help */
 			DESTROY(Option_table)(&option_table);
-			Cmiss_graphics_material_destroy(&label_material);
-			Cmiss_graphics_material_destroy(&material);
+			cmzn_graphics_material_destroy(&label_material);
+			cmzn_graphics_material_destroy(&material);
 			DEACCESS(Spectrum)(&spectrum);
 			DEALLOCATE(glyph_name);
 			DEALLOCATE(number_format);
@@ -958,45 +958,45 @@ struct Interpreter_command_element_selection_callback_data
  * @param manage_faces  Set if faces are added/removed with parent elements.
  * Faces are only removed if not in use by any other elements in group.
  */
-static int process_modify_element_group(Cmiss_field_group_id group,
-	Cmiss_region_id region, int dimension, char add_flag,
-	Cmiss_field_id conditional_field, Cmiss_field_group_id from_group,
+static int process_modify_element_group(cmzn_field_group_id group,
+	cmzn_region_id region, int dimension, char add_flag,
+	cmzn_field_id conditional_field, cmzn_field_group_id from_group,
 	Multi_range *element_ranges, char selected_flag, FE_value time,
 	int manage_nodes, int manage_faces)
 {
 	if (!group || !region)
 		return 0;
 	int return_code = 1;
-	Cmiss_field_module_id field_module = Cmiss_region_get_field_module(region);
-	Cmiss_mesh_id master_mesh = Cmiss_field_module_find_mesh_by_dimension(field_module, dimension);
+	cmzn_field_module_id field_module = cmzn_region_get_field_module(region);
+	cmzn_mesh_id master_mesh = cmzn_field_module_find_mesh_by_dimension(field_module, dimension);
 	char remove_flag = !add_flag;
-	Cmiss_mesh_group_id selection_mesh_group = 0;
+	cmzn_mesh_group_id selection_mesh_group = 0;
 	if (selected_flag)
 	{
-		Cmiss_scene *scene = Cmiss_region_get_scene_internal(region);
-		Cmiss_field_group_id selection_group = Cmiss_scene_get_selection_group(scene);
+		cmzn_scene *scene = cmzn_region_get_scene_internal(region);
+		cmzn_field_group_id selection_group = cmzn_scene_get_selection_group(scene);
 		if (selection_group)
 		{
-			Cmiss_field_element_group_id selection_element_group =
-				Cmiss_field_group_get_element_group(selection_group, master_mesh);
+			cmzn_field_element_group_id selection_element_group =
+				cmzn_field_group_get_element_group(selection_group, master_mesh);
 			if (selection_element_group)
 			{
-				selection_mesh_group = Cmiss_field_element_group_get_mesh(selection_element_group);
-				Cmiss_field_element_group_destroy(&selection_element_group);
+				selection_mesh_group = cmzn_field_element_group_get_mesh(selection_element_group);
+				cmzn_field_element_group_destroy(&selection_element_group);
 			}
-			Cmiss_field_group_destroy(&selection_group);
+			cmzn_field_group_destroy(&selection_group);
 		}
-		Cmiss_scene_destroy(&scene);
+		cmzn_scene_destroy(&scene);
 	}
-	Cmiss_mesh_group_id from_mesh_group = 0;
+	cmzn_mesh_group_id from_mesh_group = 0;
 	if (from_group)
 	{
-		Cmiss_field_element_group_id from_element_group =
-			Cmiss_field_group_get_element_group(from_group, master_mesh);
+		cmzn_field_element_group_id from_element_group =
+			cmzn_field_group_get_element_group(from_group, master_mesh);
 		if (from_element_group)
 		{
-			from_mesh_group = Cmiss_field_element_group_get_mesh(from_element_group);
-			Cmiss_field_element_group_destroy(&from_element_group);
+			from_mesh_group = cmzn_field_element_group_get_mesh(from_element_group);
+			cmzn_field_element_group_destroy(&from_element_group);
 		}
 
 	}
@@ -1004,100 +1004,100 @@ static int process_modify_element_group(Cmiss_field_group_id group,
 	int elements_not_processed = 0;
 	if (((!selected_flag) || selection_mesh_group) && ((!from_group) || from_mesh_group))
 	{
-		Cmiss_field_module_begin_change(field_module);
-		Cmiss_field_element_group_id modify_element_group = Cmiss_field_group_get_element_group(group, master_mesh);
+		cmzn_field_module_begin_change(field_module);
+		cmzn_field_element_group_id modify_element_group = cmzn_field_group_get_element_group(group, master_mesh);
 		if (!modify_element_group)
-			modify_element_group = Cmiss_field_group_create_element_group(group, master_mesh);
-		Cmiss_mesh_group_id modify_mesh_group = Cmiss_field_element_group_get_mesh(modify_element_group);
-		objects_processed += Cmiss_mesh_get_size(Cmiss_mesh_group_base_cast(modify_mesh_group));
-		Cmiss_field_element_group_destroy(&modify_element_group);
-		Cmiss_field_cache_id cache = Cmiss_field_module_create_cache(field_module);
-		Cmiss_field_cache_set_time(cache, time);
+			modify_element_group = cmzn_field_group_create_element_group(group, master_mesh);
+		cmzn_mesh_group_id modify_mesh_group = cmzn_field_element_group_get_mesh(modify_element_group);
+		objects_processed += cmzn_mesh_get_size(cmzn_mesh_group_base_cast(modify_mesh_group));
+		cmzn_field_element_group_destroy(&modify_element_group);
+		cmzn_field_cache_id cache = cmzn_field_module_create_cache(field_module);
+		cmzn_field_cache_set_time(cache, time);
 
-		Cmiss_nodeset_group_id modify_nodeset_group = 0;
-		Cmiss_field_node_group_id remove_node_group = 0;
-		Cmiss_nodeset_group_id remove_nodeset_group = 0;
+		cmzn_nodeset_group_id modify_nodeset_group = 0;
+		cmzn_field_node_group_id remove_node_group = 0;
+		cmzn_nodeset_group_id remove_nodeset_group = 0;
 		if (manage_nodes)
 		{
-			Cmiss_nodeset_id master_nodeset = Cmiss_field_module_find_nodeset_by_domain_type(field_module, CMISS_FIELD_DOMAIN_NODES);
-			Cmiss_field_node_group_id modify_node_group = Cmiss_field_group_get_node_group(group, master_nodeset);
+			cmzn_nodeset_id master_nodeset = cmzn_field_module_find_nodeset_by_domain_type(field_module, CMISS_FIELD_DOMAIN_NODES);
+			cmzn_field_node_group_id modify_node_group = cmzn_field_group_get_node_group(group, master_nodeset);
 			if ((!modify_node_group) && add_flag)
-				modify_node_group = Cmiss_field_group_create_node_group(group, master_nodeset);
+				modify_node_group = cmzn_field_group_create_node_group(group, master_nodeset);
 			if (modify_node_group)
 			{
-				modify_nodeset_group = Cmiss_field_node_group_get_nodeset(modify_node_group);
-				objects_processed += Cmiss_nodeset_get_size(Cmiss_nodeset_group_base_cast(modify_nodeset_group));
+				modify_nodeset_group = cmzn_field_node_group_get_nodeset(modify_node_group);
+				objects_processed += cmzn_nodeset_get_size(cmzn_nodeset_group_base_cast(modify_nodeset_group));
 				if (remove_flag)
 				{
-					Cmiss_field_id remove_node_group_field = Cmiss_field_module_create_node_group(field_module, master_nodeset);
-					remove_node_group = Cmiss_field_cast_node_group(remove_node_group_field);
-					remove_nodeset_group = Cmiss_field_node_group_get_nodeset(remove_node_group);
-					Cmiss_field_destroy(&remove_node_group_field);
+					cmzn_field_id remove_node_group_field = cmzn_field_module_create_node_group(field_module, master_nodeset);
+					remove_node_group = cmzn_field_cast_node_group(remove_node_group_field);
+					remove_nodeset_group = cmzn_field_node_group_get_nodeset(remove_node_group);
+					cmzn_field_destroy(&remove_node_group_field);
 				}
-				Cmiss_field_node_group_destroy(&modify_node_group);
+				cmzn_field_node_group_destroy(&modify_node_group);
 			}
-			Cmiss_nodeset_destroy(&master_nodeset);
+			cmzn_nodeset_destroy(&master_nodeset);
 		}
-		Cmiss_nodeset_group_id working_nodeset_group = add_flag ? modify_nodeset_group : remove_nodeset_group;
+		cmzn_nodeset_group_id working_nodeset_group = add_flag ? modify_nodeset_group : remove_nodeset_group;
 
-		Cmiss_mesh_id master_face_mesh = 0;
-		Cmiss_mesh_group_id modify_face_mesh_group = 0;
-		Cmiss_field_element_group_id working_face_element_group = 0;
-		Cmiss_mesh_group_id working_face_mesh_group = 0;
+		cmzn_mesh_id master_face_mesh = 0;
+		cmzn_mesh_group_id modify_face_mesh_group = 0;
+		cmzn_field_element_group_id working_face_element_group = 0;
+		cmzn_mesh_group_id working_face_mesh_group = 0;
 		if (manage_faces && (1 < dimension))
 		{
-			master_face_mesh = Cmiss_field_module_find_mesh_by_dimension(field_module, dimension - 1);
-			Cmiss_field_element_group_id modify_face_element_group = Cmiss_field_group_get_element_group(group, master_face_mesh);
+			master_face_mesh = cmzn_field_module_find_mesh_by_dimension(field_module, dimension - 1);
+			cmzn_field_element_group_id modify_face_element_group = cmzn_field_group_get_element_group(group, master_face_mesh);
 			if ((!modify_face_element_group) && add_flag)
-				modify_face_element_group = Cmiss_field_group_create_element_group(group, master_face_mesh);
+				modify_face_element_group = cmzn_field_group_create_element_group(group, master_face_mesh);
 			if (modify_face_element_group)
 			{
-				modify_face_mesh_group = Cmiss_field_element_group_get_mesh(modify_face_element_group);
-				objects_processed += Cmiss_mesh_get_size(Cmiss_mesh_group_base_cast(modify_face_mesh_group));
-				Cmiss_field_id working_face_element_group_field = Cmiss_field_module_create_element_group(field_module, master_face_mesh);
-				working_face_element_group = Cmiss_field_cast_element_group(working_face_element_group_field);
-				working_face_mesh_group = Cmiss_field_element_group_get_mesh(working_face_element_group);
-				Cmiss_field_destroy(&working_face_element_group_field);
-				Cmiss_field_element_group_destroy(&modify_face_element_group);
+				modify_face_mesh_group = cmzn_field_element_group_get_mesh(modify_face_element_group);
+				objects_processed += cmzn_mesh_get_size(cmzn_mesh_group_base_cast(modify_face_mesh_group));
+				cmzn_field_id working_face_element_group_field = cmzn_field_module_create_element_group(field_module, master_face_mesh);
+				working_face_element_group = cmzn_field_cast_element_group(working_face_element_group_field);
+				working_face_mesh_group = cmzn_field_element_group_get_mesh(working_face_element_group);
+				cmzn_field_destroy(&working_face_element_group_field);
+				cmzn_field_element_group_destroy(&modify_face_element_group);
 			}
 		}
 
-		Cmiss_mesh_id iteration_mesh = master_mesh;
-		Cmiss_mesh_id selection_mesh = Cmiss_mesh_group_base_cast(selection_mesh_group);
-		Cmiss_mesh_id from_mesh = Cmiss_mesh_group_base_cast(from_mesh_group);
-		if (selected_flag && selection_mesh && !Cmiss_mesh_match(selection_mesh, Cmiss_mesh_group_base_cast(modify_mesh_group)))
+		cmzn_mesh_id iteration_mesh = master_mesh;
+		cmzn_mesh_id selection_mesh = cmzn_mesh_group_base_cast(selection_mesh_group);
+		cmzn_mesh_id from_mesh = cmzn_mesh_group_base_cast(from_mesh_group);
+		if (selected_flag && selection_mesh && !cmzn_mesh_match(selection_mesh, cmzn_mesh_group_base_cast(modify_mesh_group)))
 		{
 			iteration_mesh = selection_mesh;
 		}
-		if (from_mesh && (!Cmiss_mesh_match(from_mesh, Cmiss_mesh_group_base_cast(modify_mesh_group))) &&
-			(Cmiss_mesh_get_size(from_mesh) < Cmiss_mesh_get_size(iteration_mesh)))
+		if (from_mesh && (!cmzn_mesh_match(from_mesh, cmzn_mesh_group_base_cast(modify_mesh_group))) &&
+			(cmzn_mesh_get_size(from_mesh) < cmzn_mesh_get_size(iteration_mesh)))
 		{
 			iteration_mesh = from_mesh;
 		}
-		Cmiss_element_iterator_id iter = Cmiss_mesh_create_element_iterator(iteration_mesh);
-		Cmiss_element_id element = 0;
-		while (NULL != (element = Cmiss_element_iterator_next_non_access(iter)))
+		cmzn_element_iterator_id iter = cmzn_mesh_create_element_iterator(iteration_mesh);
+		cmzn_element_id element = 0;
+		while (NULL != (element = cmzn_element_iterator_next_non_access(iter)))
 		{
-			if (element_ranges && !Multi_range_is_value_in_range(element_ranges, Cmiss_element_get_identifier(element)))
+			if (element_ranges && !Multi_range_is_value_in_range(element_ranges, cmzn_element_get_identifier(element)))
 				continue;
-			if (selection_mesh && (selection_mesh != iteration_mesh) && !Cmiss_mesh_contains_element(selection_mesh, element))
+			if (selection_mesh && (selection_mesh != iteration_mesh) && !cmzn_mesh_contains_element(selection_mesh, element))
 				continue;
-			if (from_mesh && (from_mesh != iteration_mesh) && !Cmiss_mesh_contains_element(from_mesh, element))
+			if (from_mesh && (from_mesh != iteration_mesh) && !cmzn_mesh_contains_element(from_mesh, element))
 				continue;
 			if (conditional_field)
 			{
-				Cmiss_field_cache_set_element(cache, element);
-				if (!Cmiss_field_evaluate_boolean(conditional_field, cache))
+				cmzn_field_cache_set_element(cache, element);
+				if (!cmzn_field_evaluate_boolean(conditional_field, cache))
 					continue;
 			}
 			if (add_flag)
 			{
-				if (!Cmiss_mesh_contains_element(Cmiss_mesh_group_base_cast(modify_mesh_group), element))
+				if (!cmzn_mesh_contains_element(cmzn_mesh_group_base_cast(modify_mesh_group), element))
 				{
-					if (!Cmiss_mesh_group_add_element(modify_mesh_group, element))
+					if (!cmzn_mesh_group_add_element(modify_mesh_group, element))
 					{
 						display_message(ERROR_MESSAGE,
-							"gfx modify egroup:  Could not add element %d", Cmiss_element_get_identifier(element));
+							"gfx modify egroup:  Could not add element %d", cmzn_element_get_identifier(element));
 						return_code = 0;
 						break;
 					}
@@ -1105,12 +1105,12 @@ static int process_modify_element_group(Cmiss_field_group_id group,
 			}
 			else
 			{
-				if (Cmiss_mesh_contains_element(Cmiss_mesh_group_base_cast(modify_mesh_group), element))
+				if (cmzn_mesh_contains_element(cmzn_mesh_group_base_cast(modify_mesh_group), element))
 				{
-					if (!Cmiss_mesh_group_remove_element(modify_mesh_group, element))
+					if (!cmzn_mesh_group_remove_element(modify_mesh_group, element))
 					{
 						display_message(ERROR_MESSAGE,
-							"gfx modify egroup:  Could not remove element %d", Cmiss_element_get_identifier(element));
+							"gfx modify egroup:  Could not remove element %d", cmzn_element_get_identifier(element));
 						return_code = 0;
 						break;
 					}
@@ -1118,115 +1118,115 @@ static int process_modify_element_group(Cmiss_field_group_id group,
 			}
 			if (working_nodeset_group)
 			{
-				Cmiss_nodeset_group_add_element_nodes(working_nodeset_group, element);
+				cmzn_nodeset_group_add_element_nodes(working_nodeset_group, element);
 			}
 			if (working_face_mesh_group)
 			{
-				Cmiss_mesh_group_add_element_faces(working_face_mesh_group, element);
+				cmzn_mesh_group_add_element_faces(working_face_mesh_group, element);
 			}
 		}
-		Cmiss_element_iterator_destroy(&iter);
+		cmzn_element_iterator_destroy(&iter);
 
 		if (remove_flag && (remove_nodeset_group || working_face_mesh_group))
 		{
 			// don't include faces and nodes still used by elements remaining in modify_mesh_group
 			// Note: ignores nodes for other dimensions
-			iter = Cmiss_mesh_create_element_iterator(Cmiss_mesh_group_base_cast(modify_mesh_group));
-				while (NULL != (element = Cmiss_element_iterator_next_non_access(iter)))
+			iter = cmzn_mesh_create_element_iterator(cmzn_mesh_group_base_cast(modify_mesh_group));
+				while (NULL != (element = cmzn_element_iterator_next_non_access(iter)))
 				{
 				if (remove_nodeset_group)
 				{
-					Cmiss_nodeset_group_remove_element_nodes(remove_nodeset_group, element);
+					cmzn_nodeset_group_remove_element_nodes(remove_nodeset_group, element);
 				}
 				if (working_face_mesh_group)
 				{
-					Cmiss_mesh_group_remove_element_faces(working_face_mesh_group, element);
+					cmzn_mesh_group_remove_element_faces(working_face_mesh_group, element);
 				}
 				}
-				Cmiss_element_iterator_destroy(&iter);
+				cmzn_element_iterator_destroy(&iter);
 				if (remove_nodeset_group)
 				{
-				Cmiss_nodeset_group_remove_nodes_conditional(modify_nodeset_group,
-					Cmiss_field_node_group_base_cast(remove_node_group));
+				cmzn_nodeset_group_remove_nodes_conditional(modify_nodeset_group,
+					cmzn_field_node_group_base_cast(remove_node_group));
 				}
 		}
 		if (working_face_mesh_group)
 		{
-			Cmiss_mesh_group_id modify_line_mesh_group = 0;
-			Cmiss_field_element_group_id remove_line_element_group = 0;
-			Cmiss_mesh_group_id remove_line_mesh_group = 0;
+			cmzn_mesh_group_id modify_line_mesh_group = 0;
+			cmzn_field_element_group_id remove_line_element_group = 0;
+			cmzn_mesh_group_id remove_line_mesh_group = 0;
 			if (2 < dimension)
 			{
-				Cmiss_mesh_id master_line_mesh = Cmiss_field_module_find_mesh_by_dimension(field_module, dimension - 2);
-				Cmiss_field_element_group_id modify_line_element_group = Cmiss_field_group_get_element_group(group, master_line_mesh);
+				cmzn_mesh_id master_line_mesh = cmzn_field_module_find_mesh_by_dimension(field_module, dimension - 2);
+				cmzn_field_element_group_id modify_line_element_group = cmzn_field_group_get_element_group(group, master_line_mesh);
 				if (add_flag && !modify_line_element_group)
-					modify_line_element_group = Cmiss_field_group_create_element_group(group, master_line_mesh);
+					modify_line_element_group = cmzn_field_group_create_element_group(group, master_line_mesh);
 				if (modify_line_element_group)
 				{
-					modify_line_mesh_group = Cmiss_field_element_group_get_mesh(modify_line_element_group);
-					objects_processed += Cmiss_mesh_get_size(Cmiss_mesh_group_base_cast(modify_line_mesh_group));
+					modify_line_mesh_group = cmzn_field_element_group_get_mesh(modify_line_element_group);
+					objects_processed += cmzn_mesh_get_size(cmzn_mesh_group_base_cast(modify_line_mesh_group));
 					if (remove_flag)
 					{
-						Cmiss_field_id remove_line_element_group_field = Cmiss_field_module_create_element_group(field_module, master_line_mesh);
-						remove_line_element_group = Cmiss_field_cast_element_group(remove_line_element_group_field);
-						remove_line_mesh_group = Cmiss_field_element_group_get_mesh(remove_line_element_group);
-						Cmiss_field_destroy(&remove_line_element_group_field);
+						cmzn_field_id remove_line_element_group_field = cmzn_field_module_create_element_group(field_module, master_line_mesh);
+						remove_line_element_group = cmzn_field_cast_element_group(remove_line_element_group_field);
+						remove_line_mesh_group = cmzn_field_element_group_get_mesh(remove_line_element_group);
+						cmzn_field_destroy(&remove_line_element_group_field);
 					}
-					Cmiss_field_element_group_destroy(&modify_line_element_group);
+					cmzn_field_element_group_destroy(&modify_line_element_group);
 				}
-				Cmiss_mesh_destroy(&master_line_mesh);
+				cmzn_mesh_destroy(&master_line_mesh);
 			}
-			Cmiss_mesh_group_id working_line_mesh_group = add_flag ? modify_line_mesh_group : remove_line_mesh_group;
-			iter = Cmiss_mesh_create_element_iterator(Cmiss_mesh_group_base_cast(working_face_mesh_group));
-			while (NULL != (element = Cmiss_element_iterator_next_non_access(iter)))
+			cmzn_mesh_group_id working_line_mesh_group = add_flag ? modify_line_mesh_group : remove_line_mesh_group;
+			iter = cmzn_mesh_create_element_iterator(cmzn_mesh_group_base_cast(working_face_mesh_group));
+			while (NULL != (element = cmzn_element_iterator_next_non_access(iter)))
 			{
 				if (add_flag)
 				{
-					Cmiss_mesh_group_add_element(modify_face_mesh_group, element);
+					cmzn_mesh_group_add_element(modify_face_mesh_group, element);
 				}
 				else
 				{
-					Cmiss_mesh_group_remove_element(modify_face_mesh_group, element);
+					cmzn_mesh_group_remove_element(modify_face_mesh_group, element);
 				}
 				if (working_line_mesh_group)
 				{
-					Cmiss_mesh_group_add_element_faces(working_line_mesh_group, element);
+					cmzn_mesh_group_add_element_faces(working_line_mesh_group, element);
 				}
 			}
-			Cmiss_element_iterator_destroy(&iter);
+			cmzn_element_iterator_destroy(&iter);
 			if (remove_line_element_group)
 			{
-				Cmiss_mesh_group_remove_elements_conditional(modify_line_mesh_group,
-					Cmiss_field_element_group_base_cast(remove_line_element_group));
+				cmzn_mesh_group_remove_elements_conditional(modify_line_mesh_group,
+					cmzn_field_element_group_base_cast(remove_line_element_group));
 			}
-			Cmiss_mesh_group_destroy(&remove_line_mesh_group);
-			Cmiss_field_element_group_destroy(&remove_line_element_group);
+			cmzn_mesh_group_destroy(&remove_line_mesh_group);
+			cmzn_field_element_group_destroy(&remove_line_element_group);
 			if (modify_line_mesh_group)
 			{
-				objects_processed -= Cmiss_mesh_get_size(Cmiss_mesh_group_base_cast(modify_line_mesh_group));
-				Cmiss_mesh_group_destroy(&modify_line_mesh_group);
+				objects_processed -= cmzn_mesh_get_size(cmzn_mesh_group_base_cast(modify_line_mesh_group));
+				cmzn_mesh_group_destroy(&modify_line_mesh_group);
 			}
 		}
 
-		Cmiss_mesh_group_destroy(&working_face_mesh_group);
-		Cmiss_field_element_group_destroy(&working_face_element_group);
+		cmzn_mesh_group_destroy(&working_face_mesh_group);
+		cmzn_field_element_group_destroy(&working_face_element_group);
 		if (modify_face_mesh_group)
 		{
-			objects_processed -= Cmiss_mesh_get_size(Cmiss_mesh_group_base_cast(modify_face_mesh_group));
-			Cmiss_mesh_group_destroy(&modify_face_mesh_group);
+			objects_processed -= cmzn_mesh_get_size(cmzn_mesh_group_base_cast(modify_face_mesh_group));
+			cmzn_mesh_group_destroy(&modify_face_mesh_group);
 		}
-		Cmiss_mesh_destroy(&master_face_mesh);
-		Cmiss_nodeset_group_destroy(&remove_nodeset_group);
-		Cmiss_field_node_group_destroy(&remove_node_group);
+		cmzn_mesh_destroy(&master_face_mesh);
+		cmzn_nodeset_group_destroy(&remove_nodeset_group);
+		cmzn_field_node_group_destroy(&remove_node_group);
 		if (modify_nodeset_group)
 		{
-			objects_processed -= Cmiss_nodeset_get_size(Cmiss_nodeset_group_base_cast(modify_nodeset_group));
-			Cmiss_nodeset_group_destroy(&modify_nodeset_group);
+			objects_processed -= cmzn_nodeset_get_size(cmzn_nodeset_group_base_cast(modify_nodeset_group));
+			cmzn_nodeset_group_destroy(&modify_nodeset_group);
 		}
-		Cmiss_field_cache_destroy(&cache);
-		objects_processed -= Cmiss_mesh_get_size(Cmiss_mesh_group_base_cast(modify_mesh_group));
-		Cmiss_mesh_group_destroy(&modify_mesh_group);
-		Cmiss_field_module_end_change(field_module);
+		cmzn_field_cache_destroy(&cache);
+		objects_processed -= cmzn_mesh_get_size(cmzn_mesh_group_base_cast(modify_mesh_group));
+		cmzn_mesh_group_destroy(&modify_mesh_group);
+		cmzn_field_module_end_change(field_module);
 	}
 	if (0 < elements_not_processed)
 	{
@@ -1237,10 +1237,10 @@ static int process_modify_element_group(Cmiss_field_group_id group,
 	{
 		display_message(WARNING_MESSAGE, "gfx modify egroup:  group unchanged");
 	}
-	Cmiss_mesh_group_destroy(&from_mesh_group);
-	Cmiss_mesh_group_destroy(&selection_mesh_group);
-	Cmiss_mesh_destroy(&master_mesh);
-	Cmiss_field_module_destroy(&field_module);
+	cmzn_mesh_group_destroy(&from_mesh_group);
+	cmzn_mesh_group_destroy(&selection_mesh_group);
+	cmzn_mesh_destroy(&master_mesh);
+	cmzn_field_module_destroy(&field_module);
 
 	return return_code;
 }
@@ -1253,14 +1253,14 @@ static int gfx_create_group(struct Parse_state *state,
 	void *use_object_type, void *root_region_void)
 {
 	int return_code = 0;
-	Cmiss_region_id root_region = reinterpret_cast<Cmiss_region_id>(root_region_void);
+	cmzn_region_id root_region = reinterpret_cast<cmzn_region_id>(root_region_void);
 	if (state && root_region)
 	{
 		int object_type = VOIDPTR2INT(use_object_type);
 		char *group_name = 0;
 		if (set_name(state, (void *)&group_name, (void *)1))
 		{
-			Cmiss_region_id region = Cmiss_region_access(root_region);
+			cmzn_region_id region = cmzn_region_access(root_region);
 			Multi_range *add_ranges = CREATE(Multi_range)();
 			char *from_group_name = 0;
 			int manage_subobjects = 1;
@@ -1269,16 +1269,16 @@ static int gfx_create_group(struct Parse_state *state,
 			Option_table_add_entry(option_table, "add_ranges", add_ranges, NULL, set_Multi_range);
 			Option_table_add_string_entry(option_table, "from", &from_group_name, " GROUP_NAME");
 			Option_table_add_switch(option_table, "manage_subobjects", "no_manage_subobjects", &manage_subobjects);
-			Option_table_add_set_Cmiss_region(option_table, "region", root_region, &region);
+			Option_table_add_set_cmzn_region(option_table, "region", root_region, &region);
 			return_code = Option_table_multi_parse(option_table, state);
 			DESTROY(Option_table)(&option_table);
 
-			Cmiss_field_group_id from_group = 0;
+			cmzn_field_group_id from_group = 0;
 			if (return_code && from_group_name)
 			{
-				Cmiss_field *field =	FIND_BY_IDENTIFIER_IN_MANAGER(Computed_field,name)(
-					from_group_name, Cmiss_region_get_Computed_field_manager(region));
-				from_group = Cmiss_field_cast_group(field);
+				cmzn_field *field =	FIND_BY_IDENTIFIER_IN_MANAGER(Computed_field,name)(
+					from_group_name, cmzn_region_get_Computed_field_manager(region));
+				from_group = cmzn_field_cast_group(field);
 				if (!from_group)
 				{
 					display_message(ERROR_MESSAGE, "gfx create group: '%s' is not a group.", from_group_name);
@@ -1287,35 +1287,35 @@ static int gfx_create_group(struct Parse_state *state,
 			}
 			if (return_code)
 			{
-				Cmiss_region_id child_region = Cmiss_region_find_child_by_name(region, group_name);
+				cmzn_region_id child_region = cmzn_region_find_child_by_name(region, group_name);
 				if (child_region)
 				{
 					display_message(ERROR_MESSAGE, "Child region with name '%s' already exists.", group_name);
-					Cmiss_region_destroy(&child_region);
+					cmzn_region_destroy(&child_region);
 					return_code = 0;
 				}
-				Cmiss_field_module_id field_module = Cmiss_region_get_field_module(region);
-				Cmiss_field_id field = Cmiss_field_module_find_field_by_name(field_module, group_name);
+				cmzn_field_module_id field_module = cmzn_region_get_field_module(region);
+				cmzn_field_id field = cmzn_field_module_find_field_by_name(field_module, group_name);
 				if (field)
 				{
 					display_message(ERROR_MESSAGE, "Group/field with name '%s' already exists.", group_name);
-					Cmiss_field_destroy(&field);
+					cmzn_field_destroy(&field);
 					return_code = 0;
 				}
 				if (return_code)
 				{
-					Cmiss_field_module_begin_change(field_module);
-					Cmiss_field_id group_field = Cmiss_field_module_create_group(field_module);
-					return_code = Cmiss_field_set_name(group_field, group_name) &&
-						Cmiss_field_set_managed(group_field, true);
+					cmzn_field_module_begin_change(field_module);
+					cmzn_field_id group_field = cmzn_field_module_create_group(field_module);
+					return_code = cmzn_field_set_name(group_field, group_name) &&
+						cmzn_field_set_managed(group_field, true);
 					if (Multi_range_get_number_of_ranges(add_ranges) > 0)
 					{
-						Cmiss_field_group_id group = Cmiss_field_cast_group(group_field);
+						cmzn_field_group_id group = cmzn_field_cast_group(group_field);
 						switch (object_type)
 						{
 							case 0: // elements
 							{
-								int max_dimension = FE_region_get_highest_dimension(Cmiss_region_get_FE_region(region));
+								int max_dimension = FE_region_get_highest_dimension(cmzn_region_get_FE_region(region));
 								double time = 0;
 								return_code = process_modify_element_group(group, region, max_dimension,
 									/*add_flag*/1, /*conditional_field*/0, from_group, add_ranges,
@@ -1324,46 +1324,46 @@ static int gfx_create_group(struct Parse_state *state,
 							case 1: // nodes
 							case 2: // data
 							{
-								Cmiss_nodeset_id master_nodeset = Cmiss_field_module_find_nodeset_by_domain_type(field_module,
+								cmzn_nodeset_id master_nodeset = cmzn_field_module_find_nodeset_by_domain_type(field_module,
 									(object_type == 1) ? CMISS_FIELD_DOMAIN_NODES : CMISS_FIELD_DOMAIN_DATA);
-								Cmiss_field_node_group_id node_group = Cmiss_field_group_create_node_group(group, master_nodeset);
-								Cmiss_nodeset_group_id modify_nodeset_group = Cmiss_field_node_group_get_nodeset(node_group);
-								Cmiss_node_iterator_id iter = Cmiss_nodeset_create_node_iterator(master_nodeset);
-								Cmiss_node_id node = 0;
-								while (NULL != (node = Cmiss_node_iterator_next_non_access(iter)))
+								cmzn_field_node_group_id node_group = cmzn_field_group_create_node_group(group, master_nodeset);
+								cmzn_nodeset_group_id modify_nodeset_group = cmzn_field_node_group_get_nodeset(node_group);
+								cmzn_node_iterator_id iter = cmzn_nodeset_create_node_iterator(master_nodeset);
+								cmzn_node_id node = 0;
+								while (NULL != (node = cmzn_node_iterator_next_non_access(iter)))
 								{
-									if (Multi_range_is_value_in_range(add_ranges, Cmiss_node_get_identifier(node)))
+									if (Multi_range_is_value_in_range(add_ranges, cmzn_node_get_identifier(node)))
 									{
-										if (!Cmiss_nodeset_group_add_node(modify_nodeset_group, node))
+										if (!cmzn_nodeset_group_add_node(modify_nodeset_group, node))
 										{
 											return_code = 0;
 											break;
 										}
 									}
 								}
-								Cmiss_node_iterator_destroy(&iter);
-								Cmiss_nodeset_group_destroy(&modify_nodeset_group);
-								Cmiss_field_node_group_destroy(&node_group);
-								Cmiss_nodeset_destroy(&master_nodeset);
+								cmzn_node_iterator_destroy(&iter);
+								cmzn_nodeset_group_destroy(&modify_nodeset_group);
+								cmzn_field_node_group_destroy(&node_group);
+								cmzn_nodeset_destroy(&master_nodeset);
 							} break;
 							default:
 							{
 								return_code = 0;
 							} break;
 						}
-						Cmiss_field_group_destroy(&group);
+						cmzn_field_group_destroy(&group);
 					}
-					Cmiss_field_destroy(&group_field);
-					Cmiss_field_module_end_change(field_module);
+					cmzn_field_destroy(&group_field);
+					cmzn_field_module_end_change(field_module);
 				}
-				Cmiss_field_module_destroy(&field_module);
+				cmzn_field_module_destroy(&field_module);
 			}
 			if (from_group_name)
 			{
 				DEALLOCATE(from_group_name);
 			}
-			Cmiss_field_group_destroy(&from_group);
-			Cmiss_region_destroy(&region);
+			cmzn_field_group_destroy(&from_group);
+			cmzn_region_destroy(&region);
 			DESTROY(Multi_range)(&add_ranges);
 		}
 		if (group_name)
@@ -1394,8 +1394,8 @@ Executes a GFX CREATE FLOW_PARTICLES command.
 	struct GT_pointset *pointset;
 	int current_number_of_particles, element_number, number_of_particles,
 		return_code, vector_components;
-	struct Cmiss_command_data *command_data;
-	struct Cmiss_region *region;
+	struct cmzn_command_data *command_data;
+	struct cmzn_region *region;
 	struct Element_to_particle_data element_to_particle_data;
 	struct Computed_field *coordinate_field, *stream_vector_field;
 	struct FE_region *fe_region;
@@ -1406,11 +1406,11 @@ Executes a GFX CREATE FLOW_PARTICLES command.
 	struct Option_table *option_table;
 
 	ENTER(gfx_create_flow_particles);
-	if (state && (command_data = (struct Cmiss_command_data *)command_data_void))
+	if (state && (command_data = (struct cmzn_command_data *)command_data_void))
 	{
 		/* initialise defaults */
 		char *graphics_object_name = duplicate_string("particles");
-		char *region_path = Cmiss_region_get_root_region_path();
+		char *region_path = cmzn_region_get_root_region_path();
 		char *coordinate_field_name = NULL;
 		char *stream_vector_field_name = NULL;
 		element_number=0;  /* Zero gives all elements in group */
@@ -1422,7 +1422,7 @@ Executes a GFX CREATE FLOW_PARTICLES command.
 		xi[2]=0.5;
 		time=0;
 		/* must access it now,because we deaccess it later */
-		material= Cmiss_graphics_material_module_get_default_material(command_data->material_module);
+		material= cmzn_graphics_material_module_get_default_material(command_data->material_module);
 		spectrum=
 			ACCESS(Spectrum)(command_data->default_spectrum);
 
@@ -1438,7 +1438,7 @@ Executes a GFX CREATE FLOW_PARTICLES command.
 			NULL, set_int_non_negative);
 		/* from */
 		Option_table_add_entry(option_table, "from", &region_path,
-			command_data->root_region, set_Cmiss_region_path);
+			command_data->root_region, set_cmzn_region_path);
 		/* initial_xi */
 		Option_table_add_entry(option_table, "initial_xi", xi,
 			&(vector_components), set_FE_value_array);
@@ -1457,9 +1457,9 @@ Executes a GFX CREATE FLOW_PARTICLES command.
 		/* no errors, not asking for help */
 		if (return_code)
 		{
-			if (!(Cmiss_region_get_region_from_path_deprecated(command_data->root_region,
+			if (!(cmzn_region_get_region_from_path_deprecated(command_data->root_region,
 				region_path, &region) &&
-				(fe_region = Cmiss_region_get_FE_region(region))))
+				(fe_region = cmzn_region_get_FE_region(region))))
 			{
 				display_message(ERROR_MESSAGE,
 					"gfx_create_flow_particles.  Invalid region");
@@ -1469,11 +1469,11 @@ Executes a GFX CREATE FLOW_PARTICLES command.
 			{
 				if (coordinate_field_name)
 				{
-				Cmiss_field_module_id field_module = Cmiss_region_get_field_module(region);
-				coordinate_field = Cmiss_field_module_find_field_by_name(field_module, coordinate_field_name);
+				cmzn_field_module_id field_module = cmzn_region_get_field_module(region);
+				coordinate_field = cmzn_field_module_find_field_by_name(field_module, coordinate_field_name);
 				if (stream_vector_field_name)
 				{
-					stream_vector_field = Cmiss_field_module_find_field_by_name(field_module, stream_vector_field_name);
+					stream_vector_field = cmzn_field_module_find_field_by_name(field_module, stream_vector_field_name);
 					if (!stream_vector_field)
 					{
 						display_message(ERROR_MESSAGE,
@@ -1505,7 +1505,7 @@ Executes a GFX CREATE FLOW_PARTICLES command.
 						return_code = 0;
 					}
 				}
-				Cmiss_field_module_destroy(&field_module);
+				cmzn_field_module_destroy(&field_module);
 				}
 				else
 				{
@@ -1516,9 +1516,9 @@ Executes a GFX CREATE FLOW_PARTICLES command.
 		}
 		if (return_code)
 		{
-			Cmiss_glyph_module_begin_change(command_data->glyph_module);
-			Cmiss_glyph_id glyph = Cmiss_glyph_module_find_glyph_by_name(command_data->glyph_module, graphics_object_name);
-			Cmiss_glyph_static *glyphStatic = dynamic_cast<Cmiss_glyph_static*>(glyph);
+			cmzn_glyph_module_begin_change(command_data->glyph_module);
+			cmzn_glyph_id glyph = cmzn_glyph_module_find_glyph_by_name(command_data->glyph_module, graphics_object_name);
+			cmzn_glyph_static *glyphStatic = dynamic_cast<cmzn_glyph_static*>(glyph);
 			GT_object *graphics_object = 0;
 			if (glyphStatic)
 			{
@@ -1563,9 +1563,9 @@ Executes a GFX CREATE FLOW_PARTICLES command.
 				else
 				{
 					graphics_object = CREATE(GT_object)(graphics_object_name, g_POINTSET, material);
-					glyph = Cmiss_glyph_module_create_glyph_static(command_data->glyph_module, graphics_object);
-					Cmiss_glyph_set_managed(glyph, true);
-					Cmiss_glyph_set_name(glyph, graphics_object_name);
+					glyph = cmzn_glyph_module_create_glyph_static(command_data->glyph_module, graphics_object);
+					cmzn_glyph_set_managed(glyph, true);
+					cmzn_glyph_set_name(glyph, graphics_object_name);
 				}
 			}
 			}
@@ -1610,8 +1610,8 @@ Executes a GFX CREATE FLOW_PARTICLES command.
 				}
 				if (return_code)
 				{
-					Cmiss_field_module_id field_module = Cmiss_field_get_field_module(coordinate_field);
-					element_to_particle_data.field_cache = Cmiss_field_module_create_cache(field_module);
+					cmzn_field_module_id field_module = cmzn_field_get_field_module(coordinate_field);
+					element_to_particle_data.field_cache = cmzn_field_module_create_cache(field_module);
 					element_to_particle_data.coordinate_field=coordinate_field;
 					element_to_particle_data.element_number=element_number;
 					element_to_particle_data.stream_vector_field=stream_vector_field;
@@ -1674,16 +1674,16 @@ Executes a GFX CREATE FLOW_PARTICLES command.
 								"gfx_create_flow_particles.  Error creating particles");
 						}
 					}
-					Cmiss_field_cache_destroy(&element_to_particle_data.field_cache);
-					Cmiss_field_module_destroy(&field_module);
+					cmzn_field_cache_destroy(&element_to_particle_data.field_cache);
+					cmzn_field_module_destroy(&field_module);
 				}
 			}
 			if (graphics_object)
 			{
 				DEACCESS(GT_object)(&graphics_object);
 			}
-			Cmiss_glyph_destroy(&glyph);
-			Cmiss_glyph_module_end_change(command_data->glyph_module);
+			cmzn_glyph_destroy(&glyph);
+			cmzn_glyph_module_end_change(command_data->glyph_module);
 		} /* parse error,help */
 		DESTROY(Option_table)(&option_table);
 		if (coordinate_field)
@@ -1700,7 +1700,7 @@ Executes a GFX CREATE FLOW_PARTICLES command.
 			DEALLOCATE(stream_vector_field);
 		DEALLOCATE(region_path);
 		DEACCESS(Spectrum)(&spectrum);
-		Cmiss_graphics_material_destroy(&material);
+		cmzn_graphics_material_destroy(&material);
 		DEALLOCATE(graphics_object_name);
 	}
 	else
@@ -1726,7 +1726,7 @@ Executes a GFX MODIFY FLOW_PARTICLES command.
 {
 	int return_code;
 	FE_value stepsize,time;
-	struct Cmiss_command_data *command_data;
+	struct cmzn_command_data *command_data;
 	struct Computed_field *coordinate_field,*stream_vector_field;
 	struct Option_table *option_table;
 	struct Set_Computed_field_conditional_data set_coordinate_field_data,
@@ -1736,7 +1736,7 @@ Executes a GFX MODIFY FLOW_PARTICLES command.
 	USE_PARAMETER(dummy_to_be_modified);
 	if (state)
 	{
-		if (NULL != (command_data = (struct Cmiss_command_data *)command_data_void))
+		if (NULL != (command_data = (struct cmzn_command_data *)command_data_void))
 		{
 			coordinate_field=(struct Computed_field *)NULL;
 			stream_vector_field=(struct Computed_field *)NULL;
@@ -1773,13 +1773,13 @@ Executes a GFX MODIFY FLOW_PARTICLES command.
 			/* no errors,not asking for help */
 			if (return_code)
 			{
-				Cmiss_field_module_id field_module = Cmiss_field_get_field_module(coordinate_field);
-				Cmiss_field_cache_id field_cache = Cmiss_field_module_create_cache(field_module);
+				cmzn_field_module_id field_module = cmzn_field_get_field_module(coordinate_field);
+				cmzn_field_cache_id field_cache = cmzn_field_module_create_cache(field_module);
 				return_code=update_flow_particle_list(
 					command_data->streampoint_list,field_cache,coordinate_field,stream_vector_field,
 					stepsize,time);
-				Cmiss_field_cache_destroy(&field_cache);
-				Cmiss_field_module_destroy(&field_module);
+				cmzn_field_cache_destroy(&field_cache);
+				cmzn_field_module_destroy(&field_module);
 			}
 			DESTROY(Option_table)(&option_table);
 			if (coordinate_field)
@@ -1817,7 +1817,7 @@ static int gfx_create_gauss_points(struct Parse_state *state,
 	ENTER(gfx_create_gauss_points);
 	int return_code = 0;
 	USE_PARAMETER(dummy_to_be_modified);
-	Cmiss_region *root_region = reinterpret_cast<Cmiss_region *>(root_region_void);
+	cmzn_region *root_region = reinterpret_cast<cmzn_region *>(root_region_void);
 	if (state && root_region)
 	{
 		int first_identifier = 1;
@@ -1826,7 +1826,7 @@ static int gfx_create_gauss_points(struct Parse_state *state,
 		char *gauss_point_nodeset_name = 0;
 		char *mesh_name = 0;
 		int order = 4;
-		Cmiss_region_id region = Cmiss_region_access(root_region);
+		cmzn_region_id region = cmzn_region_access(root_region);
 		Option_table *option_table = CREATE(Option_table)();
 		Option_table_add_help(option_table,
 			"Creates points at Gauss point locations in the elements of the mesh. "
@@ -1845,16 +1845,16 @@ static int gfx_create_gauss_points(struct Parse_state *state,
 		Option_table_add_string_entry(option_table, "mesh", &mesh_name,
 			" ELEMENT_GROUP_FIELD_NAME|[GROUP_REGION_NAME.]mesh_1d|mesh_2d|mesh_3d");
 		Option_table_add_int_positive_entry(option_table, "order", &order);
-		Option_table_add_set_Cmiss_region(option_table, "region", root_region, &region);
+		Option_table_add_set_cmzn_region(option_table, "region", root_region, &region);
 		return_code = Option_table_multi_parse(option_table, state);
 		DESTROY(Option_table)(&option_table);
 		if (return_code)
 		{
-			Cmiss_field_module_id field_module = Cmiss_region_get_field_module(region);
-			Cmiss_mesh_id mesh = 0;
+			cmzn_field_module_id field_module = cmzn_region_get_field_module(region);
+			cmzn_mesh_id mesh = 0;
 			if (mesh_name)
 			{
-				mesh = Cmiss_field_module_find_mesh_by_name(field_module, mesh_name);
+				mesh = cmzn_field_module_find_mesh_by_name(field_module, mesh_name);
 				if (!mesh)
 				{
 					display_message(ERROR_MESSAGE, "gfx create gauss_points:  Unknown mesh %s", mesh_name);
@@ -1866,14 +1866,14 @@ static int gfx_create_gauss_points(struct Parse_state *state,
 				display_message(ERROR_MESSAGE, "gfx create gauss_points:  Must specify mesh");
 				return_code = 0;
 			}
-			Cmiss_nodeset_id gauss_points_nodeset = 0;
+			cmzn_nodeset_id gauss_points_nodeset = 0;
 			if (gauss_point_nodeset_name)
 			{
-				gauss_points_nodeset = Cmiss_field_module_find_nodeset_by_name(field_module, gauss_point_nodeset_name);
+				gauss_points_nodeset = cmzn_field_module_find_nodeset_by_name(field_module, gauss_point_nodeset_name);
 				if (!gauss_points_nodeset)
 				{
-					gauss_points_nodeset = Cmiss_nodeset_group_base_cast(
-						Cmiss_field_module_create_nodeset_group_from_name_internal(
+					gauss_points_nodeset = cmzn_nodeset_group_base_cast(
+						cmzn_field_module_create_nodeset_group_from_name_internal(
 							field_module, gauss_point_nodeset_name));
 				}
 				if (!gauss_points_nodeset)
@@ -1889,14 +1889,14 @@ static int gfx_create_gauss_points(struct Parse_state *state,
 					"gfx create gauss_points:  Must specify gauss_point_nodeset");
 				return_code = 0;
 			}
-			Cmiss_field_stored_mesh_location_id gauss_location_field = 0;
+			cmzn_field_stored_mesh_location_id gauss_location_field = 0;
 			if (gauss_location_field_name)
 			{
-				Cmiss_field_id field = Cmiss_field_module_find_field_by_name(field_module, gauss_location_field_name);
+				cmzn_field_id field = cmzn_field_module_find_field_by_name(field_module, gauss_location_field_name);
 				if (field)
 				{
-					gauss_location_field = Cmiss_field_cast_stored_mesh_location(field);
-					Cmiss_field_destroy(&field);
+					gauss_location_field = cmzn_field_cast_stored_mesh_location(field);
+					cmzn_field_destroy(&field);
 					if (!gauss_location_field)
 					{
 						display_message(ERROR_MESSAGE, "gfx create gauss_points:  Gauss location field %s is not element_xi valued", gauss_location_field_name);
@@ -1914,14 +1914,14 @@ static int gfx_create_gauss_points(struct Parse_state *state,
 				display_message(ERROR_MESSAGE, "gfx create gauss_points:  Must specify gauss_location_field");
 				return_code = 0;
 			}
-			Cmiss_field_finite_element_id gauss_weight_field = 0;
+			cmzn_field_finite_element_id gauss_weight_field = 0;
 			if (gauss_weight_field_name)
 			{
-				Cmiss_field_id field = Cmiss_field_module_find_field_by_name(field_module, gauss_weight_field_name);
+				cmzn_field_id field = cmzn_field_module_find_field_by_name(field_module, gauss_weight_field_name);
 				if (field)
 				{
-					gauss_weight_field = Cmiss_field_cast_finite_element(field);
-					Cmiss_field_destroy(&field);
+					gauss_weight_field = cmzn_field_cast_finite_element(field);
+					cmzn_field_destroy(&field);
 					if (!gauss_weight_field)
 					{
 						display_message(ERROR_MESSAGE, "gfx create gauss_points:  Gauss weight field %s is not scalar real finite_element", gauss_weight_field_name);
@@ -1941,14 +1941,14 @@ static int gfx_create_gauss_points(struct Parse_state *state,
 			}
 			if (return_code)
 			{
-				return_code = Cmiss_mesh_create_gauss_points(mesh, order, gauss_points_nodeset,
+				return_code = cmzn_mesh_create_gauss_points(mesh, order, gauss_points_nodeset,
 					first_identifier, gauss_location_field, gauss_weight_field);
 			}
-			Cmiss_field_finite_element_destroy(&gauss_weight_field);
-			Cmiss_field_stored_mesh_location_destroy(&gauss_location_field);
-			Cmiss_nodeset_destroy(&gauss_points_nodeset);
-			Cmiss_mesh_destroy(&mesh);
-			Cmiss_field_module_destroy(&field_module);
+			cmzn_field_finite_element_destroy(&gauss_weight_field);
+			cmzn_field_stored_mesh_location_destroy(&gauss_location_field);
+			cmzn_nodeset_destroy(&gauss_points_nodeset);
+			cmzn_mesh_destroy(&mesh);
+			cmzn_field_module_destroy(&field_module);
 		}
 		if (gauss_location_field_name)
 			DEALLOCATE(gauss_location_field_name);
@@ -1958,7 +1958,7 @@ static int gfx_create_gauss_points(struct Parse_state *state,
 			DEALLOCATE(gauss_point_nodeset_name);
 		if (mesh_name)
 			DEALLOCATE(mesh_name);
-		Cmiss_region_destroy(&region);
+		cmzn_region_destroy(&region);
 	}
 	else
 	{
@@ -1985,7 +1985,7 @@ editor at a time.  This implementation may be changed later.
 {
 	const char *current_token;
 	int return_code;
-	struct Cmiss_command_data *command_data;
+	struct cmzn_command_data *command_data;
 
 	ENTER(gfx_create_graphical_material_editor);
 	USE_PARAMETER(dummy_to_be_modified);
@@ -2007,7 +2007,7 @@ editor at a time.  This implementation may be changed later.
 		}
 		else
 		{
-			if (NULL != (command_data = (struct Cmiss_command_data *)command_data_void))
+			if (NULL != (command_data = (struct cmzn_command_data *)command_data_void))
 			{
 #if defined (WX_USER_INTERFACE)
 				return_code=material_editor_bring_up_editor(
@@ -2048,7 +2048,7 @@ Executes a GFX CREATE LIGHT command.
 {
 	const char *current_token;
 	int return_code;
-	struct Cmiss_command_data *command_data;
+	struct cmzn_command_data *command_data;
 	struct Light *light;
 	struct Modify_light_data modify_light_data;
 
@@ -2058,7 +2058,7 @@ Executes a GFX CREATE LIGHT command.
 	{
 		if (NULL != (current_token = state->current_token))
 		{
-			if (NULL != (command_data = (struct Cmiss_command_data *)command_data_void))
+			if (NULL != (command_data = (struct cmzn_command_data *)command_data_void))
 			{
 				MANAGER(Light) *light_manager = Light_module_get_manager(command_data->light_module);
 				if (strcmp(PARSER_HELP_STRING,current_token)&&
@@ -2144,7 +2144,7 @@ Executes a GFX CREATE LMODEL command.
 {
 	const char *current_token;
 	int return_code;
-	struct Cmiss_command_data *command_data;
+	struct cmzn_command_data *command_data;
 	struct Light_model *light_model;
 	struct Modify_light_model_data modify_light_model_data;
 
@@ -2154,7 +2154,7 @@ Executes a GFX CREATE LMODEL command.
 	{
 		if (NULL != (current_token = state->current_token))
 		{
-			if (NULL != (command_data = (struct Cmiss_command_data *)command_data_void))
+			if (NULL != (command_data = (struct cmzn_command_data *)command_data_void))
 			{
 				MANAGER(Light_model) *light_model_manager = Light_model_module_get_manager(command_data->light_model_module);
 				if (strcmp(PARSER_HELP_STRING,current_token)&&
@@ -2242,7 +2242,7 @@ Executes a GFX CREATE NODE_VIEWER command.
 {
 	const char *current_token;
 	int return_code;
-	struct Cmiss_command_data *command_data;
+	struct cmzn_command_data *command_data;
 
 	ENTER(gfx_create_node_viewer);
 	USE_PARAMETER(dummy_to_be_modified);
@@ -2264,7 +2264,7 @@ Executes a GFX CREATE NODE_VIEWER command.
 		}
 		else
 		{
-			if (NULL != (command_data = (struct Cmiss_command_data *)command_data_void))
+			if (NULL != (command_data = (struct cmzn_command_data *)command_data_void))
 			{
 				if (command_data->node_viewer)
 				{
@@ -2319,7 +2319,7 @@ Executes a GFX CREATE DATA_VIEWER command.
 {
 	const char *current_token;
 	int return_code;
-	struct Cmiss_command_data *command_data;
+	struct cmzn_command_data *command_data;
 
 	ENTER(gfx_create_data_viewer);
 	USE_PARAMETER(dummy_to_be_modified);
@@ -2341,7 +2341,7 @@ Executes a GFX CREATE DATA_VIEWER command.
 		}
 		else
 		{
-			if (NULL != (command_data = (struct Cmiss_command_data *)command_data_void))
+			if (NULL != (command_data = (struct cmzn_command_data *)command_data_void))
 			{
 				if (command_data->data_viewer)
 				{
@@ -2396,7 +2396,7 @@ Executes a GFX CREATE ELEMENT_POINT_VIEWER command.
 {
 	const char *current_token;
 	int return_code;
-	struct Cmiss_command_data *command_data;
+	struct cmzn_command_data *command_data;
 	struct Time_object *time_object;
 
 	ENTER(gfx_create_element_point_viewer);
@@ -2419,7 +2419,7 @@ Executes a GFX CREATE ELEMENT_POINT_VIEWER command.
 		}
 		else
 		{
-			if (NULL != (command_data = (struct Cmiss_command_data *)command_data_void))
+			if (NULL != (command_data = (struct cmzn_command_data *)command_data_void))
 			{
 				if (command_data->element_point_viewer)
 				{
@@ -2487,7 +2487,7 @@ static int gfx_create_region(struct Parse_state *state,
 
 	ENTER(gfx_create_region);
 	USE_PARAMETER(dummy);
-	Cmiss_region *root_region = (struct Cmiss_region *)root_region_void;
+	cmzn_region *root_region = (struct cmzn_region *)root_region_void;
 	if (state && root_region)
 	{
 		char *region_path = NULL;
@@ -2505,7 +2505,7 @@ static int gfx_create_region(struct Parse_state *state,
 		DESTROY(Option_table)(&option_table);
 		if (return_code)
 		{
-			Cmiss_region *region = Cmiss_region_find_subregion_at_path(root_region, region_path);
+			cmzn_region *region = cmzn_region_find_subregion_at_path(root_region, region_path);
 			if (region)
 			{
 				if (error_if_exists)
@@ -2514,14 +2514,14 @@ static int gfx_create_region(struct Parse_state *state,
 						"gfx create region.  Region already exists at path '%s'", region_path);
 					return_code = 0;
 				}
-				Cmiss_region_destroy(&region);
+				cmzn_region_destroy(&region);
 			}
 			else
 			{
-				region = Cmiss_region_create_subregion(root_region, region_path);
+				region = cmzn_region_create_subregion(root_region, region_path);
 				if (region)
 				{
-					Cmiss_region_destroy(&region);
+					cmzn_region_destroy(&region);
 				}
 				else
 				{
@@ -2557,8 +2557,8 @@ Executes a GFX CREATE SNAKE command.
 	float density_factor, stiffness;
 	int i, number_of_elements, number_of_fitting_fields,
 		previous_state_index, return_code;
-	struct Cmiss_command_data *command_data;
-	struct Cmiss_region *region, *source_region;
+	struct cmzn_command_data *command_data;
+	struct cmzn_region *region, *source_region;
 	struct Computed_field *coordinate_field, **fitting_fields,
 		*weight_field;
 	struct Option_table *option_table;
@@ -2568,10 +2568,10 @@ Executes a GFX CREATE SNAKE command.
 
 	ENTER(gfx_create_snake);
 	USE_PARAMETER(dummy_to_be_modified);
-	if (state && (command_data = (struct Cmiss_command_data *)command_data_void))
+	if (state && (command_data = (struct cmzn_command_data *)command_data_void))
 	{
-		region = Cmiss_region_access(command_data->root_region);
-		Cmiss_field_group_id group = 0;
+		region = cmzn_region_access(command_data->root_region);
+		cmzn_field_group_id group = 0;
 		source_region_path = (char *)NULL;
 		number_of_fitting_fields = 1;
 		coordinate_field = (struct Computed_field *)NULL;
@@ -2628,7 +2628,7 @@ Executes a GFX CREATE SNAKE command.
 			&density_factor, NULL, set_float_0_to_1_inclusive);
 		/* source_group */
 		Option_table_add_entry(option_table, "source_group", &source_region_path,
-			command_data->root_region, set_Cmiss_region_path);
+			command_data->root_region, set_cmzn_region_path);
 		/* destination_group */
 		Option_table_add_region_or_group_entry(option_table, "destination_group",
 			&region, &group);
@@ -2674,7 +2674,7 @@ Executes a GFX CREATE SNAKE command.
 				return_code = 0;
 			}
 			if (!(source_region_path &&
-				Cmiss_region_get_region_from_path_deprecated(command_data->root_region,
+				cmzn_region_get_region_from_path_deprecated(command_data->root_region,
 					source_region_path, &source_region)))
 			{
 				source_region = command_data->root_region;
@@ -2682,39 +2682,39 @@ Executes a GFX CREATE SNAKE command.
 		}
 		if (return_code)
 		{
-			Cmiss_scene *scene = Cmiss_graphics_module_get_scene(command_data->graphics_module, source_region);
-			Cmiss_field_group_id selection_group = NULL;
+			cmzn_scene *scene = cmzn_graphics_module_get_scene(command_data->graphics_module, source_region);
+			cmzn_field_group_id selection_group = NULL;
 			if (scene)
 			{
-				selection_group = Cmiss_scene_get_selection_group(scene);
-				Cmiss_scene_destroy(&scene);
+				selection_group = cmzn_scene_get_selection_group(scene);
+				cmzn_scene_destroy(&scene);
 			}
 			if (selection_group)
 			{
-				Cmiss_field_module_id field_module = Cmiss_region_get_field_module(region);
-				Cmiss_field_module_begin_change(field_module);
+				cmzn_field_module_id field_module = cmzn_region_get_field_module(region);
+				cmzn_field_module_begin_change(field_module);
 				struct LIST(FE_node) *data_list = FE_node_list_from_region_and_selection_group(
-					source_region, NULL,	Cmiss_field_group_base_cast(selection_group), NULL, 0, /*use_data*/1);
-				FE_region *fe_region = Cmiss_region_get_FE_region(region);
-				Cmiss_nodeset_group_id nodeset_group = 0;
-				Cmiss_mesh_group_id mesh_group = 0;
+					source_region, NULL,	cmzn_field_group_base_cast(selection_group), NULL, 0, /*use_data*/1);
+				FE_region *fe_region = cmzn_region_get_FE_region(region);
+				cmzn_nodeset_group_id nodeset_group = 0;
+				cmzn_mesh_group_id mesh_group = 0;
 				if (group)
 				{
-					Cmiss_nodeset_id master_nodeset = Cmiss_field_module_find_nodeset_by_domain_type(field_module, CMISS_FIELD_DOMAIN_NODES);
-					Cmiss_field_node_group_id node_group = Cmiss_field_group_get_node_group(group, master_nodeset);
+					cmzn_nodeset_id master_nodeset = cmzn_field_module_find_nodeset_by_domain_type(field_module, CMISS_FIELD_DOMAIN_NODES);
+					cmzn_field_node_group_id node_group = cmzn_field_group_get_node_group(group, master_nodeset);
 					if (!node_group)
-						node_group = Cmiss_field_group_create_node_group(group, master_nodeset);
-					nodeset_group = Cmiss_field_node_group_get_nodeset(node_group);
-					Cmiss_field_node_group_destroy(&node_group);
-					Cmiss_nodeset_destroy(&master_nodeset);
+						node_group = cmzn_field_group_create_node_group(group, master_nodeset);
+					nodeset_group = cmzn_field_node_group_get_nodeset(node_group);
+					cmzn_field_node_group_destroy(&node_group);
+					cmzn_nodeset_destroy(&master_nodeset);
 
-					Cmiss_mesh_id master_mesh = Cmiss_field_module_find_mesh_by_dimension(field_module, 1);
-					Cmiss_field_element_group_id element_group = Cmiss_field_group_get_element_group(group, master_mesh);
+					cmzn_mesh_id master_mesh = cmzn_field_module_find_mesh_by_dimension(field_module, 1);
+					cmzn_field_element_group_id element_group = cmzn_field_group_get_element_group(group, master_mesh);
 					if (!element_group)
-						element_group = Cmiss_field_group_create_element_group(group, master_mesh);
-					mesh_group = Cmiss_field_element_group_get_mesh(element_group);
-					Cmiss_field_element_group_destroy(&element_group);
-					Cmiss_mesh_destroy(&master_mesh);
+						element_group = cmzn_field_group_create_element_group(group, master_mesh);
+					mesh_group = cmzn_field_element_group_get_mesh(element_group);
+					cmzn_field_element_group_destroy(&element_group);
+					cmzn_mesh_destroy(&master_mesh);
 				}
 				return_code = create_FE_element_snake_from_data_points(
 					fe_region, coordinate_field, weight_field,
@@ -2723,12 +2723,12 @@ Executes a GFX CREATE SNAKE command.
 					number_of_elements,
 					density_factor,
 					stiffness, nodeset_group, mesh_group);
-				Cmiss_mesh_group_destroy(&mesh_group);
-				Cmiss_nodeset_group_destroy(&nodeset_group);
-				Cmiss_field_group_destroy(&selection_group);
+				cmzn_mesh_group_destroy(&mesh_group);
+				cmzn_nodeset_group_destroy(&nodeset_group);
+				cmzn_field_group_destroy(&selection_group);
 				DESTROY(LIST(FE_node))(&data_list);
-				Cmiss_field_module_end_change(field_module);
-				Cmiss_field_module_destroy(&field_module);
+				cmzn_field_module_end_change(field_module);
+				cmzn_field_module_destroy(&field_module);
 			}
 			else
 			{
@@ -2758,8 +2758,8 @@ Executes a GFX CREATE SNAKE command.
 		{
 			DEALLOCATE(source_region_path);
 		}
-		Cmiss_field_group_destroy(&group);
-		Cmiss_region_destroy(&region);
+		cmzn_field_group_destroy(&group);
+		cmzn_region_destroy(&region);
 	}
 	else
 	{
@@ -2787,7 +2787,7 @@ static and referred to by gfx_create_Spectrum
 		lg_red_to_blue, overlay_colour, overwrite_colour, red_to_blue;
 	const char *current_token;
 	int process, return_code;
-	struct Cmiss_command_data *command_data;
+	struct cmzn_command_data *command_data;
 	struct Modify_spectrum_app_data modify_spectrum_data;
 	struct Option_table *option_table;
 	struct Scene *autorange_scene;
@@ -2797,7 +2797,7 @@ static and referred to by gfx_create_Spectrum
 	ENTER(gfx_modify_Spectrum);
 	if (state)
 	{
-		if (NULL != (command_data = (struct Cmiss_command_data *)command_data_void))
+		if (NULL != (command_data = (struct cmzn_command_data *)command_data_void))
 		{
 			if (NULL != (current_token = state->current_token))
 			{
@@ -2807,8 +2807,8 @@ static and referred to by gfx_create_Spectrum
 					if (IS_MANAGED(Spectrum)(spectrum_to_be_modified,
 						command_data->spectrum_manager))
 					{
-						spectrum_to_be_modified_copy=Cmiss_spectrum_create_private();
-						Cmiss_spectrum_set_name(spectrum_to_be_modified_copy, "spectrum_modify_temp");
+						spectrum_to_be_modified_copy=cmzn_spectrum_create_private();
+						cmzn_spectrum_set_name(spectrum_to_be_modified_copy, "spectrum_modify_temp");
 						if (spectrum_to_be_modified_copy)
 						{
 							MANAGER_COPY_WITHOUT_IDENTIFIER(Spectrum,name)(
@@ -2841,8 +2841,8 @@ static and referred to by gfx_create_Spectrum
 							return_code = shift_Parse_state(state, 1);
 							if (return_code)
 							{
-								spectrum_to_be_modified_copy=Cmiss_spectrum_create_private();
-								Cmiss_spectrum_set_name(spectrum_to_be_modified_copy, "spectrum_modify_temp");
+								spectrum_to_be_modified_copy=cmzn_spectrum_create_private();
+								cmzn_spectrum_set_name(spectrum_to_be_modified_copy, "spectrum_modify_temp");
 								if (spectrum_to_be_modified_copy)
 								{
 									MANAGER_COPY_WITH_IDENTIFIER(Spectrum,name)(
@@ -2867,8 +2867,8 @@ static and referred to by gfx_create_Spectrum
 					}
 					else
 					{
-						spectrum_to_be_modified_copy=Cmiss_spectrum_create_private();
-						Cmiss_spectrum_set_name(spectrum_to_be_modified_copy, "dummy");
+						spectrum_to_be_modified_copy=cmzn_spectrum_create_private();
+						cmzn_spectrum_set_name(spectrum_to_be_modified_copy, "dummy");
 						if (spectrum_to_be_modified_copy)
 						{
 							option_table=CREATE(Option_table)();
@@ -2900,16 +2900,16 @@ static and referred to by gfx_create_Spectrum
 					red_to_blue = 0;
 					blue_white_red = 0;
 					modify_spectrum_data.position = 0;
-					modify_spectrum_data.component = (struct Cmiss_spectrum_component *)NULL;
-					modify_spectrum_data.spectrum_minimum = Cmiss_spectrum_get_minimum(
+					modify_spectrum_data.component = (struct cmzn_spectrum_component *)NULL;
+					modify_spectrum_data.spectrum_minimum = cmzn_spectrum_get_minimum(
 						spectrum_to_be_modified_copy);
-					modify_spectrum_data.spectrum_maximum = Cmiss_spectrum_get_maximum(
+					modify_spectrum_data.spectrum_maximum = cmzn_spectrum_get_maximum(
 						spectrum_to_be_modified_copy);
 					modify_spectrum_data.computed_field_manager
 						= Computed_field_package_get_computed_field_manager(
 							command_data->computed_field_package);
-					Cmiss_graphics_filter_id filter =
-						Cmiss_graphics_filter_module_get_default_filter(command_data->filter_module);
+					cmzn_graphics_filter_id filter =
+						cmzn_graphics_filter_module_get_default_filter(command_data->filter_module);
 					option_table=CREATE(Option_table)();
 					Option_table_add_entry(option_table,"autorange",&autorange,NULL,
 						set_char_flag);
@@ -2922,7 +2922,7 @@ static and referred to by gfx_create_Spectrum
 					Option_table_add_entry(option_table,"field",&modify_spectrum_data,
 						NULL,gfx_modify_spectrum_settings_field);
 					Option_table_add_entry(option_table, "filter", &filter,
-						command_data->filter_module, set_Cmiss_graphics_filter);
+						command_data->filter_module, set_cmzn_graphics_filter);
 					Option_table_add_entry(option_table,"linear",&modify_spectrum_data,
 						NULL,gfx_modify_spectrum_settings_linear);
 					Option_table_add_entry(option_table,"log",&modify_spectrum_data,
@@ -2949,7 +2949,7 @@ static and referred to by gfx_create_Spectrum
 						{
 							if ( clear )
 							{
-								Cmiss_spectrum_remove_all_components(spectrum_to_be_modified_copy);
+								cmzn_spectrum_remove_all_components(spectrum_to_be_modified_copy);
 							}
 							if (blue_to_red + blue_white_red +red_to_blue + lg_red_to_blue +
 								lg_blue_to_red > 1 )
@@ -2999,18 +2999,18 @@ static and referred to by gfx_create_Spectrum
 							}
 							else if (overlay_colour)
 							{
-								Cmiss_spectrum_set_material_overwrite(spectrum_to_be_modified_copy,
+								cmzn_spectrum_set_material_overwrite(spectrum_to_be_modified_copy,
 									0);
 							}
 							else if (overwrite_colour)
 							{
-								Cmiss_spectrum_set_material_overwrite(spectrum_to_be_modified_copy,
+								cmzn_spectrum_set_material_overwrite(spectrum_to_be_modified_copy,
 									1);
 							}
 							if (autorange)
 							{
 								double maximum, minimum;
-								int maxRanges = Cmiss_scene_get_spectrum_data_range(autorange_scene,
+								int maxRanges = cmzn_scene_get_spectrum_data_range(autorange_scene,
 									filter, spectrum_to_be_modified
 									/* Not spectrum_to_be_modified_copy as this ptr
 										identifies the valid graphics objects */,
@@ -3044,10 +3044,10 @@ static and referred to by gfx_create_Spectrum
 					}
 					if ( modify_spectrum_data.component )
 					{
-						DEACCESS(Cmiss_spectrum_component)(&(modify_spectrum_data.component));
+						DEACCESS(cmzn_spectrum_component)(&(modify_spectrum_data.component));
 					}
 					DEACCESS(Scene)(&autorange_scene);
-					Cmiss_graphics_filter_destroy(&filter);
+					cmzn_graphics_filter_destroy(&filter);
 				}
 			}
 			else
@@ -3093,7 +3093,7 @@ Executes a GFX CREATE SPECTRUM command.
 {
 	const char *current_token;
 	int return_code;
-	struct Cmiss_command_data *command_data;
+	struct cmzn_command_data *command_data;
 	struct Spectrum *spectrum;
 
 	ENTER(gfx_create_spectrum);
@@ -3102,7 +3102,7 @@ Executes a GFX CREATE SPECTRUM command.
 	{
 		if (NULL != (current_token = state->current_token))
 		{
-			if (NULL != (command_data = (struct Cmiss_command_data *)command_data_void))
+			if (NULL != (command_data = (struct cmzn_command_data *)command_data_void))
 			{
 				if (strcmp(PARSER_HELP_STRING,current_token)&&
 					strcmp(PARSER_RECURSIVE_HELP_STRING,current_token))
@@ -3110,8 +3110,8 @@ Executes a GFX CREATE SPECTRUM command.
 					if (!FIND_BY_IDENTIFIER_IN_MANAGER(Spectrum,name)(
 						current_token,command_data->spectrum_manager))
 					{
-						spectrum=Cmiss_spectrum_create_private();
-						Cmiss_spectrum_set_name(spectrum, current_token);
+						spectrum=cmzn_spectrum_create_private();
+						cmzn_spectrum_set_name(spectrum, current_token);
 						if (spectrum)
 						{
 							/*???DB.  Temporary */
@@ -3184,7 +3184,7 @@ static int set_Texture_image_from_field(struct Texture *texture,
 	struct Computed_field *texture_coordinate_field,
 	int propagate_field,
 	struct Spectrum *spectrum,
-	Cmiss_mesh_id search_mesh,
+	cmzn_mesh_id search_mesh,
 	enum Texture_storage_type storage,
 	int image_width, int image_height, int image_depth,
 	int number_of_bytes_per_component,
@@ -3394,8 +3394,8 @@ MAXIMUM_ELEMENT_XI_DIMENSIONS to be set.
 
 struct Texture_evaluate_image_data
 {
-	Cmiss_region_id region;
-	Cmiss_field_group_id group;
+	cmzn_region_id region;
+	cmzn_field_group_id group;
 	char *field_name, *texture_coordinates_field_name;
 	int element_dimension; /* where 0 is any dimension */
 	int propagate_field;
@@ -3414,12 +3414,12 @@ Modifies the properties of a texture.
 ==============================================================================*/
 {
 	int return_code;
-	struct Cmiss_command_data *command_data;
+	struct cmzn_command_data *command_data;
 	struct Option_table *option_table;
 	struct Texture_evaluate_image_data *data;
 
 	ENTER(gfx_modify_Texture_evaluate_image);
-	if (state && (command_data = (struct Cmiss_command_data *)command_data_void)
+	if (state && (command_data = (struct cmzn_command_data *)command_data_void)
 		&& (data = (struct Texture_evaluate_image_data *)data_void))
 	{
 		if (state->current_token)
@@ -3486,13 +3486,13 @@ Modifies the properties of a texture.
 {
 	const char *current_token;
 	int return_code;
-	struct Cmiss_command_data *command_data;
+	struct cmzn_command_data *command_data;
 	struct Option_table *option_table;
 	struct Texture_image_data *data;
 
 	ENTER(gfx_modify_Texture_image);
 	if (state && (data = (struct Texture_image_data *)data_void) &&
-		(command_data = (struct Cmiss_command_data *)command_data_void))
+		(command_data = (struct cmzn_command_data *)command_data_void))
 	{
 		return_code=1;
 		if (NULL != (current_token = state->current_token))
@@ -3672,7 +3672,7 @@ Modifies the properties of a texture.
 		specify_number_of_bytes_per_component, specify_width, texture_is_managed = 0;
 	struct Cmgui_image *cmgui_image;
 	struct Cmgui_image_information *cmgui_image_information;
-	struct Cmiss_command_data *command_data;
+	struct cmzn_command_data *command_data;
 	struct Colour colour;
 	struct Option_table *option_table;
 	struct Texture *texture, *texture_copy;
@@ -3687,7 +3687,7 @@ Modifies the properties of a texture.
 	struct Movie_graphics *movie, *old_movie;
 	struct X3d_movie *x3d_movie;
 #endif /* defined (SGI_MOVIE_FILE) */
-	Cmiss_field_image_id image = NULL;
+	cmzn_field_image_id image = NULL;
 
 	ENTER(gfx_modify_Texture);
 	cmgui_image_information = NULL;
@@ -3695,7 +3695,7 @@ Modifies the properties of a texture.
 	{
 		if (NULL != (current_token = state->current_token))
 		{
-			if (NULL != (command_data = (struct Cmiss_command_data *)command_data_void))
+			if (NULL != (command_data = (struct cmzn_command_data *)command_data_void))
 			{
 				process = 0;
 				if (NULL != (texture = (struct Texture *)texture_void))
@@ -3707,28 +3707,28 @@ Modifies the properties of a texture.
 					if (strcmp(PARSER_HELP_STRING,current_token)&&
 						strcmp(PARSER_RECURSIVE_HELP_STRING,current_token))
 					{
-						struct Cmiss_region *region = NULL;
+						struct cmzn_region *region = NULL;
 						char *region_path, *field_name;
-						if (Cmiss_region_get_partial_region_path(command_data->root_region,
+						if (cmzn_region_get_partial_region_path(command_data->root_region,
 							current_token, &region, &region_path, &field_name))
 						{
 							if (field_name && (strlen(field_name) > 0) &&
 								(strchr(field_name, CMISS_REGION_PATH_SEPARATOR_CHAR)	== NULL))
 							{
-								field_manager = Cmiss_region_get_Computed_field_manager(region);
+								field_manager = cmzn_region_get_Computed_field_manager(region);
 								Computed_field *existing_field =
 									FIND_BY_IDENTIFIER_IN_MANAGER(Computed_field,name)(
 										field_name, field_manager);
 								if (existing_field)
 								{
-									image = Cmiss_field_cast_image(existing_field);
+									image = cmzn_field_cast_image(existing_field);
 									if (image)
 									{
-										texture = Cmiss_field_image_get_texture(image);
+										texture = cmzn_field_image_get_texture(image);
 										texture_is_managed = 1;
-										image_field = Cmiss_field_access(existing_field);
+										image_field = cmzn_field_access(existing_field);
 									}
-									Cmiss_field_destroy(&existing_field);
+									cmzn_field_destroy(&existing_field);
 								}
 							}
 							else
@@ -3835,8 +3835,8 @@ Modifies the properties of a texture.
 					image_data.crop_height=0;
 
 					Texture_evaluate_image_data evaluate_data;
-					evaluate_data.region = Cmiss_region_access(command_data->root_region);
-					evaluate_data.group = (Cmiss_field_group_id)0;
+					evaluate_data.region = cmzn_region_access(command_data->root_region);
+					evaluate_data.group = (cmzn_field_group_id)0;
 					evaluate_data.element_dimension = 0; /* dimension == number of texture coordinates components */
 					evaluate_data.propagate_field = 1;
 					evaluate_data.field = (struct Computed_field *)NULL;
@@ -3846,11 +3846,11 @@ Modifies the properties of a texture.
 					evaluate_data.texture_coordinates_field_name = (char *)NULL;
 					/* Try for the special transparent gray material first */
 					if (!(evaluate_data.fail_material =
-					Cmiss_graphics_material_module_find_material_by_name(command_data->material_module,
+					cmzn_graphics_material_module_find_material_by_name(command_data->material_module,
 						"transparent_gray50")))
 					{
 						/* Just use the default material */
-						evaluate_data.fail_material = Cmiss_graphics_material_module_get_default_material(
+						evaluate_data.fail_material = cmzn_graphics_material_module_get_default_material(
 							command_data->material_module);
 					}
 					evaluate_data.spectrum = (struct Spectrum *)NULL;
@@ -3995,12 +3995,12 @@ Modifies the properties of a texture.
 							if (evaluate_data.field_name && evaluate_data.texture_coordinates_field_name &&
 								evaluate_data.spectrum)
 							{
-								Cmiss_field_module_id field_module = Cmiss_region_get_field_module(evaluate_data.region);
-								evaluate_data.field = Cmiss_field_module_find_field_by_name(field_module,
+								cmzn_field_module_id field_module = cmzn_region_get_field_module(evaluate_data.region);
+								evaluate_data.field = cmzn_field_module_find_field_by_name(field_module,
 									evaluate_data.field_name);
-								evaluate_data.texture_coordinates_field = Cmiss_field_module_find_field_by_name(field_module,
+								evaluate_data.texture_coordinates_field = cmzn_field_module_find_field_by_name(field_module,
 									evaluate_data.texture_coordinates_field_name);
-								Cmiss_field_module_destroy(&field_module);
+								cmzn_field_module_destroy(&field_module);
 								if (!evaluate_data.field && !evaluate_data.texture_coordinates_field)
 								{
 									return_code = 0;
@@ -4251,23 +4251,23 @@ Modifies the properties of a texture.
 								texture_copy = texture;
 							}
 
-							Cmiss_field_module_id field_module = Cmiss_region_get_field_module(evaluate_data.region);
+							cmzn_field_module_id field_module = cmzn_region_get_field_module(evaluate_data.region);
 							int element_dimension = evaluate_data.element_dimension;
 							if (element_dimension == 0)
-								element_dimension = Cmiss_field_get_number_of_components(evaluate_data.texture_coordinates_field);
-							const int highest_dimension = FE_region_get_highest_dimension(Cmiss_region_get_FE_region(evaluate_data.region));
+								element_dimension = cmzn_field_get_number_of_components(evaluate_data.texture_coordinates_field);
+							const int highest_dimension = FE_region_get_highest_dimension(cmzn_region_get_FE_region(evaluate_data.region));
 							if (element_dimension > highest_dimension)
 								element_dimension = highest_dimension;
-							Cmiss_mesh_id search_mesh = Cmiss_field_module_find_mesh_by_dimension(field_module, element_dimension);
+							cmzn_mesh_id search_mesh = cmzn_field_module_find_mesh_by_dimension(field_module, element_dimension);
 							if (evaluate_data.group)
 							{
-								Cmiss_field_element_group_id element_group =
-									Cmiss_field_group_get_element_group(evaluate_data.group, search_mesh);
-								Cmiss_mesh_destroy(&search_mesh);
+								cmzn_field_element_group_id element_group =
+									cmzn_field_group_get_element_group(evaluate_data.group, search_mesh);
+								cmzn_mesh_destroy(&search_mesh);
 								if (element_group)
 								{
-									search_mesh = Cmiss_mesh_group_base_cast(Cmiss_field_element_group_get_mesh(element_group));
-									Cmiss_field_element_group_destroy(&element_group);
+									search_mesh = cmzn_mesh_group_base_cast(cmzn_field_element_group_get_mesh(element_group));
+									cmzn_field_element_group_destroy(&element_group);
 								}
 							}
 							set_Texture_image_from_field(texture_copy,
@@ -4287,13 +4287,13 @@ Modifies the properties of a texture.
 								Texture_copy_without_identifier(texture_copy, texture);
 								DESTROY(Texture)(&texture_copy);
 							}
-							Cmiss_mesh_destroy(&search_mesh);
-							Cmiss_field_module_destroy(&field_module);
+							cmzn_mesh_destroy(&search_mesh);
+							cmzn_field_module_destroy(&field_module);
 						}
 						if (texture_is_managed)
 						{
 							if (image && texture)
-								Cmiss_field_image_set_texture(image, texture);
+								cmzn_field_image_set_texture(image, texture);
 							MANAGER_END_CACHE(Computed_field)(field_manager);
 						}
 					}
@@ -4309,12 +4309,12 @@ Modifies the properties of a texture.
 					}
 #endif /* defined (SGI_MOVIE_FILE) */
 					if (evaluate_data.region)
-						Cmiss_region_destroy(&evaluate_data.region);
+						cmzn_region_destroy(&evaluate_data.region);
 					if (evaluate_data.group)
-						Cmiss_field_group_destroy(&evaluate_data.group);
+						cmzn_field_group_destroy(&evaluate_data.group);
 					if (evaluate_data.fail_material)
 					{
-						Cmiss_graphics_material_destroy(&evaluate_data.fail_material);
+						cmzn_graphics_material_destroy(&evaluate_data.fail_material);
 					}
 					if (evaluate_data.spectrum)
 					{
@@ -4367,7 +4367,7 @@ Modifies the properties of a texture.
 		return_code=0;
 	}
 	if (image_field)
-		Cmiss_field_destroy(&image_field);
+		cmzn_field_destroy(&image_field);
 	LEAVE;
 
 	return (return_code);
@@ -4384,7 +4384,7 @@ Executes a GFX CREATE TEXTURE command.
 {
 	const char *current_token;
 	int return_code = 0;
-	struct Cmiss_command_data *command_data;
+	struct cmzn_command_data *command_data;
 	struct Texture *texture;
 
 	ENTER(gfx_create_texture);
@@ -4393,23 +4393,23 @@ Executes a GFX CREATE TEXTURE command.
 	{
 		if (NULL != (current_token = state->current_token))
 		{
-			if (NULL != (command_data = (struct Cmiss_command_data *)command_data_void))
+			if (NULL != (command_data = (struct cmzn_command_data *)command_data_void))
 			{
 				if (strcmp(PARSER_HELP_STRING,current_token)&&
 					strcmp(PARSER_RECURSIVE_HELP_STRING,current_token))
 				{
-					struct Cmiss_region *region = NULL;
+					struct cmzn_region *region = NULL;
 					char *region_path, *field_name;
-					if (Cmiss_region_get_partial_region_path(command_data->root_region,
+					if (cmzn_region_get_partial_region_path(command_data->root_region,
 						current_token, &region, &region_path, &field_name))
 					{
-						Cmiss_field_module *field_module = Cmiss_region_get_field_module(region);
+						cmzn_field_module *field_module = cmzn_region_get_field_module(region);
 						if (field_name && (strlen(field_name) > 0) &&
 							(strchr(field_name, CMISS_REGION_PATH_SEPARATOR_CHAR)	== NULL))
 						{
 							Computed_field *existing_field =
 								FIND_BY_IDENTIFIER_IN_MANAGER(Computed_field,name)(
-									field_name, Cmiss_region_get_Computed_field_manager(region));
+									field_name, cmzn_region_get_Computed_field_manager(region));
 							if (existing_field)
 							{
 								display_message(ERROR_MESSAGE,
@@ -4432,15 +4432,15 @@ Executes a GFX CREATE TEXTURE command.
 									}
 									if (return_code)
 									{
-										Cmiss_field_id image_field =	Cmiss_field_module_create_image(
+										cmzn_field_id image_field =	cmzn_field_module_create_image(
 											field_module, NULL, NULL);
-										Cmiss_field_set_name(image_field, field_name);
-										Cmiss_field_set_managed(image_field, true);
-										Cmiss_field_image_id image = Cmiss_field_cast_image(image_field);
-										Cmiss_field_image_set_texture(image, texture);
-										Cmiss_field_destroy(&image_field);
-										image_field = reinterpret_cast<Cmiss_field_id>(image);
-										Cmiss_field_destroy(&image_field);
+										cmzn_field_set_name(image_field, field_name);
+										cmzn_field_set_managed(image_field, true);
+										cmzn_field_image_id image = cmzn_field_cast_image(image_field);
+										cmzn_field_image_set_texture(image, texture);
+										cmzn_field_destroy(&image_field);
+										image_field = reinterpret_cast<cmzn_field_id>(image);
+										cmzn_field_destroy(&image_field);
 									}
 									else
 									{
@@ -4464,7 +4464,7 @@ Executes a GFX CREATE TEXTURE command.
 							display_parse_state_location(state);
 							return_code = 0;
 						}
-						Cmiss_field_module_destroy(&field_module);
+						cmzn_field_module_destroy(&field_module);
 						if (region_path)
 							DEALLOCATE(region_path);
 						if (field_name)
@@ -4516,7 +4516,7 @@ editor at a time.  This implementation may be changed later.
 {
 	const char *current_token;
 	int return_code = 0;
-	struct Cmiss_command_data *command_data;
+	struct cmzn_command_data *command_data;
 
 	ENTER(gfx_create_graphical_time_editor);
 	USE_PARAMETER(dummy_to_be_modified);
@@ -4538,7 +4538,7 @@ editor at a time.  This implementation may be changed later.
 		}
 		else
 		{
-			if (NULL != (command_data = (struct Cmiss_command_data *)command_data_void))
+			if (NULL != (command_data = (struct cmzn_command_data *)command_data_void))
 			{
 				if (command_data->graphics_window_manager)
 				{
@@ -4583,7 +4583,7 @@ Executes a GFX CREATE WINDOW command.
 	enum Graphics_window_stereo_mode stereo_mode;
 	int minimum_colour_buffer_depth, minimum_depth_buffer_depth,
 		minimum_accumulation_buffer_depth, return_code;
-	struct Cmiss_command_data *command_data;
+	struct cmzn_command_data *command_data;
 	struct Graphics_window *window;
 	struct Option_table *buffer_option_table, *option_table, *stereo_option_table
 
@@ -4591,7 +4591,7 @@ Executes a GFX CREATE WINDOW command.
 	USE_PARAMETER(dummy_to_be_modified);
 	if (state)
 	{
-		if (NULL != (command_data = (struct Cmiss_command_data *)command_data_void))
+		if (NULL != (command_data = (struct cmzn_command_data *)command_data_void))
 		{
 			return_code=1;
 			/* set_defaults */
@@ -4716,8 +4716,8 @@ Executes a GFX CREATE WINDOW command.
 							 command_data->user_interface);
 						ADD_OBJECT_TO_MANAGER(Interactive_tool)(transform_tool,
 							 interactive_tool_manager);
-						Cmiss_graphics_material_id defaultMaterial =
-							Cmiss_graphics_material_module_get_default_material(command_data->material_module);
+						cmzn_graphics_material_id defaultMaterial =
+							cmzn_graphics_material_module_get_default_material(command_data->material_module);
 						Node_tool_set_execute_command(CREATE(Node_tool)(
 								interactive_tool_manager,
 								command_data->root_region, CMISS_FIELD_DOMAIN_NODES,
@@ -4759,7 +4759,7 @@ Executes a GFX CREATE WINDOW command.
 								command_data->default_time_keeper_app),
 								command_data->execute_command);
 						if (defaultMaterial)
-							Cmiss_graphics_material_destroy(&defaultMaterial);
+							cmzn_graphics_material_destroy(&defaultMaterial);
 
 						if (NULL != (window=CREATE(Graphics_window)(name,buffer_mode,stereo_mode,
 							minimum_colour_buffer_depth, minimum_depth_buffer_depth,
@@ -4861,12 +4861,12 @@ Executes an ATTACH command.
 	int return_code = 0;
 	struct Io_device *device;
 	static struct Option_table *option_table;
-	struct Cmiss_command_data *command_data;
+	struct cmzn_command_data *command_data;
 
 	ENTER(execute_command_attach);
 	USE_PARAMETER(prompt_void);
 	/* check argument */
-	if (state && (command_data=(struct Cmiss_command_data *)command_data_void))
+	if (state && (command_data=(struct cmzn_command_data *)command_data_void))
 	{
 		device = (struct Io_device *)NULL;
 		if (NULL != (current_token = state->current_token))
@@ -4989,12 +4989,12 @@ Executes a DETACH command.
 	const char *current_token;
 	int return_code;
 	struct Io_device *device;
-	struct Cmiss_command_data *command_data;
+	struct cmzn_command_data *command_data;
 
 	ENTER(execute_command_detach);
 	USE_PARAMETER(prompt_void);
 	/* check argument */
-	if (state && (command_data=(struct Cmiss_command_data *)command_data_void))
+	if (state && (command_data=(struct cmzn_command_data *)command_data_void))
 	{
 		device = (struct Io_device *)NULL;
 		if (NULL != (current_token = state->current_token))
@@ -5123,7 +5123,7 @@ Executes a GFX CONVERT ELEMENTS command.
 ==============================================================================*/
 {
 	int i, number_of_fields, previous_state_index, return_code;
-	struct Cmiss_command_data *command_data;
+	struct cmzn_command_data *command_data;
 	struct Computed_field **fields;
 	struct Option_table *option_table;
 	char **component_names;
@@ -5132,10 +5132,10 @@ Executes a GFX CONVERT ELEMENTS command.
 	USE_PARAMETER(dummy_to_be_modified);
 	if (state)
 	{
-		if (NULL != (command_data = (struct Cmiss_command_data *)command_data_void))
+		if (NULL != (command_data = (struct cmzn_command_data *)command_data_void))
 		{
-			Cmiss_region *source_region = Cmiss_region_access(command_data->root_region);
-			Cmiss_region *destination_region = NULL;
+			cmzn_region *source_region = cmzn_region_access(command_data->root_region);
+			cmzn_region *destination_region = NULL;
 			fields = (struct Computed_field **)NULL;
 			component_names = NULL;
 			number_of_fields = 1;
@@ -5186,7 +5186,7 @@ Executes a GFX CONVERT ELEMENTS command.
 				" - the first processed element's versions are assumed. "
 				"Mode \'convert_hermite_2D_product_elements\' ONLY: converts element fields on 2-D elements "
 				"into bicubic hermite basis WITHOUT merging nearby nodes.");
-			Option_table_add_set_Cmiss_region(option_table, "destination_region",
+			Option_table_add_set_cmzn_region(option_table, "destination_region",
 				command_data->root_region, &destination_region);
 			Option_table_add_entry(option_table,"fields",component_names,
 				&number_of_fields, set_names);
@@ -5196,7 +5196,7 @@ Executes a GFX CONVERT ELEMENTS command.
 				&conversion_mode);
 			Option_table_add_entry(option_table, "refinement",
 				(void *)&element_refinement, (void *)NULL, set_Element_discretization);
-			Option_table_add_set_Cmiss_region(option_table, "source_region",
+			Option_table_add_set_cmzn_region(option_table, "source_region",
 				command_data->root_region, &source_region);
 			Option_table_add_non_negative_double_entry(option_table, "tolerance", &tolerance);
 			return_code=Option_table_multi_parse(option_table,state);
@@ -5222,8 +5222,8 @@ Executes a GFX CONVERT ELEMENTS command.
 						"gfx_convert elements.  Must specify destination region");
 					return_code = 0;
 				}
-				else if (Cmiss_region_get_Computed_field_manager(destination_region) ==
-					Cmiss_region_get_Computed_field_manager(source_region))
+				else if (cmzn_region_get_Computed_field_manager(destination_region) ==
+					cmzn_region_get_Computed_field_manager(source_region))
 				{
 					display_message(ERROR_MESSAGE,
 						"gfx_convert elements.  Destination and source regions must be different and not share fields");
@@ -5235,12 +5235,12 @@ Executes a GFX CONVERT ELEMENTS command.
 			{
 				if (component_names && fields)
 				{
-					Cmiss_field_module_id field_module = Cmiss_region_get_field_module(source_region);
+					cmzn_field_module_id field_module = cmzn_region_get_field_module(source_region);
 					for (i = 0; i < number_of_fields; i++)
 					{
 						if (component_names[i])
 						{
-							fields[i] = Cmiss_field_module_find_field_by_name(field_module, component_names[i]);
+							fields[i] = cmzn_field_module_find_field_by_name(field_module, component_names[i]);
 							if (fields[i])
 							{
 								if (!Computed_field_has_numerical_components(fields[i], NULL))
@@ -5260,7 +5260,7 @@ Executes a GFX CONVERT ELEMENTS command.
 							}
 						}
 					}
-					Cmiss_field_module_destroy(&field_module);
+					cmzn_field_module_destroy(&field_module);
 				}
 				else
 				{
@@ -5299,10 +5299,10 @@ Executes a GFX CONVERT ELEMENTS command.
 				}
 				DEALLOCATE(component_names);
 			}
-			Cmiss_region_destroy(&source_region);
+			cmzn_region_destroy(&source_region);
 			if (destination_region)
 			{
-				Cmiss_region_destroy(&destination_region);
+				cmzn_region_destroy(&destination_region);
 			}
 		}
 		else
@@ -5332,20 +5332,20 @@ static int gfx_convert_graphics(struct Parse_state *state,
 	int return_code;
 
 	USE_PARAMETER(dummy_to_be_modified);
-	Cmiss_command_data *command_data = reinterpret_cast<Cmiss_command_data *>(command_data_void);
+	cmzn_command_data *command_data = reinterpret_cast<cmzn_command_data *>(command_data_void);
 	if (state && command_data)
 	{
-		Cmiss_region_id region = Cmiss_region_access(command_data->root_region);
-		Cmiss_field_group_id group = 0;
-		struct Cmiss_region *input_region = NULL;
+		cmzn_region_id region = cmzn_region_access(command_data->root_region);
+		cmzn_field_group_id group = 0;
+		struct cmzn_region *input_region = NULL;
 		char *coordinate_field_name = 0;
-		Cmiss_field_id coordinate_field = 0;
+		cmzn_field_id coordinate_field = 0;
 		const char *scene_name = 0;
 		const char *graphic_name = NULL;
-		Cmiss_scene_id scene = 0;
+		cmzn_scene_id scene = 0;
 		char *scene_path_name = 0;
-		Cmiss_graphics_filter_id filter =
-			Cmiss_graphics_filter_module_get_default_filter(command_data->filter_module);
+		cmzn_graphics_filter_id filter =
+			cmzn_graphics_filter_module_get_default_filter(command_data->filter_module);
 		enum Render_to_finite_elements_mode render_mode = RENDER_TO_FINITE_ELEMENTS_LINEAR_PRODUCT;
 
 		Option_table *option_table=CREATE(Option_table)();
@@ -5369,7 +5369,7 @@ static int gfx_convert_graphics(struct Parse_state *state,
 		OPTION_TABLE_ADD_ENUMERATOR(Render_to_finite_elements_mode)(option_table,
 			&render_mode);
 		Option_table_add_entry(option_table, "filter", &filter,
-			command_data->filter_module, set_Cmiss_graphics_filter);
+			command_data->filter_module, set_cmzn_graphics_filter);
 		/* region */
 		Option_table_add_region_or_group_entry(option_table, "region", &region, &group);
 		/* scene */
@@ -5391,11 +5391,11 @@ static int gfx_convert_graphics(struct Parse_state *state,
 			}
 			if (coordinate_field_name &&
 				(coordinate_field = FIND_BY_IDENTIFIER_IN_MANAGER(Computed_field,name)(
-						coordinate_field_name, Cmiss_region_get_Computed_field_manager(region))))
+						coordinate_field_name, cmzn_region_get_Computed_field_manager(region))))
 			{
 				if (Computed_field_has_up_to_3_numerical_components(coordinate_field, NULL))
 				{
-					Cmiss_field_access(coordinate_field);
+					cmzn_field_access(coordinate_field);
 				}
 				else
 				{
@@ -5414,12 +5414,12 @@ static int gfx_convert_graphics(struct Parse_state *state,
 			}
 			if (scene_name && (0!=strcmp(scene_name,"default")))
 			{
-				input_region = Cmiss_region_find_subregion_at_path(command_data->root_region,
+				input_region = cmzn_region_find_subregion_at_path(command_data->root_region,
 					scene_name);
 			}
 			else
 			{
-				input_region = Cmiss_region_access(command_data->root_region);
+				input_region = cmzn_region_access(command_data->root_region);
 			}
 			if (scene_name && !input_region)
 			{
@@ -5439,12 +5439,12 @@ static int gfx_convert_graphics(struct Parse_state *state,
 		if (return_code)
 		{
 			render_to_finite_elements(input_region, graphic_name, filter, render_mode,
-				region, group, coordinate_field, static_cast<Cmiss_nodeset_id>(0),
+				region, group, coordinate_field, static_cast<cmzn_nodeset_id>(0),
 				line_density, line_density_scale_factor, surface_density, surface_density_scale_factor);
 		}
 		if (scene)
 		{
-			Cmiss_scene_destroy(&scene);
+			cmzn_scene_destroy(&scene);
 		}
 		if (coordinate_field)
 		{
@@ -5464,16 +5464,16 @@ static int gfx_convert_graphics(struct Parse_state *state,
 		}
 		if (input_region)
 		{
-			Cmiss_region_destroy(&input_region);
+			cmzn_region_destroy(&input_region);
 		}
 		if (filter)
-			Cmiss_graphics_filter_destroy(&filter);
+			cmzn_graphics_filter_destroy(&filter);
 		if (scene_path_name)
 		{
 			DEALLOCATE(scene_path_name);
 		}
-		Cmiss_field_group_destroy(&group);
-		Cmiss_region_destroy(&region);
+		cmzn_field_group_destroy(&group);
+		cmzn_region_destroy(&region);
 	}
 	else
 	{
@@ -5528,14 +5528,14 @@ Executes a GFX CREATE command.
 ==============================================================================*/
 {
 	int return_code;
-	struct Cmiss_command_data *command_data;
+	struct cmzn_command_data *command_data;
 	struct Option_table *option_table;
 
 	ENTER(execute_command_gfx_create);
 	USE_PARAMETER(dummy_to_be_modified);
 	if (state)
 	{
-		if (NULL != (command_data = (struct Cmiss_command_data *)command_data_void))
+		if (NULL != (command_data = (struct cmzn_command_data *)command_data_void))
 		{
 			if (state->current_token)
 			{
@@ -5665,48 +5665,48 @@ static int gfx_define_faces(struct Parse_state *state,
 {
 	int return_code;
 	USE_PARAMETER(dummy_to_be_modified);
-	Cmiss_command_data *command_data = reinterpret_cast<Cmiss_command_data *>(command_data_void);
+	cmzn_command_data *command_data = reinterpret_cast<cmzn_command_data *>(command_data_void);
 	if (state && command_data)
 	{
-		Cmiss_region_id region = Cmiss_region_access(command_data->root_region);
-		Cmiss_field_group_id group = 0;
+		cmzn_region_id region = cmzn_region_access(command_data->root_region);
+		cmzn_field_group_id group = 0;
 		Option_table *option_table = CREATE(Option_table)();
 		Option_table_add_region_or_group_entry(option_table, "egroup", &region, &group);
 		return_code = Option_table_multi_parse(option_table, state);
 		DESTROY(Option_table)(&option_table);
 		if (return_code)
 		{
-			Cmiss_field_module_id field_module = Cmiss_region_get_field_module(region);
-			Cmiss_field_module_begin_change(field_module);
-			FE_region *fe_region = Cmiss_region_get_FE_region(region);
+			cmzn_field_module_id field_module = cmzn_region_get_field_module(region);
+			cmzn_field_module_begin_change(field_module);
+			FE_region *fe_region = cmzn_region_get_FE_region(region);
 			for (int dimension = MAXIMUM_ELEMENT_XI_DIMENSIONS; (1 < dimension) && return_code; --dimension)
 			{
-				Cmiss_mesh_id mesh = Cmiss_field_module_find_mesh_by_dimension(field_module, dimension);
-				Cmiss_mesh_group_id face_mesh_group = 0;
+				cmzn_mesh_id mesh = cmzn_field_module_find_mesh_by_dimension(field_module, dimension);
+				cmzn_mesh_group_id face_mesh_group = 0;
 				if (group)
 				{
-					Cmiss_field_element_group_id element_group = Cmiss_field_group_get_element_group(group, mesh);
-					Cmiss_mesh_destroy(&mesh);
-					mesh = Cmiss_mesh_group_base_cast(Cmiss_field_element_group_get_mesh(element_group));
-					Cmiss_field_element_group_destroy(&element_group);
+					cmzn_field_element_group_id element_group = cmzn_field_group_get_element_group(group, mesh);
+					cmzn_mesh_destroy(&mesh);
+					mesh = cmzn_mesh_group_base_cast(cmzn_field_element_group_get_mesh(element_group));
+					cmzn_field_element_group_destroy(&element_group);
 				}
-				if (mesh && (0 < Cmiss_mesh_get_size(mesh)))
+				if (mesh && (0 < cmzn_mesh_get_size(mesh)))
 				{
 					if (group)
 					{
-						Cmiss_mesh_id face_master_mesh = Cmiss_field_module_find_mesh_by_dimension(field_module, dimension - 1);
-						Cmiss_field_element_group_id face_element_group = Cmiss_field_group_get_element_group(group, face_master_mesh);
+						cmzn_mesh_id face_master_mesh = cmzn_field_module_find_mesh_by_dimension(field_module, dimension - 1);
+						cmzn_field_element_group_id face_element_group = cmzn_field_group_get_element_group(group, face_master_mesh);
 						if (!face_element_group)
-							face_element_group = Cmiss_field_group_create_element_group(group, face_master_mesh);
-						Cmiss_mesh_destroy(&face_master_mesh);
-						face_mesh_group = Cmiss_field_element_group_get_mesh(face_element_group);
-						Cmiss_field_element_group_destroy(&face_element_group);
+							face_element_group = cmzn_field_group_create_element_group(group, face_master_mesh);
+						cmzn_mesh_destroy(&face_master_mesh);
+						face_mesh_group = cmzn_field_element_group_get_mesh(face_element_group);
+						cmzn_field_element_group_destroy(&face_element_group);
 
 					}
 					FE_region_begin_define_faces(fe_region, dimension - 1);
-					Cmiss_element_iterator_id iter = Cmiss_mesh_create_element_iterator(mesh);
-					Cmiss_element_id element = 0;
-					while ((0 != (element = Cmiss_element_iterator_next_non_access(iter))) && return_code)
+					cmzn_element_iterator_id iter = cmzn_mesh_create_element_iterator(mesh);
+					cmzn_element_id element = 0;
+					while ((0 != (element = cmzn_element_iterator_next_non_access(iter))) && return_code)
 					{
 						if (!FE_region_merge_FE_element_and_faces_and_nodes(fe_region, element))
 						{
@@ -5716,13 +5716,13 @@ static int gfx_define_faces(struct Parse_state *state,
 						{
 							int number_of_faces = 0;
 							get_FE_element_number_of_faces(element, &number_of_faces);
-							Cmiss_element_id face = 0;
+							cmzn_element_id face = 0;
 							for (int face_number = 0; face_number < number_of_faces; ++face_number)
 							{
 								if (get_FE_element_face(element, face_number, &face) && face)
 								{
-									if (!Cmiss_mesh_contains_element(Cmiss_mesh_group_base_cast(face_mesh_group), face) &&
-										!Cmiss_mesh_group_add_element(face_mesh_group, face))
+									if (!cmzn_mesh_contains_element(cmzn_mesh_group_base_cast(face_mesh_group), face) &&
+										!cmzn_mesh_group_add_element(face_mesh_group, face))
 									{
 										return_code = 0;
 										break;
@@ -5731,17 +5731,17 @@ static int gfx_define_faces(struct Parse_state *state,
 							}
 						}
 					}
-					Cmiss_element_iterator_destroy(&iter);
+					cmzn_element_iterator_destroy(&iter);
 					FE_region_end_define_faces(fe_region);
 				}
-				Cmiss_mesh_group_destroy(&face_mesh_group);
-				Cmiss_mesh_destroy(&mesh);
+				cmzn_mesh_group_destroy(&face_mesh_group);
+				cmzn_mesh_destroy(&mesh);
 			}
-			Cmiss_field_module_end_change(field_module);
-			Cmiss_field_module_destroy(&field_module);
+			cmzn_field_module_end_change(field_module);
+			cmzn_field_module_destroy(&field_module);
 		}
-		Cmiss_field_group_destroy(&group);
-		Cmiss_region_destroy(&region);
+		cmzn_field_group_destroy(&group);
+		cmzn_region_destroy(&region);
 	}
 	else
 	{
@@ -5762,7 +5762,7 @@ Executes a GFX DEFINE command.
 ==============================================================================*/
 {
 	int return_code;
-	struct Cmiss_command_data *command_data;
+	struct cmzn_command_data *command_data;
 	struct Curve_command_data curve_command_data;
 	struct Option_table *option_table;
 
@@ -5770,11 +5770,11 @@ Executes a GFX DEFINE command.
 	USE_PARAMETER(dummy_to_be_modified);
 	if (state)
 	{
-		if (NULL != (command_data = (struct Cmiss_command_data *)command_data_void))
+		if (NULL != (command_data = (struct cmzn_command_data *)command_data_void))
 		{
 			if (state->current_token)
 			{
-				Cmiss_font_module_id font_module = Cmiss_graphics_module_get_font_module(
+				cmzn_font_module_id font_module = cmzn_graphics_module_get_font_module(
 					command_data->graphics_module);
 				option_table = CREATE(Option_table)();
 				/* curve */
@@ -5807,7 +5807,7 @@ Executes a GFX DEFINE command.
 					command_data->tessellation_module, gfx_define_tessellation);
 				return_code = Option_table_parse(option_table, state);
 				DESTROY(Option_table)(&option_table);
-				Cmiss_font_module_destroy(&font_module);
+				cmzn_font_module_destroy(&font_module);
 			}
 			else
 			{
@@ -5840,13 +5840,13 @@ static int gfx_destroy_group(struct Parse_state *state,
 {
 	int return_code = 1;
 	USE_PARAMETER(dummy_to_be_modified);
-	Cmiss_region_id root_region = reinterpret_cast<Cmiss_region_id>(root_region_void);
+	cmzn_region_id root_region = reinterpret_cast<cmzn_region_id>(root_region_void);
 	if (state && root_region)
 	{
-		Cmiss_region_id region = Cmiss_region_access(root_region);
-		Cmiss_field_group_id group = 0;
+		cmzn_region_id region = cmzn_region_access(root_region);
+		cmzn_field_group_id group = 0;
 		const char *current_token = state->current_token;
-		if (!set_Cmiss_region_or_group(state, &region, &group) ||
+		if (!set_cmzn_region_or_group(state, &region, &group) ||
 			Parse_state_help_mode(state))
 		{
 			// message already output
@@ -5858,16 +5858,16 @@ static int gfx_destroy_group(struct Parse_state *state,
 		}
 		else
 		{
-			if (!MANAGED_OBJECT_NOT_IN_USE(Computed_field)(Cmiss_field_group_base_cast(group),
-				Cmiss_region_get_Computed_field_manager(region)))
+			if (!MANAGED_OBJECT_NOT_IN_USE(Computed_field)(cmzn_field_group_base_cast(group),
+				cmzn_region_get_Computed_field_manager(region)))
 			{
 				display_message(INFORMATION_MESSAGE, "Group %s marked for destruction when no longer in use.\n",
 					current_token);
 			}
-			return_code = Cmiss_field_set_managed(Cmiss_field_group_base_cast(group), false);
+			return_code = cmzn_field_set_managed(cmzn_field_group_base_cast(group), false);
 		}
-		Cmiss_field_group_destroy(&group);
-		Cmiss_region_destroy(&region);
+		cmzn_field_group_destroy(&group);
+		cmzn_region_destroy(&region);
 	}
 	else
 	{
@@ -5888,26 +5888,26 @@ Executes a GFX DESTROY REGION command.
 {
 	const char *current_token;
 	int return_code = 1;
-	struct Cmiss_region *root_region;
+	struct cmzn_region *root_region;
 
 	ENTER(gfx_destroy_region);
 	USE_PARAMETER(dummy_to_be_modified);
-	if (state && (root_region = (struct Cmiss_region *)root_region_void))
+	if (state && (root_region = (struct cmzn_region *)root_region_void))
 	{
 		if (NULL != (current_token = state->current_token))
 		{
 			if (strcmp(PARSER_HELP_STRING,current_token)&&
 				strcmp(PARSER_RECURSIVE_HELP_STRING,current_token))
 			{
-				struct Cmiss_region *region =
-					Cmiss_region_find_subregion_at_path(root_region, current_token);
+				struct cmzn_region *region =
+					cmzn_region_find_subregion_at_path(root_region, current_token);
 				if (region)
 				{
-					struct Cmiss_region *parent_region = Cmiss_region_get_parent(region);
+					struct cmzn_region *parent_region = cmzn_region_get_parent(region);
 					if (parent_region)
 					{
-						Cmiss_region_remove_child(parent_region, region);
-						Cmiss_region_destroy(&parent_region);
+						cmzn_region_remove_child(parent_region, region);
+						cmzn_region_destroy(&parent_region);
 					}
 					else
 					{
@@ -5916,7 +5916,7 @@ Executes a GFX DESTROY REGION command.
 						display_parse_state_location(state);
 						return_code = 0;
 					}
-					Cmiss_region_destroy(&region);
+					cmzn_region_destroy(&region);
 				}
 				else
 				{
@@ -5956,14 +5956,14 @@ static int gfx_destroy_elements(struct Parse_state *state,
 {
 	int return_code;
 	int dimension = VOIDPTR2INT(dimension_void);
-	Cmiss_command_data *command_data = reinterpret_cast<Cmiss_command_data *>(command_data_void);
+	cmzn_command_data *command_data = reinterpret_cast<cmzn_command_data *>(command_data_void);
 	if (state && command_data && (0 < dimension) && (dimension <= 3))
 	{
 		/* initialise defaults */
 		char all_flag = 0;
-		Cmiss_region_id region = Cmiss_region_access(command_data->root_region);
-		Cmiss_field_group_id group = 0;
-		Cmiss_field_id conditional_field = 0;
+		cmzn_region_id region = cmzn_region_access(command_data->root_region);
+		cmzn_field_group_id group = 0;
+		cmzn_field_id conditional_field = 0;
 		char *conditional_field_name = 0;
 		char selected_flag = 0;
 		Multi_range *element_ranges = CREATE(Multi_range)();
@@ -6004,61 +6004,61 @@ static int gfx_destroy_elements(struct Parse_state *state,
 		}
 		if (return_code && conditional_field_name)
 		{
-			Cmiss_field_module_id field_module = Cmiss_region_get_field_module(region);
-			conditional_field = Cmiss_field_module_find_field_by_name(field_module, conditional_field_name);
+			cmzn_field_module_id field_module = cmzn_region_get_field_module(region);
+			conditional_field = cmzn_field_module_find_field_by_name(field_module, conditional_field_name);
 			if (!conditional_field)
 			{
 				display_message(ERROR_MESSAGE,
 					"gfx_destroy_elements:  conditional field cannot be found");
 				return_code = 0;
 			}
-			Cmiss_field_module_destroy(&field_module);
+			cmzn_field_module_destroy(&field_module);
 		}
 		if (return_code)
 		{
-			Cmiss_field_module_id field_module = Cmiss_region_get_field_module(region);
-			Cmiss_field_group_id selection_group = NULL;
+			cmzn_field_module_id field_module = cmzn_region_get_field_module(region);
+			cmzn_field_group_id selection_group = NULL;
 			if (selected_flag)
 			{
-				Cmiss_scene *scene = Cmiss_region_get_scene_internal(region);
+				cmzn_scene *scene = cmzn_region_get_scene_internal(region);
 				if (scene)
 				{
-					selection_group = Cmiss_scene_get_selection_group(scene);
-					Cmiss_scene_destroy(&scene);
+					selection_group = cmzn_scene_get_selection_group(scene);
+					cmzn_scene_destroy(&scene);
 				}
 			}
 			int use_dimension = dimension;
 			if (dimension == 3)
 			{
-				use_dimension = FE_region_get_highest_dimension(Cmiss_region_get_FE_region(region));
+				use_dimension = FE_region_get_highest_dimension(cmzn_region_get_FE_region(region));
 			}
-			Cmiss_field_id use_conditional_field = 0;
+			cmzn_field_id use_conditional_field = 0;
 			if (group && conditional_field)
 			{
-				use_conditional_field = Cmiss_field_module_create_or(field_module, conditional_field, Cmiss_field_group_base_cast(group));
+				use_conditional_field = cmzn_field_module_create_or(field_module, conditional_field, cmzn_field_group_base_cast(group));
 			}
 			else if (conditional_field)
 			{
-				use_conditional_field = Cmiss_field_access(conditional_field);
+				use_conditional_field = cmzn_field_access(conditional_field);
 			}
 			else if (group)
 			{
-				use_conditional_field = Cmiss_field_access(Cmiss_field_group_base_cast(group));
+				use_conditional_field = cmzn_field_access(cmzn_field_group_base_cast(group));
 			}
 			LIST(FE_element) *destroy_element_list = 0;
 			if ((!selected_flag) || selection_group)
 			{
 				destroy_element_list = FE_element_list_from_region_and_selection_group(
-					region, use_dimension, element_ranges, Cmiss_field_group_base_cast(selection_group), use_conditional_field,
+					region, use_dimension, element_ranges, cmzn_field_group_base_cast(selection_group), use_conditional_field,
 					time);
 				if (!destroy_element_list)
 					return_code = 0;
 			}
 			if (destroy_element_list && (0 < NUMBER_IN_LIST(FE_element)(destroy_element_list)))
 			{
-				Cmiss_field_module_begin_change(field_module);
+				cmzn_field_module_begin_change(field_module);
 				return_code = FE_region_remove_FE_element_list(
-					Cmiss_region_get_FE_region(region), destroy_element_list);
+					cmzn_region_get_FE_region(region), destroy_element_list);
 				int number_not_destroyed = 0;
 				if (0 < (number_not_destroyed = NUMBER_IN_LIST(FE_element)(
 					destroy_element_list)))
@@ -6069,9 +6069,9 @@ static int gfx_destroy_elements(struct Parse_state *state,
 				}
 				if (selection_group)
 				{
-					Cmiss_field_group_remove_empty_subgroups(selection_group);
+					cmzn_field_group_remove_empty_subgroups(selection_group);
 				}
-				Cmiss_field_module_end_change(field_module);
+				cmzn_field_module_end_change(field_module);
 			}
 			else
 			{
@@ -6091,10 +6091,10 @@ static int gfx_destroy_elements(struct Parse_state *state,
 			if (destroy_element_list)
 				DESTROY(LIST(FE_element))(&destroy_element_list);
 			if (selection_group)
-				Cmiss_field_group_destroy(&selection_group);
+				cmzn_field_group_destroy(&selection_group);
 			if (use_conditional_field)
-				Cmiss_field_destroy(&use_conditional_field);
-			Cmiss_field_module_destroy(&field_module);
+				cmzn_field_destroy(&use_conditional_field);
+			cmzn_field_module_destroy(&field_module);
 		}
 		if (conditional_field)
 		{
@@ -6105,8 +6105,8 @@ static int gfx_destroy_elements(struct Parse_state *state,
 			DEALLOCATE(conditional_field_name);
 		}
 		DESTROY(Multi_range)(&element_ranges);
-		Cmiss_field_group_destroy(&group);
-		Cmiss_region_destroy(&region);
+		cmzn_field_group_destroy(&group);
+		cmzn_region_destroy(&region);
 	}
 	else
 	{
@@ -6129,32 +6129,32 @@ Executes a GFX DESTROY FIELD command.
 	char *field_name, *region_path;
 	struct Computed_field *field;
 	int return_code = 0;
-	struct Cmiss_region *region, *root_region;
+	struct cmzn_region *region, *root_region;
 
 	ENTER(gfx_destroy_Computed_field);
 	USE_PARAMETER(dummy_to_be_modified);
-	if (state && (root_region=(struct Cmiss_region *)root_region_void))
+	if (state && (root_region=(struct cmzn_region *)root_region_void))
 	{
 		if (NULL != (current_token = state->current_token))
 		{
 			if (strcmp(PARSER_HELP_STRING,current_token)&&
 				strcmp(PARSER_RECURSIVE_HELP_STRING,current_token))
 			{
-				if (Cmiss_region_get_partial_region_path(root_region,
+				if (cmzn_region_get_partial_region_path(root_region,
 					current_token, &region, &region_path, &field_name))
 				{
 					if (field_name &&
 						(field = FIND_BY_IDENTIFIER_IN_MANAGER(Computed_field,name)(
-							field_name, Cmiss_region_get_Computed_field_manager(region))))
+							field_name, cmzn_region_get_Computed_field_manager(region))))
 					{
 						ACCESS(Computed_field)(field);
 						if (!MANAGED_OBJECT_NOT_IN_USE(Computed_field)(field,
-							Cmiss_region_get_Computed_field_manager(region)))
+							cmzn_region_get_Computed_field_manager(region)))
 						{
 							display_message(INFORMATION_MESSAGE, "Field %s marked for destruction when no longer in use.\n",
 								current_token);
 						}
-						return_code = Cmiss_field_set_managed(field, false);
+						return_code = cmzn_field_set_managed(field, false);
 						if (!return_code)
 						{
 							display_message(ERROR_MESSAGE, "gfx destroy field.  Failed");
@@ -6212,24 +6212,24 @@ Executes a GFX DESTROY GRAPHICS_OBJECT command.
 {
 	const char *current_token;
 	int return_code;
-	struct Cmiss_command_data *command_data;
+	struct cmzn_command_data *command_data;
 
 	ENTER(gfx_destroy_graphics_object);
 	USE_PARAMETER(dummy_to_be_modified);
 	if (state)
 	{
-		if (NULL != (command_data = (struct Cmiss_command_data *)command_data_void))
+		if (NULL != (command_data = (struct cmzn_command_data *)command_data_void))
 		{
 			if (NULL != (current_token = state->current_token))
 			{
 				if (strcmp(PARSER_HELP_STRING,current_token)&&
 					strcmp(PARSER_RECURSIVE_HELP_STRING,current_token))
 				{
-					Cmiss_glyph_id glyph = Cmiss_glyph_module_find_glyph_by_name(command_data->glyph_module, current_token);
+					cmzn_glyph_id glyph = cmzn_glyph_module_find_glyph_by_name(command_data->glyph_module, current_token);
 					if (glyph)
 					{
-						Cmiss_glyph_set_managed(glyph, false);
-						Cmiss_glyph_destroy(&glyph);
+						cmzn_glyph_set_managed(glyph, false);
+						cmzn_glyph_destroy(&glyph);
 					}
 					else
 					{
@@ -6347,14 +6347,14 @@ static int gfx_destroy_nodes(struct Parse_state *state,
 	void *use_data, void *command_data_void)
 {
 	int return_code;
-	Cmiss_command_data *command_data = reinterpret_cast<Cmiss_command_data *>(command_data_void);
+	cmzn_command_data *command_data = reinterpret_cast<cmzn_command_data *>(command_data_void);
 	if (state && command_data)
 	{
 		/* initialise defaults */
 		char all_flag = 0;
-		Cmiss_region_id region = Cmiss_region_access(command_data->root_region);
-		Cmiss_field_group_id group = 0;
-		Cmiss_field_id conditional_field = 0;
+		cmzn_region_id region = cmzn_region_access(command_data->root_region);
+		cmzn_field_group_id group = 0;
+		cmzn_field_id conditional_field = 0;
 		char *conditional_field_name = 0;
 		char selected_flag = 0;
 		Multi_range *node_ranges = CREATE(Multi_range)();
@@ -6395,54 +6395,54 @@ static int gfx_destroy_nodes(struct Parse_state *state,
 		}
 		if (return_code && conditional_field_name)
 		{
-			Cmiss_field_module_id field_module = Cmiss_region_get_field_module(region);
-			conditional_field = Cmiss_field_module_find_field_by_name(field_module, conditional_field_name);
+			cmzn_field_module_id field_module = cmzn_region_get_field_module(region);
+			conditional_field = cmzn_field_module_find_field_by_name(field_module, conditional_field_name);
 			if (!conditional_field)
 			{
 				display_message(ERROR_MESSAGE,
 					"gfx destroy nodes:  conditional field cannot be found");
 				return_code = 0;
 			}
-			Cmiss_field_module_destroy(&field_module);
+			cmzn_field_module_destroy(&field_module);
 		}
 		if (return_code)
 		{
-			Cmiss_field_module_id field_module = Cmiss_region_get_field_module(region);
-			Cmiss_field_group_id selection_group = NULL;
+			cmzn_field_module_id field_module = cmzn_region_get_field_module(region);
+			cmzn_field_group_id selection_group = NULL;
 			if (selected_flag)
 			{
-				Cmiss_scene *scene = Cmiss_region_get_scene_internal(region);
+				cmzn_scene *scene = cmzn_region_get_scene_internal(region);
 				if (scene)
 				{
-					selection_group = Cmiss_scene_get_selection_group(scene);
-					Cmiss_scene_destroy(&scene);
+					selection_group = cmzn_scene_get_selection_group(scene);
+					cmzn_scene_destroy(&scene);
 				}
 			}
-			Cmiss_field_id use_conditional_field = 0;
+			cmzn_field_id use_conditional_field = 0;
 			if (group && conditional_field)
 			{
-				use_conditional_field = Cmiss_field_module_create_or(field_module, conditional_field, Cmiss_field_group_base_cast(group));
+				use_conditional_field = cmzn_field_module_create_or(field_module, conditional_field, cmzn_field_group_base_cast(group));
 			}
 			else if (conditional_field)
 			{
-				use_conditional_field = Cmiss_field_access(conditional_field);
+				use_conditional_field = cmzn_field_access(conditional_field);
 			}
 			else if (group)
 			{
-				use_conditional_field = Cmiss_field_access(Cmiss_field_group_base_cast(group));
+				use_conditional_field = cmzn_field_access(cmzn_field_group_base_cast(group));
 			}
 			LIST(FE_node) *destroy_node_list = 0;
 			if ((!selected_flag) || selection_group)
 			{
 				destroy_node_list = FE_node_list_from_region_and_selection_group(
-					region, node_ranges, Cmiss_field_group_base_cast(selection_group), use_conditional_field, time, (use_data != NULL));
+					region, node_ranges, cmzn_field_group_base_cast(selection_group), use_conditional_field, time, (use_data != NULL));
 				if (!destroy_node_list)
 					return_code = 0;
 			}
 			if (destroy_node_list && (0 < NUMBER_IN_LIST(FE_node)(destroy_node_list)))
 			{
-				Cmiss_field_module_begin_change(field_module);
-				FE_region *fe_region = Cmiss_region_get_FE_region(region);
+				cmzn_field_module_begin_change(field_module);
+				FE_region *fe_region = cmzn_region_get_FE_region(region);
 				if (use_data)
 					fe_region = FE_region_get_data_FE_region(fe_region);
 				return_code = FE_region_remove_FE_node_list(fe_region, destroy_node_list);
@@ -6456,9 +6456,9 @@ static int gfx_destroy_nodes(struct Parse_state *state,
 				}
 				if (selection_group)
 				{
-					Cmiss_field_group_remove_empty_subgroups(selection_group);
+					cmzn_field_group_remove_empty_subgroups(selection_group);
 				}
-				Cmiss_field_module_end_change(field_module);
+				cmzn_field_module_end_change(field_module);
 			}
 			else
 			{
@@ -6474,10 +6474,10 @@ static int gfx_destroy_nodes(struct Parse_state *state,
 			if (destroy_node_list)
 				DESTROY(LIST(FE_node))(&destroy_node_list);
 			if (selection_group)
-				Cmiss_field_group_destroy(&selection_group);
+				cmzn_field_group_destroy(&selection_group);
 			if (use_conditional_field)
-				Cmiss_field_destroy(&use_conditional_field);
-			Cmiss_field_module_destroy(&field_module);
+				cmzn_field_destroy(&use_conditional_field);
+			cmzn_field_module_destroy(&field_module);
 		}
 		if (conditional_field)
 		{
@@ -6488,8 +6488,8 @@ static int gfx_destroy_nodes(struct Parse_state *state,
 			DEALLOCATE(conditional_field_name);
 		}
 		DESTROY(Multi_range)(&node_ranges);
-		Cmiss_field_group_destroy(&group);
-		Cmiss_region_destroy(&region);
+		cmzn_field_group_destroy(&group);
+		cmzn_region_destroy(&region);
 	}
 	else
 	{
@@ -6612,14 +6612,14 @@ Executes a GFX DESTROY command.
 ==============================================================================*/
 {
 	int return_code;
-	struct Cmiss_command_data *command_data;
+	struct cmzn_command_data *command_data;
 	struct Option_table *option_table;
 
 	ENTER(execute_command_gfx_destroy);
 	USE_PARAMETER(dummy_to_be_modified);
 	if (state)
 	{
-		if (NULL != (command_data = (struct Cmiss_command_data *)command_data_void))
+		if (NULL != (command_data = (struct cmzn_command_data *)command_data_void))
 		{
 			if (state->current_token)
 			{
@@ -6653,7 +6653,7 @@ Executes a GFX DESTROY command.
 					command_data_void, gfx_destroy_elements);
 				/* material */
 				Option_table_add_entry(option_table, "material", NULL,
-					Cmiss_graphics_material_module_get_manager(command_data->material_module), gfx_destroy_material);
+					cmzn_graphics_material_module_get_manager(command_data->material_module), gfx_destroy_material);
 				/* ngroup */
 				Option_table_add_entry(option_table, "ngroup", NULL,
 					command_data->root_region, gfx_destroy_group);
@@ -6712,15 +6712,15 @@ Executes a GFX DRAW command.
 ==============================================================================*/
 {
 	int return_code;
-	struct Cmiss_command_data *command_data;
+	struct cmzn_command_data *command_data;
 	struct Option_table *option_table;
 
 	ENTER(execute_command_gfx_draw);
 	USE_PARAMETER(dummy_to_be_modified);
-	if (state && (command_data=(struct Cmiss_command_data *)command_data_void))
+	if (state && (command_data=(struct cmzn_command_data *)command_data_void))
 	{
-		Cmiss_glyph *glyph = 0;
-		Cmiss_scene_id scene = Cmiss_scene_access(command_data->default_scene);
+		cmzn_glyph *glyph = 0;
+		cmzn_scene_id scene = cmzn_scene_access(command_data->default_scene);
 		char *graphic_name = 0;
 		char *region_path = 0;
 		option_table=CREATE(Option_table)();
@@ -6732,7 +6732,7 @@ Executes a GFX DRAW command.
 			command_data->glyph_module, set_Glyph);
 		/* group */
 		Option_table_add_entry(option_table, "group", &region_path,
-			command_data->root_region, set_Cmiss_region_path);
+			command_data->root_region, set_cmzn_region_path);
 		/* scene */
 		Option_table_add_entry(option_table,"scene",&scene,
 			command_data->root_region,set_Scene);
@@ -6747,13 +6747,13 @@ Executes a GFX DRAW command.
 			{
 				if (!graphic_name)
 				{
-					graphic_name = Cmiss_glyph_get_name(glyph);
+					graphic_name = cmzn_glyph_get_name(glyph);
 				}
-				Cmiss_region_id region = Cmiss_scene_get_region(scene);
-				Cmiss_scene_id scene =
-					Cmiss_graphics_module_get_scene(command_data->graphics_module, region);
-				return_code = Cmiss_scene_add_glyph(scene, glyph, graphic_name);
-				Cmiss_scene_destroy(&scene);
+				cmzn_region_id region = cmzn_scene_get_region(scene);
+				cmzn_scene_id scene =
+					cmzn_graphics_module_get_scene(command_data->graphics_module, region);
+				return_code = cmzn_scene_add_glyph(scene, glyph, graphic_name);
+				cmzn_scene_destroy(&scene);
 			}
 			else if (region_path)
 			{
@@ -6763,12 +6763,12 @@ Executes a GFX DRAW command.
 			}
 		} /* parse error,help */
 		DESTROY(Option_table)(&option_table);
-		Cmiss_scene_destroy(&scene);
+		cmzn_scene_destroy(&scene);
 		if (region_path)
 		{
 			DEALLOCATE(region_path);
 		}
-		Cmiss_glyph_destroy(&glyph);
+		cmzn_glyph_destroy(&glyph);
 		if (graphic_name)
 		{
 			DEALLOCATE(graphic_name);
@@ -6877,14 +6877,14 @@ Executes a GFX EDIT GRAPHICS_OBJECT command.
 {
 	char apply_flag, *region_path;
 	int return_code;
-	struct Cmiss_command_data *command_data;
-	struct Cmiss_region *region;
+	struct cmzn_command_data *command_data;
+	struct cmzn_region *region;
 	struct FE_region *fe_region;
 	struct Option_table *option_table;
 
 	ENTER(gfx_edit_graphics_object);
 	USE_PARAMETER(dummy_to_be_modified);
-	if (state && (command_data = (struct Cmiss_command_data *)command_data_void))
+	if (state && (command_data = (struct cmzn_command_data *)command_data_void))
 	{
 		/* initialize defaults */
 		apply_flag = 0;
@@ -6902,7 +6902,7 @@ Executes a GFX EDIT GRAPHICS_OBJECT command.
 			(void *)0, set_name);
 		if (0 != (return_code = Option_table_multi_parse(option_table, state)))
 		{
-			if (region_path && Cmiss_region_get_region_from_path_deprecated(command_data->root_region,
+			if (region_path && cmzn_region_get_region_from_path_deprecated(command_data->root_region,
 					region_path, &region) && region)
 			{
 				if (apply_flag)
@@ -6910,15 +6910,15 @@ Executes a GFX EDIT GRAPHICS_OBJECT command.
 					/* SAB Temporary place for this command cause I really need to use it,
 						 not very general, doesn't work in prolate or rotate derivatives */
 					struct Apply_transformation_data data;
-					struct Cmiss_scene *scene = NULL;
+					struct cmzn_scene *scene = NULL;
 					gtMatrix identity = {{1,0,0,0},{0,1,0,0},{0,0,1,0},{0,0,0,1}};
-					scene = Cmiss_graphics_module_get_scene(command_data->graphics_module, region);
+					scene = cmzn_graphics_module_get_scene(command_data->graphics_module, region);
 					if (scene)
 					{
-						if (Cmiss_scene_has_transformation(scene)&&
-								Cmiss_scene_get_transformation(scene, &(data.transformation)))
+						if (cmzn_scene_has_transformation(scene)&&
+								cmzn_scene_get_transformation(scene, &(data.transformation)))
 						{
-							if (NULL != (fe_region = Cmiss_region_get_FE_region(region)))
+							if (NULL != (fe_region = cmzn_region_get_FE_region(region)))
 							{
 								/* nodes */
 								data.fe_region = fe_region;
@@ -6938,7 +6938,7 @@ Executes a GFX EDIT GRAPHICS_OBJECT command.
 								display_message(WARNING_MESSAGE, "Invalid region");
 								return_code = 0;
 							}
-							Cmiss_scene_set_transformation(scene, &identity);
+							cmzn_scene_set_transformation(scene, &identity);
 						}
 						else
 						{
@@ -6989,12 +6989,12 @@ Executes a GFX EDIT_SCENE command.  Brings up the Region_tree_viewer.
 {
 	char close_flag;
 	int return_code;
-	struct Cmiss_command_data *command_data;
+	struct cmzn_command_data *command_data;
 	struct Option_table *option_table;
 
 	ENTER(gfx_edit_scene);
 	USE_PARAMETER(dummy_to_be_modified);
-	if (state && (command_data = (struct Cmiss_command_data *)command_data_void))
+	if (state && (command_data = (struct cmzn_command_data *)command_data_void))
 	{
 		close_flag = 0;
 
@@ -7023,13 +7023,13 @@ Executes a GFX EDIT_SCENE command.  Brings up the Region_tree_viewer.
 			}
 			else
 			{
-				Cmiss_graphics_material_id defaultMaterial =
-					Cmiss_graphics_material_module_get_default_material(command_data->material_module);
+				cmzn_graphics_material_id defaultMaterial =
+					cmzn_graphics_material_module_get_default_material(command_data->material_module);
 				if ((!command_data->user_interface) ||
 					(!CREATE(Region_tree_viewer)(	&(command_data->region_tree_viewer),
 						command_data->graphics_module,
 						command_data->root_region,
-						Cmiss_graphics_material_module_get_manager(command_data->material_module),
+						cmzn_graphics_material_module_get_manager(command_data->material_module),
 						defaultMaterial,
 						command_data->default_font,
 						command_data->glyph_module,
@@ -7042,7 +7042,7 @@ Executes a GFX EDIT_SCENE command.  Brings up the Region_tree_viewer.
 					return_code = 0;
 				}
 				if (defaultMaterial)
-					Cmiss_graphics_material_destroy(&defaultMaterial);
+					cmzn_graphics_material_destroy(&defaultMaterial);
 			}
 		} /* parse error, help */
 		DESTROY(Option_table)(&option_table);
@@ -7070,13 +7070,13 @@ Invokes the graphical spectrum group editor.
 ==============================================================================*/
 {
 	int return_code;
-	struct Cmiss_command_data *command_data;
+	struct cmzn_command_data *command_data;
 	struct Spectrum *spectrum;
 	struct Option_table *option_table;
 
 	ENTER(gfx_edit_spectrum);
 	USE_PARAMETER(dummy_to_be_modified);
-	if (state && (command_data = (struct Cmiss_command_data *)command_data_void))
+	if (state && (command_data = (struct cmzn_command_data *)command_data_void))
 	{
 		/* initialize defaults */
 		spectrum = (struct Spectrum *)NULL;
@@ -7085,7 +7085,7 @@ Invokes the graphical spectrum group editor.
 			command_data->spectrum_manager, set_Spectrum);
 		if (0 != (return_code = Option_table_multi_parse(option_table, state)))
 		{
-			Cmiss_region *spectrum_region = Cmiss_region_create_region(command_data->root_region);
+			cmzn_region *spectrum_region = cmzn_region_create_region(command_data->root_region);
 			return_code = bring_up_spectrum_editor_dialog(
 				&(command_data->spectrum_editor_dialog),
 				command_data->spectrum_manager, spectrum,
@@ -7094,7 +7094,7 @@ Invokes the graphical spectrum group editor.
 				command_data->graphics_module,
 				command_data->root_region,
 				spectrum_region);
-			Cmiss_region_destroy(&spectrum_region);
+			cmzn_region_destroy(&spectrum_region);
 		} /* parse error, help */
 		DESTROY(Option_table)(&option_table);
 		if (spectrum)
@@ -7124,12 +7124,12 @@ Executes a GFX EDIT command.
 ==============================================================================*/
 {
 	int return_code;
-	struct Cmiss_command_data *command_data;
+	struct cmzn_command_data *command_data;
 	struct Option_table *option_table;
 
 	ENTER(execute_command_gfx_edit);
 	USE_PARAMETER(dummy_to_be_modified);
-	if (state && (command_data = (struct Cmiss_command_data *)command_data_void))
+	if (state && (command_data = (struct cmzn_command_data *)command_data_void))
 	{
 		if (state->current_token)
 		{
@@ -7202,7 +7202,7 @@ Executes a GFX ELEMENT_POINT_TOOL command.
 	static const char *(dialog_strings[2]) = {"open_dialog", "close_dialog"};
 	const char *dialog_string;
 	int return_code;
-	struct Cmiss_command_data *command_data;
+	struct cmzn_command_data *command_data;
 	struct Computed_field *command_field;
 	struct Element_point_tool *element_point_tool;
 	struct Option_table *option_table;
@@ -7210,7 +7210,7 @@ Executes a GFX ELEMENT_POINT_TOOL command.
 
 	ENTER(execute_command_gfx_element_point_tool);
 	USE_PARAMETER(dummy_to_be_modified);
-	if (state && (command_data = (struct Cmiss_command_data *)command_data_void))
+	if (state && (command_data = (struct cmzn_command_data *)command_data_void))
 	{
 		/* initialize defaults */
 		if (NULL != (element_point_tool=command_data->element_point_tool))
@@ -7254,7 +7254,7 @@ Executes a GFX ELEMENT_POINT_TOOL command.
 				 (void *)Element_point_tool_get_interactive_tool(element_point_tool),
 				 command_data->graphics_window_manager);
 #endif
-			Cmiss_scene_viewer_module_update_Interactive_tool(
+			cmzn_scene_viewer_module_update_Interactive_tool(
 				command_data->scene_viewer_module,
 				Element_point_tool_get_interactive_tool(element_point_tool));
 			}
@@ -7298,7 +7298,7 @@ Executes a GFX ELEMENT_TOOL command.
 	const char *dialog_string;
 	int select_elements_enabled,select_faces_enabled,select_lines_enabled,
 		return_code;
-	struct Cmiss_command_data *command_data;
+	struct cmzn_command_data *command_data;
 	struct Computed_field *command_field;
 	struct Element_tool *element_tool;
 	struct Option_table *option_table;
@@ -7306,7 +7306,7 @@ Executes a GFX ELEMENT_TOOL command.
 
 	ENTER(execute_command_gfx_element_tool);
 	USE_PARAMETER(dummy_to_be_modified);
-	if (state&&(command_data=(struct Cmiss_command_data *)command_data_void))
+	if (state&&(command_data=(struct cmzn_command_data *)command_data_void))
 	{
 		/* initialize defaults */
 		if (NULL != (element_tool = command_data->element_tool))
@@ -7413,7 +7413,7 @@ Executes a GFX EXPORT ALIAS command.
 	float frame_in,frame_out,view_frame;
 #endif /* defined (NEW_ALIAS) */
 	int return_code;
-	struct Cmiss_command_data *command_data;
+	struct cmzn_command_data *command_data;
 	struct Scene *scene;
 	static struct Modifier_entry option_table[]=
 	{
@@ -7439,7 +7439,7 @@ Executes a GFX EXPORT ALIAS command.
 	/* check argument */
 	if (state)
 	{
-		if (NULL != (command_data = (struct Cmiss_command_data *)command_data_void))
+		if (NULL != (command_data = (struct cmzn_command_data *)command_data_void))
 		{
 			/* initialize defaults */
 #if defined (NEW_ALIAS)
@@ -7528,14 +7528,14 @@ Executes a GFX EXPORT CM command.
 		*ipmap_filename, *region_path;
 	FILE *ipbase_file, *ipcoor_file, *ipelem_file, *ipmap_file, *ipnode_file;
 	int return_code;
-	struct Cmiss_command_data *command_data;
+	struct cmzn_command_data *command_data;
 	struct FE_field *coordinate_field;
 	struct Option_table *option_table;
 	struct Set_FE_field_conditional_FE_region_data coordinate_field_data;
 
 	ENTER(gfx_export_cm);
 	USE_PARAMETER(dummy_to_be_modified);
-	if (state && (command_data = (struct Cmiss_command_data *)command_data_void))
+	if (state && (command_data = (struct cmzn_command_data *)command_data_void))
 	{
 		coordinate_field = (struct FE_field *)NULL;
 		ipbase_filename = (char *)NULL;
@@ -7551,7 +7551,7 @@ Executes a GFX EXPORT CM command.
 			(LIST_CONDITIONAL_FUNCTION(FE_field) *)NULL;
 		coordinate_field_data.user_data = (void *)NULL;
 		coordinate_field_data.fe_region =
-			Cmiss_region_get_FE_region(command_data->root_region);
+			cmzn_region_get_FE_region(command_data->root_region);
 		Option_table_add_entry(option_table, "field",
 			&coordinate_field,
 			(void *)&coordinate_field_data,
@@ -7573,7 +7573,7 @@ Executes a GFX EXPORT CM command.
 			NULL, set_name);
 		/* region */
 		Option_table_add_entry(option_table, "region", &region_path,
-			command_data->root_region, set_Cmiss_region_path);
+			command_data->root_region, set_cmzn_region_path);
 
 		if (0 != (return_code = Option_table_multi_parse(option_table, state)))
 		{
@@ -7699,8 +7699,8 @@ Executes a GFX EXPORT IGES command.
 	char *file_name, *region_path;
 	int return_code;
 	struct Computed_field *coordinate_field;
-	struct Cmiss_command_data *command_data = (struct Cmiss_command_data *)command_data_void;
-	struct Cmiss_region *region;
+	struct cmzn_command_data *command_data = (struct cmzn_command_data *)command_data_void;
+	struct cmzn_region *region;
 	struct FE_region *fe_region;
 	struct Option_table *option_table;
 
@@ -7711,7 +7711,7 @@ Executes a GFX EXPORT IGES command.
 	{
 		return_code=1;
 		/* initialize defaults */
-		region_path = Cmiss_region_get_root_region_path();
+		region_path = cmzn_region_get_root_region_path();
 		coordinate_field = (struct Computed_field *)NULL;
 		char *coordinate_field_name = 0;
 		file_name = (char *)NULL;
@@ -7722,24 +7722,24 @@ Executes a GFX EXPORT IGES command.
 			(void *)1,set_name);
 		/* group */
 		Option_table_add_entry(option_table, "group", &region_path,
-			command_data->root_region, set_Cmiss_region_path);
+			command_data->root_region, set_cmzn_region_path);
 		/* default option: file name */
 		Option_table_add_default_string_entry(option_table, &file_name, "FILE_NAME");
 
 		/* no errors, not asking for help */
 		if (0 != (return_code = Option_table_multi_parse(option_table, state)))
 		{
-			if (Cmiss_region_get_region_from_path_deprecated(command_data->root_region,
+			if (cmzn_region_get_region_from_path_deprecated(command_data->root_region,
 				region_path, &region) &&
-				(0 != (fe_region = Cmiss_region_get_FE_region(region))))
+				(0 != (fe_region = cmzn_region_get_FE_region(region))))
 			{
 				if (region && coordinate_field_name &&
 					(0 != (coordinate_field = FIND_BY_IDENTIFIER_IN_MANAGER(Computed_field,name)(
-							coordinate_field_name, Cmiss_region_get_Computed_field_manager(region)))))
+							coordinate_field_name, cmzn_region_get_Computed_field_manager(region)))))
 				{
 					if (Computed_field_has_3_components(coordinate_field, NULL))
 					{
-						Cmiss_field_access(coordinate_field);
+						cmzn_field_access(coordinate_field);
 					}
 					else
 					{
@@ -7814,7 +7814,7 @@ Executes a GFX EXPORT STL command.
 {
 	char *file_name;
 	int return_code;
-	struct Cmiss_command_data *command_data;
+	struct cmzn_command_data *command_data;
 	struct Option_table *option_table;
 	struct Scene *scene;
 
@@ -7822,12 +7822,12 @@ Executes a GFX EXPORT STL command.
 	USE_PARAMETER(dummy_to_be_modified);
 	if (state)
 	{
-		if (NULL != (command_data = (struct Cmiss_command_data *)command_data_void))
+		if (NULL != (command_data = (struct cmzn_command_data *)command_data_void))
 		{
 			file_name = (char *)NULL;
-			scene = Cmiss_scene_access(command_data->default_scene);
-			Cmiss_graphics_filter_id filter =
-				Cmiss_graphics_filter_module_get_default_filter(command_data->filter_module);
+			scene = cmzn_scene_access(command_data->default_scene);
+			cmzn_graphics_filter_id filter =
+				cmzn_graphics_filter_module_get_default_filter(command_data->filter_module);
 			option_table = CREATE(Option_table)();
 			/* file */
 			Option_table_add_entry(option_table, "file", &file_name,
@@ -7836,7 +7836,7 @@ Executes a GFX EXPORT STL command.
 			Option_table_add_entry(option_table,"scene",&scene,
 				command_data->root_region, set_Scene);
 			Option_table_add_entry(option_table, "filter", &filter,
-				command_data->filter_module, set_Cmiss_graphics_filter);
+				command_data->filter_module, set_cmzn_graphics_filter);
 			if (0 != (return_code = Option_table_multi_parse(option_table, state)))
 			{
 				if (scene)
@@ -7855,9 +7855,9 @@ Executes a GFX EXPORT STL command.
 			}
 			DESTROY(Option_table)(&option_table);
 			if (scene)
-				Cmiss_scene_destroy(&scene);
+				cmzn_scene_destroy(&scene);
 			if (filter)
-				Cmiss_graphics_filter_destroy(&filter);
+				cmzn_graphics_filter_destroy(&filter);
 			if (file_name)
 			{
 				DEALLOCATE(file_name);
@@ -7892,7 +7892,7 @@ Executes a GFX EXPORT VRML command.
 	char *file_name;
 	int return_code;
 	struct Option_table *option_table;
-	struct Cmiss_command_data *command_data;
+	struct cmzn_command_data *command_data;
 	struct Scene *scene;
 
 	ENTER(gfx_export_vrml);
@@ -7900,19 +7900,19 @@ Executes a GFX EXPORT VRML command.
 	/* check argument */
 	if (state)
 	{
-		if (NULL != (command_data = (struct Cmiss_command_data *)command_data_void))
+		if (NULL != (command_data = (struct cmzn_command_data *)command_data_void))
 		{
 			/* initialize defaults */
 			file_name=(char *)NULL;
-			Cmiss_graphics_filter_id filter =
-				Cmiss_graphics_filter_module_get_default_filter(command_data->filter_module);
-			scene = Cmiss_scene_access(command_data->default_scene);
+			cmzn_graphics_filter_id filter =
+				cmzn_graphics_filter_module_get_default_filter(command_data->filter_module);
+			scene = cmzn_scene_access(command_data->default_scene);
 			option_table = CREATE(Option_table)();
 			Option_table_add_entry(option_table, "file", &file_name, (void *)1, set_name);
 			Option_table_add_entry(option_table,"scene",&scene,
 				command_data->root_region,set_Scene);
 			Option_table_add_entry(option_table, "filter", &filter,
-				command_data->filter_module, set_Cmiss_graphics_filter);
+				command_data->filter_module, set_cmzn_graphics_filter);
 			return_code = Option_table_multi_parse(option_table, state);
 			DESTROY(Option_table)(&option_table);
 			/* no errors, not asking for help */
@@ -7944,9 +7944,9 @@ Executes a GFX EXPORT VRML command.
 				}
 			} /* parse error,help */
 
-			Cmiss_scene_destroy(&scene);
+			cmzn_scene_destroy(&scene);
 			if (filter)
-				Cmiss_graphics_filter_destroy(&filter);
+				cmzn_graphics_filter_destroy(&filter);
 			if (file_name)
 				DEALLOCATE(file_name);
 		}
@@ -7978,9 +7978,9 @@ Executes a GFX EXPORT WAVEFRONT command.
 	const char *file_ext = ".obj";
 	char *file_name,full_comments;
 	int frame_number, number_of_frames, return_code, version;
-	struct Cmiss_command_data *command_data;
+	struct cmzn_command_data *command_data;
 	struct Scene *scene = NULL;
-	Cmiss_graphics_filter_id filter = 0;
+	cmzn_graphics_filter_id filter = 0;
 	static struct Modifier_entry option_table[]=
 	{
 		{"file",NULL,(void *)1,set_name},
@@ -7989,7 +7989,7 @@ Executes a GFX EXPORT WAVEFRONT command.
 		{"number_of_frames",NULL,NULL,set_int_positive},
 		{"scene",NULL,NULL,set_Scene},
 		{"version",NULL,NULL,set_int_positive},
-		{"filter",NULL,NULL,set_Cmiss_graphics_filter},
+		{"filter",NULL,NULL,set_cmzn_graphics_filter},
 		{NULL,NULL,NULL,NULL}
 	};
 	ENTER(gfx_export_wavefront);
@@ -7997,15 +7997,15 @@ Executes a GFX EXPORT WAVEFRONT command.
 	/* check argument */
 	if (state)
 	{
-		if (NULL != (command_data = (struct Cmiss_command_data *)command_data_void))
+		if (NULL != (command_data = (struct cmzn_command_data *)command_data_void))
 		{
 			/* initialize defaults */
 			file_name=(char *)NULL;
 			frame_number = 0;
 			full_comments=0;
 			number_of_frames=100;
-			scene=Cmiss_scene_access(command_data->default_scene);
-			filter=Cmiss_graphics_filter_module_get_default_filter(command_data->filter_module);
+			scene=cmzn_scene_access(command_data->default_scene);
+			filter=cmzn_graphics_filter_module_get_default_filter(command_data->filter_module);
 			version=3;
 			(option_table[0]).to_be_modified= &file_name;
 			(option_table[1]).to_be_modified= &frame_number;
@@ -8039,8 +8039,8 @@ Executes a GFX EXPORT WAVEFRONT command.
 					return_code=export_to_wavefront(file_name, scene, filter, full_comments);
 				}
 			} /* parse error,help */
-			Cmiss_scene_destroy(&scene);
-			Cmiss_graphics_filter_destroy(&filter);
+			cmzn_scene_destroy(&scene);
+			cmzn_graphics_filter_destroy(&filter);
 			if (file_name)
 				DEALLOCATE(file_name);
 		}
@@ -8062,15 +8062,15 @@ Executes a GFX EXPORT WAVEFRONT command.
 } /* gfx_export_wavefront */
 
 #if defined (USE_OPENCASCADE)
-static struct Cmiss_spectrum_component *create_spectrum_component( Cmiss_spectrum_component_colour_mapping colour )
+static struct cmzn_spectrum_component *create_spectrum_component( cmzn_spectrum_component_colour_mapping colour )
 {
 	int component = 1;
-	struct Cmiss_spectrum_component *settings = CREATE(Cmiss_spectrum_component)();
-	Cmiss_spectrum_component_set_scale_type(settings, CMISS_SPECTRUM_COMPONENT_SCALE_LINEAR);
-	Cmiss_spectrum_component_set_colour_mapping(settings, colour);
-	Cmiss_spectrum_component_set_extend_above(settings, true);
-	Cmiss_spectrum_component_set_extend_below_flag(settings, true);
-	Cmiss_spectrum_component_set_colour_reverse(settings, false);
+	struct cmzn_spectrum_component *settings = CREATE(cmzn_spectrum_component)();
+	cmzn_spectrum_component_set_scale_type(settings, CMISS_SPECTRUM_COMPONENT_SCALE_LINEAR);
+	cmzn_spectrum_component_set_colour_mapping(settings, colour);
+	cmzn_spectrum_component_set_extend_above(settings, true);
+	cmzn_spectrum_component_set_extend_below_flag(settings, true);
+	cmzn_spectrum_component_set_colour_reverse(settings, false);
 
 	if ( colour == CMISS_SPECTRUM_COMPONENT_COLOUR_MAPPING_RED )
 		component = 1;
@@ -8079,7 +8079,7 @@ static struct Cmiss_spectrum_component *create_spectrum_component( Cmiss_spectru
 	else
 		component = 3;
 
-	Cmiss_spectrum_component_set_field_component( settings, component );
+	cmzn_spectrum_component_set_field_component( settings, component );
 
 	return settings;
 }
@@ -8087,41 +8087,41 @@ static struct Cmiss_spectrum_component *create_spectrum_component( Cmiss_spectru
 static int create_RGB_spectrum( struct Spectrum **spectrum, void *command_data_void )
 {
 	int return_code = 0, number_in_list = 0;
-	struct LIST(Cmiss_spectrum_component) *spectrum_settings_list;
-	struct Cmiss_spectrum_component *red_settings;
-	struct Cmiss_spectrum_component *green_settings;
-	struct Cmiss_spectrum_component *blue_settings;
-	struct Cmiss_command_data *command_data = (struct Cmiss_command_data *)command_data_void;
+	struct LIST(cmzn_spectrum_component) *spectrum_settings_list;
+	struct cmzn_spectrum_component *red_settings;
+	struct cmzn_spectrum_component *green_settings;
+	struct cmzn_spectrum_component *blue_settings;
+	struct cmzn_command_data *command_data = (struct cmzn_command_data *)command_data_void;
 
-	if ( command_data && (NULL != ((*spectrum) = Cmiss_spectrum_create_private())) &&
-		Cmiss_spectrum_set_name(spectrum, "RGB"))
+	if ( command_data && (NULL != ((*spectrum) = cmzn_spectrum_create_private())) &&
+		cmzn_spectrum_set_name(spectrum, "RGB"))
 	{
-		spectrum_settings_list = get_Cmiss_spectrum_component_list( (*spectrum) );
-		number_in_list = NUMBER_IN_LIST(Cmiss_spectrum_component)(spectrum_settings_list);
+		spectrum_settings_list = get_cmzn_spectrum_component_list( (*spectrum) );
+		number_in_list = NUMBER_IN_LIST(cmzn_spectrum_component)(spectrum_settings_list);
 		if ( number_in_list > 0 )
 		{
-			REMOVE_ALL_OBJECTS_FROM_LIST(Cmiss_spectrum_component)(spectrum_settings_list);
+			REMOVE_ALL_OBJECTS_FROM_LIST(cmzn_spectrum_component)(spectrum_settings_list);
 		}
 		red_settings = create_spectrum_component( CMISS_SPECTRUM_COMPONENT_COLOUR_MAPPING_RED );
-		Cmiss_spectrum_component_add( red_settings, /* end of list = 0 */0,
+		cmzn_spectrum_component_add( red_settings, /* end of list = 0 */0,
 			spectrum_settings_list );
 
 		green_settings = create_spectrum_component( CMISS_SPECTRUM_COMPONENT_COLOUR_MAPPING_GREEN );
-		Cmiss_spectrum_component_add( green_settings, /* end of list = 0 */0,
+		cmzn_spectrum_component_add( green_settings, /* end of list = 0 */0,
 			spectrum_settings_list );
 
 		blue_settings = create_spectrum_component( CMISS_SPECTRUM_COMPONENT_COLOUR_MAPPING_BLUE );
-		Cmiss_spectrum_component_add( blue_settings, /* end of list = 0 */0,
+		cmzn_spectrum_component_add( blue_settings, /* end of list = 0 */0,
 			spectrum_settings_list );
 
 		Spectrum_calculate_range( (*spectrum) );
 		Spectrum_calculate_range( (*spectrum) );
 		Spectrum_set_minimum_and_maximum( (*spectrum), 0, 1);
-		Cmiss_spectrum_set_material_overwrite( (*spectrum), 0 );
+		cmzn_spectrum_set_material_overwrite( (*spectrum), 0 );
 		if (!ADD_OBJECT_TO_MANAGER(Spectrum)( (*spectrum),
 				command_data->spectrum_manager))
 		{
-			Cmiss_spectrum_destroy(&command_data->spectrum_manager);
+			cmzn_spectrum_destroy(&command_data->spectrum_manager);
 		}
 		else
 		{
@@ -8135,20 +8135,20 @@ static int execute_command_gfx_import(struct Parse_state *state,
 	void *dummy_to_be_modified, void *command_data_void )
 {
 	int return_code;
-	struct Cmiss_command_data *command_data;
+	struct cmzn_command_data *command_data;
 
 	ENTER(execute_command_gfx_import);
 
 	USE_PARAMETER(dummy_to_be_modified);
-	if (state && (command_data = (struct Cmiss_command_data *)command_data_void))
+	if (state && (command_data = (struct cmzn_command_data *)command_data_void))
 	{
 		struct Spectrum *rgb_spectrum = (struct Spectrum *)NULL;
 		struct Graphical_material *material =
-			Cmiss_graphics_material_module_get_default_material(command_data->material_module);
+			cmzn_graphics_material_module_get_default_material(command_data->material_module);
 
 		char *graphics_object_name = NULL, *region_path = NULL;
 		char *file_name;
-		struct Cmiss_region *top_region = NULL;
+		struct cmzn_region *top_region = NULL;
 		file_name = duplicate_string( "" );
 		float deflection = 0.1;
 		struct Option_table *option_table = CREATE(Option_table)();
@@ -8195,11 +8195,11 @@ static int execute_command_gfx_import(struct Parse_state *state,
 			printf("region path = '%s'\n", region_path);
 			if (region_path)
 			{
-				top_region = Cmiss_region_find_subregion_at_path(
+				top_region = cmzn_region_find_subregion_at_path(
 					command_data->root_region, region_path);
 				if (NULL == top_region)
 				{
-					top_region = Cmiss_region_create_subregion(
+					top_region = cmzn_region_create_subregion(
 						command_data->root_region, region_path);
 					if (NULL == top_region)
 					{
@@ -8211,18 +8211,18 @@ static int execute_command_gfx_import(struct Parse_state *state,
 			}
 			else
 			{
-				top_region = ACCESS(Cmiss_region)(command_data->root_region);
+				top_region = ACCESS(cmzn_region)(command_data->root_region);
 			}
 
 			if (return_code)
 			{
-				if (Cmiss_region_import_cad_file(top_region, file_name))
+				if (cmzn_region_import_cad_file(top_region, file_name))
 				{
 					occEnd = clock();
 					//DEBUG_PRINT( "OCC load took %.2lf seconds\n", ( occEnd - occStart ) / double( CLOCKS_PER_SEC ) );
 				}
 			}
-			DEACCESS(Cmiss_region)(&top_region);
+			DEACCESS(cmzn_region)(&top_region);
 		}
 		DESTROY(Option_table)(&option_table);
 		if (region_path)
@@ -8234,7 +8234,7 @@ static int execute_command_gfx_import(struct Parse_state *state,
 			DEACCESS(Spectrum)(&rgb_spectrum);
 		}
 		DEALLOCATE(graphics_object_name);
-		Cmiss_graphics_material_destroy(&material);
+		cmzn_graphics_material_destroy(&material);
 		DEALLOCATE(file_name);
 	}
 	else
@@ -8292,9 +8292,9 @@ Executes a GFX EXPORT command.
 	return (return_code);
 } /* execute_command_gfx_export */
 
-void create_triangle_mesh(struct Cmiss_region *region, Triangle_mesh *trimesh)
+void create_triangle_mesh(struct cmzn_region *region, Triangle_mesh *trimesh)
 {
-	struct FE_region *fe_region = Cmiss_region_get_FE_region(region);
+	struct FE_region *fe_region = cmzn_region_get_FE_region(region);
 	// for efficiency cache changes until all finished
 	FE_region_begin_change(fe_region);
 
@@ -8377,34 +8377,34 @@ static int gfx_mesh_graphics_tetrahedral(struct Parse_state *state,
 	void *dummy_to_be_modified,void *command_data_void)
 {
 	int return_code;
-	struct Cmiss_command_data *command_data;
+	struct cmzn_command_data *command_data;
 	char *region_path;
 
 	ENTER(gfx_mesh_graphics_tetrahedral);
 	USE_PARAMETER(dummy_to_be_modified);
 	if (state)
 	{
-		region_path = Cmiss_region_get_root_region_path();
-		if (NULL != (command_data=(struct Cmiss_command_data *)command_data_void))
+		region_path = cmzn_region_get_root_region_path();
+		if (NULL != (command_data=(struct cmzn_command_data *)command_data_void))
 		{
 
 			double maxh=100000;
 			double fineness=0.5;
 			int secondorder=0;
-			Cmiss_scene_id scene;
+			cmzn_scene_id scene;
 			char *meshsize_file = NULL;
 			struct Option_table *option_table;
 			scene = ACCESS(Scene)(command_data->default_scene);
-			Cmiss_graphics_filter_id filter =
-				Cmiss_graphics_filter_module_get_default_filter(command_data->filter_module);
+			cmzn_graphics_filter_id filter =
+				cmzn_graphics_filter_module_get_default_filter(command_data->filter_module);
 			option_table = CREATE(Option_table)();
 			char clear = 0;
 			Option_table_add_entry(option_table, "region", &region_path,
-				command_data->root_region, set_Cmiss_region_path);
+				command_data->root_region, set_cmzn_region_path);
 			Option_table_add_entry(option_table, "scene", &scene,
 				command_data->root_region, set_Scene);
 			Option_table_add_entry(option_table, "filter", &filter,
-				command_data->filter_module, set_Cmiss_graphics_filter);
+				command_data->filter_module, set_cmzn_graphics_filter);
 			Option_table_add_entry(option_table,"clear_region",
 				&clear,(void *)NULL,set_char_flag);
 			Option_table_add_entry(option_table,"mesh_global_size",
@@ -8425,7 +8425,7 @@ static int gfx_mesh_graphics_tetrahedral(struct Parse_state *state,
 					float tolerance = 0.000001;
 					double centre_x, centre_y, centre_z, size_x, size_y, size_z;
 					build_Scene(scene, filter);
-					Cmiss_scene_get_global_graphics_range(scene, filter,
+					cmzn_scene_get_global_graphics_range(scene, filter,
 						&centre_x, &centre_y, &centre_z, &size_x, &size_y, &size_z);
 					if (size_x !=0 && size_y!=0 && size_z!=0)
 					{
@@ -8437,11 +8437,11 @@ static int gfx_mesh_graphics_tetrahedral(struct Parse_state *state,
 					{
 						return_code = renderer.Scene_tree_execute(scene);
 						trimesh = renderer.get_triangle_mesh();
-						struct Cmiss_region *region = Cmiss_region_find_subregion_at_path(
+						struct cmzn_region *region = cmzn_region_find_subregion_at_path(
 							command_data->root_region, region_path);
 						if (clear)
 						{
-							Cmiss_region_clear_finite_elements(region);
+							cmzn_region_clear_finite_elements(region);
 						}
 						if (trimesh && region)
 						{
@@ -8453,7 +8453,7 @@ static int gfx_mesh_graphics_tetrahedral(struct Parse_state *state,
 							set_netgen_parameters_trimesh(generate_netgen_para, trimesh);
 							if (meshsize_file)
 								set_netgen_parameters_meshsize_filename(generate_netgen_para, meshsize_file);
-							generate_mesh_netgen(Cmiss_region_get_FE_region(region), generate_netgen_para);
+							generate_mesh_netgen(cmzn_region_get_FE_region(region), generate_netgen_para);
 							release_netgen_parameters(generate_netgen_para);
 
 						}
@@ -8462,7 +8462,7 @@ static int gfx_mesh_graphics_tetrahedral(struct Parse_state *state,
 							display_message(ERROR_MESSAGE, "gfx_mesh_graphics_tetrahedral."
 								"Unknown region: %s", region_path);
 						}
-						Cmiss_region_destroy(&region);
+						cmzn_region_destroy(&region);
 					}
 				}
 #else
@@ -8476,8 +8476,8 @@ static int gfx_mesh_graphics_tetrahedral(struct Parse_state *state,
 			}
 			DEALLOCATE(region_path);
 			DESTROY(Option_table)(&option_table);
-			Cmiss_scene_destroy(&scene);
-			Cmiss_graphics_filter_destroy(&filter);
+			cmzn_scene_destroy(&scene);
+			cmzn_graphics_filter_destroy(&filter);
 			if (meshsize_file)
 			{
 				DEALLOCATE(meshsize_file);
@@ -8504,7 +8504,7 @@ static int gfx_mesh_graphics_triangle(struct Parse_state *state,
 	void *dummy_to_be_modified,void *command_data_void)
 {
 	int return_code;
-	struct Cmiss_command_data *command_data;
+	struct cmzn_command_data *command_data;
 	struct Option_table *option_table;
 	char *region_path;
 
@@ -8512,21 +8512,21 @@ static int gfx_mesh_graphics_triangle(struct Parse_state *state,
 	USE_PARAMETER(dummy_to_be_modified);
 	if (state)
 	{
-		region_path = Cmiss_region_get_root_region_path();
-		if (NULL != (command_data=(struct Cmiss_command_data *)command_data_void))
+		region_path = cmzn_region_get_root_region_path();
+		if (NULL != (command_data=(struct cmzn_command_data *)command_data_void))
 		{
 			Triangle_mesh *trimesh = NULL;
-			Cmiss_scene_id scene = Cmiss_scene_access(command_data->default_scene);
-			Cmiss_graphics_filter_id filter =
-				Cmiss_graphics_filter_module_get_default_filter(command_data->filter_module);
+			cmzn_scene_id scene = cmzn_scene_access(command_data->default_scene);
+			cmzn_graphics_filter_id filter =
+				cmzn_graphics_filter_module_get_default_filter(command_data->filter_module);
 			option_table = CREATE(Option_table)();
 			char clear = 0;
 			Option_table_add_entry(option_table, "scene", &scene,
 				command_data->root_region, set_Scene);
 			Option_table_add_entry(option_table, "filter", &filter,
-				command_data->filter_module, set_Cmiss_graphics_filter);
+				command_data->filter_module, set_cmzn_graphics_filter);
 			Option_table_add_entry(option_table, "target_region", &region_path,
-				command_data->root_region, set_Cmiss_region_path);
+				command_data->root_region, set_cmzn_region_path);
 			Option_table_add_entry(option_table,"clear_region",
 				&clear,(void *)NULL,set_char_flag);
 			if ((return_code = Option_table_multi_parse(option_table, state)))
@@ -8536,7 +8536,7 @@ static int gfx_mesh_graphics_triangle(struct Parse_state *state,
 					float tolerance = 0.000001;
 					double centre_x, centre_y, centre_z, size_x, size_y, size_z;
 					build_Scene(scene, filter);
-					Cmiss_scene_get_global_graphics_range(scene, filter,
+					cmzn_scene_get_global_graphics_range(scene, filter,
 						&centre_x, &centre_y, &centre_z, &size_x, &size_y, &size_z);
 					if (size_x !=0 && size_y!=0 && size_z!=0)
 					{
@@ -8548,11 +8548,11 @@ static int gfx_mesh_graphics_triangle(struct Parse_state *state,
 					{
 						return_code = renderer.Scene_tree_execute(scene);
 						trimesh = renderer.get_triangle_mesh();
-						struct Cmiss_region *region = Cmiss_region_find_subregion_at_path(
+						struct cmzn_region *region = cmzn_region_find_subregion_at_path(
 							command_data->root_region, region_path);
 						if (clear)
 						{
-							Cmiss_region_clear_finite_elements(region);
+							cmzn_region_clear_finite_elements(region);
 						}
 						if (trimesh && region)
 						{
@@ -8562,15 +8562,15 @@ static int gfx_mesh_graphics_triangle(struct Parse_state *state,
 						{
 							display_message(ERROR_MESSAGE, "gfx_mesh_graphics_triangle. Unknown region: %s", region_path);
 						}
-						Cmiss_region_destroy(&region);
+						cmzn_region_destroy(&region);
 					}
 
 				}
 			}
 			DEALLOCATE(region_path);
 			DESTROY(Option_table)(&option_table);
-			Cmiss_graphics_filter_destroy(&filter);
-			Cmiss_scene_destroy(&scene);
+			cmzn_graphics_filter_destroy(&filter);
+			cmzn_scene_destroy(&scene);
 		}
 		else
 		{
@@ -8594,12 +8594,12 @@ static int gfx_mesh_graphics(struct Parse_state *state,
 	void *dummy_to_be_modified,void *command_data_void)
 {
 	int return_code;
-	struct Cmiss_command_data *command_data;
+	struct cmzn_command_data *command_data;
 	struct Option_table *option_table;
 
 	ENTER(gfx_mesh_graphics);
 	USE_PARAMETER(dummy_to_be_modified);
-	if (state && (command_data=(struct Cmiss_command_data *)command_data_void))
+	if (state && (command_data=(struct cmzn_command_data *)command_data_void))
 	{
 		return_code = 1;
 
@@ -8666,7 +8666,7 @@ int gfx_evaluate(struct Parse_state *state, void *dummy_to_be_modified,
 
 	ENTER(gfx_evaluate);
 	USE_PARAMETER(dummy_to_be_modified);
-	Cmiss_command_data *command_data = reinterpret_cast<Cmiss_command_data *>(command_data_void);
+	cmzn_command_data *command_data = reinterpret_cast<cmzn_command_data *>(command_data_void);
 	if (state && command_data)
 	{
 		char *data_region_path = 0;
@@ -8718,79 +8718,79 @@ int gfx_evaluate(struct Parse_state *state, void *dummy_to_be_modified,
 				}
 				if (region_or_group_path)
 				{
-					Cmiss_region_id region = Cmiss_region_access(command_data->root_region);
-					Cmiss_field_group_id group = 0;
+					cmzn_region_id region = cmzn_region_access(command_data->root_region);
+					cmzn_field_group_id group = 0;
 					if (region_or_group_path)
 					{
 						Parse_state *temp_parse_state = create_Parse_state(region_or_group_path);
-						return_code = set_Cmiss_region_or_group(temp_parse_state, (void *)&region, (void *)&group);
+						return_code = set_cmzn_region_or_group(temp_parse_state, (void *)&region, (void *)&group);
 						destroy_Parse_state(&temp_parse_state);
 					}
 					if (return_code)
 					{
-						Cmiss_field_module_id field_module = Cmiss_region_get_field_module(region);
-						Cmiss_field_id destination_field = Cmiss_field_module_find_field_by_name(field_module,
+						cmzn_field_module_id field_module = cmzn_region_get_field_module(region);
+						cmzn_field_id destination_field = cmzn_field_module_find_field_by_name(field_module,
 							destination_field_name);
-						Cmiss_field_id source_field = Cmiss_field_module_find_field_by_name(field_module,
+						cmzn_field_id source_field = cmzn_field_module_find_field_by_name(field_module,
 							source_field_name);
-						Cmiss_field_group_id selection_group = 0;
+						cmzn_field_group_id selection_group = 0;
 						if (selected_flag)
 						{
-							Cmiss_scene_id scene =
-								Cmiss_graphics_module_get_scene(command_data->graphics_module, region);
+							cmzn_scene_id scene =
+								cmzn_graphics_module_get_scene(command_data->graphics_module, region);
 							if (scene)
 							{
-								selection_group = Cmiss_scene_get_selection_group(scene);
-								Cmiss_scene_destroy(&scene);
+								selection_group = cmzn_scene_get_selection_group(scene);
+								cmzn_scene_destroy(&scene);
 							}
 						}
 						if (node_region_path || data_region_path)
 						{
-							Cmiss_nodeset_id nodeset = Cmiss_field_module_find_nodeset_by_domain_type(
+							cmzn_nodeset_id nodeset = cmzn_field_module_find_nodeset_by_domain_type(
 								field_module, node_region_path ? CMISS_FIELD_DOMAIN_NODES : CMISS_FIELD_DOMAIN_DATA);
 							if (group)
 							{
-								Cmiss_field_node_group_id node_group = Cmiss_field_group_get_node_group(group, nodeset);
-								Cmiss_nodeset_destroy(&nodeset);
-								nodeset = Cmiss_nodeset_group_base_cast(Cmiss_field_node_group_get_nodeset(node_group));
-								Cmiss_field_node_group_destroy(&node_group);
+								cmzn_field_node_group_id node_group = cmzn_field_group_get_node_group(group, nodeset);
+								cmzn_nodeset_destroy(&nodeset);
+								nodeset = cmzn_nodeset_group_base_cast(cmzn_field_node_group_get_nodeset(node_group));
+								cmzn_field_node_group_destroy(&node_group);
 							}
 							if (nodeset)
 							{
-								return_code = Cmiss_nodeset_assign_field_from_source(nodeset, destination_field, source_field,
-									/*conditional_field*/Cmiss_field_group_base_cast(selection_group), time);
-								Cmiss_nodeset_destroy(&nodeset);
+								return_code = cmzn_nodeset_assign_field_from_source(nodeset, destination_field, source_field,
+									/*conditional_field*/cmzn_field_group_base_cast(selection_group), time);
+								cmzn_nodeset_destroy(&nodeset);
 							}
 						}
 						else if (element_region_path)
 						{
-							int highest_dimension = FE_region_get_highest_dimension(Cmiss_region_get_FE_region(region));
-							Cmiss_mesh_id mesh = Cmiss_field_module_find_mesh_by_dimension(field_module, highest_dimension);
+							int highest_dimension = FE_region_get_highest_dimension(cmzn_region_get_FE_region(region));
+							cmzn_mesh_id mesh = cmzn_field_module_find_mesh_by_dimension(field_module, highest_dimension);
 							if (group)
 							{
-								Cmiss_field_element_group_id element_group = Cmiss_field_group_get_element_group(group, mesh);
-								Cmiss_mesh_destroy(&mesh);
-								mesh = Cmiss_mesh_group_base_cast(Cmiss_field_element_group_get_mesh(element_group));
-								Cmiss_field_element_group_destroy(&element_group);
+								cmzn_field_element_group_id element_group = cmzn_field_group_get_element_group(group, mesh);
+								cmzn_mesh_destroy(&mesh);
+								mesh = cmzn_mesh_group_base_cast(cmzn_field_element_group_get_mesh(element_group));
+								cmzn_field_element_group_destroy(&element_group);
 							}
 							if (mesh)
 							{
-								return_code = Cmiss_mesh_assign_grid_field_from_source(mesh, destination_field, source_field,
-									/*conditional_field*/Cmiss_field_group_base_cast(selection_group),
+								return_code = cmzn_mesh_assign_grid_field_from_source(mesh, destination_field, source_field,
+									/*conditional_field*/cmzn_field_group_base_cast(selection_group),
 									element_point_ranges_selection, time);
-								Cmiss_mesh_destroy(&mesh);
+								cmzn_mesh_destroy(&mesh);
 							}
 						}
 						if (selection_group)
 						{
-							Cmiss_field_group_destroy(&selection_group);
+							cmzn_field_group_destroy(&selection_group);
 						}
-						Cmiss_field_destroy(&source_field);
-						Cmiss_field_destroy(&destination_field);
-						Cmiss_field_module_destroy(&field_module);
+						cmzn_field_destroy(&source_field);
+						cmzn_field_destroy(&destination_field);
+						cmzn_field_module_destroy(&field_module);
 					}
-					Cmiss_field_group_destroy(&group);
-					Cmiss_region_destroy(&region);
+					cmzn_field_group_destroy(&group);
+					cmzn_region_destroy(&region);
 				}
 			}
 			else
@@ -8844,7 +8844,7 @@ Executes a GFX LIST ALL_COMMANDS.
 {
 	int return_code = 1;
 	static const char	*command_prefix, *current_token;
-	struct Cmiss_command_data *command_data;
+	struct cmzn_command_data *command_data;
 	struct MANAGER(Graphical_material) *graphical_material_manager;
 
 	ENTER(gfx_list_all_commands);
@@ -8865,7 +8865,7 @@ Executes a GFX LIST ALL_COMMANDS.
 		}
 		else
 		{
-			if (NULL != (command_data = (struct Cmiss_command_data *)command_data_void))
+			if (NULL != (command_data = (struct cmzn_command_data *)command_data_void))
 			{
 				cmiss_execute_command("gfx list field commands", command_data_void);
 				/* Commands of spectrum */
@@ -8876,7 +8876,7 @@ Executes a GFX LIST ALL_COMMANDS.
 				}
 				/* Command of graphical_material */
 				if (NULL != (graphical_material_manager =
-					Cmiss_graphics_material_module_get_manager(command_data->material_module)))
+					cmzn_graphics_material_module_get_manager(command_data->material_module)))
 				{
 					command_prefix="gfx create material ";
 					return_code=FOR_EACH_OBJECT_IN_MANAGER(Graphical_material)(
@@ -8906,46 +8906,46 @@ static int gfx_list_btree_statistics(struct Parse_state *state,
 {
 	int return_code = 0;
 	USE_PARAMETER(dummy_to_be_modified);
-	Cmiss_region *root_region = (struct Cmiss_region *)root_region_void;
+	cmzn_region *root_region = (struct cmzn_region *)root_region_void;
 	if (state && root_region)
 	{
-		Cmiss_region *region = Cmiss_region_access(root_region);
+		cmzn_region *region = cmzn_region_access(root_region);
 		Option_table *option_table = CREATE(Option_table)();
 		Option_table_add_help(option_table,
 			"List statistics about btree structures storing a region's nodes and elements.");
-		Option_table_add_set_Cmiss_region(option_table,
+		Option_table_add_set_cmzn_region(option_table,
 			"region", root_region, &region);
 		return_code = Option_table_multi_parse(option_table, state);
 		DESTROY(Option_table)(&option_table);
 		if (return_code)
 		{
-			Cmiss_field_module_id field_module = Cmiss_region_get_field_module(region);
-			FE_region *fe_region = Cmiss_region_get_FE_region(region);
+			cmzn_field_module_id field_module = cmzn_region_get_field_module(region);
+			FE_region *fe_region = cmzn_region_get_FE_region(region);
 			FE_region_list_btree_statistics(fe_region);
-			Cmiss_field_iterator_id iterator = Cmiss_field_module_create_field_iterator(field_module);
-			Cmiss_field_id field = 0;
-			while (0 != (field = Cmiss_field_iterator_next(iterator)))
+			cmzn_field_iterator_id iterator = cmzn_field_module_create_field_iterator(field_module);
+			cmzn_field_id field = 0;
+			while (0 != (field = cmzn_field_iterator_next(iterator)))
 			{
-				Cmiss_field_node_group_id node_group = Cmiss_field_cast_node_group(field);
-				Cmiss_field_element_group_id element_group = Cmiss_field_cast_element_group(field);
+				cmzn_field_node_group_id node_group = cmzn_field_cast_node_group(field);
+				cmzn_field_element_group_id element_group = cmzn_field_cast_element_group(field);
 				if (node_group || element_group)
 				{
-					char *name = Cmiss_field_get_name(field);
+					char *name = cmzn_field_get_name(field);
 					display_message(INFORMATION_MESSAGE, "%s group: %s\n", node_group ? "Node" : "Element", name);
 					if (node_group)
-						Cmiss_field_node_group_list_btree_statistics(node_group);
+						cmzn_field_node_group_list_btree_statistics(node_group);
 					else
-						Cmiss_field_element_group_list_btree_statistics(element_group);
-					Cmiss_field_node_group_destroy(&node_group);
-					Cmiss_field_element_group_destroy(&element_group);
+						cmzn_field_element_group_list_btree_statistics(element_group);
+					cmzn_field_node_group_destroy(&node_group);
+					cmzn_field_element_group_destroy(&element_group);
 					DEALLOCATE(name);
 				}
-				Cmiss_field_destroy(&field);
+				cmzn_field_destroy(&field);
 			}
-			Cmiss_field_iterator_destroy(&iterator);
-			Cmiss_field_module_destroy(&field_module);
+			cmzn_field_iterator_destroy(&iterator);
+			cmzn_field_module_destroy(&field_module);
 		}
-		Cmiss_region_destroy(&region);
+		cmzn_region_destroy(&region);
 	}
 	return (return_code);
 }
@@ -8961,7 +8961,7 @@ Executes a GFX LIST ENVIRONMENT_MAP.
 {
 	const char *current_token;
 	int return_code;
-	struct Cmiss_command_data *command_data;
+	struct cmzn_command_data *command_data;
 	struct Environment_map *environment_map;
 
 	ENTER(gfx_list_environment_map);
@@ -8973,7 +8973,7 @@ Executes a GFX LIST ENVIRONMENT_MAP.
 			if (strcmp(PARSER_HELP_STRING,current_token)&&
 				strcmp(PARSER_RECURSIVE_HELP_STRING,current_token))
 			{
-				if (NULL != (command_data = (struct Cmiss_command_data *)command_data_void))
+				if (NULL != (command_data = (struct cmzn_command_data *)command_data_void))
 				{
 					if (NULL != (environment_map=FIND_BY_IDENTIFIER_IN_MANAGER(Environment_map,
 						name)(current_token,command_data->environment_map_manager)))
@@ -9030,8 +9030,8 @@ Executes a GFX LIST FIELD.
 	static const char	*command_prefix="gfx define field ";
 	char commands_flag, *command_prefix_plus_region_path;
 	int path_length, return_code;
-	struct Cmiss_region *root_region;
-	struct Cmiss_region_path_and_name region_path_and_name;
+	struct cmzn_region *root_region;
+	struct cmzn_region_path_and_name region_path_and_name;
 	struct Computed_field *field;
 	struct List_Computed_field_commands_data list_commands_data;
 	struct LIST(Computed_field) *list_of_fields;
@@ -9039,10 +9039,10 @@ Executes a GFX LIST FIELD.
 
 	ENTER(gfx_list_Computed_field);
 	USE_PARAMETER(dummy_to_be_modified);
-	if (state && (root_region = (struct Cmiss_region *)root_region_void))
+	if (state && (root_region = (struct cmzn_region *)root_region_void))
 	{
 		commands_flag=0;
-		region_path_and_name.region = (struct Cmiss_region *)NULL;
+		region_path_and_name.region = (struct cmzn_region *)NULL;
 		region_path_and_name.region_path = (char *)NULL;
 		region_path_and_name.name = (char *)NULL;
 
@@ -9059,7 +9059,7 @@ Executes a GFX LIST FIELD.
 			if (region_path_and_name.name)
 			{
 				/* following accesses the field, if any */
-				field = Cmiss_region_find_field_by_name(region_path_and_name.region,
+				field = cmzn_region_find_field_by_name(region_path_and_name.region,
 					region_path_and_name.name);
 				if (!field)
 				{
@@ -9082,7 +9082,7 @@ Executes a GFX LIST FIELD.
 				}
 				else
 				{
-					region_path_and_name.region = ACCESS(Cmiss_region)(root_region);
+					region_path_and_name.region = ACCESS(cmzn_region)(root_region);
 				}
 				if (commands_flag)
 				{
@@ -9109,10 +9109,10 @@ Executes a GFX LIST FIELD.
 							list_commands_data.listed_fields = 0;
 							list_commands_data.computed_field_list = list_of_fields;
 							list_commands_data.computed_field_manager =
-								Cmiss_region_get_Computed_field_manager(region_path_and_name.region);
+								cmzn_region_get_Computed_field_manager(region_path_and_name.region);
 							while (FOR_EACH_OBJECT_IN_MANAGER(Computed_field)(
 								list_Computed_field_commands_if_managed_source_fields_in_list,
-								(void *)&list_commands_data, Cmiss_region_get_Computed_field_manager(region_path_and_name.region)) &&
+								(void *)&list_commands_data, cmzn_region_get_Computed_field_manager(region_path_and_name.region)) &&
 								(0 != list_commands_data.listed_fields))
 							{
 								list_commands_data.listed_fields = 0;
@@ -9136,7 +9136,7 @@ Executes a GFX LIST FIELD.
 					{
 						return_code=FOR_EACH_OBJECT_IN_MANAGER(Computed_field)(
 							list_Computed_field_name,(void *)NULL,
-							Cmiss_region_get_Computed_field_manager(region_path_and_name.region));
+							cmzn_region_get_Computed_field_manager(region_path_and_name.region));
 					}
 				}
 				if (!return_code)
@@ -9153,7 +9153,7 @@ Executes a GFX LIST FIELD.
 		DESTROY(Option_table)(&option_table);
 		if (region_path_and_name.region)
 		{
-			DEACCESS(Cmiss_region)(&region_path_and_name.region);
+			DEACCESS(cmzn_region)(&region_path_and_name.region);
 		}
 		if (region_path_and_name.region_path)
 		{
@@ -9186,12 +9186,12 @@ Executes a GFX LIST ELEMENT.
 {
 	int return_code;
 	int dimension = VOIDPTR2INT(dimension_void);
-	Cmiss_command_data *command_data = reinterpret_cast<Cmiss_command_data *>(command_data_void);
+	cmzn_command_data *command_data = reinterpret_cast<cmzn_command_data *>(command_data_void);
 	if (state && command_data && (0 < dimension) && (dimension <= 3))
 	{
 		/* initialise defaults */
 		char all_flag = 0;
-		Cmiss_region_id region = Cmiss_region_access(command_data->root_region);
+		cmzn_region_id region = cmzn_region_access(command_data->root_region);
 		char selected_flag = 0;
 		char verbose_flag = 0;
 		Multi_range *element_ranges = CREATE(Multi_range)();
@@ -9201,7 +9201,7 @@ Executes a GFX LIST ELEMENT.
 		/* all (redundant option) */
 		Option_table_add_entry(option_table, "all", &all_flag, NULL, set_char_flag);
 		/* region */
-		Option_table_add_set_Cmiss_region(option_table, "region",
+		Option_table_add_set_cmzn_region(option_table, "region",
 			command_data->root_region, &region);
 		/* selected */
 		Option_table_add_entry(option_table, "selected", &selected_flag,
@@ -9218,69 +9218,69 @@ Executes a GFX LIST ELEMENT.
 		return_code = Option_table_multi_parse(option_table, state);
 		DESTROY(Option_table)(&option_table);
 
-		Cmiss_field_id conditional_field = 0;
+		cmzn_field_id conditional_field = 0;
 		if (return_code && conditional_field_name)
 		{
-			Cmiss_field_module_id field_module = Cmiss_region_get_field_module(region);
-			conditional_field = Cmiss_field_module_find_field_by_name(field_module, conditional_field_name);
+			cmzn_field_module_id field_module = cmzn_region_get_field_module(region);
+			conditional_field = cmzn_field_module_find_field_by_name(field_module, conditional_field_name);
 			if (!conditional_field)
 			{
 				display_message(ERROR_MESSAGE,
 					"gfx list elements:  conditional field cannot be found");
 				return_code = 0;
 			}
-			Cmiss_field_module_destroy(&field_module);
+			cmzn_field_module_destroy(&field_module);
 		}
 		if (return_code)
 		{
 			int use_dimension = dimension;
 			if (dimension == 3)
 			{
-				use_dimension = FE_region_get_highest_dimension(Cmiss_region_get_FE_region(region));
+				use_dimension = FE_region_get_highest_dimension(cmzn_region_get_FE_region(region));
 			}
-			Cmiss_field_module_id field_module = Cmiss_region_get_field_module(region);
-			Cmiss_mesh_id master_mesh = Cmiss_field_module_find_mesh_by_dimension(field_module, use_dimension);
-			Cmiss_mesh_group_id selection_mesh_group = 0;
+			cmzn_field_module_id field_module = cmzn_region_get_field_module(region);
+			cmzn_mesh_id master_mesh = cmzn_field_module_find_mesh_by_dimension(field_module, use_dimension);
+			cmzn_mesh_group_id selection_mesh_group = 0;
 			if (selected_flag)
 			{
-				Cmiss_scene *scene = Cmiss_region_get_scene_internal(region);
-				Cmiss_field_group_id selection_group = Cmiss_scene_get_selection_group(scene);
+				cmzn_scene *scene = cmzn_region_get_scene_internal(region);
+				cmzn_field_group_id selection_group = cmzn_scene_get_selection_group(scene);
 				if (selection_group)
 				{
-					Cmiss_field_element_group_id selection_element_group =
-						Cmiss_field_group_get_element_group(selection_group, master_mesh);
+					cmzn_field_element_group_id selection_element_group =
+						cmzn_field_group_get_element_group(selection_group, master_mesh);
 					if (selection_element_group)
 					{
-						selection_mesh_group = Cmiss_field_element_group_get_mesh(selection_element_group);
-						Cmiss_field_element_group_destroy(&selection_element_group);
+						selection_mesh_group = cmzn_field_element_group_get_mesh(selection_element_group);
+						cmzn_field_element_group_destroy(&selection_element_group);
 					}
 				}
-				Cmiss_field_group_destroy(&selection_group);
-				Cmiss_scene_destroy(&scene);
+				cmzn_field_group_destroy(&selection_group);
+				cmzn_scene_destroy(&scene);
 			}
 			int number_of_elements_listed = 0;
 			if ((!selected_flag) || selection_mesh_group)
 			{
-				Cmiss_field_cache_id cache = Cmiss_field_module_create_cache(field_module);
-				Cmiss_mesh_id iteration_mesh = master_mesh;
+				cmzn_field_cache_id cache = cmzn_field_module_create_cache(field_module);
+				cmzn_mesh_id iteration_mesh = master_mesh;
 				if (selected_flag)
 				{
-					iteration_mesh = Cmiss_mesh_group_base_cast(selection_mesh_group);
+					iteration_mesh = cmzn_mesh_group_base_cast(selection_mesh_group);
 				}
 				const bool use_element_ranges = Multi_range_get_number_of_ranges(element_ranges) > 0;
 				if (Multi_range_get_total_number_in_ranges(element_ranges) == 1)
 					verbose_flag = 1;
 				Multi_range *output_element_ranges = CREATE(Multi_range)();
-				Cmiss_element_iterator_id iter = Cmiss_mesh_create_element_iterator(iteration_mesh);
-				Cmiss_element_id element = 0;
-				while (NULL != (element = Cmiss_element_iterator_next_non_access(iter)))
+				cmzn_element_iterator_id iter = cmzn_mesh_create_element_iterator(iteration_mesh);
+				cmzn_element_id element = 0;
+				while (NULL != (element = cmzn_element_iterator_next_non_access(iter)))
 				{
-					if (use_element_ranges && !Multi_range_is_value_in_range(element_ranges, Cmiss_element_get_identifier(element)))
+					if (use_element_ranges && !Multi_range_is_value_in_range(element_ranges, cmzn_element_get_identifier(element)))
 						continue;
 					if (conditional_field)
 					{
-						Cmiss_field_cache_set_element(cache, element);
-						if (!Cmiss_field_evaluate_boolean(conditional_field, cache))
+						cmzn_field_cache_set_element(cache, element);
+						if (!cmzn_field_evaluate_boolean(conditional_field, cache))
 							continue;
 					}
 					if (verbose_flag)
@@ -9289,12 +9289,12 @@ Executes a GFX LIST ELEMENT.
 					}
 					else
 					{
-						int element_identifier = Cmiss_element_get_identifier(element);
+						int element_identifier = cmzn_element_get_identifier(element);
 						Multi_range_add_range(output_element_ranges, element_identifier, element_identifier);
 					}
 					++number_of_elements_listed;
 				}
-				Cmiss_element_iterator_destroy(&iter);
+				cmzn_element_iterator_destroy(&iter);
 				if ((!verbose_flag) && number_of_elements_listed)
 				{
 					if (dimension == 1)
@@ -9313,7 +9313,7 @@ Executes a GFX LIST ELEMENT.
 					display_message(INFORMATION_MESSAGE, "Total number = %d\n", number_of_elements_listed);
 				}
 				DESTROY(Multi_range)(&output_element_ranges);
-				Cmiss_field_cache_destroy(&cache);
+				cmzn_field_cache_destroy(&cache);
 			}
 			if (0 == number_of_elements_listed)
 			{
@@ -9330,15 +9330,15 @@ Executes a GFX LIST ELEMENT.
 					display_message(INFORMATION_MESSAGE, "gfx list elements:  No elements specified\n");
 				}
 			}
-			Cmiss_mesh_group_destroy(&selection_mesh_group);
-			Cmiss_mesh_destroy(&master_mesh);
-			Cmiss_field_module_destroy(&field_module);
+			cmzn_mesh_group_destroy(&selection_mesh_group);
+			cmzn_mesh_destroy(&master_mesh);
+			cmzn_field_module_destroy(&field_module);
 		}
 		DESTROY(Multi_range)(&element_ranges);
-		Cmiss_field_destroy(&conditional_field);
+		cmzn_field_destroy(&conditional_field);
 		if (conditional_field_name)
 			DEALLOCATE(conditional_field_name);
-		Cmiss_region_destroy(&region);
+		cmzn_region_destroy(&region);
 	}
 	else
 	{
@@ -9360,12 +9360,12 @@ use node_manager and node_selection.
 ==============================================================================*/
 {
 	int return_code;
-	Cmiss_command_data *command_data = reinterpret_cast<Cmiss_command_data *>(command_data_void);
+	cmzn_command_data *command_data = reinterpret_cast<cmzn_command_data *>(command_data_void);
 	if (state && command_data)
 	{
 		/* initialise defaults */
 		char all_flag = 0;
-		Cmiss_region_id region = Cmiss_region_access(command_data->root_region);
+		cmzn_region_id region = cmzn_region_access(command_data->root_region);
 		char selected_flag = 0;
 		char verbose_flag = 0;
 		Multi_range *node_ranges = CREATE(Multi_range)();
@@ -9375,7 +9375,7 @@ use node_manager and node_selection.
 		/* all (redundant option) */
 		Option_table_add_entry(option_table, "all", &all_flag, NULL, set_char_flag);
 		/* region */
-		Option_table_add_set_Cmiss_region(option_table, "region",
+		Option_table_add_set_cmzn_region(option_table, "region",
 			command_data->root_region, &region);
 		/* selected */
 		Option_table_add_entry(option_table, "selected", &selected_flag,
@@ -9392,65 +9392,65 @@ use node_manager and node_selection.
 		return_code = Option_table_multi_parse(option_table, state);
 		DESTROY(Option_table)(&option_table);
 
-		Cmiss_field_id conditional_field = 0;
+		cmzn_field_id conditional_field = 0;
 		if (return_code && conditional_field_name)
 		{
-			Cmiss_field_module_id field_module = Cmiss_region_get_field_module(region);
-			conditional_field = Cmiss_field_module_find_field_by_name(field_module, conditional_field_name);
+			cmzn_field_module_id field_module = cmzn_region_get_field_module(region);
+			conditional_field = cmzn_field_module_find_field_by_name(field_module, conditional_field_name);
 			if (!conditional_field)
 			{
 				display_message(ERROR_MESSAGE,
 					"gfx list nodes:  conditional field cannot be found");
 				return_code = 0;
 			}
-			Cmiss_field_module_destroy(&field_module);
+			cmzn_field_module_destroy(&field_module);
 		}
 		if (return_code)
 		{
-			Cmiss_field_module_id field_module = Cmiss_region_get_field_module(region);
-			Cmiss_nodeset_id master_nodeset = Cmiss_field_module_find_nodeset_by_domain_type(field_module,
+			cmzn_field_module_id field_module = cmzn_region_get_field_module(region);
+			cmzn_nodeset_id master_nodeset = cmzn_field_module_find_nodeset_by_domain_type(field_module,
 				use_data ? CMISS_FIELD_DOMAIN_DATA : CMISS_FIELD_DOMAIN_NODES);
-			Cmiss_nodeset_group_id selection_nodeset_group = 0;
+			cmzn_nodeset_group_id selection_nodeset_group = 0;
 			if (selected_flag)
 			{
-				Cmiss_scene *scene = Cmiss_region_get_scene_internal(region);
-				Cmiss_field_group_id selection_group = Cmiss_scene_get_selection_group(scene);
+				cmzn_scene *scene = cmzn_region_get_scene_internal(region);
+				cmzn_field_group_id selection_group = cmzn_scene_get_selection_group(scene);
 				if (selection_group)
 				{
-					Cmiss_field_node_group_id selection_node_group =
-						Cmiss_field_group_get_node_group(selection_group, master_nodeset);
+					cmzn_field_node_group_id selection_node_group =
+						cmzn_field_group_get_node_group(selection_group, master_nodeset);
 					if (selection_node_group)
 					{
-						selection_nodeset_group = Cmiss_field_node_group_get_nodeset(selection_node_group);
-						Cmiss_field_node_group_destroy(&selection_node_group);
+						selection_nodeset_group = cmzn_field_node_group_get_nodeset(selection_node_group);
+						cmzn_field_node_group_destroy(&selection_node_group);
 					}
 				}
-				Cmiss_field_group_destroy(&selection_group);
-				Cmiss_scene_destroy(&scene);
+				cmzn_field_group_destroy(&selection_group);
+				cmzn_scene_destroy(&scene);
 			}
 			int number_of_nodes_listed = 0;
 			if ((!selected_flag) || selection_nodeset_group)
 			{
-				Cmiss_field_cache_id cache = Cmiss_field_module_create_cache(field_module);
-				Cmiss_nodeset_id iteration_nodeset = master_nodeset;
+				cmzn_field_cache_id cache = cmzn_field_module_create_cache(field_module);
+				cmzn_nodeset_id iteration_nodeset = master_nodeset;
 				if (selected_flag)
 				{
-					iteration_nodeset = Cmiss_nodeset_group_base_cast(selection_nodeset_group);
+					iteration_nodeset = cmzn_nodeset_group_base_cast(selection_nodeset_group);
 				}
 				const bool use_node_ranges = Multi_range_get_number_of_ranges(node_ranges) > 0;
 				if (Multi_range_get_total_number_in_ranges(node_ranges) == 1)
 					verbose_flag = 1;
 				Multi_range *output_node_ranges = CREATE(Multi_range)();
-				Cmiss_node_iterator_id iter = Cmiss_nodeset_create_node_iterator(iteration_nodeset);
-				Cmiss_node_id node = 0;
-				while (NULL != (node = Cmiss_node_iterator_next_non_access(iter)))
+				cmzn_node_iterator_id iter = cmzn_nodeset_create_node_iterator(iteration_nodeset);
+				cmzn_node_id node = 0;
+				while (NULL != (node = cmzn_node_iterator_next_non_access(iter)))
 				{
-					if (use_node_ranges && !Multi_range_is_value_in_range(node_ranges, Cmiss_node_get_identifier(node)))
+					if (use_node_ranges && !Multi_range_is_value_in_range(node_ranges, cmzn_node_get_identifier(node)))
 						continue;
 					if (conditional_field)
 					{
-						Cmiss_field_cache_set_node(cache, node);
-						if (!Cmiss_field_evaluate_boolean(conditional_field, cache))
+						cmzn_field_cache_set_node(cache, node);
+						if (!cmzn_field_evaluate_boolean(conditional_field, cache))
 							continue;
 					}
 					if (verbose_flag)
@@ -9459,12 +9459,12 @@ use node_manager and node_selection.
 					}
 					else
 					{
-						int node_identifier = Cmiss_node_get_identifier(node);
+						int node_identifier = cmzn_node_get_identifier(node);
 						Multi_range_add_range(output_node_ranges, node_identifier, node_identifier);
 					}
 					++number_of_nodes_listed;
 				}
-				Cmiss_node_iterator_destroy(&iter);
+				cmzn_node_iterator_destroy(&iter);
 				if ((!verbose_flag) && number_of_nodes_listed)
 				{
 					display_message(INFORMATION_MESSAGE, use_data ? "Data:\n" : "Nodes:\n");
@@ -9472,22 +9472,22 @@ use node_manager and node_selection.
 					display_message(INFORMATION_MESSAGE, "Total number = %d\n", number_of_nodes_listed);
 				}
 				DESTROY(Multi_range)(&output_node_ranges);
-				Cmiss_field_cache_destroy(&cache);
+				cmzn_field_cache_destroy(&cache);
 			}
 			if (0 == number_of_nodes_listed)
 			{
 				display_message(INFORMATION_MESSAGE,
 					use_data ? "gfx list data:  No data specified\n" : "gfx list nodes:  No nodes specified\n");
 			}
-			Cmiss_nodeset_group_destroy(&selection_nodeset_group);
-			Cmiss_nodeset_destroy(&master_nodeset);
-			Cmiss_field_module_destroy(&field_module);
+			cmzn_nodeset_group_destroy(&selection_nodeset_group);
+			cmzn_nodeset_destroy(&master_nodeset);
+			cmzn_field_module_destroy(&field_module);
 		}
 		DESTROY(Multi_range)(&node_ranges);
-		Cmiss_field_destroy(&conditional_field);
+		cmzn_field_destroy(&conditional_field);
 		if (conditional_field_name)
 			DEALLOCATE(conditional_field_name);
-		Cmiss_region_destroy(&region);
+		cmzn_region_destroy(&region);
 	}
 	else
 	{
@@ -9567,7 +9567,7 @@ Executes a GFX LIST MATERIAL.
 			/* must deaccess material since accessed by set_Graphical_material */
 			if (material)
 			{
-				Cmiss_graphics_material_destroy(&material);
+				cmzn_graphics_material_destroy(&material);
 			}
 		}
 		else
@@ -9596,34 +9596,34 @@ static int gfx_list_group(struct Parse_state *state, void *dummy_to_be_modified,
 {
 	int return_code = 1;
 	USE_PARAMETER(dummy_to_be_modified);
-	Cmiss_region_id root_region = reinterpret_cast<Cmiss_region_id>(root_region_void);
+	cmzn_region_id root_region = reinterpret_cast<cmzn_region_id>(root_region_void);
 	if (state && root_region)
 	{
-		Cmiss_region_id region = Cmiss_region_access(root_region);
-		if ((!state->current_token) || (set_Cmiss_region(state, (void *)&region, (void *)root_region) &&
+		cmzn_region_id region = cmzn_region_access(root_region);
+		if ((!state->current_token) || (set_cmzn_region(state, (void *)&region, (void *)root_region) &&
 			!Parse_state_help_mode(state)))
 		{
-			Cmiss_field_module_id field_module = Cmiss_region_get_field_module(region);
-			Cmiss_field_iterator_id field_iter = Cmiss_field_module_create_field_iterator(field_module);
-			Cmiss_field_id field = 0;
-			char *region_path = Cmiss_region_get_path(region);
+			cmzn_field_module_id field_module = cmzn_region_get_field_module(region);
+			cmzn_field_iterator_id field_iter = cmzn_field_module_create_field_iterator(field_module);
+			cmzn_field_id field = 0;
+			char *region_path = cmzn_region_get_path(region);
 			display_message(INFORMATION_MESSAGE, "Groups in region %s:\n", region_path);
 			DEALLOCATE(region_path);
-			while (0 != (field = Cmiss_field_iterator_next_non_access(field_iter)))
+			while (0 != (field = cmzn_field_iterator_next_non_access(field_iter)))
 			{
-				Cmiss_field_group_id group = Cmiss_field_cast_group(field);
+				cmzn_field_group_id group = cmzn_field_cast_group(field);
 				if (group)
 				{
-					char *group_name = Cmiss_field_get_name(field);
+					char *group_name = cmzn_field_get_name(field);
 					display_message(INFORMATION_MESSAGE, "  %s\n", group_name);
 					DEALLOCATE(group_name);
-					Cmiss_field_group_destroy(&group);
+					cmzn_field_group_destroy(&group);
 				}
 			}
-			Cmiss_field_iterator_destroy(&field_iter);
-			Cmiss_field_module_destroy(&field_module);
+			cmzn_field_iterator_destroy(&field_iter);
+			cmzn_field_module_destroy(&field_module);
 		}
-		Cmiss_region_destroy(&region);
+		cmzn_region_destroy(&region);
 	}
 	else
 	{
@@ -9644,11 +9644,11 @@ Executes a GFX LIST REGION command.
 {
 	const char *current_token;
 	int return_code;
-	struct Cmiss_region *region, *root_region;
+	struct cmzn_region *region, *root_region;
 
 	ENTER(gfx_list_region);
 	USE_PARAMETER(dummy_to_be_modified);
-	if (state && (root_region = (struct Cmiss_region *)root_region_void))
+	if (state && (root_region = (struct cmzn_region *)root_region_void))
 	{
 		return_code = 1;
 		if ((current_token = state->current_token) &&
@@ -9660,11 +9660,11 @@ Executes a GFX LIST REGION command.
 		}
 		else
 		{
-			region = (struct Cmiss_region *)NULL;
+			region = (struct cmzn_region *)NULL;
 			if (current_token)
 			{
 				/* get region to be listed */
-				if (Cmiss_region_get_region_from_path_deprecated(root_region, current_token,
+				if (cmzn_region_get_region_from_path_deprecated(root_region, current_token,
 					&region))
 				{
 					display_message(INFORMATION_MESSAGE, "Region %s:\n", current_token);
@@ -9684,7 +9684,7 @@ Executes a GFX LIST REGION command.
 			}
 			if (return_code)
 			{
-				return_code = Cmiss_region_list(region, 2, 2);
+				return_code = cmzn_region_list(region, 2, 2);
 			}
 		}
 	}
@@ -9698,13 +9698,13 @@ Executes a GFX LIST REGION command.
 	return (return_code);
 } /* gfx_list_region */
 
-int Cmiss_region_list_scene(Cmiss_region_id region, int commands_flag, int recursive_flag)
+int cmzn_region_list_scene(cmzn_region_id region, int commands_flag, int recursive_flag)
 {
 	if (!region)
 		return 0;
 	int return_code = 1;
-	char *region_path = Cmiss_region_get_path(region);
-	Cmiss_scene_id scene = Cmiss_region_get_scene_internal(region);
+	char *region_path = cmzn_region_get_path(region);
+	cmzn_scene_id scene = cmzn_region_get_scene_internal(region);
 	if (commands_flag)
 	{
 		int error = 0;
@@ -9712,29 +9712,29 @@ int Cmiss_region_list_scene(Cmiss_region_id region, int commands_flag, int recur
 		make_valid_token(&region_path);
 		append_string(&command_prefix, region_path, &error);
 		append_string(&command_prefix, " ", &error);
-		return_code = Cmiss_scene_list_commands(scene, command_prefix, /*command_suffix*/";");
+		return_code = cmzn_scene_list_commands(scene, command_prefix, /*command_suffix*/";");
 		DEALLOCATE(command_prefix);
 	}
 	else
 	{
 		display_message(INFORMATION_MESSAGE,
 			"Contents of region %s scene:\n", region_path);
-		return_code = Cmiss_scene_list_contents(scene);
+		return_code = cmzn_scene_list_contents(scene);
 	}
-	Cmiss_scene_destroy(&scene);
+	cmzn_scene_destroy(&scene);
 	DEALLOCATE(region_path);
 	if (recursive_flag)
 	{
-		Cmiss_region_id child = Cmiss_region_get_first_child(region);
+		cmzn_region_id child = cmzn_region_get_first_child(region);
 		while (child)
 		{
-			if (!Cmiss_region_list_scene(child, commands_flag, recursive_flag))
+			if (!cmzn_region_list_scene(child, commands_flag, recursive_flag))
 			{
-				Cmiss_region_destroy(&child);
+				cmzn_region_destroy(&child);
 				return_code = 0;
 				break;
 			}
-			Cmiss_region_reaccess_next_sibling(&child);
+			cmzn_region_reaccess_next_sibling(&child);
 		}
 	}
 	return return_code;
@@ -9748,27 +9748,27 @@ static int gfx_list_g_element(struct Parse_state *state,
 {
 	int return_code;
 	USE_PARAMETER(dummy_to_be_modified);
-	Cmiss_command_data *command_data = reinterpret_cast<Cmiss_command_data *>(command_data_void);
+	cmzn_command_data *command_data = reinterpret_cast<cmzn_command_data *>(command_data_void);
 	if (state && command_data)
 	{
 		int commands_flag = 1;
 		int recursive_flag = 1;
-		Cmiss_region_id region = Cmiss_region_access(command_data->root_region);
+		cmzn_region_id region = cmzn_region_access(command_data->root_region);
 		Option_table *option_table = CREATE(Option_table)();
 		/* commands|description */
 		Option_table_add_switch(option_table, "commands", "description", &commands_flag);
 		/* recursive|non_recursive */
 		Option_table_add_switch(option_table, "recursive", "non_recursive", &recursive_flag);
 		/* default option: region */
-		Option_table_add_set_Cmiss_region(option_table, /*token*/(const char *)0,
+		Option_table_add_set_cmzn_region(option_table, /*token*/(const char *)0,
 			command_data->root_region, &region);
 		return_code = Option_table_multi_parse(option_table, state);
 		DESTROY(Option_table)(&option_table);
 		if (return_code)
 		{
-			return_code = Cmiss_region_list_scene(region, commands_flag, recursive_flag);
+			return_code = cmzn_region_list_scene(region, commands_flag, recursive_flag);
 		}
-		Cmiss_region_destroy(&region);
+		cmzn_region_destroy(&region);
 	}
 	else
 	{
@@ -9778,11 +9778,11 @@ static int gfx_list_g_element(struct Parse_state *state,
 	return (return_code);
 }
 
-static int Cmiss_glyph_list_contents(Cmiss_glyph *glyph, void *dummy_void)
+static int cmzn_glyph_list_contents(cmzn_glyph *glyph, void *dummy_void)
 {
 	USE_PARAMETER(dummy_void);
-	Cmiss_glyph_static *glyphStatic = dynamic_cast<Cmiss_glyph_static*>(glyph);
-	Cmiss_glyph_colour_bar *colourBar = dynamic_cast<Cmiss_glyph_colour_bar*>(glyph);
+	cmzn_glyph_static *glyphStatic = dynamic_cast<cmzn_glyph_static*>(glyph);
+	cmzn_glyph_colour_bar *colourBar = dynamic_cast<cmzn_glyph_colour_bar*>(glyph);
 	display_message(INFORMATION_MESSAGE, "%s = %s; access_count = %d\n", glyph->getName(),
 		glyphStatic ? "static" : (colourBar ? "colour_bar" : "unknown"), glyph->access_count);
 	return 1;
@@ -9802,7 +9802,7 @@ Executes a GFX LIST GLYPH/GRAPHICS_OBJECT command.
 
 	ENTER(gfx_list_graphics_object);
 	USE_PARAMETER(dummy_to_be_modified);
-	Cmiss_glyph_module_id glyphModule = reinterpret_cast<Cmiss_glyph_module *>(glyph_module_void);
+	cmzn_glyph_module_id glyphModule = reinterpret_cast<cmzn_glyph_module *>(glyph_module_void);
 	if (state)
 	{
 		if (glyphModule)
@@ -9811,11 +9811,11 @@ Executes a GFX LIST GLYPH/GRAPHICS_OBJECT command.
 			{
 				if (!Parse_state_help_mode(state))
 				{
-					Cmiss_glyph_id glyph = Cmiss_glyph_module_find_glyph_by_name(glyphModule, current_token);
+					cmzn_glyph_id glyph = cmzn_glyph_module_find_glyph_by_name(glyphModule, current_token);
 					if (glyph)
 					{
-						Cmiss_glyph_list_contents(glyph, 0);
-						Cmiss_glyph_destroy(&glyph);
+						cmzn_glyph_list_contents(glyph, 0);
+						cmzn_glyph_destroy(&glyph);
 					}
 					else
 					{
@@ -9833,8 +9833,8 @@ Executes a GFX LIST GLYPH/GRAPHICS_OBJECT command.
 			}
 			else
 			{
-				return_code = FOR_EACH_OBJECT_IN_MANAGER(Cmiss_glyph)(
-					Cmiss_glyph_list_contents, (void *)NULL, Cmiss_glyph_module_get_manager(glyphModule));
+				return_code = FOR_EACH_OBJECT_IN_MANAGER(cmzn_glyph)(
+					cmzn_glyph_list_contents, (void *)NULL, cmzn_glyph_module_get_manager(glyphModule));
 			}
 		}
 		else
@@ -9868,7 +9868,7 @@ use node_manager and node_selection.
 {
 	char all_flag,ranges_flag,selected_flag;
 	int return_code;
-	struct Cmiss_command_data *command_data;
+	struct cmzn_command_data *command_data;
 	struct Element_point_ranges_grid_to_multi_range_data grid_to_multi_range_data;
 	struct FE_element_grid_to_multi_range_data element_grid_to_multi_range_data;
 	struct FE_field *grid_field;
@@ -9879,13 +9879,13 @@ use node_manager and node_selection.
 
 	ENTER(gfx_list_grid_points);
 	USE_PARAMETER(dummy_to_be_modified);
-	if (state&&(command_data=(struct Cmiss_command_data *)command_data_void))
+	if (state&&(command_data=(struct cmzn_command_data *)command_data_void))
 	{
 		/* initialise defaults */
 		all_flag=0;
 		selected_flag=0;
 		grid_point_ranges=CREATE(Multi_range)();
-		fe_region = Cmiss_region_get_FE_region(command_data->root_region);
+		fe_region = cmzn_region_get_FE_region(command_data->root_region);
 
 		if ((grid_field = FE_region_get_FE_field_from_name(fe_region,
 			"grid_point_number")) &&
@@ -10243,14 +10243,14 @@ Executes a GFX LIST TEXTURE.
 	char *region_name = NULL, *field_name = NULL;
 	char commands_flag;
 	int return_code = 0;
-	struct Cmiss_region *region = NULL, *root_region = NULL;
+	struct cmzn_region *region = NULL, *root_region = NULL;
 	struct Option_table *option_table;
 
 	ENTER(gfx_list_texture);
 	USE_PARAMETER(dummy_to_be_modified);
 	if (state)
 	{
-		root_region=(struct Cmiss_region *)region_void;
+		root_region=(struct cmzn_region *)region_void;
 		if (root_region)
 		{
 			commands_flag=0;
@@ -10267,7 +10267,7 @@ Executes a GFX LIST TEXTURE.
 			{
 				if (region_name)
 				{
-					region = Cmiss_region_find_subregion_at_path(root_region,
+					region = cmzn_region_find_subregion_at_path(root_region,
 						region_name);
 					if (!region)
 					{
@@ -10276,13 +10276,13 @@ Executes a GFX LIST TEXTURE.
 				}
 				else
 				{
-					region = ACCESS(Cmiss_region)(root_region);
-					region_name = Cmiss_region_get_path(region);
+					region = ACCESS(cmzn_region)(root_region);
+					region_name = cmzn_region_get_path(region);
 				}
 				if (region)
 				{
 					MANAGER(Computed_field) *field_manager =
-						Cmiss_region_get_Computed_field_manager(region);
+						cmzn_region_get_Computed_field_manager(region);
 					Computed_field *existing_field = NULL;
 					if (field_name)
 					{
@@ -10327,7 +10327,7 @@ Executes a GFX LIST TEXTURE.
 									list_image_field,(void *)NULL,field_manager);
 						}
 					}
-					DEACCESS(Cmiss_region)(&region);
+					DEACCESS(cmzn_region)(&region);
 				}
 			}
 			DESTROY(Option_table)(&option_table);
@@ -10366,8 +10366,8 @@ Executes a GFX LIST TRANSFORMATION.
 {
 	char commands_flag,*region_name = NULL;
 	int return_code;
-	struct Cmiss_command_data *command_data;
-	struct Cmiss_region *region = NULL;
+	struct cmzn_command_data *command_data;
+	struct cmzn_region *region = NULL;
 	static struct Modifier_entry option_table[]=
 	{
 		{"commands",NULL,NULL,set_char_flag},
@@ -10379,7 +10379,7 @@ Executes a GFX LIST TRANSFORMATION.
 	USE_PARAMETER(dummy_to_be_modified);
 	if (state)
 	{
-		if (NULL != (command_data = (struct Cmiss_command_data *)command_data_void))
+		if (NULL != (command_data = (struct cmzn_command_data *)command_data_void))
 		{
 			/* initialise defaults */
 			commands_flag=0;
@@ -10392,7 +10392,7 @@ Executes a GFX LIST TRANSFORMATION.
 			{
 				if (region_name)
 				{
-					region = Cmiss_region_find_subregion_at_path(command_data->root_region,
+					region = cmzn_region_find_subregion_at_path(command_data->root_region,
 						region_name);
 					if (!region)
 					{
@@ -10401,12 +10401,12 @@ Executes a GFX LIST TRANSFORMATION.
 				}
 				else
 				{
-					region = ACCESS(Cmiss_region)(command_data->root_region);
-					region_name = Cmiss_region_get_path(region);
+					region = ACCESS(cmzn_region)(command_data->root_region);
+					region_name = cmzn_region_get_path(region);
 				}
 				if (region)
 				{
-					Cmiss_scene *scene = Cmiss_region_get_scene_internal(region);
+					cmzn_scene *scene = cmzn_region_get_scene_internal(region);
 					if (scene)
 					{
 						if (commands_flag)
@@ -10419,9 +10419,9 @@ Executes a GFX LIST TRANSFORMATION.
 								sprintf(command_prefix, "gfx set transformation name ");
 								if (scene)
 								{
-									return_code = list_Cmiss_scene_transformation_commands(
+									return_code = list_cmzn_scene_transformation_commands(
 										scene,(void *)command_prefix);
-									DEACCESS(Cmiss_scene)(&scene);
+									DEACCESS(cmzn_scene)(&scene);
 								}
 								DEALLOCATE(command_prefix);
 							}
@@ -10432,9 +10432,9 @@ Executes a GFX LIST TRANSFORMATION.
 						}
 						else
 						{
-							return_code = list_Cmiss_scene_transformation(scene);
+							return_code = list_cmzn_scene_transformation(scene);
 						}
-						Cmiss_scene_destroy(&scene);
+						cmzn_scene_destroy(&scene);
 					}
 				}
 				else
@@ -10442,7 +10442,7 @@ Executes a GFX LIST TRANSFORMATION.
 					return_code=0;
 				}
 			} /* parse error, help */
-			DEACCESS(Cmiss_region)(&region);
+			DEACCESS(cmzn_region)(&region);
 			if (region_name)
 			{
 				DEALLOCATE(region_name);
@@ -10635,12 +10635,12 @@ Executes a GFX LIST command.
 ==============================================================================*/
 {
 	int return_code;
-	struct Cmiss_command_data *command_data;
+	struct cmzn_command_data *command_data;
 	struct Option_table *option_table;
 
 	ENTER(execute_command_gfx_list);
 	USE_PARAMETER(dummy_to_be_modified);
-	if (state && (command_data=(struct Cmiss_command_data *)command_data_void))
+	if (state && (command_data=(struct cmzn_command_data *)command_data_void))
 	{
 		if (state->current_token)
 		{
@@ -10700,7 +10700,7 @@ Executes a GFX LIST command.
 				Light_model_module_get_manager(command_data->light_model_module), gfx_list_light_model);
 			/* material */
 			Option_table_add_entry(option_table, "material", NULL,
-				Cmiss_graphics_material_module_get_manager(command_data->material_module), gfx_list_graphical_material);
+				cmzn_graphics_material_module_get_manager(command_data->material_module), gfx_list_graphical_material);
 #if defined (SGI_MOVIE_FILE)
 			/* movie */
 			Option_table_add_entry(option_table, "movie", NULL,
@@ -10760,13 +10760,13 @@ static int gfx_modify_element_group(struct Parse_state *state,
 {
 	int return_code = 0;
 	USE_PARAMETER(dummy_to_be_modified);
-	Cmiss_command_data *command_data = reinterpret_cast<Cmiss_command_data *>(command_data_void);
+	cmzn_command_data *command_data = reinterpret_cast<cmzn_command_data *>(command_data_void);
 	if (state && command_data)
 	{
-		Cmiss_region_id region = Cmiss_region_access(command_data->root_region);
-		Cmiss_field_group_id group = 0;
+		cmzn_region_id region = cmzn_region_access(command_data->root_region);
+		cmzn_field_group_id group = 0;
 		const char *current_token = state->current_token;
-		if (!set_Cmiss_region_or_group(state, &region, &group))
+		if (!set_cmzn_region_or_group(state, &region, &group))
 		{
 			// message already output
 		}
@@ -10784,7 +10784,7 @@ static int gfx_modify_element_group(struct Parse_state *state,
 			/* initialise defaults */
 			char add_flag = 0;
 			char remove_flag = 0;
-			Cmiss_field_id conditional_field = 0;
+			cmzn_field_id conditional_field = 0;
 			const char *element_type_string = elements_type_string;
 			char all_flag = 0;
 			char selected_flag = 0;
@@ -10826,14 +10826,14 @@ static int gfx_modify_element_group(struct Parse_state *state,
 			return_code = Option_table_multi_parse(option_table, state);
 			DESTROY(Option_table)(&option_table);
 
-			Cmiss_field_group_id from_group = 0;
+			cmzn_field_group_id from_group = 0;
 			if (return_code)
 			{
 				if (from_group_name)
 				{
-					Cmiss_field *field =	FIND_BY_IDENTIFIER_IN_MANAGER(Computed_field,name)(
-						from_group_name, Cmiss_region_get_Computed_field_manager(region));
-					from_group = Cmiss_field_cast_group(field);
+					cmzn_field *field =	FIND_BY_IDENTIFIER_IN_MANAGER(Computed_field,name)(
+						from_group_name, cmzn_region_get_Computed_field_manager(region));
+					from_group = cmzn_field_cast_group(field);
 					if (!from_group)
 					{
 						display_message(ERROR_MESSAGE, "gfx modify egroup: '%s' is not a group.", from_group_name);
@@ -10864,7 +10864,7 @@ static int gfx_modify_element_group(struct Parse_state *state,
 				}
 				else
 				{
-					dimension = FE_region_get_highest_dimension(Cmiss_region_get_FE_region(region));
+					dimension = FE_region_get_highest_dimension(cmzn_region_get_FE_region(region));
 				}
 				// following code
 				return_code = process_modify_element_group(group, region, dimension,
@@ -10876,12 +10876,12 @@ static int gfx_modify_element_group(struct Parse_state *state,
 			{
 				DEALLOCATE(from_group_name);
 			}
-			Cmiss_field_group_destroy(&from_group);
+			cmzn_field_group_destroy(&from_group);
 			DESTROY(Multi_range)(&element_ranges);
-			Cmiss_field_destroy(&conditional_field);
+			cmzn_field_destroy(&conditional_field);
 		}
-		Cmiss_field_group_destroy(&group);
-		Cmiss_region_destroy(&region);
+		cmzn_field_group_destroy(&group);
+		cmzn_region_destroy(&region);
 	}
 	else
 	{
@@ -10900,7 +10900,7 @@ static int gfx_modify_field_rename(struct Parse_state *state,
 {
 	int return_code = 1;
 	ENTER(gfx_modify_field_rename);
-	Cmiss_field* field = (Cmiss_field*)field_void;
+	cmzn_field* field = (cmzn_field*)field_void;
 	USE_PARAMETER(region_void);
 	if (state)
 	{
@@ -10910,7 +10910,7 @@ static int gfx_modify_field_rename(struct Parse_state *state,
 		{
 			if (state->current_token)
 			{
-				return_code = Cmiss_field_set_name(field, state->current_token);
+				return_code = cmzn_field_set_name(field, state->current_token);
 			}
 			else
 			{
@@ -10969,7 +10969,7 @@ static int gfx_modify_field(struct Parse_state *state,
 	int return_code = 1;
 	ENTER(gfx_modify_field);
 	USE_PARAMETER(dummy_to_be_modified);
-	Cmiss_command_data *command_data = (struct Cmiss_command_data *)command_data_void;
+	cmzn_command_data *command_data = (struct cmzn_command_data *)command_data_void;
 	if (state && command_data)
 	{
 		const char *current_token = state->current_token;
@@ -10978,23 +10978,23 @@ static int gfx_modify_field(struct Parse_state *state,
 			if (strcmp(PARSER_HELP_STRING,current_token)&&
 				strcmp(PARSER_RECURSIVE_HELP_STRING,current_token))
 			{
-				Cmiss_field_id field = 0;
-				Cmiss_region *region = 0;
+				cmzn_field_id field = 0;
+				cmzn_region *region = 0;
 				char *region_path = NULL;
 				char *field_name = NULL;
-				if (Cmiss_region_get_partial_region_path(command_data->root_region,
+				if (cmzn_region_get_partial_region_path(command_data->root_region,
 					current_token, &region, &region_path, &field_name))
 				{
-					Cmiss_field_module_id field_module = Cmiss_region_get_field_module(region);
-					field = Cmiss_field_module_find_field_by_name(field_module, field_name);
-					Cmiss_field_module_destroy(&field_module);
+					cmzn_field_module_id field_module = cmzn_region_get_field_module(region);
+					field = cmzn_field_module_find_field_by_name(field_module, field_name);
+					cmzn_field_module_destroy(&field_module);
 				}
 				if (field)
 				{
 					shift_Parse_state(state, 1);
 					return_code = gfx_modify_field_subcommands(state,
 						(void *)field, (void *)region);
-					Cmiss_field_destroy(&field);
+					cmzn_field_destroy(&field);
 				}
 				else
 				{
@@ -11046,14 +11046,14 @@ Parameter <help_mode> should be NULL when calling this function.
 ==============================================================================*/
 {
 	int return_code;
-	struct Cmiss_command_data *command_data;
+	struct cmzn_command_data *command_data;
 
 	ENTER(gfx_modify_g_element);
-	if (state && (command_data = (struct Cmiss_command_data *)command_data_void))
+	if (state && (command_data = (struct cmzn_command_data *)command_data_void))
 	{
 		return_code = 1;
-		Cmiss_region_id region = Cmiss_region_access(command_data->root_region);
-		Cmiss_field_group_id group = 0;
+		cmzn_region_id region = cmzn_region_access(command_data->root_region);
+		cmzn_field_group_id group = 0;
 		if (!help_mode)
 		{
 			struct Option_table *option_table = CREATE(Option_table)();
@@ -11074,14 +11074,14 @@ Parameter <help_mode> should be NULL when calling this function.
 		}
 		if (return_code)
 		{
-			struct Cmiss_scene *scene = Cmiss_region_get_scene_internal(region);
-			return_code = Cmiss_scene_execute_command_internal(scene, group, state);
-			Cmiss_scene_destroy(&scene);
+			struct cmzn_scene *scene = cmzn_region_get_scene_internal(region);
+			return_code = cmzn_scene_execute_command_internal(scene, group, state);
+			cmzn_scene_destroy(&scene);
 		} /* parse error,help */
-		Cmiss_region_destroy(&region);
+		cmzn_region_destroy(&region);
 		if (group)
 		{
-			Cmiss_field_group_destroy(&group);
+			cmzn_field_group_destroy(&group);
 		}
 	}
 	else
@@ -11105,19 +11105,19 @@ Executes a GFX MODIFY GRAPHICS_OBJECT command.
 ==============================================================================*/
 {
 	int return_code;
-	struct Cmiss_command_data *command_data;
+	struct cmzn_command_data *command_data;
 	struct Graphical_material *material;
 	struct Option_table *option_table;
 	struct Spectrum *spectrum;
 
 	ENTER(gfx_modify_glyph);
 	USE_PARAMETER(dummy_to_be_modified);
-	if (state&&(command_data=(struct Cmiss_command_data *)command_data_void))
+	if (state&&(command_data=(struct cmzn_command_data *)command_data_void))
 	{
 		if ((!state->current_token) || (!Parse_state_help_mode(state)))
 		{
-			Cmiss_glyph_id glyph = Cmiss_glyph_module_find_glyph_by_name(command_data->glyph_module, state->current_token);
-			Cmiss_glyph_static *glyphStatic = dynamic_cast<Cmiss_glyph_static *>(glyph);
+			cmzn_glyph_id glyph = cmzn_glyph_module_find_glyph_by_name(command_data->glyph_module, state->current_token);
+			cmzn_glyph_static *glyphStatic = dynamic_cast<cmzn_glyph_static *>(glyph);
 			if (glyphStatic)
 			{
 				shift_Parse_state(state,1);
@@ -11125,7 +11125,7 @@ Executes a GFX MODIFY GRAPHICS_OBJECT command.
 				/* initialise defaults */
 				if (NULL != (material = get_GT_object_default_material(graphics_object)))
 				{
-					Cmiss_graphics_material_access(material);
+					cmzn_graphics_material_access(material);
 				}
 				if (NULL != (spectrum = get_GT_object_spectrum(graphics_object)))
 				{
@@ -11146,7 +11146,7 @@ Executes a GFX MODIFY GRAPHICS_OBJECT command.
 				}
 				if (material)
 				{
-					Cmiss_graphics_material_destroy(&material);
+					cmzn_graphics_material_destroy(&material);
 				}
 				if (spectrum)
 				{
@@ -11176,7 +11176,7 @@ Executes a GFX MODIFY GRAPHICS_OBJECT command.
 				display_parse_state_location(state);
 				return_code=0;
 			}
-			Cmiss_glyph_destroy(&glyph);
+			cmzn_glyph_destroy(&glyph);
 		}
 		else
 		{
@@ -11240,13 +11240,13 @@ static int gfx_modify_node_group(struct Parse_state *state,
 	void *use_data, void *command_data_void)
 {
 	int return_code = 0;
-	Cmiss_command_data *command_data = reinterpret_cast<Cmiss_command_data *>(command_data_void);
+	cmzn_command_data *command_data = reinterpret_cast<cmzn_command_data *>(command_data_void);
 	if (state && command_data)
 	{
-		Cmiss_region_id region = Cmiss_region_access(command_data->root_region);
-		Cmiss_field_group_id group = 0;
+		cmzn_region_id region = cmzn_region_access(command_data->root_region);
+		cmzn_field_group_id group = 0;
 		const char *current_token = state->current_token;
-		if (!set_Cmiss_region_or_group(state, &region, &group))
+		if (!set_cmzn_region_or_group(state, &region, &group))
 		{
 			// message already output
 		}
@@ -11260,7 +11260,7 @@ static int gfx_modify_node_group(struct Parse_state *state,
 			/* initialise defaults */
 			char add_flag = 0;
 			char remove_flag = 0;
-			Cmiss_field_id conditional_field = 0;
+			cmzn_field_id conditional_field = 0;
 			char all_flag = 0;
 			char selected_flag = 0;
 			Multi_range *node_ranges = CREATE(Multi_range)();
@@ -11296,14 +11296,14 @@ static int gfx_modify_node_group(struct Parse_state *state,
 			return_code = Option_table_multi_parse(option_table, state);
 			DESTROY(Option_table)(&option_table);
 
-			Cmiss_field_group_id from_group = 0;
+			cmzn_field_group_id from_group = 0;
 			if (return_code)
 			{
 				if (from_group_name)
 				{
-					Cmiss_field *field =	FIND_BY_IDENTIFIER_IN_MANAGER(Computed_field,name)(
-						from_group_name, Cmiss_region_get_Computed_field_manager(region));
-					from_group = Cmiss_field_cast_group(field);
+					cmzn_field *field =	FIND_BY_IDENTIFIER_IN_MANAGER(Computed_field,name)(
+						from_group_name, cmzn_region_get_Computed_field_manager(region));
+					from_group = cmzn_field_cast_group(field);
 					if (!from_group)
 					{
 						display_message(ERROR_MESSAGE, "gfx modify ngroup: '%s' is not a group.", from_group_name);
@@ -11323,91 +11323,91 @@ static int gfx_modify_node_group(struct Parse_state *state,
 			}
 			if (return_code)
 			{
-				Cmiss_field_module_id field_module = Cmiss_region_get_field_module(region);
-				Cmiss_nodeset_id master_nodeset = Cmiss_field_module_find_nodeset_by_domain_type(field_module,
+				cmzn_field_module_id field_module = cmzn_region_get_field_module(region);
+				cmzn_nodeset_id master_nodeset = cmzn_field_module_find_nodeset_by_domain_type(field_module,
 					use_data ? CMISS_FIELD_DOMAIN_DATA : CMISS_FIELD_DOMAIN_NODES);
-				Cmiss_nodeset_group_id selection_nodeset_group = 0;
+				cmzn_nodeset_group_id selection_nodeset_group = 0;
 				if (selected_flag)
 				{
-					Cmiss_scene *scene = Cmiss_region_get_scene_internal(region);
-					Cmiss_field_group_id selection_group = Cmiss_scene_get_selection_group(scene);
+					cmzn_scene *scene = cmzn_region_get_scene_internal(region);
+					cmzn_field_group_id selection_group = cmzn_scene_get_selection_group(scene);
 					if (selection_group)
 					{
-						Cmiss_field_node_group_id selection_node_group =
-							Cmiss_field_group_get_node_group(selection_group, master_nodeset);
+						cmzn_field_node_group_id selection_node_group =
+							cmzn_field_group_get_node_group(selection_group, master_nodeset);
 						if (selection_node_group)
 						{
-							selection_nodeset_group = Cmiss_field_node_group_get_nodeset(selection_node_group);
-							Cmiss_field_node_group_destroy(&selection_node_group);
+							selection_nodeset_group = cmzn_field_node_group_get_nodeset(selection_node_group);
+							cmzn_field_node_group_destroy(&selection_node_group);
 						}
 					}
-					Cmiss_field_group_destroy(&selection_group);
-					Cmiss_scene_destroy(&scene);
+					cmzn_field_group_destroy(&selection_group);
+					cmzn_scene_destroy(&scene);
 				}
-				Cmiss_nodeset_group_id from_nodeset_group = 0;
+				cmzn_nodeset_group_id from_nodeset_group = 0;
 				if (from_group)
 				{
-					Cmiss_field_node_group_id from_node_group = Cmiss_field_group_get_node_group(from_group, master_nodeset);
+					cmzn_field_node_group_id from_node_group = cmzn_field_group_get_node_group(from_group, master_nodeset);
 					if (from_node_group)
 					{
-						from_nodeset_group = Cmiss_field_node_group_get_nodeset(from_node_group);
-						Cmiss_field_node_group_destroy(&from_node_group);
+						from_nodeset_group = cmzn_field_node_group_get_nodeset(from_node_group);
+						cmzn_field_node_group_destroy(&from_node_group);
 					}
 				}
 				int nodes_processed = 0;
 				int nodes_not_processed = 0;
 				if (((!selected_flag) || selection_nodeset_group) && ((!from_group) || from_nodeset_group))
 				{
-					Cmiss_field_module_begin_change(field_module);
-					Cmiss_field_node_group_id modify_node_group = Cmiss_field_group_get_node_group(group, master_nodeset);
+					cmzn_field_module_begin_change(field_module);
+					cmzn_field_node_group_id modify_node_group = cmzn_field_group_get_node_group(group, master_nodeset);
 					if (!modify_node_group)
 					{
-						modify_node_group = Cmiss_field_group_create_node_group(group, master_nodeset);
+						modify_node_group = cmzn_field_group_create_node_group(group, master_nodeset);
 					}
-					Cmiss_nodeset_group_id modify_nodeset_group = Cmiss_field_node_group_get_nodeset(modify_node_group);
-					Cmiss_field_node_group_destroy(&modify_node_group);
-					Cmiss_field_cache_id cache = Cmiss_field_module_create_cache(field_module);
-					Cmiss_field_cache_set_time(cache, time);
+					cmzn_nodeset_group_id modify_nodeset_group = cmzn_field_node_group_get_nodeset(modify_node_group);
+					cmzn_field_node_group_destroy(&modify_node_group);
+					cmzn_field_cache_id cache = cmzn_field_module_create_cache(field_module);
+					cmzn_field_cache_set_time(cache, time);
 
-					Cmiss_nodeset_id iteration_nodeset = master_nodeset;
-					Cmiss_nodeset_id selection_nodeset = Cmiss_nodeset_group_base_cast(selection_nodeset_group);
-					Cmiss_nodeset_id from_nodeset = Cmiss_nodeset_group_base_cast(from_nodeset_group);
-					if (selected_flag && !Cmiss_nodeset_match(selection_nodeset, Cmiss_nodeset_group_base_cast(modify_nodeset_group)))
+					cmzn_nodeset_id iteration_nodeset = master_nodeset;
+					cmzn_nodeset_id selection_nodeset = cmzn_nodeset_group_base_cast(selection_nodeset_group);
+					cmzn_nodeset_id from_nodeset = cmzn_nodeset_group_base_cast(from_nodeset_group);
+					if (selected_flag && !cmzn_nodeset_match(selection_nodeset, cmzn_nodeset_group_base_cast(modify_nodeset_group)))
 					{
 						iteration_nodeset = selection_nodeset;
 					}
-					if (from_nodeset && (!Cmiss_nodeset_match(from_nodeset, Cmiss_nodeset_group_base_cast(modify_nodeset_group))) &&
-						Cmiss_nodeset_get_size(from_nodeset) < Cmiss_nodeset_get_size(iteration_nodeset))
+					if (from_nodeset && (!cmzn_nodeset_match(from_nodeset, cmzn_nodeset_group_base_cast(modify_nodeset_group))) &&
+						cmzn_nodeset_get_size(from_nodeset) < cmzn_nodeset_get_size(iteration_nodeset))
 					{
 						iteration_nodeset = from_nodeset;
 					}
 
-					Cmiss_node_iterator_id iter = Cmiss_nodeset_create_node_iterator(iteration_nodeset);
+					cmzn_node_iterator_id iter = cmzn_nodeset_create_node_iterator(iteration_nodeset);
 					const bool use_node_ranges = Multi_range_get_number_of_ranges(node_ranges) > 0;
-					Cmiss_node_id node = 0;
-					while (NULL != (node = Cmiss_node_iterator_next_non_access(iter)))
+					cmzn_node_id node = 0;
+					while (NULL != (node = cmzn_node_iterator_next_non_access(iter)))
 					{
-						if (use_node_ranges && !Multi_range_is_value_in_range(node_ranges, Cmiss_node_get_identifier(node)))
+						if (use_node_ranges && !Multi_range_is_value_in_range(node_ranges, cmzn_node_get_identifier(node)))
 							continue;
-						if (selection_nodeset && (selection_nodeset != iteration_nodeset) && !Cmiss_nodeset_contains_node(selection_nodeset, node))
+						if (selection_nodeset && (selection_nodeset != iteration_nodeset) && !cmzn_nodeset_contains_node(selection_nodeset, node))
 							continue;
-						if (from_nodeset && (from_nodeset != iteration_nodeset) && !Cmiss_nodeset_contains_node(from_nodeset, node))
+						if (from_nodeset && (from_nodeset != iteration_nodeset) && !cmzn_nodeset_contains_node(from_nodeset, node))
 							continue;
 						if (conditional_field)
 						{
-							Cmiss_field_cache_set_node(cache, node);
-							if (!Cmiss_field_evaluate_boolean(conditional_field, cache))
+							cmzn_field_cache_set_node(cache, node);
+							if (!cmzn_field_evaluate_boolean(conditional_field, cache))
 								continue;
 						}
 						++nodes_processed;
 						if (add_flag)
 						{
-							if (!Cmiss_nodeset_contains_node(Cmiss_nodeset_group_base_cast(modify_nodeset_group), node))
+							if (!cmzn_nodeset_contains_node(cmzn_nodeset_group_base_cast(modify_nodeset_group), node))
 							{
-								if (!Cmiss_nodeset_group_add_node(modify_nodeset_group, node))
+								if (!cmzn_nodeset_group_add_node(modify_nodeset_group, node))
 								{
 									display_message(ERROR_MESSAGE,
-										"gfx modify ngroup:  Could not add node %d", Cmiss_node_get_identifier(node));
+										"gfx modify ngroup:  Could not add node %d", cmzn_node_get_identifier(node));
 									return_code = 0;
 									break;
 								}
@@ -11415,23 +11415,23 @@ static int gfx_modify_node_group(struct Parse_state *state,
 						}
 						else
 						{
-							if (Cmiss_nodeset_contains_node(Cmiss_nodeset_group_base_cast(modify_nodeset_group), node))
+							if (cmzn_nodeset_contains_node(cmzn_nodeset_group_base_cast(modify_nodeset_group), node))
 							{
-								if (!Cmiss_nodeset_group_remove_node(modify_nodeset_group, node))
+								if (!cmzn_nodeset_group_remove_node(modify_nodeset_group, node))
 								{
 									display_message(ERROR_MESSAGE,
-										"gfx modify ngroup:  Could not remove node %d", Cmiss_node_get_identifier(node));
+										"gfx modify ngroup:  Could not remove node %d", cmzn_node_get_identifier(node));
 									return_code = 0;
 									break;
 								}
 							}
 						}
 					}
-					Cmiss_node_iterator_destroy(&iter);
-					Cmiss_field_cache_destroy(&cache);
-					Cmiss_nodeset_group_destroy(&modify_nodeset_group);
-					Cmiss_field_node_group_destroy(&modify_node_group);
-					Cmiss_field_module_end_change(field_module);
+					cmzn_node_iterator_destroy(&iter);
+					cmzn_field_cache_destroy(&cache);
+					cmzn_nodeset_group_destroy(&modify_nodeset_group);
+					cmzn_field_node_group_destroy(&modify_node_group);
+					cmzn_field_module_end_change(field_module);
 				}
 				if (0 < nodes_not_processed)
 				{
@@ -11442,21 +11442,21 @@ static int gfx_modify_node_group(struct Parse_state *state,
 				{
 					display_message(WARNING_MESSAGE, "gfx modify ngroup:  group unchanged");
 				}
-				Cmiss_nodeset_group_destroy(&from_nodeset_group);
-				Cmiss_nodeset_group_destroy(&selection_nodeset_group);
-				Cmiss_nodeset_destroy(&master_nodeset);
-				Cmiss_field_module_destroy(&field_module);
+				cmzn_nodeset_group_destroy(&from_nodeset_group);
+				cmzn_nodeset_group_destroy(&selection_nodeset_group);
+				cmzn_nodeset_destroy(&master_nodeset);
+				cmzn_field_module_destroy(&field_module);
 			}
 			if (from_group_name)
 			{
 				DEALLOCATE(from_group_name);
 			}
-			Cmiss_field_group_destroy(&from_group);
+			cmzn_field_group_destroy(&from_group);
 			DESTROY(Multi_range)(&node_ranges);
-			Cmiss_field_destroy(&conditional_field);
+			cmzn_field_destroy(&conditional_field);
 		}
-		Cmiss_field_group_destroy(&group);
-		Cmiss_region_destroy(&region);
+		cmzn_field_group_destroy(&group);
+		cmzn_region_destroy(&region);
 	}
 	else
 	{
@@ -11467,10 +11467,10 @@ static int gfx_modify_node_group(struct Parse_state *state,
 	return (return_code);
 }
 
-struct Cmiss_nodal_derivatives_data
+struct cmzn_nodal_derivatives_data
 {
 	int number_of_derivatives; // initialise to -1
-	enum Cmiss_nodal_value_type *derivatives; // initialise to NULL
+	enum cmzn_nodal_value_type *derivatives; // initialise to NULL
 };
 
 /***************************************************************************//**
@@ -11478,12 +11478,12 @@ struct Cmiss_nodal_derivatives_data
  * node field.
  * Idea: could make it re-enter to be different for different components.
  */
-static int set_Cmiss_nodal_derivatives(struct Parse_state *state,
+static int set_cmzn_nodal_derivatives(struct Parse_state *state,
 	void *derivatives_data_void, void *dummy_void)
 {
 	int return_code = 1;
 	USE_PARAMETER(dummy_void);
-	Cmiss_nodal_derivatives_data *derivatives_data = reinterpret_cast<Cmiss_nodal_derivatives_data *>(derivatives_data_void);
+	cmzn_nodal_derivatives_data *derivatives_data = reinterpret_cast<cmzn_nodal_derivatives_data *>(derivatives_data_void);
 	if (state && derivatives_data && (0 > derivatives_data->number_of_derivatives))
 	{
 		if (0 == state->current_token)
@@ -11507,12 +11507,12 @@ static int set_Cmiss_nodal_derivatives(struct Parse_state *state,
 			while (state->current_token)
 			{
 				// stop when derivatives not recognised
-				enum Cmiss_nodal_value_type nodal_value_type =
-					Cmiss_nodal_value_type_enum_from_string(state->current_token);
+				enum cmzn_nodal_value_type nodal_value_type =
+					cmzn_nodal_value_type_enum_from_string(state->current_token);
 				if (nodal_value_type != CMISS_NODAL_VALUE_TYPE_INVALID)
 				{
-					enum Cmiss_nodal_value_type *temp;
-					if (REALLOCATE(temp, derivatives_data->derivatives, enum Cmiss_nodal_value_type,
+					enum cmzn_nodal_value_type *temp;
+					if (REALLOCATE(temp, derivatives_data->derivatives, enum cmzn_nodal_value_type,
 						derivatives_data->number_of_derivatives + 1))
 					{
 						derivatives_data->derivatives = temp;
@@ -11548,7 +11548,7 @@ static int set_Cmiss_nodal_derivatives(struct Parse_state *state,
 		else
 		{
 			display_message(ERROR_MESSAGE,
-				"set_Cmiss_nodal_derivatives.  Invalid argument(s)");
+				"set_cmzn_nodal_derivatives.  Invalid argument(s)");
 		}
 		return_code = 0;
 	}
@@ -11563,19 +11563,19 @@ static int gfx_modify_nodes(struct Parse_state *state,
 	void *use_data, void *command_data_void)
 {
 	int return_code;
-	Cmiss_command_data *command_data = reinterpret_cast<Cmiss_command_data *>(command_data_void);
+	cmzn_command_data *command_data = reinterpret_cast<cmzn_command_data *>(command_data_void);
 	if (state && command_data)
 	{
 		/* initialise defaults */
-		Cmiss_region_id region = Cmiss_region_access(command_data->root_region);
-		Cmiss_field_group_id group = 0;
+		cmzn_region_id region = cmzn_region_access(command_data->root_region);
+		cmzn_field_group_id group = 0;
 		char all_flag = 0;
 		char selected_flag = 0;
 		Multi_range *node_ranges = CREATE(Multi_range)();
 		char *define_field_name = 0;
 		char *undefine_field_name = 0;
 		char *conditional_field_name = 0;
-		Cmiss_nodal_derivatives_data derivatives_data;
+		cmzn_nodal_derivatives_data derivatives_data;
 		derivatives_data.number_of_derivatives = -1; // not set, = 0
 		derivatives_data.derivatives = 0;
 		int number_of_versions = 1;
@@ -11596,7 +11596,7 @@ static int gfx_modify_nodes(struct Parse_state *state,
 			" FIELD_NAME");
 		/* derivatives */
 		Option_table_add_entry(option_table, "derivatives",
-			(void *)&derivatives_data, (void *)0, set_Cmiss_nodal_derivatives);
+			(void *)&derivatives_data, (void *)0, set_cmzn_nodal_derivatives);
 		/* group */
 		Option_table_add_region_or_group_entry(option_table, "group", &region, &group);
 		/* selected */
@@ -11622,18 +11622,18 @@ static int gfx_modify_nodes(struct Parse_state *state,
 				return_code = 0;
 			}
 		}
-		Cmiss_field_id conditional_field = 0;
+		cmzn_field_id conditional_field = 0;
 		if (return_code && conditional_field_name)
 		{
-			Cmiss_field_module_id field_module = Cmiss_region_get_field_module(region);
-			conditional_field = Cmiss_field_module_find_field_by_name(field_module, conditional_field_name);
+			cmzn_field_module_id field_module = cmzn_region_get_field_module(region);
+			conditional_field = cmzn_field_module_find_field_by_name(field_module, conditional_field_name);
 			if (!conditional_field)
 			{
 				display_message(ERROR_MESSAGE,
 					"gfx modify nodes:  conditional field cannot be found");
 				return_code = 0;
 			}
-			Cmiss_field_module_destroy(&field_module);
+			cmzn_field_module_destroy(&field_module);
 		}
 		if (return_code)
 		{
@@ -11652,30 +11652,30 @@ static int gfx_modify_nodes(struct Parse_state *state,
 		}
 		if (return_code)
 		{
-			Cmiss_field_module_id field_module = Cmiss_region_get_field_module(region);
-			Cmiss_field_group_id selection_group = NULL;
+			cmzn_field_module_id field_module = cmzn_region_get_field_module(region);
+			cmzn_field_group_id selection_group = NULL;
 			if (selected_flag)
 			{
-				Cmiss_scene *scene = Cmiss_region_get_scene_internal(region);
+				cmzn_scene *scene = cmzn_region_get_scene_internal(region);
 				if (scene)
 				{
-					selection_group = Cmiss_scene_get_selection_group(scene);
-					Cmiss_scene_destroy(&scene);
+					selection_group = cmzn_scene_get_selection_group(scene);
+					cmzn_scene_destroy(&scene);
 				}
 			}
 			const char *field_name = define_field_name ? define_field_name : undefine_field_name;
-			Cmiss_field_id field = Cmiss_field_module_find_field_by_name(field_module, field_name);
+			cmzn_field_id field = cmzn_field_module_find_field_by_name(field_module, field_name);
 			if (!field)
 			{
 				display_message(ERROR_MESSAGE, "gfx modify nodes:  Cannot find field %s", field_name);
 				return_code = 0;
 			}
-			Cmiss_nodeset_id nodeset = Cmiss_field_module_find_nodeset_by_domain_type(field_module,
+			cmzn_nodeset_id nodeset = cmzn_field_module_find_nodeset_by_domain_type(field_module,
 				use_data ? CMISS_FIELD_DOMAIN_DATA : CMISS_FIELD_DOMAIN_NODES);
-			Cmiss_node_template_id node_template = Cmiss_nodeset_create_node_template(nodeset);
+			cmzn_node_template_id node_template = cmzn_nodeset_create_node_template(nodeset);
 			if (define_field_name)
 			{
-				if (!Cmiss_node_template_define_field(node_template, field))
+				if (!cmzn_node_template_define_field(node_template, field))
 				{
 					return_code = 0;
 				}
@@ -11683,14 +11683,14 @@ static int gfx_modify_nodes(struct Parse_state *state,
 				{
 					for (int i = 0; i < derivatives_data.number_of_derivatives; ++i)
 					{
-						if (!Cmiss_node_template_define_derivative(node_template, field,
+						if (!cmzn_node_template_define_derivative(node_template, field,
 							/*component_number=all*/-1, derivatives_data.derivatives[i]))
 						{
 							return_code = 0;
 							break;
 						}
 					}
-					if ((number_of_versions > 1) && !Cmiss_node_template_define_versions(node_template, field,
+					if ((number_of_versions > 1) && !cmzn_node_template_define_versions(node_template, field,
 						/*component_number=all*/-1, number_of_versions))
 					{
 						return_code = 0;
@@ -11699,38 +11699,38 @@ static int gfx_modify_nodes(struct Parse_state *state,
 			}
 			else
 			{
-				if (!Cmiss_node_template_undefine_field(node_template, field))
+				if (!cmzn_node_template_undefine_field(node_template, field))
 					return_code = 0;
 			}
 			if (group)
 			{
-				Cmiss_field_node_group_id node_group = Cmiss_field_group_get_node_group(group, nodeset);
-				Cmiss_nodeset_destroy(&nodeset);
-				nodeset = Cmiss_nodeset_group_base_cast(Cmiss_field_node_group_get_nodeset(node_group));
-				Cmiss_field_node_group_destroy(&node_group);
+				cmzn_field_node_group_id node_group = cmzn_field_group_get_node_group(group, nodeset);
+				cmzn_nodeset_destroy(&nodeset);
+				nodeset = cmzn_nodeset_group_base_cast(cmzn_field_node_group_get_nodeset(node_group));
+				cmzn_field_node_group_destroy(&node_group);
 			}
 			int nodes_processed = 0;
 			if (return_code && nodeset && ((!selected_flag) || selection_group))
 			{
-				Cmiss_field_module_begin_change(field_module);
-				Cmiss_field_cache_id cache = Cmiss_field_module_create_cache(field_module);
-				Cmiss_field_cache_set_time(cache, time);
-				Cmiss_node_iterator_id iter = Cmiss_nodeset_create_node_iterator(nodeset);
+				cmzn_field_module_begin_change(field_module);
+				cmzn_field_cache_id cache = cmzn_field_module_create_cache(field_module);
+				cmzn_field_cache_set_time(cache, time);
+				cmzn_node_iterator_id iter = cmzn_nodeset_create_node_iterator(nodeset);
 				const bool use_node_ranges = Multi_range_get_number_of_ranges(node_ranges) > 0;
-				Cmiss_node_id node = 0;
-				while (NULL != (node = Cmiss_node_iterator_next_non_access(iter)))
+				cmzn_node_id node = 0;
+				while (NULL != (node = cmzn_node_iterator_next_non_access(iter)))
 				{
-					if (use_node_ranges && !Multi_range_is_value_in_range(node_ranges, Cmiss_node_get_identifier(node)))
+					if (use_node_ranges && !Multi_range_is_value_in_range(node_ranges, cmzn_node_get_identifier(node)))
 						continue;
 					if (conditional_field || selection_group)
 					{
-						Cmiss_field_cache_set_node(cache, node);
+						cmzn_field_cache_set_node(cache, node);
 					}
-					if (conditional_field && !Cmiss_field_evaluate_boolean(conditional_field, cache))
+					if (conditional_field && !cmzn_field_evaluate_boolean(conditional_field, cache))
 						continue;
-					if (selection_group && !Cmiss_field_evaluate_boolean(Cmiss_field_group_base_cast(selection_group), cache))
+					if (selection_group && !cmzn_field_evaluate_boolean(cmzn_field_group_base_cast(selection_group), cache))
 						continue;
-					if (!Cmiss_node_merge(node, node_template))
+					if (!cmzn_node_merge(node, node_template))
 					{
 						display_message(WARNING_MESSAGE, "gfx modify nodes:  Failed to merge node");
 						return_code = 0;
@@ -11738,9 +11738,9 @@ static int gfx_modify_nodes(struct Parse_state *state,
 					}
 					++nodes_processed;
 				}
-				Cmiss_node_iterator_destroy(&iter);
-				Cmiss_field_cache_destroy(&cache);
-				Cmiss_field_module_end_change(field_module);
+				cmzn_node_iterator_destroy(&iter);
+				cmzn_field_cache_destroy(&cache);
+				cmzn_field_module_end_change(field_module);
 			}
 			if (return_code && (0 == nodes_processed))
 			{
@@ -11754,12 +11754,12 @@ static int gfx_modify_nodes(struct Parse_state *state,
 				}
 			}
 			if (node_template)
-				Cmiss_node_template_destroy(&node_template);
-			Cmiss_nodeset_destroy(&nodeset);
-			Cmiss_field_destroy(&field);
+				cmzn_node_template_destroy(&node_template);
+			cmzn_nodeset_destroy(&nodeset);
+			cmzn_field_destroy(&field);
 			if (selection_group)
-				Cmiss_field_group_destroy(&selection_group);
-			Cmiss_field_module_destroy(&field_module);
+				cmzn_field_group_destroy(&selection_group);
+			cmzn_field_module_destroy(&field_module);
 		}
 		DESTROY(Multi_range)(&node_ranges);
 		if (define_field_name)
@@ -11780,10 +11780,10 @@ static int gfx_modify_nodes(struct Parse_state *state,
 		}
 		if (conditional_field)
 		{
-			Cmiss_field_destroy(&conditional_field);
+			cmzn_field_destroy(&conditional_field);
 		}
-		Cmiss_field_group_destroy(&group);
-		Cmiss_region_destroy(&region);
+		cmzn_field_group_destroy(&group);
+		cmzn_region_destroy(&region);
 	}
 	else
 	{
@@ -11804,7 +11804,7 @@ Executes a GFX MODIFY command.
 ==============================================================================*/
 {
 	int return_code;
-	struct Cmiss_command_data *command_data;
+	struct cmzn_command_data *command_data;
 	struct Modify_environment_map_data modify_environment_map_data;
 #if defined (USE_CMGUI_GRAPHICS_WINDOW)
 	struct Modify_graphics_window_data modify_graphics_window_data;
@@ -11818,7 +11818,7 @@ Executes a GFX MODIFY command.
 	/* check argument */
 	if (state)
 	{
-		if (NULL != (command_data = (struct Cmiss_command_data *)command_data_void))
+		if (NULL != (command_data = (struct cmzn_command_data *)command_data_void))
 		{
 			if (state->current_token)
 			{
@@ -11838,7 +11838,7 @@ Executes a GFX MODIFY command.
 					gfx_modify_emoter);
 				/* environment_map */
 				modify_environment_map_data.graphical_material_manager=
-					Cmiss_graphics_material_module_get_manager(command_data->material_module);
+					cmzn_graphics_material_module_get_manager(command_data->material_module);
 				modify_environment_map_data.environment_map_manager=
 					command_data->environment_map_manager;
 				Option_table_add_entry(option_table,"environment_map",NULL,
@@ -11950,11 +11950,11 @@ then the <data_tool> is being modified, otherwise the <node_tool>.
 Which tool that is being modified is passed in <node_tool_void>.
 ==============================================================================*/
 {
-	struct Cmiss_command_data *command_data;
+	struct cmzn_command_data *command_data;
 	struct Node_tool *node_tool;
 	int return_code = 0;
 	ENTER(execute_command_gfx_node_tool);
-	if (state && (command_data=(struct Cmiss_command_data *)command_data_void))
+	if (state && (command_data=(struct cmzn_command_data *)command_data_void))
 	{
 		if (data_tool_flag)
 		{
@@ -11975,7 +11975,7 @@ Which tool that is being modified is passed in <node_tool_void>.
 			display_message(WARNING_MESSAGE,
 				"This command changes the node tool settings for each window to the global settings. To change node tool settings for individual window, please see the command [gfx modify window <name> nodes ?]. \n");
 #endif /*(WX_USER_INTERFACE)*/
-			Cmiss_scene_viewer_module_update_Interactive_tool(
+			cmzn_scene_viewer_module_update_Interactive_tool(
 				command_data->scene_viewer_module,
 				Node_tool_get_interactive_tool(node_tool));
 		}
@@ -12011,13 +12011,13 @@ Executes a GFX PRINT command.
 		transparency_layers, width;
 	struct Cmgui_image *cmgui_image;
 	struct Cmgui_image_information *cmgui_image_information;
-	struct Cmiss_command_data *command_data;
+	struct cmzn_command_data *command_data;
 	struct Graphics_window *window;
 	struct Option_table *option_table;
 
 	ENTER(execute_command_gfx_print);
 	USE_PARAMETER(dummy_to_be_modified);
-	if (state && (command_data=(struct Cmiss_command_data *)command_data_void))
+	if (state && (command_data=(struct cmzn_command_data *)command_data_void))
 	{
 		/* initialize defaults */
 		antialias = -1;
@@ -12171,14 +12171,14 @@ instruction to read in the mesh.
 {
 	char *file_name;
 	int return_code;
-	struct Cmiss_command_data *command_data;
+	struct cmzn_command_data *command_data;
 	struct Option_table *option_table;
 
 	ENTER(gfx_read_Curve);
 	USE_PARAMETER(dummy_to_be_modified);
 	if (state)
 	{
-		if (NULL != (command_data = (struct Cmiss_command_data *)command_data_void))
+		if (NULL != (command_data = (struct cmzn_command_data *)command_data_void))
 		{
 			file_name = (char *)NULL;
 			option_table = CREATE(Option_table)();
@@ -12240,13 +12240,13 @@ instruction to read in the mesh.
 	return (return_code);
 } /* gfx_read_Curve */
 
-int offset_region_identifier(Cmiss_region_id region, char element_flag, int element_offset,
+int offset_region_identifier(cmzn_region_id region, char element_flag, int element_offset,
 	char face_flag, int face_offset, char line_flag, int line_offset, char node_flag, int node_offset, int use_data)
 {
 	int return_code = 1;
 	struct FE_region *fe_region = NULL;
 	if (region)
-		fe_region = Cmiss_region_get_FE_region(region);
+		fe_region = cmzn_region_get_FE_region(region);
 	/* Offset these nodes and elements before merging */
 	if (fe_region)
 	{
@@ -12304,12 +12304,12 @@ int offset_region_identifier(Cmiss_region_id region, char element_flag, int elem
 			}
 		}
 		FE_region_end_change(fe_region);
-		struct Cmiss_region *child_region = Cmiss_region_get_first_child(region);
+		struct cmzn_region *child_region = cmzn_region_get_first_child(region);
 		while ((NULL != child_region))
 		{
 			return_code = offset_region_identifier(child_region, element_flag, element_offset, face_flag,
 				face_offset, line_flag, line_offset, node_flag, node_offset, use_data);
-			Cmiss_region_reaccess_next_sibling(&child_region);
+			cmzn_region_reaccess_next_sibling(&child_region);
 		}
 	}
 	else
@@ -12335,15 +12335,15 @@ user, otherwise the elements file is read.
 		element_flag, face_flag, line_flag, node_flag;
 	int element_offset, face_offset, line_offset, node_offset,
 		return_code;
-	struct Cmiss_command_data *command_data;
-	struct Cmiss_region *region, *top_region;
+	struct cmzn_command_data *command_data;
+	struct cmzn_region *region, *top_region;
 	struct IO_stream *input_file;
 	struct Option_table *option_table;
 
 	ENTER(gfx_read_elements);
 	USE_PARAMETER(dummy_to_be_modified);
 	input_file = NULL;
-	if (state && (command_data = (struct Cmiss_command_data *)command_data_void))
+	if (state && (command_data = (struct cmzn_command_data *)command_data_void))
 	{
 		element_flag = 0;
 		element_offset = 0;
@@ -12406,14 +12406,14 @@ user, otherwise the elements file is read.
 					return_code = 0;
 				}
 			}
-			top_region = (struct Cmiss_region *)NULL;
+			top_region = (struct cmzn_region *)NULL;
 			if (region_path)
 			{
-				top_region = Cmiss_region_find_subregion_at_path(
+				top_region = cmzn_region_find_subregion_at_path(
 					command_data->root_region, region_path);
 				if (NULL == top_region)
 				{
-					top_region = Cmiss_region_create_subregion(
+					top_region = cmzn_region_create_subregion(
 						command_data->root_region, region_path);
 					if (NULL == top_region)
 					{
@@ -12425,7 +12425,7 @@ user, otherwise the elements file is read.
 			}
 			else
 			{
-				top_region = ACCESS(Cmiss_region)(command_data->root_region);
+				top_region = ACCESS(cmzn_region)(command_data->root_region);
 			}
 			if (return_code)
 			{
@@ -12433,7 +12433,7 @@ user, otherwise the elements file is read.
 				if ((input_file = CREATE(IO_stream)(command_data->io_stream_package))
 					&& (IO_stream_open_for_read(input_file, file_name)))
 				{
-					region = Cmiss_region_create_region(top_region);
+					region = cmzn_region_create_region(top_region);
 					if (read_exregion_file(region, input_file,
 						(struct FE_import_time_index *)NULL))
 					{
@@ -12444,9 +12444,9 @@ user, otherwise the elements file is read.
 						}
 						if (return_code)
 						{
-							if (Cmiss_region_can_merge(top_region, region))
+							if (cmzn_region_can_merge(top_region, region))
 							{
-								if (!Cmiss_region_merge(top_region, region))
+								if (!cmzn_region_merge(top_region, region))
 								{
 									display_message(ERROR_MESSAGE,
 										"Error merging elements from file: %s", file_name);
@@ -12468,7 +12468,7 @@ user, otherwise the elements file is read.
 							"Error reading element file: %s", file_name);
 						return_code = 0;
 					}
-					DEACCESS(Cmiss_region)(&region);
+					DEACCESS(cmzn_region)(&region);
 					IO_stream_close(input_file);
 					DESTROY(IO_stream)(&input_file);
 				}
@@ -12479,7 +12479,7 @@ user, otherwise the elements file is read.
 					return_code = 0;
 				}
 			}
-			DEACCESS(Cmiss_region)(&top_region);
+			DEACCESS(cmzn_region)(&top_region);
 		}
 		DESTROY(Option_table)(&option_table);
 #if defined (WX_USER_INTERFACE)
@@ -12520,8 +12520,8 @@ If the <use_data> flag is set, then read data, otherwise nodes.
 	double maximum, minimum;
 	float time;
 	int node_offset, return_code;
-	struct Cmiss_command_data *command_data;
-	struct Cmiss_region *region, *top_region;
+	struct cmzn_command_data *command_data;
+	struct cmzn_region *region, *top_region;
 	struct FE_import_time_index *node_time_index, node_time_index_data;
 	struct IO_stream *input_file;
 	struct Option_table *option_table;
@@ -12530,7 +12530,7 @@ If the <use_data> flag is set, then read data, otherwise nodes.
 	input_file=NULL;
 	if (state)
 	{
-		if (NULL != (command_data = (struct Cmiss_command_data *)command_data_void))
+		if (NULL != (command_data = (struct cmzn_command_data *)command_data_void))
 		{
 			file_name = (char *)NULL;
 			node_offset_flag = 0;
@@ -12615,14 +12615,14 @@ If the <use_data> flag is set, then read data, otherwise nodes.
 					{
 						return_code = check_suffix(&file_name,".exnode");
 					}
-					top_region = (struct Cmiss_region *)NULL;
+					top_region = (struct cmzn_region *)NULL;
 					if (region_path)
 					{
-						top_region = Cmiss_region_find_subregion_at_path(
+						top_region = cmzn_region_find_subregion_at_path(
 							command_data->root_region, region_path);
 						if (NULL == top_region)
 						{
-							top_region = Cmiss_region_create_subregion(
+							top_region = cmzn_region_create_subregion(
 								command_data->root_region, region_path);
 							if (NULL == top_region)
 							{
@@ -12634,14 +12634,14 @@ If the <use_data> flag is set, then read data, otherwise nodes.
 					}
 					else
 					{
-						top_region = ACCESS(Cmiss_region)(command_data->root_region);
+						top_region = ACCESS(cmzn_region)(command_data->root_region);
 					}
 					if (return_code)
 					{
 						if ((input_file = CREATE(IO_stream)(command_data->io_stream_package))
 							&& (IO_stream_open_for_read(input_file, file_name)))
 						{
-							region = Cmiss_region_create_region(top_region);
+							region = cmzn_region_create_region(top_region);
 							if (use_data)
 							{
 								return_code = read_exdata_file(region, input_file, node_time_index);
@@ -12666,9 +12666,9 @@ If the <use_data> flag is set, then read data, otherwise nodes.
 											0, 0, 0, node_offset_flag, node_offset, /*use_data*/0);
 									}
 								}
-								if (Cmiss_region_can_merge(top_region, region))
+								if (cmzn_region_can_merge(top_region, region))
 								{
-									if (!Cmiss_region_merge(top_region, region))
+									if (!cmzn_region_merge(top_region, region))
 									{
 										if (use_data)
 										{
@@ -12697,7 +12697,7 @@ If the <use_data> flag is set, then read data, otherwise nodes.
 									"Error reading node file: %s", file_name);
 								return_code = 0;
 							}
-							DEACCESS(Cmiss_region)(&region);
+							DEACCESS(cmzn_region)(&region);
 							IO_stream_close(input_file);
 							DESTROY(IO_stream)(&input_file);
 							input_file =NULL;
@@ -12709,7 +12709,7 @@ If the <use_data> flag is set, then read data, otherwise nodes.
 							return_code = 0;
 						}
 					}
-					DEACCESS(Cmiss_region)(&top_region);
+					DEACCESS(cmzn_region)(&top_region);
 					if (return_code && time_set_flag)
 					{
 						/* Increase the range of the default time keepeer and set the
@@ -12772,14 +12772,14 @@ otherwise the file of graphics objects is read.
 {
 	char *file_name;
 	int return_code;
-	struct Cmiss_command_data *command_data;
+	struct cmzn_command_data *command_data;
 	struct Option_table *option_table;
 
 	ENTER(gfx_read_objects);
 	USE_PARAMETER(dummy_to_be_modified);
 	if (state)
 	{
-		if (NULL != (command_data = (struct Cmiss_command_data *)command_data_void))
+		if (NULL != (command_data = (struct cmzn_command_data *)command_data_void))
 		{
 			file_name = (char *)NULL;
 			option_table=CREATE(Option_table)();
@@ -12844,20 +12844,20 @@ static int gfx_read_region(struct Parse_state *state,
 	const char file_ext[] = ".fml";
 	int return_code = 0;
 	USE_PARAMETER(dummy);
-	Cmiss_command_data *command_data = reinterpret_cast<Cmiss_command_data*>(command_data_void);
+	cmzn_command_data *command_data = reinterpret_cast<cmzn_command_data*>(command_data_void);
 	if (state && command_data)
 	{
 		struct FE_field_order_info *field_order_info = (struct FE_field_order_info *)NULL;
-		Cmiss_region_id region = Cmiss_region_access(command_data->root_region);
+		cmzn_region_id region = cmzn_region_access(command_data->root_region);
 		char *file_name = (char *)NULL;
 
 		struct Option_table *option_table = CREATE(Option_table)();
 		/* fields */
 		Option_table_add_entry(option_table, "fields", &field_order_info,
-			Cmiss_region_get_FE_region(command_data->root_region),
+			cmzn_region_get_FE_region(command_data->root_region),
 			set_FE_fields_FE_region);
 		/* region */
-		Option_table_add_set_Cmiss_region(option_table, "region",
+		Option_table_add_set_cmzn_region(option_table, "region",
 			command_data->root_region, &region);
 		/* default option: file name */
 		Option_table_add_default_string_entry(option_table, &file_name, "FILE_NAME");
@@ -12879,13 +12879,13 @@ static int gfx_read_region(struct Parse_state *state,
 			}
 			if (return_code)
 			{
-				Cmiss_stream_information_id stream_information =
-					Cmiss_region_create_stream_information(region);
-				Cmiss_stream_resource_id resource = Cmiss_stream_information_create_resource_file(
+				cmzn_stream_information_id stream_information =
+					cmzn_region_create_stream_information(region);
+				cmzn_stream_resource_id resource = cmzn_stream_information_create_resource_file(
 					stream_information, file_name);
-				return_code = Cmiss_region_read(region, stream_information);
-				Cmiss_stream_resource_destroy(&resource);
-				Cmiss_stream_information_destroy(&stream_information);
+				return_code = cmzn_region_read(region, stream_information);
+				cmzn_stream_resource_destroy(&resource);
+				cmzn_stream_information_destroy(&stream_information);
 				if (!return_code)
 				{
 					display_message(ERROR_MESSAGE,
@@ -12902,7 +12902,7 @@ static int gfx_read_region(struct Parse_state *state,
 		{
 			DEALLOCATE(file_name);
 		}
-		Cmiss_region_destroy(&region);
+		cmzn_region_destroy(&region);
 	}
 	return return_code;
 }
@@ -12916,17 +12916,17 @@ static int gfx_read_wavefront_obj(struct Parse_state *state,
 {
 	char *file_name, *graphics_object_name,	*specified_graphics_object_name;
 	const char *render_polygon_mode_string, **valid_strings;
-	enum Cmiss_graphic_render_polygon_mode render_polygon_mode;
+	enum cmzn_graphic_render_polygon_mode render_polygon_mode;
 	float time;
 	int number_of_valid_strings, return_code;
-	struct Cmiss_command_data *command_data;
+	struct cmzn_command_data *command_data;
 	struct Option_table *option_table;
 
 	ENTER(gfx_read_wavefront_obj);
 	USE_PARAMETER(dummy_to_be_modified);
 	if (state)
 	{
-		if ((command_data=(struct Cmiss_command_data *)command_data_void))
+		if ((command_data=(struct cmzn_command_data *)command_data_void))
 		{
 			specified_graphics_object_name=(char *)NULL;
 			graphics_object_name=(char *)NULL;
@@ -12942,10 +12942,10 @@ static int gfx_read_wavefront_obj(struct Parse_state *state,
 				(void *)1,set_name);
 			/* render_polygon_mode */
 			render_polygon_mode = CMISS_GRAPHIC_RENDER_POLYGON_SHADED;
-			render_polygon_mode_string = ENUMERATOR_STRING(Cmiss_graphic_render_polygon_mode)(render_polygon_mode);
-			valid_strings = ENUMERATOR_GET_VALID_STRINGS(Cmiss_graphic_render_polygon_mode)(
+			render_polygon_mode_string = ENUMERATOR_STRING(cmzn_graphic_render_polygon_mode)(render_polygon_mode);
+			valid_strings = ENUMERATOR_GET_VALID_STRINGS(cmzn_graphic_render_polygon_mode)(
 				&number_of_valid_strings,
-				(ENUMERATOR_CONDITIONAL_FUNCTION(Cmiss_graphic_render_polygon_mode) *)NULL, (void *)NULL);
+				(ENUMERATOR_CONDITIONAL_FUNCTION(cmzn_graphic_render_polygon_mode) *)NULL, (void *)NULL);
 			Option_table_add_enumerator(option_table,number_of_valid_strings,
 				valid_strings,&render_polygon_mode_string);
 			DEALLOCATE(valid_strings);
@@ -12959,7 +12959,7 @@ static int gfx_read_wavefront_obj(struct Parse_state *state,
 			DESTROY(Option_table)(&option_table);
 			if (return_code)
 			{
-				STRING_TO_ENUMERATOR(Cmiss_graphic_render_polygon_mode)(render_polygon_mode_string, &render_polygon_mode);
+				STRING_TO_ENUMERATOR(cmzn_graphic_render_polygon_mode)(render_polygon_mode_string, &render_polygon_mode);
 				if (!file_name)
 				{
 					if (!(file_name = confirmation_get_read_filename(".obj",
@@ -13029,12 +13029,12 @@ Executes a GFX READ command.
 ==============================================================================*/
 {
 	int return_code;
-	struct Cmiss_command_data *command_data;
+	struct cmzn_command_data *command_data;
 	struct Option_table *option_table;
 
 	ENTER(execute_command_gfx_read);
 	USE_PARAMETER(dummy_to_be_modified);
-	if (state && (command_data = (struct Cmiss_command_data *)command_data_void))
+	if (state && (command_data = (struct cmzn_command_data *)command_data_void))
 	{
 		if (state->current_token)
 		{
@@ -13094,8 +13094,8 @@ Executes a GFX SELECT command.
 	FE_value time;
 	int return_code;
 	struct Computed_field *conditional_field;
-	struct Cmiss_command_data *command_data;
-	struct Cmiss_region *region;
+	struct cmzn_command_data *command_data;
+	struct cmzn_region *region;
 	struct Element_point_ranges *element_point_ranges;
 	struct FE_element_grid_to_Element_point_ranges_list_data grid_to_list_data;
 	struct FE_field *grid_field;
@@ -13108,12 +13108,12 @@ Executes a GFX SELECT command.
 
 	ENTER(execute_command_gfx_select);
 	USE_PARAMETER(dummy_to_be_modified);
-	if (state&&(command_data=(struct Cmiss_command_data *)command_data_void))
+	if (state&&(command_data=(struct cmzn_command_data *)command_data_void))
 	{
 		if (state->current_token)
 		{
-			region_path = Cmiss_region_get_root_region_path();
-			fe_region = Cmiss_region_get_FE_region(command_data->root_region);
+			region_path = cmzn_region_get_root_region_path();
+			fe_region = cmzn_region_get_FE_region(command_data->root_region);
 			all_flag = 0;
 			conditional_field=(struct Computed_field *)NULL;
 			data_flag = 0;
@@ -13176,7 +13176,7 @@ Executes a GFX SELECT command.
 				(void *)NULL,set_char_flag);
 			/* group */
 			Option_table_add_entry(option_table, "group", &region_path,
-				command_data->root_region, set_Cmiss_region_path);
+				command_data->root_region, set_cmzn_region_path);
 			/* lines */
 			Option_table_add_entry(option_table,"lines",&lines_flag,
 				(void *)NULL,set_char_flag);
@@ -13203,9 +13203,9 @@ Executes a GFX SELECT command.
 					return_code = 0;
 				}
 				if (!(region_path &&
-					Cmiss_region_get_region_from_path_deprecated(command_data->root_region,
+					cmzn_region_get_region_from_path_deprecated(command_data->root_region,
 						region_path, &region) &&
-					(fe_region = Cmiss_region_get_FE_region(region))))
+					(fe_region = cmzn_region_get_FE_region(region))))
 				{
 					display_message(ERROR_MESSAGE, "gfx select:  Invalid region");
 					return_code = 0;
@@ -13214,10 +13214,10 @@ Executes a GFX SELECT command.
 				{
 				if (conditional_field_name)
 				{
-					Cmiss_field_module_id field_module = Cmiss_region_get_field_module(region);
-					conditional_field = Cmiss_field_module_find_field_by_name(field_module,
+					cmzn_field_module_id field_module = cmzn_region_get_field_module(region);
+					conditional_field = cmzn_field_module_find_field_by_name(field_module,
 						conditional_field_name);
-					Cmiss_field_module_destroy(&field_module);
+					cmzn_field_module_destroy(&field_module);
 					if (!conditional_field)
 					{
 						display_message(ERROR_MESSAGE,
@@ -13237,11 +13237,11 @@ Executes a GFX SELECT command.
 					{
 						if (region)
 						{
-							Cmiss_scene *local_scene = Cmiss_graphics_module_get_scene(
+							cmzn_scene *local_scene = cmzn_graphics_module_get_scene(
 								command_data->graphics_module, region);
-							Cmiss_scene_add_selection_from_node_list(local_scene,
+							cmzn_scene_add_selection_from_node_list(local_scene,
 								node_list, /* use_data */1);
-							Cmiss_scene_destroy(&local_scene);
+							cmzn_scene_destroy(&local_scene);
 						}
 						if (verbose_flag)
 						{
@@ -13263,15 +13263,15 @@ Executes a GFX SELECT command.
 				{
 					if (region)
 					{
-						int dimension = FE_region_get_highest_dimension(Cmiss_region_get_FE_region(region));
+						int dimension = FE_region_get_highest_dimension(cmzn_region_get_FE_region(region));
 						if (NULL != (element_list =
 								FE_element_list_from_region_and_selection_group(
 									region, dimension, multi_range, NULL, conditional_field, time)))
 						{
-							Cmiss_scene *local_scene = Cmiss_graphics_module_get_scene(
+							cmzn_scene *local_scene = cmzn_graphics_module_get_scene(
 								command_data->graphics_module, region);
-							Cmiss_scene_add_selection_from_element_list_of_dimension(local_scene,element_list, dimension);
-							Cmiss_scene_destroy(&local_scene);
+							cmzn_scene_add_selection_from_element_list_of_dimension(local_scene,element_list, dimension);
+							cmzn_scene_destroy(&local_scene);
 							if (verbose_flag)
 							{
 								display_message(INFORMATION_MESSAGE,
@@ -13296,10 +13296,10 @@ Executes a GFX SELECT command.
 								FE_element_list_from_region_and_selection_group(
 									region, /*dimension*/2, multi_range, NULL, conditional_field, time)))
 						{
-							Cmiss_scene *local_scene = Cmiss_graphics_module_get_scene(
+							cmzn_scene *local_scene = cmzn_graphics_module_get_scene(
 								command_data->graphics_module, region);
-							Cmiss_scene_add_selection_from_element_list_of_dimension(local_scene,element_list, 2);
-							Cmiss_scene_destroy(&local_scene);
+							cmzn_scene_add_selection_from_element_list_of_dimension(local_scene,element_list, 2);
+							cmzn_scene_destroy(&local_scene);
 							if (verbose_flag)
 							{
 								display_message(INFORMATION_MESSAGE,
@@ -13368,10 +13368,10 @@ Executes a GFX SELECT command.
 								FE_element_list_from_region_and_selection_group(
 									region, /*dimension*/1, multi_range, NULL, conditional_field, time)))
 						{
-							Cmiss_scene *local_scene = Cmiss_graphics_module_get_scene(
+							cmzn_scene *local_scene = cmzn_graphics_module_get_scene(
 								command_data->graphics_module, region);
-							Cmiss_scene_add_selection_from_element_list_of_dimension(local_scene,element_list, 1);
-							Cmiss_scene_destroy(&local_scene);
+							cmzn_scene_add_selection_from_element_list_of_dimension(local_scene,element_list, 1);
+							cmzn_scene_destroy(&local_scene);
 							if (verbose_flag)
 							{
 								display_message(INFORMATION_MESSAGE,
@@ -13395,11 +13395,11 @@ Executes a GFX SELECT command.
 					{
 						if (region)
 						{
-							Cmiss_scene *local_scene = Cmiss_graphics_module_get_scene(
+							cmzn_scene *local_scene = cmzn_graphics_module_get_scene(
 								command_data->graphics_module, region);
-							Cmiss_scene_add_selection_from_node_list(local_scene,
+							cmzn_scene_add_selection_from_node_list(local_scene,
 								node_list, /* use_data */0);
-							Cmiss_scene_destroy(&local_scene);
+							cmzn_scene_destroy(&local_scene);
 						}
 						if (verbose_flag)
 						{
@@ -13461,8 +13461,8 @@ Executes a GFX UNSELECT command.
 	FE_value time;
 	int return_code;
 	struct Computed_field *conditional_field;
-	struct Cmiss_command_data *command_data;
-	struct Cmiss_region *region;
+	struct cmzn_command_data *command_data;
+	struct cmzn_region *region;
 	struct Element_point_ranges *element_point_ranges;
 	struct FE_element_grid_to_Element_point_ranges_list_data grid_to_list_data;
 	struct FE_field *grid_field;
@@ -13475,12 +13475,12 @@ Executes a GFX UNSELECT command.
 
 	ENTER(execute_command_gfx_unselect);
 	USE_PARAMETER(dummy_to_be_modified);
-	if (state&&(command_data=(struct Cmiss_command_data *)command_data_void))
+	if (state&&(command_data=(struct cmzn_command_data *)command_data_void))
 	{
 		if (state->current_token)
 		{
-			region_path = Cmiss_region_get_root_region_path();
-			fe_region = Cmiss_region_get_FE_region(command_data->root_region);
+			region_path = cmzn_region_get_root_region_path();
+			fe_region = cmzn_region_get_FE_region(command_data->root_region);
 			all_flag = 0;
 			conditional_field=(struct Computed_field *)NULL;
 			conditional_field_name = NULL;
@@ -13542,7 +13542,7 @@ Executes a GFX UNSELECT command.
 				(void *)NULL,set_char_flag);
 			/* group */
 			Option_table_add_entry(option_table, "group", &region_path,
-				command_data->root_region, set_Cmiss_region_path);
+				command_data->root_region, set_cmzn_region_path);
 			/* lines */
 			Option_table_add_entry(option_table,"lines",&lines_flag,
 				(void *)NULL,set_char_flag);
@@ -13569,9 +13569,9 @@ Executes a GFX UNSELECT command.
 					return_code = 0;
 				}
 				if (!(region_path &&
-					Cmiss_region_get_region_from_path_deprecated(command_data->root_region,
+					cmzn_region_get_region_from_path_deprecated(command_data->root_region,
 						region_path, &region) &&
-					(fe_region = Cmiss_region_get_FE_region(region))))
+					(fe_region = cmzn_region_get_FE_region(region))))
 				{
 					display_message(ERROR_MESSAGE, "gfx unselect:  Invalid region");
 					return_code = 0;
@@ -13580,10 +13580,10 @@ Executes a GFX UNSELECT command.
 				{
 				if (conditional_field_name)
 				{
-					Cmiss_field_module_id field_module = Cmiss_region_get_field_module(region);
-					conditional_field = Cmiss_field_module_find_field_by_name(field_module,
+					cmzn_field_module_id field_module = cmzn_region_get_field_module(region);
+					conditional_field = cmzn_field_module_find_field_by_name(field_module,
 						conditional_field_name);
-					Cmiss_field_module_destroy(&field_module);
+					cmzn_field_module_destroy(&field_module);
 					if (!conditional_field)
 					{
 						display_message(ERROR_MESSAGE,
@@ -13603,11 +13603,11 @@ Executes a GFX UNSELECT command.
 					{
 						if (region)
 						{
-							Cmiss_scene *local_scene = Cmiss_graphics_module_get_scene(
+							cmzn_scene *local_scene = cmzn_graphics_module_get_scene(
 								command_data->graphics_module, region);
-							Cmiss_scene_remove_selection_from_node_list(local_scene,
+							cmzn_scene_remove_selection_from_node_list(local_scene,
 								node_list, /* use_data */1);
-							Cmiss_scene_destroy(&local_scene);
+							cmzn_scene_destroy(&local_scene);
 						}
 						if (verbose_flag)
 						{
@@ -13629,15 +13629,15 @@ Executes a GFX UNSELECT command.
 				{
 					if (region)
 					{
-						int dimension = FE_region_get_highest_dimension(Cmiss_region_get_FE_region(region));
+						int dimension = FE_region_get_highest_dimension(cmzn_region_get_FE_region(region));
 						if (NULL != (element_list =
 								FE_element_list_from_region_and_selection_group(
 									region, dimension, multi_range, NULL, conditional_field, time)))
 						{
-							Cmiss_scene *local_scene = Cmiss_graphics_module_get_scene(
+							cmzn_scene *local_scene = cmzn_graphics_module_get_scene(
 								command_data->graphics_module, region);
-							Cmiss_scene_remove_selection_from_element_list_of_dimension(local_scene,element_list, dimension);
-							Cmiss_scene_destroy(&local_scene);
+							cmzn_scene_remove_selection_from_element_list_of_dimension(local_scene,element_list, dimension);
+							cmzn_scene_destroy(&local_scene);
 							if (verbose_flag)
 							{
 								display_message(INFORMATION_MESSAGE,
@@ -13662,10 +13662,10 @@ Executes a GFX UNSELECT command.
 								FE_element_list_from_region_and_selection_group(
 									region, /*dimension*/2, multi_range, NULL, conditional_field, time)))
 						{
-							Cmiss_scene *local_scene = Cmiss_graphics_module_get_scene(
+							cmzn_scene *local_scene = cmzn_graphics_module_get_scene(
 								command_data->graphics_module, region);
-							Cmiss_scene_remove_selection_from_element_list_of_dimension(local_scene,element_list, 2);
-							Cmiss_scene_destroy(&local_scene);
+							cmzn_scene_remove_selection_from_element_list_of_dimension(local_scene,element_list, 2);
+							cmzn_scene_destroy(&local_scene);
 							if (verbose_flag)
 							{
 								display_message(INFORMATION_MESSAGE,
@@ -13734,10 +13734,10 @@ Executes a GFX UNSELECT command.
 								FE_element_list_from_region_and_selection_group(
 									region, /*dimension*/1, multi_range, NULL, conditional_field, time)))
 						{
-							Cmiss_scene *local_scene = Cmiss_graphics_module_get_scene(
+							cmzn_scene *local_scene = cmzn_graphics_module_get_scene(
 								command_data->graphics_module, region);
-							Cmiss_scene_remove_selection_from_element_list_of_dimension(local_scene, element_list, 1);
-							Cmiss_scene_destroy(&local_scene);
+							cmzn_scene_remove_selection_from_element_list_of_dimension(local_scene, element_list, 1);
+							cmzn_scene_destroy(&local_scene);
 							if (verbose_flag)
 							{
 								display_message(INFORMATION_MESSAGE,
@@ -13761,11 +13761,11 @@ Executes a GFX UNSELECT command.
 					{
 						if (region)
 						{
-							Cmiss_scene *local_scene = Cmiss_graphics_module_get_scene(
+							cmzn_scene *local_scene = cmzn_graphics_module_get_scene(
 								command_data->graphics_module, region);
-							Cmiss_scene_remove_selection_from_node_list(local_scene,
+							cmzn_scene_remove_selection_from_node_list(local_scene,
 								node_list, /* use_data */0);
-							Cmiss_scene_destroy(&local_scene);
+							cmzn_scene_destroy(&local_scene);
 						}
 						DESTROY(LIST(FE_node))(&node_list);
 					}
@@ -13834,7 +13834,7 @@ Sets nodal field values from a command.
 		{"d3/ds1ds2ds3",NULL,NULL,set_enum},
 		{NULL,NULL,NULL,NULL}
 	};
-	struct Cmiss_command_data *command_data;
+	struct cmzn_command_data *command_data;
 	struct FE_field_component component;
 	struct FE_node *node;
 	struct FE_region *fe_region;
@@ -13842,9 +13842,9 @@ Sets nodal field values from a command.
 
 	ENTER(gfx_set_FE_nodal_value);
 	USE_PARAMETER(dummy_to_be_modified);
-	if (state && (command_data = (struct Cmiss_command_data *)command_data_void))
+	if (state && (command_data = (struct cmzn_command_data *)command_data_void))
 	{
-		fe_region = Cmiss_region_get_FE_region(command_data->root_region);
+		fe_region = cmzn_region_get_FE_region(command_data->root_region);
 		node = (struct FE_node *)NULL;
 		if (0 != (return_code = set_FE_node_FE_region(state,(void *)&node,
 			(void *)fe_region)))
@@ -13951,12 +13951,12 @@ static int gfx_set_region_order(struct Parse_state *state,
 
 	ENTER(gfx_set_region_order);
 	USE_PARAMETER(dummy_to_be_modified);
-	Cmiss_region *root_region = (struct Cmiss_region *)root_region_void;
+	cmzn_region *root_region = (struct cmzn_region *)root_region_void;
 	if (state && root_region)
 	{
 		char *insert_before_sibling_name = NULL;
-		Cmiss_region_id region = Cmiss_region_access(root_region);
-		Cmiss_field_group_id group = 0;
+		cmzn_region_id region = cmzn_region_access(root_region);
+		cmzn_field_group_id group = 0;
 		Option_table *option_table = CREATE(Option_table)();
 		Option_table_add_help(option_table,
 			"Change the order of regions in the region hierarchy. The 'region' "
@@ -13991,13 +13991,13 @@ static int gfx_set_region_order(struct Parse_state *state,
 			}
 			if (return_code)
 			{
-				Cmiss_region *parent = Cmiss_region_get_parent(region);
-				Cmiss_region *sibling = Cmiss_region_find_child_by_name(parent,
+				cmzn_region *parent = cmzn_region_get_parent(region);
+				cmzn_region *sibling = cmzn_region_find_child_by_name(parent,
 					insert_before_sibling_name);
 				if (sibling)
 				{
-					Cmiss_region_insert_child_before(parent, region, sibling);
-					Cmiss_region_destroy(&sibling);
+					cmzn_region_insert_child_before(parent, region, sibling);
+					cmzn_region_destroy(&sibling);
 				}
 				else
 				{
@@ -14006,12 +14006,12 @@ static int gfx_set_region_order(struct Parse_state *state,
 						insert_before_sibling_name);
 					return_code = 0;
 				}
-				Cmiss_region_destroy(&parent);
+				cmzn_region_destroy(&parent);
 			}
 		}
 		DEALLOCATE(insert_before_sibling_name);
-		Cmiss_field_group_destroy(&group);
-		Cmiss_region_destroy(&region);
+		cmzn_field_group_destroy(&group);
+		cmzn_region_destroy(&region);
 	}
 	else
 	{
@@ -14036,7 +14036,7 @@ Sets the time from the command line.
 	char *timekeeper_name;
 	float time;
 	int return_code;
-	struct Cmiss_command_data *command_data;
+	struct cmzn_command_data *command_data;
 	static struct Modifier_entry option_table[]=
 	{
 		{"timekeeper",NULL,NULL,set_name},
@@ -14047,7 +14047,7 @@ Sets the time from the command line.
 	USE_PARAMETER(dummy_to_be_modified);
 	if (state)
 	{
-		if (NULL != (command_data = (struct Cmiss_command_data *)command_data_void))
+		if (NULL != (command_data = (struct cmzn_command_data *)command_data_void))
 		{
 			ALLOCATE(timekeeper_name,char,10);
 			/* there is only a default timekeeper at the moment but I am making the
@@ -14198,12 +14198,12 @@ static int gfx_set_transformation(struct Parse_state *state,
 	USE_PARAMETER(dummy_to_be_modified);
 	if (state)
 	{
-		struct Cmiss_command_data *command_data = (struct Cmiss_command_data *)command_data_void;
+		struct cmzn_command_data *command_data = (struct cmzn_command_data *)command_data_void;
 		if (command_data)
 		{
 			 /* initialise defaults */
 			struct Computed_field *computed_field=(struct Computed_field *)NULL;
-			Cmiss_region *region = Cmiss_region_access(command_data->root_region);
+			cmzn_region *region = cmzn_region_access(command_data->root_region);
 			char *field_name = NULL;
 			gtMatrix transformation_matrix;
 			transformation_matrix[0][0]=1;
@@ -14224,7 +14224,7 @@ static int gfx_set_transformation(struct Parse_state *state,
 			transformation_matrix[3][3]=1;
 			/* parse the command line */
 			Option_table *option_table = CREATE(Option_table)();
-			Option_table_add_set_Cmiss_region(option_table,
+			Option_table_add_set_cmzn_region(option_table,
 				"name", command_data->root_region, &region);
 			Option_table_add_string_entry(option_table, "field",
 				&field_name, " FIELD_NAME");
@@ -14237,9 +14237,9 @@ static int gfx_set_transformation(struct Parse_state *state,
 			{
 				if (field_name)
 				{
-					Cmiss_field_module_id field_module = Cmiss_region_get_field_module(region);
-					computed_field = Cmiss_field_module_find_field_by_name(field_module, field_name);
-					Cmiss_field_module_destroy(&field_module);
+					cmzn_field_module_id field_module = cmzn_region_get_field_module(region);
+					computed_field = cmzn_field_module_find_field_by_name(field_module, field_name);
+					cmzn_field_module_destroy(&field_module);
 					if (!computed_field)
 					{
 						display_message(ERROR_MESSAGE,
@@ -14249,27 +14249,27 @@ static int gfx_set_transformation(struct Parse_state *state,
 				}
 				if (return_code)
 				{
-					Cmiss_scene *scene = Cmiss_region_get_scene_internal(region);
+					cmzn_scene *scene = cmzn_region_get_scene_internal(region);
 					if (scene)
 					{
 						if (computed_field)
 						{
-							Cmiss_scene_set_transformation_with_time_callback(scene,
+							cmzn_scene_set_transformation_with_time_callback(scene,
 								computed_field);
 						}
 						else
 						{
-							Cmiss_scene_remove_time_dependent_transformation(scene);
-							Cmiss_scene_set_transformation(scene,&transformation_matrix);
+							cmzn_scene_remove_time_dependent_transformation(scene);
+							cmzn_scene_set_transformation(scene,&transformation_matrix);
 						}
-						DEACCESS(Cmiss_scene)(&scene);
+						DEACCESS(cmzn_scene)(&scene);
 					}
 					return_code = 1;
 				}
 				if (computed_field)
 					DEACCESS(Computed_field)(&computed_field);
 			}
-			Cmiss_region_destroy(&region);
+			cmzn_region_destroy(&region);
 			if (field_name)
 				DEALLOCATE(field_name);
 		}
@@ -14298,7 +14298,7 @@ static int gfx_set_visibility(struct Parse_state *state,
 {
 	int return_code;
 	USE_PARAMETER(dummy_to_be_modified);
-	Cmiss_command_data *command_data = reinterpret_cast<Cmiss_command_data *>(command_data_void);
+	cmzn_command_data *command_data = reinterpret_cast<cmzn_command_data *>(command_data_void);
 	if (state && command_data)
 	{
 		char on_flag = 0;
@@ -14317,7 +14317,7 @@ static int gfx_set_visibility(struct Parse_state *state,
 		return_code = Option_table_multi_parse(option_table, state);
 		DESTROY(Option_table)(&option_table);
 
-		Cmiss_region_id region = 0;
+		cmzn_region_id region = 0;
 		if (return_code)
 		{
 			if (off_flag && on_flag)
@@ -14332,7 +14332,7 @@ static int gfx_set_visibility(struct Parse_state *state,
 			}
 			else
 			{
-				region = Cmiss_region_find_subregion_at_path(command_data->root_region, region_path);
+				region = cmzn_region_find_subregion_at_path(command_data->root_region, region_path);
 				if (!region)
 				{
 					display_message(ERROR_MESSAGE, "gfx set visibility:  Could not find region %s", region_path);
@@ -14342,28 +14342,28 @@ static int gfx_set_visibility(struct Parse_state *state,
 		}
 		if (return_code)
 		{
-			Cmiss_scene_id scene = Cmiss_region_get_scene_internal(region);
+			cmzn_scene_id scene = cmzn_region_get_scene_internal(region);
 			if (part_graphic_name)
 			{
-				Cmiss_scene_begin_change(scene);
+				cmzn_scene_begin_change(scene);
 				// support legacy command files by changing visibility of each graphic using group as its subgroup field
-				Cmiss_graphic_id graphic = Cmiss_scene_get_first_graphic(scene);
+				cmzn_graphic_id graphic = cmzn_scene_get_first_graphic(scene);
 				int number_matched = 0;
 				while (graphic)
 				{
-					char *graphic_name = Cmiss_graphic_get_name_internal(graphic);
+					char *graphic_name = cmzn_graphic_get_name_internal(graphic);
 					if (strstr(graphic_name, part_graphic_name))
 					{
-						bool visibility_flag = on_flag ? true : (off_flag ? false : !Cmiss_graphic_get_visibility_flag(graphic));
-						Cmiss_graphic_set_visibility_flag(graphic, visibility_flag);
+						bool visibility_flag = on_flag ? true : (off_flag ? false : !cmzn_graphic_get_visibility_flag(graphic));
+						cmzn_graphic_set_visibility_flag(graphic, visibility_flag);
 						++number_matched;
 					}
 					DEALLOCATE(graphic_name);
-					Cmiss_graphic_id temp = Cmiss_scene_get_next_graphic(scene, graphic);
-					Cmiss_graphic_destroy(&graphic);
+					cmzn_graphic_id temp = cmzn_scene_get_next_graphic(scene, graphic);
+					cmzn_graphic_destroy(&graphic);
 					graphic = temp;
 				}
-				Cmiss_scene_end_change(scene);
+				cmzn_scene_end_change(scene);
 				if (0 == number_matched)
 				{
 					display_message(WARNING_MESSAGE, "gfx set visibility:  No graphics matched name '%s'", part_graphic_name);
@@ -14371,12 +14371,12 @@ static int gfx_set_visibility(struct Parse_state *state,
 			}
 			else
 			{
-				bool visibility_flag = on_flag ? true : (off_flag ? false : !Cmiss_scene_get_visibility_flag(scene));
-				Cmiss_scene_set_visibility_flag(scene, visibility_flag);
+				bool visibility_flag = on_flag ? true : (off_flag ? false : !cmzn_scene_get_visibility_flag(scene));
+				cmzn_scene_set_visibility_flag(scene, visibility_flag);
 			}
-			Cmiss_scene_destroy(&scene);
+			cmzn_scene_destroy(&scene);
 		}
-		Cmiss_region_destroy(&region);
+		cmzn_region_destroy(&region);
 		if (region_path)
 			DEALLOCATE(region_path);
 		if (part_graphic_name)
@@ -14400,12 +14400,12 @@ Executes a GFX SET command.
 ==============================================================================*/
 {
 	int return_code;
-	struct Cmiss_command_data *command_data;
+	struct cmzn_command_data *command_data;
 	struct Option_table *option_table;
 
 	ENTER(execute_command_gfx_set);
 	USE_PARAMETER(dummy_to_be_modified);
-	if (state && (command_data = (struct Cmiss_command_data *)command_data_void))
+	if (state && (command_data = (struct cmzn_command_data *)command_data_void))
 	{
 		if (state->current_token)
 		{
@@ -14463,17 +14463,17 @@ Executes a GFX SMOOTH command.
 	char *region_path;
 	FE_value time;
 	int return_code;
-	struct Cmiss_command_data *command_data;
-	struct Cmiss_region *region;
+	struct cmzn_command_data *command_data;
+	struct cmzn_region *region;
 	struct FE_field *fe_field;
 	struct FE_region *fe_region;
 	struct Option_table *option_table;
 
 	ENTER(execute_command_gfx_smooth);
 	USE_PARAMETER(dummy_to_be_modified);
-	if (state && (command_data = (struct Cmiss_command_data *)command_data_void))
+	if (state && (command_data = (struct cmzn_command_data *)command_data_void))
 	{
-		region_path = Cmiss_region_get_root_region_path();
+		region_path = cmzn_region_get_root_region_path();
 		fe_field = (struct FE_field *)NULL;
 		if (command_data->default_time_keeper_app)
 		{
@@ -14487,19 +14487,19 @@ Executes a GFX SMOOTH command.
 		option_table = CREATE(Option_table)();
 		/* egroup */
 		Option_table_add_entry(option_table, "egroup", &region_path,
-			command_data->root_region, set_Cmiss_region_path);
+			command_data->root_region, set_cmzn_region_path);
 		/* field */
 		Option_table_add_set_FE_field_from_FE_region(
 			option_table, "field" ,&fe_field,
-			Cmiss_region_get_FE_region(command_data->root_region));
+			cmzn_region_get_FE_region(command_data->root_region));
 		/* time */
 		Option_table_add_entry(option_table, "time", &time, NULL, set_FE_value);
 		return_code = Option_table_multi_parse(option_table, state);
 		if (return_code)
 		{
-			if (Cmiss_region_get_region_from_path_deprecated(command_data->root_region,
+			if (cmzn_region_get_region_from_path_deprecated(command_data->root_region,
 				region_path, &region) &&
-				(fe_region = Cmiss_region_get_FE_region(region)))
+				(fe_region = cmzn_region_get_FE_region(region)))
 			{
 				if (fe_field)
 				{
@@ -14566,14 +14566,14 @@ DESCRIPTION :
 		{"swing",NULL,NULL,set_char_flag},
 		{NULL,NULL,NULL,NULL}
 	};
-	struct Cmiss_command_data *command_data;
+	struct cmzn_command_data *command_data;
 	struct Time_keeper_app *time_keeper_app;
 
 	ENTER(gfx_timekeeper);
 	USE_PARAMETER(dummy_to_be_modified);
 	if (state)
 	{
-		if (NULL != (command_data = (struct Cmiss_command_data *)command_data_void))
+		if (NULL != (command_data = (struct cmzn_command_data *)command_data_void))
 		{
 			if (state->current_token)
 			{
@@ -14761,12 +14761,12 @@ Executes a GFX TRANSFORM_TOOL command.
 ==============================================================================*/
 {
 	int return_code;
-	struct Cmiss_command_data *command_data;
+	struct cmzn_command_data *command_data;
 	struct Interactive_tool *transform_tool;
 
 	ENTER(execute_command_gfx_transform_tool);
 	USE_PARAMETER(dummy_user_data);
-	if (state&&(command_data=(struct Cmiss_command_data *)command_data_void)
+	if (state&&(command_data=(struct cmzn_command_data *)command_data_void)
 		&& (transform_tool=command_data->transform_tool))
 	{
 		return_code = Transform_tool_execute_command_with_parse_state(transform_tool, state);
@@ -14777,7 +14777,7 @@ Executes a GFX TRANSFORM_TOOL command.
 				Graphics_window_update_Interactive_tool,(void *)transform_tool,
 				command_data->graphics_window_manager);
 #endif /*(WX_USER_INTERFACE)*/
-			Cmiss_scene_viewer_module_update_Interactive_tool(
+			cmzn_scene_viewer_module_update_Interactive_tool(
 				command_data->scene_viewer_module,	transform_tool);
 		}
 	}
@@ -14803,7 +14803,7 @@ Executes a GFX UPDATE command.
 ==============================================================================*/
 {
 	int return_code;
-	struct Cmiss_command_data *command_data;
+	struct cmzn_command_data *command_data;
 	struct Graphics_window *window;
 	static struct Modifier_entry option_table[]=
 	{
@@ -14815,7 +14815,7 @@ Executes a GFX UPDATE command.
 	USE_PARAMETER(dummy_to_be_modified);
 	if (state)
 	{
-		if (NULL != (command_data = (struct Cmiss_command_data *)command_data_void))
+		if (NULL != (command_data = (struct cmzn_command_data *)command_data_void))
 		{
 			/* initialize defaults */
 			window=(struct Graphics_window *)NULL;
@@ -14875,7 +14875,7 @@ Can also write individual groups with the <group> option.
 	 enum FE_write_criterion write_criterion;
 	 enum FE_write_recursion write_recursion;
 	 int exfile_return_code, return_code, exfile_fd, com_return_code;
-	 struct Cmiss_command_data *command_data;
+	 struct cmzn_command_data *command_data;
 	 struct Multiple_strings field_names;
 	 struct Option_table *option_table;
 	 struct MANAGER(Graphical_material) *graphical_material_manager;
@@ -14896,14 +14896,14 @@ Can also write individual groups with the <group> option.
 
 	 ENTER(gfx_write_all);
 	 USE_PARAMETER(dummy_to_be_modified);
-	 if (state && (command_data=(struct Cmiss_command_data *)command_data_void))
+	 if (state && (command_data=(struct cmzn_command_data *)command_data_void))
 	 {
 		 	exfile_fd = 1;
 			exfile_return_code = 1;
 			com_return_code = 1;
 			return_code = 1;
 			file_name = 0;
-			Cmiss_region_id root_region = Cmiss_region_access(command_data->root_region);
+			cmzn_region_id root_region = cmzn_region_access(command_data->root_region);
 			char *region_or_group_path = 0;
 			exfile_name = (char *)NULL;
 			com_file_name = (char *)NULL;
@@ -14925,7 +14925,7 @@ Can also write individual groups with the <group> option.
 			/* recursion */
 			OPTION_TABLE_ADD_ENUMERATOR(FE_write_recursion)(option_table, &write_recursion);
 			/* root_region */
-			Option_table_add_set_Cmiss_region(option_table, "root",
+			Option_table_add_set_cmzn_region(option_table, "root",
 				command_data->root_region, &root_region);
 			/* time */
 			Option_table_add_entry(option_table, "time",
@@ -14980,12 +14980,12 @@ Can also write individual groups with the <group> option.
 					return_code = 0;
 					exfile_return_code = 0;
 				}
-				Cmiss_region_id region = Cmiss_region_access(root_region);
-				Cmiss_field_group_id group = 0;
+				cmzn_region_id region = cmzn_region_access(root_region);
+				cmzn_field_group_id group = 0;
 				if (region_or_group_path)
 				{
 					Parse_state *temp_parse_state = create_Parse_state(region_or_group_path);
-					return_code = set_Cmiss_region_or_group(temp_parse_state, (void *)&region, (void *)&group);
+					return_code = set_cmzn_region_or_group(temp_parse_state, (void *)&region, (void *)&group);
 					destroy_Parse_state(&temp_parse_state);
 				}
 				if (return_code)
@@ -15129,7 +15129,7 @@ Can also write individual groups with the <group> option.
 										 for_each_spectrum_list_or_write_commands, (void *)"true", command_data->spectrum_manager);
 							 }
 							 if (NULL != (graphical_material_manager =
-									Cmiss_graphics_material_module_get_manager(command_data->material_module)))
+									cmzn_graphics_material_module_get_manager(command_data->material_module)))
 							 {
 									command_prefix="gfx create material ";
 									return_code=FOR_EACH_OBJECT_IN_MANAGER(Graphical_material)(
@@ -15172,8 +15172,8 @@ Can also write individual groups with the <group> option.
 				 {
 						DEALLOCATE(exfile_name);
 				 }
-				Cmiss_field_group_destroy(&group);
-				Cmiss_region_destroy(&region);
+				cmzn_field_group_destroy(&group);
+				cmzn_region_destroy(&region);
 			}
 			DESTROY(Option_table)(&option_table);
 			if (region_or_group_path)
@@ -15192,7 +15192,7 @@ Can also write individual groups with the <group> option.
 			{
 				 DEALLOCATE(file_name);
 			}
-			Cmiss_region_destroy(&root_region);
+			cmzn_region_destroy(&root_region);
 	 }
 	 else
 	 {
@@ -15216,7 +15216,7 @@ Writes a com file
 {
 	char write_all_curves_flag;
 	int return_code;
-	struct Cmiss_command_data *command_data;
+	struct cmzn_command_data *command_data;
 	struct Modifier_entry option_table[]=
 	{
 		{"all",NULL,NULL,set_char_flag},
@@ -15226,7 +15226,7 @@ Writes a com file
 
 	ENTER(gfx_write_Curve);
 	USE_PARAMETER(dummy_to_be_modified);
-	if (state&&(command_data=(struct Cmiss_command_data *)command_data_void))
+	if (state&&(command_data=(struct cmzn_command_data *)command_data_void))
 	{
 		return_code=1;
 		write_all_curves_flag=0;
@@ -15284,7 +15284,7 @@ of the curve, eg. "name" -> name.curve.com name.curve.exnode name.curve.exelem
 {
 	char write_all_curves_flag;
 	int return_code;
-	struct Cmiss_command_data *command_data;
+	struct cmzn_command_data *command_data;
 	struct Modifier_entry option_table[]=
 	{
 		{"all",NULL,NULL,set_char_flag},
@@ -15294,7 +15294,7 @@ of the curve, eg. "name" -> name.curve.com name.curve.exnode name.curve.exelem
 
 	ENTER(gfx_write_Curve);
 	USE_PARAMETER(dummy_to_be_modified);
-	if (state&&(command_data=(struct Cmiss_command_data *)command_data_void))
+	if (state&&(command_data=(struct cmzn_command_data *)command_data_void))
 	{
 		return_code=1;
 		write_all_curves_flag=0;
@@ -15352,17 +15352,17 @@ Can also write individual element groups with the <group> option.
 	enum FE_write_criterion write_criterion;
 	enum FE_write_recursion write_recursion;
 	int return_code;
-	struct Cmiss_command_data *command_data;
+	struct cmzn_command_data *command_data;
 	struct Multiple_strings field_names;
 	struct Option_table *option_table;
 	FE_value time;
 
 	ENTER(gfx_write_elements);
 	USE_PARAMETER(dummy_to_be_modified);
-	if (state && (command_data=(struct Cmiss_command_data *)command_data_void))
+	if (state && (command_data=(struct cmzn_command_data *)command_data_void))
 	{
 		return_code = 1;
-		Cmiss_region_id root_region = Cmiss_region_access(command_data->root_region);
+		cmzn_region_id root_region = cmzn_region_access(command_data->root_region);
 		char *region_or_group_path = 0;
 		field_names.number_of_strings = 0;
 		field_names.strings = (char **)NULL;
@@ -15402,7 +15402,7 @@ Can also write individual element groups with the <group> option.
 		/* recursion */
 		OPTION_TABLE_ADD_ENUMERATOR(FE_write_recursion)(option_table, &write_recursion);
 		/* root_region */
-		Option_table_add_set_Cmiss_region(option_table, "root",
+		Option_table_add_set_cmzn_region(option_table, "root",
 			command_data->root_region, &root_region);
 		/* time */
 		Option_table_add_entry(option_table, "time", &time, (void*)NULL, set_FE_value);
@@ -15440,12 +15440,12 @@ Can also write individual element groups with the <group> option.
 				return_code = 0;
 
 			}
-			Cmiss_region_id region = Cmiss_region_access(root_region);
-			Cmiss_field_group_id group = 0;
+			cmzn_region_id region = cmzn_region_access(root_region);
+			cmzn_field_group_id group = 0;
 			if (region_or_group_path)
 			{
 				Parse_state *temp_parse_state = create_Parse_state(region_or_group_path);
-				return_code = set_Cmiss_region_or_group(temp_parse_state, (void *)&region, (void *)&group);
+				return_code = set_cmzn_region_or_group(temp_parse_state, (void *)&region, (void *)&group);
 				destroy_Parse_state(&temp_parse_state);
 			}
 			if (return_code)
@@ -15482,8 +15482,8 @@ Can also write individual element groups with the <group> option.
 						time, write_criterion, write_recursion);
 				}
 			}
-			Cmiss_field_group_destroy(&group);
-			Cmiss_region_destroy(&region);
+			cmzn_field_group_destroy(&group);
+			cmzn_region_destroy(&region);
 		}
 		DESTROY(Option_table)(&option_table);
 		if (region_or_group_path)
@@ -15502,7 +15502,7 @@ Can also write individual element groups with the <group> option.
 		{
 			DEALLOCATE(file_name);
 		}
-		Cmiss_region_destroy(&root_region);
+		cmzn_region_destroy(&root_region);
 	}
 	else
 	{
@@ -15532,17 +15532,17 @@ If <use_data> is set, writing data, otherwise writing nodes.
 	enum FE_write_criterion write_criterion;
 	enum FE_write_recursion write_recursion;
 	int return_code;
-	struct Cmiss_command_data *command_data;
+	struct cmzn_command_data *command_data;
 	struct Multiple_strings field_names;
 	struct Option_table *option_table;
 	FE_value time;
 
 	ENTER(gfx_write_nodes);
-	if (state && (command_data = (struct Cmiss_command_data *)command_data_void))
+	if (state && (command_data = (struct cmzn_command_data *)command_data_void))
 	{
 		return_code = 1;
 		time = 0.0;
-		Cmiss_region_id root_region = Cmiss_region_access(command_data->root_region);
+		cmzn_region_id root_region = cmzn_region_access(command_data->root_region);
 		char *region_or_group_path = 0;
 		if (use_data)
 		{
@@ -15592,7 +15592,7 @@ If <use_data> is set, writing data, otherwise writing nodes.
 		/* recursion */
 		OPTION_TABLE_ADD_ENUMERATOR(FE_write_recursion)(option_table, &write_recursion);
 		/* root_region */
-		Option_table_add_set_Cmiss_region(option_table, "root",
+		Option_table_add_set_cmzn_region(option_table, "root",
 			command_data->root_region, &root_region);
 		/* time */
 		Option_table_add_entry(option_table, "time", &time, (void*)NULL, set_FE_value);
@@ -15629,12 +15629,12 @@ If <use_data> is set, writing data, otherwise writing nodes.
 					ENUMERATOR_STRING(FE_write_criterion)(write_criterion));
 				return_code = 0;
 			}
-			Cmiss_region_id region = Cmiss_region_access(root_region);
-			Cmiss_field_group_id group = 0;
+			cmzn_region_id region = cmzn_region_access(root_region);
+			cmzn_field_group_id group = 0;
 			if (region_or_group_path)
 			{
 				Parse_state *temp_parse_state = create_Parse_state(region_or_group_path);
-				return_code = set_Cmiss_region_or_group(temp_parse_state, (void *)&region, (void *)&group);
+				return_code = set_cmzn_region_or_group(temp_parse_state, (void *)&region, (void *)&group);
 				destroy_Parse_state(&temp_parse_state);
 			}
 			if (return_code)
@@ -15669,8 +15669,8 @@ If <use_data> is set, writing data, otherwise writing nodes.
 						write_criterion, write_recursion);
 				}
 			}
-			Cmiss_field_group_destroy(&group);
-			Cmiss_region_destroy(&region);
+			cmzn_field_group_destroy(&group);
+			cmzn_region_destroy(&region);
 		}
 		DESTROY(Option_table)(&option_table);
 		if (region_or_group_path)
@@ -15689,7 +15689,7 @@ If <use_data> is set, writing data, otherwise writing nodes.
 		{
 			DEALLOCATE(file_name);
 		}
-		Cmiss_region_destroy(&root_region);
+		cmzn_region_destroy(&root_region);
 	}
 	else
 	{
@@ -15719,13 +15719,13 @@ Executes a GFX WRITE TEXTURE command.
 		return_code = 0;
 	struct Cmgui_image *cmgui_image;
 	struct Cmgui_image_information *cmgui_image_information;
-	struct Cmiss_command_data *command_data;
+	struct cmzn_command_data *command_data;
 	struct Option_table *option_table;
 	struct Texture *texture;
 
 	ENTER(gfx_write_texture);
 	USE_PARAMETER(dummy_to_be_modified);
-	if (state && (command_data=(struct Cmiss_command_data *)command_data_void))
+	if (state && (command_data=(struct cmzn_command_data *)command_data_void))
 	{
 		texture = (struct Texture *)NULL;
 		if (NULL != (current_token = state->current_token))
@@ -15735,18 +15735,18 @@ Executes a GFX WRITE TEXTURE command.
 			{
 				if (command_data->root_region)
 				{
-					struct Cmiss_region *region = NULL;
+					struct cmzn_region *region = NULL;
 					char *region_path = NULL, *field_name = NULL;
-					if (Cmiss_region_get_partial_region_path(command_data->root_region,
+					if (cmzn_region_get_partial_region_path(command_data->root_region,
 						current_token, &region, &region_path, &field_name))
 					{
-						Cmiss_field_module *field_module = Cmiss_region_get_field_module(region);
+						cmzn_field_module *field_module = cmzn_region_get_field_module(region);
 						return_code=1;
 						if (field_name && (strlen(field_name) > 0) &&
 							(strchr(field_name, CMISS_REGION_PATH_SEPARATOR_CHAR)	== NULL))
 						{
 							struct Computed_field *temp_field =
-								Cmiss_field_module_find_field_by_name(field_module, field_name);
+								cmzn_field_module_find_field_by_name(field_module, field_name);
 							if (temp_field)
 							{
 								if (!Computed_field_is_image_type(temp_field,NULL))
@@ -15759,9 +15759,9 @@ Executes a GFX WRITE TEXTURE command.
 								}
 								else
 								{
-									Cmiss_field_image_id image_field = Cmiss_field_cast_image(temp_field);
-									texture = Cmiss_field_image_get_texture(image_field);
-									Cmiss_field_image_destroy(&image_field);
+									cmzn_field_image_id image_field = cmzn_field_cast_image(temp_field);
+									texture = cmzn_field_image_get_texture(image_field);
+									cmzn_field_image_destroy(&image_field);
 									shift_Parse_state(state, 1);
 								}
 								DEACCESS(Computed_field)(&temp_field);
@@ -15782,7 +15782,7 @@ Executes a GFX WRITE TEXTURE command.
 							display_parse_state_location(state);
 							return_code = 0;
 						}
-						Cmiss_field_module_destroy(&field_module);
+						cmzn_field_module_destroy(&field_module);
 					}
 					if (region_path)
 						DEALLOCATE(region_path);
@@ -15955,12 +15955,12 @@ Executes a GFX WRITE command.
 ==============================================================================*/
 {
 	int return_code;
-	struct Cmiss_command_data *command_data;
+	struct cmzn_command_data *command_data;
 	struct Option_table *option_table;
 
 	ENTER(execute_command_gfx_write);
 	USE_PARAMETER(dummy_to_be_modified);
-	if (state && (command_data = (struct Cmiss_command_data *)command_data_void))
+	if (state && (command_data = (struct cmzn_command_data *)command_data_void))
 	{
 		if (state->current_token)
 		{
@@ -16010,11 +16010,11 @@ Executes a GFX command.
 {
 	int return_code;
 	struct Option_table *option_table;
-	struct Cmiss_command_data *command_data;
+	struct cmzn_command_data *command_data;
 
 	ENTER(execute_command_gfx);
 	USE_PARAMETER(dummy_to_be_modified);
-	if (state && (command_data = (struct Cmiss_command_data *)command_data_void))
+	if (state && (command_data = (struct cmzn_command_data *)command_data_void))
 	{
 		if (state->current_token)
 		{
@@ -16195,7 +16195,7 @@ Executes a READ command.
 ==============================================================================*/
 {
 	int return_code;
-	struct Cmiss_command_data *command_data;
+	struct cmzn_command_data *command_data;
 	struct Open_comfile_data open_comfile_data;
 	struct Option_table *option_table;
 
@@ -16204,7 +16204,7 @@ Executes a READ command.
 	/* check argument */
 	if (state)
 	{
-		if (NULL != (command_data = (struct Cmiss_command_data *)command_data_void))
+		if (NULL != (command_data = (struct cmzn_command_data *)command_data_void))
 		{
 			if (state->current_token)
 			{
@@ -16266,14 +16266,14 @@ Opens an example.
 {
 	char *example, *execute_flag, *found_cm, temp_string[100];
 	int return_code;
-	struct Cmiss_command_data *command_data;
+	struct cmzn_command_data *command_data;
 	struct Option_table *option_table;
 
 	ENTER(open_example);
 	USE_PARAMETER(dummy_to_be_modified);
 	if (state)
 	{
-		if (NULL != (command_data = (struct Cmiss_command_data *)command_data_void))
+		if (NULL != (command_data = (struct cmzn_command_data *)command_data_void))
 		{
 		   example = (char *)NULL;
 			execute_flag = 0;
@@ -16373,7 +16373,7 @@ Executes a OPEN command.
 ==============================================================================*/
 {
 	int return_code;
-	struct Cmiss_command_data *command_data;
+	struct cmzn_command_data *command_data;
 	struct Open_comfile_data open_comfile_data;
 	struct Option_table *option_table;
 
@@ -16382,7 +16382,7 @@ Executes a OPEN command.
 	/* check argument */
 	if (state)
 	{
-		if (NULL != (command_data = (struct Cmiss_command_data *)command_data_void))
+		if (NULL != (command_data = (struct cmzn_command_data *)command_data_void))
 		{
 			if (state->current_token)
 			{
@@ -16446,7 +16446,7 @@ Executes a QUIT command.
 {
 	const char *current_token;
 	int return_code;
-	struct Cmiss_command_data *command_data;
+	struct cmzn_command_data *command_data;
 
 	ENTER(execute_command_quit);
 	USE_PARAMETER(dummy_to_be_modified);
@@ -16457,7 +16457,7 @@ Executes a QUIT command.
 			!(strcmp(PARSER_HELP_STRING,current_token)&&
 			strcmp(PARSER_RECURSIVE_HELP_STRING,current_token))))
 		{
-			if (NULL != (command_data = (struct Cmiss_command_data *)command_data_void))
+			if (NULL != (command_data = (struct cmzn_command_data *)command_data_void))
 			{
 				User_interface_end_application_loop(command_data->user_interface);
 				return_code=1;
@@ -16497,7 +16497,7 @@ Executes a SET DIR command.
 	char *comfile_name, *directory_name, *example_directory, example_flag,
 		*example_requirements;
 	int file_name_length, return_code;
-	struct Cmiss_command_data *command_data;
+	struct cmzn_command_data *command_data;
 	static struct Modifier_entry option_table[]=
 	{
 		{CMGUI_EXAMPLE_DIRECTORY_SYMBOL,const_cast<char *>(CMGUI_EXAMPLE_DIRECTORY_SYMBOL),
@@ -16510,7 +16510,7 @@ Executes a SET DIR command.
 	/* check argument */
 	if (state)
 	{
-		if (NULL != (command_data = (struct Cmiss_command_data *)command_data_void))
+		if (NULL != (command_data = (struct cmzn_command_data *)command_data_void))
 		{
 			if (state->current_token)
 			{
@@ -16646,7 +16646,7 @@ Executes a SET command.
 ==============================================================================*/
 {
 	int return_code;
-	struct Cmiss_command_data *command_data;
+	struct cmzn_command_data *command_data;
 	struct Option_table *option_table;
 
 	ENTER(execute_command_set);
@@ -16654,7 +16654,7 @@ Executes a SET command.
 	/* check argument */
 	if (state)
 	{
-		if (NULL != (command_data = (struct Cmiss_command_data *)command_data_void))
+		if (NULL != (command_data = (struct cmzn_command_data *)command_data_void))
 		{
 			if (state->current_token)
 			{
@@ -16768,13 +16768,13 @@ DESCRIPTION:
 {
 	char **token;
 	int i,return_code = 1;
-	struct Cmiss_command_data *command_data;
+	struct cmzn_command_data *command_data;
 	struct Option_table *option_table;
 	struct Parse_state *state;
 
 	ENTER(execute_command);
 	USE_PARAMETER(quit);
-	if (NULL != (command_data = (struct Cmiss_command_data *)command_data_void))
+	if (NULL != (command_data = (struct cmzn_command_data *)command_data_void))
 	{
 		if (NULL != (state = create_Parse_state(command_string)))
 			/*???DB.  create_Parse_state has to be extended */
@@ -16880,11 +16880,11 @@ and then executes the returned strings
 ==============================================================================*/
 {
 	int quit,return_code;
-	struct Cmiss_command_data *command_data;
+	struct cmzn_command_data *command_data;
 
 	ENTER(cmiss_execute_command);
-	command_data = (struct Cmiss_command_data *)NULL;
-	if (NULL != (command_data = (struct Cmiss_command_data *)command_data_void))
+	command_data = (struct cmzn_command_data *)NULL;
+	if (NULL != (command_data = (struct cmzn_command_data *)command_data_void))
 	{
 #if defined (WIN32_USER_INTERFACE) || defined (GTK_USER_INTERFACE) || defined (WX_USER_INTERFACE)
 		if (command_data->command_window)
@@ -16929,12 +16929,12 @@ Execute a <command_string>. If there is a command
 {
 	char **token;
 	int i,return_code = 0;
-	struct Cmiss_command_data *command_data;
+	struct cmzn_command_data *command_data;
 	struct Option_table *option_table;
 	struct Parse_state *state;
 
 	ENTER(cmiss_execute_command);
-	if (NULL != (command_data = (struct Cmiss_command_data *)command_data_void))
+	if (NULL != (command_data = (struct cmzn_command_data *)command_data_void))
 	{
 		if (NULL != (state = create_Parse_state(command_string)))
 			/*???DB.  create_Parse_state has to be extended */
@@ -17045,13 +17045,13 @@ for editing and entering. If there is no command_window, does nothing.
 {
 	int return_code;
 #if defined (WX_USER_INTERFACE)
-	struct Cmiss_command_data *command_data;
+	struct cmzn_command_data *command_data;
 #endif /* defined (WX_USER_INTERFACE) */
 
 	ENTER(cmiss_set_command);
 	if (command_string
 #if defined (WX_USER_INTERFACE)
-		&& (command_data=(struct Cmiss_command_data *)command_data_void)
+		&& (command_data=(struct cmzn_command_data *)command_data_void)
 #endif /* defined (WX_USER_INTERFACE) */
 			)
 	{
@@ -17437,7 +17437,7 @@ Parses command line options from <state>.
 	return (return_code);
 } /* read_cmgui_command_line_options */
 
-int Cmiss_command_data_process_command_line(int argc, char *argv[],
+int cmzn_command_data_process_command_line(int argc, char *argv[],
 	struct Cmgui_command_line_options *command_line_options)
 {
 	int return_code = 1;
@@ -17487,13 +17487,13 @@ int Cmiss_command_data_process_command_line(int argc, char *argv[],
 	return return_code;
 }
 
-struct Cmiss_command_data *CREATE(Cmiss_command_data)(struct Cmiss_context_app *context,
+struct cmzn_command_data *CREATE(cmzn_command_data)(struct cmzn_context_app *context,
 	struct User_interface_module *UI_module)
 /*******************************************************************************
 LAST MODIFIED : 3 April 2003
 
 DESCRIPTION :
-Initialise all the subcomponents of cmgui and create the Cmiss_command_data
+Initialise all the subcomponents of cmgui and create the cmzn_command_data
 ==============================================================================*/
 {
 	char *cm_examples_directory,*cm_parameters_file_name,*comfile_name,
@@ -17507,7 +17507,7 @@ Initialise all the subcomponents of cmgui and create the Cmiss_command_data
 	int status;
 #endif /* defined (F90_INTERPRETER) || defined (USE_PERL_INTERPRETER) */
 	struct Cmgui_command_line_options command_line_options;
-	struct Cmiss_command_data *command_data;
+	struct cmzn_command_data *command_data;
 #if defined(USE_CMGUI_COMMAND_WINDOW)
 	struct Command_window *command_window;
 #endif /* defined(USE_CMGUI_COMMAND_WINDOW) */
@@ -17520,7 +17520,7 @@ Initialise all the subcomponents of cmgui and create the Cmiss_command_data
 #endif /* defined (WIN32_USER_INTERFACE) */
 	return_code = 1;
 
-	if (ALLOCATE(command_data, struct Cmiss_command_data, 1))
+	if (ALLOCATE(command_data, struct cmzn_command_data, 1))
 	{
 		command_data->access_count = 1;
 		// duplicate argument list so it can be modified by User Interface
@@ -17555,19 +17555,19 @@ Initialise all the subcomponents of cmgui and create the Cmiss_command_data
 		command_data->default_spectrum=(struct Spectrum *)NULL;
 		command_data->spectrum_manager=(struct MANAGER(Spectrum) *)NULL;
 		command_data->graphics_buffer_package=(struct Graphics_buffer_app_package *)NULL;
-		command_data->scene_viewer_module=(struct Cmiss_scene_viewer_app_module *)NULL;
-		command_data->graphics_module = (struct Cmiss_graphics_module *)NULL;
+		command_data->scene_viewer_module=(struct cmzn_scene_viewer_app_module *)NULL;
+		command_data->graphics_module = (struct cmzn_graphics_module *)NULL;
 #if defined (USE_CMGUI_GRAPHICS_WINDOW)
 		command_data->graphics_window_manager=(struct MANAGER(Graphics_window) *)NULL;
 #endif /* defined (USE_CMGUI_GRAPHICS_WINDOW) */
-		command_data->root_region = (struct Cmiss_region *)NULL;
+		command_data->root_region = (struct cmzn_region *)NULL;
 		command_data->curve_manager=(struct MANAGER(Curve) *)NULL;
 		command_data->basis_manager=(struct MANAGER(FE_basis) *)NULL;
 		command_data->streampoint_list=(struct Streampoint *)NULL;
 #if defined (SELECT_DESCRIPTORS)
 		command_data->device_list=(struct LIST(Io_device) *)NULL;
 #endif /* defined (SELECT_DESCRIPTORS) */
-		command_data->glyph_module=(Cmiss_glyph_module_id)0;
+		command_data->glyph_module=(cmzn_glyph_module_id)0;
 		command_data->any_object_selection=(struct Any_object_selection *)NULL;
 		command_data->element_point_ranges_selection=(struct Element_point_ranges_selection *)NULL;
 		command_data->interactive_tool_manager=(struct MANAGER(Interactive_tool) *)NULL;
@@ -17709,7 +17709,7 @@ Initialise all the subcomponents of cmgui and create the Cmiss_command_data
 			delete double_question_mark;
 		}
 
-		command_data->io_stream_package = Cmiss_context_get_default_IO_stream_package(Cmiss_context_app_get_core_context(context));
+		command_data->io_stream_package = cmzn_context_get_default_IO_stream_package(cmzn_context_app_get_core_context(context));
 
 #if defined (F90_INTERPRETER) || defined (USE_PERL_INTERPRETER)
 		/* SAB I want to do this before CREATEing the User_interface
@@ -17730,19 +17730,19 @@ Initialise all the subcomponents of cmgui and create the Cmiss_command_data
 			a package directive */
 		interpreter_set_string(command_data->interpreter, "cmiss::example", ".", &status);
 
-		/* SAB Set the cmgui command data into the interpreter.  The Cmiss package
+		/* SAB Set the cmgui command data into the interpreter.  The cmzn package
 			is then able to export this when it is called from inside cmgui or
 			when called directly from perl to load the appropriate libraries to
 			create a cmgui externally. */
-		interpreter_set_pointer(command_data->interpreter, "Cmiss::Cmiss_context",
-			"Cmiss::Cmiss_context", context, &status);
+		interpreter_set_pointer(command_data->interpreter, "cmzn::cmzn_context",
+			"cmzn::cmzn_context", context, &status);
 
 #endif /* defined (F90_INTERPRETER) || defined (USE_PERL_INTERPRETER) */
 
 		if ((!command_list) && (!write_help))
 		{
 			if (NULL != (command_data->event_dispatcher =
-					Cmiss_context_app_get_default_event_dispatcher(context)))
+					cmzn_context_app_get_default_event_dispatcher(context)))
 			{
 				if (!no_display)
 				{
@@ -17803,23 +17803,23 @@ Initialise all the subcomponents of cmgui and create the Cmiss_command_data
 		command_data->comfile_window_manager = UI_module->comfile_window_manager;
 #endif /* defined (WX_USER_INTERFACE) */
 		command_data->graphics_module =
-			Cmiss_context_get_graphics_module(Cmiss_context_app_get_core_context(context));
+			cmzn_context_get_graphics_module(cmzn_context_app_get_core_context(context));
 		/* light manager */
 		command_data->light_module=
-			Cmiss_graphics_module_get_light_module(command_data->graphics_module);
+			cmzn_graphics_module_get_light_module(command_data->graphics_module);
 		command_data->default_light=
 			Light_module_get_default_light(command_data->light_module);
 		command_data->light_model_module=
-			Cmiss_graphics_module_get_light_model_module(command_data->graphics_module);
+			cmzn_graphics_module_get_light_model_module(command_data->graphics_module);
 		command_data->default_light_model=
 			Light_model_module_get_default_light_model(command_data->light_model_module);
 
 		// ensure we have default tessellations
-		command_data->tessellation_module = Cmiss_graphics_module_get_tessellation_module(command_data->graphics_module);
-		Cmiss_tessellation_id default_tessellation = Cmiss_tessellation_module_get_default_tessellation(command_data->tessellation_module);
-		Cmiss_tessellation_destroy(&default_tessellation);
-		Cmiss_tessellation_id default_points_tessellation = Cmiss_tessellation_module_get_default_points_tessellation(command_data->tessellation_module);
-		Cmiss_tessellation_destroy(&default_points_tessellation);
+		command_data->tessellation_module = cmzn_graphics_module_get_tessellation_module(command_data->graphics_module);
+		cmzn_tessellation_id default_tessellation = cmzn_tessellation_module_get_default_tessellation(command_data->tessellation_module);
+		cmzn_tessellation_destroy(&default_tessellation);
+		cmzn_tessellation_id default_points_tessellation = cmzn_tessellation_module_get_default_points_tessellation(command_data->tessellation_module);
+		cmzn_tessellation_destroy(&default_points_tessellation);
 
 		/* environment map manager */
 		command_data->environment_map_manager=CREATE(MANAGER(Environment_map))();
@@ -17827,65 +17827,65 @@ Initialise all the subcomponents of cmgui and create the Cmiss_command_data
 		command_data->volume_texture_manager=CREATE(MANAGER(VT_volume_texture))();
 		/* spectrum manager */
 		if (NULL != (command_data->spectrum_manager=
-				Cmiss_graphics_module_get_spectrum_manager(
+				cmzn_graphics_module_get_spectrum_manager(
 					command_data->graphics_module)))
 		{
-			Cmiss_spectrum_module_id spectrum_module =
-				Cmiss_graphics_module_get_spectrum_module(command_data->graphics_module);
+			cmzn_spectrum_module_id spectrum_module =
+				cmzn_graphics_module_get_spectrum_module(command_data->graphics_module);
 			command_data->default_spectrum =
-					Cmiss_spectrum_module_get_default_spectrum(spectrum_module);
-			Cmiss_spectrum_module_destroy(&spectrum_module);
+					cmzn_spectrum_module_get_default_spectrum(spectrum_module);
+			cmzn_spectrum_module_destroy(&spectrum_module);
 		}
 		/* create Material module and CMGUI default materials */
-		command_data->material_module = Cmiss_graphics_module_get_material_module(command_data->graphics_module);
+		command_data->material_module = cmzn_graphics_module_get_material_module(command_data->graphics_module);
 		if (command_data->material_module)
 		{
-			Cmiss_graphics_material_module_define_standard_materials(
+			cmzn_graphics_material_module_define_standard_materials(
 				command_data->material_module);
-			Cmiss_graphics_material_id material = Cmiss_graphics_material_module_create_material(
+			cmzn_graphics_material_id material = cmzn_graphics_material_module_create_material(
 				command_data->material_module);
-			Cmiss_graphics_material_set_name(material, "gray50");
+			cmzn_graphics_material_set_name(material, "gray50");
 			double material_colour[3] = { 0.50, 0.50, 0.50};
-			Cmiss_graphics_material_set_attribute_real3(material,
+			cmzn_graphics_material_set_attribute_real3(material,
 				CMISS_GRAPHICS_MATERIAL_ATTRIBUTE_AMBIENT, &material_colour[0]);
-			Cmiss_graphics_material_set_attribute_real3(material,
+			cmzn_graphics_material_set_attribute_real3(material,
 				CMISS_GRAPHICS_MATERIAL_ATTRIBUTE_DIFFUSE, &material_colour[0]);
-			Cmiss_graphics_material_set_attribute_real3(material,
+			cmzn_graphics_material_set_attribute_real3(material,
 				CMISS_GRAPHICS_MATERIAL_ATTRIBUTE_EMISSION, &material_colour[0]);
-			Cmiss_graphics_material_set_attribute_real3(material,
+			cmzn_graphics_material_set_attribute_real3(material,
 				CMISS_GRAPHICS_MATERIAL_ATTRIBUTE_SPECULAR, &material_colour[0]);
-			Cmiss_graphics_material_set_attribute_real(material,
+			cmzn_graphics_material_set_attribute_real(material,
 				CMISS_GRAPHICS_MATERIAL_ATTRIBUTE_ALPHA, 1.0);
-			Cmiss_graphics_material_set_attribute_real(material,
+			cmzn_graphics_material_set_attribute_real(material,
 				CMISS_GRAPHICS_MATERIAL_ATTRIBUTE_SHININESS, 0.2);
-			Cmiss_graphics_material_set_managed(material, true);
-			Cmiss_graphics_material_destroy(&material);
-			material = Cmiss_graphics_material_module_create_material(
+			cmzn_graphics_material_set_managed(material, true);
+			cmzn_graphics_material_destroy(&material);
+			material = cmzn_graphics_material_module_create_material(
 				command_data->material_module);
-			Cmiss_graphics_material_set_name(material, "transparent_gray50");
-			Cmiss_graphics_material_set_attribute_real3(material,
+			cmzn_graphics_material_set_name(material, "transparent_gray50");
+			cmzn_graphics_material_set_attribute_real3(material,
 				CMISS_GRAPHICS_MATERIAL_ATTRIBUTE_AMBIENT, &material_colour[0]);
-			Cmiss_graphics_material_set_attribute_real3(material,
+			cmzn_graphics_material_set_attribute_real3(material,
 				CMISS_GRAPHICS_MATERIAL_ATTRIBUTE_DIFFUSE, &material_colour[0]);
-			Cmiss_graphics_material_set_attribute_real3(material,
+			cmzn_graphics_material_set_attribute_real3(material,
 				CMISS_GRAPHICS_MATERIAL_ATTRIBUTE_EMISSION, &material_colour[0]);
-			Cmiss_graphics_material_set_attribute_real3(material,
+			cmzn_graphics_material_set_attribute_real3(material,
 				CMISS_GRAPHICS_MATERIAL_ATTRIBUTE_SPECULAR, &material_colour[0]);
-			Cmiss_graphics_material_set_attribute_real(material,
+			cmzn_graphics_material_set_attribute_real(material,
 				CMISS_GRAPHICS_MATERIAL_ATTRIBUTE_ALPHA, 0.0);
-			Cmiss_graphics_material_set_attribute_real(material,
+			cmzn_graphics_material_set_attribute_real(material,
 				CMISS_GRAPHICS_MATERIAL_ATTRIBUTE_SHININESS, 0.2);
-			Cmiss_graphics_material_set_managed(material, true);
-			Cmiss_graphics_material_destroy(&material);
+			cmzn_graphics_material_set_managed(material, true);
+			cmzn_graphics_material_destroy(&material);
 		}
 		command_data->filter_module =
-				Cmiss_graphics_module_get_filter_module(command_data->graphics_module);
-		command_data->default_font = Cmiss_graphics_module_get_default_font(
+				cmzn_graphics_module_get_filter_module(command_data->graphics_module);
+		command_data->default_font = cmzn_graphics_module_get_default_font(
 			command_data->graphics_module);
 
-		command_data->glyph_module = Cmiss_graphics_module_get_glyph_module(command_data->graphics_module);
-		Cmiss_glyph_module_define_standard_glyphs(command_data->glyph_module);
-		Cmiss_glyph_module_define_standard_cmgui_glyphs(command_data->glyph_module);
+		command_data->glyph_module = cmzn_graphics_module_get_glyph_module(command_data->graphics_module);
+		cmzn_glyph_module_define_standard_glyphs(command_data->glyph_module);
+		cmzn_glyph_module_define_standard_cmgui_glyphs(command_data->glyph_module);
 
 #if defined (USE_CMGUI_GRAPHICS_WINDOW)
 		command_data->graphics_buffer_package = UI_module->graphics_buffer_package;
@@ -17896,11 +17896,11 @@ Initialise all the subcomponents of cmgui and create the Cmiss_command_data
 		/*???DB.  To be done */
 		command_data->element_shape_list=CREATE(LIST(FE_element_shape))();
 
-		command_data->curve_manager=Cmiss_context_get_default_curve_manager(Cmiss_context_app_get_core_context(context));
+		command_data->curve_manager=cmzn_context_get_default_curve_manager(cmzn_context_app_get_core_context(context));
 
 		command_data->basis_manager=CREATE(MANAGER(FE_basis))();
 
-		command_data->root_region = Cmiss_context_get_default_region(Cmiss_context_app_get_core_context(context));
+		command_data->root_region = cmzn_context_get_default_region(cmzn_context_app_get_core_context(context));
 
 #if defined (SELECT_DESCRIPTORS)
 		/* create device list */
@@ -17908,9 +17908,9 @@ Initialise all the subcomponents of cmgui and create the Cmiss_command_data
 		command_data->device_list=CREATE(LIST(Io_device))();
 #endif /* defined (SELECT_DESCRIPTORS) */
 		/* global list of selected objects */
-		command_data->any_object_selection = Cmiss_context_get_any_object_selection(Cmiss_context_app_get_core_context(context));
+		command_data->any_object_selection = cmzn_context_get_any_object_selection(cmzn_context_app_get_core_context(context));
 		command_data->element_point_ranges_selection =
-			Cmiss_context_get_element_point_ranges_selection(Cmiss_context_app_get_core_context(context));
+			cmzn_context_get_element_point_ranges_selection(cmzn_context_app_get_core_context(context));
 
 		/* interactive_tool manager */
 		command_data->interactive_tool_manager=UI_module->interactive_tool_manager;
@@ -17923,7 +17923,7 @@ Initialise all the subcomponents of cmgui and create the Cmiss_command_data
 		  purely type-specific data. Field manager is now owned by region.
 		  Temporarily passing it to package to keep existing code running */
 		struct MANAGER(Computed_field) *computed_field_manager=
-			Cmiss_region_get_Computed_field_manager(command_data->root_region);
+			cmzn_region_get_Computed_field_manager(command_data->root_region);
 		command_data->computed_field_package =
 			CREATE(Computed_field_package)(computed_field_manager);
 		/* Add Computed_fields to the Computed_field_package */
@@ -18045,7 +18045,7 @@ Initialise all the subcomponents of cmgui and create the Cmiss_command_data
 		/* scene manager */
 		/*???RC & SAB.   LOTS of managers need to be created before this
 		  and the User_interface too */
-		command_data->default_scene = Cmiss_graphics_module_get_scene(
+		command_data->default_scene = cmzn_graphics_module_get_scene(
 			command_data->graphics_module, command_data->root_region);
 		if (command_data->computed_field_package && command_data->default_time_keeper_app)
 		{
@@ -18239,40 +18239,40 @@ Initialise all the subcomponents of cmgui and create the Cmiss_command_data
 
 		if (command_list || write_help || batch_mode || !return_code)
 		{
-			Cmiss_command_data_destroy(&command_data);
+			cmzn_command_data_destroy(&command_data);
 		}
 	}
 	else
 	{
-		command_data = (struct Cmiss_command_data *)NULL;
+		command_data = (struct cmzn_command_data *)NULL;
 	}
 	LEAVE;
 
 	return (command_data);
-} /* CREATE(Cmiss_command_data) */
+} /* CREATE(cmzn_command_data) */
 
-int DESTROY(Cmiss_command_data)(struct Cmiss_command_data **command_data_address)
+int DESTROY(cmzn_command_data)(struct cmzn_command_data **command_data_address)
 /*******************************************************************************
 LAST MODIFIED : 19 December 2002
 
 DESCRIPTION :
 Clean up the command_data, deallocating all the associated memory and resources.
-NOTE: Do not call this directly: call Cmiss_command_data_destroy() to deaccess.
+NOTE: Do not call this directly: call cmzn_command_data_destroy() to deaccess.
 ==============================================================================*/
 {
 	int return_code = 0;
 #if defined (F90_INTERPRETER) || defined (USE_PERL_INTERPRETER)
 	int status;
 #endif /* defined (F90_INTERPRETER) || defined (USE_PERL_INTERPRETER) */
-	struct Cmiss_command_data *command_data;
-	ENTER(DESTROY(Cmiss_command_data));
+	struct cmzn_command_data *command_data;
+	ENTER(DESTROY(cmzn_command_data));
 
 	if (command_data_address && (command_data = *command_data_address))
 	{
 		if (command_data->access_count != 0)
 		{
 			display_message(ERROR_MESSAGE,
-				"Call to DESTROY(Cmiss_command_data) while still in use");
+				"Call to DESTROY(cmzn_command_data) while still in use");
 			return 0;
 		}
 		if (command_data->emoter_slider_dialog)
@@ -18310,8 +18310,8 @@ NOTE: Do not call this directly: call Cmiss_command_data_destroy() to deaccess.
 #endif /* defined (WX_USER_INTERFACE) */
 
 		DEACCESS(Scene)(&command_data->default_scene);
-		Cmiss_glyph_module_destroy(&command_data->glyph_module);
-		Cmiss_graphics_module_destroy(&command_data->graphics_module);
+		cmzn_glyph_module_destroy(&command_data->glyph_module);
+		cmzn_graphics_module_destroy(&command_data->graphics_module);
 		DEACCESS(Time_keeper_app)(&command_data->default_time_keeper_app);
 		if (command_data->computed_field_package)
 		{
@@ -18322,7 +18322,7 @@ NOTE: Do not call this directly: call Cmiss_command_data_destroy() to deaccess.
 		DESTROY(LIST(Io_device))(&command_data->device_list);
 #endif /* defined (SELECT_DESCRIPTORS) */
 
-		DEACCESS(Cmiss_region)(&(command_data->root_region));
+		DEACCESS(cmzn_region)(&(command_data->root_region));
 		DESTROY(MANAGER(FE_basis))(&command_data->basis_manager);
 		DESTROY(LIST(FE_element_shape))(&command_data->element_shape_list);
 
@@ -18331,10 +18331,10 @@ NOTE: Do not call this directly: call Cmiss_command_data_destroy() to deaccess.
 		command_data->curve_manager = NULL;
 		DEACCESS(Spectrum)(&(command_data->default_spectrum));
 		command_data->spectrum_manager=NULL;
-		Cmiss_graphics_filter_module_destroy(&command_data->filter_module);
-		Cmiss_graphics_material_module_destroy(&command_data->material_module);
-		Cmiss_tessellation_module_destroy(&command_data->tessellation_module);
-		DEACCESS(Cmiss_font)(&command_data->default_font);
+		cmzn_graphics_filter_module_destroy(&command_data->filter_module);
+		cmzn_graphics_material_module_destroy(&command_data->material_module);
+		cmzn_tessellation_module_destroy(&command_data->tessellation_module);
+		DEACCESS(cmzn_font)(&command_data->default_font);
 		DESTROY(MANAGER(VT_volume_texture))(&command_data->volume_texture_manager);
 		DESTROY(MANAGER(Environment_map))(&command_data->environment_map_manager);
 		DEACCESS(Light_model)(&(command_data->default_light_model));
@@ -18399,7 +18399,7 @@ NOTE: Do not call this directly: call Cmiss_command_data_destroy() to deaccess.
 	}
 	else
 	{
-		display_message(ERROR_MESSAGE,"DESTROY(Cmiss_command_data).  "
+		display_message(ERROR_MESSAGE,"DESTROY(cmzn_command_data).  "
 			"Invalid arguments");
 	}
 
@@ -18407,9 +18407,9 @@ NOTE: Do not call this directly: call Cmiss_command_data_destroy() to deaccess.
 	LEAVE;
 
 	return (return_code);
-} /* DESTROY(Cmiss_command_data) */
+} /* DESTROY(cmzn_command_data) */
 
-struct Cmiss_command_data *Cmiss_command_data_access(struct Cmiss_command_data *command_data)
+struct cmzn_command_data *cmzn_command_data_access(struct cmzn_command_data *command_data)
 {
 	if (command_data)
 	{
@@ -18418,19 +18418,19 @@ struct Cmiss_command_data *Cmiss_command_data_access(struct Cmiss_command_data *
 	return command_data;
 }
 
-int Cmiss_command_data_destroy(
-	struct Cmiss_command_data **command_data_address)
+int cmzn_command_data_destroy(
+	struct cmzn_command_data **command_data_address)
 {
 	int return_code;
-	struct Cmiss_command_data *command_data;
+	struct cmzn_command_data *command_data;
 
-	ENTER(Cmiss_command_data_destroy);
+	ENTER(cmzn_command_data_destroy);
 	if (command_data_address && (NULL != (command_data = *command_data_address)))
 	{
 		command_data->access_count--;
 		if (0 == command_data->access_count)
 		{
-			DESTROY(Cmiss_command_data)(command_data_address);
+			DESTROY(cmzn_command_data)(command_data_address);
 		}
 		*command_data_address = NULL;
 		return_code = 1;
@@ -18438,7 +18438,7 @@ int Cmiss_command_data_destroy(
 	else
 	{
 		display_message(ERROR_MESSAGE,
-			"Cmiss_command_data_destroy.  Missing command data");
+			"cmzn_command_data_destroy.  Missing command data");
 		return_code = 0;
 	}
 	LEAVE;
@@ -18446,7 +18446,7 @@ int Cmiss_command_data_destroy(
 	return (return_code);
 }
 
-int Cmiss_command_data_main_loop(struct Cmiss_command_data *command_data)
+int cmzn_command_data_main_loop(struct cmzn_command_data *command_data)
 /*******************************************************************************
 LAST MODIFIED : 19 December 2002
 
@@ -18456,7 +18456,7 @@ Process events until some events request the program to finish.
 {
 	int return_code = 0;
 
-	ENTER(Cmiss_command_data_main_loop);
+	ENTER(cmzn_command_data_main_loop);
 	/* main processing / loop */
 	if (command_data && command_data->event_dispatcher)
 	{
@@ -18466,10 +18466,10 @@ Process events until some events request the program to finish.
 	LEAVE;
 
 	return (return_code);
-} /* Cmiss_command_data_main_loop */
+} /* cmzn_command_data_main_loop */
 
-struct Cmiss_region *Cmiss_command_data_get_root_region(
-	struct Cmiss_command_data *command_data)
+struct cmzn_region *cmzn_command_data_get_root_region(
+	struct cmzn_command_data *command_data)
 /*******************************************************************************
 LAST MODIFIED : 18 April 2003
 
@@ -18477,22 +18477,22 @@ DESCRIPTION :
 Returns the root region from the <command_data>.
 ==============================================================================*/
 {
-	struct Cmiss_region *root_region;
+	struct cmzn_region *root_region;
 
-	ENTER(Cmiss_command_data_get_root_region);
-	root_region=(struct Cmiss_region *)NULL;
+	ENTER(cmzn_command_data_get_root_region);
+	root_region=(struct cmzn_region *)NULL;
 	if (command_data)
 	{
 		/* API functions return accessed values */
-		root_region=ACCESS(Cmiss_region)(command_data->root_region);
+		root_region=ACCESS(cmzn_region)(command_data->root_region);
 	}
 	LEAVE;
 
 	return (root_region);
-} /* Cmiss_command_data_get_root_region */
+} /* cmzn_command_data_get_root_region */
 
-struct Execute_command *Cmiss_command_data_get_execute_command(
-	struct Cmiss_command_data *command_data)
+struct Execute_command *cmzn_command_data_get_execute_command(
+	struct cmzn_command_data *command_data)
 /*******************************************************************************
 LAST MODIFIED : 28 May 2003
 
@@ -18503,7 +18503,7 @@ executing cmiss commands from C.
 {
 	struct Execute_command *execute_command;
 
-	ENTER(Cmiss_command_data_get_execute_command);
+	ENTER(cmzn_command_data_get_execute_command);
 	execute_command=(struct Execute_command *)NULL;
 	if (command_data)
 	{
@@ -18512,10 +18512,10 @@ executing cmiss commands from C.
 	LEAVE;
 
 	return (execute_command);
-} /* Cmiss_command_data_get_execute_command */
+} /* cmzn_command_data_get_execute_command */
 
-struct IO_stream_package *Cmiss_command_data_get_IO_stream_package(
-	struct Cmiss_command_data *command_data)
+struct IO_stream_package *cmzn_command_data_get_IO_stream_package(
+	struct cmzn_command_data *command_data)
 /*******************************************************************************
 LAST MODIFIED : 16 September 2004
 
@@ -18525,7 +18525,7 @@ Returns the io_stream_package structure from the <command_data>
 {
 	struct IO_stream_package *io_stream_package;
 
-	ENTER(Cmiss_command_data_get_io_stream_package);
+	ENTER(cmzn_command_data_get_io_stream_package);
 	io_stream_package=(struct IO_stream_package *)NULL;
 	if (command_data)
 	{
@@ -18534,10 +18534,10 @@ Returns the io_stream_package structure from the <command_data>
 	LEAVE;
 
 	return (io_stream_package);
-} /* Cmiss_command_data_get_io_stream_package */
+} /* cmzn_command_data_get_io_stream_package */
 
-struct Fdio_package* Cmiss_command_data_get_fdio_package(
-	struct Cmiss_command_data *command_data)
+struct Fdio_package* cmzn_command_data_get_fdio_package(
+	struct cmzn_command_data *command_data)
 /*******************************************************************************
 LAST MODIFIED : 10 March 2005
 
@@ -18547,7 +18547,7 @@ Gets an Fdio_package for this <command_data>
 {
 	struct Fdio_package *fdio_package;
 
-	ENTER(Cmiss_command_data_get_fdio_package);
+	ENTER(cmzn_command_data_get_fdio_package);
 	fdio_package = (struct Fdio_package *)NULL;
 	if (command_data)
 	{
@@ -18558,8 +18558,8 @@ Gets an Fdio_package for this <command_data>
 	return (fdio_package);
 }
 
-Idle_package_id Cmiss_command_data_get_idle_package(
-	struct Cmiss_command_data *command_data
+Idle_package_id cmzn_command_data_get_idle_package(
+	struct cmzn_command_data *command_data
 )
 /*******************************************************************************
 LAST MODIFIED : 21 March 2005
@@ -18570,7 +18570,7 @@ Gets an Idle_package for this <command_data>
 {
 	struct Idle_package *idle_package;
 
-	ENTER(Cmiss_command_data_get_idle_package);
+	ENTER(cmzn_command_data_get_idle_package);
 	idle_package = (struct Idle_package *)NULL;
 	if (command_data)
 	{
@@ -18581,8 +18581,8 @@ Gets an Idle_package for this <command_data>
 	return (idle_package);
 }
 
-struct MANAGER(Computed_field) *Cmiss_command_data_get_computed_field_manager(
-	struct Cmiss_command_data *command_data)
+struct MANAGER(Computed_field) *cmzn_command_data_get_computed_field_manager(
+	struct cmzn_command_data *command_data)
 /*******************************************************************************
 LAST MODIFIED : 16 September 2004
 
@@ -18592,7 +18592,7 @@ Returns the root region from the <command_data>.
 {
 	struct MANAGER(Computed_field) *computed_field_manager;
 
-	ENTER(Cmiss_command_data_get_computed_field_manager);
+	ENTER(cmzn_command_data_get_computed_field_manager);
 	computed_field_manager=(struct MANAGER(Computed_field) *)NULL;
 	if (command_data)
 	{
@@ -18602,10 +18602,10 @@ Returns the root region from the <command_data>.
 	LEAVE;
 
 	return (computed_field_manager);
-} /* Cmiss_command_data_get_computed_field_manager */
+} /* cmzn_command_data_get_computed_field_manager */
 
-struct User_interface *Cmiss_command_data_get_user_interface(
-	struct Cmiss_command_data *command_data)
+struct User_interface *cmzn_command_data_get_user_interface(
+	struct cmzn_command_data *command_data)
 /*******************************************************************************
 LAST MODIFIED : 25 January 2006
 
@@ -18615,7 +18615,7 @@ Gets the user_interface for this <command_data>
 {
 	struct User_interface *user_interface;
 
-	ENTER(Cmiss_command_data_get_user_interface);
+	ENTER(cmzn_command_data_get_user_interface);
 	user_interface = (struct User_interface *)NULL;
 	if (command_data)
 	{
@@ -18624,10 +18624,10 @@ Gets the user_interface for this <command_data>
 	LEAVE;
 
 	return (user_interface);
-} /* Cmiss_command_data_get_user_interface */
+} /* cmzn_command_data_get_user_interface */
 
-struct Cmiss_scene_viewer_app_module *Cmiss_command_data_get_scene_viewer_module(
-	struct Cmiss_command_data *command_data)
+struct cmzn_scene_viewer_app_module *cmzn_command_data_get_scene_viewer_module(
+	struct cmzn_command_data *command_data)
 /*******************************************************************************
 LAST MODIFIED : 19 January 2007
 
@@ -18635,10 +18635,10 @@ DESCRIPTION :
 Returns the scene viewer data from the <command_data>.
 ==============================================================================*/
 {
-	struct Cmiss_scene_viewer_app_module *cmiss_scene_viewer_module;
+	struct cmzn_scene_viewer_app_module *cmiss_scene_viewer_module;
 
-	ENTER(Cmiss_command_package_get_scene_viewer_module);
-	cmiss_scene_viewer_module=(struct Cmiss_scene_viewer_app_module *)NULL;
+	ENTER(cmzn_command_package_get_scene_viewer_module);
+	cmiss_scene_viewer_module=(struct cmzn_scene_viewer_app_module *)NULL;
 	if (command_data)
 	{
 		cmiss_scene_viewer_module = command_data->scene_viewer_module;
@@ -18648,8 +18648,8 @@ Returns the scene viewer data from the <command_data>.
 	return (cmiss_scene_viewer_module);
 }
 
-struct MANAGER(Graphics_window) *Cmiss_command_data_get_graphics_window_manager(
-	struct Cmiss_command_data *command_data)
+struct MANAGER(Graphics_window) *cmzn_command_data_get_graphics_window_manager(
+	struct cmzn_command_data *command_data)
 /*******************************************************************************
 LAST MODIFIED : 26 January 2007
 
@@ -18659,7 +18659,7 @@ Returns the graphics_window manager from the <command_data>.
 {
 	struct MANAGER(Graphics_window) *graphics_window_manager;
 
-	ENTER(Cmiss_command_data_get_graphics_window_manager);
+	ENTER(cmzn_command_data_get_graphics_window_manager);
 	graphics_window_manager=(struct MANAGER(Graphics_window) *)NULL;
 #if defined (USE_CMGUI_GRAPHICS_WINDOW)
 	if (command_data)
@@ -18672,9 +18672,9 @@ Returns the graphics_window manager from the <command_data>.
 	LEAVE;
 
 	return (graphics_window_manager);
-} /* Cmiss_command_data_get_graphics_window_manager */
+} /* cmzn_command_data_get_graphics_window_manager */
 
-int Cmiss_command_data_set_cmgui_string(Cmiss_command_data *command_data, const char *name_string,
+int cmzn_command_data_set_cmgui_string(cmzn_command_data *command_data, const char *name_string,
 	const char *version_string,const char *date_string, const char *copyright_string,
 	const char *build_string, const char *revision_string)
 {

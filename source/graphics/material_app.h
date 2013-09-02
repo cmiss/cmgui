@@ -57,7 +57,7 @@ Modifier function to set the material from a command.
 
 int Option_table_add_set_Material_entry(
 	struct Option_table *option_table, const char *token,
-	struct Graphical_material **material, struct Cmiss_graphics_material_module *material_module);
+	struct Graphical_material **material, struct cmzn_graphics_material_module *material_module);
 /*******************************************************************************
 LAST MODIFIED : 20 November 2003
 

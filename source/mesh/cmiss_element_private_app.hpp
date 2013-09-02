@@ -15,5 +15,5 @@ struct Option_table;
  * existing accessed pointer to mesh. Caller is responsible for deaccessing.
  */
 int Option_table_add_mesh_entry(struct Option_table *option_table,
-	const char *token, Cmiss_region_id region, Cmiss_mesh_id *mesh_address);
+	const char *token, cmzn_region_id region, cmzn_mesh_id *mesh_address);
 

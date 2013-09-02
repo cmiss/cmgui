@@ -3729,14 +3729,14 @@ will be requested with handle_windows_event.
 	}
 	else
 	{
-		display_message(ERROR_MESSAGE,"Cmiss_graphics_buffer_win32_set_window_size.  "
+		display_message(ERROR_MESSAGE,"cmzn_graphics_buffer_win32_set_window_size.  "
 			"Missing graphics_buffer parameter.");
 		return_code = 0;
 	}
 	LEAVE;
 
 	return (return_code);
-} /* Cmiss_graphics_buffer_win32_set_window_size */
+} /* cmzn_graphics_buffer_win32_set_window_size */
 #endif /* defined (WIN32_USER_INTERFACE) */
 
 #if defined (WIN32_USER_INTERFACE)
@@ -4285,7 +4285,7 @@ respect.
 {
 	int return_code;
 
-	ENTER(Cmiss_graphics_buffer_get_near_and_far_plane);
+	ENTER(cmzn_graphics_buffer_get_near_and_far_plane);
 	if (buffer)
 	{
 		buffer->width = width;
@@ -4295,14 +4295,14 @@ respect.
 	}
 	else
 	{
-		display_message(ERROR_MESSAGE,"Cmiss_graphics_buffer_carbon_set_window_size.  "
+		display_message(ERROR_MESSAGE,"cmzn_graphics_buffer_carbon_set_window_size.  "
 			"Missing graphics_buffer parameter.");
 		return_code = 0;
 	}
 	LEAVE;
 
 	return (return_code);
-} /* Cmiss_graphics_buffer_carbon_set_window_size */
+} /* cmzn_graphics_buffer_carbon_set_window_size */
 #endif /* defined (CARBON_USER_INTERFACE) */
 
 struct Graphics_buffer *Graphics_buffer_app_get_core_buffer(struct Graphics_buffer_app *buffer)

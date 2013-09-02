@@ -44,8 +44,8 @@ struct Parse_state;
 
 /**
  * Modifier function to set a glyph from a command.
- * @param glyphAddress_void  Address of accessing pointer to Cmiss_glyph
- * @param glyphModule_void  A Cmiss_glyph_module *.
+ * @param glyphAddress_void  Address of accessing pointer to cmzn_glyph
+ * @param glyphModule_void  A cmzn_glyph_module *.
  */
 int set_Glyph(struct Parse_state *state, void *glyphAddress_void,
 	void *glyphModule_void);

@@ -20,11 +20,11 @@ int Computed_field_get_type_image(struct Computed_field *field,
 	struct Texture **texture,
 	double *minimum, double *maximum, int *native_texture);
 
-int Cmiss_field_image_set_number_of_bytes_per_component(Cmiss_field_image_id image_field, int number_of_bytes_per_component);
+int cmzn_field_image_set_number_of_bytes_per_component(cmzn_field_image_id image_field, int number_of_bytes_per_component);
 
-int Cmiss_field_image_set_output_range(Cmiss_field_image_id image_field, double minimum, double maximum);
+int cmzn_field_image_set_output_range(cmzn_field_image_id image_field, double minimum, double maximum);
 
-int Cmiss_field_image_set_native_texture_flag(Cmiss_field_image_id image_field, int native_texture_flag);
+int cmzn_field_image_set_native_texture_flag(cmzn_field_image_id image_field, int native_texture_flag);
 
 int define_Computed_field_type_sample_texture(struct Parse_state *state,
 	void *field_modify_void,void *computed_field_image_package_void)
@@ -160,11 +160,11 @@ Maintains legacy version that is set with a texture.
 					texture_coordinate_field, source_field);
 				if (field)
 				{
-					Cmiss_field_image_id field_image = Cmiss_field_cast_image(field);
-					Cmiss_field_image_set_output_range(field_image, minimum, maximum);
-					Cmiss_field_image_set_native_texture_flag(field_image, native_texture);
-					Cmiss_field_image_set_number_of_bytes_per_component(field_image, number_of_bytes_per_component);
-					Cmiss_field_image_destroy(&field_image);
+					cmzn_field_image_id field_image = cmzn_field_cast_image(field);
+					cmzn_field_image_set_output_range(field_image, minimum, maximum);
+					cmzn_field_image_set_native_texture_flag(field_image, native_texture);
+					cmzn_field_image_set_number_of_bytes_per_component(field_image, number_of_bytes_per_component);
+					cmzn_field_image_destroy(&field_image);
 				}
 				return_code = field_modify->update_field_and_deaccess(field);
 			}

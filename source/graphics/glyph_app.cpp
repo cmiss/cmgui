@@ -51,8 +51,8 @@ int set_Glyph(struct Parse_state *state, void *glyphAddress_void,
 	void *glyphModule_void)
 {
 	int return_code;
-	Cmiss_glyph **glyphAddress = reinterpret_cast<Cmiss_glyph **>(glyphAddress_void);
-	Cmiss_glyph_module *glyphModule = reinterpret_cast<Cmiss_glyph_module *>(glyphModule_void);
+	cmzn_glyph **glyphAddress = reinterpret_cast<cmzn_glyph **>(glyphAddress_void);
+	cmzn_glyph_module *glyphModule = reinterpret_cast<cmzn_glyph_module *>(glyphModule_void);
 	if (state && glyphAddress && glyphModule)
 	{
 		const char *current_token = state->current_token;
@@ -64,18 +64,18 @@ int set_Glyph(struct Parse_state *state, void *glyphAddress_void,
 				{
 					if (*glyphAddress)
 					{
-						Cmiss_glyph_destroy(glyphAddress);
+						cmzn_glyph_destroy(glyphAddress);
 					}
 					return_code=1;
 				}
 				else
 				{
-					Cmiss_glyph *glyph = Cmiss_glyph_module_find_glyph_by_name(glyphModule, current_token);
+					cmzn_glyph *glyph = cmzn_glyph_module_find_glyph_by_name(glyphModule, current_token);
 					if (glyph)
 					{
 						if (*glyphAddress)
 						{
-							Cmiss_glyph_destroy(glyphAddress);
+							cmzn_glyph_destroy(glyphAddress);
 						}
 						*glyphAddress = glyph;
 						return_code = 1;
@@ -92,7 +92,7 @@ int set_Glyph(struct Parse_state *state, void *glyphAddress_void,
 			{
 				display_message(INFORMATION_MESSAGE," GLYPH_NAME|none");
 				/* if possible, then write the name */
-				Cmiss_glyph *glyph = *glyphAddress;
+				cmzn_glyph *glyph = *glyphAddress;
 				if (glyph)
 				{
 					display_message(INFORMATION_MESSAGE, "[%s]", glyph->getName());

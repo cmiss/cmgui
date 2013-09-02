@@ -66,9 +66,9 @@ equivalent to the scene_viewer assigned to it.
 #include "computed_field/computed_field_private_app.hpp"
 
 
-int Cmiss_field_projection_set_window_name(struct Computed_field *field, const char *graphics_window_name);
+int cmzn_field_projection_set_window_name(struct Computed_field *field, const char *graphics_window_name);
 
-int Cmiss_field_projection_set_pane_number(struct Computed_field *field, int pane_number);
+int cmzn_field_projection_set_pane_number(struct Computed_field *field, int pane_number);
 
 class Computed_field_scene_viewer_projection_package : public Computed_field_type_package
 {
@@ -80,22 +80,22 @@ const char computed_field_scene_viewer_projection_type_string[] = "window_projec
 
 int Computed_field_get_type_scene_viewer_projection(struct Computed_field *field,
 	struct Scene_viewer **scene_viewer, char **graphics_window_name, int *pane_number,
-	enum Cmiss_scene_coordinate_system *from_coordinate_system,
-	enum Cmiss_scene_coordinate_system *to_coordinate_system);
+	enum cmzn_scene_coordinate_system *from_coordinate_system,
+	enum cmzn_scene_coordinate_system *to_coordinate_system);
 
 /* For gfx command */
 struct Computed_field *Computed_field_create_scene_viewer_projection_with_window_name(
-	struct Cmiss_field_module *field_module, struct Scene_viewer *scene_viewer,
+	struct cmzn_field_module *field_module, struct Scene_viewer *scene_viewer,
 	const char *graphics_window_name, int pane_number,
-	enum Cmiss_scene_coordinate_system from_coordinate_system,
-	enum Cmiss_scene_coordinate_system to_coordinate_system)
+	enum cmzn_scene_coordinate_system from_coordinate_system,
+	enum cmzn_scene_coordinate_system to_coordinate_system)
 {
 	Computed_field *field = NULL;
 	if (scene_viewer)
 	{
-		field = Cmiss_field_module_create_scene_viewer_projection(field_module, scene_viewer, from_coordinate_system, to_coordinate_system);
-		Cmiss_field_projection_set_window_name(field, graphics_window_name);
-		Cmiss_field_projection_set_pane_number(field, pane_number);
+		field = cmzn_field_module_create_scene_viewer_projection(field_module, scene_viewer, from_coordinate_system, to_coordinate_system);
+		cmzn_field_projection_set_window_name(field, graphics_window_name);
+		cmzn_field_projection_set_pane_number(field, pane_number);
 	}
 	else
 	{
@@ -135,8 +135,8 @@ already) and allows its contents to be modified.
 		/* get valid parameters for projection field */
 		pane_number = 1;
 		graphics_window = (struct Graphics_window *)NULL;
-		Cmiss_scene_coordinate_system from_coordinate_system = CMISS_SCENE_COORDINATE_SYSTEM_INVALID;
-		Cmiss_scene_coordinate_system to_coordinate_system = CMISS_SCENE_COORDINATE_SYSTEM_INVALID;
+		cmzn_scene_coordinate_system from_coordinate_system = CMISS_SCENE_COORDINATE_SYSTEM_INVALID;
+		cmzn_scene_coordinate_system to_coordinate_system = CMISS_SCENE_COORDINATE_SYSTEM_INVALID;
 		if ((NULL != field_modify->get_field()) &&
 			(computed_field_scene_viewer_projection_type_string == Computed_field_get_type_string(field_modify->get_field())))
 		{
@@ -161,9 +161,9 @@ already) and allows its contents to be modified.
 			char *from_coordinate_system_string = 0;
 			char *to_coordinate_system_string = 0;
 			int number_of_valid_strings = 0;
-			const char **valid_strings = ENUMERATOR_GET_VALID_STRINGS(Cmiss_scene_coordinate_system)(
+			const char **valid_strings = ENUMERATOR_GET_VALID_STRINGS(cmzn_scene_coordinate_system)(
 				&number_of_valid_strings,
-				(ENUMERATOR_CONDITIONAL_FUNCTION(Cmiss_scene_coordinate_system) *)NULL,
+				(ENUMERATOR_CONDITIONAL_FUNCTION(cmzn_scene_coordinate_system) *)NULL,
 				(void *)NULL);
 			std::string all_coordinate_systems = " ";
 			for (int i = 0; i < number_of_valid_strings; i++)
@@ -197,7 +197,7 @@ already) and allows its contents to be modified.
 			{
 				if (from_coordinate_system_string)
 				{
-					STRING_TO_ENUMERATOR(Cmiss_scene_coordinate_system)(from_coordinate_system_string,
+					STRING_TO_ENUMERATOR(cmzn_scene_coordinate_system)(from_coordinate_system_string,
 						&from_coordinate_system);
 					if (CMISS_SCENE_COORDINATE_SYSTEM_INVALID == from_coordinate_system)
 					{
@@ -214,7 +214,7 @@ already) and allows its contents to be modified.
 				}
 				if (to_coordinate_system_string)
 				{
-					STRING_TO_ENUMERATOR(Cmiss_scene_coordinate_system)(to_coordinate_system_string,
+					STRING_TO_ENUMERATOR(cmzn_scene_coordinate_system)(to_coordinate_system_string,
 						&to_coordinate_system);
 					if (CMISS_SCENE_COORDINATE_SYSTEM_INVALID == to_coordinate_system)
 					{

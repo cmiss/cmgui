@@ -112,7 +112,7 @@ Object storing all the parameters for interactively selecting element points.
 	struct Element_point_ranges *last_picked_element_point;
 	struct Interaction_volume *last_interaction_volume;
 	struct GT_object *rubber_band;
-	struct Cmiss_region *region;
+	struct cmzn_region *region;
 	//struct Graphics_window *graphics_window;
 
 #if defined (WX_USER_INTERFACE)
@@ -180,7 +180,7 @@ release.
 //	struct LIST(Scene_picked_object) *scene_picked_object_list;
 //	struct Multi_range *multi_range;
 //	struct Scene *scene;
-//	Cmiss_scene_picker_id scene_picker = 0;
+//	cmzn_scene_picker_id scene_picker = 0;
 //
 //	ENTER(Element_point_tool_interactive_event_handler);
 //	if (device_id&&event&&(element_point_tool=
@@ -207,10 +207,10 @@ release.
 //							element_point_tool->picked_element_point_was_unselected=0;
 //							if (0 != (picked_element_point=
 //								Scene_picked_object_list_get_nearest_element_point(
-//									scene_picked_object_list,(struct Cmiss_region *)NULL,
+//									scene_picked_object_list,(struct cmzn_region *)NULL,
 //									(struct Scene_picked_object **)NULL,
-//									(struct Cmiss_rendition **)NULL,
-//									(struct Cmiss_graphic **)NULL)))
+//									(struct cmzn_rendition **)NULL,
+//									(struct cmzn_graphic **)NULL)))
 //							{
 //								/* Execute command_field of picked_element_point */
 //								if (element_point_tool->command_field)
@@ -237,25 +237,25 @@ release.
 //												element_point_ranges_identifier.sample_mode,
 //												element_point_ranges_identifier.number_in_xi,
 //												element_point_ranges_identifier.exact_xi,
-//												(Cmiss_field_cache_id)0,
+//												(cmzn_field_cache_id)0,
 //												/*coordinate_field*/(struct Computed_field *)NULL,
 //												/*density_field*/(struct Computed_field *)NULL,
 //												start, xi))
 //										{
-//											Cmiss_field_module_id field_module = Cmiss_field_get_field_module(element_point_tool->command_field);
-//											Cmiss_field_cache_id field_cache = Cmiss_field_module_create_cache(field_module);
-//											Cmiss_field_cache_set_time(field_cache, time);
-//											Cmiss_field_cache_set_mesh_location_with_parent(field_cache,
-//												element_point_ranges_identifier.element, Cmiss_element_get_dimension(element_point_ranges_identifier.element),
+//											cmzn_field_module_id field_module = cmzn_field_get_field_module(element_point_tool->command_field);
+//											cmzn_field_cache_id field_cache = cmzn_field_module_create_cache(field_module);
+//											cmzn_field_cache_set_time(field_cache, time);
+//											cmzn_field_cache_set_mesh_location_with_parent(field_cache,
+//												element_point_ranges_identifier.element, cmzn_element_get_dimension(element_point_ranges_identifier.element),
 //												xi, element_point_ranges_identifier.top_level_element);
-//											char *command_string = Cmiss_field_evaluate_string(element_point_tool->command_field, field_cache);
+//											char *command_string = cmzn_field_evaluate_string(element_point_tool->command_field, field_cache);
 //											if (command_string)
 //											{
 //												Execute_command_execute_string(element_point_tool->execute_command, command_string);
 //												DEALLOCATE(command_string);
 //											}
-//											Cmiss_field_cache_destroy(&field_cache);
-//											Cmiss_field_module_destroy(&field_module);
+//											cmzn_field_cache_destroy(&field_cache);
+//											cmzn_field_module_destroy(&field_module);
 //										}
 //									}
 //								}
@@ -441,7 +441,7 @@ public:
 			if (element_point_tool->region)
 			{
 				computed_field_manager=
-					Cmiss_region_get_Computed_field_manager(element_point_tool->region);
+					cmzn_region_get_Computed_field_manager(element_point_tool->region);
 			}
 			element_point_command_field_chooser =
 				 new Managed_object_chooser<Computed_field,MANAGER_CLASS(Computed_field)>
@@ -621,7 +621,7 @@ Copies the state of one element_point tool to another.
 
 struct Element_point_tool *CREATE(Element_point_tool)(
 	struct MANAGER(Interactive_tool) *interactive_tool_manager,
-	struct Cmiss_region *region,
+	struct cmzn_region *region,
 	struct Element_point_ranges_selection *element_point_ranges_selection,
 	struct Graphical_material *rubber_band_material,
 	struct User_interface *user_interface,
@@ -641,7 +641,7 @@ Creates an Element_point_tool with Interactive_tool in
 	ENTER(CREATE(Element_point_tool));
 	if (interactive_tool_manager&&element_point_ranges_selection&&region&&
 		(NULL != (computed_field_manager=
-			Cmiss_region_get_Computed_field_manager(region)))
+			cmzn_region_get_Computed_field_manager(region)))
 		&&rubber_band_material&&user_interface)
 	{
 		if (ALLOCATE(element_point_tool,struct Element_point_tool,1))
@@ -652,7 +652,7 @@ Creates an Element_point_tool with Interactive_tool in
 			element_point_tool->element_point_ranges_selection=
 				element_point_ranges_selection;
 			element_point_tool->rubber_band_material=
-				Cmiss_graphics_material_access(rubber_band_material);
+				cmzn_graphics_material_access(rubber_band_material);
 			element_point_tool->user_interface=user_interface;
 			element_point_tool->time_keeper_app = (struct Time_keeper_app *)NULL;
 			if (time_keeper_app)
@@ -725,7 +725,7 @@ structure itself.
 			(struct Interaction_volume *)NULL);
 		REACCESS(GT_object)(&(element_point_tool->rubber_band),
 			(struct GT_object *)NULL);
-		Cmiss_graphics_material_destroy(&(element_point_tool->rubber_band_material));
+		cmzn_graphics_material_destroy(&(element_point_tool->rubber_band_material));
 		if (element_point_tool->time_keeper_app)
 		{
 			DEACCESS(Time_keeper_app)(&(element_point_tool->time_keeper_app));

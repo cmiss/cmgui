@@ -31,7 +31,7 @@ const char computed_field_nodeset_operator_type_string[] = "nodeset_operator";
  */
 int define_Computed_field_type_nodeset_operator(struct Parse_state *state,
 	Computed_field_modify_data *field_modify, const char *type_name, const char *help_string,
-	Cmiss_field_id &source_field, Cmiss_nodeset_id &nodeset)
+	cmzn_field_id &source_field, cmzn_nodeset_id &nodeset)
 {
 	if (!(state && field_modify && help_string))
 		return 0;
@@ -43,9 +43,9 @@ int define_Computed_field_type_nodeset_operator(struct Parse_state *state,
 			(computed_field_nodeset_operator_type_string ==
 			Computed_field_get_type_string(field_modify->get_field())))
 	{
-		source_field = Cmiss_field_get_source_field(field_modify->get_field(), 1);
-		nodeset_name = Cmiss_field_get_name(source_field);
-		//-- nodeset_name = Cmiss_nodeset_get_name(nodeset_operator_core->get_nodeset());
+		source_field = cmzn_field_get_source_field(field_modify->get_field(), 1);
+		nodeset_name = cmzn_field_get_name(source_field);
+		//-- nodeset_name = cmzn_nodeset_get_name(nodeset_operator_core->get_nodeset());
 	}
 	Option_table *option_table = CREATE(Option_table)();
 	Option_table_add_help(option_table, help_string);
@@ -65,12 +65,12 @@ int define_Computed_field_type_nodeset_operator(struct Parse_state *state,
 	{
 		if (nodeset_name)
 		{
-			nodeset = Cmiss_field_module_find_nodeset_by_name(
+			nodeset = cmzn_field_module_find_nodeset_by_name(
 				field_modify->get_field_module(), nodeset_name);
 			if (!nodeset)
 			{
-				nodeset = Cmiss_nodeset_group_base_cast(
-					Cmiss_field_module_create_nodeset_group_from_name_internal(
+				nodeset = cmzn_nodeset_group_base_cast(
+					cmzn_field_module_create_nodeset_group_from_name_internal(
 						field_modify->get_field_module(), nodeset_name));
 			}
 			if (!nodeset)
@@ -101,11 +101,11 @@ int define_Computed_field_type_nodeset_operator(struct Parse_state *state,
 	{
 		if (nodeset)
 		{
-			Cmiss_nodeset_destroy(&nodeset);
+			cmzn_nodeset_destroy(&nodeset);
 		}
 		if (source_field)
 		{
-			Cmiss_field_destroy(&source_field);
+			cmzn_field_destroy(&source_field);
 		}
 	}
 	return (return_code);
@@ -123,18 +123,18 @@ int define_Computed_field_type_nodeset_sum(struct Parse_state *state,
 	USE_PARAMETER(computed_field_nodeset_operators_package_void);
 	Computed_field_modify_data * field_modify =
 		reinterpret_cast<Computed_field_modify_data *>(field_modify_void);
-	Cmiss_field_id source_field = 0;
-	Cmiss_nodeset_id nodeset = 0;
+	cmzn_field_id source_field = 0;
+	cmzn_nodeset_id nodeset = 0;
 	if (define_Computed_field_type_nodeset_operator(state, field_modify, "nodeset_sum",
 		"A nodeset_sum field calculates the sums of each of the supplied field's "
 		"component values over all nodes in the nodeset over which it is defined.",
 		source_field, nodeset))
 	{
 		return_code = field_modify->update_field_and_deaccess(
-			Cmiss_field_module_create_nodeset_sum(field_modify->get_field_module(),
+			cmzn_field_module_create_nodeset_sum(field_modify->get_field_module(),
 				source_field, nodeset));
-		Cmiss_field_destroy(&source_field);
-		Cmiss_nodeset_destroy(&nodeset);
+		cmzn_field_destroy(&source_field);
+		cmzn_nodeset_destroy(&nodeset);
 	}
 	return return_code;
 }
@@ -151,18 +151,18 @@ int define_Computed_field_type_nodeset_mean(struct Parse_state *state,
 	USE_PARAMETER(computed_field_nodeset_operators_package_void);
 	Computed_field_modify_data * field_modify =
 		reinterpret_cast<Computed_field_modify_data *>(field_modify_void);
-	Cmiss_field_id source_field = 0;
-	Cmiss_nodeset_id nodeset = 0;
+	cmzn_field_id source_field = 0;
+	cmzn_nodeset_id nodeset = 0;
 	if (define_Computed_field_type_nodeset_operator(state, field_modify, "nodeset_mean",
 		"A nodeset_mean field calculates the means of each of the supplied field's "
 		"component values over all nodes in the nodeset over which it is defined.",
 		source_field, nodeset))
 	{
 		return_code = field_modify->update_field_and_deaccess(
-			Cmiss_field_module_create_nodeset_mean(field_modify->get_field_module(),
+			cmzn_field_module_create_nodeset_mean(field_modify->get_field_module(),
 				source_field, nodeset));
-		Cmiss_field_destroy(&source_field);
-		Cmiss_nodeset_destroy(&nodeset);
+		cmzn_field_destroy(&source_field);
+		cmzn_nodeset_destroy(&nodeset);
 	}
 	return return_code;
 }
@@ -179,8 +179,8 @@ int define_Computed_field_type_nodeset_sum_squares(struct Parse_state *state,
 	USE_PARAMETER(computed_field_nodeset_operators_package_void);
 	Computed_field_modify_data * field_modify =
 		reinterpret_cast<Computed_field_modify_data *>(field_modify_void);
-	Cmiss_field_id source_field = 0;
-	Cmiss_nodeset_id nodeset = 0;
+	cmzn_field_id source_field = 0;
+	cmzn_nodeset_id nodeset = 0;
 	if (define_Computed_field_type_nodeset_operator(state, field_modify, "nodeset_sum_squares",
 		"A nodeset_sum_squares field calculates the sums of the squares of each of the "
 		"supplied field's component values over all nodes in the nodeset over which it is "
@@ -188,10 +188,10 @@ int define_Computed_field_type_nodeset_sum_squares(struct Parse_state *state,
 		"See 'gfx minimise' command.", source_field, nodeset))
 	{
 		return_code = field_modify->update_field_and_deaccess(
-			Cmiss_field_module_create_nodeset_sum_squares(field_modify->get_field_module(),
+			cmzn_field_module_create_nodeset_sum_squares(field_modify->get_field_module(),
 				source_field, nodeset));
-		Cmiss_field_destroy(&source_field);
-		Cmiss_nodeset_destroy(&nodeset);
+		cmzn_field_destroy(&source_field);
+		cmzn_nodeset_destroy(&nodeset);
 	}
 	return return_code;
 }
@@ -208,8 +208,8 @@ int define_Computed_field_type_nodeset_mean_squares(struct Parse_state *state,
 	USE_PARAMETER(computed_field_nodeset_operators_package_void);
 	Computed_field_modify_data * field_modify =
 		reinterpret_cast<Computed_field_modify_data *>(field_modify_void);
-	Cmiss_field_id source_field = 0;
-	Cmiss_nodeset_id nodeset = 0;
+	cmzn_field_id source_field = 0;
+	cmzn_nodeset_id nodeset = 0;
 	if (define_Computed_field_type_nodeset_operator(state, field_modify, "nodeset_mean_squares",
 		"A nodeset_mean_squares field calculates the means of the squares of each of the "
 		"supplied field's component values over all nodes in the nodeset over which it is "
@@ -217,10 +217,10 @@ int define_Computed_field_type_nodeset_mean_squares(struct Parse_state *state,
 		"See 'gfx minimise' command.", source_field, nodeset))
 	{
 		return_code = field_modify->update_field_and_deaccess(
-			Cmiss_field_module_create_nodeset_mean_squares(field_modify->get_field_module(),
+			cmzn_field_module_create_nodeset_mean_squares(field_modify->get_field_module(),
 				source_field, nodeset));
-		Cmiss_field_destroy(&source_field);
-		Cmiss_nodeset_destroy(&nodeset);
+		cmzn_field_destroy(&source_field);
+		cmzn_nodeset_destroy(&nodeset);
 	}
 	return return_code;
 }

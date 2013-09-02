@@ -42,7 +42,7 @@
 #if !defined (CONTEXT_APP_H)
 #define CONTEXT_APP_H
 
-#define Context Cmiss_context
+#define Context cmzn_context
 struct Context;
 
 #include "zinc/context.h"
@@ -54,14 +54,14 @@ struct Context;
  * @param id
  * @return
  */
-struct Cmiss_context_app *Cmiss_context_app_create(const char *id);
+struct cmzn_context_app *cmzn_context_app_create(const char *id);
 
 /**
  * Destroy the given handle to the application context.
  * @param context_address
  * @return
  */
-int Cmiss_context_app_destroy(struct Cmiss_context_app **context_address);
+int cmzn_context_app_destroy(struct cmzn_context_app **context_address);
 
 /***************************************************************************//**
  * Return the default command data object in context.
@@ -69,8 +69,8 @@ int Cmiss_context_app_destroy(struct Cmiss_context_app **context_address);
  * @param context  Pointer to a cmiss_context object.
  * @return  the default command data if successfully, otherwise NULL.
  */
-struct Cmiss_command_data *Cmiss_context_get_default_command_interpreter(
-	struct Cmiss_context_app *context);
+struct cmzn_command_data *cmzn_context_get_default_command_interpreter(
+	struct cmzn_context_app *context);
 
 /***************************************************************************//**
  * Return the event dispatcher in context.
@@ -78,8 +78,8 @@ struct Cmiss_command_data *Cmiss_context_get_default_command_interpreter(
  * @param context  Pointer to a cmiss_context object.
  * @return  the default event_dispatcher if successfully, otherwise NULL.
  */
-struct Event_dispatcher *Cmiss_context_app_get_default_event_dispatcher(
-	struct Cmiss_context_app *context);
+struct Event_dispatcher *cmzn_context_app_get_default_event_dispatcher(
+	struct cmzn_context_app *context);
 
 /***************************************************************************//**
  * Create and returns the internal user interface module in cmgui.
@@ -89,11 +89,11 @@ struct Event_dispatcher *Cmiss_context_app_get_default_event_dispatcher(
  *    otherwise NULL.
  */
 #if defined (WX_USER_INTERFACE) || (!defined (WIN32_USER_INTERFACE) && !defined (_MSC_VER))
-struct User_interface_module *Cmiss_context_create_user_interface(
-	struct Cmiss_context_app *context, int in_argc, char *in_argv[], void *user_interface_instance);
+struct User_interface_module *cmzn_context_create_user_interface(
+	struct cmzn_context_app *context, int in_argc, char *in_argv[], void *user_interface_instance);
 #else
-struct User_interface_module *Cmiss_context_create_user_interface(
-	struct Cmiss_context_app *context, int in_argc, char *in_argv[],
+struct User_interface_module *cmzn_context_create_user_interface(
+	struct cmzn_context_app *context, int in_argc, char *in_argv[],
 	HINSTANCE current_instance, HINSTANCE previous_instance,
 	LPSTR command_line,int initial_main_window_state, void *user_interface_instance);
 #endif
@@ -108,6 +108,6 @@ void Context_internal_cleanup();
  * @param context
  * @return
  */
-struct Context *Cmiss_context_app_get_core_context(struct Cmiss_context_app *context);
+struct Context *cmzn_context_app_get_core_context(struct cmzn_context_app *context);
 
 #endif /* !defined (CONTEXT_H) */

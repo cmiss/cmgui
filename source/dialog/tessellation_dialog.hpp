@@ -50,15 +50,15 @@ class TessellationItem : public wxPanel {
 
 public:
 
- 	TessellationItem(wxWindow* parent, MANAGER(Cmiss_tessellation) *tessellation_manager_in,
- 		Cmiss_tessellation *tessellation_in);
+ 	TessellationItem(wxWindow* parent, MANAGER(cmzn_tessellation) *tessellation_manager_in,
+ 		cmzn_tessellation *tessellation_in);
 	void update_global();
 
 private:
 
-	Cmiss_tessellation *tessellation;
+	cmzn_tessellation *tessellation;
 	int labelChanged, refinementChanged, divisionsChanged, circleDivisionsChanged;
-  MANAGER(Cmiss_tessellation) *tessellation_manager;
+  MANAGER(cmzn_tessellation) *tessellation_manager;
  	void do_layout();
  	void set_callback();
 	void update_divisions_string_for_dialog();
@@ -75,27 +75,27 @@ protected:
 class TessellationDialog: public wxDialog {
 public:
 
-    TessellationDialog(struct Cmiss_tessellation_module *tessellation_module_in, wxWindow* parent, int id,
+    TessellationDialog(struct cmzn_tessellation_module *tessellation_module_in, wxWindow* parent, int id,
     	const wxPoint& pos=wxDefaultPosition, const wxSize& size=wxDefaultSize);
-    int add_managed_object(Cmiss_tessellation *tessellation);
-    void manager_callback(struct MANAGER_MESSAGE(Cmiss_tessellation) *message);
+    int add_managed_object(cmzn_tessellation *tessellation);
+    void manager_callback(struct MANAGER_MESSAGE(cmzn_tessellation) *message);
     virtual ~TessellationDialog() {
     	if (tessellation_manager_callback_id)
     	{
-    		MANAGER_DEREGISTER(Cmiss_tessellation)(
+    		MANAGER_DEREGISTER(cmzn_tessellation)(
     			tessellation_manager_callback_id,	tessellation_manager);
     	}
     }
 
 private:
-    struct Cmiss_tessellation_module *tessellation_module;
-    MANAGER(Cmiss_tessellation) *tessellation_manager;
+    struct cmzn_tessellation_module *tessellation_module;
+    MANAGER(cmzn_tessellation) *tessellation_manager;
     void *tessellation_manager_callback_id;
     void set_properties();
     void do_layout();
     void create_managed_objects_table();
 		void OnTessellationDialogAddNewPressed(wxCommandEvent & event);
-    std::map<Cmiss_tessellation *, TessellationItem *> itemMap;
+    std::map<cmzn_tessellation *, TessellationItem *> itemMap;
 
 protected:
     wxStaticBox* sizer_1_staticbox;

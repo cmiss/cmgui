@@ -13,7 +13,7 @@
 class Computed_field_time_package : public Computed_field_type_package
 {
 public:
-	Cmiss_time_keeper *time_keeper;
+	cmzn_time_keeper *time_keeper;
 };
 
 char computed_field_time_value_type_string[] = "time_value";
@@ -88,7 +88,7 @@ already) and allows its contents to be modified.
 				if (return_code)
 				{
 					return_code = field_modify->update_field_and_deaccess(
-						Cmiss_field_module_create_time_lookup(field_modify->get_field_module(),
+						cmzn_field_module_create_time_lookup(field_modify->get_field_module(),
 							source_fields[0], source_fields[1]));
 				}
 				if (!return_code)
@@ -167,7 +167,7 @@ already) and allows its contents to be modified.
 		strcmp(PARSER_RECURSIVE_HELP_STRING,state->current_token)))
 		{
 			return_code = field_modify->update_field_and_deaccess(
-				Cmiss_field_module_create_time_value(field_modify->get_field_module(),
+				cmzn_field_module_create_time_value(field_modify->get_field_module(),
 					computed_field_time_package->time_keeper));
 		}
 		else
@@ -183,7 +183,7 @@ already) and allows its contents to be modified.
 
 int Computed_field_register_types_time(
 	struct Computed_field_package *computed_field_package,
-	struct Cmiss_time_keeper *time_keeper)
+	struct cmzn_time_keeper *time_keeper)
 /*******************************************************************************
 LAST MODIFIED : 25 August 2006
 

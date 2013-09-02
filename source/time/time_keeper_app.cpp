@@ -79,7 +79,7 @@ int Time_keeper_app_timer_event_handler(void *time_keeper_app_void)
 	return 0;
 }
 
-Time_keeper_app::Time_keeper_app(Cmiss_time_keeper *time_keeper_in,
+Time_keeper_app::Time_keeper_app(cmzn_time_keeper *time_keeper_in,
 	struct Event_dispatcher *event_dispatcher):
 	play_mode(TIME_KEEPER_APP_PLAY_LOOP),
 	play_remaining(0.0),
@@ -94,7 +94,7 @@ Time_keeper_app::Time_keeper_app(Cmiss_time_keeper *time_keeper_in,
 	timeout_callback_id(0),
 	event_dispatcher(event_dispatcher),
 	callback_list(0),
-	time_keeper(Cmiss_time_keeper_access(time_keeper_in)),
+	time_keeper(cmzn_time_keeper_access(time_keeper_in)),
 	access_count(1)
 {
 }
@@ -109,7 +109,7 @@ Time_keeper_app::~Time_keeper_app()
 		DEALLOCATE(callback_data);
 		callback_data = next_callback;
 	}
-	Cmiss_time_keeper_destroy(&time_keeper);
+	cmzn_time_keeper_destroy(&time_keeper);
 }
 
 int Time_keeper_app::notifyClients(enum Time_keeper_app_event event_mask)
@@ -362,7 +362,7 @@ int Time_keeper_app::requestNewTime(double new_time)
 	return 1;
 }
 
-Cmiss_time_keeper *Time_keeper_app::getTimeKeeper()
+cmzn_time_keeper *Time_keeper_app::getTimeKeeper()
 {
 	return time_keeper;
 }

@@ -63,10 +63,10 @@ class Transformation_editor : public wxPanel
 
 public:
 
-	 Transformation_editor(wxPanel *parent, const char *panel_name, struct Cmiss_scene *scene,
+	 Transformation_editor(wxPanel *parent, const char *panel_name, struct cmzn_scene *scene,
 			int *auto_apply);
 	 int set_transformation(gtMatrix *transformation_matrix);
-	 void set_scene(struct Cmiss_scene *scene);
+	 void set_scene(struct cmzn_scene *scene);
 	 void ApplyTransformation(int force_apply);
 
 	 ~Transformation_editor()
@@ -101,7 +101,7 @@ private:
 
 protected:
 	 int *auto_apply_flag, direction_system_index;
-	 struct Cmiss_scene *current_scene;
+	 struct cmzn_scene *current_scene;
 	 gtMatrix transformation_editor_transformation_matrix;
 	 int rate_of_change;
 	 struct Dof3_data global_direction, global_position;

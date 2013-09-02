@@ -147,8 +147,8 @@ Structure to pass to modify_Graphics_window.
 	struct MANAGER(Interactive_tool) *interactive_tool_manager;
 	struct MANAGER(Light) *light_manager;
 	struct MANAGER(Light_model) *light_model_manager;
-	Cmiss_graphics_filter_module_id filter_module;
-	struct Cmiss_region *root_region;
+	cmzn_graphics_filter_module_id filter_module;
+	struct cmzn_region *root_region;
 }; /* struct Modify_graphics_window_data */
 
 #if defined(WX_USER_INTERFACE)
@@ -180,12 +180,12 @@ struct Graphics_window *CREATE(Graphics_window)(const char *name,
 	int minimum_colour_buffer_depth, int minimum_depth_buffer_depth,
 	int minimum_accumulation_buffer_depth,
 	struct Graphics_buffer_app_package *graphics_buffer_package,
-	Cmiss_graphics_filter_module_id filter_module,Cmiss_scene *scene,
+	cmzn_graphics_filter_module_id filter_module,cmzn_scene *scene,
 	struct MANAGER(Interactive_tool) *interactive_tool_manager,
 	struct Time_keeper_app *default_time_keeper_app,
 	struct User_interface *user_interface,
-	Cmiss_region_id root_region,
-	Cmiss_scene_viewer_module_id scene_viewer_module);
+	cmzn_region_id root_region,
+	cmzn_scene_viewer_module_id scene_viewer_module);
 /*******************************************************************************
 LAST MODIFIED : 5 May 2004
 
@@ -356,7 +356,7 @@ are SCENE_VIEWER_PARALLEL,	SCENE_VIEWER_PERSPECTIVE and SCENE_VIEWER_CUSTOM.
 Whether you can set this for a pane depends on current layout_mode of window.
 ==============================================================================*/
 
-Cmiss_scene *Graphics_window_get_Scene(struct Graphics_window *window);
+cmzn_scene *Graphics_window_get_Scene(struct Graphics_window *window);
 /*******************************************************************************
 LAST MODIFIED : 6 October 1998
 

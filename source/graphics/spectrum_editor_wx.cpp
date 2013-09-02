@@ -66,17 +66,17 @@ Contains all the information carried by the graphical element editor widget.
 	/* This editorMaterial is used when displaying the spectrum in the
 		3d widget */
 	 struct Graphical_material *editorMaterial, *labelMaterial;
-	 struct Cmiss_spectrum_component *current_settings;
+	 struct cmzn_spectrum_component *current_settings;
 	 struct Spectrum *edit_spectrum, *current_spectrum;
 	 struct MANAGER(Spectrum) *spectrum_manager;
 	 struct User_interface *user_interface;
 	 struct Spectrum_editor_dialog **spectrum_editor_dialog_address;
-	 Cmiss_scene *spectrum_editor_scene, *autorange_scene;
-	 Cmiss_region_id root_region;
+	 cmzn_scene *spectrum_editor_scene, *autorange_scene;
+	 cmzn_region_id root_region;
 	 struct Scene_viewer_app *spectrum_editor_scene_viewer;
-	 Cmiss_glyph_colour_bar *colourBar;
+	 cmzn_glyph_colour_bar *colourBar;
 	 int viewer_type;
-	 struct Cmiss_region *private_region;
+	 struct cmzn_region *private_region;
 	 wxSpectrumEditor *wx_spectrum_editor;
 	 wxPanel *spectrum_panel, *spectrum_listbox_panel;
 	 wxFrame *spectrum_editor_frame;
@@ -96,7 +96,7 @@ Contains all the information carried by the graphical element editor widget.
 	 wxScrolledWindow *spectrum_higher_panel, *spectrum_lower_panel;
 	 void *material_manager_callback_id;
 	 void *spectrum_manager_callback_id;
-	 Cmiss_graphics_filter_module_id filter_module;
+	 cmzn_graphics_filter_module_id filter_module;
 };
 
 
@@ -120,12 +120,12 @@ static int make_colour_bar(struct Spectrum_editor *spectrum_editor)
 	int return_code = 0;
 	if (spectrum_editor && spectrum_editor->spectrum_editor_scene && spectrum_editor->edit_spectrum)
 	{
-		Cmiss_scene_begin_change(spectrum_editor->spectrum_editor_scene);
+		cmzn_scene_begin_change(spectrum_editor->spectrum_editor_scene);
 		if (spectrum_editor->colourBar)
 		{
-			Cmiss_glyph_colour_bar_destroy(&spectrum_editor->colourBar);
+			cmzn_glyph_colour_bar_destroy(&spectrum_editor->colourBar);
 		}
-		spectrum_editor->colourBar = Cmiss_glyph_colour_bar::create(spectrum_editor->edit_spectrum);
+		spectrum_editor->colourBar = cmzn_glyph_colour_bar::create(spectrum_editor->edit_spectrum);
 		spectrum_editor->colourBar->setName("Spectrum Editor Colour Bar");
 		spectrum_editor->colourBar->setNumberFormat("%.4g");
 		const double axis[3] = { 1.0, 0.0, 0.0 };
@@ -155,7 +155,7 @@ static int make_colour_bar(struct Spectrum_editor *spectrum_editor)
 			struct Colour white = {1.0, 1.0, 1.0};
 			Graphical_material_set_ambient(spectrum_editor->labelMaterial, &white );
 			Graphical_material_set_diffuse(spectrum_editor->labelMaterial, &white );
-			Cmiss_scene_viewer_set_background_colour_component_rgb(
+			cmzn_scene_viewer_set_background_colour_component_rgb(
 				spectrum_editor->spectrum_editor_scene_viewer->core_scene_viewer, 0.0, 0.0, 0.0);
 		}
 		else if (spectrum_editor->viewer_type == 3)
@@ -163,27 +163,27 @@ static int make_colour_bar(struct Spectrum_editor *spectrum_editor)
 			struct Colour black = {0, 0, 0};
 			Graphical_material_set_ambient(spectrum_editor->labelMaterial, &black );
 			Graphical_material_set_diffuse(spectrum_editor->labelMaterial, &black );
-			Cmiss_scene_viewer_set_background_colour_component_rgb(
+			cmzn_scene_viewer_set_background_colour_component_rgb(
 				spectrum_editor->spectrum_editor_scene_viewer->core_scene_viewer, 1.0, 1.0, 1.0);
 		}
 		spectrum_editor->colourBar->setLabelDivisions(labelDivisions);
 		spectrum_editor->colourBar->setLabelMaterial(spectrum_editor->labelMaterial);
 
-		Cmiss_graphic *graphic = Cmiss_scene_get_first_graphic(spectrum_editor->spectrum_editor_scene);
+		cmzn_graphic *graphic = cmzn_scene_get_first_graphic(spectrum_editor->spectrum_editor_scene);
 		if (!graphic)
 		{
-			Cmiss_graphic_points *points = Cmiss_scene_create_graphic_points(spectrum_editor->spectrum_editor_scene);
-			graphic = Cmiss_graphic_points_base_cast(points);
-			Cmiss_graphic_set_name(graphic, "Spectrum Editor Colour Bar");
-			Cmiss_graphic_set_material(graphic, spectrum_editor->editorMaterial);
+			cmzn_graphic_points *points = cmzn_scene_create_graphic_points(spectrum_editor->spectrum_editor_scene);
+			graphic = cmzn_graphic_points_base_cast(points);
+			cmzn_graphic_set_name(graphic, "Spectrum Editor Colour Bar");
+			cmzn_graphic_set_material(graphic, spectrum_editor->editorMaterial);
 		}
-		Cmiss_graphic_point_attributes_id pointAttr = Cmiss_graphic_get_point_attributes(graphic);
-		Cmiss_graphic_point_attributes_set_glyph(pointAttr, spectrum_editor->colourBar);
+		cmzn_graphic_point_attributes_id pointAttr = cmzn_graphic_get_point_attributes(graphic);
+		cmzn_graphic_point_attributes_set_glyph(pointAttr, spectrum_editor->colourBar);
 		const double one = 1.0;
-		Cmiss_graphic_point_attributes_set_base_size(pointAttr, 1, &one);
-		Cmiss_graphic_point_attributes_destroy(&pointAttr);
-		Cmiss_graphic_destroy(&graphic);
-		Cmiss_scene_end_change(spectrum_editor->spectrum_editor_scene);
+		cmzn_graphic_point_attributes_set_base_size(pointAttr, 1, &one);
+		cmzn_graphic_point_attributes_destroy(&pointAttr);
+		cmzn_graphic_destroy(&graphic);
+		cmzn_scene_end_change(spectrum_editor->spectrum_editor_scene);
 		Scene_viewer_app_redraw(spectrum_editor->spectrum_editor_scene_viewer);
 		if (spectrum_editor->spectrum_panel)
 		{
@@ -216,8 +216,8 @@ a complete copy of <Spectrum>.
 			DEACCESS(Spectrum)(&(spectrum_editor->edit_spectrum));
 		}
 		/* make an empty spectrum */
-		spectrum_editor->edit_spectrum = Cmiss_spectrum_create_private();
-		Cmiss_spectrum_set_name(spectrum_editor->edit_spectrum, "copy");
+		spectrum_editor->edit_spectrum = cmzn_spectrum_create_private();
+		cmzn_spectrum_set_name(spectrum_editor->edit_spectrum, "copy");
 		if (spectrum_editor->edit_spectrum)
 		{
 			/* copy general settings into new object */
@@ -225,7 +225,7 @@ a complete copy of <Spectrum>.
 				(spectrum_editor->edit_spectrum,spectrum);
 
 			spectrum_editor->spectrum_overwrite_colour_radiobox->SetSelection(
-				 Cmiss_spectrum_is_material_overwrite(spectrum_editor->edit_spectrum));
+				 cmzn_spectrum_is_material_overwrite(spectrum_editor->edit_spectrum));
 
 			make_colour_bar(spectrum_editor);
 
@@ -249,7 +249,7 @@ a complete copy of <Spectrum>.
 	return (return_code);
 } /* make_edit_spectrum */
 
-static int create_settings_item_wx(struct Cmiss_spectrum_component *settings,
+static int create_settings_item_wx(struct cmzn_spectrum_component *settings,
 	void *spectrum_editor_void)
 /*******************************************************************************
 LAST MODIFIED : 30 August 2007
@@ -267,7 +267,7 @@ of the type spectrum_editor->settings_type.
 	 if (settings&&(spectrum_editor=
 				 (struct Spectrum_editor *)spectrum_editor_void))
 	 {
-			settings_string=Cmiss_spectrum_component_string(settings,
+			settings_string=cmzn_spectrum_component_string(settings,
 						SPECTRUM_COMPONENT_STRING_COMPLETE_PLUS);
 			if (settings_string != 0)
 			{
@@ -275,7 +275,7 @@ of the type spectrum_editor->settings_type.
 				 {
 						spectrum_editor->spectrum_settings_checklist->Append(wxString::FromAscii(settings_string));
 						num_children = spectrum_editor->spectrum_settings_checklist->GetCount();
-						if (Cmiss_spectrum_component_is_active(settings))
+						if (cmzn_spectrum_component_is_active(settings))
 						{
 							 spectrum_editor->spectrum_settings_checklist->Check(num_children-1, true);
 						}
@@ -330,9 +330,9 @@ of the type spectrum_editor->settings_type.
 			{
 				 selection = spectrum_editor->spectrum_settings_checklist->GetSelection();
 				 spectrum_editor->spectrum_settings_checklist->Clear();
-				 FOR_EACH_OBJECT_IN_LIST(Cmiss_spectrum_component)(
+				 FOR_EACH_OBJECT_IN_LIST(cmzn_spectrum_component)(
 						create_settings_item_wx,(void *)spectrum_editor,
-						get_Cmiss_spectrum_component_list( spectrum_editor->edit_spectrum));
+						get_cmzn_spectrum_component_list( spectrum_editor->edit_spectrum));
 				 num_of_items = spectrum_editor->spectrum_settings_checklist->GetCount();
 				 if (num_of_items>=selection+1)
 				 {
@@ -372,7 +372,7 @@ Sets the current settings type on the choose menu according to the
 current settings in spectrum_editor_settings.
 ==============================================================================*/
 {
-	enum Cmiss_spectrum_component_scale_type current_type;
+	enum cmzn_spectrum_component_scale_type current_type;
 	int return_code = 1;
 
 	ENTER(spectrum_editor_settings_set_type);
@@ -380,7 +380,7 @@ current settings in spectrum_editor_settings.
 		 spectrum_editor->current_settings &&
 		 spectrum_editor->spectrum_type_choice)
 	{
-		current_type = Cmiss_spectrum_component_get_scale_type(
+		current_type = cmzn_spectrum_component_get_scale_type(
 			spectrum_editor->current_settings);
 		switch (current_type)
 		{
@@ -418,13 +418,13 @@ Changes the currently chosen settings.
 ==============================================================================*/
 {
 	 char temp_string[50];
-	 enum Cmiss_spectrum_component_scale_type type;
-	 enum Cmiss_spectrum_component_colour_mapping colour_mapping = CMISS_SPECTRUM_COMPONENT_COLOUR_MAPPING_ALPHA;
+	 enum cmzn_spectrum_component_scale_type type;
+	 enum cmzn_spectrum_component_colour_mapping colour_mapping = CMISS_SPECTRUM_COMPONENT_COLOUR_MAPPING_ALPHA;
 	 float exaggeration, step_value, band_ratio;
 	 int component, number_of_bands, black_band_proportion,fix; //,i, num_children, number_of_bands, black_band_proportion,
 	 bool extend;
 	 int return_code;
-	 struct Cmiss_spectrum_component *new_settings;
+	 struct cmzn_spectrum_component *new_settings;
 
 	 ENTER(spectrum_editor_wx_set_settings);
 	 if (spectrum_editor)
@@ -433,15 +433,15 @@ Changes the currently chosen settings.
 			if (new_settings != 0)
 			{
 				 spectrum_editor_wx_set_type(spectrum_editor);
-				 type = Cmiss_spectrum_component_get_scale_type(new_settings);
+				 type = cmzn_spectrum_component_get_scale_type(new_settings);
 				 if (spectrum_editor->spectrum_reverse_checkbox)
 				 {
 						spectrum_editor->spectrum_reverse_checkbox->SetValue(
-							Cmiss_spectrum_component_is_colour_reverse(new_settings));
+							cmzn_spectrum_component_is_colour_reverse(new_settings));
 				 }
 				 if (spectrum_editor->spectrum_colour_mapping_choice)
 				 {
-						colour_mapping = Cmiss_spectrum_component_get_colour_mapping(
+						colour_mapping = cmzn_spectrum_component_get_colour_mapping(
 							 new_settings);
 						switch (colour_mapping)
 						{
@@ -494,7 +494,7 @@ Changes the currently chosen settings.
 
 				 if (spectrum_editor->spectrum_exaggeration_text)
 				 {
-						exaggeration = Cmiss_spectrum_component_get_exaggeration(new_settings);
+						exaggeration = cmzn_spectrum_component_get_exaggeration(new_settings);
 						sprintf(temp_string,"%10g",fabs(exaggeration));
 						spectrum_editor->spectrum_exaggeration_text->SetValue(wxString::FromAscii(temp_string));
 						if (exaggeration >= 0.0)
@@ -518,19 +518,19 @@ Changes the currently chosen settings.
 				 }
 				if (spectrum_editor->spectrum_data_component_text)
 				{
-					component = Cmiss_spectrum_component_get_field_component(new_settings);
+					component = cmzn_spectrum_component_get_field_component(new_settings);
 					sprintf(temp_string,"%d",component);
 					spectrum_editor->spectrum_data_component_text->SetValue(wxString::FromAscii(temp_string));
 				}
 				if (spectrum_editor->spectrum_number_of_bands_text)
 				{
-					 number_of_bands = Cmiss_spectrum_component_get_number_of_bands(new_settings);
+					 number_of_bands = cmzn_spectrum_component_get_number_of_bands(new_settings);
 					 sprintf(temp_string,"%10d",number_of_bands);
 					 spectrum_editor->spectrum_number_of_bands_text->SetValue(wxString::FromAscii(temp_string));
 				}
 				if (spectrum_editor->spectrum_ratio_of_black_bands_text)
 				{
-					black_band_proportion = Cmiss_spectrum_component_get_black_band_proportion(new_settings);
+					black_band_proportion = cmzn_spectrum_component_get_black_band_proportion(new_settings);
 					band_ratio = (float)(black_band_proportion) / 1000.0;
 					sprintf(temp_string,"%10g",band_ratio);
 					spectrum_editor->spectrum_ratio_of_black_bands_text->SetValue(wxString::FromAscii(temp_string));
@@ -547,7 +547,7 @@ Changes the currently chosen settings.
 				}
 				if (spectrum_editor->spectrum_editor_step_value_text)
 				{
-					step_value = Cmiss_spectrum_component_get_step_value(new_settings);
+					step_value = cmzn_spectrum_component_get_step_value(new_settings);
 					sprintf(temp_string,"%10g",step_value);
 					spectrum_editor->spectrum_editor_step_value_text->SetValue(wxString::FromAscii(temp_string));
 				}
@@ -562,40 +562,40 @@ Changes the currently chosen settings.
 				if (spectrum_editor->spectrum_range_min_text)
 				{
 					sprintf(temp_string,"%10g",
-						Cmiss_spectrum_component_get_range_minimum(new_settings));
+						cmzn_spectrum_component_get_range_minimum(new_settings));
 					spectrum_editor->spectrum_range_min_text->SetValue(wxString::FromAscii(temp_string));
 				}
 				if (spectrum_editor->spectrum_range_max_text)
 				{
 					sprintf(temp_string,"%10g",
-						Cmiss_spectrum_component_get_range_maximum(new_settings));
+						cmzn_spectrum_component_get_range_maximum(new_settings));
 					spectrum_editor->spectrum_range_max_text->SetValue(wxString::FromAscii(temp_string));
 				}
 				if (spectrum_editor->spectrum_extend_below_check)
 				{
-					 extend = Cmiss_spectrum_component_is_extend_below(new_settings);
+					 extend = cmzn_spectrum_component_is_extend_below(new_settings);
 					 spectrum_editor->spectrum_extend_below_check->SetValue(extend);
 				}
 				if (spectrum_editor->spectrum_extend_above_check)
 				{
-					 extend = Cmiss_spectrum_component_is_extend_above(new_settings);
+					 extend = cmzn_spectrum_component_is_extend_above(new_settings);
 					 spectrum_editor->spectrum_extend_above_check->SetValue(extend);
 				}
 				if (spectrum_editor->spectrum_fix_maximum_check)
 				{
-					 fix = Cmiss_spectrum_component_get_fix_maximum_flag(new_settings);
+					 fix = cmzn_spectrum_component_get_fix_maximum_flag(new_settings);
 					 spectrum_editor->spectrum_fix_maximum_check->SetValue(fix);
 					 spectrum_editor->spectrum_range_max_text->Enable(!fix);
 				}
 				if (spectrum_editor->spectrum_fix_minimum_check)
 				{
-					 fix = Cmiss_spectrum_component_get_fix_minimum_flag(new_settings);
+					 fix = cmzn_spectrum_component_get_fix_minimum_flag(new_settings);
 					 spectrum_editor->spectrum_fix_minimum_check->SetValue(fix);
 					 spectrum_editor->spectrum_range_min_text->Enable(!fix);
 				}
 				if (spectrum_editor->spectrum_normalised_colour_range_min_text)
 				{					 sprintf(temp_string,"%10g",
-									 Cmiss_spectrum_component_get_colour_minimum(new_settings));
+									 cmzn_spectrum_component_get_colour_minimum(new_settings));
 					 spectrum_editor->spectrum_normalised_colour_range_min_text->SetValue(wxString::FromAscii(temp_string));
 					 if (CMISS_SPECTRUM_COMPONENT_COLOUR_MAPPING_BANDED == colour_mapping
 							|| CMISS_SPECTRUM_COMPONENT_COLOUR_MAPPING_STEP == colour_mapping)
@@ -610,7 +610,7 @@ Changes the currently chosen settings.
 				if (spectrum_editor->spectrum_normalised_colour_range_max_text)
 				{
 					 sprintf(temp_string,"%10g",
-						 Cmiss_spectrum_component_get_colour_maximum(new_settings));
+						 cmzn_spectrum_component_get_colour_maximum(new_settings));
 					 spectrum_editor->spectrum_normalised_colour_range_max_text->SetValue(wxString::FromAscii(temp_string));
 					 if (CMISS_SPECTRUM_COMPONENT_COLOUR_MAPPING_BANDED == colour_mapping || CMISS_SPECTRUM_COMPONENT_COLOUR_MAPPING_STEP == colour_mapping)
 					 {
@@ -657,7 +657,7 @@ If current_settings is NULL, no editing fields are displayed.
 ==============================================================================*/
 {
 	int return_code,i,num_children;
-	struct Cmiss_spectrum_component *temp_settings;
+	struct cmzn_spectrum_component *temp_settings;
 	ENTER(spectrum_editor_select_settings_item);
 	/* check arguments */
 	if (spectrum_editor)
@@ -668,7 +668,7 @@ If current_settings is NULL, no editing fields are displayed.
 		 {
 				for (i=1;i<(num_children+1);i++)
 				{
-					 temp_settings = Cmiss_spectrum_get_component_at_position(spectrum_editor->edit_spectrum,i);
+					 temp_settings = cmzn_spectrum_get_component_at_position(spectrum_editor->edit_spectrum,i);
 					 if (!spectrum_editor->current_settings)
 					 {
 							spectrum_editor->current_settings=temp_settings;
@@ -681,15 +681,15 @@ If current_settings is NULL, no editing fields are displayed.
 		 }
 		 else
 		 {
-				spectrum_editor->current_settings=(struct Cmiss_spectrum_component *)NULL;
+				spectrum_editor->current_settings=(struct cmzn_spectrum_component *)NULL;
 		 }
 		/* Grey Delete and Priority buttons if no current_settings */
 		 spectrum_editor->spectrum_settings_del_button->Enable(
-				(struct Cmiss_spectrum_component *)NULL != spectrum_editor->current_settings);
+				(struct cmzn_spectrum_component *)NULL != spectrum_editor->current_settings);
 		 spectrum_editor->spectrum_settings_up_button->Enable(
-				(struct Cmiss_spectrum_component *)NULL != spectrum_editor->current_settings);
+				(struct cmzn_spectrum_component *)NULL != spectrum_editor->current_settings);
 		 spectrum_editor->spectrum_settings_dn_button->Enable(
-				(struct Cmiss_spectrum_component *)NULL != spectrum_editor->current_settings);
+				(struct cmzn_spectrum_component *)NULL != spectrum_editor->current_settings);
 		 /* send selected object to settings editor */
 		 return_code=spectrum_editor_wx_set_settings(
 				spectrum_editor);
@@ -714,23 +714,23 @@ Called when a modify button - add, delete, up, down - is activated.
 ==============================================================================*/
 {
 	 int list_changed = 0, position, return_code = 0;
-	 struct Cmiss_spectrum_component *settings;
+	 struct cmzn_spectrum_component *settings;
 
 	 ENTER(spectrum_editor_settings_wx_key_presssed);
 	 if (spectrum_editor->edit_spectrum && flag)
 	 {
 			if (strcmp(flag, "Add") == 0)
 			{
-				 settings=CREATE(Cmiss_spectrum_component)();
+				 settings=CREATE(cmzn_spectrum_component)();
 				 if (settings != 0)
 				 {
 						return_code=1;
 						if (spectrum_editor->current_settings)
 						{
 							 /* copy current settings into new settings */
-							 return_code=COPY(Cmiss_spectrum_component)(settings,
+							 return_code=COPY(cmzn_spectrum_component)(settings,
 									spectrum_editor->current_settings);
-							 Cmiss_spectrum_component_set_active(settings, true);
+							 cmzn_spectrum_component_set_active(settings, true);
 						}
 						if (return_code&&Spectrum_add_component(
 									 spectrum_editor->edit_spectrum,settings,0))
@@ -738,44 +738,44 @@ Called when a modify button - add, delete, up, down - is activated.
 							 list_changed=1;
 							 spectrum_editor->current_settings=settings;
 						}
-						Cmiss_spectrum_component_destroy(&settings);
+						cmzn_spectrum_component_destroy(&settings);
 				 }
 			}
 			else if (strcmp(flag, "Del") == 0)
 			{
-				 list_changed=Cmiss_spectrum_remove_component(
+				 list_changed=cmzn_spectrum_remove_component(
 						spectrum_editor->edit_spectrum,spectrum_editor->current_settings);
-				 spectrum_editor->current_settings=(struct Cmiss_spectrum_component *)NULL;
+				 spectrum_editor->current_settings=(struct cmzn_spectrum_component *)NULL;
 			}
 			else if (strcmp(flag, "Up") == 0)
 			{
 				 /* increase position of current_settings by 1 */
-				 if (1<(position=Cmiss_spectrum_get_component_position(
+				 if (1<(position=cmzn_spectrum_get_component_position(
 									 spectrum_editor->edit_spectrum,spectrum_editor->current_settings)))
 				 {
 						list_changed=1;
-						ACCESS(Cmiss_spectrum_component)(spectrum_editor->current_settings);
-						Cmiss_spectrum_remove_component(spectrum_editor->edit_spectrum,
+						ACCESS(cmzn_spectrum_component)(spectrum_editor->current_settings);
+						cmzn_spectrum_remove_component(spectrum_editor->edit_spectrum,
 							 spectrum_editor->current_settings);
 						Spectrum_add_component(spectrum_editor->edit_spectrum,
 							 spectrum_editor->current_settings,position-1);
-						DEACCESS(Cmiss_spectrum_component)(&(spectrum_editor->current_settings));
+						DEACCESS(cmzn_spectrum_component)(&(spectrum_editor->current_settings));
 				 }
 			}
 			else if (strcmp(flag, "Dn") == 0)
 			{
 				 /* decrease position of current_settings by 1 */
-				 position=Cmiss_spectrum_get_component_position(
+				 position=cmzn_spectrum_get_component_position(
 								spectrum_editor->edit_spectrum,spectrum_editor->current_settings);
 				 if (position > 0)
 				 {
 						list_changed=1;
-						ACCESS(Cmiss_spectrum_component)(spectrum_editor->current_settings);
-						Cmiss_spectrum_remove_component(spectrum_editor->edit_spectrum,
+						ACCESS(cmzn_spectrum_component)(spectrum_editor->current_settings);
+						cmzn_spectrum_remove_component(spectrum_editor->edit_spectrum,
 							 spectrum_editor->current_settings);
 						Spectrum_add_component(spectrum_editor->edit_spectrum,
 							 spectrum_editor->current_settings,position+1);
-						DEACCESS(Cmiss_spectrum_component)(&(spectrum_editor->current_settings));
+						DEACCESS(cmzn_spectrum_component)(&(spectrum_editor->current_settings));
 				 }
 			}
 			if (list_changed)
@@ -812,9 +812,9 @@ settings.
 	{
 		if (spectrum_editor->edit_spectrum)
 		{
-			FOR_EACH_OBJECT_IN_LIST(Cmiss_spectrum_component)(
-				Cmiss_spectrum_component_clear_changed,(void *)NULL,
-				get_Cmiss_spectrum_component_list( spectrum_editor->edit_spectrum ));
+			FOR_EACH_OBJECT_IN_LIST(cmzn_spectrum_component)(
+				cmzn_spectrum_component_clear_changed,(void *)NULL,
+				get_cmzn_spectrum_component_list( spectrum_editor->edit_spectrum ));
 			spectrum_editor_wx_make_settings_list(spectrum_editor);
 			return_code=1;
 		}
@@ -875,7 +875,7 @@ Called when a button - OK, Apply, Revert or Cancel - is activated.
 }
 
 void spectrum_editor_wx_update_settings(struct Spectrum_editor *spectrum_editor,
-	 struct Cmiss_spectrum_component *new_settings)
+	 struct cmzn_spectrum_component *new_settings)
 /*******************************************************************************
 LAST MODIFIED : 31 August 2007
 
@@ -887,10 +887,10 @@ Callback for when changes made in the settings editor.
 	if (spectrum_editor && new_settings)
 	{
 		/* keep visibility of current_settings */
-		 bool active = Cmiss_spectrum_component_is_active(spectrum_editor->current_settings);
-		 Cmiss_spectrum_component_modify(spectrum_editor->current_settings,new_settings,
-				get_Cmiss_spectrum_component_list( spectrum_editor->edit_spectrum ));
-		 Cmiss_spectrum_component_set_active(spectrum_editor->current_settings, active);
+		 bool active = cmzn_spectrum_component_is_active(spectrum_editor->current_settings);
+		 cmzn_spectrum_component_modify(spectrum_editor->current_settings,new_settings,
+				get_cmzn_spectrum_component_list( spectrum_editor->edit_spectrum ));
+		 cmzn_spectrum_component_set_active(spectrum_editor->current_settings, active);
 		 spectrum_editor_wx_make_settings_list(spectrum_editor);
 		 Spectrum_calculate_range(spectrum_editor->edit_spectrum);
 		 make_colour_bar(spectrum_editor);
@@ -911,8 +911,8 @@ class wxSpectrumEditor : public wxFrame
 	 DEFINE_MANAGER_CLASS(Spectrum);
 	 Managed_object_listbox<Spectrum, MANAGER_CLASS(Spectrum)>
 	 *spectrum_object_listbox;
-	 DEFINE_MANAGER_CLASS(Cmiss_graphics_filter);
-	 Managed_object_chooser<Cmiss_graphics_filter,MANAGER_CLASS(Cmiss_graphics_filter)>
+	 DEFINE_MANAGER_CLASS(cmzn_graphics_filter);
+	 Managed_object_chooser<cmzn_graphics_filter,MANAGER_CLASS(cmzn_graphics_filter)>
 	 *filter_chooser;
 public:
 
@@ -940,26 +940,26 @@ public:
 			wxPanel *spectrum_region_chooser_panel =
 				 XRCCTRL(*this, "wxSpectrumRegionChooserPanel", wxPanel);
 			char *initial_path;
-		   initial_path = Cmiss_region_get_root_region_path();
+		   initial_path = cmzn_region_get_root_region_path();
 		   spectrum_region_chooser = new wxRegionChooser(spectrum_region_chooser_panel,
 				spectrum_editor->root_region, initial_path);
 			DEALLOCATE(initial_path);
-			Callback_base< Cmiss_region* > *spectrum_region_chooser_callback =
-				new Callback_member_callback< Cmiss_region*,
-				wxSpectrumEditor, int (wxSpectrumEditor::*)(Cmiss_region *) >
+			Callback_base< cmzn_region* > *spectrum_region_chooser_callback =
+				new Callback_member_callback< cmzn_region*,
+				wxSpectrumEditor, int (wxSpectrumEditor::*)(cmzn_region *) >
 				(this, &wxSpectrumEditor::spectrum_region_chooser_callback);
 			spectrum_region_chooser->set_callback(spectrum_region_chooser_callback);
 			wxPanel *spectrum_filter_chooser_panel =
 				 XRCCTRL(*this, "wxSpectrumFilterChooserPanel", wxPanel);
-			Cmiss_graphics_filter_id filter =
-				Cmiss_graphics_filter_module_get_default_filter(spectrum_editor->filter_module);
+			cmzn_graphics_filter_id filter =
+				cmzn_graphics_filter_module_get_default_filter(spectrum_editor->filter_module);
 			filter_chooser =
-				 new Managed_object_chooser<Cmiss_graphics_filter, MANAGER_CLASS(Cmiss_graphics_filter)>
+				 new Managed_object_chooser<cmzn_graphics_filter, MANAGER_CLASS(cmzn_graphics_filter)>
 				 (spectrum_filter_chooser_panel, filter,
-					 Cmiss_graphics_filter_module_get_manager(spectrum_editor->filter_module),
-						(MANAGER_CONDITIONAL_FUNCTION(Cmiss_graphics_filter) *)NULL, (void *)NULL,
+					 cmzn_graphics_filter_module_get_manager(spectrum_editor->filter_module),
+						(MANAGER_CONDITIONAL_FUNCTION(cmzn_graphics_filter) *)NULL, (void *)NULL,
 						spectrum_editor->user_interface);
-			Cmiss_graphics_filter_destroy(&filter);
+			cmzn_graphics_filter_destroy(&filter);
 
 			XRCCTRL(*this, "wxSpectrumRangeMinText", wxTextCtrl)->Connect(wxEVT_KILL_FOCUS,
 				 wxCommandEventHandler(wxSpectrumEditor::OnSpectrumSettingRangeValueEntered),
@@ -1041,14 +1041,14 @@ struct Spectrum *spectrum_editor_spectrum_list_get_selected()
 
 int set_autorange_scene()
 {
-	Cmiss_region_id current_region = spectrum_region_chooser->get_region();
+	cmzn_region_id current_region = spectrum_region_chooser->get_region();
 	if (spectrum_editor->autorange_scene)
-		Cmiss_scene_destroy(&spectrum_editor->autorange_scene);
-	spectrum_editor->autorange_scene = Cmiss_region_get_scene_internal(current_region);
+		cmzn_scene_destroy(&spectrum_editor->autorange_scene);
+	spectrum_editor->autorange_scene = cmzn_region_get_scene_internal(current_region);
 	return 1;
 }
 
-int spectrum_region_chooser_callback(Cmiss_region *region)
+int spectrum_region_chooser_callback(cmzn_region *region)
 {
 	set_autorange_scene();
 	return 1;
@@ -1064,9 +1064,9 @@ Callback for Spectrum clear colour checkbox changed.
 {
 	USE_PARAMETER(event);
 	 if (spectrum_editor->spectrum_overwrite_colour_radiobox->GetSelection() !=
-			Cmiss_spectrum_is_material_overwrite(spectrum_editor->edit_spectrum))
+			cmzn_spectrum_is_material_overwrite(spectrum_editor->edit_spectrum))
 	 {
-			Cmiss_spectrum_set_material_overwrite(spectrum_editor->edit_spectrum,
+			cmzn_spectrum_set_material_overwrite(spectrum_editor->edit_spectrum,
 				 spectrum_editor->spectrum_overwrite_colour_radiobox->GetSelection());
 	 }
 }
@@ -1079,11 +1079,11 @@ DESCRIPTION :
 Callback for Spectrum settings.
 ==============================================================================*/
 {
-	 struct Cmiss_spectrum_component *temp_settings;
+	 struct cmzn_spectrum_component *temp_settings;
 	 int selection;
 	USE_PARAMETER(event);
 	 selection = spectrum_editor->spectrum_settings_checklist->GetSelection();
-	 temp_settings = Cmiss_spectrum_get_component_at_position(spectrum_editor->edit_spectrum,selection+1);
+	 temp_settings = cmzn_spectrum_get_component_at_position(spectrum_editor->edit_spectrum,selection+1);
 	 if (temp_settings)
 	 {
 			if (temp_settings != spectrum_editor->current_settings)
@@ -1091,9 +1091,9 @@ Callback for Spectrum settings.
 				 spectrum_editor->current_settings = temp_settings;
 			}
 			if (spectrum_editor->spectrum_settings_checklist->IsChecked(selection) !=
-				 static_cast<bool>(Cmiss_spectrum_component_is_active(temp_settings)))
+				 static_cast<bool>(cmzn_spectrum_component_is_active(temp_settings)))
 			{
-				Cmiss_spectrum_component_set_active(temp_settings,
+				cmzn_spectrum_component_set_active(temp_settings,
 					  spectrum_editor->spectrum_settings_checklist->IsChecked(selection));
 				 spectrum_editor_wx_update_settings(spectrum_editor, temp_settings);
 			}
@@ -1160,13 +1160,13 @@ Callback for the range text widgets.
 	const char *text;
 	float new_parameter;
 	int selection;
-	struct Cmiss_spectrum_component *settings;
+	struct cmzn_spectrum_component *settings;
 
 	ENTER(OnSpectrumSettingRangeValueEntered);
 	USE_PARAMETER(event);
 	/* check arguments */
 	selection = spectrum_editor->spectrum_settings_checklist->GetSelection();
-	settings = Cmiss_spectrum_get_component_at_position(spectrum_editor->edit_spectrum,selection+1);
+	settings = cmzn_spectrum_get_component_at_position(spectrum_editor->edit_spectrum,selection+1);
 	if (settings != 0)
 	{
 		if (spectrum_editor->spectrum_range_min_text)
@@ -1176,7 +1176,7 @@ Callback for the range text widgets.
 			if (text)
 			{
 				sscanf(text,"%f",&new_parameter);
-				Cmiss_spectrum_component_set_range_minimum(settings, new_parameter);
+				cmzn_spectrum_component_set_range_minimum(settings, new_parameter);
 			}
 			else
 			{
@@ -1191,7 +1191,7 @@ Callback for the range text widgets.
 			if (text)
 			{
 				sscanf(text,"%f",&new_parameter);
-				Cmiss_spectrum_component_set_range_maximum(settings, new_parameter);
+				cmzn_spectrum_component_set_range_maximum(settings, new_parameter);
 			}
 			else
 			{
@@ -1219,33 +1219,33 @@ Callback for the range text widgets.
 ==============================================================================*/
 {
 	 int selection;
-	 struct Cmiss_spectrum_component *settings;
+	 struct cmzn_spectrum_component *settings;
 
 	 ENTER(OnSpectrumSettingRangeChecked);
 	USE_PARAMETER(event);
 	 selection = spectrum_editor->spectrum_settings_checklist->GetSelection();
 	 if (spectrum_editor &&
-			(settings = Cmiss_spectrum_get_component_at_position(spectrum_editor->edit_spectrum,selection+1)))
+			(settings = cmzn_spectrum_get_component_at_position(spectrum_editor->edit_spectrum,selection+1)))
 	 {
 			if (spectrum_editor->spectrum_extend_above_check)
 			{
 
-				Cmiss_spectrum_component_set_extend_above(settings,
+				cmzn_spectrum_component_set_extend_above(settings,
 					 spectrum_editor->spectrum_extend_above_check->IsChecked());
 			}
 			if (spectrum_editor->spectrum_extend_below_check)
 			{
-				Cmiss_spectrum_component_set_extend_below(settings,
+				cmzn_spectrum_component_set_extend_below(settings,
 					 spectrum_editor->spectrum_extend_below_check->IsChecked());
 			}
 			if (spectrum_editor->spectrum_fix_maximum_check)
 			{
-				 Cmiss_spectrum_component_set_fix_maximum_flag(settings,
+				 cmzn_spectrum_component_set_fix_maximum_flag(settings,
 						spectrum_editor->spectrum_fix_maximum_check->IsChecked());
 			}
 			if (spectrum_editor->spectrum_fix_minimum_check)
 			{
-				 Cmiss_spectrum_component_set_fix_minimum_flag(settings,
+				 cmzn_spectrum_component_set_fix_minimum_flag(settings,
 						spectrum_editor->spectrum_fix_minimum_check->IsChecked());
 			}
 			spectrum_editor_wx_update_settings(spectrum_editor, settings);
@@ -1315,8 +1315,8 @@ DESCRIPTION :
 Callback for colour settings
 ==============================================================================*/
 {
-	enum Cmiss_spectrum_component_colour_mapping new_colour_mapping = CMISS_SPECTRUM_COMPONENT_COLOUR_MAPPING_ALPHA;
-	struct Cmiss_spectrum_component *settings;
+	enum cmzn_spectrum_component_colour_mapping new_colour_mapping = CMISS_SPECTRUM_COMPONENT_COLOUR_MAPPING_ALPHA;
+	struct cmzn_spectrum_component *settings;
 	const char *string_selection;
 	int selection;
 
@@ -1325,7 +1325,7 @@ Callback for colour settings
 	USE_PARAMETER(event);
 	selection = spectrum_editor->spectrum_settings_checklist->GetSelection();
 	if (spectrum_editor &&
-		 (settings = Cmiss_spectrum_get_component_at_position(spectrum_editor->edit_spectrum,selection+1)))
+		 (settings = cmzn_spectrum_get_component_at_position(spectrum_editor->edit_spectrum,selection+1)))
 	{
 		/* get the widget from the call data */
 		wxString tmpstr = spectrum_editor->spectrum_colour_mapping_choice->GetStringSelection();
@@ -1376,9 +1376,9 @@ Callback for colour settings
 			{
 				new_colour_mapping = CMISS_SPECTRUM_COMPONENT_COLOUR_MAPPING_WHITE_TO_RED;
 			}
-			if (Cmiss_spectrum_component_get_colour_mapping(settings) != new_colour_mapping)
+			if (cmzn_spectrum_component_get_colour_mapping(settings) != new_colour_mapping)
 			{
-				if (Cmiss_spectrum_component_set_colour_mapping(settings, new_colour_mapping))
+				if (cmzn_spectrum_component_set_colour_mapping(settings, new_colour_mapping))
 				{
 					spectrum_editor_wx_update_settings(spectrum_editor, settings);
 				}
@@ -1410,21 +1410,21 @@ Callback for the colour_value text widgets.
 {
 	const char *text;
 	float new_parameter;
-	struct Cmiss_spectrum_component *settings;
+	struct cmzn_spectrum_component *settings;
 	int selection;
 
 	ENTER(OnSpectrumColourMappingChoice);
 	USE_PARAMETER(event);
 	selection = spectrum_editor->spectrum_settings_checklist->GetSelection();
 	if (spectrum_editor &&
-		(settings = Cmiss_spectrum_get_component_at_position(spectrum_editor->edit_spectrum,selection+1)))
+		(settings = cmzn_spectrum_get_component_at_position(spectrum_editor->edit_spectrum,selection+1)))
 	{
 		wxString min_string = spectrum_editor->spectrum_normalised_colour_range_min_text->GetValue();
 		text = min_string.mb_str(wxConvUTF8);
 		if (text)
 		{
 			sscanf(text,"%f",&new_parameter);
-			Cmiss_spectrum_component_set_colour_minimum(settings, new_parameter);
+			cmzn_spectrum_component_set_colour_minimum(settings, new_parameter);
 			text = NULL;
 		}
 		wxString max_string = spectrum_editor->spectrum_normalised_colour_range_max_text->GetValue();
@@ -1432,7 +1432,7 @@ Callback for the colour_value text widgets.
 		if (text)
 		{
 			sscanf(text,"%f",&new_parameter);
-			Cmiss_spectrum_component_set_colour_maximum(settings, new_parameter);
+			cmzn_spectrum_component_set_colour_maximum(settings, new_parameter);
 		}
 		spectrum_editor_wx_update_settings(spectrum_editor, settings);
 		spectrum_editor_wx_set_settings(spectrum_editor);
@@ -1454,15 +1454,15 @@ Callback for the settings reverse toggle button.
 ==============================================================================*/
 {
 	 int selection;
-	 struct Cmiss_spectrum_component *settings;
+	 struct cmzn_spectrum_component *settings;
 
 	 ENTER(spectrum_editor_settings_reverse_toggle_CB);
 	USE_PARAMETER(event);
 	 selection = spectrum_editor->spectrum_settings_checklist->GetSelection();
 	 if (spectrum_editor &&
-			(settings = Cmiss_spectrum_get_component_at_position(spectrum_editor->edit_spectrum,selection+1)))
+			(settings = cmzn_spectrum_get_component_at_position(spectrum_editor->edit_spectrum,selection+1)))
 	 {
-			 Cmiss_spectrum_component_set_colour_reverse(settings,
+			 cmzn_spectrum_component_set_colour_reverse(settings,
 				 spectrum_editor->spectrum_reverse_checkbox->GetValue());
 			spectrum_editor_wx_update_settings(spectrum_editor, settings);
 			/* make sure the correct reverse flag is shown in case of error */
@@ -1484,8 +1484,8 @@ DESCRIPTION :
 Callback for the settings type.
 ==============================================================================*/
 {
-	 enum Cmiss_spectrum_component_scale_type new_spectrum_type = CMISS_SPECTRUM_COMPONENT_SCALE_INVALID;
-	 struct Cmiss_spectrum_component *settings;
+	 enum cmzn_spectrum_component_scale_type new_spectrum_type = CMISS_SPECTRUM_COMPONENT_SCALE_INVALID;
+	 struct cmzn_spectrum_component *settings;
 	 int selection;
 	 const char *string_selection;
 
@@ -1493,7 +1493,7 @@ Callback for the settings type.
 	USE_PARAMETER(event);
 	 selection = spectrum_editor->spectrum_settings_checklist->GetSelection();
 	 if (spectrum_editor &&
-			(settings = Cmiss_spectrum_get_component_at_position(spectrum_editor->edit_spectrum,selection+1)))
+			(settings = cmzn_spectrum_get_component_at_position(spectrum_editor->edit_spectrum,selection+1)))
 	 {
 			/* get the widget from the call data */
 			wxString tmpstr = spectrum_editor->spectrum_type_choice->GetStringSelection();
@@ -1508,9 +1508,9 @@ Callback for the settings type.
 				 {
 						new_spectrum_type = CMISS_SPECTRUM_COMPONENT_SCALE_LOG;
 				 }
-				 if (Cmiss_spectrum_component_get_scale_type(settings) != new_spectrum_type)
+				 if (cmzn_spectrum_component_get_scale_type(settings) != new_spectrum_type)
 				 {
-						if (Cmiss_spectrum_component_set_scale_type(settings, new_spectrum_type))
+						if (cmzn_spectrum_component_set_scale_type(settings, new_spectrum_type))
 						{
 							 spectrum_editor_wx_update_settings(spectrum_editor, settings);
 						}
@@ -1541,14 +1541,14 @@ Callback for the exaggeration widgets.
 {
 	const char *text;
 	float new_parameter;
-	struct Cmiss_spectrum_component *settings;
+	struct cmzn_spectrum_component *settings;
 	int selection;
 
 	ENTER(OnSpectrumExaggerationSettingsChanged);
 	USE_PARAMETER(event);
 	selection = spectrum_editor->spectrum_settings_checklist->GetSelection();
 	if (spectrum_editor &&
-		(settings = Cmiss_spectrum_get_component_at_position(spectrum_editor->edit_spectrum,selection+1)))
+		(settings = cmzn_spectrum_get_component_at_position(spectrum_editor->edit_spectrum,selection+1)))
 	{
 		wxString exaggeration_string = spectrum_editor->spectrum_exaggeration_text->GetValue();
 		text = exaggeration_string.mb_str(wxConvUTF8);
@@ -1566,9 +1566,9 @@ Callback for the exaggeration widgets.
 			new_parameter *= -1.0;
 		}
 		if(new_parameter !=
-			Cmiss_spectrum_component_get_exaggeration(settings))
+			cmzn_spectrum_component_get_exaggeration(settings))
 		{
-			Cmiss_spectrum_component_set_exaggeration(settings, new_parameter);
+			cmzn_spectrum_component_set_exaggeration(settings, new_parameter);
 			spectrum_editor_wx_update_settings(spectrum_editor, settings);
 		}
 		spectrum_editor_wx_set_settings(spectrum_editor);
@@ -1591,13 +1591,13 @@ Callback for the component widgets.
 {
 	const char *text;
 	int new_component, selection;
-	struct Cmiss_spectrum_component *settings;
+	struct cmzn_spectrum_component *settings;
 
 	ENTER(OnSpectrumDataValueEntered);
 	USE_PARAMETER(event);
 	selection = spectrum_editor->spectrum_settings_checklist->GetSelection();
 	if (spectrum_editor &&
-		(settings = Cmiss_spectrum_get_component_at_position(spectrum_editor->edit_spectrum,selection+1)))
+		(settings = cmzn_spectrum_get_component_at_position(spectrum_editor->edit_spectrum,selection+1)))
 	{
 		new_component = 1;
 		wxString component_string = spectrum_editor->spectrum_data_component_text->GetValue();
@@ -1612,9 +1612,9 @@ Callback for the component widgets.
 			"OnSpectrumDataValueEntered.  Missing widget text");
 		}
 		if(new_component !=
-			Cmiss_spectrum_component_get_field_component(settings))
+			cmzn_spectrum_component_get_field_component(settings))
 		{
-			Cmiss_spectrum_component_set_field_component(settings,new_component);
+			cmzn_spectrum_component_set_field_component(settings,new_component);
 			spectrum_editor_wx_update_settings(spectrum_editor, settings);
 		}
 		spectrum_editor_wx_set_settings(spectrum_editor);
@@ -1638,13 +1638,13 @@ Callback for the band  widgets.
 	const char *text;
 	int new_parameter, selection;
 	float new_ratio;
-	struct Cmiss_spectrum_component *settings;
+	struct cmzn_spectrum_component *settings;
 
 	ENTER(OnSpectrumBandsValuesEntered);
 	USE_PARAMETER(event);
 	selection = spectrum_editor->spectrum_settings_checklist->GetSelection();
 	if (spectrum_editor &&
-		(settings = Cmiss_spectrum_get_component_at_position(spectrum_editor->edit_spectrum,selection+1)))
+		(settings = cmzn_spectrum_get_component_at_position(spectrum_editor->edit_spectrum,selection+1)))
 	{
 		wxString num_bands_string = spectrum_editor->spectrum_number_of_bands_text->GetValue();
 		text = num_bands_string.mb_str(wxConvUTF8);
@@ -1659,9 +1659,9 @@ Callback for the band  widgets.
 				"OnSpectrumBandsValuesEntered.  Missing widget text");
 		}
 		if(new_parameter !=
-			Cmiss_spectrum_component_get_number_of_bands(settings))
+			cmzn_spectrum_component_get_number_of_bands(settings))
 		{
-			Cmiss_spectrum_component_set_number_of_bands(settings,new_parameter);
+			cmzn_spectrum_component_set_number_of_bands(settings,new_parameter);
 			spectrum_editor_wx_update_settings(spectrum_editor, settings);
 		}
 		wxString sprectrum_ratio_string = spectrum_editor->spectrum_ratio_of_black_bands_text->GetValue();
@@ -1677,9 +1677,9 @@ Callback for the band  widgets.
 		}
 		new_parameter = (int)(new_ratio * 1000.0 + 0.5);
 		if(new_parameter !=
-			Cmiss_spectrum_component_get_black_band_proportion(settings))
+			cmzn_spectrum_component_get_black_band_proportion(settings))
 		{
-			Cmiss_spectrum_component_set_black_band_proportion(settings,new_parameter);
+			cmzn_spectrum_component_set_black_band_proportion(settings,new_parameter);
 			spectrum_editor_wx_update_settings(spectrum_editor, settings);
 		}
 		spectrum_editor_wx_set_settings(spectrum_editor);
@@ -1697,13 +1697,13 @@ void OnSpectrumStepValueEntered(wxCommandEvent &event)
 	const char *text;
 	float new_parameter;
 	int selection;
-	struct Cmiss_spectrum_component *settings;
+	struct cmzn_spectrum_component *settings;
 
 	ENTER(OnSpectrumStepValueEntered);
 USE_PARAMETER(event);
 	selection = spectrum_editor->spectrum_settings_checklist->GetSelection();
 	if (spectrum_editor &&
-		(settings = Cmiss_spectrum_get_component_at_position(spectrum_editor->edit_spectrum,selection+1)))
+		(settings = cmzn_spectrum_get_component_at_position(spectrum_editor->edit_spectrum,selection+1)))
 	{
 		wxString step_value = spectrum_editor->spectrum_editor_step_value_text->GetValue();
 		text = step_value.mb_str(wxConvUTF8);
@@ -1717,9 +1717,9 @@ USE_PARAMETER(event);
 				"OnSpectrumStepValueEntered.  Missing widget text");
 		}
 		if(new_parameter !=
-			Cmiss_spectrum_component_get_step_value(settings))
+			cmzn_spectrum_component_get_step_value(settings))
 		{
-			Cmiss_spectrum_component_set_step_value(settings, new_parameter);
+			cmzn_spectrum_component_set_step_value(settings, new_parameter);
 			spectrum_editor_wx_update_settings(spectrum_editor, settings);
 		}
 		spectrum_editor_wx_set_settings(spectrum_editor);
@@ -1738,7 +1738,7 @@ void OnSpectrumAutorangePressed(wxCommandEvent &event)
 	if (spectrum_editor)
 	{
 		double maximum, minimum;
-		int maxRanges = Cmiss_scene_get_spectrum_data_range(spectrum_editor->autorange_scene,
+		int maxRanges = cmzn_scene_get_spectrum_data_range(spectrum_editor->autorange_scene,
 			filter_chooser->get_object(), spectrum_editor->current_spectrum
 			/* Not spectrum_to_be_modified_copy as this ptr
 				identifies the valid graphics objects */,
@@ -1771,8 +1771,8 @@ void OnSpectrumEditorCreateNewSpectrum(wxCommandEvent& event)
 	if (NewSpectrumDialog->ShowModal() == wxID_OK)
 	{
 		wxString text = NewSpectrumDialog->GetValue();
-		spectrum = Cmiss_spectrum_create_private();
-		Cmiss_spectrum_set_name(spectrum, text.mb_str(wxConvUTF8));
+		spectrum = cmzn_spectrum_create_private();
+		cmzn_spectrum_set_name(spectrum, text.mb_str(wxConvUTF8));
 		if (spectrum)
 		{
 			if(MANAGER_COPY_WITHOUT_IDENTIFIER(Spectrum,name)
@@ -1997,12 +1997,12 @@ current spectrum.
 struct Spectrum_editor *CREATE(Spectrum_editor)(
 	 struct Spectrum_editor_dialog **spectrum_editor_dialog_address,
 	 struct Spectrum *spectrum,
-	 struct Cmiss_font *font,
+	 struct cmzn_font *font,
 	 struct Graphics_buffer_app_package *graphics_buffer_package,
 	 struct User_interface *user_interface,
-	 struct Cmiss_graphics_module *graphics_module,
-	 Cmiss_region_id root_region,
-	 struct Cmiss_region *spectrum_region)
+	 struct cmzn_graphics_module *graphics_module,
+	 cmzn_region_id root_region,
+	 struct cmzn_region *spectrum_region)
 /*******************************************************************************
 LAST MODIFIED : 6 May 2004
 
@@ -2029,22 +2029,22 @@ Creates a spectrum_editor widget.
 			{
 				/* initialise the structure */
 				spectrum_editor->spectrum_editor_dialog_address = spectrum_editor_dialog_address;
-				spectrum_editor->current_settings = (struct Cmiss_spectrum_component *)NULL;
+				spectrum_editor->current_settings = (struct cmzn_spectrum_component *)NULL;
 				spectrum_editor->current_spectrum=(struct Spectrum *)NULL;
 				spectrum_editor->edit_spectrum=(struct Spectrum *)NULL;
-				spectrum_editor->private_region=(struct Cmiss_region *)NULL;
+				spectrum_editor->private_region=(struct cmzn_region *)NULL;
 				spectrum_editor->user_interface=user_interface;
 				spectrum_editor->material_manager_callback_id=(void *)NULL;
 				spectrum_editor->spectrum_manager_callback_id=(void *)NULL;
-				spectrum_editor->spectrum_manager = Cmiss_graphics_module_get_spectrum_manager(
+				spectrum_editor->spectrum_manager = cmzn_graphics_module_get_spectrum_manager(
 					graphics_module);
-				spectrum_editor->filter_module = Cmiss_graphics_module_get_filter_module(graphics_module);
-				spectrum_editor->root_region = Cmiss_region_access(root_region);
+				spectrum_editor->filter_module = cmzn_graphics_module_get_filter_module(graphics_module);
+				spectrum_editor->root_region = cmzn_region_access(root_region);
 				spectrum_editor->editorMaterial = (struct Graphical_material *)NULL;
 				spectrum_editor->labelMaterial = (struct Graphical_material *)NULL;
 				spectrum_editor->colourBar = 0;
-				spectrum_editor->autorange_scene = (Cmiss_scene_id)NULL;
-				spectrum_editor->spectrum_editor_scene = (Cmiss_scene_id)NULL;
+				spectrum_editor->autorange_scene = (cmzn_scene_id)NULL;
+				spectrum_editor->spectrum_editor_scene = (cmzn_scene_id)NULL;
 				spectrum_editor->spectrum_editor_scene_viewer = (struct Scene_viewer_app *)NULL;
 				spectrum_editor->viewer_type = 0;
 				spectrum_editor->spectrum_range_min_text = NULL;
@@ -2154,21 +2154,21 @@ Creates a spectrum_editor widget.
 					 spectrum_editor->spectrum_lower_panel->SetScrollbars(10,10,10,40);
 					 spectrum_editor->spectrum_higher_panel->SetScrollbars(10,10,40,40);
 					 return_code = 1;
-					 spectrum_editor->editorMaterial = Cmiss_graphics_material_create_private();
-					 Cmiss_graphics_material_set_name(spectrum_editor->editorMaterial, "editorMaterial");
+					 spectrum_editor->editorMaterial = cmzn_graphics_material_create_private();
+					 cmzn_graphics_material_set_name(spectrum_editor->editorMaterial, "editorMaterial");
 					 Graphical_material_set_ambient(spectrum_editor->editorMaterial, &black );
 					 Graphical_material_set_diffuse(spectrum_editor->editorMaterial, &black );
 					 Graphical_material_set_shininess(spectrum_editor->editorMaterial, 0.3 );
-					 spectrum_editor->labelMaterial = Cmiss_graphics_material_create_private();
-					 Cmiss_graphics_material_set_name(spectrum_editor->labelMaterial, "labelMaterial");
+					 spectrum_editor->labelMaterial = cmzn_graphics_material_create_private();
+					 cmzn_graphics_material_set_name(spectrum_editor->labelMaterial, "labelMaterial");
 					 Graphical_material_set_ambient(spectrum_editor->labelMaterial, &white );
 					 Graphical_material_set_diffuse(spectrum_editor->labelMaterial, &white );
 					 Graphical_material_set_shininess(spectrum_editor->labelMaterial, 0.3 );
 					 if ( return_code )
 					 {
 							/* Create new rendition */
-							spectrum_editor->private_region = Cmiss_region_access(spectrum_region);
-							spectrum_editor->spectrum_editor_scene =CREATE(Cmiss_scene)(spectrum_editor->private_region,
+							spectrum_editor->private_region = cmzn_region_access(spectrum_region);
+							spectrum_editor->spectrum_editor_scene =CREATE(cmzn_scene)(spectrum_editor->private_region,
 								graphics_module);
 							viewer_light = CREATE(Light)("spectrum_editor_light");
 							set_Light_direction(viewer_light, light_direction);
@@ -2197,7 +2197,7 @@ Creates a spectrum_editor widget.
 								//-- 		spectrum_editor_viewer_input_callback,
 								//-- 		(void *)spectrum_editor, /*add_first*/0);
 								wxSize viewerSize = spectrum_editor->spectrum_panel->GetSize();
-								 Cmiss_scene_viewer_set_viewport_size(
+								 cmzn_scene_viewer_set_viewport_size(
 										spectrum_editor->spectrum_editor_scene_viewer->core_scene_viewer,
 										viewerSize.GetWidth(), viewerSize.GetHeight());
 								 Scene_viewer_set_lookat_parameters(
@@ -2255,7 +2255,7 @@ Set the <spectrum> to be edited by the <spectrum_editor>.
 				/* continue with the current_settings_type */
 				 spectrum_editor_wx_make_settings_list(spectrum_editor);
 				/* select the first settings item in the list (if any) */
-				spectrum_editor->current_settings=(struct Cmiss_spectrum_component *)NULL;
+				spectrum_editor->current_settings=(struct cmzn_spectrum_component *)NULL;
 				spectrum_editor_wx_select_settings_item(spectrum_editor);
 				/* turn on callbacks from settings editor */
 			}
@@ -2267,7 +2267,7 @@ Set the <spectrum> to be edited by the <spectrum_editor>.
 		if (!spectrum)
 		{
 			/* turn off settings editor by passing NULL settings */
-			spectrum_editor->current_settings=(struct Cmiss_spectrum_component *)NULL;
+			spectrum_editor->current_settings=(struct cmzn_spectrum_component *)NULL;
 			spectrum_editor_wx_set_settings(spectrum_editor);
 			if (spectrum_editor->edit_spectrum)
 			{
@@ -2325,24 +2325,24 @@ Destroys the <*spectrum_editor_address> and sets
 	{
 		return_code = 1;
 		delete spectrum_editor->wx_spectrum_editor;
-		Cmiss_graphics_material_destroy(&spectrum_editor->editorMaterial);
-		Cmiss_graphics_material_destroy(&spectrum_editor->labelMaterial);
-		Cmiss_glyph_colour_bar_destroy(&spectrum_editor->colourBar);
+		cmzn_graphics_material_destroy(&spectrum_editor->editorMaterial);
+		cmzn_graphics_material_destroy(&spectrum_editor->labelMaterial);
+		cmzn_glyph_colour_bar_destroy(&spectrum_editor->colourBar);
 		if (spectrum_editor->autorange_scene)
 		{
-			Cmiss_scene_destroy(&(spectrum_editor->autorange_scene));
+			cmzn_scene_destroy(&(spectrum_editor->autorange_scene));
 		}
 		if (spectrum_editor->root_region)
 		{
-			Cmiss_region_destroy(&(spectrum_editor->root_region));
+			cmzn_region_destroy(&(spectrum_editor->root_region));
 		}
 		if (spectrum_editor->private_region)
 		{
-			Cmiss_region_destroy(&(spectrum_editor->private_region));
+			cmzn_region_destroy(&(spectrum_editor->private_region));
 		}
 		if (spectrum_editor->spectrum_editor_scene)
 		{
-			Cmiss_scene_destroy(&spectrum_editor->spectrum_editor_scene);
+			cmzn_scene_destroy(&spectrum_editor->spectrum_editor_scene);
 		}
 		DESTROY(Scene_viewer_app)(&spectrum_editor->spectrum_editor_scene_viewer);
 		/* destroy edit_spectrum */
@@ -2355,7 +2355,7 @@ Destroys the <*spectrum_editor_address> and sets
 			DEACCESS(Spectrum)(
 				&(spectrum_editor->edit_spectrum));
 		}
-		Cmiss_graphics_filter_module_destroy(&spectrum_editor->filter_module);
+		cmzn_graphics_filter_module_destroy(&spectrum_editor->filter_module);
 		if (spectrum_editor->spectrum_manager_callback_id)
 		{
 			 MANAGER_DEREGISTER(Spectrum)(

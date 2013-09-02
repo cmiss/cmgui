@@ -53,23 +53,23 @@
 #include "graphics/scene.h"
 #include "selection/any_object_selection.h"
 #include "region/cmiss_region.h"
-/* following is temporary until circular references are removed for Cmiss_region  */
+/* following is temporary until circular references are removed for cmzn_region  */
 #include "region/cmiss_region_private.h"
 #include <set>
 
-struct Cmiss_context_app *Cmiss_context_app_access(Cmiss_context_app *context);
-int Cmiss_context_app_destroy(struct Cmiss_context_app **context_address);
+struct cmzn_context_app *cmzn_context_app_access(cmzn_context_app *context);
+int cmzn_context_app_destroy(struct cmzn_context_app **context_address);
 
-struct Cmiss_context_app
+struct cmzn_context_app
 {
 	int access_count;
 	struct Context *context;
-	struct Cmiss_command_data  *default_command_data;
+	struct cmzn_command_data  *default_command_data;
 	struct User_interface_module *UI_module;
 	struct Event_dispatcher *event_dispatcher;
 };
 
-struct Context *Cmiss_context_app_get_core_context(struct Cmiss_context_app *context)
+struct Context *cmzn_context_app_get_core_context(struct cmzn_context_app *context)
 {
 	return context->context;
 }
@@ -77,7 +77,7 @@ struct Context *Cmiss_context_app_get_core_context(struct Cmiss_context_app *con
 class Context_holder
 {
 private:
-	std::set<Cmiss_context_app *> contextsList;
+	std::set<cmzn_context_app *> contextsList;
 
 	Context_holder()
 	{
@@ -98,25 +98,25 @@ public:
 
 	void destroy()
 	{
-		std::set<Cmiss_context_app *>::iterator pos = contextsList.begin();
+		std::set<cmzn_context_app *>::iterator pos = contextsList.begin();
 		while (pos != contextsList.end())
 		{
-			Cmiss_context_app * temp_pointer = *pos;
-			Cmiss_context_app_destroy(&temp_pointer);
+			cmzn_context_app * temp_pointer = *pos;
+			cmzn_context_app_destroy(&temp_pointer);
 			++pos;
 		}
 		contextsList.clear();
 	}
 
-	void insert(Cmiss_context_app * context_in)
+	void insert(cmzn_context_app * context_in)
 	{
-		if (Cmiss_context_app_access(context_in))
+		if (cmzn_context_app_access(context_in))
 		{
 			contextsList.insert(context_in);
 		}
 	}
 
-	int hasEntry(Cmiss_context_app * context_in)
+	int hasEntry(cmzn_context_app * context_in)
 	{
 		if (contextsList.find(context_in) != contextsList.end())
 		{
@@ -127,13 +127,13 @@ public:
 
 };
 
-struct Cmiss_context_app *Cmiss_context_app_create(const char *id)
+struct cmzn_context_app *cmzn_context_app_create(const char *id)
 {
-	struct Cmiss_context_app *context = NULL;
-	if (ALLOCATE(context, struct Cmiss_context_app, 1))
+	struct cmzn_context_app *context = NULL;
+	if (ALLOCATE(context, struct cmzn_context_app, 1))
 	{
 		context->access_count = 1;
-		context->context = Cmiss_context_create(id);
+		context->context = cmzn_context_create(id);
 		context->default_command_data = NULL;
 		context->UI_module = NULL;
 		context->event_dispatcher = NULL;
@@ -143,10 +143,10 @@ struct Cmiss_context_app *Cmiss_context_app_create(const char *id)
 	return context;
 }
 
-int Cmiss_context_app_destroy(struct Cmiss_context_app **context_address)
+int cmzn_context_app_destroy(struct cmzn_context_app **context_address)
 {
 	int return_code = 0;
-	struct Cmiss_context_app *context = NULL;
+	struct cmzn_context_app *context = NULL;
 
 	if (context_address && NULL != (context = *context_address))
 	{
@@ -155,7 +155,7 @@ int Cmiss_context_app_destroy(struct Cmiss_context_app **context_address)
 		if (0 == context->access_count)
 		{
 			if (context->default_command_data)
-				Cmiss_command_data_destroy(&context->default_command_data);
+				cmzn_command_data_destroy(&context->default_command_data);
 			if (context->UI_module)
 				User_interface_module_destroy(&context->UI_module);
 			if (context->event_dispatcher)
@@ -164,7 +164,7 @@ int Cmiss_context_app_destroy(struct Cmiss_context_app **context_address)
 			}
 			if (context->context)
 			{
-				Cmiss_context_destroy(&context->context);
+				cmzn_context_destroy(&context->context);
 			}
 			DEALLOCATE(*context_address);
 		}
@@ -174,14 +174,14 @@ int Cmiss_context_app_destroy(struct Cmiss_context_app **context_address)
 	else
 	{
 		display_message(ERROR_MESSAGE,
-			"Cmiss_context_destroy.  Missing context address");
+			"cmzn_context_destroy.  Missing context address");
 		return_code = 0;
 	}
 
 	return return_code;
 }
 
-struct Cmiss_context_app *Cmiss_context_app_access(struct Cmiss_context_app *context)
+struct cmzn_context_app *cmzn_context_app_access(struct cmzn_context_app *context)
 {
 	if (context)
 	{
@@ -190,41 +190,41 @@ struct Cmiss_context_app *Cmiss_context_app_access(struct Cmiss_context_app *con
 	else
 	{
 		display_message(ERROR_MESSAGE,
-			"Cmiss_context_access.  Missing context");
+			"cmzn_context_access.  Missing context");
 	}
 	return context;
 }
 
-struct Cmiss_command_data *Cmiss_context_get_default_command_interpreter(struct Cmiss_context_app *context)
+struct cmzn_command_data *cmzn_context_get_default_command_interpreter(struct cmzn_context_app *context)
 {
-	struct Cmiss_command_data *command_data = NULL;
+	struct cmzn_command_data *command_data = NULL;
 
 	if (context && context->UI_module)
 	{
 		if (!context->default_command_data)
 		{
-			context->default_command_data = CREATE(Cmiss_command_data)(context, context->UI_module);
+			context->default_command_data = CREATE(cmzn_command_data)(context, context->UI_module);
 		}
 		if (context->default_command_data)
 		{
-			command_data = Cmiss_command_data_access(context->default_command_data);
+			command_data = cmzn_command_data_access(context->default_command_data);
 		}
 	}
 	else
 	{
 		display_message(ERROR_MESSAGE,
-			"Cmiss_context_get_default_command_interpreter.  Missing context "
+			"cmzn_context_get_default_command_interpreter.  Missing context "
 			"or user interface has not been enable yet.");
 	}
 
 	return command_data;
 }
 #if defined (WX_USER_INTERFACE) || (!defined (WIN32_USER_INTERFACE) && !defined (_MSC_VER))
-struct User_interface_module *Cmiss_context_create_user_interface(
-	struct Cmiss_context_app *context, int in_argc, char *in_argv[],
+struct User_interface_module *cmzn_context_create_user_interface(
+	struct cmzn_context_app *context, int in_argc, char *in_argv[],
 	void *user_interface_instance)
 #else
-struct User_interface_module *Cmiss_context_create_user_interface(
+struct User_interface_module *cmzn_context_create_user_interface(
 	struct Context *context, int in_argc, char *in_argv[],
 	HINSTANCE current_instance, HINSTANCE previous_instance,
 	LPSTR command_line,int initial_main_window_state,
@@ -240,7 +240,7 @@ struct User_interface_module *Cmiss_context_create_user_interface(
 		{
 #if defined (WX_USER_INTERFACE)
 			if (user_interface_instance)
-				Event_dispatcher_set_wx_instance(Cmiss_context_app_get_default_event_dispatcher(context), user_interface_instance);
+				Event_dispatcher_set_wx_instance(cmzn_context_app_get_default_event_dispatcher(context), user_interface_instance);
 #endif
 #if defined (WX_USER_INTERFACE) || (!defined (WIN32_USER_INTERFACE) && !defined (_MSC_VER))
 			context->UI_module = User_interface_module_create(
@@ -259,13 +259,13 @@ struct User_interface_module *Cmiss_context_create_user_interface(
 	else
 	{
 		display_message(ERROR_MESSAGE,
-			"Cmiss_context_create_user_interface.  Missing context.");
+			"cmzn_context_create_user_interface.  Missing context.");
 	}
 
 	return UI_module;
 }
 
-struct Event_dispatcher *Cmiss_context_app_get_default_event_dispatcher(struct Cmiss_context_app *context)
+struct Event_dispatcher *cmzn_context_app_get_default_event_dispatcher(struct cmzn_context_app *context)
 {
 	struct Event_dispatcher *event_dispatcher = NULL;
 	if (context)
@@ -279,55 +279,55 @@ struct Event_dispatcher *Cmiss_context_app_get_default_event_dispatcher(struct C
 	else
 	{
 		display_message(ERROR_MESSAGE,
-			"Cmiss_context_app_get_default_event_dispatcher.  Missing context.");
+			"cmzn_context_app_get_default_event_dispatcher.  Missing context.");
 	}
 	return event_dispatcher;
 }
 
-int Cmiss_context_app_execute_command(Cmiss_context_app *context,
+int cmzn_context_app_execute_command(cmzn_context_app *context,
 	const char *command)
 {
 	int return_code = 0;
 	if (context && context->UI_module && command)
 	{
-		struct Cmiss_command_data *command_data =
-			Cmiss_context_get_default_command_interpreter(context);
+		struct cmzn_command_data *command_data =
+			cmzn_context_get_default_command_interpreter(context);
 		return_code = cmiss_execute_command(command, (void *)command_data);
-		Cmiss_command_data_destroy(&command_data);
+		cmzn_command_data_destroy(&command_data);
 	}
 	else
 	{
 		display_message(ERROR_MESSAGE,
-			"Cmiss_context_execute_command.  Missing context or user interface or"
+			"cmzn_context_execute_command.  Missing context or user interface or"
 			"command is empty.");
 	}
 
 	return return_code;
 }
 
-int Cmiss_context_run_main_loop(Cmiss_context_app *context)
+int cmzn_context_run_main_loop(cmzn_context_app *context)
 {
 	int return_code = 0;
 	if (context && context->UI_module)
 	{
-		struct Cmiss_command_data *command_data =
-			Cmiss_context_get_default_command_interpreter(context);
-		return_code = Cmiss_command_data_main_loop(command_data);
-		Cmiss_command_data_destroy(&command_data);
+		struct cmzn_command_data *command_data =
+			cmzn_context_get_default_command_interpreter(context);
+		return_code = cmzn_command_data_main_loop(command_data);
+		cmzn_command_data_destroy(&command_data);
 	}
 	else
 	{
 		display_message(ERROR_MESSAGE,
-			"Cmiss_context_start_main_loop.  Missing context or user interface");
+			"cmzn_context_start_main_loop.  Missing context or user interface");
 	}
 
 	return return_code;
 }
 
-//-- Cmiss_scene_viewer_module_id Cmiss_context_app_get_default_scene_viewer_module(
-//-- 	Cmiss_context_app *context)
+//-- cmzn_scene_viewer_module_id cmzn_context_app_get_default_scene_viewer_module(
+//-- 	cmzn_context_app *context)
 //-- {
-//-- 	Cmiss_scene_viewer_module *scene_viewer_module = NULL;
+//-- 	cmzn_scene_viewer_module *scene_viewer_module = NULL;
 //-- 	if (context && context->UI_module && context->UI_module->scene_viewer_module)
 //-- 	{
 //-- 		scene_viewer_module = context->UI_module->scene_viewer_module;
@@ -335,26 +335,26 @@ int Cmiss_context_run_main_loop(Cmiss_context_app *context)
 //-- 	else
 //-- 	{
 //-- 		display_message(ERROR_MESSAGE,
-//-- 			"Cmiss_context_get_default_scene_viewer_module.  "
+//-- 			"cmzn_context_get_default_scene_viewer_module.  "
 //-- 			"Missing context or user interface");
 //-- 	}
 //-- 	return scene_viewer_module;
 //-- }
 
 #if defined (WX_USER_INTERFACE) || (!defined (WIN32_USER_INTERFACE) && !defined (_MSC_VER))
-int Cmiss_context_app_enable_user_interface(Cmiss_context_app *context, void *user_interface_instance)
+int cmzn_context_app_enable_user_interface(cmzn_context_app *context, void *user_interface_instance)
 #else
-int Cmiss_context_enable_user_interface(
-	Cmiss_context_id context, HINSTANCE current_instance, HINSTANCE previous_instance,
+int cmzn_context_enable_user_interface(
+	cmzn_context_id context, HINSTANCE current_instance, HINSTANCE previous_instance,
 	LPSTR command_line,int initial_main_window_state, void *user_interface_instance)
 #endif
 {
 	int return_code = 0;
 #if defined (WX_USER_INTERFACE) || (!defined (WIN32_USER_INTERFACE) && !defined (_MSC_VER))
-	struct User_interface_module *UI_module = Cmiss_context_create_user_interface(
+	struct User_interface_module *UI_module = cmzn_context_create_user_interface(
 		context, 0, 0, user_interface_instance);
 #else
-	struct User_interface_module *UI_module=  Cmiss_context_create_user_interface(
+	struct User_interface_module *UI_module=  cmzn_context_create_user_interface(
 		context, 0, 0, current_instance, previous_instance,
 		command_line, initial_main_window_state, user_interface_instance);
 #endif
@@ -368,7 +368,7 @@ int Cmiss_context_enable_user_interface(
 	return return_code;
 }
 
-int Cmiss_context_app_process_idle_event(Cmiss_context_app *context)
+int cmzn_context_app_process_idle_event(cmzn_context_app *context)
 {
 	if (context && context->event_dispatcher)
 	{
@@ -377,7 +377,7 @@ int Cmiss_context_app_process_idle_event(Cmiss_context_app *context)
 	else
 	{
 		display_message(ERROR_MESSAGE,
-			"Cmiss_context_do_idle_event.  Missing context or event dispatcher.");
+			"cmzn_context_do_idle_event.  Missing context or event dispatcher.");
 	}
 
 	return 0;

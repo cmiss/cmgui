@@ -78,12 +78,12 @@ static struct Spectrum_editor_dialog *CREATE(Spectrum_editor_dialog)(
 	 struct Spectrum_editor_dialog **spectrum_editor_dialog_address,
 	 struct MANAGER(Spectrum) *spectrum_manager,
 	 struct Spectrum *init_data,
-	 struct Cmiss_font *font,
+	 struct cmzn_font *font,
 	 struct Graphics_buffer_app_package *graphics_buffer_package,
 	 struct User_interface *user_interface,
-	 struct Cmiss_graphics_module *graphics_module,
-	 struct Cmiss_region *root_region,
-	 struct Cmiss_region *spectrum_region)
+	 struct cmzn_graphics_module *graphics_module,
+	 struct cmzn_region *root_region,
+	 struct cmzn_region *spectrum_region)
 /*******************************************************************************
 LAST MODIFIED : 23 August 2007
 
@@ -183,12 +183,12 @@ int bring_up_spectrum_editor_dialog(
 	struct Spectrum_editor_dialog **spectrum_editor_dialog_address,
 	struct MANAGER(Spectrum) *spectrum_manager,
 	struct Spectrum *spectrum,
-	struct Cmiss_font *font,
+	struct cmzn_font *font,
 	struct Graphics_buffer_app_package *graphics_buffer_package,
 	struct User_interface *user_interface,
-	struct Cmiss_graphics_module *graphics_module,
-	struct Cmiss_region *root_region,
-	struct Cmiss_region *spectrum_region)
+	struct cmzn_graphics_module *graphics_module,
+	struct cmzn_region *root_region,
+	struct cmzn_region *spectrum_region)
 /*******************************************************************************
 LAST MODIFIED : 18 November 2005
 

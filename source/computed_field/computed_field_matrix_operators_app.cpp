@@ -58,15 +58,15 @@ int Computed_field_get_type_eigenvalues(struct Computed_field *field,
 	struct Computed_field **source_field);
 
 Computed_field *Computed_field_create_quaternion_to_matrix(
-	struct Cmiss_field_module *field_module,
+	struct cmzn_field_module *field_module,
 	struct Computed_field *source_field);
 
 Computed_field *Computed_field_create_quaternion_to_matrix(
-	struct Cmiss_field_module *field_module,
+	struct cmzn_field_module *field_module,
 	struct Computed_field *source_field);
 
 Computed_field *Computed_field_create_matrix_to_quaternion(
-	struct Cmiss_field_module *field_module,
+	struct cmzn_field_module *field_module,
 	struct Computed_field *source_field);
 
 int Computed_field_is_type_eigenvalues_conditional(struct Computed_field *field,
@@ -91,12 +91,12 @@ int define_Computed_field_type_determinant(struct Parse_state *state,
 	if (state && field_modify)
 	{
 		return_code = 1;
-		Cmiss_field_id source_field = 0;
+		cmzn_field_id source_field = 0;
 		if (NULL != field_modify->get_field() &&
 			(computed_field_determinant_type_string ==
 			 Computed_field_get_type_string(field_modify->get_field())))
 		{
-			source_field = Cmiss_field_get_source_field(field_modify->get_field(), 1);
+			source_field = cmzn_field_get_source_field(field_modify->get_field(), 1);
 		}
 		Option_table *option_table = CREATE(Option_table)();
 		Option_table_add_help(option_table,
@@ -114,13 +114,13 @@ int define_Computed_field_type_determinant(struct Parse_state *state,
 		if (return_code)
 		{
 			return_code = field_modify->update_field_and_deaccess(
-				Cmiss_field_module_create_determinant(field_modify->get_field_module(),
+				cmzn_field_module_create_determinant(field_modify->get_field_module(),
 					source_field));
 		}
 		DESTROY(Option_table)(&option_table);
 		if (source_field)
 		{
-			Cmiss_field_destroy(&source_field);
+			cmzn_field_destroy(&source_field);
 		}
 	}
 	else
@@ -183,7 +183,7 @@ contents to be modified.
 			if (return_code)
 			{
 				return_code = field_modify->update_field_and_deaccess(
-					Cmiss_field_module_create_eigenvalues(field_modify->get_field_module(),
+					cmzn_field_module_create_eigenvalues(field_modify->get_field_module(),
 						source_field));
 			}
 			DESTROY(Option_table)(&option_table);
@@ -256,7 +256,7 @@ its contents to be modified.
 			if (return_code)
 			{
 				return_code = field_modify->update_field_and_deaccess(
-					Cmiss_field_module_create_eigenvectors(field_modify->get_field_module(),
+					cmzn_field_module_create_eigenvectors(field_modify->get_field_module(),
 						source_field));
 			}
 			if (source_field)
@@ -328,7 +328,7 @@ contents to be modified.
 			if (return_code)
 			{
 				return_code = field_modify->update_field_and_deaccess(
-					Cmiss_field_module_create_matrix_invert(field_modify->get_field_module(),
+					cmzn_field_module_create_matrix_invert(field_modify->get_field_module(),
 						source_field));
 			}
 			DESTROY(Option_table)(&option_table);
@@ -448,7 +448,7 @@ already) and allows its contents to be modified.
 							if (return_code)
 							{
 								return_code = field_modify->update_field_and_deaccess(
-									Cmiss_field_module_create_matrix_multiply(field_modify->get_field_module(),
+									cmzn_field_module_create_matrix_multiply(field_modify->get_field_module(),
 										number_of_rows, source_fields[0], source_fields[1]));
 							}
 							DESTROY(Option_table)(&option_table);
@@ -511,8 +511,8 @@ int define_Computed_field_type_projection(struct Parse_state *state,
 	if (state && field_modify)
 	{
 		return_code = 1;
-		Cmiss_field_id source_field = 0;
-		Cmiss_field_id projection_matrix_field = 0;
+		cmzn_field_id source_field = 0;
+		cmzn_field_id projection_matrix_field = 0;
 		if ((NULL != field_modify->get_field()) &&
 			(computed_field_projection_type_string ==
 				Computed_field_get_type_string(field_modify->get_field())))
@@ -556,7 +556,7 @@ int define_Computed_field_type_projection(struct Parse_state *state,
 		if (return_code)
 		{
 			return_code = field_modify->update_field_and_deaccess(
-				Cmiss_field_module_create_projection(field_modify->get_field_module(),
+				cmzn_field_module_create_projection(field_modify->get_field_module(),
 					source_field, projection_matrix_field));
 		}
 		if (source_field)
@@ -662,7 +662,7 @@ already) and allows its contents to be modified.
 						if (return_code)
 						{
 							return_code = field_modify->update_field_and_deaccess(
-								Cmiss_field_module_create_transpose(field_modify->get_field_module(),
+								cmzn_field_module_create_transpose(field_modify->get_field_module(),
 									source_number_of_rows, source_field));
 						}
 						DESTROY(Option_table)(&option_table);

@@ -65,7 +65,7 @@ struct User_interface_module
 	struct Interactive_tool *transform_tool;
 	struct Node_tool *data_tool,*node_tool;
 	struct Event_dispatcher *event_dispatcher;
-	struct Cmiss_scene_viewer_app_module *scene_viewer_module;
+	struct cmzn_scene_viewer_app_module *scene_viewer_module;
 #if defined (USE_CMGUI_GRAPHICS_WINDOW)
 	struct MANAGER(Graphics_window) *graphics_window_manager;
 #endif /* defined (USE_CMGUI_GRAPHICS_WINDOW) */
@@ -96,10 +96,10 @@ struct User_interface_module
  */
 #if defined (WX_USER_INTERFACE) || (!defined (WIN32_USER_INTERFACE) && !defined (_MSC_VER))
 struct User_interface_module *User_interface_module_create(
-	struct Cmiss_context_app *context, int in_argc, char *in_argv[]);
+	struct cmzn_context_app *context, int in_argc, char *in_argv[]);
 #else
 struct User_interface_module *User_interface_module_create(
-	struct Cmiss_context_app *context, int in_argc, char *in_argv[],
+	struct cmzn_context_app *context, int in_argc, char *in_argv[],
 	HINSTANCE current_instance, HINSTANCE previous_instance,
 	LPSTR command_line,int initial_main_window_state);
 #endif

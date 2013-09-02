@@ -89,7 +89,7 @@ Contains all the information carried by the element_point_viewer widget.
 	/* global data */
 	struct Computed_field_package *computed_field_package;
 	struct Element_point_viewer **element_point_viewer_address;
-	struct Cmiss_region *region;
+	struct cmzn_region *region;
 	struct FE_region *fe_region;
 	struct Element_point_ranges_selection *element_point_ranges_selection;
 	struct Time_object *time_object;
@@ -189,7 +189,7 @@ static int Element_point_viewer_refresh_sample_mode(
 LAST MODIFIED : 13 June 2007
 
 DESCRIPTION :
-Updates the Cmiss_element_point_sample_mode shown in the chooser to match that for the
+Updates the cmzn_element_point_sample_mode shown in the chooser to match that for the
 current point.
 ==============================================================================*/
 
@@ -524,9 +524,9 @@ Furthermore, if the <element_point_viewer>
 							&(element_point_viewer->element_point_identifier));
 						if (return_code)
 						{
-							Cmiss_field_module_id field_module = Cmiss_region_get_field_module(FE_region_get_Cmiss_region(element_point_viewer->fe_region));
-							Cmiss_field_module_begin_change(field_module);
-							Cmiss_field_cache_id field_cache = Cmiss_field_module_create_cache(field_module);
+							cmzn_field_module_id field_module = cmzn_region_get_field_module(FE_region_get_cmzn_region(element_point_viewer->fe_region));
+							cmzn_field_module_begin_change(field_module);
+							cmzn_field_cache_id field_cache = cmzn_field_module_create_cache(field_module);
 							source_identifier.element=element_point_viewer->element_copy;
 							/* note values taken from the local element_copy... */
 							struct Element_point_ranges_set_grid_values_data set_grid_values_data;
@@ -553,9 +553,9 @@ Furthermore, if the <element_point_viewer>
 									"Values only set at %d element locations out of %d specified.",
 									set_grid_values_data.number_of_points_set, set_grid_values_data.number_of_points);
 							}
-							Cmiss_field_cache_destroy(&field_cache);
-							Cmiss_field_module_end_change(field_module);
-							Cmiss_field_module_destroy(&field_module);
+							cmzn_field_cache_destroy(&field_cache);
+							cmzn_field_module_end_change(field_module);
+							cmzn_field_module_destroy(&field_module);
 						}
 						if (!return_code)
 						{
@@ -737,7 +737,7 @@ Ensures xi is correct for the currently selected element point, if any.
 				element_point_viewer->element_point_identifier.sample_mode,
 				element_point_viewer->element_point_identifier.number_in_xi,
 				element_point_viewer->element_point_identifier.exact_xi,
-				(Cmiss_field_cache_id)0,
+				(cmzn_field_cache_id)0,
 				/*coordinate_field*/(struct Computed_field *)NULL,
 				/*density_field*/(struct Computed_field *)NULL,
 				element_point_viewer->element_point_number,
@@ -897,7 +897,7 @@ LAST MODIFIED : 30 May 2000
 
 DESCRIPTION :
 If there is a grid field defined for the element, gets its discretization and
-sets the Cmiss_element_point_sample_mode to CMISS_ELEMENT_POINT_SAMPLE_CELL_CORNERS, otherwise
+sets the cmzn_element_point_sample_mode to CMISS_ELEMENT_POINT_SAMPLE_CELL_CORNERS, otherwise
 leaves the current discretization/mode intact.
 ==============================================================================*/
 {
@@ -1060,28 +1060,28 @@ static char *element_point_viewer_get_field_string(struct Element_point_viewer *
 		(xi = element_point_viewer->xi) &&
 		(component_number < number_of_components))
 	{
-		Cmiss_field_module_id field_module = Cmiss_field_get_field_module(field);
-		Cmiss_field_cache_id field_cache = Cmiss_field_module_create_cache(field_module);
+		cmzn_field_module_id field_module = cmzn_field_get_field_module(field);
+		cmzn_field_cache_id field_cache = cmzn_field_module_create_cache(field_module);
 		time = Time_object_get_current_time(element_point_viewer->time_object);
-		Cmiss_field_cache_set_time(field_cache, time);
-		int element_dimension = Cmiss_element_get_dimension(element);
-		Cmiss_field_cache_set_mesh_location_with_parent(field_cache, element, element_dimension, xi, top_level_element);
+		cmzn_field_cache_set_time(field_cache, time);
+		int element_dimension = cmzn_element_get_dimension(element);
+		cmzn_field_cache_set_mesh_location_with_parent(field_cache, element, element_dimension, xi, top_level_element);
 		if ((component_number < 0) || (1 == number_of_components))
 		{
-			value_string = Cmiss_field_evaluate_string(field, field_cache);
+			value_string = cmzn_field_evaluate_string(field, field_cache);
 		}
 		else
 		{
 			FE_value *values = new FE_value[number_of_components];
-			if (Cmiss_field_evaluate_real(field, field_cache, number_of_components, values))
+			if (cmzn_field_evaluate_real(field, field_cache, number_of_components, values))
 			{
 				char tmp[50];
 				sprintf(tmp, "%g", values[component_number]);
 				value_string = duplicate_string(tmp);
 			}
 		}
-		Cmiss_field_cache_destroy(&field_cache);
-		Cmiss_field_module_destroy(&field_module);
+		cmzn_field_cache_destroy(&field_cache);
+		cmzn_field_module_destroy(&field_module);
 		if (!value_string)
 		{
 			display_message(ERROR_MESSAGE,
@@ -1106,8 +1106,8 @@ class wxElementPointViewer : public wxFrame
 	 wxFeElementTextChooser *top_level_element_text_chooser;
 	 wxFrame *frame;
 	 wxTextCtrl *discretizationtextctrl, *pointtextctrl;
-	 DEFINE_ENUMERATOR_TYPE_CLASS(Cmiss_element_point_sample_mode);
-	 Enumerator_chooser<ENUMERATOR_TYPE_CLASS(Cmiss_element_point_sample_mode)>
+	 DEFINE_ENUMERATOR_TYPE_CLASS(cmzn_element_point_sample_mode);
+	 Enumerator_chooser<ENUMERATOR_TYPE_CLASS(cmzn_element_point_sample_mode)>
 	 *element_sample_mode_chooser;
 	 DEFINE_MANAGER_CLASS(Computed_field);
 	 Managed_object_chooser<Computed_field,MANAGER_CLASS(Computed_field)>
@@ -1151,15 +1151,15 @@ public:
 
 			element_point_viewer->element_sample_mode_chooser_panel=XRCCTRL(
 				 *this,"XiDiscretizationModePanel",wxPanel);
-			element_sample_mode_chooser = new Enumerator_chooser<ENUMERATOR_TYPE_CLASS(Cmiss_element_point_sample_mode)>
+			element_sample_mode_chooser = new Enumerator_chooser<ENUMERATOR_TYPE_CLASS(cmzn_element_point_sample_mode)>
 				 (element_point_viewer->element_sample_mode_chooser_panel,
 						element_point_viewer->element_point_identifier.sample_mode,
-						(ENUMERATOR_CONDITIONAL_FUNCTION(Cmiss_element_point_sample_mode) *)NULL,
+						(ENUMERATOR_CONDITIONAL_FUNCTION(cmzn_element_point_sample_mode) *)NULL,
 						(void *)NULL, element_point_viewer->user_interface);
 			element_point_viewer->element_sample_mode_chooser_panel->Fit();
-			Callback_base< enum Cmiss_element_point_sample_mode > *element_sample_mode_callback =
-				 new Callback_member_callback<enum Cmiss_element_point_sample_mode,
-				 wxElementPointViewer, int(wxElementPointViewer::*)(enum Cmiss_element_point_sample_mode)>
+			Callback_base< enum cmzn_element_point_sample_mode > *element_sample_mode_callback =
+				 new Callback_member_callback<enum cmzn_element_point_sample_mode,
+				 wxElementPointViewer, int(wxElementPointViewer::*)(enum cmzn_element_point_sample_mode)>
 				 (this, &wxElementPointViewer::element_sample_mode_callback);
 			element_sample_mode_chooser->set_callback(element_sample_mode_callback);
 			if (element_point_viewer->element_point_identifier.element)
@@ -1368,7 +1368,7 @@ Callback from wxTextChooser when text is entered.
 			return 1;
 }
 
-int element_sample_mode_callback(enum Cmiss_element_point_sample_mode sample_mode)
+int element_sample_mode_callback(enum cmzn_element_point_sample_mode sample_mode)
 /*******************************************************************************
 LAST MODIFIED : 22 March 2007
 
@@ -1843,7 +1843,7 @@ data, and then changes the correct value in the array structure.
 	struct FE_element *element,*top_level_element;
 	struct FE_field *fe_field;
 
-	int number_of_components = Cmiss_field_get_number_of_components(field);
+	int number_of_components = cmzn_field_get_number_of_components(field);
 	if ((element_point_field_viewer) &&
 		(element=element_point_field_viewer->element_point_identifier.element)&&
 		(top_level_element=
@@ -1903,14 +1903,14 @@ data, and then changes the correct value in the array structure.
 						{
 							if (ALLOCATE(values, FE_value, number_of_components))
 							{
-								Cmiss_field_module_id field_module = Cmiss_field_get_field_module(field);
-								Cmiss_field_cache_id field_cache = Cmiss_field_module_create_cache(field_module);
-								if (Cmiss_field_cache_set_time(field_cache, time) &&
-									Cmiss_field_cache_set_mesh_location(field_cache, element, MAXIMUM_ELEMENT_XI_DIMENSIONS, xi) &&
-									Cmiss_field_evaluate_real(field, field_cache, number_of_components, values))
+								cmzn_field_module_id field_module = cmzn_field_get_field_module(field);
+								cmzn_field_cache_id field_cache = cmzn_field_module_create_cache(field_module);
+								if (cmzn_field_cache_set_time(field_cache, time) &&
+									cmzn_field_cache_set_mesh_location(field_cache, element, MAXIMUM_ELEMENT_XI_DIMENSIONS, xi) &&
+									cmzn_field_evaluate_real(field, field_cache, number_of_components, values))
 								{
 									values[component_number] = value;
-									return_code = Cmiss_field_assign_real(field, field_cache, number_of_components, values);
+									return_code = cmzn_field_assign_real(field, field_cache, number_of_components, values);
 								}
 								else
 								{
@@ -1919,8 +1919,8 @@ data, and then changes the correct value in the array structure.
 										"Unable to evaluate field component values");
 								}
 								DEALLOCATE(values);
-								Cmiss_field_cache_destroy(&field_cache);
-								Cmiss_field_module_destroy(&field_module);
+								cmzn_field_cache_destroy(&field_cache);
+								cmzn_field_module_destroy(&field_module);
 							}
 							else
 							{
@@ -2204,7 +2204,7 @@ Global functions
 */
 struct Element_point_viewer *CREATE(Element_point_viewer)(
 	struct Element_point_viewer **element_point_viewer_address,
-	struct Cmiss_region *region,
+	struct cmzn_region *region,
 	struct Element_point_ranges_selection *element_point_ranges_selection,
 	struct Computed_field_package *computed_field_package,
 	struct Time_object *time_object,
@@ -2234,7 +2234,7 @@ fields.
 	ENTER(CREATE(Element_point_viewer));
 	element_point_viewer=(struct Element_point_viewer *)NULL;
 	if (element_point_viewer_address && region &&
-		(fe_region = Cmiss_region_get_FE_region(region)) &&
+		(fe_region = cmzn_region_get_FE_region(region)) &&
 		element_point_ranges_selection&&computed_field_package &&
 		(computed_field_manager = Computed_field_package_get_computed_field_manager(
 			computed_field_package)) && user_interface)
@@ -2613,7 +2613,7 @@ pass unmanaged elements in the element_point_identifier to this widget.
 					 element_point_identifier->sample_mode,
 					 element_point_identifier->number_in_xi,
 					 element_point_identifier->exact_xi,
-					 (Cmiss_field_cache_id)0,
+					 (cmzn_field_cache_id)0,
 					 /*coordinate_field*/(struct Computed_field *)NULL,
 					 /*density_field*/(struct Computed_field *)NULL,
 					 element_point_number, element_point_viewer->xi);
@@ -2920,7 +2920,7 @@ static int Element_point_viewer_refresh_sample_mode(
 LAST MODIFIED : 19 March 2001
 
 DESCRIPTION :
-Updates the Cmiss_element_point_sample_mode shown in the chooser to match that for the
+Updates the cmzn_element_point_sample_mode shown in the chooser to match that for the
 current point.
 ==============================================================================*/
 {

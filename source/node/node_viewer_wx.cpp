@@ -86,16 +86,16 @@ class wxNodeViewer;
  */
 struct Node_viewer
 {
-	Cmiss_graphics_module_id graphics_module;
+	cmzn_graphics_module_id graphics_module;
 	struct Node_viewer **node_viewer_address;
-	Cmiss_node_id current_node;
-	struct Cmiss_region *region;
-	Cmiss_field_domain_type domain_type;
+	cmzn_node_id current_node;
+	struct cmzn_region *region;
+	cmzn_field_domain_type domain_type;
 	struct FE_region *fe_region;
 	struct MANAGER(Computed_field) *computed_field_manager;
 	void *computed_field_manager_callback_id;
 	struct Time_keeper_app *time_keeper_app;
-	Cmiss_time_notifier_id time_notifier;
+	cmzn_time_notifier_id time_notifier;
 	int time_notifier_callback;
 #if defined (WX_USER_INTERFACE)
 	wxNodeViewer *wx_node_viewer;
@@ -111,8 +111,8 @@ struct Node_viewer
 Prototype
 ------------
 */
-static int Node_viewer_set_Cmiss_region(struct Node_viewer *node_viewer,
-	struct Cmiss_region *region);
+static int Node_viewer_set_cmzn_region(struct Node_viewer *node_viewer,
+	struct cmzn_region *region);
 
 static int Node_viewer_set_viewer_node(struct Node_viewer *node_viewer);
 /*******************************************************************************
@@ -135,10 +135,10 @@ object cause updates.
 ==============================================================================*/
 
 int Node_viewer_update_collpane(struct Node_viewer *node_viewer);
-char *node_viewer_get_component_value_string(struct Node_viewer *node_viewer, Cmiss_field_id field, int component_number, enum Cmiss_nodal_value_type nodal_value_type, int version);
+char *node_viewer_get_component_value_string(struct Node_viewer *node_viewer, cmzn_field_id field, int component_number, enum cmzn_nodal_value_type nodal_value_type, int version);
 
 static int node_viewer_setup_components(
-	struct Node_viewer *node_viewer, Cmiss_node_id node, Cmiss_field_id field, bool &time_varying_field);
+	struct Node_viewer *node_viewer, cmzn_node_id node, cmzn_field_id field, bool &time_varying_field);
 
 /*
 Module constants
@@ -184,13 +184,13 @@ public:
 		wxPanel *region_chooser_panel =
 			 XRCCTRL(*this, "RegionChooserPanel", wxPanel);
 		char *initial_path;
-		initial_path = Cmiss_region_get_root_region_path();
+		initial_path = cmzn_region_get_root_region_path();
 		region_chooser = new wxRegionChooser(region_chooser_panel,
 			node_viewer->region, initial_path);
 		DEALLOCATE(initial_path);
-		Callback_base<Cmiss_region* > *Node_viewer_wx_region_callback =
-			new Callback_member_callback< Cmiss_region*,
-			wxNodeViewer, int (wxNodeViewer::*)(Cmiss_region *) >
+		Callback_base<cmzn_region* > *Node_viewer_wx_region_callback =
+			new Callback_member_callback< cmzn_region*,
+			wxNodeViewer, int (wxNodeViewer::*)(cmzn_region *) >
 			(this, &wxNodeViewer::Node_viewer_wx_region_callback);
 		region_chooser->set_callback(Node_viewer_wx_region_callback);
 			Show();
@@ -211,7 +211,7 @@ public:
 			delete region_chooser;
 	 }
 
-	int Node_viewer_wx_region_callback(Cmiss_region *region)
+	int Node_viewer_wx_region_callback(cmzn_region *region)
 /*******************************************************************************
 LAST MODIFIED : 9 February 2007
 
@@ -222,10 +222,10 @@ Callback from wxChooser<Computed_field> when choice is made.
 		USE_PARAMETER(region);
 		if (region)
 		{
-			FE_region *fe_region = Cmiss_region_get_FE_region(region);
+			FE_region *fe_region = cmzn_region_get_FE_region(region);
 			node_text_chooser->set_region(fe_region);
 		}
-		if (Node_viewer_set_Cmiss_region(node_viewer, region) &&
+		if (Node_viewer_set_cmzn_region(node_viewer, region) &&
 			node_viewer->wx_node_viewer && node_viewer->collpane)
 		{
 			Node_viewer_update_collpane(node_viewer);
@@ -244,8 +244,8 @@ Callback from wxChooser<Computed_field> when choice is made.
 			if (node)
 			{
 				if (node_viewer->current_node)
-					Cmiss_node_destroy(&node_viewer->current_node);
-				node_viewer->current_node = Cmiss_node_access(node);
+					cmzn_node_destroy(&node_viewer->current_node);
+				node_viewer->current_node = cmzn_node_access(node);
 				Node_viewer_update_collpane(node_viewer);
 			}
 			else
@@ -320,7 +320,7 @@ after a collapsible pane is opened/closed.
 	 }
 
 	void NodeViewerTextEntered(wxTextCtrl *textctrl, Node_viewer *node_viewer,
-		Cmiss_field_id field, int component_number, enum Cmiss_nodal_value_type nodal_value_type, int version)
+		cmzn_field_id field, int component_number, enum cmzn_nodal_value_type nodal_value_type, int version)
 	{
 		if (textctrl && node_viewer && field && node_viewer->current_node)
 		{
@@ -329,47 +329,47 @@ after a collapsible pane is opened/closed.
 			if (value_string != NULL)
 			{
 				int result = !CMISS_OK;
-				Cmiss_field_module_id field_module = Cmiss_field_get_field_module(field);
-				Cmiss_field_module_begin_change(field_module);
-				Cmiss_field_cache_id field_cache = Cmiss_field_module_create_cache(field_module);
-				double time = Cmiss_time_notifier_get_current_time(node_viewer->time_notifier);
-				Cmiss_field_cache_set_time(field_cache, time);
-				Cmiss_field_cache_set_node(field_cache, node_viewer->current_node);
-				enum Cmiss_field_value_type valueType = Cmiss_field_get_value_type(field);
+				cmzn_field_module_id field_module = cmzn_field_get_field_module(field);
+				cmzn_field_module_begin_change(field_module);
+				cmzn_field_cache_id field_cache = cmzn_field_module_create_cache(field_module);
+				double time = cmzn_time_notifier_get_current_time(node_viewer->time_notifier);
+				cmzn_field_cache_set_time(field_cache, time);
+				cmzn_field_cache_set_node(field_cache, node_viewer->current_node);
+				enum cmzn_field_value_type valueType = cmzn_field_get_value_type(field);
 				switch (valueType)
 				{
 				case CMISS_FIELD_VALUE_TYPE_REAL:
 					{
-						Cmiss_field_id assignField = 0;
+						cmzn_field_id assignField = 0;
 						if ((nodal_value_type != CMISS_NODAL_VALUE) || (version != 1))
 						{
-							assignField = Cmiss_field_module_create_node_value(field_module, field, nodal_value_type, version);
+							assignField = cmzn_field_module_create_node_value(field_module, field, nodal_value_type, version);
 						}
 						else
 						{
-							assignField = Cmiss_field_access(field);
+							assignField = cmzn_field_access(field);
 						}
-						const int numberOfComponents = Cmiss_field_get_number_of_components(field);
+						const int numberOfComponents = cmzn_field_get_number_of_components(field);
 						double *values = new double[numberOfComponents];
-						if (CMISS_OK == Cmiss_field_evaluate_real(assignField, field_cache, numberOfComponents, values))
+						if (CMISS_OK == cmzn_field_evaluate_real(assignField, field_cache, numberOfComponents, values))
 						{
 							sscanf(value_string, FE_VALUE_INPUT_STRING, &values[component_number - 1]);
-							result = Cmiss_field_assign_real(field, field_cache, numberOfComponents, values);
+							result = cmzn_field_assign_real(field, field_cache, numberOfComponents, values);
 						}
 						delete[] values;
-						Cmiss_field_destroy(&assignField);
+						cmzn_field_destroy(&assignField);
 					} break;
 				case CMISS_FIELD_VALUE_TYPE_STRING:
 					{
-						result = Cmiss_field_assign_string(field, field_cache, value_string);
+						result = cmzn_field_assign_string(field, field_cache, value_string);
 					} break;
 				default:
 					{
 					} break;
 				}
-				Cmiss_field_cache_destroy(&field_cache);
-				Cmiss_field_module_end_change(field_module);
-				Cmiss_field_module_destroy(&field_module);
+				cmzn_field_cache_destroy(&field_cache);
+				cmzn_field_module_end_change(field_module);
+				cmzn_field_module_destroy(&field_module);
 
 				if (result != CMISS_OK)
 				{
@@ -414,17 +414,17 @@ END_EVENT_TABLE()
 class wxNodeViewerTextCtrl : public wxTextCtrl
 {
 	 Node_viewer *node_viewer;
-	 Cmiss_field_id field;
+	 cmzn_field_id field;
 	 int component_number;
-	 enum Cmiss_nodal_value_type nodal_value_type;
+	 enum cmzn_nodal_value_type nodal_value_type;
 	 int version;
 
 public:
 
   wxNodeViewerTextCtrl(Node_viewer *node_viewer,
-		 Cmiss_field_id field,
+		 cmzn_field_id field,
 		 int component_number,
-		 enum Cmiss_nodal_value_type nodal_value_type,
+		 enum cmzn_nodal_value_type nodal_value_type,
 		 int version) :
 		 node_viewer(node_viewer), field(field), component_number(component_number),
 		 nodal_value_type(nodal_value_type), version(version)
@@ -446,9 +446,9 @@ public:
 
 /** @param time_varying_field  Initialise to false before calling. Set to true if any field is time varying on node */
 static int node_viewer_add_collpane(Node_viewer *node_viewer,
-	Cmiss_field_cache_id field_cache, Cmiss_field_id field, bool &time_varying_field)
+	cmzn_field_cache_id field_cache, cmzn_field_id field, bool &time_varying_field)
 {
-	char *field_name = Cmiss_field_get_name(field);
+	char *field_name = cmzn_field_get_name(field);
 	wxScrolledWindow *panel = node_viewer->collpane;
 
 	// identifier is the name of the panel in the collapsible pane
@@ -467,7 +467,7 @@ static int node_viewer_add_collpane(Node_viewer *node_viewer,
 		node_viewer->win->SetName(wxString::FromAscii(field_name));
 	}
 
-	if (node_viewer->current_node && Cmiss_field_is_defined_at_location(field, field_cache))
+	if (node_viewer->current_node && cmzn_field_is_defined_at_location(field, field_cache))
 	{
 		node_viewer_setup_components(node_viewer, node_viewer->current_node, field, time_varying_field);
 		if (node_viewer->grid_field != NULL)
@@ -486,7 +486,7 @@ static int node_viewer_add_collpane(Node_viewer *node_viewer,
 	frame = XRCCTRL(*node_viewer->wx_node_viewer, "CmguiNodeViewer", wxFrame);
 	frame->Layout();
 	frame->SetMinSize(wxSize(50,100));
-	Cmiss_deallocate(field_name);
+	cmzn_deallocate(field_name);
 	return 1;
 }
 
@@ -503,20 +503,20 @@ int Node_viewer_remove_unused_collpane(struct Node_viewer *node_viewer)
 			wxWindow *child = ((wxCollapsiblePane *)current)->GetPane();
 			wxString tmpstr = child->GetName().GetData();
 			const char *field_name = tmpstr.mb_str(wxConvUTF8);
-			Cmiss_field_module_id fieldModule = Cmiss_region_get_field_module(node_viewer->region);
-			Cmiss_field_id field = Cmiss_field_module_find_field_by_name(fieldModule, field_name);
+			cmzn_field_module_id fieldModule = cmzn_region_get_field_module(node_viewer->region);
+			cmzn_field_id field = cmzn_field_module_find_field_by_name(fieldModule, field_name);
 			if (!field)
 			{
 				current->Destroy();
 			}
-			Cmiss_field_module_destroy(&fieldModule);
+			cmzn_field_module_destroy(&fieldModule);
 		}
 	}
 	return return_code;
 }
 
 static int node_field_time_change_callback(
-	Cmiss_time_notifier_id time_notifier, double current_time,
+	cmzn_time_notifier_id time_notifier, double current_time,
 	void *node_viewer_void)
 /*******************************************************************************
 LAST MODIFIED : 5 December 2001
@@ -548,27 +548,27 @@ int Node_viewer_update_collpane(struct Node_viewer *node_viewer)
 	int return_code = 0;
 	if (node_viewer)
 	{
-		Cmiss_field_module_id field_module = Cmiss_region_get_field_module(node_viewer->region);
-		Cmiss_field_cache_id field_cache = Cmiss_field_module_create_cache(field_module);
-		Cmiss_field_cache_set_time(field_cache, Cmiss_time_notifier_get_current_time(node_viewer->time_notifier));
-		Cmiss_field_cache_set_node(field_cache, node_viewer->current_node);
-		Cmiss_field_iterator_id iter = Cmiss_field_module_create_field_iterator(field_module);
-		Cmiss_field_id field = 0;
+		cmzn_field_module_id field_module = cmzn_region_get_field_module(node_viewer->region);
+		cmzn_field_cache_id field_cache = cmzn_field_module_create_cache(field_module);
+		cmzn_field_cache_set_time(field_cache, cmzn_time_notifier_get_current_time(node_viewer->time_notifier));
+		cmzn_field_cache_set_node(field_cache, node_viewer->current_node);
+		cmzn_field_iterator_id iter = cmzn_field_module_create_field_iterator(field_module);
+		cmzn_field_id field = 0;
 		bool time_varying = false;
-		while ((0 != (field = Cmiss_field_iterator_next(iter))))
+		while ((0 != (field = cmzn_field_iterator_next(iter))))
 		{
 			node_viewer_add_collpane(node_viewer, field_cache, field, time_varying);
-			Cmiss_field_destroy(&field);
+			cmzn_field_destroy(&field);
 		}
-		Cmiss_field_iterator_destroy(&iter);
-		Cmiss_field_cache_destroy(&field_cache);
-		Cmiss_field_module_destroy(&field_module);
+		cmzn_field_iterator_destroy(&iter);
+		cmzn_field_cache_destroy(&field_cache);
+		cmzn_field_module_destroy(&field_module);
 		Node_viewer_remove_unused_collpane(node_viewer);
 		if (time_varying)
 		{
 			if (!node_viewer->time_notifier_callback)
 			{
-				if (CMISS_OK == Cmiss_time_notifier_add_callback(node_viewer->time_notifier,
+				if (CMISS_OK == cmzn_time_notifier_add_callback(node_viewer->time_notifier,
 					node_field_time_change_callback, (void *)node_viewer))
 				{
 					node_viewer->time_notifier_callback = 1;
@@ -579,7 +579,7 @@ int Node_viewer_update_collpane(struct Node_viewer *node_viewer)
 		{
 			if (node_viewer->time_notifier_callback)
 			{
-				Cmiss_time_notifier_remove_callback(node_viewer->time_notifier,
+				cmzn_time_notifier_remove_callback(node_viewer->time_notifier,
 					node_field_time_change_callback, (void *)node_viewer);
 				node_viewer->time_notifier_callback = 0;
 			}
@@ -598,73 +598,73 @@ static void Node_viewer_Computed_field_change(
 	node_viewer = (struct Node_viewer *)node_viewer_void;
 	if (message && node_viewer)
 	{
-		Cmiss_scene_id scene = Cmiss_graphics_module_get_scene(node_viewer->graphics_module, node_viewer->region);
+		cmzn_scene_id scene = cmzn_graphics_module_get_scene(node_viewer->graphics_module, node_viewer->region);
 		if (scene)
 		{
-			Cmiss_field_group_id selection_group = Cmiss_scene_get_selection_group(scene);
+			cmzn_field_group_id selection_group = cmzn_scene_get_selection_group(scene);
 			changed_field_list =
 				MANAGER_MESSAGE_GET_CHANGE_LIST(Computed_field)(message,
 					MANAGER_CHANGE_RESULT(Computed_field));
 			if (selection_group && changed_field_list && Computed_field_or_ancestor_satisfies_condition(
-				Cmiss_field_group_base_cast(selection_group), Computed_field_is_in_list, (void *)changed_field_list))
+				cmzn_field_group_base_cast(selection_group), Computed_field_is_in_list, (void *)changed_field_list))
 			{
-				Cmiss_field_module_id field_module = Cmiss_region_get_field_module(node_viewer->region);
-				Cmiss_nodeset_id master_nodeset = Cmiss_field_module_find_nodeset_by_domain_type(
+				cmzn_field_module_id field_module = cmzn_region_get_field_module(node_viewer->region);
+				cmzn_nodeset_id master_nodeset = cmzn_field_module_find_nodeset_by_domain_type(
 					field_module, node_viewer->domain_type);
-				Cmiss_field_module_destroy(&field_module);
-				Cmiss_field_node_group_id node_group = Cmiss_field_group_get_node_group(selection_group, master_nodeset);
-				Cmiss_nodeset_destroy(&master_nodeset);
-				Cmiss_nodeset_group_id nodeset_group = Cmiss_field_node_group_get_nodeset(node_group);
-				Cmiss_field_node_group_destroy(&node_group);
+				cmzn_field_module_destroy(&field_module);
+				cmzn_field_node_group_id node_group = cmzn_field_group_get_node_group(selection_group, master_nodeset);
+				cmzn_nodeset_destroy(&master_nodeset);
+				cmzn_nodeset_group_id nodeset_group = cmzn_field_node_group_get_nodeset(node_group);
+				cmzn_field_node_group_destroy(&node_group);
 				/* make sure there is only one node selected in group */
-				if (1 == Cmiss_nodeset_get_size(Cmiss_nodeset_group_base_cast(nodeset_group)))
+				if (1 == cmzn_nodeset_get_size(cmzn_nodeset_group_base_cast(nodeset_group)))
 				{
-					Cmiss_node_iterator_id iterator = Cmiss_nodeset_create_node_iterator(
-						Cmiss_nodeset_group_base_cast(nodeset_group));
-					Cmiss_node_id node = Cmiss_node_iterator_next(iterator);
-					Cmiss_node_iterator_destroy(&iterator);
+					cmzn_node_iterator_id iterator = cmzn_nodeset_create_node_iterator(
+						cmzn_nodeset_group_base_cast(nodeset_group));
+					cmzn_node_id node = cmzn_node_iterator_next(iterator);
+					cmzn_node_iterator_destroy(&iterator);
 					if (node != node_viewer->current_node)
 					{
 						if (node_viewer->wx_node_viewer)
 						{
 							node_viewer->wx_node_viewer->set_selected_node(node);
 							if (node_viewer->current_node)
-								Cmiss_node_destroy(&node_viewer->current_node);
-							node_viewer->current_node = Cmiss_node_access(node);
+								cmzn_node_destroy(&node_viewer->current_node);
+							node_viewer->current_node = cmzn_node_access(node);
 						}
 						if (node_viewer->wx_node_viewer && node_viewer->collpane)
 						{
 							Node_viewer_update_collpane(node_viewer);
 						}
 					}
-					Cmiss_node_destroy(&node);
+					cmzn_node_destroy(&node);
 				}
-				Cmiss_nodeset_group_destroy(&nodeset_group);
+				cmzn_nodeset_group_destroy(&nodeset_group);
 			}
 			if (changed_field_list)
 				DESTROY(LIST(Computed_field))(&changed_field_list);
-			Cmiss_scene_destroy(&scene);
+			cmzn_scene_destroy(&scene);
 			if (selection_group)
 			{
-				Cmiss_field_group_destroy(&selection_group);
+				cmzn_field_group_destroy(&selection_group);
 			}
 		}
 	}
 }
 
-Cmiss_node_id Node_viewer_get_first_node(Node_viewer *node_viewer)
+cmzn_node_id Node_viewer_get_first_node(Node_viewer *node_viewer)
 {
-	Cmiss_node_id node = 0;
+	cmzn_node_id node = 0;
 	if (node_viewer)
 	{
-		Cmiss_field_module_id field_module = Cmiss_region_get_field_module(node_viewer->region);
-		Cmiss_nodeset_id nodeset = Cmiss_field_module_find_nodeset_by_domain_type(field_module,
+		cmzn_field_module_id field_module = cmzn_region_get_field_module(node_viewer->region);
+		cmzn_nodeset_id nodeset = cmzn_field_module_find_nodeset_by_domain_type(field_module,
 			node_viewer->domain_type);
-		Cmiss_node_iterator_id iter = Cmiss_nodeset_create_node_iterator(nodeset);
-		node = Cmiss_node_iterator_next(iter);
-		Cmiss_node_iterator_destroy(&iter);
-		Cmiss_nodeset_destroy(&nodeset);
-		Cmiss_field_module_destroy(&field_module);
+		cmzn_node_iterator_id iter = cmzn_nodeset_create_node_iterator(nodeset);
+		node = cmzn_node_iterator_next(iter);
+		cmzn_node_iterator_destroy(&iter);
+		cmzn_nodeset_destroy(&nodeset);
+		cmzn_field_module_destroy(&field_module);
 	}
 	return node;
 }
@@ -672,8 +672,8 @@ Cmiss_node_id Node_viewer_get_first_node(Node_viewer *node_viewer)
 struct Node_viewer *Node_viewer_create(
 	struct Node_viewer **node_viewer_address,
 	const char *dialog_title,
-	Cmiss_region_id root_region, Cmiss_field_domain_type domain_type,
-	Cmiss_graphics_module_id graphics_module,
+	cmzn_region_id root_region, cmzn_field_domain_type domain_type,
+	cmzn_graphics_module_id graphics_module,
 	struct Time_keeper_app *time_keeper_app)
 {
 	struct Node_viewer *node_viewer;
@@ -684,20 +684,20 @@ struct Node_viewer *Node_viewer_create(
 		/* allocate memory */
 		if (ALLOCATE(node_viewer,struct Node_viewer,1))
 		{
-			node_viewer->graphics_module = Cmiss_graphics_module_access(graphics_module);
+			node_viewer->graphics_module = cmzn_graphics_module_access(graphics_module);
 			node_viewer->region = root_region;
 			node_viewer->computed_field_manager =
-				Cmiss_region_get_Computed_field_manager(node_viewer->region);
+				cmzn_region_get_Computed_field_manager(node_viewer->region);
 			node_viewer->node_viewer_address = node_viewer_address;
 			node_viewer->domain_type = domain_type;
-			node_viewer->fe_region = Cmiss_region_get_FE_region(root_region);
+			node_viewer->fe_region = cmzn_region_get_FE_region(root_region);
 			if (domain_type == CMISS_FIELD_DOMAIN_DATA)
 			{
 				node_viewer->fe_region = FE_region_get_data_FE_region(node_viewer->fe_region);
 			}
 			node_viewer->collpane = NULL;
 			node_viewer->time_keeper_app = time_keeper_app->access();
-			node_viewer->time_notifier = Cmiss_time_keeper_create_notifier_regular(
+			node_viewer->time_notifier = cmzn_time_keeper_create_notifier_regular(
 				time_keeper_app->getTimeKeeper(), /*update_frequency*/10.0, /*time_offset*/0.0);
 			node_viewer->time_notifier_callback = 0;
 			node_viewer->grid_field = NULL;
@@ -784,9 +784,9 @@ int Node_viewer_destroy(struct Node_viewer **node_viewer_address)
 		{
 			 delete node_viewer->wx_node_viewer;
 		}
-		Cmiss_time_notifier_destroy(&(node_viewer->time_notifier));
+		cmzn_time_notifier_destroy(&(node_viewer->time_notifier));
 		DEACCESS(Time_keeper_app)(&(node_viewer->time_keeper_app));
-		Cmiss_graphics_module_destroy(&(node_viewer->graphics_module));
+		cmzn_graphics_module_destroy(&(node_viewer->graphics_module));
 		DEALLOCATE(*node_viewer_address);
 		return_code=1;
 	}
@@ -835,10 +835,10 @@ static int Node_viewer_set_viewer_node(struct Node_viewer *node_viewer)
 	if (node_viewer)
 	{
 		if (node_viewer->current_node)
-			Cmiss_node_destroy(&node_viewer->current_node);
+			cmzn_node_destroy(&node_viewer->current_node);
 		if (node_viewer->wx_node_viewer != 0)
 		{
-			node_viewer->current_node = Cmiss_node_access(node_viewer->wx_node_viewer->get_selected_node());
+			node_viewer->current_node = cmzn_node_access(node_viewer->wx_node_viewer->get_selected_node());
 		}
 		return_code=1;
 	}
@@ -859,7 +859,7 @@ object cause updates.
 	int fe_node_change;
 	struct Node_viewer *node_viewer;
 
-	ENTER(Node_viewer_Cmiss_region_change);
+	ENTER(Node_viewer_cmzn_region_change);
 	if (fe_region && changes &&
 		(node_viewer = (struct Node_viewer *)node_viewer_void))
 	{
@@ -879,46 +879,46 @@ object cause updates.
 	else
 	{
 		 display_message(ERROR_MESSAGE,
-				"Node_viewer_Cmiss_region_change.  Invalid argument(s)");
+				"Node_viewer_cmzn_region_change.  Invalid argument(s)");
 	}
 	LEAVE;
-} /* Node_viewer_Cmiss_region_change */
+} /* Node_viewer_cmzn_region_change */
 
 /*******************************************************************************
  * Get field component value as string
  */
-char *node_viewer_get_component_value_string(Node_viewer *node_viewer, Cmiss_field_id field,
-	int component_number, enum Cmiss_nodal_value_type nodal_value_type, int version)
+char *node_viewer_get_component_value_string(Node_viewer *node_viewer, cmzn_field_id field,
+	int component_number, enum cmzn_nodal_value_type nodal_value_type, int version)
 {
 	char *new_value_string = 0;
 	if (node_viewer && field && node_viewer->current_node)
 	{
-		const int numberOfComponents = Cmiss_field_get_number_of_components(field);
-		Cmiss_field_module_id field_module = Cmiss_field_get_field_module(field);
-		Cmiss_field_cache_id field_cache = Cmiss_field_module_create_cache(field_module);
-		double time = Cmiss_time_notifier_get_current_time(node_viewer->time_notifier);
-		Cmiss_field_cache_set_time(field_cache, time);
-		Cmiss_field_cache_set_node(field_cache, node_viewer->current_node);
+		const int numberOfComponents = cmzn_field_get_number_of_components(field);
+		cmzn_field_module_id field_module = cmzn_field_get_field_module(field);
+		cmzn_field_cache_id field_cache = cmzn_field_module_create_cache(field_module);
+		double time = cmzn_time_notifier_get_current_time(node_viewer->time_notifier);
+		cmzn_field_cache_set_time(field_cache, time);
+		cmzn_field_cache_set_node(field_cache, node_viewer->current_node);
 		if (1 == numberOfComponents)
 		{
-			new_value_string = Cmiss_field_evaluate_string(field, field_cache);
+			new_value_string = cmzn_field_evaluate_string(field, field_cache);
 		}
 		else
 		{
 			// must be numeric
-			Cmiss_field_module_begin_change(field_module);
-			Cmiss_field_id useField = 0;
+			cmzn_field_module_begin_change(field_module);
+			cmzn_field_id useField = 0;
 			if ((nodal_value_type != CMISS_NODAL_VALUE) || (version != 1))
 			{
-				useField = Cmiss_field_module_create_node_value(field_module, field, nodal_value_type, version);
+				useField = cmzn_field_module_create_node_value(field_module, field, nodal_value_type, version);
 			}
 			else
 			{
-				useField = Cmiss_field_access(field);
+				useField = cmzn_field_access(field);
 			}
-			const int numberOfComponents = Cmiss_field_get_number_of_components(field);
+			const int numberOfComponents = cmzn_field_get_number_of_components(field);
 			double *values = new double[numberOfComponents];
-			if (CMISS_OK == Cmiss_field_evaluate_real(useField, field_cache, numberOfComponents, values))
+			if (CMISS_OK == cmzn_field_evaluate_real(useField, field_cache, numberOfComponents, values))
 			{
 				char temp_string[VALUE_STRING_SIZE];
 				sprintf(temp_string, FE_VALUE_INPUT_STRING, values[component_number-1]);
@@ -929,18 +929,18 @@ char *node_viewer_get_component_value_string(Node_viewer *node_viewer, Cmiss_fie
 				new_value_string = duplicate_string("nan");
 			}
 			delete[] values;
-			Cmiss_field_destroy(&useField);
-			Cmiss_field_module_end_change(field_module);
+			cmzn_field_destroy(&useField);
+			cmzn_field_module_end_change(field_module);
 		}
-		Cmiss_field_cache_destroy(&field_cache);
-		Cmiss_field_module_destroy(&field_module);
+		cmzn_field_cache_destroy(&field_cache);
+		cmzn_field_module_destroy(&field_module);
 	}
 	return new_value_string;
 }
 
 
-int node_viewer_add_textctrl(Node_viewer *node_viewer, Cmiss_field_id field,
-	int component_number, Cmiss_nodal_value_type nodal_value_type, int version)
+int node_viewer_add_textctrl(Node_viewer *node_viewer, cmzn_field_id field,
+	int component_number, cmzn_nodal_value_type nodal_value_type, int version)
 /*******************************************************************************
 LAST MODIFIED : 24 April 2007
 
@@ -979,14 +979,14 @@ Add textctrl box onto the viewer.
  * Assumes field is defined at node.
  */
 static int node_viewer_setup_components(
-	struct Node_viewer *node_viewer, Cmiss_node_id node, Cmiss_field_id field, bool &time_varying_field)
+	struct Node_viewer *node_viewer, cmzn_node_id node, cmzn_field_id field, bool &time_varying_field)
 {
-	struct Cmiss_nodal_value_type_label
+	struct cmzn_nodal_value_type_label
 	{
-		enum Cmiss_nodal_value_type type;
+		enum cmzn_nodal_value_type type;
 		const char *label;
 	};
-	const Cmiss_nodal_value_type_label all_nodal_value_types[] =
+	const cmzn_nodal_value_type_label all_nodal_value_types[] =
 	{
 		{ CMISS_NODAL_VALUE, "value" },
 		{ CMISS_NODAL_D_DS1, "d/ds1" },
@@ -997,33 +997,33 @@ static int node_viewer_setup_components(
 		{ CMISS_NODAL_D2_DS2DS3, "d2/ds2ds3" },
 		{ CMISS_NODAL_D3_DS1DS2DS3, "d3/ds1ds2ds3" }
 	};
-	const int all_nodal_value_types_count = sizeof(all_nodal_value_types) / sizeof(Cmiss_nodal_value_type_label);
+	const int all_nodal_value_types_count = sizeof(all_nodal_value_types) / sizeof(cmzn_nodal_value_type_label);
 	int return_code = 0;
 	wxString tmp_string;
 	if (node_viewer && node && field)
 	{
 		return_code = 1;
-		const int number_of_components = Cmiss_field_get_number_of_components(field);
-		Cmiss_field_finite_element_id feField = Cmiss_field_cast_finite_element(field);
-		Cmiss_node_template_id nodeTemplate = 0;
-		enum Cmiss_nodal_value_type nodal_value_types[8];
+		const int number_of_components = cmzn_field_get_number_of_components(field);
+		cmzn_field_finite_element_id feField = cmzn_field_cast_finite_element(field);
+		cmzn_node_template_id nodeTemplate = 0;
+		enum cmzn_nodal_value_type nodal_value_types[8];
 		const char *nodal_value_labels[8];
 		nodal_value_types[0] = CMISS_NODAL_VALUE;
 		nodal_value_labels[0] = "value";
 		int number_of_nodal_value_types = 1;
 		if (feField)
 		{
-			Cmiss_field_module_id field_module = Cmiss_region_get_field_module(node_viewer->region);
-			Cmiss_nodeset_id nodeset = Cmiss_field_module_find_nodeset_by_domain_type(field_module,
+			cmzn_field_module_id field_module = cmzn_region_get_field_module(node_viewer->region);
+			cmzn_nodeset_id nodeset = cmzn_field_module_find_nodeset_by_domain_type(field_module,
 				node_viewer->domain_type);
-			nodeTemplate = Cmiss_nodeset_create_node_template(nodeset);
-			Cmiss_node_template_define_field_from_node(nodeTemplate, field, node);
-			Cmiss_nodeset_destroy(&nodeset);
-			Cmiss_field_module_destroy(&field_module);
+			nodeTemplate = cmzn_nodeset_create_node_template(nodeset);
+			cmzn_node_template_define_field_from_node(nodeTemplate, field, node);
+			cmzn_nodeset_destroy(&nodeset);
+			cmzn_field_module_destroy(&field_module);
 			for (int i = 1; i < all_nodal_value_types_count; ++i)
 			{
-				enum Cmiss_nodal_value_type nodal_value_type = all_nodal_value_types[i].type;
-				if (Cmiss_node_template_has_derivative(nodeTemplate,
+				enum cmzn_nodal_value_type nodal_value_type = all_nodal_value_types[i].type;
+				if (cmzn_node_template_has_derivative(nodeTemplate,
 					field, /*component_number*/-1, nodal_value_type))
 				{
 					nodal_value_types[number_of_nodal_value_types] = nodal_value_type;
@@ -1049,17 +1049,17 @@ static int node_viewer_setup_components(
 		for (int comp_no = 1; comp_no <= number_of_components; ++comp_no)
 		{
 			// first column is component label */
-			char *new_string = Cmiss_field_get_component_name(field, comp_no);
+			char *new_string = cmzn_field_get_component_name(field, comp_no);
 			tmp_string = wxString::FromAscii(new_string);
 			node_viewer->grid_field->Add(new wxStaticText(node_viewer->win, -1, tmp_string),1,
 				wxALIGN_CENTER_VERTICAL|
 				wxALIGN_CENTER_HORIZONTAL|wxADJUST_MINSIZE, 0);
-			Cmiss_deallocate(new_string);
+			cmzn_deallocate(new_string);
 
 			for (int nodal_value_no = 0; nodal_value_no < number_of_nodal_value_types; ++nodal_value_no)
 			{
-				enum Cmiss_nodal_value_type nodal_value_type = nodal_value_types[nodal_value_no];
-				if (!feField || Cmiss_node_template_has_derivative(nodeTemplate,
+				enum cmzn_nodal_value_type nodal_value_type = nodal_value_types[nodal_value_no];
+				if (!feField || cmzn_node_template_has_derivative(nodeTemplate,
 					field, comp_no, nodal_value_type))
 				{
 					node_viewer_add_textctrl(node_viewer, field, comp_no, nodal_value_type, 1);
@@ -1072,20 +1072,20 @@ static int node_viewer_setup_components(
 				}
 			}
 		}
-		Cmiss_time_sequence_id timeSequence = Cmiss_node_template_get_time_sequence(nodeTemplate, field);
+		cmzn_time_sequence_id timeSequence = cmzn_node_template_get_time_sequence(nodeTemplate, field);
 		if (timeSequence)
 		{
 			time_varying_field = true;
-			Cmiss_time_sequence_destroy(&timeSequence);
+			cmzn_time_sequence_destroy(&timeSequence);
 		}
-		Cmiss_node_template_destroy(&nodeTemplate);
-		Cmiss_field_finite_element_destroy(&feField);
+		cmzn_node_template_destroy(&nodeTemplate);
+		cmzn_field_finite_element_destroy(&feField);
 	}
 	return (return_code);
 }
 
-static int Node_viewer_set_Cmiss_region(struct Node_viewer *node_viewer,
-	struct Cmiss_region *region)
+static int Node_viewer_set_cmzn_region(struct Node_viewer *node_viewer,
+	struct cmzn_region *region)
 /*******************************************************************************
 LAST MODIFIED : 8 September 2008
 
@@ -1104,7 +1104,7 @@ in this region only.
 				Node_viewer_FE_region_change, (void *)node_viewer);
 			if (region)
 			{
-				node_viewer->fe_region = Cmiss_region_get_FE_region(region);
+				node_viewer->fe_region = cmzn_region_get_FE_region(region);
 
 				if (node_viewer->domain_type = CMISS_FIELD_DOMAIN_DATA)
 				{
@@ -1130,7 +1130,7 @@ in this region only.
 					node_viewer->computed_field_manager_callback_id = NULL;
 				}
 				node_viewer->computed_field_manager	=
-					Cmiss_region_get_Computed_field_manager(region);
+					cmzn_region_get_Computed_field_manager(region);
 				if (node_viewer->computed_field_manager)
 				{
 					node_viewer->computed_field_manager_callback_id =

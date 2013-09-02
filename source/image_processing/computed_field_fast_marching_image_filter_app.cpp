@@ -11,7 +11,7 @@
 
 const char computed_field_fast_marching_image_filter_type_string[] = "fast_marching_filter";
 
-int Cmiss_field_get_type_fast_marching_image_filter(struct Computed_field *field,
+int cmzn_field_get_type_fast_marching_image_filter(struct Computed_field *field,
   struct Computed_field **source_field, double *stopping_value,
 		int *num_seed_points, int *dimension, double **seed_points,
 		double **seed_values, int **output_size);
@@ -75,7 +75,7 @@ already) and allows its contents to be modified.
 				Computed_field_get_type_string(field_modify->get_field())))
 		{
 			return_code =
-				Cmiss_field_get_type_fast_marching_image_filter(field_modify->get_field(), &source_field,
+				cmzn_field_get_type_fast_marching_image_filter(field_modify->get_field(), &source_field,
 				  &stopping_value, &num_seed_points, &dimension, &seed_points, &seed_values, &output_size);
 		}
 		if (return_code)
@@ -216,7 +216,7 @@ already) and allows its contents to be modified.
 			if (return_code)
 			{
 				return_code = field_modify->update_field_and_deaccess(
-					Cmiss_field_module_create_fast_marching_image_filter(
+					cmzn_field_module_create_fast_marching_image_filter(
 						field_modify->get_field_module(),
 						source_field, stopping_value, num_seed_points, dimension,
 						seed_points, seed_values, output_size));

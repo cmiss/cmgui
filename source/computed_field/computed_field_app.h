@@ -78,7 +78,7 @@ Creates a Computed_field_package which is used by the rest of the program to
 access everything to do with computed fields.
 The root_region's computed_field_manager is passed in to support old code that
 expects it to be in the package. This is temporary until all code gets the true
-manager from the respective Cmiss_region.
+manager from the respective cmzn_region.
 ==============================================================================*/
 
 int DESTROY(Computed_field_package)(

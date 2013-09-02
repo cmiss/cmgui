@@ -223,13 +223,13 @@ from the <event_dispatcher>.
 ==============================================================================*/
 
 Fdio_id Event_dispatcher_create_Fdio(struct Event_dispatcher *event_dispatcher,
-	Cmiss_native_socket_t descriptor);
+	cmzn_native_socket_t descriptor);
 /*******************************************************************************
 LAST MODIFIED : 16 May 2005
 
 DESCRIPTION :
 Create a file-descriptor I/O object from an event dispatcher and a descriptor.
-Note that Cmiss_native_socket_t may be a file-descriptor int if you are on a
+Note that cmzn_native_socket_t may be a file-descriptor int if you are on a
 *nix platform, or a SOCKET type on Win32.
 ==============================================================================*/
 

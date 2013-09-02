@@ -734,7 +734,7 @@ Up to calling function to deallocate the returned array AND the strings in it.
 	return (tool_names);
 } /* interactive_tool_manager_get_tool_names */
 
-int Cmiss_interactive_tool_execute_command(Cmiss_interactive_tool_id interactive_tool,
+int cmzn_interactive_tool_execute_command(cmzn_interactive_tool_id interactive_tool,
 	const char *command)
 {
 	int return_code = 0;
@@ -756,9 +756,9 @@ int Cmiss_interactive_tool_execute_command(Cmiss_interactive_tool_id interactive
 	return return_code;
 }
 
-Cmiss_interactive_tool_id Cmiss_interactive_tool_access(Cmiss_interactive_tool_id interactive_tool)
+cmzn_interactive_tool_id cmzn_interactive_tool_access(cmzn_interactive_tool_id interactive_tool)
 {
-	Cmiss_interactive_tool_id return_interactive_tool = 0;
+	cmzn_interactive_tool_id return_interactive_tool = 0;
 	if (interactive_tool)
 	{
 		return_interactive_tool = ACCESS(Interactive_tool)(return_interactive_tool);
@@ -767,7 +767,7 @@ Cmiss_interactive_tool_id Cmiss_interactive_tool_access(Cmiss_interactive_tool_i
 	return return_interactive_tool;
 }
 
-int Cmiss_interactive_tool_destroy(Cmiss_interactive_tool_id *interactive_tool)
+int cmzn_interactive_tool_destroy(cmzn_interactive_tool_id *interactive_tool)
 {
 	int return_code = 0;
 	if (interactive_tool)

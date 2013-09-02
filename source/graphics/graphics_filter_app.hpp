@@ -51,23 +51,23 @@
 #include "general/mystring.h"
 #include "general/object.h"
 
-struct Cmiss_rendition;
-struct Cmiss_graphic;
+struct cmzn_rendition;
+struct cmzn_graphic;
 
-DECLARE_LIST_TYPES(Cmiss_graphics_filter);
+DECLARE_LIST_TYPES(cmzn_graphics_filter);
 
-PROTOTYPE_OBJECT_FUNCTIONS(Cmiss_graphics_filter);
-PROTOTYPE_GET_OBJECT_NAME_FUNCTION(Cmiss_graphics_filter);
+PROTOTYPE_OBJECT_FUNCTIONS(cmzn_graphics_filter);
+PROTOTYPE_GET_OBJECT_NAME_FUNCTION(cmzn_graphics_filter);
 
-PROTOTYPE_LIST_FUNCTIONS(Cmiss_graphics_filter);
-PROTOTYPE_FIND_BY_IDENTIFIER_IN_LIST_FUNCTION(Cmiss_graphics_filter,name,const char *);
+PROTOTYPE_LIST_FUNCTIONS(cmzn_graphics_filter);
+PROTOTYPE_FIND_BY_IDENTIFIER_IN_LIST_FUNCTION(cmzn_graphics_filter,name,const char *);
 
-PROTOTYPE_MANAGER_FUNCTIONS(Cmiss_graphics_filter);
-PROTOTYPE_MANAGER_IDENTIFIER_FUNCTIONS(Cmiss_graphics_filter,name,const char *);
+PROTOTYPE_MANAGER_FUNCTIONS(cmzn_graphics_filter);
+PROTOTYPE_MANAGER_IDENTIFIER_FUNCTIONS(cmzn_graphics_filter,name,const char *);
 
 
-int Cmiss_graphics_filter_manager_set_owner_private(struct MANAGER(Cmiss_graphics_filter) *manager,
-	struct Cmiss_graphics_module *graphics_module);
+int cmzn_graphics_filter_manager_set_owner_private(struct MANAGER(cmzn_graphics_filter) *manager,
+	struct cmzn_graphics_module *graphics_module);
 
 int gfx_define_graphics_filter(struct Parse_state *state, void *root_region_void,
 	void *filter_module_void);
@@ -75,6 +75,6 @@ int gfx_define_graphics_filter(struct Parse_state *state, void *root_region_void
 int gfx_list_graphics_filter(struct Parse_state *state, void *dummy_to_be_modified,
 	void *filter_module_void);
 
-int set_Cmiss_graphics_filter(struct Parse_state *state,
+int set_cmzn_graphics_filter(struct Parse_state *state,
 	void *graphics_filter_address_void, void *filter_module_void);
 #endif /* GRAPHICS_FILTER_HPP_ */

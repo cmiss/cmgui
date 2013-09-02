@@ -41,7 +41,7 @@ already) and allows its contents to be modified.
 			if (new_string_value)
 			{
 				return_code = field_modify->update_field_and_deaccess(
-					Cmiss_field_module_create_string_constant(field_modify->get_field_module(),
+					cmzn_field_module_create_string_constant(field_modify->get_field_module(),
 						new_string_value));
 			}
 			else

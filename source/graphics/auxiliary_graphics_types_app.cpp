@@ -19,8 +19,8 @@ int set_graphic_face_type(struct Parse_state *state, void *face_type_address_voi
 {
 	int return_code = 1;
 	USE_PARAMETER(dummy_user_data);
-	enum Cmiss_element_face_type *face_type_address =
-		static_cast<Cmiss_element_face_type*>(face_type_address_void);
+	enum cmzn_element_face_type *face_type_address =
+		static_cast<cmzn_element_face_type*>(face_type_address_void);
 	if (state && face_type_address)
 	{
 		const char *current_token = state->current_token;

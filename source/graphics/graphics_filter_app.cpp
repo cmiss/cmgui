@@ -9,20 +9,20 @@
 
 struct Define_graphics_filter_data
 {
-	Cmiss_region *root_region;
-	Cmiss_graphics_filter_module *filter_module;
+	cmzn_region *root_region;
+	cmzn_graphics_filter_module *filter_module;
 	int number_of_filters;
-	Cmiss_graphics_filter **source_filters;
+	cmzn_graphics_filter **source_filters;
 };
 
-int set_Cmiss_graphics_filter_source_data(struct Parse_state *state,
+int set_cmzn_graphics_filter_source_data(struct Parse_state *state,
 	void *filter_data_void,void *dummy_void)
 {
 	int return_code = 1;
 	struct Define_graphics_filter_data *filter_data = (struct Define_graphics_filter_data *)filter_data_void;
 	const char *current_token;
-	Cmiss_graphics_filter *filter = NULL, **temp_source_filters = NULL;
-	Cmiss_graphics_filter_module *filter_module = filter_data->filter_module;
+	cmzn_graphics_filter *filter = NULL, **temp_source_filters = NULL;
+	cmzn_graphics_filter_module *filter_module = filter_data->filter_module;
 
 	USE_PARAMETER(dummy_void);
 	if (state && filter_data && filter_module)
@@ -36,7 +36,7 @@ int set_Cmiss_graphics_filter_source_data(struct Parse_state *state,
 				while (return_code && (current_token = state->current_token))
 				{
 					/* first try to find a number in the token */
-					filter=Cmiss_graphics_filter_module_find_filter_by_name(filter_module, current_token);
+					filter=cmzn_graphics_filter_module_find_filter_by_name(filter_module, current_token);
 					if (filter)
 					{
 						shift_Parse_state(state,1);
@@ -50,7 +50,7 @@ int set_Cmiss_graphics_filter_source_data(struct Parse_state *state,
 					if (return_code)
 					{
 						if (REALLOCATE(temp_source_filters, filter_data->source_filters,
-							Cmiss_graphics_filter *, filter_data->number_of_filters+1))
+							cmzn_graphics_filter *, filter_data->number_of_filters+1))
 						{
 							filter_data->source_filters = temp_source_filters;
 							temp_source_filters[filter_data->number_of_filters] =	filter;
@@ -85,9 +85,9 @@ int set_Cmiss_graphics_filter_source_data(struct Parse_state *state,
 	return return_code;
 }
 
-enum Cmiss_graphics_filter_type Cmiss_graphics_filter_get_type(Cmiss_graphics_filter_id graphics_filter)
+enum cmzn_graphics_filter_type cmzn_graphics_filter_get_type(cmzn_graphics_filter_id graphics_filter)
 {
-	enum Cmiss_graphics_filter_type filter_type = CMISS_GRAPHICS_FILTER_TYPE_INVALID;
+	enum cmzn_graphics_filter_type filter_type = CMISS_GRAPHICS_FILTER_TYPE_INVALID;
 	if (graphics_filter)
 	{
 		filter_type = graphics_filter->getType();
@@ -99,15 +99,15 @@ int gfx_define_graphics_filter_operator_or(struct Parse_state *state, void *grap
 	void *filter_data_void)
 {
 	int return_code = 1, add_filter = 1;
-	enum Cmiss_graphics_filter_type filter_type;
+	enum cmzn_graphics_filter_type filter_type;
 	struct Define_graphics_filter_data *filter_data = (struct Define_graphics_filter_data *)filter_data_void;
 	if (state && filter_data)
 	{
-		Cmiss_graphics_filter_id *graphics_filter_handle = (Cmiss_graphics_filter_id *)graphics_filter_handle_void; // can be null
-		Cmiss_graphics_filter_id graphics_filter = *graphics_filter_handle;
+		cmzn_graphics_filter_id *graphics_filter_handle = (cmzn_graphics_filter_id *)graphics_filter_handle_void; // can be null
+		cmzn_graphics_filter_id graphics_filter = *graphics_filter_handle;
 		if (graphics_filter)
 		{
-			filter_type = Cmiss_graphics_filter_get_type(graphics_filter);
+			filter_type = cmzn_graphics_filter_get_type(graphics_filter);
 		}
 		else
 		{
@@ -119,30 +119,30 @@ int gfx_define_graphics_filter_operator_or(struct Parse_state *state, void *grap
 			"Graphics that match any of the filters will be shown.");
 		Option_table_add_switch(option_table,"add_filters","remove_filters",&add_filter);
 		Option_table_add_entry(option_table, NULL, filter_data,
-			NULL, set_Cmiss_graphics_filter_source_data);
+			NULL, set_cmzn_graphics_filter_source_data);
 		return_code = Option_table_multi_parse(option_table, state);
 		if (return_code && (filter_type == CMISS_GRAPHICS_FILTER_TYPE_OPERATOR_OR))
 		{
 			if (!graphics_filter)
 			{
-				graphics_filter = Cmiss_graphics_filter_module_create_filter_operator_or(filter_data->filter_module);
+				graphics_filter = cmzn_graphics_filter_module_create_filter_operator_or(filter_data->filter_module);
 				*graphics_filter_handle = graphics_filter;
 			}
-			Cmiss_graphics_filter_operator_id operator_filter = Cmiss_graphics_filter_cast_operator(graphics_filter);
+			cmzn_graphics_filter_operator_id operator_filter = cmzn_graphics_filter_cast_operator(graphics_filter);
 			if (operator_filter)
 			{
 				for (int i = 0; i < filter_data->number_of_filters; i++)
 				{
 					if (add_filter)
 					{
-						Cmiss_graphics_filter_operator_append_operand(operator_filter, filter_data->source_filters[i]);
+						cmzn_graphics_filter_operator_append_operand(operator_filter, filter_data->source_filters[i]);
 					}
 					else
 					{
-						Cmiss_graphics_filter_operator_remove_operand(operator_filter, filter_data->source_filters[i]);
+						cmzn_graphics_filter_operator_remove_operand(operator_filter, filter_data->source_filters[i]);
 					}
 				}
-				Cmiss_graphics_filter_operator_destroy(&operator_filter);
+				cmzn_graphics_filter_operator_destroy(&operator_filter);
 			}
 			else
 			{
@@ -165,15 +165,15 @@ int gfx_define_graphics_filter_operator_and(struct Parse_state *state, void *gra
 	void *filter_data_void)
 {
 	int return_code = 1, add_filter = 1;
-	enum Cmiss_graphics_filter_type filter_type;
+	enum cmzn_graphics_filter_type filter_type;
 	struct Define_graphics_filter_data *filter_data = (struct Define_graphics_filter_data *)filter_data_void;
 	if (state && filter_data)
 	{
-		Cmiss_graphics_filter_id *graphics_filter_handle = (Cmiss_graphics_filter_id *)graphics_filter_handle_void; // can be null
-		Cmiss_graphics_filter_id graphics_filter = *graphics_filter_handle;
+		cmzn_graphics_filter_id *graphics_filter_handle = (cmzn_graphics_filter_id *)graphics_filter_handle_void; // can be null
+		cmzn_graphics_filter_id graphics_filter = *graphics_filter_handle;
 		if (graphics_filter)
 		{
-			filter_type = Cmiss_graphics_filter_get_type(graphics_filter);
+			filter_type = cmzn_graphics_filter_get_type(graphics_filter);
 		}
 		else
 		{
@@ -185,30 +185,30 @@ int gfx_define_graphics_filter_operator_and(struct Parse_state *state, void *gra
 			"Only graphics that match all of the filters will be shown.");
 		Option_table_add_switch(option_table,"add_filters","remove_filters",&add_filter);
 		Option_table_add_entry(option_table, NULL, filter_data,
-			NULL, set_Cmiss_graphics_filter_source_data);
+			NULL, set_cmzn_graphics_filter_source_data);
 		return_code = Option_table_multi_parse(option_table, state);
 		if (return_code && (filter_type == CMISS_GRAPHICS_FILTER_TYPE_OPERATOR_AND))
 		{
 			if (!graphics_filter)
 			{
-				graphics_filter = Cmiss_graphics_filter_module_create_filter_operator_and(filter_data->filter_module);
+				graphics_filter = cmzn_graphics_filter_module_create_filter_operator_and(filter_data->filter_module);
 				*graphics_filter_handle = graphics_filter;
 			}
-			Cmiss_graphics_filter_operator_id operator_filter = Cmiss_graphics_filter_cast_operator(graphics_filter);
+			cmzn_graphics_filter_operator_id operator_filter = cmzn_graphics_filter_cast_operator(graphics_filter);
 			if (operator_filter)
 			{
 				for (int i = 0; i < filter_data->number_of_filters; i++)
 				{
 					if (add_filter)
 					{
-						Cmiss_graphics_filter_operator_append_operand(operator_filter, filter_data->source_filters[i]);
+						cmzn_graphics_filter_operator_append_operand(operator_filter, filter_data->source_filters[i]);
 					}
 					else
 					{
-						Cmiss_graphics_filter_operator_remove_operand(operator_filter, filter_data->source_filters[i]);
+						cmzn_graphics_filter_operator_remove_operand(operator_filter, filter_data->source_filters[i]);
 					}
 				}
-				Cmiss_graphics_filter_operator_destroy(&operator_filter);
+				cmzn_graphics_filter_operator_destroy(&operator_filter);
 			}
 			else
 			{
@@ -233,12 +233,12 @@ int gfx_define_graphics_filter_contents(struct Parse_state *state, void *graphic
 	int return_code = 1, number_of_valid_strings = 0;
 	struct Define_graphics_filter_data *filter_data = (struct Define_graphics_filter_data *)filter_data_void;
 	char *match_graphic_name, match_visibility_flags, *match_region_path;
-	enum Cmiss_graphic_type graphic_type;
+	enum cmzn_graphic_type graphic_type;
 	const char **valid_strings = NULL, *graphic_type_string = NULL;
 	if (state && filter_data)
 	{
-		Cmiss_graphics_filter_id *graphics_filter_handle = (Cmiss_graphics_filter_id *)graphics_filter_handle_void; // can be null
-		Cmiss_graphics_filter_id graphics_filter = *graphics_filter_handle;
+		cmzn_graphics_filter_id *graphics_filter_handle = (cmzn_graphics_filter_id *)graphics_filter_handle_void; // can be null
+		cmzn_graphics_filter_id graphics_filter = *graphics_filter_handle;
 		match_graphic_name = NULL;
 		match_visibility_flags = 0;
 		match_region_path = NULL;
@@ -248,9 +248,9 @@ int gfx_define_graphics_filter_contents(struct Parse_state *state, void *graphic
 		{
 			inverse = static_cast<int>(graphics_filter->isInverse());
 		}
-		valid_strings = ENUMERATOR_GET_VALID_STRINGS(Cmiss_graphic_type)(
+		valid_strings = ENUMERATOR_GET_VALID_STRINGS(cmzn_graphic_type)(
 			&number_of_valid_strings,
-			(ENUMERATOR_CONDITIONAL_FUNCTION(Cmiss_graphic_type) *)NULL, (void *)NULL);
+			(ENUMERATOR_CONDITIONAL_FUNCTION(cmzn_graphic_type) *)NULL, (void *)NULL);
 
 		struct Option_table *option_table = CREATE(Option_table)();
 		Option_table_add_help(option_table," Filter to set up what will be and "
@@ -298,23 +298,23 @@ int gfx_define_graphics_filter_contents(struct Parse_state *state, void *graphic
 			{
 				if (match_visibility_flags)
 				{
-					graphics_filter = Cmiss_graphics_filter_module_create_filter_visibility_flags(
+					graphics_filter = cmzn_graphics_filter_module_create_filter_visibility_flags(
 						filter_data->filter_module);
 				}
 				else if (match_graphic_name)
 				{
-					graphics_filter = Cmiss_graphics_filter_module_create_filter_graphic_name(
+					graphics_filter = cmzn_graphics_filter_module_create_filter_graphic_name(
 						filter_data->filter_module, match_graphic_name);
 				}
 				else if (match_region_path)
 				{
-					Cmiss_region *match_region = Cmiss_region_find_subregion_at_path(
+					cmzn_region *match_region = cmzn_region_find_subregion_at_path(
 						filter_data->root_region, match_region_path);
 					if (match_region)
 					{
-						graphics_filter = Cmiss_graphics_filter_module_create_filter_region(
+						graphics_filter = cmzn_graphics_filter_module_create_filter_region(
 							filter_data->filter_module, match_region);
-						Cmiss_region_destroy(&match_region);
+						cmzn_region_destroy(&match_region);
 					}
 					else
 					{
@@ -325,15 +325,15 @@ int gfx_define_graphics_filter_contents(struct Parse_state *state, void *graphic
 				}
 				else if (graphic_type_string)
 				{
-					STRING_TO_ENUMERATOR(Cmiss_graphic_type)(graphic_type_string, &graphic_type);
-					graphics_filter = Cmiss_graphics_filter_module_create_filter_graphic_type(
+					STRING_TO_ENUMERATOR(cmzn_graphic_type)(graphic_type_string, &graphic_type);
+					graphics_filter = cmzn_graphics_filter_module_create_filter_graphic_type(
 						filter_data->filter_module, graphic_type);
 				}
 			}
 
 			if (graphics_filter)
 			{
-				Cmiss_graphics_filter_set_inverse(graphics_filter, 0 != inverse);
+				cmzn_graphics_filter_set_inverse(graphics_filter, 0 != inverse);
 				*graphics_filter_handle = graphics_filter;
 			}
 		}
@@ -357,15 +357,15 @@ int gfx_define_graphics_filter(struct Parse_state *state, void *root_region_void
 	void *filter_module_void)
 {
 	int return_code = 1;
-	Cmiss_graphics_filter_module *filter_module =
-		(Cmiss_graphics_filter_module *)filter_module_void;
-	Cmiss_region *root_region = (Cmiss_region *)root_region_void;
+	cmzn_graphics_filter_module *filter_module =
+		(cmzn_graphics_filter_module *)filter_module_void;
+	cmzn_region *root_region = (cmzn_region *)root_region_void;
 	if (state && filter_module && root_region)
 	{
 		const char *current_token = state->current_token;
 		if (current_token)
 		{
-			Cmiss_graphics_filter *graphics_filter = NULL;
+			cmzn_graphics_filter *graphics_filter = NULL;
 			struct Define_graphics_filter_data filter_data;
 			filter_data.filter_module = filter_module;
 			filter_data.root_region = root_region;
@@ -374,18 +374,18 @@ int gfx_define_graphics_filter(struct Parse_state *state, void *root_region_void
 			if (strcmp(PARSER_HELP_STRING, current_token) &&
 				strcmp(PARSER_RECURSIVE_HELP_STRING, current_token))
 			{
-				Cmiss_graphics_filter_module_begin_change(filter_module);
-				graphics_filter = Cmiss_graphics_filter_module_find_filter_by_name(filter_module, current_token);
+				cmzn_graphics_filter_module_begin_change(filter_module);
+				graphics_filter = cmzn_graphics_filter_module_find_filter_by_name(filter_module, current_token);
 				bool existing_filter = (graphics_filter != 0);
 				shift_Parse_state(state,1);
 				return_code = gfx_define_graphics_filter_contents(state, (void *)&graphics_filter, (void*)&filter_data);
 				if (return_code)
 				{
-					Cmiss_graphics_filter_set_managed(graphics_filter, true);
+					cmzn_graphics_filter_set_managed(graphics_filter, true);
 					if (!existing_filter)
-						Cmiss_graphics_filter_set_name(graphics_filter, current_token);
+						cmzn_graphics_filter_set_name(graphics_filter, current_token);
 				}
-				Cmiss_graphics_filter_module_end_change(filter_module);
+				cmzn_graphics_filter_module_end_change(filter_module);
 			}
 			else
 			{
@@ -400,12 +400,12 @@ int gfx_define_graphics_filter(struct Parse_state *state, void *root_region_void
 			{
 				for (int i = 0; i < filter_data.number_of_filters; i++)
 				{
-					Cmiss_graphics_filter_destroy(&filter_data.source_filters[i]);
+					cmzn_graphics_filter_destroy(&filter_data.source_filters[i]);
 				}
 				DEALLOCATE(filter_data.source_filters);
 			}
 			if (graphics_filter)
-				Cmiss_graphics_filter_destroy(&graphics_filter);
+				cmzn_graphics_filter_destroy(&graphics_filter);
 		}
 		else
 		{
@@ -428,7 +428,7 @@ int gfx_list_graphics_filter(struct Parse_state *state, void *dummy_to_be_modifi
 {
 	USE_PARAMETER(dummy_to_be_modified);
 	int return_code = 1;
-	Cmiss_graphics_filter_module_id filter_module = (Cmiss_graphics_filter_module_id)filter_module_void;
+	cmzn_graphics_filter_module_id filter_module = (cmzn_graphics_filter_module_id)filter_module_void;
 	if (state && filter_module)
 	{
 		char *filter_name = NULL;
@@ -440,12 +440,12 @@ int gfx_list_graphics_filter(struct Parse_state *state, void *dummy_to_be_modifi
 		{
 			if (filter_name)
 			{
-				Cmiss_graphics_filter *filter =
-					Cmiss_graphics_filter_module_find_filter_by_name(filter_module, filter_name);
+				cmzn_graphics_filter *filter =
+					cmzn_graphics_filter_module_find_filter_by_name(filter_module, filter_name);
 				if (filter)
 				{
 					filter->list("gfx define graphics_filter");
-					Cmiss_graphics_filter_destroy(&filter);
+					cmzn_graphics_filter_destroy(&filter);
 				}
 				else
 				{
@@ -456,12 +456,12 @@ int gfx_list_graphics_filter(struct Parse_state *state, void *dummy_to_be_modifi
 			}
 			else
 			{
-				//-- MANAGER(Cmiss_graphics_filter) *manager =
-				//-- 	Cmiss_graphics_module_get_filter_manager(graphics_module);
-				//-- Cmiss_set_Cmiss_graphics_filter *filter_list =
-				//-- 	reinterpret_cast<Cmiss_set_Cmiss_graphics_filter *>(manager->object_list);
+				//-- MANAGER(cmzn_graphics_filter) *manager =
+				//-- 	cmzn_graphics_module_get_filter_manager(graphics_module);
+				//-- cmzn_set_cmzn_graphics_filter *filter_list =
+				//-- 	reinterpret_cast<cmzn_set_cmzn_graphics_filter *>(manager->object_list);
 				// Note: doesn't list in dependency order
-				//-- for (Cmiss_set_Cmiss_graphics_filter::iterator iter = filter_list->begin();
+				//-- for (cmzn_set_cmzn_graphics_filter::iterator iter = filter_list->begin();
 				//-- 	iter != filter_list->end(); ++iter)
 				{
 					//-- (*iter)->list("gfx define graphics_filter");
@@ -481,13 +481,13 @@ int gfx_list_graphics_filter(struct Parse_state *state, void *dummy_to_be_modifi
 	return return_code;
 }
 
-int set_Cmiss_graphics_filter(struct Parse_state *state,
+int set_cmzn_graphics_filter(struct Parse_state *state,
 	void *graphics_filter_address_void, void *filter_module_void)
 {
 	int return_code = 1;
 
-	Cmiss_graphics_filter **graphics_filter_address = (Cmiss_graphics_filter **)graphics_filter_address_void;
-	Cmiss_graphics_filter_module *filter_module = (Cmiss_graphics_filter_module *)filter_module_void;
+	cmzn_graphics_filter **graphics_filter_address = (cmzn_graphics_filter **)graphics_filter_address_void;
+	cmzn_graphics_filter_module *filter_module = (cmzn_graphics_filter_module *)filter_module_void;
 	if (state && graphics_filter_address && filter_module)
 	{
 		const char *current_token = state->current_token;
@@ -496,10 +496,10 @@ int set_Cmiss_graphics_filter(struct Parse_state *state,
 			if (strcmp(PARSER_HELP_STRING,current_token)&&
 				strcmp(PARSER_RECURSIVE_HELP_STRING,current_token))
 			{
-				Cmiss_graphics_filter *graphics_filter = NULL;
+				cmzn_graphics_filter *graphics_filter = NULL;
 				if (!fuzzy_string_compare(current_token, "NONE"))
 				{
-					graphics_filter = Cmiss_graphics_filter_module_find_filter_by_name(filter_module, current_token);
+					graphics_filter = cmzn_graphics_filter_module_find_filter_by_name(filter_module, current_token);
 					if (!graphics_filter)
 					{
 						display_message(ERROR_MESSAGE, "Unknown graphics_filter : %s", current_token);
@@ -509,11 +509,11 @@ int set_Cmiss_graphics_filter(struct Parse_state *state,
 				}
 				if (return_code)
 				{
-					REACCESS(Cmiss_graphics_filter)(graphics_filter_address, graphics_filter);
+					REACCESS(cmzn_graphics_filter)(graphics_filter_address, graphics_filter);
 					shift_Parse_state(state,1);
 				}
 				if (graphics_filter)
-					Cmiss_graphics_filter_destroy(&graphics_filter);
+					cmzn_graphics_filter_destroy(&graphics_filter);
 			}
 			else
 			{
