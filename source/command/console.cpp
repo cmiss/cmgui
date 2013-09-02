@@ -58,7 +58,7 @@ Management routines for the main command window.
 #include <sgtty.h>
 #endif /* defined (UNIX) */
 
-#include "zinc/fdio.h"
+#include "api/cmiss_fdio.h"
 #include "general/debug.h"
 #include "general/object.h"
 #include "command/console.h"

@@ -49,7 +49,7 @@ The private interface to file-descriptor I/O functions of cmiss.
 extern "C" {
 #endif /* __cplusplus */
 
-#include "zinc/fdio.h"
+#include "api/cmiss_fdio.h"
 
 /* Map private names to public function names. */
 #define Fdio_package cmzn_fdio_package
