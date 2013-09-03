@@ -14898,7 +14898,7 @@ Can also write individual groups with the <group> option.
 	 USE_PARAMETER(dummy_to_be_modified);
 	 if (state && (command_data=(struct cmzn_command_data *)command_data_void))
 	 {
-		 	exfile_fd = 1;
+			exfile_fd = 1;
 			exfile_return_code = 1;
 			com_return_code = 1;
 			return_code = 1;
