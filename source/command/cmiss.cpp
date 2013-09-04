@@ -4774,10 +4774,10 @@ Executes a GFX CREATE WINDOW command.
 							if (!ADD_OBJECT_TO_MANAGER(Graphics_window)(window,
 							   command_data->graphics_window_manager))
 							{
-							   DESTROY(Graphics_window)(&window);
-								 DESTROY(MANAGER(Interactive_tool))(&interactive_tool_manager);
+								DESTROY(MANAGER(Interactive_tool))(&interactive_tool_manager);
 							   return_code=0;
 							}
+						   DEACCESS(Graphics_window)(&window);
 						}
 						else
 					   {
@@ -4803,9 +4803,9 @@ Executes a GFX CREATE WINDOW command.
 						   if (!ADD_OBJECT_TO_MANAGER(Graphics_window)(window,
 							   command_data->graphics_window_manager))
 							{
-							   DESTROY(Graphics_window)(&window);
 							   return_code=0;
 							}
+						   DEACCESS(Graphics_window)(&window);
 						}
 						else
 					   {

@@ -1188,6 +1188,11 @@ public:
 				 graphics_window->scene_viewer_array = NULL;
 			}
 			graphics_window->wx_graphics_window = NULL;
+			if (graphics_window->graphics_window_manager)
+			{
+				REMOVE_OBJECT_FROM_MANAGER(Graphics_window)(graphics_window,
+					graphics_window->graphics_window_manager);
+			}
 			delete graphics_window_filter_chooser;
 			delete region_chooser;
 	 };
@@ -3226,7 +3231,7 @@ it.
 		{
 			strcpy((char *)window->name,name);
 			/* initialize the fields of the window structure */
-			window->access_count=0;
+			window->access_count=1;
 			window->scene_viewer_module = cmzn_scene_viewer_module_access(scene_viewer_module);
 			window->eye_spacing=0.25;
 			window->std_view_angle=40.0;
@@ -3381,7 +3386,7 @@ it.
 							display_message(ERROR_MESSAGE,
 								"CREATE(Graphics_window).  "
 								"Could not create graphics buffer.");
-							DESTROY(Graphics_window)(&window);
+							DEACCESS(Graphics_window)(&window);
 							window = (struct Graphics_window *)NULL;
 						}
 					}
@@ -3390,7 +3395,7 @@ it.
 						display_message(ERROR_MESSAGE,
 							"CREATE(Graphics_window).  "
 							"Could not allocate memory for scene viewer array.");
-						DESTROY(Graphics_window)(&window);
+						DEACCESS(Graphics_window)(&window);
 						window = (struct Graphics_window *)NULL;
 					}
 				}
@@ -3399,7 +3404,7 @@ it.
 					display_message(ERROR_MESSAGE,
 						"CREATE(Graphics_window).  "
 						"Could not create graphics buffer.");
-					DESTROY(Graphics_window)(&window);
+					DEACCESS(Graphics_window)(&window);
 					window = (struct Graphics_window *)NULL;
 				}
 			}
@@ -3507,7 +3512,7 @@ it.
 								display_message(ERROR_MESSAGE,
 									"CREATE(Graphics_window).  "
 									"Could not create scene_viewer.");
-								DESTROY(Graphics_window)(&window);
+								DEACCESS(Graphics_window)(&window);
 								window = (struct Graphics_window *)NULL;
 							}
 						}
@@ -3516,7 +3521,7 @@ it.
 							display_message(ERROR_MESSAGE,
 								"CREATE(Graphics_window).  "
 								"Could not allocate memory for scene viewer array.");
-							DESTROY(Graphics_window)(&window);
+							DEACCESS(Graphics_window)(&window);
 							window = (struct Graphics_window *)NULL;
 						}
 					}
@@ -3525,7 +3530,7 @@ it.
 						display_message(ERROR_MESSAGE,
 							"CREATE(Graphics_window).  "
 							"Could not create graphics buffer.");
-						DESTROY(Graphics_window)(&window);
+						DEACCESS(Graphics_window)(&window);
 						window = (struct Graphics_window *)NULL;
 					}
 				}
@@ -3758,7 +3763,7 @@ it.
 									display_message(ERROR_MESSAGE,
 										 "CREATE(Graphics_window).  "
 										 "Could not create scene_viewer.");
-									DESTROY(Graphics_window)(&window);
+									DEACCESS(Graphics_window)(&window);
 									window = (struct Graphics_window *)NULL;
 							 }
 						}
@@ -3767,7 +3772,7 @@ it.
 							 display_message(ERROR_MESSAGE,
 									"CREATE(Graphics_window).  "
 									"Could not allocate memory for scene viewer array.");
-							 DESTROY(Graphics_window)(&window);
+							 DEACCESS(Graphics_window)(&window);
 							 window = (struct Graphics_window *)NULL;
 						}
 						DEACCESS(Graphics_buffer_app)(&graphics_buffer);
@@ -3777,7 +3782,7 @@ it.
 						display_message(ERROR_MESSAGE,
 							 "CREATE(Graphics_window).  "
 							 "Could not create graphics buffer.");
-						DESTROY(Graphics_window)(&window);
+						DEACCESS(Graphics_window)(&window);
 						window = (struct Graphics_window *)NULL;
 				}
 			}
@@ -3786,7 +3791,7 @@ it.
 				display_message(ERROR_MESSAGE,
 					"CREATE(Graphics_window).  "
 					"Unable to fetch panel widget.");
-				DESTROY(Graphics_window)(&window);
+				DEACCESS(Graphics_window)(&window);
 				window = (struct Graphics_window *)NULL;
 			}
 #elif defined (CARBON_USER_INTERFACE) /* switch (USER_INTERFACE) */
@@ -3885,7 +3890,7 @@ it.
 								display_message(ERROR_MESSAGE,
 									"CREATE(Graphics_window).  "
 									"Could not create scene_viewer.");
-								DESTROY(Graphics_window)(&window);
+								DEACCESS(Graphics_window)(&window);
 								window = (struct Graphics_window *)NULL;
 							}
 						}
@@ -3894,7 +3899,7 @@ it.
 							display_message(ERROR_MESSAGE,
 								"CREATE(Graphics_window).  "
 								"Could not allocate memory for scene viewer array.");
-							DESTROY(Graphics_window)(&window);
+							DEACCESS(Graphics_window)(&window);
 							window = (struct Graphics_window *)NULL;
 						}
 			}
