@@ -1,3 +1,4 @@
+#include "zinc/status.h"
 #include "general/debug.h"
 #include "general/message.h"
 #include "command/parser.h"
@@ -155,12 +156,19 @@ Maintains legacy version that is set with a texture.
 			}
 			if (return_code)
 			{
-				Computed_field *field = Computed_field_create_image(
-					field_modify->get_field_module(),
-					texture_coordinate_field, source_field);
+				cmzn_field_id field = cmzn_field_module_create_image_from_source(
+					field_modify->get_field_module(), source_field);
 				if (field)
 				{
 					cmzn_field_image_id field_image = cmzn_field_cast_image(field);
+					if (texture_coordinate_field)
+					{
+						if (CMZN_OK != cmzn_field_image_set_domain_field(field_image, texture_coordinate_field))
+						{
+							display_message(ERROR_MESSAGE,
+								"define field sample_texture.  Invalid texture coordinates field");
+						}
+					}
 					cmzn_field_image_set_output_range(field_image, minimum, maximum);
 					cmzn_field_image_set_native_texture_flag(field_image, native_texture);
 					cmzn_field_image_set_number_of_bytes_per_component(field_image, number_of_bytes_per_component);

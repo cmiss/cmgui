@@ -4432,15 +4432,15 @@ Executes a GFX CREATE TEXTURE command.
 									}
 									if (return_code)
 									{
-										cmzn_field_id image_field =	cmzn_field_module_create_image(
-											field_module, NULL, NULL);
+										cmzn_field_module_begin_change(field_module);
+										cmzn_field_id image_field =	cmzn_field_module_create_image(field_module);
 										cmzn_field_set_name(image_field, field_name);
 										cmzn_field_set_managed(image_field, true);
 										cmzn_field_image_id image = cmzn_field_cast_image(image_field);
 										cmzn_field_image_set_texture(image, texture);
+										cmzn_field_image_destroy(&image);
 										cmzn_field_destroy(&image_field);
-										image_field = reinterpret_cast<cmzn_field_id>(image);
-										cmzn_field_destroy(&image_field);
+										cmzn_field_module_end_change(field_module);
 									}
 									else
 									{
