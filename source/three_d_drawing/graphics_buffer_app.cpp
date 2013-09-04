@@ -122,6 +122,7 @@ struct Graphics_buffer_app_package
 #endif /* defined (WIN32_USER_INTERFACE) */
 #if defined (WX_USER_INTERFACE)
 	wxGLContext* wxSharedContext;
+	wxFrame* sharedFrame;
 #endif /* defined (WX_USER_INTERFACE) */
 };
 
@@ -1061,19 +1062,19 @@ void Graphics_buffer_create_buffer_wx(
 #endif /* defined (UNIX) */
 			if (!buffer->package->wxSharedContext)
 			{
-				wxFrame *frame = new wxFrame(parent, -1, wxT("temporary"));
+				wxFrame *frame = new wxFrame(0, -1, wxT("temporary"));
 				wxPanel *temp = new wxPanel(frame);
-				wxTestingBuffer *testingbuffer;
 				struct Graphics_buffer_app *temp_buffer;
 				temp_buffer = CREATE(Graphics_buffer_app)(graphics_buffer_package,
 					GRAPHICS_BUFFER_ONSCREEN_TYPE, GRAPHICS_BUFFER_ANY_BUFFERING_MODE, GRAPHICS_BUFFER_ANY_STEREO_MODE);
 				temp_buffer->parent = temp;
 				temp_buffer->core_buffer->attrib_list = NULL;
-				testingbuffer = new wxTestingBuffer(temp, temp_buffer,
+				wxTestingBuffer *testingbuffer = new wxTestingBuffer(temp, temp_buffer,
 													graphics_buffer_package->wxSharedContext,
 													buffer->core_buffer->attrib_list);
 				testingbuffer->Set_wx_SharedContext();
 				frame->Show(false);
+				buffer->package->sharedFrame = frame;
 				DESTROY(Graphics_buffer_app)(&temp_buffer);
 			}
 			buffer->canvas = new wxGraphicsBuffer(parent,
@@ -1585,6 +1586,7 @@ it to share graphics contexts.
 #endif /* defined (GTK_USER_INTERFACE) */
 #if defined (WX_USER_INTERFACE)
 		package->wxSharedContext = (wxGLContext*)NULL;
+		package->sharedFrame = (wxFrame*)NULL;
 #endif /* defined (WX_USER_INTERFACE) */
 #if defined (WIN32_USER_INTERFACE)
 		package->user_interface = user_interface;
@@ -1669,6 +1671,13 @@ Closes the Graphics buffer package
 			DESTROY(Graphics_buffer_package)(&package->hidden_graphics_package);
 		}
 #endif /* defined (WIN32_USER_INTERFACE) */
+#if defined (WX_USER_INTERFACE)
+	if (package->sharedFrame)
+	{
+		delete package->sharedFrame;
+		package->sharedFrame = 0;
+	}
+#endif /* defined (WX_USER_INTERFACE) */
 
 		DESTROY(Graphics_buffer_package)(&(package->core_package));
 		DEALLOCATE(*package_ptr);
