@@ -132,7 +132,7 @@ int cmiss_set_command(const char *command_string,void *command_data_void);
 LAST MODIFIED : 27 April 1999
 
 DESCRIPTION:
-Sets the <command_string> in the command box of the CMZN command_window, ready
+Sets the <command_string> in the command box of the cmgui command_window, ready
 for editing or entering. If there is no command_window, does nothing.
 ==============================================================================*/
 

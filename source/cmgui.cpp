@@ -122,7 +122,7 @@ void ShortenPSN(int argc, char *argv[])
 }
 
 /**
- * Main program for the CMZN Graphical User Interface
+ * Main program for the CMISS Graphical User Interface CMGUI
  */
 #if !defined (WIN32_USER_INTERFACE) && !defined (_MSC_VER)
 int main(int argc, char *argv[])

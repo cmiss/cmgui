@@ -4,7 +4,7 @@ FILE : graphics_window.h
 LAST MODIFIED : 5 March 2002
 
 DESCRIPTION :
-Interface file for opening and closing and working a CMZN 3D display window.
+Interface file for opening and closing and working a cmgui 3D display window.
 
 Have get/set routines for parameters specific to window and/or which have
 widgets that are automatically updated if you set them. Use these functions

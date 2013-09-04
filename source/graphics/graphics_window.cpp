@@ -4,7 +4,7 @@ FILE : graphics_window.cpp
 LAST MODIFIED : 9 May 2007
 
 DESCRIPTION:
-Code for opening, closing and working a CMZN 3D display window.
+Code for opening, closing and working a cmgui 3D display window.
 
 Have get/set routines for parameters specific to window and/or which have
 widgets that are automatically updated if you set them. Use these functions

@@ -1100,7 +1100,7 @@ private:
 	 void ShowSimpleAboutDialog(wxCommandEvent& event)
 	 {
 		 char *temp_string;
-		 const char *license_string = "\nThis software is part of CMZN and originally developed \nat The University of Auckland.\n";
+		 const char *license_string = "\nThis software is part of CMISS and originally developed \nat The University of Auckland.\n";
 		 USE_PARAMETER(event);
 		 wxAboutDialogInfo info;
 		 info.SetName(_T("cmgui"));
@@ -1431,7 +1431,7 @@ Create the structures and retrieve the command window from the uil file.
 				command_window->shell = gtk_window_new(GTK_WINDOW_TOPLEVEL);
 				if (command_window->shell)
 				{
-					gtk_window_set_title(GTK_WINDOW(command_window->shell), "CMZN Command Window");
+					gtk_window_set_title(GTK_WINDOW(command_window->shell), "CMGUI Command Window");
 					gtk_widget_set_name(command_window->shell, "command_window");
 
 					/* create a vpaned widget and add it to our toplevel window */
