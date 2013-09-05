@@ -2013,7 +2013,7 @@ Creates a spectrum_editor widget.
 	int return_code;
 	struct Spectrum_editor *spectrum_editor;
 	struct Colour background_colour = {0.1, 0.1, 0.1},
-		ambient_colour = {0.2, 0.2, 0.2}, black ={0, 0, 0},
+		ambient_colour = {0.1, 0.1, 0.1}, black ={0, 0, 0},
 		white = { 1.0, 1.0, 1.0 };
 	struct Graphics_buffer_app *graphics_buffer;
 	struct Light *viewer_light;
