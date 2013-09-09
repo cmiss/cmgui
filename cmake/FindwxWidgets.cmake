@@ -63,6 +63,12 @@
 #   # and for each of your dependant executable/library targets:
 #   TARGET_LINK_LIBRARIES(<YourTarget> ${wxWidgets_LIBRARIES})
 
+# OpenCMISS-Cmgui Application
+#
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
 #=============================================================================
 # Copyright 2004-2009 Kitware, Inc.
 # Copyright 2007-2009 Miguel A. Figueroa-Villanueva <miguelf at ieee dot org>
