@@ -213,6 +213,13 @@ SET_TARGET_PROPERTIES( ${CMGUI_TARGET} PROPERTIES DEBUG_POSTFIX "d" )
 
 TARGET_LINK_LIBRARIES( ${CMGUI_TARGET} zinc-static ${PERL_INTERPRETER_LIBRARIES} ${WXWIDGETS_LIBRARIES} )
 
+# Creating a symbolic link for the application bundle to cmgui for buildbot testing.
+IF( APPLE )
+	ADD_CUSTOM_COMMAND(TARGET ${CMGUI_TARGET} POST_BUILD
+		COMMAND ${CMAKE_COMMAND} -E create_symlink Cmgui-r${CMGUI_SVN_REVISION_STRING}.app/Contents/MacOS/Cmgui-r${CMGUI_SVN_REVISION_STRING} cmgui
+		COMMENT "Creating symlink to cmgui for Buildbot testing.")
+ENDIF()
+
 SET(CPACK_GENERATOR "TGZ")
 IF( WIN32 )
 	MESSAGE( STATUS "Please implement NSIS installer for me." )
