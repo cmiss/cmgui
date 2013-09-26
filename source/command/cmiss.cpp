@@ -498,7 +498,6 @@ DESCRIPTION :
 	int data_offset, element_offset, face_offset, line_offset, node_offset,
 		return_code;
 	struct cmzn_command_data *command_data;
-	struct cmzn_region *region;
 	struct Computed_field *sort_by_field;
 	struct FE_region *data_fe_region, *fe_region;
 	struct Option_table *option_table;
@@ -11439,7 +11438,7 @@ static int gfx_modify_node_group(struct Parse_state *state,
 struct cmzn_nodal_derivatives_data
 {
 	int number_of_derivatives; // initialise to -1
-	enum cmzn_nodal_value_type *derivatives; // initialise to NULL
+	enum cmzn_node_value_type *derivatives; // initialise to NULL
 };
 
 /***************************************************************************//**
@@ -11476,12 +11475,12 @@ static int set_cmzn_nodal_derivatives(struct Parse_state *state,
 			while (state->current_token)
 			{
 				// stop when derivatives not recognised
-				enum cmzn_nodal_value_type nodal_value_type =
-					cmzn_nodal_value_type_enum_from_string(state->current_token);
-				if (nodal_value_type != CMZN_NODAL_VALUE_TYPE_INVALID)
+				enum cmzn_node_value_type nodal_value_type =
+					cmzn_node_value_type_enum_from_string(state->current_token);
+				if (nodal_value_type != CMZN_NODE_VALUE_TYPE_INVALID)
 				{
-					enum cmzn_nodal_value_type *temp;
-					if (REALLOCATE(temp, derivatives_data->derivatives, enum cmzn_nodal_value_type,
+					enum cmzn_node_value_type *temp;
+					if (REALLOCATE(temp, derivatives_data->derivatives, enum cmzn_node_value_type,
 						derivatives_data->number_of_derivatives + 1))
 					{
 						derivatives_data->derivatives = temp;
@@ -17480,7 +17479,6 @@ Initialise all the subcomponents of cmgui and create the cmzn_command_data
 #if defined(USE_CMGUI_COMMAND_WINDOW)
 	struct Command_window *command_window;
 #endif /* defined(USE_CMGUI_COMMAND_WINDOW) */
-	struct Graphical_material *material;
 	struct Option_table *option_table;
 	struct Parse_state *state;
 	User_settings user_settings;

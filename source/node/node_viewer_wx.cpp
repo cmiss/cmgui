@@ -105,7 +105,7 @@ object cause updates.
 ==============================================================================*/
 
 int Node_viewer_update_collpane(struct Node_viewer *node_viewer);
-char *node_viewer_get_component_value_string(struct Node_viewer *node_viewer, cmzn_field_id field, int component_number, enum cmzn_nodal_value_type nodal_value_type, int version);
+char *node_viewer_get_component_value_string(struct Node_viewer *node_viewer, cmzn_field_id field, int component_number, enum cmzn_node_value_type nodal_value_type, int version);
 
 static int node_viewer_setup_components(
 	struct Node_viewer *node_viewer, cmzn_node_id node, cmzn_field_id field, bool &time_varying_field);
@@ -290,7 +290,7 @@ after a collapsible pane is opened/closed.
 	 }
 
 	void NodeViewerTextEntered(wxTextCtrl *textctrl, Node_viewer *node_viewer,
-		cmzn_field_id field, int component_number, enum cmzn_nodal_value_type nodal_value_type, int version)
+		cmzn_field_id field, int component_number, enum cmzn_node_value_type nodal_value_type, int version)
 	{
 		if (textctrl && node_viewer && field && node_viewer->current_node)
 		{
@@ -311,7 +311,7 @@ after a collapsible pane is opened/closed.
 				case CMZN_FIELD_VALUE_TYPE_REAL:
 					{
 						cmzn_field_id assignField = 0;
-						if ((nodal_value_type != CMZN_NODAL_VALUE) || (version != 1))
+						if ((nodal_value_type != CMZN_NODE_VALUE) || (version != 1))
 						{
 							assignField = cmzn_field_module_create_node_value(field_module, field, nodal_value_type, version);
 						}
@@ -386,7 +386,7 @@ class wxNodeViewerTextCtrl : public wxTextCtrl
 	 Node_viewer *node_viewer;
 	 cmzn_field_id field;
 	 int component_number;
-	 enum cmzn_nodal_value_type nodal_value_type;
+	 enum cmzn_node_value_type nodal_value_type;
 	 int version;
 
 public:
@@ -394,7 +394,7 @@ public:
   wxNodeViewerTextCtrl(Node_viewer *node_viewer,
 		 cmzn_field_id field,
 		 int component_number,
-		 enum cmzn_nodal_value_type nodal_value_type,
+		 enum cmzn_node_value_type nodal_value_type,
 		 int version) :
 		 node_viewer(node_viewer), field(field), component_number(component_number),
 		 nodal_value_type(nodal_value_type), version(version)
@@ -858,7 +858,7 @@ object cause updates.
  * Get field component value as string
  */
 char *node_viewer_get_component_value_string(Node_viewer *node_viewer, cmzn_field_id field,
-	int component_number, enum cmzn_nodal_value_type nodal_value_type, int version)
+	int component_number, enum cmzn_node_value_type nodal_value_type, int version)
 {
 	char *new_value_string = 0;
 	if (node_viewer && field && node_viewer->current_node)
@@ -878,7 +878,7 @@ char *node_viewer_get_component_value_string(Node_viewer *node_viewer, cmzn_fiel
 			// must be numeric
 			cmzn_field_module_begin_change(field_module);
 			cmzn_field_id useField = 0;
-			if ((nodal_value_type != CMZN_NODAL_VALUE) || (version != 1))
+			if ((nodal_value_type != CMZN_NODE_VALUE) || (version != 1))
 			{
 				useField = cmzn_field_module_create_node_value(field_module, field, nodal_value_type, version);
 			}
@@ -910,7 +910,7 @@ char *node_viewer_get_component_value_string(Node_viewer *node_viewer, cmzn_fiel
 
 
 int node_viewer_add_textctrl(Node_viewer *node_viewer, cmzn_field_id field,
-	int component_number, cmzn_nodal_value_type nodal_value_type, int version)
+	int component_number, cmzn_node_value_type nodal_value_type, int version)
 /*******************************************************************************
 LAST MODIFIED : 24 April 2007
 
@@ -951,23 +951,23 @@ Add textctrl box onto the viewer.
 static int node_viewer_setup_components(
 	struct Node_viewer *node_viewer, cmzn_node_id node, cmzn_field_id field, bool &time_varying_field)
 {
-	struct cmzn_nodal_value_type_label
+	struct cmzn_node_value_type_label
 	{
-		enum cmzn_nodal_value_type type;
+		enum cmzn_node_value_type type;
 		const char *label;
 	};
-	const cmzn_nodal_value_type_label all_nodal_value_types[] =
+	const cmzn_node_value_type_label all_nodal_value_types[] =
 	{
-		{ CMZN_NODAL_VALUE, "value" },
-		{ CMZN_NODAL_D_DS1, "d/ds1" },
-		{ CMZN_NODAL_D_DS2, "d/ds2" },
-		{ CMZN_NODAL_D_DS3, "d/ds3" },
-		{ CMZN_NODAL_D2_DS1DS2, "d2/ds1ds2" },
-		{ CMZN_NODAL_D2_DS1DS3, "d2/ds1ds3" },
-		{ CMZN_NODAL_D2_DS2DS3, "d2/ds2ds3" },
-		{ CMZN_NODAL_D3_DS1DS2DS3, "d3/ds1ds2ds3" }
+		{ CMZN_NODE_VALUE, "value" },
+		{ CMZN_NODE_D_DS1, "d/ds1" },
+		{ CMZN_NODE_D_DS2, "d/ds2" },
+		{ CMZN_NODE_D_DS3, "d/ds3" },
+		{ CMZN_NODE_D2_DS1DS2, "d2/ds1ds2" },
+		{ CMZN_NODE_D2_DS1DS3, "d2/ds1ds3" },
+		{ CMZN_NODE_D2_DS2DS3, "d2/ds2ds3" },
+		{ CMZN_NODE_D3_DS1DS2DS3, "d3/ds1ds2ds3" }
 	};
-	const int all_nodal_value_types_count = sizeof(all_nodal_value_types) / sizeof(cmzn_nodal_value_type_label);
+	const int all_nodal_value_types_count = sizeof(all_nodal_value_types) / sizeof(cmzn_node_value_type_label);
 	int return_code = 0;
 	wxString tmp_string;
 	if (node_viewer && node && field)
@@ -976,9 +976,9 @@ static int node_viewer_setup_components(
 		const int number_of_components = cmzn_field_get_number_of_components(field);
 		cmzn_field_finite_element_id feField = cmzn_field_cast_finite_element(field);
 		cmzn_node_template_id nodeTemplate = 0;
-		enum cmzn_nodal_value_type nodal_value_types[8];
+		enum cmzn_node_value_type nodal_value_types[8];
 		const char *nodal_value_labels[8];
-		nodal_value_types[0] = CMZN_NODAL_VALUE;
+		nodal_value_types[0] = CMZN_NODE_VALUE;
 		nodal_value_labels[0] = "value";
 		int number_of_nodal_value_types = 1;
 		if (feField)
@@ -992,7 +992,7 @@ static int node_viewer_setup_components(
 			cmzn_field_module_destroy(&field_module);
 			for (int i = 1; i < all_nodal_value_types_count; ++i)
 			{
-				enum cmzn_nodal_value_type nodal_value_type = all_nodal_value_types[i].type;
+				enum cmzn_node_value_type nodal_value_type = all_nodal_value_types[i].type;
 				if (cmzn_node_template_has_derivative(nodeTemplate,
 					field, /*component_number*/-1, nodal_value_type))
 				{
@@ -1028,7 +1028,7 @@ static int node_viewer_setup_components(
 
 			for (int nodal_value_no = 0; nodal_value_no < number_of_nodal_value_types; ++nodal_value_no)
 			{
-				enum cmzn_nodal_value_type nodal_value_type = nodal_value_types[nodal_value_no];
+				enum cmzn_node_value_type nodal_value_type = nodal_value_types[nodal_value_no];
 				if (!feField || cmzn_node_template_has_derivative(nodeTemplate,
 					field, comp_no, nodal_value_type))
 				{
