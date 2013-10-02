@@ -63,15 +63,15 @@ int Computed_field_get_type_eigenvalues(struct Computed_field *field,
 	struct Computed_field **source_field);
 
 Computed_field *Computed_field_create_quaternion_to_matrix(
-	struct cmzn_field_module *field_module,
+	struct cmzn_fieldmodule *field_module,
 	struct Computed_field *source_field);
 
 Computed_field *Computed_field_create_quaternion_to_matrix(
-	struct cmzn_field_module *field_module,
+	struct cmzn_fieldmodule *field_module,
 	struct Computed_field *source_field);
 
 Computed_field *Computed_field_create_matrix_to_quaternion(
-	struct cmzn_field_module *field_module,
+	struct cmzn_fieldmodule *field_module,
 	struct Computed_field *source_field);
 
 int Computed_field_is_type_eigenvalues_conditional(struct Computed_field *field,
@@ -119,7 +119,7 @@ int define_Computed_field_type_determinant(struct Parse_state *state,
 		if (return_code)
 		{
 			return_code = field_modify->update_field_and_deaccess(
-				cmzn_field_module_create_determinant(field_modify->get_field_module(),
+				cmzn_fieldmodule_create_field_determinant(field_modify->get_field_module(),
 					source_field));
 		}
 		DESTROY(Option_table)(&option_table);
@@ -188,7 +188,7 @@ contents to be modified.
 			if (return_code)
 			{
 				return_code = field_modify->update_field_and_deaccess(
-					cmzn_field_module_create_eigenvalues(field_modify->get_field_module(),
+					cmzn_fieldmodule_create_field_eigenvalues(field_modify->get_field_module(),
 						source_field));
 			}
 			DESTROY(Option_table)(&option_table);
@@ -261,7 +261,7 @@ its contents to be modified.
 			if (return_code)
 			{
 				return_code = field_modify->update_field_and_deaccess(
-					cmzn_field_module_create_eigenvectors(field_modify->get_field_module(),
+					cmzn_fieldmodule_create_field_eigenvectors(field_modify->get_field_module(),
 						source_field));
 			}
 			if (source_field)
@@ -333,7 +333,7 @@ contents to be modified.
 			if (return_code)
 			{
 				return_code = field_modify->update_field_and_deaccess(
-					cmzn_field_module_create_matrix_invert(field_modify->get_field_module(),
+					cmzn_fieldmodule_create_field_matrix_invert(field_modify->get_field_module(),
 						source_field));
 			}
 			DESTROY(Option_table)(&option_table);
@@ -453,7 +453,7 @@ already) and allows its contents to be modified.
 							if (return_code)
 							{
 								return_code = field_modify->update_field_and_deaccess(
-									cmzn_field_module_create_matrix_multiply(field_modify->get_field_module(),
+									cmzn_fieldmodule_create_field_matrix_multiply(field_modify->get_field_module(),
 										number_of_rows, source_fields[0], source_fields[1]));
 							}
 							DESTROY(Option_table)(&option_table);
@@ -561,7 +561,7 @@ int define_Computed_field_type_projection(struct Parse_state *state,
 		if (return_code)
 		{
 			return_code = field_modify->update_field_and_deaccess(
-				cmzn_field_module_create_projection(field_modify->get_field_module(),
+				cmzn_fieldmodule_create_field_projection(field_modify->get_field_module(),
 					source_field, projection_matrix_field));
 		}
 		if (source_field)
@@ -667,7 +667,7 @@ already) and allows its contents to be modified.
 						if (return_code)
 						{
 							return_code = field_modify->update_field_and_deaccess(
-								cmzn_field_module_create_transpose(field_modify->get_field_module(),
+								cmzn_fieldmodule_create_field_transpose(field_modify->get_field_module(),
 									source_number_of_rows, source_field));
 						}
 						DESTROY(Option_table)(&option_table);

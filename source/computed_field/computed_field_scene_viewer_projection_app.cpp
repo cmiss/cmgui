@@ -55,7 +55,7 @@ int Computed_field_get_type_scene_viewer_projection(struct Computed_field *field
 
 /* For gfx command */
 struct Computed_field *Computed_field_create_scene_viewer_projection_with_window_name(
-	struct cmzn_field_module *field_module, struct Scene_viewer *scene_viewer,
+	struct cmzn_fieldmodule *field_module, struct Scene_viewer *scene_viewer,
 	const char *graphics_window_name, int pane_number,
 	enum cmzn_scene_coordinate_system from_coordinate_system,
 	enum cmzn_scene_coordinate_system to_coordinate_system)
@@ -63,7 +63,7 @@ struct Computed_field *Computed_field_create_scene_viewer_projection_with_window
 	Computed_field *field = NULL;
 	if (scene_viewer)
 	{
-		field = cmzn_field_module_create_scene_viewer_projection(field_module, scene_viewer, from_coordinate_system, to_coordinate_system);
+		field = cmzn_fieldmodule_create_field_scene_viewer_projection(field_module, scene_viewer, from_coordinate_system, to_coordinate_system);
 		cmzn_field_projection_set_window_name(field, graphics_window_name);
 		cmzn_field_projection_set_pane_number(field, pane_number);
 	}

@@ -16,6 +16,7 @@ selected element point, or set it if entered in this dialog.
 #if 1
 #include "configure/cmgui_configure.h"
 #endif
+#include "zinc/fieldcache.h"
 #include "zinc/fieldmodule.h"
 #include "computed_field/computed_field.h"
 #include "computed_field/computed_field_app.h"
@@ -494,9 +495,9 @@ Furthermore, if the <element_point_viewer>
 							&(element_point_viewer->element_point_identifier));
 						if (return_code)
 						{
-							cmzn_field_module_id field_module = cmzn_region_get_field_module(FE_region_get_cmzn_region(element_point_viewer->fe_region));
-							cmzn_field_module_begin_change(field_module);
-							cmzn_field_cache_id field_cache = cmzn_field_module_create_cache(field_module);
+							cmzn_fieldmodule_id field_module = cmzn_region_get_fieldmodule(FE_region_get_cmzn_region(element_point_viewer->fe_region));
+							cmzn_fieldmodule_begin_change(field_module);
+							cmzn_fieldcache_id field_cache = cmzn_fieldmodule_create_fieldcache(field_module);
 							source_identifier.element=element_point_viewer->element_copy;
 							/* note values taken from the local element_copy... */
 							struct Element_point_ranges_set_grid_values_data set_grid_values_data;
@@ -523,9 +524,9 @@ Furthermore, if the <element_point_viewer>
 									"Values only set at %d element locations out of %d specified.",
 									set_grid_values_data.number_of_points_set, set_grid_values_data.number_of_points);
 							}
-							cmzn_field_cache_destroy(&field_cache);
-							cmzn_field_module_end_change(field_module);
-							cmzn_field_module_destroy(&field_module);
+							cmzn_fieldcache_destroy(&field_cache);
+							cmzn_fieldmodule_end_change(field_module);
+							cmzn_fieldmodule_destroy(&field_module);
 						}
 						if (!return_code)
 						{
@@ -707,7 +708,7 @@ Ensures xi is correct for the currently selected element point, if any.
 				element_point_viewer->element_point_identifier.sample_mode,
 				element_point_viewer->element_point_identifier.number_in_xi,
 				element_point_viewer->element_point_identifier.exact_xi,
-				(cmzn_field_cache_id)0,
+				(cmzn_fieldcache_id)0,
 				/*coordinate_field*/(struct Computed_field *)NULL,
 				/*density_field*/(struct Computed_field *)NULL,
 				element_point_viewer->element_point_number,
@@ -1030,12 +1031,12 @@ static char *element_point_viewer_get_field_string(struct Element_point_viewer *
 		(xi = element_point_viewer->xi) &&
 		(component_number < number_of_components))
 	{
-		cmzn_field_module_id field_module = cmzn_field_get_field_module(field);
-		cmzn_field_cache_id field_cache = cmzn_field_module_create_cache(field_module);
+		cmzn_fieldmodule_id field_module = cmzn_field_get_fieldmodule(field);
+		cmzn_fieldcache_id field_cache = cmzn_fieldmodule_create_fieldcache(field_module);
 		time = Time_object_get_current_time(element_point_viewer->time_object);
-		cmzn_field_cache_set_time(field_cache, time);
+		cmzn_fieldcache_set_time(field_cache, time);
 		int element_dimension = cmzn_element_get_dimension(element);
-		cmzn_field_cache_set_mesh_location_with_parent(field_cache, element, element_dimension, xi, top_level_element);
+		cmzn_fieldcache_set_mesh_location_with_parent(field_cache, element, element_dimension, xi, top_level_element);
 		if ((component_number < 0) || (1 == number_of_components))
 		{
 			value_string = cmzn_field_evaluate_string(field, field_cache);
@@ -1050,8 +1051,8 @@ static char *element_point_viewer_get_field_string(struct Element_point_viewer *
 				value_string = duplicate_string(tmp);
 			}
 		}
-		cmzn_field_cache_destroy(&field_cache);
-		cmzn_field_module_destroy(&field_module);
+		cmzn_fieldcache_destroy(&field_cache);
+		cmzn_fieldmodule_destroy(&field_module);
 		if (!value_string)
 		{
 			display_message(ERROR_MESSAGE,
@@ -1873,10 +1874,10 @@ data, and then changes the correct value in the array structure.
 						{
 							if (ALLOCATE(values, FE_value, number_of_components))
 							{
-								cmzn_field_module_id field_module = cmzn_field_get_field_module(field);
-								cmzn_field_cache_id field_cache = cmzn_field_module_create_cache(field_module);
-								if (cmzn_field_cache_set_time(field_cache, time) &&
-									cmzn_field_cache_set_mesh_location(field_cache, element, MAXIMUM_ELEMENT_XI_DIMENSIONS, xi) &&
+								cmzn_fieldmodule_id field_module = cmzn_field_get_fieldmodule(field);
+								cmzn_fieldcache_id field_cache = cmzn_fieldmodule_create_fieldcache(field_module);
+								if (cmzn_fieldcache_set_time(field_cache, time) &&
+									cmzn_fieldcache_set_mesh_location(field_cache, element, MAXIMUM_ELEMENT_XI_DIMENSIONS, xi) &&
 									cmzn_field_evaluate_real(field, field_cache, number_of_components, values))
 								{
 									values[component_number] = value;
@@ -1889,8 +1890,8 @@ data, and then changes the correct value in the array structure.
 										"Unable to evaluate field component values");
 								}
 								DEALLOCATE(values);
-								cmzn_field_cache_destroy(&field_cache);
-								cmzn_field_module_destroy(&field_module);
+								cmzn_fieldcache_destroy(&field_cache);
+								cmzn_fieldmodule_destroy(&field_module);
 							}
 							else
 							{
@@ -2583,7 +2584,7 @@ pass unmanaged elements in the element_point_identifier to this widget.
 					 element_point_identifier->sample_mode,
 					 element_point_identifier->number_in_xi,
 					 element_point_identifier->exact_xi,
-					 (cmzn_field_cache_id)0,
+					 (cmzn_fieldcache_id)0,
 					 /*coordinate_field*/(struct Computed_field *)NULL,
 					 /*density_field*/(struct Computed_field *)NULL,
 					 element_point_number, element_point_viewer->xi);

@@ -207,15 +207,15 @@ release.
 //												element_point_ranges_identifier.sample_mode,
 //												element_point_ranges_identifier.number_in_xi,
 //												element_point_ranges_identifier.exact_xi,
-//												(cmzn_field_cache_id)0,
+//												(cmzn_fieldcache_id)0,
 //												/*coordinate_field*/(struct Computed_field *)NULL,
 //												/*density_field*/(struct Computed_field *)NULL,
 //												start, xi))
 //										{
-//											cmzn_field_module_id field_module = cmzn_field_get_field_module(element_point_tool->command_field);
-//											cmzn_field_cache_id field_cache = cmzn_field_module_create_cache(field_module);
-//											cmzn_field_cache_set_time(field_cache, time);
-//											cmzn_field_cache_set_mesh_location_with_parent(field_cache,
+//											cmzn_fieldmodule_id field_module = cmzn_field_get_fieldmodule(element_point_tool->command_field);
+//											cmzn_fieldcache_id field_cache = cmzn_fieldmodule_create_fieldcache(field_module);
+//											cmzn_fieldcache_set_time(field_cache, time);
+//											cmzn_fieldcache_set_mesh_location_with_parent(field_cache,
 //												element_point_ranges_identifier.element, cmzn_element_get_dimension(element_point_ranges_identifier.element),
 //												xi, element_point_ranges_identifier.top_level_element);
 //											char *command_string = cmzn_field_evaluate_string(element_point_tool->command_field, field_cache);
@@ -224,8 +224,8 @@ release.
 //												Execute_command_execute_string(element_point_tool->execute_command, command_string);
 //												DEALLOCATE(command_string);
 //											}
-//											cmzn_field_cache_destroy(&field_cache);
-//											cmzn_field_module_destroy(&field_module);
+//											cmzn_fieldcache_destroy(&field_cache);
+//											cmzn_fieldmodule_destroy(&field_module);
 //										}
 //									}
 //								}

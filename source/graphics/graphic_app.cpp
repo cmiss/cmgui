@@ -13,6 +13,7 @@
 #include "zinc/graphicsmaterial.h"
 #include "zinc/graphicsmodule.h"
 #include "zinc/font.h"
+#include "zinc/region.h"
 #include "zinc/spectrum.h"
 #include "zinc/tessellation.h"
 #include "general/debug.h"
@@ -1067,9 +1068,9 @@ int gfx_modify_scene_graphic(struct Parse_state *state,
 			}
 			if (return_code && seed_nodeset_name)
 			{
-				cmzn_field_module_id field_module = cmzn_region_get_field_module(scene_command_data->region);
+				cmzn_fieldmodule_id field_module = cmzn_region_get_fieldmodule(scene_command_data->region);
 				cmzn_nodeset_id seed_nodeset =
-					cmzn_field_module_find_nodeset_by_name(field_module, seed_nodeset_name);
+					cmzn_fieldmodule_find_nodeset_by_name(field_module, seed_nodeset_name);
 				if (seed_nodeset || (fuzzy_string_compare(seed_nodeset_name, "none")))
 				{
 					if (graphic->seed_nodeset)
@@ -1085,7 +1086,7 @@ int gfx_modify_scene_graphic(struct Parse_state *state,
 						"Unknown seed_nodeset %s", seed_nodeset_name);
 					return_code = 0;
 				}
-				cmzn_field_module_destroy(&field_module);
+				cmzn_fieldmodule_destroy(&field_module);
 			}
 			if ((graphic->seed_node_mesh_location_field && (!graphic->seed_nodeset)) ||
 				((!graphic->seed_node_mesh_location_field) && graphic->seed_nodeset))

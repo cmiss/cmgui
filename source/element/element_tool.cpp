@@ -14,6 +14,7 @@ Interactive tool for selecting elements with mouse and other devices.
 #if 1
 #include "configure/cmgui_configure.h"
 #endif /* defined (1) */
+#include "zinc/fieldcache.h"
 #include "zinc/graphicsfilter.h"
 #include "zinc/graphicsmaterial.h"
 #include "zinc/scene.h"
@@ -110,11 +111,11 @@ static int cmzn_field_group_destroy_all_elements(cmzn_field_group_id group, void
 	int return_code = 0;
 	if (group)
 	{
-		cmzn_field_module_id field_module = cmzn_field_get_field_module(cmzn_field_group_base_cast(group));
+		cmzn_fieldmodule_id field_module = cmzn_field_get_fieldmodule(cmzn_field_group_base_cast(group));
 		for (int i = 1; i <= 3; i++)
 		{
 			cmzn_mesh_id master_mesh =
-				cmzn_field_module_find_mesh_by_dimension(field_module, /*dimension*/i);
+				cmzn_fieldmodule_find_mesh_by_dimension(field_module, /*dimension*/i);
 			cmzn_field_element_group_id element_group = cmzn_field_group_get_element_group(group, master_mesh);
 			cmzn_mesh_destroy(&master_mesh);
 			if (element_group)
@@ -125,7 +126,7 @@ static int cmzn_field_group_destroy_all_elements(cmzn_field_group_id group, void
 				cmzn_field_element_group_destroy(&element_group);
 			}
 		}
-		cmzn_field_module_destroy(&field_module);
+		cmzn_fieldmodule_destroy(&field_module);
 		return_code = 1;
 	}
 	return return_code;
@@ -317,18 +318,18 @@ release.
 											/*???debug*/printf(" %g",xi[i]);
 										}
 										/*???debug*/printf("\n");
-										cmzn_field_module_id field_module = cmzn_field_get_field_module(element_tool->command_field);
-										cmzn_field_cache_id field_cache = cmzn_field_module_create_cache(field_module);
-										cmzn_field_cache_set_time(field_cache, time);
-										cmzn_field_cache_set_mesh_location(field_cache, picked_element, element_dimension, xi);
+										cmzn_fieldmodule_id field_module = cmzn_field_get_fieldmodule(element_tool->command_field);
+										cmzn_fieldcache_id field_cache = cmzn_fieldmodule_create_fieldcache(field_module);
+										cmzn_fieldcache_set_time(field_cache, time);
+										cmzn_fieldcache_set_mesh_location(field_cache, picked_element, element_dimension, xi);
 										char *command_string = cmzn_field_evaluate_string(element_tool->command_field, field_cache);
 										if (command_string)
 										{
 											Execute_command_execute_string(element_tool->execute_command, command_string);
 											DEALLOCATE(command_string);
 										}
-										cmzn_field_cache_destroy(&field_cache);
-										cmzn_field_module_destroy(&field_module);
+										cmzn_fieldcache_destroy(&field_cache);
+										cmzn_fieldmodule_destroy(&field_module);
 										DEALLOCATE(xi_points);
 									}
 								}
@@ -336,9 +337,9 @@ release.
 								if (group)
 								{
 									cmzn_region_id temp_region = cmzn_scene_get_region(scene);
-									cmzn_field_module_id field_module = cmzn_region_get_field_module(temp_region);
+									cmzn_fieldmodule_id field_module = cmzn_region_get_fieldmodule(temp_region);
 									int dimension = cmzn_element_get_dimension(picked_element);
-									cmzn_mesh_id master_mesh = cmzn_field_module_find_mesh_by_dimension(field_module, dimension);
+									cmzn_mesh_id master_mesh = cmzn_fieldmodule_find_mesh_by_dimension(field_module, dimension);
 									cmzn_field_element_group_id element_group = cmzn_field_group_get_element_group(group, master_mesh);
 									cmzn_mesh_destroy(&master_mesh);
 									if (element_group)
@@ -350,7 +351,7 @@ release.
 										cmzn_field_element_group_destroy(&element_group);
 									}
 									cmzn_field_group_destroy(&group);
-									cmzn_field_module_destroy(&field_module);
+									cmzn_fieldmodule_destroy(&field_module);
 								}
 							}
 							REACCESS(FE_element)(&(element_tool->last_picked_element),
@@ -393,16 +394,16 @@ release.
 									if (sub_group)
 									{
 										int dimension = cmzn_element_get_dimension(picked_element);
-										cmzn_field_module_id field_module = cmzn_region_get_field_module(sub_region);
+										cmzn_fieldmodule_id field_module = cmzn_region_get_fieldmodule(sub_region);
 										cmzn_mesh_id temp_mesh =
-											cmzn_field_module_find_mesh_by_dimension(field_module, dimension);
+											cmzn_fieldmodule_find_mesh_by_dimension(field_module, dimension);
 										cmzn_field_element_group_id element_group = cmzn_field_group_get_element_group(sub_group, temp_mesh);
 										if (!element_group)
 											element_group = cmzn_field_group_create_element_group(sub_group, temp_mesh);
 										mesh_group = cmzn_field_element_group_get_mesh(element_group);
 										cmzn_field_element_group_destroy(&element_group);
 										cmzn_mesh_destroy(&temp_mesh);
-										cmzn_field_module_destroy(&field_module);
+										cmzn_fieldmodule_destroy(&field_module);
 									}
 								}
 								if (mesh_group)

@@ -234,7 +234,7 @@ returned in this location, for the calling function to use or destroy.
 									element_point_ranges_identifier.sample_mode,
 									element_point_ranges_identifier.number_in_xi,
 									element_point_ranges_identifier.exact_xi,
-									(cmzn_field_cache_id)0,
+									(cmzn_fieldcache_id)0,
 									/*coordinate_field*/(struct Computed_field *)NULL,
 									/*density_field*/(struct Computed_field *)NULL,
 									&number_of_xi_points,

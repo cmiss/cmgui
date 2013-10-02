@@ -81,8 +81,8 @@ and allows its contents to be modified.
 			/* Make a default integrand of one */
 			double value = 1.0;
 			// use temporary field module to supply different defaults
-			cmzn_field_module *temp_field_module = cmzn_field_module_create(region);
-			cmzn_field_module_set_field_name(temp_field_module, "constant_1.0");
+			cmzn_fieldmodule *temp_field_module = cmzn_region_get_fieldmodule(region);
+			cmzn_fieldmodule_set_field_name(temp_field_module, "constant_1.0");
 			integrand = Computed_field_create_constant(temp_field_module,
 				/*number_of_components*/1, &value);
 			if (NULL == integrand)
@@ -91,7 +91,7 @@ and allows its contents to be modified.
 					"define_Computed_field_type_integration.  Unable to create constant integrand");
 				return_code = 0;
 			}
-			cmzn_field_module_destroy(&temp_field_module);
+			cmzn_fieldmodule_destroy(&temp_field_module);
 		}
 		char *group_name = 0;
 
@@ -129,10 +129,10 @@ and allows its contents to be modified.
 		if (return_code && !mesh)
 		{
 			int dimension = FE_region_get_highest_dimension(cmzn_region_get_FE_region(region));
-			mesh = cmzn_field_module_find_mesh_by_dimension(field_modify->get_field_module(), dimension);
+			mesh = cmzn_fieldmodule_find_mesh_by_dimension(field_modify->get_field_module(), dimension);
 			if (group_name)
 			{
-				cmzn_field_id group_field = cmzn_field_module_find_field_by_name(field_modify->get_field_module(), group_name);
+				cmzn_field_id group_field = cmzn_fieldmodule_find_field_by_name(field_modify->get_field_module(), group_name);
 				cmzn_field_group_id group = cmzn_field_cast_group(group_field);
 				cmzn_field_element_group_id element_group = cmzn_field_group_get_element_group(group, mesh);
 				cmzn_mesh_destroy(&mesh);
@@ -239,10 +239,10 @@ and allows its contents to be modified.
 		if (return_code && !mesh)
 		{
 			int dimension = FE_region_get_highest_dimension(cmzn_region_get_FE_region(region));
-			mesh = cmzn_field_module_find_mesh_by_dimension(field_modify->get_field_module(), dimension);
+			mesh = cmzn_fieldmodule_find_mesh_by_dimension(field_modify->get_field_module(), dimension);
 			if (group_name)
 			{
-				cmzn_field_id group_field = cmzn_field_module_find_field_by_name(field_modify->get_field_module(), group_name);
+				cmzn_field_id group_field = cmzn_fieldmodule_find_field_by_name(field_modify->get_field_module(), group_name);
 				cmzn_field_group_id group = cmzn_field_cast_group(group_field);
 				cmzn_field_element_group_id element_group = cmzn_field_group_get_element_group(group, mesh);
 				cmzn_mesh_destroy(&mesh);
@@ -287,11 +287,11 @@ and allows its contents to be modified.
 			return_code = 0;
 		}
 		double value = 1.0;
-		cmzn_field_module *temp_field_module = cmzn_field_module_create(region);
-		cmzn_field_module_set_field_name(temp_field_module, "constant_1.0");
+		cmzn_fieldmodule *temp_field_module = cmzn_region_get_fieldmodule(region);
+		cmzn_fieldmodule_set_field_name(temp_field_module, "constant_1.0");
 		Computed_field *integrand = Computed_field_create_constant(temp_field_module,
 			/*number_of_components*/1, &value);
-		cmzn_field_module_destroy(&temp_field_module);
+		cmzn_fieldmodule_destroy(&temp_field_module);
 		if (NULL == integrand)
 		{
 			display_message(ERROR_MESSAGE,

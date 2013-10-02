@@ -96,11 +96,11 @@ wrapper for field and add it to the manager.
 
 						cmzn_region *region =
 							Computed_field_manager_get_region(set_field_data->computed_field_manager);
-						cmzn_field_module *temp_field_module = cmzn_field_module_create(region);
-						cmzn_field_module_set_field_name(temp_field_module, "constants");
+						cmzn_fieldmodule *temp_field_module = cmzn_region_get_fieldmodule(region);
+						cmzn_fieldmodule_set_field_name(temp_field_module, "constants");
 						selected_field = Computed_field_create_constant(temp_field_module,
 							number_of_values, values);
-						cmzn_field_module_destroy(&temp_field_module);
+						cmzn_fieldmodule_destroy(&temp_field_module);
 
 						DEALLOCATE(values);
 						DEALLOCATE(command_string);

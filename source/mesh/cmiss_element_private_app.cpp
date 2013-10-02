@@ -5,6 +5,7 @@
 * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "zinc/fieldmodule.h"
+#include "zinc/region.h"
 #include "general/debug.h"
 #include "general/message.h"
 #include "general/list.h"
@@ -44,8 +45,8 @@ static int set_cmzn_mesh(struct Parse_state *state, void *region_void, void *mes
 	}
 	else
 	{
-		cmzn_field_module_id field_module = cmzn_region_get_field_module(region);
-		cmzn_mesh_id new_mesh = cmzn_field_module_find_mesh_by_name(field_module, current_token);
+		cmzn_fieldmodule_id field_module = cmzn_region_get_fieldmodule(region);
+		cmzn_mesh_id new_mesh = cmzn_fieldmodule_find_mesh_by_name(field_module, current_token);
 		if (new_mesh)
 		{
 			if (*mesh_address)
@@ -59,7 +60,7 @@ static int set_cmzn_mesh(struct Parse_state *state, void *region_void, void *mes
 			display_parse_state_location(state);
 			return_code = 0;
 		}
-		cmzn_field_module_destroy(&field_module);
+		cmzn_fieldmodule_destroy(&field_module);
 	}
 	return return_code;
 }

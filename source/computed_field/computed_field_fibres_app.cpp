@@ -88,7 +88,7 @@ allows its contents to be modified.
 			if (return_code)
 			{
 				return_code = field_modify->update_field_and_deaccess(
-					cmzn_field_module_create_fibre_axes(
+					cmzn_fieldmodule_create_field_fibre_axes(
 						field_modify->get_field_module(), fibre_field, coordinate_field));
 			}
 			DESTROY(Option_table)(&option_table);

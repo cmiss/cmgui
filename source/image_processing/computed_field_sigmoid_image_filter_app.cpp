@@ -104,7 +104,7 @@ already) and allows its contents to be modified.
 			if (return_code)
 			{
 				return_code = field_modify->update_field_and_deaccess(
-					cmzn_field_module_create_sigmoid_image_filter(
+					cmzn_fieldmodule_create_field_sigmoid_image_filter(
 						field_modify->get_field_module(),
 						source_field, min, max, alpha, beta));
 			}

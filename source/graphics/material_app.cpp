@@ -7,6 +7,7 @@
 
 #include "zinc/zincconfigure.h"
 #include "zinc/graphicsmaterial.h"
+#include "zinc/region.h"
 #if 1
 #include "configure/cmgui_configure.h"
 #endif /* defined (BUILD_WITH_CMAKE) */
@@ -176,11 +177,11 @@ int set_Material_image_texture(struct Parse_state *state,void *material_image_te
 						if (cmzn_region_get_partial_region_path(root_region,
 							current_token, &region, &region_path, &field_name))
 						{
-							cmzn_field_module *field_module = cmzn_region_get_field_module(region);
+							cmzn_fieldmodule *field_module = cmzn_region_get_fieldmodule(region);
 							if (field_name && (strlen(field_name) > 0) &&
 								(strchr(field_name, CMZN_REGION_PATH_SEPARATOR_CHAR)	== NULL))
 							{
-								temp_field = cmzn_field_module_find_field_by_name(field_module,
+								temp_field = cmzn_fieldmodule_find_field_by_name(field_module,
 									field_name);
 								if (temp_field &&
 										!Computed_field_is_image_type(temp_field,0))
@@ -207,7 +208,7 @@ int set_Material_image_texture(struct Parse_state *state,void *material_image_te
 								display_parse_state_location(state);
 								return_code = 0;
 							}
-							cmzn_field_module_destroy(&field_module);
+							cmzn_fieldmodule_destroy(&field_module);
 						}
 						if (region_path)
 							DEALLOCATE(region_path);

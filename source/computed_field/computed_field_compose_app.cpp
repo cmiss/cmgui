@@ -18,7 +18,7 @@
 // insert app headers here
 #include "mesh/cmiss_element_private_app.hpp"
 
-Computed_field *Computed_field_create_compose(cmzn_field_module *field_module,
+Computed_field *Computed_field_create_compose(cmzn_fieldmodule *field_module,
 	struct Computed_field *texture_coordinate_field,
 	struct Computed_field *find_element_xi_field,
 	struct Computed_field *calculate_values_field,
@@ -163,11 +163,11 @@ already) and allows its contents to be modified.
 
 			if (return_code && !mesh)
 			{
-				mesh = cmzn_field_module_find_mesh_by_dimension(
+				mesh = cmzn_fieldmodule_find_mesh_by_dimension(
 					field_modify->get_field_module(), element_dimension);
 				if (search_group_name)
 				{
-					cmzn_field_id group_field = cmzn_field_module_find_field_by_name(field_modify->get_field_module(), search_group_name);
+					cmzn_field_id group_field = cmzn_fieldmodule_find_field_by_name(field_modify->get_field_module(), search_group_name);
 					cmzn_field_group_id group = cmzn_field_cast_group(group_field);
 					cmzn_field_element_group_id element_group = cmzn_field_group_get_element_group(group, mesh);
 					cmzn_mesh_destroy(&mesh);

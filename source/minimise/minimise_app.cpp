@@ -67,8 +67,8 @@ int gfx_minimise(struct Parse_state *state, void *dummy_to_be_modified,
 		return_code = Option_table_multi_parse(option_table, state);
 		if (return_code)
 		{
-			cmzn_field_module_id fieldModule = cmzn_region_get_field_module(region);
-			cmzn_optimisation_id optimisation = cmzn_field_module_create_optimisation(fieldModule);
+			cmzn_fieldmodule_id fieldModule = cmzn_region_get_fieldmodule(region);
+			cmzn_optimisation_id optimisation = cmzn_fieldmodule_create_optimisation(fieldModule);
 			STRING_TO_ENUMERATOR(cmzn_optimisation_method)(
 				optimisation_method_string, &optimisation_method);
 			if (!cmzn_optimisation_set_method(optimisation, optimisation_method))
@@ -78,7 +78,7 @@ int gfx_minimise(struct Parse_state *state, void *dummy_to_be_modified,
 			}
 			for (int i = 0; i < independentFieldNames.number_of_strings; i++)
 			{
-				cmzn_field_id independentField = cmzn_field_module_find_field_by_name(
+				cmzn_field_id independentField = cmzn_fieldmodule_find_field_by_name(
 					fieldModule, independentFieldNames.strings[i]);
 				if (!cmzn_optimisation_add_independent_field(optimisation, independentField))
 				{
@@ -90,7 +90,7 @@ int gfx_minimise(struct Parse_state *state, void *dummy_to_be_modified,
 			}
 			for (int i = 0; i < objectiveFieldNames.number_of_strings; i++)
 			{
-				cmzn_field_id objectiveField = cmzn_field_module_find_field_by_name(
+				cmzn_field_id objectiveField = cmzn_fieldmodule_find_field_by_name(
 					fieldModule, objectiveFieldNames.strings[i]);
 				if (!cmzn_optimisation_add_objective_field(optimisation, objectiveField))
 				{
@@ -124,7 +124,7 @@ int gfx_minimise(struct Parse_state *state, void *dummy_to_be_modified,
 				}
 			}
 			cmzn_optimisation_destroy(&optimisation);
-			cmzn_field_module_destroy(&fieldModule);
+			cmzn_fieldmodule_destroy(&fieldModule);
 		}
 		DESTROY(Option_table)(&option_table);
 		if (independentFieldNames.strings)

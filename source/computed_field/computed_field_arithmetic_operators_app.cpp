@@ -57,31 +57,31 @@ int Computed_field_get_type_sqrt(struct Computed_field *field,
 int Computed_field_get_type_log(struct Computed_field *field,
 	struct Computed_field **source_field);
 
-Computed_field *Computed_field_create_edit_mask(cmzn_field_module *field_module,
+Computed_field *Computed_field_create_edit_mask(cmzn_fieldmodule *field_module,
 	struct Computed_field *source_field, double *edit_mask);
 
 int Computed_field_get_type_edit_mask(struct Computed_field *field,
 	struct Computed_field **source_field, double **edit_mask);
 
-Computed_field *Computed_field_create_offset(cmzn_field_module *field_module,
+Computed_field *Computed_field_create_offset(cmzn_fieldmodule *field_module,
 	struct Computed_field *source_field, double *offsets);
 
 int Computed_field_get_type_offset(struct Computed_field *field,
 	struct Computed_field **source_field, double **offsets);
 
-Computed_field *Computed_field_create_clamp_minimum(cmzn_field_module *field_module,
+Computed_field *Computed_field_create_clamp_minimum(cmzn_fieldmodule *field_module,
 	struct Computed_field *source_field, double *minimums);
 
 int Computed_field_get_type_clamp_minimum(struct Computed_field *field,
 	struct Computed_field **source_field, double **minimums);
 
-Computed_field *Computed_field_create_clamp_maximum(cmzn_field_module *field_module,
+Computed_field *Computed_field_create_clamp_maximum(cmzn_fieldmodule *field_module,
 	struct Computed_field *source_field, double *maximums);
 
 int Computed_field_get_type_clamp_maximum(struct Computed_field *field,
 	struct Computed_field **source_field, double **maximums);
 
-Computed_field *Computed_field_create_scale(cmzn_field_module *field_module,
+Computed_field *Computed_field_create_scale(cmzn_fieldmodule *field_module,
 	struct Computed_field *source_field, double *scale_factors);
 
 int Computed_field_get_type_scale(struct Computed_field *field,

@@ -44,7 +44,7 @@ int Computed_field_get_type_cubic_texture_coordinates(struct Computed_field *fie
 	struct Computed_field **source_field);
 
 struct Computed_field *Computed_field_create_cubic_texture_coordinates(
-	struct cmzn_field_module *field_module,
+	struct cmzn_fieldmodule *field_module,
 	struct Computed_field *source_field);
 
 int define_Computed_field_type_normalise(struct Parse_state *state,
@@ -96,7 +96,7 @@ already) and allows its contents to be modified.
 			if (return_code)
 			{
 				return_code = field_modify->update_field_and_deaccess(
-					cmzn_field_module_create_normalise(field_modify->get_field_module(),
+					cmzn_fieldmodule_create_field_normalise(field_modify->get_field_module(),
 						source_field));
 			}
 			if (!return_code)
@@ -270,7 +270,7 @@ already) and allows its contents to be modified.
 						if (return_code)
 						{
 							return_code = field_modify->update_field_and_deaccess(
-								cmzn_field_module_create_cross_product(field_modify->get_field_module(),
+								cmzn_fieldmodule_create_field_cross_product(field_modify->get_field_module(),
 									number_of_source_fields, source_fields));
 						}
 						for (i = 0; i < number_of_source_fields; i++)
@@ -372,7 +372,7 @@ already) and allows its contents to be modified.
 				if (return_code)
 				{
 					return_code = field_modify->update_field_and_deaccess(
-						cmzn_field_module_create_dot_product(field_modify->get_field_module(),
+						cmzn_fieldmodule_create_field_dot_product(field_modify->get_field_module(),
 							source_fields[0], source_fields[1]));
 				}
 				if (!return_code)
@@ -466,7 +466,7 @@ already) and allows its contents to be modified.
 			if (return_code)
 			{
 				return_code = field_modify->update_field_and_deaccess(
-					cmzn_field_module_create_magnitude(field_modify->get_field_module(),
+					cmzn_fieldmodule_create_field_magnitude(field_modify->get_field_module(),
 						source_field));
 			}
 			if (!return_code)
@@ -612,17 +612,17 @@ already) and allows its contents to be modified.
 				if (weighted)
 				{
 					cmzn_region_id region = field_modify->get_region();
-					cmzn_field_module *temp_field_module = cmzn_field_module_create(region);
-					cmzn_field_module_set_field_name(temp_field_module, "tempweights");
-					Computed_field *weights_field = cmzn_field_module_create_constant(temp_field_module,
+					cmzn_fieldmodule *temp_field_module = cmzn_region_get_fieldmodule(region);
+					cmzn_fieldmodule_set_field_name(temp_field_module, "tempweights");
+					Computed_field *weights_field = cmzn_fieldmodule_create_field_constant(temp_field_module,
 						/*number_of_components*/number_of_weights, weights);
-					cmzn_field_module_destroy(&temp_field_module);
-					field = cmzn_field_module_create_dot_product(field_modify->get_field_module(), source_field, weights_field);
+					cmzn_fieldmodule_destroy(&temp_field_module);
+					field = cmzn_fieldmodule_create_field_dot_product(field_modify->get_field_module(), source_field, weights_field);
 					cmzn_field_destroy(&weights_field);
 				}
 				else
 				{
-					field = cmzn_field_module_create_sum_components(field_modify->get_field_module(), source_field);
+					field = cmzn_fieldmodule_create_field_sum_components(field_modify->get_field_module(), source_field);
 				}
 				return_code = field_modify->update_field_and_deaccess(field);
 			}

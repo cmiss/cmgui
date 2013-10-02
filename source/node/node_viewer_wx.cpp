@@ -16,6 +16,7 @@
 
 #include "zinc/core.h"
 #include "zinc/graphicsmodule.h"
+#include "zinc/fieldcache.h"
 #include "zinc/fieldfiniteelement.h"
 #include "zinc/fieldmodule.h"
 #include "zinc/fieldsubobjectgroup.h"
@@ -299,12 +300,12 @@ after a collapsible pane is opened/closed.
 			if (value_string != NULL)
 			{
 				int result = !CMZN_OK;
-				cmzn_field_module_id field_module = cmzn_field_get_field_module(field);
-				cmzn_field_module_begin_change(field_module);
-				cmzn_field_cache_id field_cache = cmzn_field_module_create_cache(field_module);
+				cmzn_fieldmodule_id field_module = cmzn_field_get_fieldmodule(field);
+				cmzn_fieldmodule_begin_change(field_module);
+				cmzn_fieldcache_id field_cache = cmzn_fieldmodule_create_fieldcache(field_module);
 				double time = cmzn_time_notifier_get_current_time(node_viewer->time_notifier);
-				cmzn_field_cache_set_time(field_cache, time);
-				cmzn_field_cache_set_node(field_cache, node_viewer->current_node);
+				cmzn_fieldcache_set_time(field_cache, time);
+				cmzn_fieldcache_set_node(field_cache, node_viewer->current_node);
 				enum cmzn_field_value_type valueType = cmzn_field_get_value_type(field);
 				switch (valueType)
 				{
@@ -313,7 +314,7 @@ after a collapsible pane is opened/closed.
 						cmzn_field_id assignField = 0;
 						if ((nodal_value_type != CMZN_NODE_VALUE) || (version != 1))
 						{
-							assignField = cmzn_field_module_create_node_value(field_module, field, nodal_value_type, version);
+							assignField = cmzn_fieldmodule_create_field_node_value(field_module, field, nodal_value_type, version);
 						}
 						else
 						{
@@ -337,9 +338,9 @@ after a collapsible pane is opened/closed.
 					{
 					} break;
 				}
-				cmzn_field_cache_destroy(&field_cache);
-				cmzn_field_module_end_change(field_module);
-				cmzn_field_module_destroy(&field_module);
+				cmzn_fieldcache_destroy(&field_cache);
+				cmzn_fieldmodule_end_change(field_module);
+				cmzn_fieldmodule_destroy(&field_module);
 
 				if (result != CMZN_OK)
 				{
@@ -416,7 +417,7 @@ public:
 
 /** @param time_varying_field  Initialise to false before calling. Set to true if any field is time varying on node */
 static int node_viewer_add_collpane(Node_viewer *node_viewer,
-	cmzn_field_cache_id field_cache, cmzn_field_id field, bool &time_varying_field)
+	cmzn_fieldcache_id field_cache, cmzn_field_id field, bool &time_varying_field)
 {
 	char *field_name = cmzn_field_get_name(field);
 	wxScrolledWindow *panel = node_viewer->collpane;
@@ -473,13 +474,13 @@ int Node_viewer_remove_unused_collpane(struct Node_viewer *node_viewer)
 			wxWindow *child = ((wxCollapsiblePane *)current)->GetPane();
 			wxString tmpstr = child->GetName().GetData();
 			const char *field_name = tmpstr.mb_str(wxConvUTF8);
-			cmzn_field_module_id fieldModule = cmzn_region_get_field_module(node_viewer->region);
-			cmzn_field_id field = cmzn_field_module_find_field_by_name(fieldModule, field_name);
+			cmzn_fieldmodule_id fieldModule = cmzn_region_get_fieldmodule(node_viewer->region);
+			cmzn_field_id field = cmzn_fieldmodule_find_field_by_name(fieldModule, field_name);
 			if (!field)
 			{
 				current->Destroy();
 			}
-			cmzn_field_module_destroy(&fieldModule);
+			cmzn_fieldmodule_destroy(&fieldModule);
 		}
 	}
 	return return_code;
@@ -518,21 +519,21 @@ int Node_viewer_update_collpane(struct Node_viewer *node_viewer)
 	int return_code = 0;
 	if (node_viewer)
 	{
-		cmzn_field_module_id field_module = cmzn_region_get_field_module(node_viewer->region);
-		cmzn_field_cache_id field_cache = cmzn_field_module_create_cache(field_module);
-		cmzn_field_cache_set_time(field_cache, cmzn_time_notifier_get_current_time(node_viewer->time_notifier));
-		cmzn_field_cache_set_node(field_cache, node_viewer->current_node);
-		cmzn_field_iterator_id iter = cmzn_field_module_create_field_iterator(field_module);
+		cmzn_fieldmodule_id field_module = cmzn_region_get_fieldmodule(node_viewer->region);
+		cmzn_fieldcache_id field_cache = cmzn_fieldmodule_create_fieldcache(field_module);
+		cmzn_fieldcache_set_time(field_cache, cmzn_time_notifier_get_current_time(node_viewer->time_notifier));
+		cmzn_fieldcache_set_node(field_cache, node_viewer->current_node);
+		cmzn_fielditerator_id iter = cmzn_fieldmodule_create_fielditerator(field_module);
 		cmzn_field_id field = 0;
 		bool time_varying = false;
-		while ((0 != (field = cmzn_field_iterator_next(iter))))
+		while ((0 != (field = cmzn_fielditerator_next(iter))))
 		{
 			node_viewer_add_collpane(node_viewer, field_cache, field, time_varying);
 			cmzn_field_destroy(&field);
 		}
-		cmzn_field_iterator_destroy(&iter);
-		cmzn_field_cache_destroy(&field_cache);
-		cmzn_field_module_destroy(&field_module);
+		cmzn_fielditerator_destroy(&iter);
+		cmzn_fieldcache_destroy(&field_cache);
+		cmzn_fieldmodule_destroy(&field_module);
 		Node_viewer_remove_unused_collpane(node_viewer);
 		if (time_varying)
 		{
@@ -578,10 +579,10 @@ static void Node_viewer_Computed_field_change(
 			if (selection_group && changed_field_list && Computed_field_or_ancestor_satisfies_condition(
 				cmzn_field_group_base_cast(selection_group), Computed_field_is_in_list, (void *)changed_field_list))
 			{
-				cmzn_field_module_id field_module = cmzn_region_get_field_module(node_viewer->region);
-				cmzn_nodeset_id master_nodeset = cmzn_field_module_find_nodeset_by_domain_type(
+				cmzn_fieldmodule_id field_module = cmzn_region_get_fieldmodule(node_viewer->region);
+				cmzn_nodeset_id master_nodeset = cmzn_fieldmodule_find_nodeset_by_domain_type(
 					field_module, node_viewer->domain_type);
-				cmzn_field_module_destroy(&field_module);
+				cmzn_fieldmodule_destroy(&field_module);
 				cmzn_field_node_group_id node_group = cmzn_field_group_get_node_group(selection_group, master_nodeset);
 				cmzn_nodeset_destroy(&master_nodeset);
 				cmzn_nodeset_group_id nodeset_group = cmzn_field_node_group_get_nodeset(node_group);
@@ -589,10 +590,10 @@ static void Node_viewer_Computed_field_change(
 				/* make sure there is only one node selected in group */
 				if (1 == cmzn_nodeset_get_size(cmzn_nodeset_group_base_cast(nodeset_group)))
 				{
-					cmzn_node_iterator_id iterator = cmzn_nodeset_create_node_iterator(
+					cmzn_nodeiterator_id iterator = cmzn_nodeset_create_nodeiterator(
 						cmzn_nodeset_group_base_cast(nodeset_group));
-					cmzn_node_id node = cmzn_node_iterator_next(iterator);
-					cmzn_node_iterator_destroy(&iterator);
+					cmzn_node_id node = cmzn_nodeiterator_next(iterator);
+					cmzn_nodeiterator_destroy(&iterator);
 					if (node != node_viewer->current_node)
 					{
 						if (node_viewer->wx_node_viewer)
@@ -627,14 +628,14 @@ cmzn_node_id Node_viewer_get_first_node(Node_viewer *node_viewer)
 	cmzn_node_id node = 0;
 	if (node_viewer)
 	{
-		cmzn_field_module_id field_module = cmzn_region_get_field_module(node_viewer->region);
-		cmzn_nodeset_id nodeset = cmzn_field_module_find_nodeset_by_domain_type(field_module,
+		cmzn_fieldmodule_id field_module = cmzn_region_get_fieldmodule(node_viewer->region);
+		cmzn_nodeset_id nodeset = cmzn_fieldmodule_find_nodeset_by_domain_type(field_module,
 			node_viewer->domain_type);
-		cmzn_node_iterator_id iter = cmzn_nodeset_create_node_iterator(nodeset);
-		node = cmzn_node_iterator_next(iter);
-		cmzn_node_iterator_destroy(&iter);
+		cmzn_nodeiterator_id iter = cmzn_nodeset_create_nodeiterator(nodeset);
+		node = cmzn_nodeiterator_next(iter);
+		cmzn_nodeiterator_destroy(&iter);
 		cmzn_nodeset_destroy(&nodeset);
-		cmzn_field_module_destroy(&field_module);
+		cmzn_fieldmodule_destroy(&field_module);
 	}
 	return node;
 }
@@ -864,11 +865,11 @@ char *node_viewer_get_component_value_string(Node_viewer *node_viewer, cmzn_fiel
 	if (node_viewer && field && node_viewer->current_node)
 	{
 		const int numberOfComponents = cmzn_field_get_number_of_components(field);
-		cmzn_field_module_id field_module = cmzn_field_get_field_module(field);
-		cmzn_field_cache_id field_cache = cmzn_field_module_create_cache(field_module);
+		cmzn_fieldmodule_id field_module = cmzn_field_get_fieldmodule(field);
+		cmzn_fieldcache_id field_cache = cmzn_fieldmodule_create_fieldcache(field_module);
 		double time = cmzn_time_notifier_get_current_time(node_viewer->time_notifier);
-		cmzn_field_cache_set_time(field_cache, time);
-		cmzn_field_cache_set_node(field_cache, node_viewer->current_node);
+		cmzn_fieldcache_set_time(field_cache, time);
+		cmzn_fieldcache_set_node(field_cache, node_viewer->current_node);
 		if (1 == numberOfComponents)
 		{
 			new_value_string = cmzn_field_evaluate_string(field, field_cache);
@@ -876,11 +877,11 @@ char *node_viewer_get_component_value_string(Node_viewer *node_viewer, cmzn_fiel
 		else
 		{
 			// must be numeric
-			cmzn_field_module_begin_change(field_module);
+			cmzn_fieldmodule_begin_change(field_module);
 			cmzn_field_id useField = 0;
 			if ((nodal_value_type != CMZN_NODE_VALUE) || (version != 1))
 			{
-				useField = cmzn_field_module_create_node_value(field_module, field, nodal_value_type, version);
+				useField = cmzn_fieldmodule_create_field_node_value(field_module, field, nodal_value_type, version);
 			}
 			else
 			{
@@ -900,10 +901,10 @@ char *node_viewer_get_component_value_string(Node_viewer *node_viewer, cmzn_fiel
 			}
 			delete[] values;
 			cmzn_field_destroy(&useField);
-			cmzn_field_module_end_change(field_module);
+			cmzn_fieldmodule_end_change(field_module);
 		}
-		cmzn_field_cache_destroy(&field_cache);
-		cmzn_field_module_destroy(&field_module);
+		cmzn_fieldcache_destroy(&field_cache);
+		cmzn_fieldmodule_destroy(&field_module);
 	}
 	return new_value_string;
 }
@@ -975,7 +976,7 @@ static int node_viewer_setup_components(
 		return_code = 1;
 		const int number_of_components = cmzn_field_get_number_of_components(field);
 		cmzn_field_finite_element_id feField = cmzn_field_cast_finite_element(field);
-		cmzn_node_template_id nodeTemplate = 0;
+		cmzn_nodetemplate_id nodeTemplate = 0;
 		enum cmzn_node_value_type nodal_value_types[8];
 		const char *nodal_value_labels[8];
 		nodal_value_types[0] = CMZN_NODE_VALUE;
@@ -983,17 +984,17 @@ static int node_viewer_setup_components(
 		int number_of_nodal_value_types = 1;
 		if (feField)
 		{
-			cmzn_field_module_id field_module = cmzn_region_get_field_module(node_viewer->region);
-			cmzn_nodeset_id nodeset = cmzn_field_module_find_nodeset_by_domain_type(field_module,
+			cmzn_fieldmodule_id field_module = cmzn_region_get_fieldmodule(node_viewer->region);
+			cmzn_nodeset_id nodeset = cmzn_fieldmodule_find_nodeset_by_domain_type(field_module,
 				node_viewer->domain_type);
-			nodeTemplate = cmzn_nodeset_create_node_template(nodeset);
-			cmzn_node_template_define_field_from_node(nodeTemplate, field, node);
+			nodeTemplate = cmzn_nodeset_create_nodetemplate(nodeset);
+			cmzn_nodetemplate_define_field_from_node(nodeTemplate, field, node);
 			cmzn_nodeset_destroy(&nodeset);
-			cmzn_field_module_destroy(&field_module);
+			cmzn_fieldmodule_destroy(&field_module);
 			for (int i = 1; i < all_nodal_value_types_count; ++i)
 			{
 				enum cmzn_node_value_type nodal_value_type = all_nodal_value_types[i].type;
-				if (cmzn_node_template_has_derivative(nodeTemplate,
+				if (cmzn_nodetemplate_has_derivative(nodeTemplate,
 					field, /*component_number*/-1, nodal_value_type))
 				{
 					nodal_value_types[number_of_nodal_value_types] = nodal_value_type;
@@ -1029,7 +1030,7 @@ static int node_viewer_setup_components(
 			for (int nodal_value_no = 0; nodal_value_no < number_of_nodal_value_types; ++nodal_value_no)
 			{
 				enum cmzn_node_value_type nodal_value_type = nodal_value_types[nodal_value_no];
-				if (!feField || cmzn_node_template_has_derivative(nodeTemplate,
+				if (!feField || cmzn_nodetemplate_has_derivative(nodeTemplate,
 					field, comp_no, nodal_value_type))
 				{
 					node_viewer_add_textctrl(node_viewer, field, comp_no, nodal_value_type, 1);
@@ -1042,13 +1043,13 @@ static int node_viewer_setup_components(
 				}
 			}
 		}
-		cmzn_time_sequence_id timeSequence = cmzn_node_template_get_time_sequence(nodeTemplate, field);
+		cmzn_time_sequence_id timeSequence = cmzn_nodetemplate_get_time_sequence(nodeTemplate, field);
 		if (timeSequence)
 		{
 			time_varying_field = true;
 			cmzn_time_sequence_destroy(&timeSequence);
 		}
-		cmzn_node_template_destroy(&nodeTemplate);
+		cmzn_nodetemplate_destroy(&nodeTemplate);
 		cmzn_field_finite_element_destroy(&feField);
 	}
 	return (return_code);

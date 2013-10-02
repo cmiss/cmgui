@@ -97,7 +97,7 @@ already) and allows its contents to be modified.
 
 		if (return_code && node_flag)
 		{
-			cmzn_nodeset_id nodeset = cmzn_field_module_find_nodeset_by_name(field_modify->get_field_module(), nodeset_name);
+			cmzn_nodeset_id nodeset = cmzn_fieldmodule_find_nodeset_by_name(field_modify->get_field_module(), nodeset_name);
 			cmzn_node_id node = cmzn_nodeset_find_node_by_identifier(nodeset, node_identifier);
 			if (node)
 			{
@@ -215,7 +215,7 @@ contents to be modified.
 
 		if (return_code && node_flag)
 		{
-			cmzn_nodeset_id nodeset = cmzn_field_module_find_nodeset_by_name(field_modify->get_field_module(), nodeset_name);
+			cmzn_nodeset_id nodeset = cmzn_fieldmodule_find_nodeset_by_name(field_modify->get_field_module(), nodeset_name);
 			cmzn_node_id node = cmzn_nodeset_find_node_by_identifier(nodeset, node_identifier);
 			if (node)
 			{

@@ -26,7 +26,7 @@ int Computed_field_get_type_2d_strain(struct Computed_field *field,
 	struct Computed_field **fibre_angle_field);
 
 struct Computed_field *Computed_field_create_2d_strain(
-	struct cmzn_field_module *field_module,
+	struct cmzn_fieldmodule *field_module,
 	struct Computed_field *deformed_coordinate_field,
 	struct Computed_field *undeformed_coordinate_field,
 	struct Computed_field *fibre_angle_field);

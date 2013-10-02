@@ -113,7 +113,7 @@ int define_Computed_field_type_alias(Parse_state *state,
 			if (return_code)
 			{
 				return_code = field_modify->update_field_and_deaccess(
-					cmzn_field_module_create_alias(field_modify->get_field_module(),
+					cmzn_fieldmodule_create_field_alias(field_modify->get_field_module(),
 						original_field));
 			}
 			if (original_field)

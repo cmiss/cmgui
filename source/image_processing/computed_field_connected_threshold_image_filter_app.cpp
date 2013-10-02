@@ -193,7 +193,7 @@ already) and allows its contents to be modified.
 			if (return_code)
 			{
 				return_code = field_modify->update_field_and_deaccess(
-					cmzn_field_module_create_connected_threshold_image_filter(
+					cmzn_fieldmodule_create_field_connected_threshold_image_filter(
 						field_modify->get_field_module(),
 						source_field, lower_threshold, upper_threshold, replace_value,
 						num_seed_points, seed_dimension, seed_points));

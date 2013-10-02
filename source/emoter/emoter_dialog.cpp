@@ -23,6 +23,7 @@ group of nodes
 #include "zinc/element.h"
 #include "zinc/fieldmodule.h"
 #include "zinc/fieldsubobjectgroup.h"
+#include "zinc/region.h"
 #include "command/command.h"
 	/*???DB.  For Execute_command */
 #include "command/parser.h"
@@ -2690,16 +2691,16 @@ DESCRIPTION :
 		if (node_numbers)
 		{
 			number_of_nodes = new_value;
-			cmzn_field_module_id field_module = cmzn_region_get_field_module(emoter_dialog->shared->region);
-			cmzn_field_module_begin_change(field_module);
-			cmzn_nodeset_id master_nodeset = cmzn_field_module_find_nodeset_by_domain_type(field_module, CMZN_FIELD_DOMAIN_NODES);
+			cmzn_fieldmodule_id field_module = cmzn_region_get_fieldmodule(emoter_dialog->shared->region);
+			cmzn_fieldmodule_begin_change(field_module);
+			cmzn_nodeset_id master_nodeset = cmzn_fieldmodule_find_nodeset_by_domain_type(field_module, CMZN_FIELD_DOMAIN_NODES);
 			if (emoter_dialog->minimum_nodeset_group)
 			{
 				cmzn_nodeset_group_remove_all_nodes(emoter_dialog->minimum_nodeset_group);
 			}
 			else
 			{
-				cmzn_field_id minimum_node_group_field = cmzn_field_module_create_node_group(field_module, master_nodeset);
+				cmzn_field_id minimum_node_group_field = cmzn_fieldmodule_create_field_node_group(field_module, master_nodeset);
 				cmzn_field_node_group_id minimum_node_group = cmzn_field_cast_node_group(minimum_node_group_field);
 				emoter_dialog->minimum_nodeset_group = cmzn_field_node_group_get_nodeset(minimum_node_group);
 				cmzn_field_node_group_destroy(&minimum_node_group);
@@ -2728,7 +2729,7 @@ DESCRIPTION :
 				}
 			}
 			cmzn_nodeset_destroy(&master_nodeset);
-			cmzn_field_module_end_change(field_module);
+			cmzn_fieldmodule_end_change(field_module);
 		}
 	}
 	else

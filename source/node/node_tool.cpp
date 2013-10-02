@@ -16,7 +16,7 @@ Scene input.
 #endif /* defined (1) */
 
 #include <math.h>
-
+#include "zinc/fieldcache.h"
 #include "zinc/graphic.h"
 #include "zinc/graphicsmaterial.h"
 #include "zinc/scene.h"
@@ -163,7 +163,7 @@ finishing points on the near and far plane. The exact amount is in proportion
 to its position between these two planes.
 ==============================================================================*/
 {
-	cmzn_field_cache_id field_cache;
+	cmzn_fieldcache_id field_cache;
 	/* the actual coordinate change calculated from the drag at the last picked
 		 node */
 	double delta1,delta2,delta3;
@@ -201,7 +201,7 @@ to its position between these two planes.
 
 struct Node_tool_element_constraint_function_data
 {
-	cmzn_field_cache_id field_cache;
+	cmzn_fieldcache_id field_cache;
 	struct FE_element *element, *found_element;
 	FE_value xi[MAXIMUM_ELEMENT_XI_DIMENSIONS];
 	struct Computed_field *coordinate_field;
@@ -232,9 +232,9 @@ static int cmzn_field_group_destroy_all_nodes(cmzn_field_group_id group, void *d
 	cmzn_field_domain_type *domain_type_address = (cmzn_field_domain_type *)domain_type_address_void;
 	if (group && domain_type_address)
 	{
-		cmzn_field_module_id field_module = cmzn_field_get_field_module(cmzn_field_group_base_cast(group));
+		cmzn_fieldmodule_id field_module = cmzn_field_get_fieldmodule(cmzn_field_group_base_cast(group));
 		cmzn_nodeset_id master_nodeset =
-			cmzn_field_module_find_nodeset_by_domain_type(field_module, *domain_type_address);
+			cmzn_fieldmodule_find_nodeset_by_domain_type(field_module, *domain_type_address);
 		cmzn_field_node_group_id node_group = cmzn_field_group_get_node_group(group, master_nodeset);
 		cmzn_nodeset_destroy(&master_nodeset);
 		if (node_group)
@@ -244,7 +244,7 @@ static int cmzn_field_group_destroy_all_nodes(cmzn_field_group_id group, void *d
 			cmzn_nodeset_group_destroy(&nodeset_group);
 			cmzn_field_node_group_destroy(&node_group);
 		}
-		cmzn_field_module_destroy(&field_module);
+		cmzn_fieldmodule_destroy(&field_module);
 		return_code = 1;
 	}
 	return return_code;
@@ -523,7 +523,7 @@ DESCRIPTION :
 		return_code = Computed_field_find_element_xi(data->coordinate_field,
 			data->field_cache, point, /*number_of_values*/3, &(data->found_element),
 			data->xi, (cmzn_mesh_id)0, /*propagate_field*/0, /*find_nearest_location*/1);
-		cmzn_field_cache_set_mesh_location(data->field_cache, data->found_element,
+		cmzn_fieldcache_set_mesh_location(data->field_cache, data->found_element,
 			cmzn_element_get_dimension(data->found_element), data->xi);
 		cmzn_field_evaluate_real(data->coordinate_field, data->field_cache,
 			cmzn_field_get_number_of_components(data->coordinate_field), point);
@@ -562,7 +562,7 @@ static int FE_node_calculate_delta_position(struct FE_node *node,
 		coordinates[0]=0.0;
 		coordinates[1]=0.0;
 		coordinates[2]=0.0;
-		cmzn_field_cache_set_node(edit_info->field_cache, node);
+		cmzn_fieldcache_set_node(edit_info->field_cache, node);
 		if (cmzn_field_evaluate_real(edit_info->rc_coordinate_field,
 			edit_info->field_cache, 3, coordinates))
 		{
@@ -581,8 +581,8 @@ static int FE_node_calculate_delta_position(struct FE_node *node,
 					 edit_info->nearest_element_coordinate_field)
 				{
 					// need a new field cache for constraint as
-					cmzn_field_module_id constraint_field_module = cmzn_field_get_field_module(edit_info->nearest_element_coordinate_field);
-					constraint_data.field_cache = cmzn_field_module_create_cache(constraint_field_module);;
+					cmzn_fieldmodule_id constraint_field_module = cmzn_field_get_fieldmodule(edit_info->nearest_element_coordinate_field);
+					constraint_data.field_cache = cmzn_fieldmodule_create_fieldcache(constraint_field_module);;
 					constraint_data.element = edit_info->nearest_element;
 					constraint_data.found_element = edit_info->nearest_element;
 					constraint_data.coordinate_field = edit_info->nearest_element_coordinate_field;
@@ -596,8 +596,8 @@ static int FE_node_calculate_delta_position(struct FE_node *node,
 					coordinates[0] = placement_coordinates[0];
 					coordinates[1] = placement_coordinates[1];
 					coordinates[2] = placement_coordinates[2];
-					cmzn_field_cache_destroy(&constraint_data.field_cache);
-					cmzn_field_module_destroy(&constraint_field_module);
+					cmzn_fieldcache_destroy(&constraint_data.field_cache);
+					cmzn_fieldmodule_destroy(&constraint_field_module);
 				}
 				else
 				{
@@ -706,7 +706,7 @@ static int FE_node_edit_position(struct FE_node *node,
 			coordinates[0]=0.0;
 			coordinates[1]=0.0;
 			coordinates[2]=0.0;
-			cmzn_field_cache_set_node(edit_info->field_cache, node);
+			cmzn_fieldcache_set_node(edit_info->field_cache, node);
 			/* If the field we are changing isn't defined at this node then we
 				don't complain and just do nothing */
 			if (cmzn_field_evaluate_real(edit_info->coordinate_field, edit_info->field_cache, 3, coordinates))
@@ -779,7 +779,7 @@ NOTE: currently does not tolerate having a variable_scale_field.
 		coordinates[0]=0.0;
 		coordinates[1]=0.0;
 		coordinates[2]=0.0;
-		cmzn_field_cache_set_node(edit_info->field_cache, node);
+		cmzn_fieldcache_set_node(edit_info->field_cache, node);
 		if (cmzn_field_evaluate_real(edit_info->wrapper_orientation_scale_field, edit_info->field_cache,
 				number_of_orientation_scale_components, orientation_scale) &&
 			cmzn_field_evaluate_real(edit_info->rc_coordinate_field, edit_info->field_cache,
@@ -985,7 +985,7 @@ static int FE_node_edit_vector(struct FE_node *node,
 		if ((node != edit_info->last_picked_node)&&(
 			FE_region_contains_FE_node(edit_info->fe_region, node)))
 		{
-			cmzn_field_cache_set_node(edit_info->field_cache, node);
+			cmzn_fieldcache_set_node(edit_info->field_cache, node);
 			if (cmzn_field_evaluate_real(edit_info->orientation_scale_field, edit_info->field_cache,
 				number_of_orientation_scale_components, orientation_scale))
 			{
@@ -1051,7 +1051,7 @@ static int FE_node_edit_vector(struct FE_node *node,
 
 static int Node_tool_define_field_at_node_from_picked_coordinates(
 	struct Node_tool *node_tool,struct FE_node *node,
-	cmzn_field_cache_id field_cache)
+	cmzn_fieldcache_id field_cache)
 /*******************************************************************************
 LAST MODIFIED : 29 September 2000
 
@@ -1083,8 +1083,8 @@ object's coordinate field.
 			cmzn_field_id rc_picked_coordinate_field = Computed_field_begin_wrap_coordinate_field(
 				picked_coordinate_field);
 
-			cmzn_field_cache_set_node(field_cache, node);
-			cmzn_field_cache_set_time(field_cache, time);
+			cmzn_fieldcache_set_node(field_cache, node);
+			cmzn_fieldcache_set_time(field_cache, time);
 			if (cmzn_field_evaluate_real(rc_picked_coordinate_field, field_cache,
 				3, coordinates))
 			{
@@ -1148,9 +1148,9 @@ the interaction volume will be supplied a constraint function which will
 try to enforce that the node is created on that element.
 ==============================================================================*/
 {
-	double d,LU_transformation_matrix[16],node_coordinates[3];
+	double node_coordinates[3];
 	FE_value coordinates[3];
-	int i,LU_indx[4],node_number,transformation_required;
+	int i,node_number;
 	struct Computed_field *rc_coordinate_field,*node_tool_coordinate_field;
 	struct FE_node *merged_node, *node;
 
@@ -1176,9 +1176,9 @@ try to enforce that the node is created on that element.
 		}
 		else
 		{
-			cmzn_field_module_id field_module = cmzn_region_get_field_module(node_tool->region);
-			cmzn_field_module_begin_change(field_module);
-			cmzn_field_cache_id field_cache = cmzn_field_module_create_cache(field_module);
+			cmzn_fieldmodule_id field_module = cmzn_region_get_fieldmodule(node_tool->region);
+			cmzn_fieldmodule_begin_change(field_module);
+			cmzn_fieldcache_id field_cache = cmzn_fieldmodule_create_fieldcache(field_module);
 			node_tool_coordinate_field=node_tool->coordinate_field;
 			scene = cmzn_region_get_scene_internal(node_tool->region);
 			if (top_scene && scene)
@@ -1207,9 +1207,9 @@ try to enforce that the node is created on that element.
 				/* get new node coordinates from interaction_volume */
 				if (nearest_element && element_coordinate_field)
 				{
-					cmzn_field_module_id constraint_field_module = cmzn_field_get_field_module(element_coordinate_field);
+					cmzn_fieldmodule_id constraint_field_module = cmzn_field_get_fieldmodule(element_coordinate_field);
 					/* field_module used for field_cache should be the on of coordinate_field */
-					constraint_data.field_cache = cmzn_field_module_create_cache(constraint_field_module);
+					constraint_data.field_cache = cmzn_fieldmodule_create_fieldcache(constraint_field_module);
 					constraint_data.element = nearest_element;
 					constraint_data.found_element = nearest_element;
 					constraint_data.coordinate_field = element_coordinate_field;
@@ -1220,8 +1220,8 @@ try to enforce that the node is created on that element.
 					Interaction_volume_get_placement_point(interaction_volume,
 						node_coordinates, Node_tool_element_constraint_function,
 						&constraint_data);
-					cmzn_field_cache_destroy(&constraint_data.field_cache);
-					cmzn_field_module_destroy(&constraint_field_module);
+					cmzn_fieldcache_destroy(&constraint_data.field_cache);
+					cmzn_fieldmodule_destroy(&constraint_field_module);
 				}
 				else
 				{
@@ -1243,7 +1243,7 @@ try to enforce that the node is created on that element.
 				else
 				{
 					ACCESS(FE_node)(node);
-					cmzn_field_cache_set_node(field_cache, node);
+					cmzn_fieldcache_set_node(field_cache, node);
 					if (!Node_tool_define_field_at_node(node_tool,node) ||
 						!cmzn_field_assign_real(rc_coordinate_field, field_cache, 3, coordinates) ||
 						(nearest_element && constraint_data.found_element && node_tool->element_xi_field &&
@@ -1259,10 +1259,10 @@ try to enforce that the node is created on that element.
 					{
 						if (node_tool->group_field)
 						{
-							cmzn_field_module_id field_module = cmzn_region_get_field_module(node_tool->region);
+							cmzn_fieldmodule_id field_module = cmzn_region_get_fieldmodule(node_tool->region);
 							cmzn_nodeset_id master_nodeset =
-								cmzn_field_module_find_nodeset_by_domain_type(field_module, node_tool->domain_type);
-							cmzn_field_module_begin_change(field_module);
+								cmzn_fieldmodule_find_nodeset_by_domain_type(field_module, node_tool->domain_type);
+							cmzn_fieldmodule_begin_change(field_module);
 							cmzn_field_node_group_id modify_node_group =
 								cmzn_field_group_get_node_group(node_tool->group_field, master_nodeset);
 							if (!modify_node_group)
@@ -1278,20 +1278,20 @@ try to enforce that the node is created on that element.
 										"gfx modify ngroup:  Could not add node %d", cmzn_node_get_identifier(node));
 								}
 							}
-							cmzn_field_module_end_change(field_module);
+							cmzn_fieldmodule_end_change(field_module);
 							cmzn_nodeset_group_destroy(&modify_nodeset_group);
 							cmzn_field_node_group_destroy(&modify_node_group);
 							cmzn_nodeset_destroy(&master_nodeset);
-							cmzn_field_module_destroy(&field_module);
+							cmzn_fieldmodule_destroy(&field_module);
 						}
 					}
 					DEACCESS(FE_node)(&node);
 				}
 				Computed_field_end_wrap(&rc_coordinate_field);
 			}
-			cmzn_field_cache_destroy(&field_cache);
-			cmzn_field_module_end_change(field_module);
-			cmzn_field_module_destroy(&field_module);
+			cmzn_fieldcache_destroy(&field_cache);
+			cmzn_fieldmodule_end_change(field_module);
+			cmzn_fieldmodule_destroy(&field_module);
 		}
 	}
 	if (node_tool)
@@ -1352,12 +1352,12 @@ int Node_tool_set_picked_node(struct Node_tool *node_tool, struct FE_node *picke
 	{
 		if (node_tool->scene)
 		{
-			cmzn_field_module_id field_module = cmzn_region_get_field_module(cmzn_scene_get_region(node_tool->scene));
-			cmzn_field_module_begin_change(field_module);
+			cmzn_fieldmodule_id field_module = cmzn_region_get_fieldmodule(cmzn_scene_get_region(node_tool->scene));
+			cmzn_fieldmodule_begin_change(field_module);
 			cmzn_field_group_id selection_group = cmzn_scene_get_or_create_selection_group(node_tool->scene);
 			if (selection_group)
 			{
-				cmzn_nodeset_id master_nodeset = cmzn_field_module_find_nodeset_by_domain_type(
+				cmzn_nodeset_id master_nodeset = cmzn_fieldmodule_find_nodeset_by_domain_type(
 					field_module, node_tool->domain_type);
 				if (master_nodeset)
 				{
@@ -1374,8 +1374,8 @@ int Node_tool_set_picked_node(struct Node_tool *node_tool, struct FE_node *picke
 				}
 			}
 			cmzn_field_group_destroy(&selection_group);
-			cmzn_field_module_end_change(field_module);
-			cmzn_field_module_destroy(&field_module);
+			cmzn_fieldmodule_end_change(field_module);
+			cmzn_fieldmodule_destroy(&field_module);
 		}
 	}
 	else
@@ -1468,14 +1468,14 @@ release.
 						{
 							cmzn_region_id temp_region = FE_region_get_cmzn_region(FE_node_get_FE_region(picked_node));
 							top_scene = cmzn_region_get_scene_internal(temp_region);
-							cmzn_field_module_id field_module = cmzn_region_get_field_module(temp_region);
-							cmzn_field_module_begin_change(field_module);
-							cmzn_field_cache_id field_cache = cmzn_field_module_create_cache(field_module);
+							cmzn_fieldmodule_id field_module = cmzn_region_get_fieldmodule(temp_region);
+							cmzn_fieldmodule_begin_change(field_module);
+							cmzn_fieldcache_id field_cache = cmzn_fieldmodule_create_fieldcache(field_module);
 							node_tool->picked_node_was_unselected=1;
 							cmzn_field_group_id selection_group = cmzn_scene_get_selection_group(top_scene);
 							if (selection_group)
 							{
-								cmzn_nodeset_id master_nodeset = cmzn_field_module_find_nodeset_by_domain_type(
+								cmzn_nodeset_id master_nodeset = cmzn_fieldmodule_find_nodeset_by_domain_type(
 									field_module, node_tool->domain_type);
 								cmzn_field_node_group_id node_group = cmzn_field_group_get_node_group(selection_group, master_nodeset);
 								cmzn_nodeset_destroy(&master_nodeset);
@@ -1494,16 +1494,16 @@ release.
 							REACCESS(cmzn_graphic)(&(node_tool->graphic),nearest_node_graphic);
 							if (node_tool->define_enabled)
 							{
-								cmzn_field_cache_set_node(field_cache, picked_node);
+								cmzn_fieldcache_set_node(field_cache, picked_node);
 								if (!cmzn_field_is_defined_at_location(node_tool->coordinate_field, field_cache))
 								{
 									Node_tool_define_field_at_node_from_picked_coordinates(
 										node_tool, picked_node, field_cache);
 								}
 							}
-							cmzn_field_cache_destroy(&field_cache);
-							cmzn_field_module_end_change(field_module);
-							cmzn_field_module_destroy(&field_module);
+							cmzn_fieldcache_destroy(&field_cache);
+							cmzn_fieldmodule_end_change(field_module);
+							cmzn_fieldmodule_destroy(&field_module);
 							cmzn_scene_destroy(&top_scene);
 						}
 						else
@@ -1610,9 +1610,9 @@ release.
 								}
 							}
 							cmzn_region_id temp_region = cmzn_scene_get_region(node_tool->scene);
-							cmzn_field_module_id field_module = cmzn_region_get_field_module(temp_region);
-							cmzn_field_module_begin_change(field_module);
-							cmzn_field_cache_id field_cache = cmzn_field_module_create_cache(field_module);
+							cmzn_fieldmodule_id field_module = cmzn_region_get_fieldmodule(temp_region);
+							cmzn_fieldmodule_begin_change(field_module);
+							cmzn_fieldcache_id field_cache = cmzn_fieldmodule_create_fieldcache(field_module);
 							if (node_tool->create_enabled &&
 								node_tool->streaming_create_enabled &&
 								(INTERACTIVE_EVENT_MOTION_NOTIFY == event_type))
@@ -1654,7 +1654,7 @@ release.
 								edit_info.nearest_element = nearest_element;
 								edit_info.nearest_element_coordinate_field =
 									nearest_element_coordinate_field;
-								cmzn_field_cache_set_time(field_cache, edit_info.time);
+								cmzn_fieldcache_set_time(field_cache, edit_info.time);
 								/* get coordinate field to edit */
 								cmzn_field_id coordinate_field = 0;
 								if (node_tool->define_enabled)
@@ -1740,7 +1740,7 @@ release.
 									cmzn_field_group_id selection_group = cmzn_scene_get_selection_group(node_tool->scene);
 									if (node_tool->scene && selection_group)
 									{
-										cmzn_nodeset_id master_nodeset = cmzn_field_module_find_nodeset_by_domain_type(
+										cmzn_nodeset_id master_nodeset = cmzn_fieldmodule_find_nodeset_by_domain_type(
 											field_module, node_tool->domain_type);
 										edit_info.fe_region=cmzn_region_get_FE_region(temp_region);
 										cmzn_field_node_group_id node_group = cmzn_field_group_get_node_group(selection_group, master_nodeset);
@@ -1760,14 +1760,14 @@ release.
 												if (FE_node_calculate_delta_vector(
 														node_tool->last_picked_node, (void *) &edit_info))
 												{
-													cmzn_node_iterator_id iterator =
-														cmzn_nodeset_create_node_iterator(cmzn_nodeset_group_base_cast(nodeset_group));
+													cmzn_nodeiterator_id iterator =
+														cmzn_nodeset_create_nodeiterator(cmzn_nodeset_group_base_cast(nodeset_group));
 													cmzn_node_id edit_node = 0;
-													while (0 != (edit_node = cmzn_node_iterator_next_non_access(iterator)))
+													while (0 != (edit_node = cmzn_nodeiterator_next_non_access(iterator)))
 													{
 														FE_node_edit_vector(edit_node, &edit_info);
 													}
-													cmzn_node_iterator_destroy(&iterator);
+													cmzn_nodeiterator_destroy(&iterator);
 												}
 											}
 											else
@@ -1777,14 +1777,14 @@ release.
 													/* edit position */
 													if (FE_node_calculate_delta_position(node_tool->last_picked_node, &edit_info))
 													{
-														cmzn_node_iterator_id iterator =
-															cmzn_nodeset_create_node_iterator(cmzn_nodeset_group_base_cast(nodeset_group));
+														cmzn_nodeiterator_id iterator =
+															cmzn_nodeset_create_nodeiterator(cmzn_nodeset_group_base_cast(nodeset_group));
 														cmzn_node_id edit_node = 0;
-														while (0 != (edit_node = cmzn_node_iterator_next_non_access(iterator)))
+														while (0 != (edit_node = cmzn_nodeiterator_next_non_access(iterator)))
 														{
 															FE_node_edit_position(edit_node, &edit_info);
 														}
-														cmzn_node_iterator_destroy(&iterator);
+														cmzn_nodeiterator_destroy(&iterator);
 													}
 												}
 												else
@@ -1826,9 +1826,9 @@ release.
 									DESTROY(LIST(FE_node))(&temp_node_list);
 								}
 							}
-							cmzn_field_cache_destroy(&field_cache);
-							cmzn_field_module_end_change(field_module);
-							cmzn_field_module_destroy(&field_module);
+							cmzn_fieldcache_destroy(&field_cache);
+							cmzn_fieldmodule_end_change(field_module);
+							cmzn_fieldmodule_destroy(&field_module);
 						}
 						else if (node_tool->motion_detected)
 						{
@@ -1896,18 +1896,18 @@ release.
 								{
 									time = 0;
 								}
-								cmzn_field_module_id field_module = cmzn_field_get_field_module(node_tool->command_field);
-								cmzn_field_cache_id field_cache = cmzn_field_module_create_cache(field_module);
-								cmzn_field_cache_set_time(field_cache, time);
-								cmzn_field_cache_set_node(field_cache, node_tool->last_picked_node);
+								cmzn_fieldmodule_id field_module = cmzn_field_get_fieldmodule(node_tool->command_field);
+								cmzn_fieldcache_id field_cache = cmzn_fieldmodule_create_fieldcache(field_module);
+								cmzn_fieldcache_set_time(field_cache, time);
+								cmzn_fieldcache_set_node(field_cache, node_tool->last_picked_node);
 								char *command_string = cmzn_field_evaluate_string(node_tool->command_field, field_cache);
 								if (command_string)
 								{
 									Execute_command_execute_string(node_tool->execute_command, command_string);
 									DEALLOCATE(command_string);
 								}
-								cmzn_field_cache_destroy(&field_cache);
-								cmzn_field_module_destroy(&field_module);
+								cmzn_fieldcache_destroy(&field_cache);
+								cmzn_fieldmodule_destroy(&field_module);
 							}
 							Node_tool_reset((void *)node_tool);
 						}
@@ -2748,8 +2748,8 @@ Adds the just created element to the fe_region, adding faces as necessary.
 	ENTER(node_tool_add_element);
 	if (node_tool && node_tool->fe_region && node_tool->element)
 	{
-		cmzn_field_module_id field_module = cmzn_region_get_field_module(node_tool->region);
-		cmzn_field_module_begin_change(field_module);
+		cmzn_fieldmodule_id field_module = cmzn_region_get_fieldmodule(node_tool->region);
+		cmzn_fieldmodule_begin_change(field_module);
 
 		FE_region_begin_define_faces(node_tool->fe_region, /*all dimensions*/-1);
 		return_code = FE_region_merge_FE_element_and_faces_and_nodes(
@@ -2759,7 +2759,7 @@ Adds the just created element to the fe_region, adding faces as necessary.
 		{
 			// add element to group
 			const int dimension = cmzn_element_get_dimension(node_tool->element);
-			cmzn_mesh_id master_mesh = cmzn_field_module_find_mesh_by_dimension(field_module, dimension);
+			cmzn_mesh_id master_mesh = cmzn_fieldmodule_find_mesh_by_dimension(field_module, dimension);
 			cmzn_field_element_group_id modify_element_group =
 				cmzn_field_group_get_element_group(node_tool->group_field, master_mesh);
 			if (!modify_element_group)
@@ -2775,7 +2775,7 @@ Adds the just created element to the fe_region, adding faces as necessary.
 			if (1 < dimension)
 			{
 				// add faces to group
-				cmzn_mesh_id master_face_mesh = cmzn_field_module_find_mesh_by_dimension(field_module, dimension - 1);
+				cmzn_mesh_id master_face_mesh = cmzn_fieldmodule_find_mesh_by_dimension(field_module, dimension - 1);
 				cmzn_field_element_group_id face_element_group = cmzn_field_group_get_element_group(node_tool->group_field, master_face_mesh);
 				if (!face_element_group)
 				{
@@ -2790,7 +2790,7 @@ Adds the just created element to the fe_region, adding faces as necessary.
 				if (2 < dimension)
 				{
 					// add lines to group
-					cmzn_mesh_id master_line_mesh = cmzn_field_module_find_mesh_by_dimension(field_module, dimension - 2);
+					cmzn_mesh_id master_line_mesh = cmzn_fieldmodule_find_mesh_by_dimension(field_module, dimension - 2);
 					cmzn_field_element_group_id line_element_group = cmzn_field_group_get_element_group(node_tool->group_field, master_line_mesh);
 					if (!line_element_group)
 					{
@@ -2811,8 +2811,8 @@ Adds the just created element to the fe_region, adding faces as necessary.
 				}
 			}
 		}
-		cmzn_field_module_end_change(field_module);
-		cmzn_field_module_destroy(&field_module);
+		cmzn_fieldmodule_end_change(field_module);
+		cmzn_fieldmodule_destroy(&field_module);
 		Node_tool_end_element_creation(node_tool);
 	}
 	else
@@ -2857,11 +2857,11 @@ static void Node_tool_Computed_field_change(
 			if (selection_group && changed_field_list && Computed_field_or_ancestor_satisfies_condition(
 				cmzn_field_group_base_cast(selection_group), Computed_field_is_in_list, (void *)changed_field_list))
 			{
-				cmzn_field_module_id field_module = cmzn_region_get_field_module(node_tool->region);
+				cmzn_fieldmodule_id field_module = cmzn_region_get_fieldmodule(node_tool->region);
 				cmzn_field_node_group_id node_group = NULL;
-				cmzn_nodeset_id master_nodeset = cmzn_field_module_find_nodeset_by_domain_type(
+				cmzn_nodeset_id master_nodeset = cmzn_fieldmodule_find_nodeset_by_domain_type(
 					field_module, node_tool->domain_type);
-				cmzn_field_module_destroy(&field_module);
+				cmzn_fieldmodule_destroy(&field_module);
 				node_group = cmzn_field_group_get_node_group(selection_group, master_nodeset);
 				cmzn_nodeset_destroy(&master_nodeset);
 				cmzn_node_id node = 0;
@@ -2871,10 +2871,10 @@ static void Node_tool_Computed_field_change(
 					/* make sure there is only one node selected in group */
 					if (1 == cmzn_nodeset_get_size(cmzn_nodeset_group_base_cast(nodeset_group)))
 					{
-						cmzn_node_iterator_id iterator = cmzn_nodeset_create_node_iterator(
+						cmzn_nodeiterator_id iterator = cmzn_nodeset_create_nodeiterator(
 							cmzn_nodeset_group_base_cast(nodeset_group));
-						node = cmzn_node_iterator_next(iterator);
-						cmzn_node_iterator_destroy(&iterator);
+						node = cmzn_nodeiterator_next(iterator);
+						cmzn_nodeiterator_destroy(&iterator);
 					}
 					cmzn_nodeset_group_destroy(&nodeset_group);
 					cmzn_field_node_group_destroy(&node_group);

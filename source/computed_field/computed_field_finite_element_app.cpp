@@ -49,18 +49,18 @@ int Computed_field_get_type_embedded(struct Computed_field *field,
 	struct Computed_field **embedded_location_field_address);
 
 struct Computed_field *Computed_field_create_finite_element_internal(
-	struct cmzn_field_module *field_module, struct FE_field *fe_field);
+	struct cmzn_fieldmodule *field_module, struct FE_field *fe_field);
 
 struct Computed_field *Computed_field_create_access_count(
-	struct cmzn_field_module *field_module);
+	struct cmzn_fieldmodule *field_module);
 
 struct Computed_field *Computed_field_create_node_value(
-	struct cmzn_field_module *field_module,
+	struct cmzn_fieldmodule *field_module,
 	cmzn_field_id finite_element_field, enum FE_nodal_value_type nodal_value_type,
 	int version_number);
 
-cmzn_field_id cmzn_field_module_create_basis_derivative(
-	cmzn_field_module_id field_module, cmzn_field_id finite_element_field,
+cmzn_field_id cmzn_fieldmodule_create_field_basis_derivative(
+	cmzn_fieldmodule_id field_module, cmzn_field_id finite_element_field,
 	int order, int *xi_indices);
 
 class Computed_field_finite_element_package : public Computed_field_type_package
@@ -253,14 +253,14 @@ FE_field being made and/or modified.
 			{
 				value_type = Value_type_from_string(value_type_string);
 				STRING_TO_ENUMERATOR(CM_field_type)(cm_field_type_string, &cm_field_type);
-				cmzn_field_module *field_module = field_modify->get_field_module();
+				cmzn_fieldmodule *field_module = field_modify->get_field_module();
 				// cache changes to ensure FE_field not automatically wrapped already
-				cmzn_field_module_begin_change(field_module);
-				char *field_name = cmzn_field_module_get_field_name(field_modify->get_field_module());
+				cmzn_fieldmodule_begin_change(field_module);
+				char *field_name = cmzn_fieldmodule_get_field_name(field_modify->get_field_module());
 				FE_field *fe_field = FE_region_get_FE_field_with_general_properties(
-					cmzn_region_get_FE_region(cmzn_field_module_get_region_internal(field_module)),
+					cmzn_region_get_FE_region(cmzn_fieldmodule_get_region_internal(field_module)),
 					field_name, value_type, number_of_components);
-				Coordinate_system coordinate_system = cmzn_field_module_get_coordinate_system(field_module);
+				Coordinate_system coordinate_system = cmzn_fieldmodule_get_coordinate_system(field_module);
 				if (fe_field &&
 					set_FE_field_CM_field_type(fe_field, cm_field_type) &&
 					set_FE_field_coordinate_system(fe_field, &coordinate_system))
@@ -285,7 +285,7 @@ FE_field being made and/or modified.
 					return_code = 0;
 				}
 				DEALLOCATE(field_name);
-				cmzn_field_module_end_change(field_module);
+				cmzn_fieldmodule_end_change(field_module);
 			}
 			/* clean up the component_names array */
 			if (component_names)
@@ -662,7 +662,7 @@ and allows its contents to be modified.
 			if (embedded_location_field && source_field)
 			{
 				return_code = field_modify->update_field_and_deaccess(
-					cmzn_field_module_create_embedded(field_modify->get_field_module(),
+					cmzn_fieldmodule_create_field_embedded(field_modify->get_field_module(),
 						source_field, embedded_location_field));
 			}
 			else
@@ -769,7 +769,7 @@ int define_Computed_field_type_find_mesh_location(struct Parse_state *state,
 				}
 				if (return_code)
 				{
-					cmzn_field_id field = cmzn_field_module_create_find_mesh_location(field_modify->get_field_module(),
+					cmzn_field_id field = cmzn_fieldmodule_create_field_find_mesh_location(field_modify->get_field_module(),
 						source_field, mesh_field, mesh);
 					if (field)
 					{
@@ -976,7 +976,7 @@ FE_field being made and/or modified.
 				xi_indices[i]--;
 			}
 			return_code = field_modify->update_field_and_deaccess(
-				cmzn_field_module_create_basis_derivative(field_modify->get_field_module(),
+				cmzn_fieldmodule_create_field_basis_derivative(field_modify->get_field_module(),
 					finite_element_field, order, xi_indices));
 		}
 		if (!return_code)

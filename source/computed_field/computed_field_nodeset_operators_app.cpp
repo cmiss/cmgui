@@ -70,12 +70,12 @@ int define_Computed_field_type_nodeset_operator(struct Parse_state *state,
 	{
 		if (nodeset_name)
 		{
-			nodeset = cmzn_field_module_find_nodeset_by_name(
+			nodeset = cmzn_fieldmodule_find_nodeset_by_name(
 				field_modify->get_field_module(), nodeset_name);
 			if (!nodeset)
 			{
 				nodeset = cmzn_nodeset_group_base_cast(
-					cmzn_field_module_create_nodeset_group_from_name_internal(
+					cmzn_fieldmodule_create_field_nodeset_group_from_name_internal(
 						field_modify->get_field_module(), nodeset_name));
 			}
 			if (!nodeset)
@@ -136,7 +136,7 @@ int define_Computed_field_type_nodeset_sum(struct Parse_state *state,
 		source_field, nodeset))
 	{
 		return_code = field_modify->update_field_and_deaccess(
-			cmzn_field_module_create_nodeset_sum(field_modify->get_field_module(),
+			cmzn_fieldmodule_create_field_nodeset_sum(field_modify->get_field_module(),
 				source_field, nodeset));
 		cmzn_field_destroy(&source_field);
 		cmzn_nodeset_destroy(&nodeset);
@@ -164,7 +164,7 @@ int define_Computed_field_type_nodeset_mean(struct Parse_state *state,
 		source_field, nodeset))
 	{
 		return_code = field_modify->update_field_and_deaccess(
-			cmzn_field_module_create_nodeset_mean(field_modify->get_field_module(),
+			cmzn_fieldmodule_create_field_nodeset_mean(field_modify->get_field_module(),
 				source_field, nodeset));
 		cmzn_field_destroy(&source_field);
 		cmzn_nodeset_destroy(&nodeset);
@@ -193,7 +193,7 @@ int define_Computed_field_type_nodeset_sum_squares(struct Parse_state *state,
 		"See 'gfx minimise' command.", source_field, nodeset))
 	{
 		return_code = field_modify->update_field_and_deaccess(
-			cmzn_field_module_create_nodeset_sum_squares(field_modify->get_field_module(),
+			cmzn_fieldmodule_create_field_nodeset_sum_squares(field_modify->get_field_module(),
 				source_field, nodeset));
 		cmzn_field_destroy(&source_field);
 		cmzn_nodeset_destroy(&nodeset);
@@ -222,7 +222,7 @@ int define_Computed_field_type_nodeset_mean_squares(struct Parse_state *state,
 		"See 'gfx minimise' command.", source_field, nodeset))
 	{
 		return_code = field_modify->update_field_and_deaccess(
-			cmzn_field_module_create_nodeset_mean_squares(field_modify->get_field_module(),
+			cmzn_fieldmodule_create_field_nodeset_mean_squares(field_modify->get_field_module(),
 				source_field, nodeset));
 		cmzn_field_destroy(&source_field);
 		cmzn_nodeset_destroy(&nodeset);

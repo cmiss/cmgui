@@ -122,7 +122,7 @@ already) and allows its contents to be modified.
 				if (return_code)
 				{
 					return_code = field_modify->update_field_and_deaccess(
-						cmzn_field_module_create_or(field_modify->get_field_module(),
+						cmzn_fieldmodule_create_field_or(field_modify->get_field_module(),
 							source_fields[0], source_fields[1]));
 				}
 				if (!return_code)
@@ -228,7 +228,7 @@ already) and allows its contents to be modified.
 				if (return_code)
 				{
 					return_code = field_modify->update_field_and_deaccess(
-						cmzn_field_module_create_and(field_modify->get_field_module(),
+						cmzn_fieldmodule_create_field_and(field_modify->get_field_module(),
 							source_fields[0], source_fields[1]));
 				}
 				if (!return_code)
@@ -334,7 +334,7 @@ already) and allows its contents to be modified.
 				if (return_code)
 				{
 					return_code = field_modify->update_field_and_deaccess(
-						cmzn_field_module_create_xor(field_modify->get_field_module(),
+						cmzn_fieldmodule_create_field_xor(field_modify->get_field_module(),
 							source_fields[0], source_fields[1]));
 				}
 				if (!return_code)
@@ -441,7 +441,7 @@ already) and allows its contents to be modified.
 				if (return_code)
 				{
 					return_code = field_modify->update_field_and_deaccess(
-						cmzn_field_module_create_equal_to(field_modify->get_field_module(),
+						cmzn_fieldmodule_create_field_equal_to(field_modify->get_field_module(),
 							source_fields[0], source_fields[1]));
 				}
 				if (!return_code)
@@ -815,7 +815,7 @@ int define_Computed_field_type_not(struct Parse_state *state,
 		if (return_code)
 		{
 			return_code = field_modify->update_field_and_deaccess(
-				cmzn_field_module_create_not(field_modify->get_field_module(), source_field));
+				cmzn_fieldmodule_create_field_not(field_modify->get_field_module(), source_field));
 		}
 		cmzn_field_destroy(&source_field);
 	}

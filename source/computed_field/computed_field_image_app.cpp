@@ -161,7 +161,7 @@ Maintains legacy version that is set with a texture.
 			}
 			if (return_code)
 			{
-				cmzn_field_id field = cmzn_field_module_create_image_from_source(
+				cmzn_field_id field = cmzn_fieldmodule_create_field_image_from_source(
 					field_modify->get_field_module(), source_field);
 				if (field)
 				{
