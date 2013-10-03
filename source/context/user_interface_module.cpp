@@ -169,9 +169,9 @@ struct User_interface_module *User_interface_module_create(
 		/* graphics window manager.  Note there is no default window. */
 		UI_module->graphics_window_manager=CREATE(MANAGER(Graphics_window))();
 #endif /* defined (USE_CMGUI_GRAPHICS_WINDOW) */
-		cmzn_time_keeper *time_keeper = cmzn_context_get_default_time_keeper(cmzn_context_app_get_core_context(context));
+		cmzn_timekeeper *time_keeper = cmzn_context_get_default_timekeeper(cmzn_context_app_get_core_context(context));
 		UI_module->default_time_keeper_app = new Time_keeper_app(time_keeper, UI_module->event_dispatcher);
-		cmzn_time_keeper_destroy(&time_keeper);
+		cmzn_timekeeper_destroy(&time_keeper);
 		UI_module->interactive_tool_manager=CREATE(MANAGER(Interactive_tool))();
 		if (UI_module->user_interface)
 		{

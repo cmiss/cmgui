@@ -58,7 +58,7 @@ private:
 	struct Event_dispatcher_timeout_callback *timeout_callback_id;
 	struct Event_dispatcher *event_dispatcher;
 	struct Time_keeper_app_callback_data *callback_list;
-	cmzn_time_keeper *time_keeper;
+	cmzn_timekeeper *time_keeper;
 
 	int notifyClients(enum Time_keeper_app_event event_mask);
 
@@ -66,7 +66,7 @@ public:
 
 	int access_count;
 
-	Time_keeper_app(cmzn_time_keeper *time_keeper_in,	struct Event_dispatcher *event_dispatcher);
+	Time_keeper_app(cmzn_timekeeper *time_keeper_in,	struct Event_dispatcher *event_dispatcher);
 
 	~Time_keeper_app();
 
@@ -103,7 +103,7 @@ public:
 
 	int requestNewTime(double new_time);
 
-	cmzn_time_keeper *getTimeKeeper();
+	cmzn_timekeeper *getTimeKeeper();
 
 	int timerEvent();
 

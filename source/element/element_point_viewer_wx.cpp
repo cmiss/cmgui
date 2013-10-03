@@ -1033,7 +1033,7 @@ static char *element_point_viewer_get_field_string(struct Element_point_viewer *
 	{
 		cmzn_fieldmodule_id field_module = cmzn_field_get_fieldmodule(field);
 		cmzn_fieldcache_id field_cache = cmzn_fieldmodule_create_fieldcache(field_module);
-		time = Time_object_get_current_time(element_point_viewer->time_object);
+		time = cmzn_timenotifier_get_time(element_point_viewer->time_object);
 		cmzn_fieldcache_set_time(field_cache, time);
 		int element_dimension = cmzn_element_get_dimension(element);
 		cmzn_fieldcache_set_mesh_location_with_parent(field_cache, element, element_dimension, xi, top_level_element);
@@ -1824,7 +1824,7 @@ data, and then changes the correct value in the array structure.
 			(0 <= component_number) && (component_number < number_of_components) &&
 			(element_point_viewer->current_field=field))
 	{
-		time = Time_object_get_current_time(element_point_field_viewer->time_object);
+		time = cmzn_timenotifier_get_time(element_point_field_viewer->time_object);
 		/* get old_value_string to prevent needless updating and preserve text
 				 selections for cut-and-paste */
 		wxString tmpstr = textctrl->GetValue();
@@ -2607,7 +2607,7 @@ pass unmanaged elements in the element_point_identifier to this widget.
 					 if (!element_point_viewer->time_object_callback)
 					 {
 							element_point_viewer->time_object_callback =
-								 Time_object_add_callback(element_point_viewer->time_object,
+								 cmzn_timenotifier_add_callback(element_point_viewer->time_object,
 										element_point_viewer_time_change_callback,
 										(void *)element_point_viewer);
 					 }
@@ -2616,7 +2616,7 @@ pass unmanaged elements in the element_point_identifier to this widget.
 				{
 					 if (element_point_viewer->time_object_callback)
 					 {
-							Time_object_remove_callback(element_point_viewer->time_object,
+							cmzn_timenotifier_remove_callback(element_point_viewer->time_object,
 								 element_point_viewer_time_change_callback,
 								 (void *)element_point_viewer);
 							element_point_viewer->time_object_callback = 0;

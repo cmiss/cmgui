@@ -66,8 +66,8 @@ struct Node_viewer
 	struct MANAGER(Computed_field) *computed_field_manager;
 	void *computed_field_manager_callback_id;
 	struct Time_keeper_app *time_keeper_app;
-	cmzn_time_notifier_id time_notifier;
-	int time_notifier_callback;
+	cmzn_timenotifier_id timenotifier;
+	int timenotifier_callback;
 #if defined (WX_USER_INTERFACE)
 	wxNodeViewer *wx_node_viewer;
 	wxScrolledWindow *collpane;
@@ -303,7 +303,7 @@ after a collapsible pane is opened/closed.
 				cmzn_fieldmodule_id field_module = cmzn_field_get_fieldmodule(field);
 				cmzn_fieldmodule_begin_change(field_module);
 				cmzn_fieldcache_id field_cache = cmzn_fieldmodule_create_fieldcache(field_module);
-				double time = cmzn_time_notifier_get_current_time(node_viewer->time_notifier);
+				double time = cmzn_timenotifier_get_time(node_viewer->timenotifier);
 				cmzn_fieldcache_set_time(field_cache, time);
 				cmzn_fieldcache_set_node(field_cache, node_viewer->current_node);
 				enum cmzn_field_value_type valueType = cmzn_field_get_value_type(field);
@@ -487,7 +487,7 @@ int Node_viewer_remove_unused_collpane(struct Node_viewer *node_viewer)
 }
 
 static int node_field_time_change_callback(
-	cmzn_time_notifier_id time_notifier, double current_time,
+	cmzn_timenotifier_id timenotifier, double current_time,
 	void *node_viewer_void)
 /*******************************************************************************
 LAST MODIFIED : 5 December 2001
@@ -499,7 +499,7 @@ DESCRIPTION :
 	struct Node_viewer *node_viewer;
 
 	USE_PARAMETER(current_time);
-	if(time_notifier && (node_viewer =
+	if(timenotifier && (node_viewer =
 			(struct Node_viewer *)node_viewer_void))
 	{
 // 		node_viewer_widget_update_values(node_viewer);
@@ -521,7 +521,7 @@ int Node_viewer_update_collpane(struct Node_viewer *node_viewer)
 	{
 		cmzn_fieldmodule_id field_module = cmzn_region_get_fieldmodule(node_viewer->region);
 		cmzn_fieldcache_id field_cache = cmzn_fieldmodule_create_fieldcache(field_module);
-		cmzn_fieldcache_set_time(field_cache, cmzn_time_notifier_get_current_time(node_viewer->time_notifier));
+		cmzn_fieldcache_set_time(field_cache, cmzn_timenotifier_get_time(node_viewer->timenotifier));
 		cmzn_fieldcache_set_node(field_cache, node_viewer->current_node);
 		cmzn_fielditerator_id iter = cmzn_fieldmodule_create_fielditerator(field_module);
 		cmzn_field_id field = 0;
@@ -537,22 +537,22 @@ int Node_viewer_update_collpane(struct Node_viewer *node_viewer)
 		Node_viewer_remove_unused_collpane(node_viewer);
 		if (time_varying)
 		{
-			if (!node_viewer->time_notifier_callback)
+			if (!node_viewer->timenotifier_callback)
 			{
-				if (CMZN_OK == cmzn_time_notifier_add_callback(node_viewer->time_notifier,
+				if (CMZN_OK == cmzn_timenotifier_add_callback(node_viewer->timenotifier,
 					node_field_time_change_callback, (void *)node_viewer))
 				{
-					node_viewer->time_notifier_callback = 1;
+					node_viewer->timenotifier_callback = 1;
 				}
 			}
 		}
 		else
 		{
-			if (node_viewer->time_notifier_callback)
+			if (node_viewer->timenotifier_callback)
 			{
-				cmzn_time_notifier_remove_callback(node_viewer->time_notifier,
+				cmzn_timenotifier_remove_callback(node_viewer->timenotifier,
 					node_field_time_change_callback, (void *)node_viewer);
-				node_viewer->time_notifier_callback = 0;
+				node_viewer->timenotifier_callback = 0;
 			}
 		}
 	}
@@ -668,9 +668,9 @@ struct Node_viewer *Node_viewer_create(
 			}
 			node_viewer->collpane = NULL;
 			node_viewer->time_keeper_app = time_keeper_app->access();
-			node_viewer->time_notifier = cmzn_time_keeper_create_notifier_regular(
+			node_viewer->timenotifier = cmzn_timekeeper_create_timenotifier_regular(
 				time_keeper_app->getTimeKeeper(), /*update_frequency*/10.0, /*time_offset*/0.0);
-			node_viewer->time_notifier_callback = 0;
+			node_viewer->timenotifier_callback = 0;
 			node_viewer->grid_field = NULL;
 #if defined (WX_USER_INTERFACE)
 			node_viewer->grid_field = NULL;
@@ -755,7 +755,7 @@ int Node_viewer_destroy(struct Node_viewer **node_viewer_address)
 		{
 			 delete node_viewer->wx_node_viewer;
 		}
-		cmzn_time_notifier_destroy(&(node_viewer->time_notifier));
+		cmzn_timenotifier_destroy(&(node_viewer->timenotifier));
 		DEACCESS(Time_keeper_app)(&(node_viewer->time_keeper_app));
 		cmzn_graphics_module_destroy(&(node_viewer->graphics_module));
 		DEALLOCATE(*node_viewer_address);
@@ -867,7 +867,7 @@ char *node_viewer_get_component_value_string(Node_viewer *node_viewer, cmzn_fiel
 		const int numberOfComponents = cmzn_field_get_number_of_components(field);
 		cmzn_fieldmodule_id field_module = cmzn_field_get_fieldmodule(field);
 		cmzn_fieldcache_id field_cache = cmzn_fieldmodule_create_fieldcache(field_module);
-		double time = cmzn_time_notifier_get_current_time(node_viewer->time_notifier);
+		double time = cmzn_timenotifier_get_time(node_viewer->timenotifier);
 		cmzn_fieldcache_set_time(field_cache, time);
 		cmzn_fieldcache_set_node(field_cache, node_viewer->current_node);
 		if (1 == numberOfComponents)

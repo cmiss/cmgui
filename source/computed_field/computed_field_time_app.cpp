@@ -18,7 +18,7 @@
 class Computed_field_time_package : public Computed_field_type_package
 {
 public:
-	cmzn_time_keeper *time_keeper;
+	cmzn_timekeeper *time_keeper;
 };
 
 char computed_field_time_value_type_string[] = "time_value";
@@ -188,7 +188,7 @@ already) and allows its contents to be modified.
 
 int Computed_field_register_types_time(
 	struct Computed_field_package *computed_field_package,
-	struct cmzn_time_keeper *time_keeper)
+	struct cmzn_timekeeper *time_keeper)
 /*******************************************************************************
 LAST MODIFIED : 25 August 2006
 
