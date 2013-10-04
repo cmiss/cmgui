@@ -1043,11 +1043,11 @@ static int node_viewer_setup_components(
 				}
 			}
 		}
-		cmzn_time_sequence_id timeSequence = cmzn_nodetemplate_get_time_sequence(nodeTemplate, field);
+		cmzn_timesequence_id timeSequence = cmzn_nodetemplate_get_timesequence(nodeTemplate, field);
 		if (timeSequence)
 		{
 			time_varying_field = true;
-			cmzn_time_sequence_destroy(&timeSequence);
+			cmzn_timesequence_destroy(&timeSequence);
 		}
 		cmzn_nodetemplate_destroy(&nodeTemplate);
 		cmzn_field_finite_element_destroy(&feField);

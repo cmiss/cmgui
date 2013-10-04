@@ -2686,28 +2686,27 @@ Creates the array of cells containing field component names and values.
 				element_point_viewer->number_of_components=number_of_components;
 				for (comp_no=0;(comp_no<number_of_components)&&return_code;comp_no++)
 				{
-					 /* component name label */
-					component_name=Computed_field_get_component_name(field,comp_no);
-					 if (component_name)
-					 {
-							new_string = component_name;
-							tmp_string = wxString::FromAscii(new_string);
-							if (tmp == 0)
-							{
-								 tmp = 1;
-								 element_point_viewer->element_point_grid_field = new wxGridSizer(2,2,1,1);
-							}
-							element_point_viewer->element_point_grid_field->Add(new wxStaticText(
-								 element_point_viewer->element_point_win, -1, tmp_string,
-								 /*the default position is not nice in the optimised
-									 version, so manually setting up the position*/
-								 wxPoint(0,comp_no*35 + 5),wxDefaultSize),1,
-								 wxALIGN_CENTER_VERTICAL|
-								 wxALIGN_CENTER_HORIZONTAL|wxADJUST_MINSIZE, 0);
-							element_point_viewer_add_textctrl(editable,element_point_viewer, field, comp_no);
-							DEALLOCATE(component_name);
-					 }
-
+					/* component name label */
+					component_name = cmzn_field_get_component_name(field, comp_no + 1);
+					if (component_name)
+					{
+						new_string = component_name;
+						tmp_string = wxString::FromAscii(new_string);
+						if (tmp == 0)
+						{
+							tmp = 1;
+							element_point_viewer->element_point_grid_field = new wxGridSizer(2,2,1,1);
+						}
+						element_point_viewer->element_point_grid_field->Add(new wxStaticText(
+							element_point_viewer->element_point_win, -1, tmp_string,
+							/* the default position is not nice in the optimised
+							   version, so manually setting up the position*/
+							wxPoint(0,comp_no*35 + 5),wxDefaultSize),1,
+							wxALIGN_CENTER_VERTICAL|
+							wxALIGN_CENTER_HORIZONTAL|wxADJUST_MINSIZE, 0);
+						element_point_viewer_add_textctrl(editable,element_point_viewer, field, comp_no);
+						DEALLOCATE(component_name);
+					}
 				}
 		 }
 		 else
