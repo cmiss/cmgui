@@ -12848,13 +12848,12 @@ static int gfx_read_region(struct Parse_state *state,
 			}
 			if (return_code)
 			{
-				cmzn_stream_information_id stream_information =
-					cmzn_region_create_stream_information(region);
-				cmzn_stream_resource_id resource = cmzn_stream_information_create_resource_file(
-					stream_information, file_name);
-				return_code = cmzn_region_read(region, stream_information);
-				cmzn_stream_resource_destroy(&resource);
-				cmzn_stream_information_destroy(&stream_information);
+				cmzn_streaminformation_id streaminformation = cmzn_region_create_streaminformation(region);
+				cmzn_streamresource_id resource = cmzn_streaminformation_create_streamresource_file(
+					streaminformation, file_name);
+				return_code = cmzn_region_read(region, streaminformation);
+				cmzn_streamresource_destroy(&resource);
+				cmzn_streaminformation_destroy(&streaminformation);
 				if (!return_code)
 				{
 					display_message(ERROR_MESSAGE,
