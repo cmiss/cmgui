@@ -163,14 +163,14 @@ int DESTROY(cmzn_scene_viewer_app_module)(struct cmzn_scene_viewer_app_module **
 
 struct Scene_viewer_app *CREATE(Scene_viewer_app)(struct Graphics_buffer_app *graphics_buffer,
 	cmzn_scene_viewer_module_id scene_viewer_module,
-	cmzn_graphics_filter_id filter, struct cmzn_scene *scene,
+	cmzn_scenefilter_id filter, struct cmzn_scene *scene,
 	struct User_interface *user_interface);
 
 struct Scene_viewer_app *Scene_viewer_app_for_spectrum_create(struct Graphics_buffer_app *graphics_buffer,
 	struct Colour *background_colour,
 	struct Light *default_light,
 	struct Light_model *default_light_model,
-	cmzn_graphics_filter_id filter, struct cmzn_scene *scene,
+	cmzn_scenefilter_id filter, struct cmzn_scene *scene,
 	struct User_interface *user_interface);
 
 int DESTROY(Scene_viewer_app)(struct Scene_viewer_app **scene_viewer_app_address);

@@ -25,7 +25,7 @@ interest and set scene_viewer values directly.
 #include <stdio.h>
 #include <math.h>
 #include "zinc/fieldmodule.h"
-#include "zinc/graphicsfilter.h"
+#include "zinc/scenefilter.h"
 #include "zinc/sceneviewer.h"
 #include "command/parser.h"
 #include "computed_field/computed_field_image.h"
@@ -39,8 +39,6 @@ interest and set scene_viewer values directly.
 #include "general/photogrammetry.h"
 #include "graphics/colour.h"
 #include "graphics/graphic.h"
-#include "graphics/graphics_filter.hpp"
-#include "graphics/graphics_filter_app.hpp"
 #include "graphics/graphics_window.h"
 #include "graphics/graphics_window_private.hpp"
 #if defined (WX_USER_INTERFACE)
@@ -54,8 +52,9 @@ interest and set scene_viewer values directly.
 #include "graphics/light.h"
 #include "graphics/light_model.h"
 #include "graphics/scene.h"
-#include "graphics/graphics_filter.hpp"
 #include "graphics/scene.hpp"
+#include "graphics/scenefilter.hpp"
+#include "graphics/scenefilter_app.hpp"
 #include "graphics/scene_viewer.h"
 #include "graphics/texture.h"
 #include "graphics/transform_tool.h"
@@ -213,7 +212,7 @@ Contains information for a graphics window.
 	cmzn_scene *scene;
 	/* graphics window does not need to keep managers now that changes handled
 		 by scene_viewer */
-	cmzn_graphics_filter_module_id filter_module;
+	cmzn_scenefiltermodule_id filter_module;
 	/* interaction */
 	struct MANAGER(Interactive_tool) *interactive_tool_manager;
 	/* Note: interactive_tool is NOT accessed by graphics_window; the chooser
@@ -1085,8 +1084,8 @@ class wxGraphicsWindow : public wxFrame
 	 int up_choices;
 	 int choices;
 	 wxPanel *time_editor_panel;
-	 DEFINE_MANAGER_CLASS(cmzn_graphics_filter);
-	 Managed_object_chooser<cmzn_graphics_filter,MANAGER_CLASS(cmzn_graphics_filter)>
+	 DEFINE_MANAGER_CLASS(cmzn_scenefilter);
+	 Managed_object_chooser<cmzn_scenefilter,MANAGER_CLASS(cmzn_scenefilter)>
 	 *graphics_window_filter_chooser;
 	 wxRegionChooser *region_chooser;
 public:
@@ -1103,17 +1102,17 @@ public:
 			time_editor_panel = NULL;
 			wxPanel *graphics_window_filter_chooser_panel =
 				 XRCCTRL(*this, "GraphicsWindowFilterChooserPanel", wxPanel);
-			cmzn_graphics_filter_id filter = cmzn_graphics_filter_module_get_default_filter(graphics_window->filter_module);
+			cmzn_scenefilter_id filter = cmzn_scenefiltermodule_get_default_scenefilter(graphics_window->filter_module);
 			graphics_window_filter_chooser =
-				 new Managed_object_chooser<cmzn_graphics_filter, MANAGER_CLASS(cmzn_graphics_filter)>
+				 new Managed_object_chooser<cmzn_scenefilter, MANAGER_CLASS(cmzn_scenefilter)>
 				 (graphics_window_filter_chooser_panel, filter,
-					 cmzn_graphics_filter_module_get_manager(graphics_window->filter_module),
-						(MANAGER_CONDITIONAL_FUNCTION(cmzn_graphics_filter) *)NULL, (void *)NULL,
+					 cmzn_scenefiltermodule_get_manager(graphics_window->filter_module),
+						(MANAGER_CONDITIONAL_FUNCTION(cmzn_scenefilter) *)NULL, (void *)NULL,
 						graphics_window->user_interface);
-			cmzn_graphics_filter_destroy(&filter);
-			Callback_base< cmzn_graphics_filter* > *graphics_window_filter_callback =
-				 new Callback_member_callback< cmzn_graphics_filter*,
-				 wxGraphicsWindow, int (wxGraphicsWindow::*)(cmzn_graphics_filter *) >
+			cmzn_scenefilter_destroy(&filter);
+			Callback_base< cmzn_scenefilter* > *graphics_window_filter_callback =
+				 new Callback_member_callback< cmzn_scenefilter*,
+				 wxGraphicsWindow, int (wxGraphicsWindow::*)(cmzn_scenefilter *) >
 				 (this, &wxGraphicsWindow::graphics_window_filter_callback);
 			graphics_window_filter_chooser->set_callback(graphics_window_filter_callback);
 			wxPanel *graphics_window_region_chooser_panel =
@@ -1203,7 +1202,7 @@ Callback from wxChooser<Scene> when choice is made.
 	 }
 }
 
-int graphics_window_filter_callback(cmzn_graphics_filter_id filter)
+int graphics_window_filter_callback(cmzn_scenefilter_id filter)
 /*******************************************************************************
 LAST MODIFIED : 9 February 2007
 
@@ -1223,7 +1222,7 @@ Callback from wxChooser<Scene> when choice is made.
 			scene_viewer=graphics_window->scene_viewer_array[pane_no];
 			if (filter)
 			{
-				cmzn_scene_viewer_set_filter(scene_viewer->core_scene_viewer,filter);
+				cmzn_scene_viewer_set_scenefilter(scene_viewer->core_scene_viewer,filter);
 				Graphics_window_update_now(graphics_window);
 			}
 		}
@@ -1240,7 +1239,7 @@ void graphics_window_set_region_chooser_selected_item(cmzn_region_id region)
 	 region_chooser->set_region(region);
 }
 
-void graphics_window_set_filter_chooser_selected_item(cmzn_graphics_filter_id filter)
+void graphics_window_set_filter_chooser_selected_item(cmzn_scenefilter_id filter)
 {
 	graphics_window_filter_chooser->set_object(filter);
 }
@@ -1968,9 +1967,9 @@ etc.) in all panes of the <window>.
 						scene_viewer = 0;
 						light_model=(struct Light_model *)NULL;
 				 }
-				 cmzn_graphics_filter_id filter = 0;
+				 cmzn_scenefilter_id filter = 0;
 				 if (scene_viewer && scene_viewer->core_scene_viewer)
-					 filter = cmzn_scene_viewer_get_filter(scene_viewer->core_scene_viewer);
+					 filter = cmzn_scene_viewer_get_scenefilter(scene_viewer->core_scene_viewer);
 				light_to_add=(struct Light *)NULL;
 				light_to_remove=(struct Light *)NULL;
 				rotate_command_data.set=0;
@@ -1995,7 +1994,7 @@ etc.) in all panes of the <window>.
 					modify_graphics_window_data->root_region, set_Scene);
 				/* filter */
 				Option_table_add_entry(option_table, "filter", &filter,
-					modify_graphics_window_data->filter_module, set_cmzn_graphics_filter);
+					modify_graphics_window_data->filter_module, set_cmzn_scenefilter);
 				/* update */
 				Option_table_add_char_flag_entry(option_table, "update",
 					&update_flag);
@@ -2062,7 +2061,7 @@ etc.) in all panes of the <window>.
 							}
 							if (filter)
 							{
-								cmzn_scene_viewer_set_filter(scene_viewer->core_scene_viewer,filter);
+								cmzn_scene_viewer_set_scenefilter(scene_viewer->core_scene_viewer,filter);
 								window->wx_graphics_window->
 									graphics_window_set_filter_chooser_selected_item(filter);
 							}
@@ -2091,7 +2090,7 @@ etc.) in all panes of the <window>.
 				DESTROY(Option_table)(&option_table);
 				if (filter)
 				{
-					cmzn_graphics_filter_destroy(&filter);
+					cmzn_scenefilter_destroy(&filter);
 				}
 				if (scene)
 				{
@@ -3154,7 +3153,7 @@ struct Graphics_window *CREATE(Graphics_window)(const char *name,
 	int minimum_colour_buffer_depth, int minimum_depth_buffer_depth,
 	int minimum_accumulation_buffer_depth,
 	struct Graphics_buffer_app_package *graphics_buffer_package,
-	cmzn_graphics_filter_module_id filter_module,cmzn_scene *scene,
+	cmzn_scenefiltermodule_id filter_module,cmzn_scene *scene,
 	struct MANAGER(Interactive_tool) *interactive_tool_manager,
 	struct Time_keeper_app *default_time_keeper_app,
 	struct User_interface *user_interface,
@@ -3210,7 +3209,7 @@ it.
 				(struct MANAGER(Graphics_window) *)NULL;
 			window->manager_change_status = MANAGER_CHANGE_NONE(Graphics_window);
 			window->graphics_buffer_package = graphics_buffer_package;
-			window->filter_module=cmzn_graphics_filter_module_access(filter_module);
+			window->filter_module=cmzn_scenefiltermodule_access(filter_module);
 			window->scene=cmzn_scene_access(scene);
 			window->time_keeper_app = ACCESS(Time_keeper_app)(default_time_keeper_app);
 			window->interactive_tool_manager=interactive_tool_manager;
@@ -3654,11 +3653,11 @@ it.
 									window->number_of_scene_viewers))
 						{
 							 pane_no = 0;
-							 cmzn_graphics_filter_id filter = cmzn_graphics_filter_module_get_default_filter(
+							 cmzn_scenefilter_id filter = cmzn_scenefiltermodule_get_default_scenefilter(
 								 window->filter_module);
 							 window->scene_viewer_array[pane_no] = CREATE(Scene_viewer_app)(graphics_buffer,
 								window->scene_viewer_module, filter, window->scene, user_interface);
-							 cmzn_graphics_filter_destroy(&filter);
+							 cmzn_scenefilter_destroy(&filter);
 							 if (window->scene_viewer_array[pane_no])
 							 {
 									ortho_up_axis=window->ortho_up_axis;
@@ -3933,7 +3932,7 @@ Graphics_window_destroy_CB.
 #endif /* !defined (WX_USER_INTERFACE) */
 		if (window->filter_module)
 		{
-			cmzn_graphics_filter_module_destroy(&window->filter_module);
+			cmzn_scenefiltermodule_destroy(&window->filter_module);
 		}
 #if defined (WX_USER_INTERFACE)
 		if (window->interactive_tool_manager)
@@ -4465,11 +4464,11 @@ Sets the layout mode in effect on the <window>.
 					if (graphics_buffer)
 					{
 						Scene_viewer_get_background_colour(first_scene_viewer->core_scene_viewer,&background_colour);
-						cmzn_graphics_filter_id filter = cmzn_scene_viewer_get_filter(first_scene_viewer->core_scene_viewer);
+						cmzn_scenefilter_id filter = cmzn_scene_viewer_get_scenefilter(first_scene_viewer->core_scene_viewer);
 						window->scene_viewer_array[pane_no]=
 							CREATE(Scene_viewer_app)(graphics_buffer,	window->scene_viewer_module,
 								filter,window->scene, window->user_interface);
-						cmzn_graphics_filter_destroy(&filter);
+						cmzn_scenefilter_destroy(&filter);
 						if (window->scene_viewer_array[pane_no])
 						{
 							Scene_viewer_set_interactive_tool(
@@ -5926,10 +5925,10 @@ with commands for setting these.
 	if (window && window->scene_viewer_array)
 	{
 		return_code = 1;
-		cmzn_graphics_filter_id filter = cmzn_scene_viewer_get_filter((window->scene_viewer_array[0]->core_scene_viewer));
+		cmzn_scenefilter_id filter = cmzn_scene_viewer_get_scenefilter((window->scene_viewer_array[0]->core_scene_viewer));
 		cmzn_scene_get_global_graphics_range(window->scene, filter,
 			&centre_x, &centre_y, &centre_z, &size_x, &size_y, &size_z);
-		cmzn_graphics_filter_destroy(&filter);
+		cmzn_scenefilter_destroy(&filter);
 		radius = 0.5*sqrt(size_x*size_x + size_y*size_y + size_z*size_z);
 		if (0 == radius)
 		{
@@ -6428,14 +6427,14 @@ Writes the properties of the <window> to the command window.
 			display_message(INFORMATION_MESSAGE,"  scene: %s\n",name);
 			DEALLOCATE(name);
 		}
-		cmzn_graphics_filter_id filter = cmzn_scene_viewer_get_filter(window->scene_viewer_array[0]->core_scene_viewer);
-		name = cmzn_graphics_filter_get_name(filter);
+		cmzn_scenefilter_id filter = cmzn_scene_viewer_get_scenefilter(window->scene_viewer_array[0]->core_scene_viewer);
+		name = cmzn_scenefilter_get_name(filter);
 		if (name)
 		{
 			display_message(INFORMATION_MESSAGE,"  filter: %s\n",name);
 			DEALLOCATE(name);
 		}
-		cmzn_graphics_filter_destroy(&filter);
+		cmzn_scenefilter_destroy(&filter);
 		if (GET_NAME(Light_model)(
 			Scene_viewer_get_light_model(window->scene_viewer_array[0]->core_scene_viewer),&name))
 		{
@@ -6740,15 +6739,15 @@ and establishing the views in it to the command window to a com file.
 			process_message->process_command(INFORMATION_MESSAGE," scene %s",name);
 			DEALLOCATE(name);
 		}
-		cmzn_graphics_filter_id filter = cmzn_scene_viewer_get_filter(window->scene_viewer_array[0]->core_scene_viewer);
-		name = cmzn_graphics_filter_get_name(filter);
+		cmzn_scenefilter_id filter = cmzn_scene_viewer_get_scenefilter(window->scene_viewer_array[0]->core_scene_viewer);
+		name = cmzn_scenefilter_get_name(filter);
 		if (name)
 		{
 			make_valid_token(&name);
 			process_message->process_command(INFORMATION_MESSAGE," filter %s",name);
 			DEALLOCATE(name);
 		}
-		cmzn_graphics_filter_destroy(&filter);
+		cmzn_scenefilter_destroy(&filter);
 		if (GET_NAME(Light_model)(
 			Scene_viewer_get_light_model(window->scene_viewer_array[0]->core_scene_viewer),&name))
 		{

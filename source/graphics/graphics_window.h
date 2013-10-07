@@ -117,7 +117,7 @@ Structure to pass to modify_Graphics_window.
 	struct MANAGER(Interactive_tool) *interactive_tool_manager;
 	struct MANAGER(Light) *light_manager;
 	struct MANAGER(Light_model) *light_model_manager;
-	cmzn_graphics_filter_module_id filter_module;
+	cmzn_scenefiltermodule_id filter_module;
 	struct cmzn_region *root_region;
 }; /* struct Modify_graphics_window_data */
 
@@ -150,7 +150,7 @@ struct Graphics_window *CREATE(Graphics_window)(const char *name,
 	int minimum_colour_buffer_depth, int minimum_depth_buffer_depth,
 	int minimum_accumulation_buffer_depth,
 	struct Graphics_buffer_app_package *graphics_buffer_package,
-	cmzn_graphics_filter_module_id filter_module,cmzn_scene *scene,
+	cmzn_scenefiltermodule_id filter_module,cmzn_scene *scene,
 	struct MANAGER(Interactive_tool) *interactive_tool_manager,
 	struct Time_keeper_app *default_time_keeper_app,
 	struct User_interface *user_interface,

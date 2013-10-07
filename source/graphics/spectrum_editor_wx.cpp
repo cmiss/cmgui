@@ -32,7 +32,7 @@ Provides the wxWidgets interface to manipulate spectrum settings.
 #include "graphics/scene.h"
 #include "graphics/scene_app.h"
 #include "graphics/scene_viewer.h"
-#include "graphics/graphics_filter.hpp"
+#include "graphics/scenefilter.hpp"
 #include "graphics/spectrum.h"
 #include "graphics/spectrum_component.h"
 #include "graphics/spectrum_component_app.h"
@@ -101,7 +101,7 @@ Contains all the information carried by the graphical element editor widget.
 	 wxScrolledWindow *spectrum_higher_panel, *spectrum_lower_panel;
 	 void *material_manager_callback_id;
 	 void *spectrum_manager_callback_id;
-	 cmzn_graphics_filter_module_id filter_module;
+	 cmzn_scenefiltermodule_id filter_module;
 };
 
 
@@ -916,8 +916,8 @@ class wxSpectrumEditor : public wxFrame
 	 DEFINE_MANAGER_CLASS(Spectrum);
 	 Managed_object_listbox<Spectrum, MANAGER_CLASS(Spectrum)>
 	 *spectrum_object_listbox;
-	 DEFINE_MANAGER_CLASS(cmzn_graphics_filter);
-	 Managed_object_chooser<cmzn_graphics_filter,MANAGER_CLASS(cmzn_graphics_filter)>
+	 DEFINE_MANAGER_CLASS(cmzn_scenefilter);
+	 Managed_object_chooser<cmzn_scenefilter,MANAGER_CLASS(cmzn_scenefilter)>
 	 *filter_chooser;
 public:
 
@@ -956,15 +956,15 @@ public:
 			spectrum_region_chooser->set_callback(spectrum_region_chooser_callback);
 			wxPanel *spectrum_filter_chooser_panel =
 				 XRCCTRL(*this, "wxSpectrumFilterChooserPanel", wxPanel);
-			cmzn_graphics_filter_id filter =
-				cmzn_graphics_filter_module_get_default_filter(spectrum_editor->filter_module);
+			cmzn_scenefilter_id filter =
+				cmzn_scenefiltermodule_get_default_scenefilter(spectrum_editor->filter_module);
 			filter_chooser =
-				 new Managed_object_chooser<cmzn_graphics_filter, MANAGER_CLASS(cmzn_graphics_filter)>
+				 new Managed_object_chooser<cmzn_scenefilter, MANAGER_CLASS(cmzn_scenefilter)>
 				 (spectrum_filter_chooser_panel, filter,
-					 cmzn_graphics_filter_module_get_manager(spectrum_editor->filter_module),
-						(MANAGER_CONDITIONAL_FUNCTION(cmzn_graphics_filter) *)NULL, (void *)NULL,
+					 cmzn_scenefiltermodule_get_manager(spectrum_editor->filter_module),
+						(MANAGER_CONDITIONAL_FUNCTION(cmzn_scenefilter) *)NULL, (void *)NULL,
 						spectrum_editor->user_interface);
-			cmzn_graphics_filter_destroy(&filter);
+			cmzn_scenefilter_destroy(&filter);
 
 			XRCCTRL(*this, "wxSpectrumRangeMinText", wxTextCtrl)->Connect(wxEVT_KILL_FOCUS,
 				 wxCommandEventHandler(wxSpectrumEditor::OnSpectrumSettingRangeValueEntered),
@@ -2043,7 +2043,7 @@ Creates a spectrum_editor widget.
 				spectrum_editor->spectrum_manager_callback_id=(void *)NULL;
 				spectrum_editor->spectrum_manager = cmzn_graphics_module_get_spectrum_manager(
 					graphics_module);
-				spectrum_editor->filter_module = cmzn_graphics_module_get_filter_module(graphics_module);
+				spectrum_editor->filter_module = cmzn_graphics_module_get_scenefiltermodule(graphics_module);
 				spectrum_editor->root_region = cmzn_region_access(root_region);
 				spectrum_editor->editorMaterial = (struct Graphical_material *)NULL;
 				spectrum_editor->labelMaterial = (struct Graphical_material *)NULL;
@@ -2360,7 +2360,7 @@ Destroys the <*spectrum_editor_address> and sets
 			DEACCESS(Spectrum)(
 				&(spectrum_editor->edit_spectrum));
 		}
-		cmzn_graphics_filter_module_destroy(&spectrum_editor->filter_module);
+		cmzn_scenefiltermodule_destroy(&spectrum_editor->filter_module);
 		if (spectrum_editor->spectrum_manager_callback_id)
 		{
 			 MANAGER_DEREGISTER(Spectrum)(

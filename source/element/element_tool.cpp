@@ -15,9 +15,9 @@ Interactive tool for selecting elements with mouse and other devices.
 #include "configure/cmgui_configure.h"
 #endif /* defined (1) */
 #include "zinc/fieldcache.h"
-#include "zinc/graphicsfilter.h"
 #include "zinc/graphicsmaterial.h"
 #include "zinc/scene.h"
+#include "zinc/scenefilter.h"
 #include "command/command.h"
 #include "computed_field/computed_field.h"
 #include "computed_field/computed_field_finite_element.h"
@@ -228,50 +228,50 @@ release.
 			input_modifier=Interactive_event_get_input_modifier(event);
 			shift_pressed=(INTERACTIVE_EVENT_MODIFIER_SHIFT & input_modifier);
 			cmzn_graphics_module *graphics_module = cmzn_scene_get_graphics_module(scene);
-			cmzn_graphics_filter_module_id filter_module = cmzn_graphics_module_get_filter_module(graphics_module);
-			cmzn_graphics_filter_module_begin_change(filter_module);
-			cmzn_graphics_filter_id combined_filter = cmzn_graphics_filter_module_create_filter_operator_or(
+			cmzn_scenefiltermodule_id filter_module = cmzn_graphics_module_get_scenefiltermodule(graphics_module);
+			cmzn_scenefiltermodule_begin_change(filter_module);
+			cmzn_scenefilter_id combined_filter = cmzn_scenefiltermodule_create_scenefilter_operator_or(
 				filter_module);
 			if ((element_tool->select_elements_enabled)||(element_tool->select_faces_enabled)||
 				(element_tool->select_lines_enabled))
 			{
-				cmzn_graphics_filter_id element_filter = 0;
-				cmzn_graphics_filter_operator_id or_filter = cmzn_graphics_filter_cast_operator(
+				cmzn_scenefilter_id element_filter = 0;
+				cmzn_scenefilter_operator_id or_filter = cmzn_scenefilter_cast_operator(
 					combined_filter);
 				if (element_tool->select_lines_enabled)
 				{
-					element_filter = cmzn_graphics_filter_module_create_filter_domain_type(
+					element_filter = cmzn_scenefiltermodule_create_scenefilter_domain_type(
 						filter_module, CMZN_FIELD_DOMAIN_MESH_1D);
-					cmzn_graphics_filter_operator_append_operand(or_filter, element_filter);
-					cmzn_graphics_filter_destroy(&element_filter);
+					cmzn_scenefilter_operator_append_operand(or_filter, element_filter);
+					cmzn_scenefilter_destroy(&element_filter);
 				}
 				if (element_tool->select_faces_enabled)
 				{
-					element_filter = cmzn_graphics_filter_module_create_filter_domain_type(
+					element_filter = cmzn_scenefiltermodule_create_scenefilter_domain_type(
 						filter_module, CMZN_FIELD_DOMAIN_MESH_2D);
-					cmzn_graphics_filter_operator_append_operand(or_filter, element_filter);
-					cmzn_graphics_filter_destroy(&element_filter);
+					cmzn_scenefilter_operator_append_operand(or_filter, element_filter);
+					cmzn_scenefilter_destroy(&element_filter);
 				}
 				if (element_tool->select_elements_enabled)
 				{
-					element_filter = cmzn_graphics_filter_module_create_filter_domain_type(
+					element_filter = cmzn_scenefiltermodule_create_scenefilter_domain_type(
 						filter_module, CMZN_FIELD_DOMAIN_MESH_HIGHEST_DIMENSION);
-					cmzn_graphics_filter_operator_append_operand(or_filter, element_filter);
-					cmzn_graphics_filter_destroy(&element_filter);
-					element_filter = cmzn_graphics_filter_module_create_filter_domain_type(
+					cmzn_scenefilter_operator_append_operand(or_filter, element_filter);
+					cmzn_scenefilter_destroy(&element_filter);
+					element_filter = cmzn_scenefiltermodule_create_scenefilter_domain_type(
 						filter_module, CMZN_FIELD_DOMAIN_MESH_3D);
-					cmzn_graphics_filter_operator_append_operand(or_filter, element_filter);
-					cmzn_graphics_filter_destroy(&element_filter);
+					cmzn_scenefilter_operator_append_operand(or_filter, element_filter);
+					cmzn_scenefilter_destroy(&element_filter);
 				}
-				cmzn_graphics_filter_operator_destroy(&or_filter);
+				cmzn_scenefilter_operator_destroy(&or_filter);
 			}
 			else
 			{
-				cmzn_graphics_filter_set_inverse(combined_filter, true);
+				cmzn_scenefilter_set_inverse(combined_filter, true);
 			}
 			cmzn_graphics_module_destroy(&graphics_module);
 			// Possible optimisation: don't pick streamlines
-			cmzn_scene_picker_set_graphics_filter(scene_picker, combined_filter);
+			cmzn_scene_picker_set_scenefilter(scene_picker, combined_filter);
 			switch (event_type)
 			{
 			case INTERACTIVE_EVENT_BUTTON_PRESS:
@@ -504,10 +504,10 @@ release.
 						"Element_tool_interactive_event_handler.  Unknown event type");
 				} break;
 			}
-			cmzn_scene_picker_set_graphics_filter(scene_picker, static_cast<cmzn_graphics_filter_id>(0));
-			cmzn_graphics_filter_destroy(&combined_filter);
-			cmzn_graphics_filter_module_end_change(filter_module);
-			cmzn_graphics_filter_module_destroy(&filter_module);
+			cmzn_scene_picker_set_scenefilter(scene_picker, static_cast<cmzn_scenefilter_id>(0));
+			cmzn_scenefilter_destroy(&combined_filter);
+			cmzn_scenefiltermodule_end_change(filter_module);
+			cmzn_scenefiltermodule_destroy(&filter_module);
 			cmzn_scene_picker_destroy(&scene_picker);
 		}
 		if (element_tool->region)

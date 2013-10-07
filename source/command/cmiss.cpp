@@ -125,7 +125,7 @@
 #include "graphics/render_triangularisation.hpp"
 #include "graphics/import_graphics_object.h"
 #include "graphics/scene.hpp"
-#include "graphics/graphics_filter.hpp"
+#include "graphics/scenefilter.hpp"
 #include "graphics/tessellation.hpp"
 #if defined (WX_USER_INTERFACE)
 #include "graphics/region_tree_viewer_wx.h"
@@ -252,9 +252,9 @@
 #include "graphics/scene_viewer_app.h"
 #include "graphics/font_app.h"
 #include "graphics/glyph_app.h"
+#include "graphics/scenefilter_app.hpp"
 #include "graphics/tessellation_app.hpp"
 #include "graphics/tessellation_app.hpp"
-#include "graphics/graphics_filter_app.hpp"
 #include "computed_field/computed_field_app.h"
 #include "curve/curve_app.h"
 #include "general/enumerator_app.h"
@@ -333,7 +333,7 @@ DESCRIPTION :
 	Light_model_module *light_model_module;
 	struct Light_model *default_light_model;
 	struct cmzn_graphics_material_module *material_module;
-	struct cmzn_graphics_filter_module *filter_module;
+	struct cmzn_scenefiltermodule *filter_module;
 	struct cmzn_font *default_font;
 	struct cmzn_tessellation_module *tessellation_module;
 	struct MANAGER(Curve) *curve_manager;
@@ -2877,8 +2877,8 @@ static and referred to by gfx_create_Spectrum
 					modify_spectrum_data.computed_field_manager
 						= Computed_field_package_get_computed_field_manager(
 							command_data->computed_field_package);
-					cmzn_graphics_filter_id filter =
-						cmzn_graphics_filter_module_get_default_filter(command_data->filter_module);
+					cmzn_scenefilter_id filter =
+						cmzn_scenefiltermodule_get_default_scenefilter(command_data->filter_module);
 					option_table=CREATE(Option_table)();
 					Option_table_add_entry(option_table,"autorange",&autorange,NULL,
 						set_char_flag);
@@ -2891,7 +2891,7 @@ static and referred to by gfx_create_Spectrum
 					Option_table_add_entry(option_table,"field",&modify_spectrum_data,
 						NULL,gfx_modify_spectrum_settings_field);
 					Option_table_add_entry(option_table, "filter", &filter,
-						command_data->filter_module, set_cmzn_graphics_filter);
+						command_data->filter_module, set_cmzn_scenefilter);
 					Option_table_add_entry(option_table,"linear",&modify_spectrum_data,
 						NULL,gfx_modify_spectrum_settings_linear);
 					Option_table_add_entry(option_table,"log",&modify_spectrum_data,
@@ -3016,7 +3016,7 @@ static and referred to by gfx_create_Spectrum
 						DEACCESS(cmzn_spectrum_component)(&(modify_spectrum_data.component));
 					}
 					DEACCESS(Scene)(&autorange_scene);
-					cmzn_graphics_filter_destroy(&filter);
+					cmzn_scenefilter_destroy(&filter);
 				}
 			}
 			else
@@ -5313,8 +5313,8 @@ static int gfx_convert_graphics(struct Parse_state *state,
 		const char *graphic_name = NULL;
 		cmzn_scene_id scene = 0;
 		char *scene_path_name = 0;
-		cmzn_graphics_filter_id filter =
-			cmzn_graphics_filter_module_get_default_filter(command_data->filter_module);
+		cmzn_scenefilter_id filter =
+			cmzn_scenefiltermodule_get_default_scenefilter(command_data->filter_module);
 		enum Render_to_finite_elements_mode render_mode = RENDER_TO_FINITE_ELEMENTS_LINEAR_PRODUCT;
 
 		Option_table *option_table=CREATE(Option_table)();
@@ -5338,7 +5338,7 @@ static int gfx_convert_graphics(struct Parse_state *state,
 		OPTION_TABLE_ADD_ENUMERATOR(Render_to_finite_elements_mode)(option_table,
 			&render_mode);
 		Option_table_add_entry(option_table, "filter", &filter,
-			command_data->filter_module, set_cmzn_graphics_filter);
+			command_data->filter_module, set_cmzn_scenefilter);
 		/* region */
 		Option_table_add_region_or_group_entry(option_table, "region", &region, &group);
 		/* scene */
@@ -5436,7 +5436,7 @@ static int gfx_convert_graphics(struct Parse_state *state,
 			cmzn_region_destroy(&input_region);
 		}
 		if (filter)
-			cmzn_graphics_filter_destroy(&filter);
+			cmzn_scenefilter_destroy(&filter);
 		if (scene_path_name)
 		{
 			DEALLOCATE(scene_path_name);
@@ -7795,8 +7795,8 @@ Executes a GFX EXPORT STL command.
 		{
 			file_name = (char *)NULL;
 			scene = cmzn_scene_access(command_data->default_scene);
-			cmzn_graphics_filter_id filter =
-				cmzn_graphics_filter_module_get_default_filter(command_data->filter_module);
+			cmzn_scenefilter_id filter =
+				cmzn_scenefiltermodule_get_default_scenefilter(command_data->filter_module);
 			option_table = CREATE(Option_table)();
 			/* file */
 			Option_table_add_entry(option_table, "file", &file_name,
@@ -7805,7 +7805,7 @@ Executes a GFX EXPORT STL command.
 			Option_table_add_entry(option_table,"scene",&scene,
 				command_data->root_region, set_Scene);
 			Option_table_add_entry(option_table, "filter", &filter,
-				command_data->filter_module, set_cmzn_graphics_filter);
+				command_data->filter_module, set_cmzn_scenefilter);
 			if (0 != (return_code = Option_table_multi_parse(option_table, state)))
 			{
 				if (scene)
@@ -7826,7 +7826,7 @@ Executes a GFX EXPORT STL command.
 			if (scene)
 				cmzn_scene_destroy(&scene);
 			if (filter)
-				cmzn_graphics_filter_destroy(&filter);
+				cmzn_scenefilter_destroy(&filter);
 			if (file_name)
 			{
 				DEALLOCATE(file_name);
@@ -7873,15 +7873,15 @@ Executes a GFX EXPORT VRML command.
 		{
 			/* initialize defaults */
 			file_name=(char *)NULL;
-			cmzn_graphics_filter_id filter =
-				cmzn_graphics_filter_module_get_default_filter(command_data->filter_module);
+			cmzn_scenefilter_id filter =
+				cmzn_scenefiltermodule_get_default_scenefilter(command_data->filter_module);
 			scene = cmzn_scene_access(command_data->default_scene);
 			option_table = CREATE(Option_table)();
 			Option_table_add_entry(option_table, "file", &file_name, (void *)1, set_name);
 			Option_table_add_entry(option_table,"scene",&scene,
 				command_data->root_region,set_Scene);
 			Option_table_add_entry(option_table, "filter", &filter,
-				command_data->filter_module, set_cmzn_graphics_filter);
+				command_data->filter_module, set_cmzn_scenefilter);
 			return_code = Option_table_multi_parse(option_table, state);
 			DESTROY(Option_table)(&option_table);
 			/* no errors, not asking for help */
@@ -7915,7 +7915,7 @@ Executes a GFX EXPORT VRML command.
 
 			cmzn_scene_destroy(&scene);
 			if (filter)
-				cmzn_graphics_filter_destroy(&filter);
+				cmzn_scenefilter_destroy(&filter);
 			if (file_name)
 				DEALLOCATE(file_name);
 		}
@@ -7949,7 +7949,7 @@ Executes a GFX EXPORT WAVEFRONT command.
 	int frame_number, number_of_frames, return_code, version;
 	struct cmzn_command_data *command_data;
 	struct Scene *scene = NULL;
-	cmzn_graphics_filter_id filter = 0;
+	cmzn_scenefilter_id filter = 0;
 	static struct Modifier_entry option_table[]=
 	{
 		{"file",NULL,(void *)1,set_name},
@@ -7958,7 +7958,7 @@ Executes a GFX EXPORT WAVEFRONT command.
 		{"number_of_frames",NULL,NULL,set_int_positive},
 		{"scene",NULL,NULL,set_Scene},
 		{"version",NULL,NULL,set_int_positive},
-		{"filter",NULL,NULL,set_cmzn_graphics_filter},
+		{"filter",NULL,NULL,set_cmzn_scenefilter},
 		{NULL,NULL,NULL,NULL}
 	};
 	ENTER(gfx_export_wavefront);
@@ -7974,7 +7974,7 @@ Executes a GFX EXPORT WAVEFRONT command.
 			full_comments=0;
 			number_of_frames=100;
 			scene=cmzn_scene_access(command_data->default_scene);
-			filter=cmzn_graphics_filter_module_get_default_filter(command_data->filter_module);
+			filter=cmzn_scenefiltermodule_get_default_scenefilter(command_data->filter_module);
 			version=3;
 			(option_table[0]).to_be_modified= &file_name;
 			(option_table[1]).to_be_modified= &frame_number;
@@ -8009,7 +8009,7 @@ Executes a GFX EXPORT WAVEFRONT command.
 				}
 			} /* parse error,help */
 			cmzn_scene_destroy(&scene);
-			cmzn_graphics_filter_destroy(&filter);
+			cmzn_scenefilter_destroy(&filter);
 			if (file_name)
 				DEALLOCATE(file_name);
 		}
@@ -8364,8 +8364,8 @@ static int gfx_mesh_graphics_tetrahedral(struct Parse_state *state,
 			char *meshsize_file = NULL;
 			struct Option_table *option_table;
 			scene = ACCESS(Scene)(command_data->default_scene);
-			cmzn_graphics_filter_id filter =
-				cmzn_graphics_filter_module_get_default_filter(command_data->filter_module);
+			cmzn_scenefilter_id filter =
+				cmzn_scenefiltermodule_get_default_scenefilter(command_data->filter_module);
 			option_table = CREATE(Option_table)();
 			char clear = 0;
 			Option_table_add_entry(option_table, "region", &region_path,
@@ -8373,7 +8373,7 @@ static int gfx_mesh_graphics_tetrahedral(struct Parse_state *state,
 			Option_table_add_entry(option_table, "scene", &scene,
 				command_data->root_region, set_Scene);
 			Option_table_add_entry(option_table, "filter", &filter,
-				command_data->filter_module, set_cmzn_graphics_filter);
+				command_data->filter_module, set_cmzn_scenefilter);
 			Option_table_add_entry(option_table,"clear_region",
 				&clear,(void *)NULL,set_char_flag);
 			Option_table_add_entry(option_table,"mesh_global_size",
@@ -8446,7 +8446,7 @@ static int gfx_mesh_graphics_tetrahedral(struct Parse_state *state,
 			DEALLOCATE(region_path);
 			DESTROY(Option_table)(&option_table);
 			cmzn_scene_destroy(&scene);
-			cmzn_graphics_filter_destroy(&filter);
+			cmzn_scenefilter_destroy(&filter);
 			if (meshsize_file)
 			{
 				DEALLOCATE(meshsize_file);
@@ -8486,14 +8486,14 @@ static int gfx_mesh_graphics_triangle(struct Parse_state *state,
 		{
 			Triangle_mesh *trimesh = NULL;
 			cmzn_scene_id scene = cmzn_scene_access(command_data->default_scene);
-			cmzn_graphics_filter_id filter =
-				cmzn_graphics_filter_module_get_default_filter(command_data->filter_module);
+			cmzn_scenefilter_id filter =
+				cmzn_scenefiltermodule_get_default_scenefilter(command_data->filter_module);
 			option_table = CREATE(Option_table)();
 			char clear = 0;
 			Option_table_add_entry(option_table, "scene", &scene,
 				command_data->root_region, set_Scene);
 			Option_table_add_entry(option_table, "filter", &filter,
-				command_data->filter_module, set_cmzn_graphics_filter);
+				command_data->filter_module, set_cmzn_scenefilter);
 			Option_table_add_entry(option_table, "target_region", &region_path,
 				command_data->root_region, set_cmzn_region_path);
 			Option_table_add_entry(option_table,"clear_region",
@@ -8538,7 +8538,7 @@ static int gfx_mesh_graphics_triangle(struct Parse_state *state,
 			}
 			DEALLOCATE(region_path);
 			DESTROY(Option_table)(&option_table);
-			cmzn_graphics_filter_destroy(&filter);
+			cmzn_scenefilter_destroy(&filter);
 			cmzn_scene_destroy(&scene);
 		}
 		else
@@ -17846,7 +17846,7 @@ Initialise all the subcomponents of cmgui and create the cmzn_command_data
 			cmzn_graphics_material_destroy(&material);
 		}
 		command_data->filter_module =
-				cmzn_graphics_module_get_filter_module(command_data->graphics_module);
+				cmzn_graphics_module_get_scenefiltermodule(command_data->graphics_module);
 		command_data->default_font = cmzn_graphics_module_get_default_font(
 			command_data->graphics_module);
 
@@ -18298,7 +18298,7 @@ NOTE: Do not call this directly: call cmzn_command_data_destroy() to deaccess.
 		command_data->curve_manager = NULL;
 		DEACCESS(Spectrum)(&(command_data->default_spectrum));
 		command_data->spectrum_manager=NULL;
-		cmzn_graphics_filter_module_destroy(&command_data->filter_module);
+		cmzn_scenefiltermodule_destroy(&command_data->filter_module);
 		cmzn_graphics_material_module_destroy(&command_data->material_module);
 		cmzn_tessellation_module_destroy(&command_data->tessellation_module);
 		DEACCESS(cmzn_font)(&command_data->default_font);

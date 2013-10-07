@@ -139,7 +139,7 @@ void My_cmzn_scene_viewer_callback(cmzn_scene_viewer_id /* scene_viewer */,
 
 struct Scene_viewer_app *CREATE(Scene_viewer_app)(struct Graphics_buffer_app *graphics_buffer,
 	cmzn_scene_viewer_module_id scene_viewer_module,
-	cmzn_graphics_filter_id filter, struct cmzn_scene *scene,
+	cmzn_scenefilter_id filter, struct cmzn_scene *scene,
 	struct User_interface *user_interface)
 {
 	struct Scene_viewer_app *scene_viewer = 0;
@@ -152,7 +152,7 @@ struct Scene_viewer_app *CREATE(Scene_viewer_app)(struct Graphics_buffer_app *gr
 			scene_viewer->core_scene_viewer = create_Scene_viewer_from_package(
 				Graphics_buffer_app_get_core_buffer(graphics_buffer), scene_viewer_module);
 			cmzn_scene_viewer_set_scene(scene_viewer->core_scene_viewer, scene);
-			cmzn_scene_viewer_set_filter(scene_viewer->core_scene_viewer, filter);
+			cmzn_scene_viewer_set_scenefilter(scene_viewer->core_scene_viewer, filter);
 			scene_viewer->user_interface = user_interface;
 			scene_viewer->idle_update_callback_id = (struct Event_dispatcher_idle_callback *)NULL;
 			/* no current interactive_tool */
@@ -191,7 +191,7 @@ struct Scene_viewer_app *Scene_viewer_app_for_spectrum_create(struct Graphics_bu
 	struct Colour *background_colour,
 	struct Light *default_light,
 	struct Light_model *default_light_model,
-	cmzn_graphics_filter_id filter, struct cmzn_scene *scene,
+	cmzn_scenefilter_id filter, struct cmzn_scene *scene,
 	struct User_interface *user_interface)
 {
 	struct Scene_viewer_app *scene_viewer = 0;
