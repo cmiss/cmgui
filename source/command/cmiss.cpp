@@ -57,7 +57,6 @@
 #include "computed_field/computed_field_find_xi.h"
 #include "computed_field/computed_field_find_xi_graphics.h"
 #include "computed_field/computed_field_finite_element.h"
-#include "computed_field/computed_field_format_output.h"
 #include "computed_field/computed_field_function.h"
 #include "computed_field/computed_field_group.h"
 #include "computed_field/computed_field_image.h"
@@ -73,7 +72,6 @@
 #include "computed_field/computed_field_time.h"
 #include "computed_field/computed_field_trigonometry.h"
 #include "computed_field/computed_field_update.h"
-#include "computed_field/computed_field_scene_viewer_projection.h"
 #include "computed_field/computed_field_wrappers.h"
 #include "context/context.h"
 #include "element/element_operations.h"
@@ -229,6 +227,7 @@
 #include "computed_field/computed_field_string_constant_app.h"
 #include "computed_field/computed_field_deformation_app.h"
 #include "computed_field/computed_field_finite_element_app.h"
+#include "computed_field/computed_field_format_output_app.h"
 #include "computed_field/computed_field_vector_operators_app.hpp"
 #include "computed_field/computed_field_matrix_operators_app.hpp"
 #include "computed_field/computed_field_nodeset_operators_app.hpp"
@@ -244,6 +243,7 @@
 #include "computed_field/computed_field_format_output_app.h"
 #include "computed_field/computed_field_trigonometry_app.h"
 #include "computed_field/computed_field_arithmetic_operators_app.h"
+#include "computed_field/computed_field_scene_viewer_projection_app.h"
 #include "minimise/minimise_app.h"
 #include "finite_element/export_finite_element_app.h"
 #include "graphics/element_point_ranges_app.h"
@@ -322,7 +322,7 @@ DESCRIPTION :
 	/* Always want the entry for graphics_buffer_package even if it will
 		not be available on this implementation */
 	struct Graphics_buffer_app_package *graphics_buffer_package;
-	struct cmzn_scene_viewer_app_module *scene_viewer_module;
+	struct cmzn_sceneviewermodule_app *sceneviewermodule;
 #if defined (USE_CMGUI_GRAPHICS_WINDOW)
 	struct MANAGER(Graphics_window) *graphics_window_manager;
 #endif /* defined (USE_CMGUI_GRAPHICS_WINDOW) */
@@ -4738,7 +4738,7 @@ Executes a GFX CREATE WINDOW command.
 							interactive_tool_manager,
 							command_data->default_time_keeper_app,
 							command_data->user_interface, command_data->root_region,
-							command_data->scene_viewer_module->core_scene_viewer_module)))
+							command_data->sceneviewermodule->core_sceneviewermodule)))
 						{
 							if (!ADD_OBJECT_TO_MANAGER(Graphics_window)(window,
 							   command_data->graphics_window_manager))
@@ -4766,7 +4766,7 @@ Executes a GFX CREATE WINDOW command.
 							command_data->interactive_tool_manager,
 							command_data->default_time_keeper_app,
 							command_data->user_interface, command_data->root_region,
-							command_data->scene_viewer_module->core_scene_viewer_module);
+							command_data->sceneviewermodule->core_sceneviewermodule);
 					  if (window)
 						{
 						   if (!ADD_OBJECT_TO_MANAGER(Graphics_window)(window,
@@ -7223,8 +7223,8 @@ Executes a GFX ELEMENT_POINT_TOOL command.
 				 (void *)Element_point_tool_get_interactive_tool(element_point_tool),
 				 command_data->graphics_window_manager);
 #endif
-			cmzn_scene_viewer_module_update_Interactive_tool(
-				command_data->scene_viewer_module,
+			cmzn_sceneviewermodule_update_Interactive_tool(
+				command_data->sceneviewermodule,
 				Element_point_tool_get_interactive_tool(element_point_tool));
 			}
 			else
@@ -11944,8 +11944,8 @@ Which tool that is being modified is passed in <node_tool_void>.
 			display_message(WARNING_MESSAGE,
 				"This command changes the node tool settings for each window to the global settings. To change node tool settings for individual window, please see the command [gfx modify window <name> nodes ?]. \n");
 #endif /*(WX_USER_INTERFACE)*/
-			cmzn_scene_viewer_module_update_Interactive_tool(
-				command_data->scene_viewer_module,
+			cmzn_sceneviewermodule_update_Interactive_tool(
+				command_data->sceneviewermodule,
 				Node_tool_get_interactive_tool(node_tool));
 		}
 	}
@@ -14745,8 +14745,8 @@ Executes a GFX TRANSFORM_TOOL command.
 				Graphics_window_update_Interactive_tool,(void *)transform_tool,
 				command_data->graphics_window_manager);
 #endif /*(WX_USER_INTERFACE)*/
-			cmzn_scene_viewer_module_update_Interactive_tool(
-				command_data->scene_viewer_module,	transform_tool);
+			cmzn_sceneviewermodule_update_Interactive_tool(
+				command_data->sceneviewermodule,	transform_tool);
 		}
 	}
 	else
@@ -17522,7 +17522,7 @@ Initialise all the subcomponents of cmgui and create the cmzn_command_data
 		command_data->default_spectrum=(struct Spectrum *)NULL;
 		command_data->spectrum_manager=(struct MANAGER(Spectrum) *)NULL;
 		command_data->graphics_buffer_package=(struct Graphics_buffer_app_package *)NULL;
-		command_data->scene_viewer_module=(struct cmzn_scene_viewer_app_module *)NULL;
+		command_data->sceneviewermodule=(struct cmzn_sceneviewermodule_app *)NULL;
 		command_data->graphics_module = (struct cmzn_graphics_module *)NULL;
 #if defined (USE_CMGUI_GRAPHICS_WINDOW)
 		command_data->graphics_window_manager=(struct MANAGER(Graphics_window) *)NULL;
@@ -17951,7 +17951,7 @@ Initialise all the subcomponents of cmgui and create the cmzn_command_data
 #if defined (USE_CMGUI_GRAPHICS_WINDOW)
 			if (command_data->graphics_window_manager)
 			{
-				Computed_field_register_types_scene_viewer_projection(
+				Computed_field_register_types_sceneviewer_projection(
 					command_data->computed_field_package,
 					command_data->graphics_window_manager);
 			}
@@ -18042,7 +18042,7 @@ Initialise all the subcomponents of cmgui and create the cmzn_command_data
 #if defined (USE_CMGUI_GRAPHICS_WINDOW)
 		if (command_data->user_interface)
 		{
-			command_data->scene_viewer_module = UI_module->scene_viewer_module;
+			command_data->sceneviewermodule = UI_module->sceneviewermodule;
 		}
 #endif /* defined (USE_CMGUI_GRAPHICS_WINDOW) */
 
@@ -18593,7 +18593,7 @@ Gets the user_interface for this <command_data>
 	return (user_interface);
 } /* cmzn_command_data_get_user_interface */
 
-struct cmzn_scene_viewer_app_module *cmzn_command_data_get_scene_viewer_module(
+struct cmzn_sceneviewermodule_app *cmzn_command_data_get_sceneviewermodule(
 	struct cmzn_command_data *command_data)
 /*******************************************************************************
 LAST MODIFIED : 19 January 2007
@@ -18602,17 +18602,17 @@ DESCRIPTION :
 Returns the scene viewer data from the <command_data>.
 ==============================================================================*/
 {
-	struct cmzn_scene_viewer_app_module *cmiss_scene_viewer_module;
+	struct cmzn_sceneviewermodule_app *cmiss_sceneviewermodule;
 
-	ENTER(cmzn_command_package_get_scene_viewer_module);
-	cmiss_scene_viewer_module=(struct cmzn_scene_viewer_app_module *)NULL;
+	ENTER(cmzn_command_package_get_sceneviewermodule);
+	cmiss_sceneviewermodule=(struct cmzn_sceneviewermodule_app *)NULL;
 	if (command_data)
 	{
-		cmiss_scene_viewer_module = command_data->scene_viewer_module;
+		cmiss_sceneviewermodule = command_data->sceneviewermodule;
 	}
 	LEAVE;
 
-	return (cmiss_scene_viewer_module);
+	return (cmiss_sceneviewermodule);
 }
 
 struct MANAGER(Graphics_window) *cmzn_command_data_get_graphics_window_manager(

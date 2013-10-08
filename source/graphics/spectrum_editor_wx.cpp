@@ -160,7 +160,7 @@ static int make_colour_bar(struct Spectrum_editor *spectrum_editor)
 			struct Colour white = {1.0, 1.0, 1.0};
 			Graphical_material_set_ambient(spectrum_editor->labelMaterial, &white );
 			Graphical_material_set_diffuse(spectrum_editor->labelMaterial, &white );
-			cmzn_scene_viewer_set_background_colour_component_rgb(
+			cmzn_sceneviewer_set_background_colour_component_rgb(
 				spectrum_editor->spectrum_editor_scene_viewer->core_scene_viewer, 0.0, 0.0, 0.0);
 		}
 		else if (spectrum_editor->viewer_type == 3)
@@ -168,7 +168,7 @@ static int make_colour_bar(struct Spectrum_editor *spectrum_editor)
 			struct Colour black = {0, 0, 0};
 			Graphical_material_set_ambient(spectrum_editor->labelMaterial, &black );
 			Graphical_material_set_diffuse(spectrum_editor->labelMaterial, &black );
-			cmzn_scene_viewer_set_background_colour_component_rgb(
+			cmzn_sceneviewer_set_background_colour_component_rgb(
 				spectrum_editor->spectrum_editor_scene_viewer->core_scene_viewer, 1.0, 1.0, 1.0);
 		}
 		spectrum_editor->colourBar->setLabelDivisions(labelDivisions);
@@ -1947,7 +1947,7 @@ Callback for when input is received by the scene_viewer.
 	spectrum_editor=(struct Spectrum_editor *)spectrum_editor_void;
 	if (spectrum_editor != 0)
 	{
-		if (CMZN_SCENE_VIEWER_INPUT_BUTTON_PRESS==input->type)
+		if (CMZN_SCENEVIEWERINPUT_EVENT_BUTTON_PRESS==input->type)
 		{
 			/* Increment the type - cycles through label divisions and colours */
 			spectrum_editor->viewer_type++;
@@ -2202,7 +2202,7 @@ Creates a spectrum_editor widget.
 								//-- 		spectrum_editor_viewer_input_callback,
 								//-- 		(void *)spectrum_editor, /*add_first*/0);
 								wxSize viewerSize = spectrum_editor->spectrum_panel->GetSize();
-								 cmzn_scene_viewer_set_viewport_size(
+								 cmzn_sceneviewer_set_viewport_size(
 										spectrum_editor->spectrum_editor_scene_viewer->core_scene_viewer,
 										viewerSize.GetWidth(), viewerSize.GetHeight());
 								 Scene_viewer_set_lookat_parameters(

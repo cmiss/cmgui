@@ -35,7 +35,7 @@ struct User_interface_module
 	struct Interactive_tool *transform_tool;
 	struct Node_tool *data_tool,*node_tool;
 	struct Event_dispatcher *event_dispatcher;
-	struct cmzn_scene_viewer_app_module *scene_viewer_module;
+	struct cmzn_sceneviewermodule_app *sceneviewermodule;
 #if defined (USE_CMGUI_GRAPHICS_WINDOW)
 	struct MANAGER(Graphics_window) *graphics_window_manager;
 #endif /* defined (USE_CMGUI_GRAPHICS_WINDOW) */

@@ -73,7 +73,7 @@ struct User_interface_module *User_interface_module_create(
 		UI_module->region_tree_viewer = NULL;
 		UI_module->spectrum_editor_dialog = NULL;
 #endif /* defined (WX_USER_INTERFACE) */
-		UI_module->scene_viewer_module = NULL;
+		UI_module->sceneviewermodule = NULL;
 		UI_module->graphics_buffer_package = NULL;
 		UI_module->interactive_tool_manager = NULL;
 		UI_module->background_colour.red=(float)0;
@@ -247,7 +247,7 @@ struct User_interface_module *User_interface_module_create(
 			{
 				cmzn_scene_id default_scene =
 					cmzn_graphics_module_get_scene(graphics_module, root_region);
-				UI_module->scene_viewer_module = CREATE(cmzn_scene_viewer_app_module)(
+				UI_module->sceneviewermodule = CREATE(cmzn_sceneviewermodule_app)(
 					UI_module->graphics_buffer_package, graphics_module, default_scene,
 					UI_module->user_interface);
 				cmzn_scene_destroy(&default_scene);
@@ -294,9 +294,9 @@ int User_interface_module_destroy(
 		if (0 == UI_module->access_count)
 		{
 #if defined (USE_CMGUI_GRAPHICS_WINDOW)
-			if (UI_module->scene_viewer_module)
+			if (UI_module->sceneviewermodule)
 			{
-				DESTROY(cmzn_scene_viewer_app_module)(&UI_module->scene_viewer_module);
+				DESTROY(cmzn_sceneviewermodule_app)(&UI_module->sceneviewermodule);
 			}
 #endif /* defined (USE_CMGUI_GRAPHICS_WINDOW) */
 #if defined (USE_CMGUI_GRAPHICS_WINDOW)

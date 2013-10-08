@@ -38,8 +38,8 @@ void Scene_viewer_app_graphics_buffer_input_callback(
 FULL_DECLARE_LIST_TYPE(Scene_viewer_app);
 
 // Callback functions:
-FULL_DECLARE_CMZN_CALLBACK_TYPES(cmzn_scene_viewer_app_module_callback, \
-	struct cmzn_scene_viewer_app_module *, void *);
+FULL_DECLARE_CMZN_CALLBACK_TYPES(cmzn_sceneviewermodule_app_callback, \
+	struct cmzn_sceneviewermodule_app *, void *);
 
 FULL_DECLARE_CMZN_CALLBACK_TYPES(Scene_viewer_app_callback, \
 	struct Scene_viewer_app *, void *);
@@ -47,14 +47,14 @@ FULL_DECLARE_CMZN_CALLBACK_TYPES(Scene_viewer_app_callback, \
 FULL_DECLARE_CMZN_CALLBACK_TYPES(Scene_viewer_app_input_callback,
 	struct Scene_viewer_app *, struct Graphics_buffer_input *);
 
-DEFINE_CMZN_CALLBACK_MODULE_FUNCTIONS(cmzn_scene_viewer_app_module_callback, void);
+DEFINE_CMZN_CALLBACK_MODULE_FUNCTIONS(cmzn_sceneviewermodule_app_callback, void);
 
 DEFINE_CMZN_CALLBACK_MODULE_FUNCTIONS(Scene_viewer_app_callback, void);
 
 DEFINE_CMZN_CALLBACK_MODULE_FUNCTIONS(Scene_viewer_app_input_callback, int);
 
-DEFINE_CMZN_CALLBACK_FUNCTIONS(cmzn_scene_viewer_app_module_callback, \
-	struct cmzn_scene_viewer_app_module *,void *);
+DEFINE_CMZN_CALLBACK_FUNCTIONS(cmzn_sceneviewermodule_app_callback, \
+	struct cmzn_sceneviewermodule_app *,void *);
 
 DEFINE_CMZN_CALLBACK_FUNCTIONS(Scene_viewer_app_callback, \
 	struct Scene_viewer_app *,void *)
@@ -62,48 +62,48 @@ DEFINE_CMZN_CALLBACK_FUNCTIONS(Scene_viewer_app_callback, \
 DEFINE_CMZN_CALLBACK_FUNCTIONS(Scene_viewer_app_input_callback,
 	struct Scene_viewer_app *,struct Graphics_buffer_input *);
 
-struct cmzn_scene_viewer_app_module *CREATE(cmzn_scene_viewer_app_module)(
+struct cmzn_sceneviewermodule_app *CREATE(cmzn_sceneviewermodule_app)(
 	struct Graphics_buffer_app_package *graphics_buffer_package,
 	cmzn_graphics_module_id graphics_module,
 	cmzn_scene_id scene,
 	struct User_interface *user_interface)
 {
-	struct cmzn_scene_viewer_app_module *scene_viewer_module;
+	struct cmzn_sceneviewermodule_app *sceneviewermodule;
 	if (graphics_buffer_package&&graphics_module&&scene&&user_interface)
 	{
 		/* allocate memory for the scene_viewer structure */
-		if (ALLOCATE(scene_viewer_module,struct cmzn_scene_viewer_app_module,1))
+		if (ALLOCATE(sceneviewermodule,struct cmzn_sceneviewermodule_app,1))
 		{
-			scene_viewer_module->access_count = 1;
-			scene_viewer_module->graphics_buffer_package = graphics_buffer_package;
-			scene_viewer_module->core_scene_viewer_module =
-				cmzn_graphics_module_get_scene_viewer_module(graphics_module);
-			scene_viewer_module->user_interface = user_interface;
-			scene_viewer_module->scene_viewer_app_list = CREATE(LIST(Scene_viewer_app))();
-			scene_viewer_module->destroy_callback_list=
-					CREATE(LIST(CMZN_CALLBACK_ITEM(cmzn_scene_viewer_app_module_callback)))();
+			sceneviewermodule->access_count = 1;
+			sceneviewermodule->graphics_buffer_package = graphics_buffer_package;
+			sceneviewermodule->core_sceneviewermodule =
+				cmzn_graphics_module_get_sceneviewermodule(graphics_module);
+			sceneviewermodule->user_interface = user_interface;
+			sceneviewermodule->scene_viewer_app_list = CREATE(LIST(Scene_viewer_app))();
+			sceneviewermodule->destroy_callback_list=
+					CREATE(LIST(CMZN_CALLBACK_ITEM(cmzn_sceneviewermodule_app_callback)))();
 		}
 		else
 		{
 			display_message(ERROR_MESSAGE,
-				"CREATE(Scene_viewer_module).  Not enough memory for scene_viewer");
+				"CREATE(sceneviewermodule).  Not enough memory for scene_viewer");
 		}
 	}
 	else
 	{
-		display_message(ERROR_MESSAGE,"CREATE(Scene_viewer_module).  Invalid argument(s)");
-		scene_viewer_module = 0;
+		display_message(ERROR_MESSAGE,"CREATE(sceneviewermodule).  Invalid argument(s)");
+		sceneviewermodule = 0;
 	}
 	LEAVE;
 
-	return (scene_viewer_module);
+	return (sceneviewermodule);
 }
 
-int DESTROY(cmzn_scene_viewer_app_module)(
-	struct cmzn_scene_viewer_app_module **scene_viewer_app_package_address)
+int DESTROY(cmzn_sceneviewermodule_app)(
+	struct cmzn_sceneviewermodule_app **scene_viewer_app_package_address)
 {
 	int return_code = 0;
-	struct cmzn_scene_viewer_app_module *scene_viewer_app_package = 0;
+	struct cmzn_sceneviewermodule_app *scene_viewer_app_package = 0;
 	if (scene_viewer_app_package_address &&
 		( 0 != (scene_viewer_app_package = *scene_viewer_app_package_address)))
 	{
@@ -111,14 +111,14 @@ int DESTROY(cmzn_scene_viewer_app_module)(
 		/* send the destroy callbacks */
 		if (scene_viewer_app_package->destroy_callback_list)
 		{
-			CMZN_CALLBACK_LIST_CALL(cmzn_scene_viewer_app_module_callback)(
+			CMZN_CALLBACK_LIST_CALL(cmzn_sceneviewermodule_app_callback)(
 				scene_viewer_app_package->destroy_callback_list,scene_viewer_app_package,NULL);
-			DESTROY( LIST(CMZN_CALLBACK_ITEM(cmzn_scene_viewer_app_module_callback)))(
+			DESTROY( LIST(CMZN_CALLBACK_ITEM(cmzn_sceneviewermodule_app_callback)))(
 				&scene_viewer_app_package->destroy_callback_list);
 		}
-		if (scene_viewer_app_package->core_scene_viewer_module)
+		if (scene_viewer_app_package->core_sceneviewermodule)
 		{
-			cmzn_scene_viewer_module_destroy(&scene_viewer_app_package->core_scene_viewer_module);
+			cmzn_sceneviewermodule_destroy(&scene_viewer_app_package->core_sceneviewermodule);
 		}
 		if (scene_viewer_app_package->scene_viewer_app_list)
 		{
@@ -131,33 +131,33 @@ int DESTROY(cmzn_scene_viewer_app_module)(
 	return return_code;
 }
 
-void My_cmzn_scene_viewer_callback(cmzn_scene_viewer_id /* scene_viewer */,
+void My_cmzn_sceneviewer_callback(cmzn_sceneviewer_id /* scene_viewer */,
 		void * /*callback_data*/, void *user_data)
 {
 	Scene_viewer_app_redraw((struct Scene_viewer_app *)user_data);
 }
 
 struct Scene_viewer_app *CREATE(Scene_viewer_app)(struct Graphics_buffer_app *graphics_buffer,
-	cmzn_scene_viewer_module_id scene_viewer_module,
+	cmzn_sceneviewermodule_id sceneviewermodule,
 	cmzn_scenefilter_id filter, struct cmzn_scene *scene,
 	struct User_interface *user_interface)
 {
 	struct Scene_viewer_app *scene_viewer = 0;
-	if (graphics_buffer && scene_viewer_module)
+	if (graphics_buffer && sceneviewermodule)
 	{
 		if (ALLOCATE(scene_viewer, Scene_viewer_app, 1))
 		{
 			scene_viewer->access_count = 1;
 			scene_viewer->graphics_buffer = ACCESS(Graphics_buffer_app)(graphics_buffer);
 			scene_viewer->core_scene_viewer = create_Scene_viewer_from_package(
-				Graphics_buffer_app_get_core_buffer(graphics_buffer), scene_viewer_module);
-			cmzn_scene_viewer_set_scene(scene_viewer->core_scene_viewer, scene);
-			cmzn_scene_viewer_set_scenefilter(scene_viewer->core_scene_viewer, filter);
+				Graphics_buffer_app_get_core_buffer(graphics_buffer), sceneviewermodule);
+			cmzn_sceneviewer_set_scene(scene_viewer->core_scene_viewer, scene);
+			cmzn_sceneviewer_set_scenefilter(scene_viewer->core_scene_viewer, filter);
 			scene_viewer->user_interface = user_interface;
 			scene_viewer->idle_update_callback_id = (struct Event_dispatcher_idle_callback *)NULL;
 			/* no current interactive_tool */
 			scene_viewer->interactive_tool=(struct Interactive_tool *)NULL;
-			/* Currently only set when created from a cmzn_scene_viewer_module
+			/* Currently only set when created from a cmzn_sceneviewermodule
 				to avoid changing the interface */
 			scene_viewer->interactive_tool_manager = 0;
 			scene_viewer->input_callback_list=
@@ -170,8 +170,8 @@ struct Scene_viewer_app *CREATE(Scene_viewer_app)(struct Graphics_buffer_app *gr
 				CREATE(LIST(CMZN_CALLBACK_ITEM(Scene_viewer_app_callback)))();
 			scene_viewer->transform_callback_list=
 				CREATE(LIST(CMZN_CALLBACK_ITEM(Scene_viewer_app_callback)))();
-			cmzn_scene_viewer_add_repaint_required_callback(scene_viewer->core_scene_viewer,
-				My_cmzn_scene_viewer_callback, scene_viewer);
+			cmzn_sceneviewer_add_repaint_required_callback(scene_viewer->core_scene_viewer,
+				My_cmzn_sceneviewer_callback, scene_viewer);
 			Graphics_buffer_app_add_initialise_callback(graphics_buffer,
 				Scene_viewer_app_initialise_callback, scene_viewer);
 			Graphics_buffer_app_add_resize_callback(graphics_buffer,
@@ -206,12 +206,12 @@ struct Scene_viewer_app *Scene_viewer_app_for_spectrum_create(struct Graphics_bu
 				default_light,
 				default_light_model,
 				filter);
-			cmzn_scene_viewer_set_scene(scene_viewer->core_scene_viewer, scene);
+			cmzn_sceneviewer_set_scene(scene_viewer->core_scene_viewer, scene);
 			scene_viewer->user_interface = user_interface;
 			scene_viewer->idle_update_callback_id = (struct Event_dispatcher_idle_callback *)NULL;
 			/* no current interactive_tool */
 			scene_viewer->interactive_tool=(struct Interactive_tool *)NULL;
-			/* Currently only set when created from a cmzn_scene_viewer_module
+			/* Currently only set when created from a cmzn_sceneviewermodule
 				to avoid changing the interface */
 			scene_viewer->interactive_tool_manager = 0;
 			scene_viewer->input_callback_list=
@@ -224,7 +224,7 @@ struct Scene_viewer_app *Scene_viewer_app_for_spectrum_create(struct Graphics_bu
 				CREATE(LIST(CMZN_CALLBACK_ITEM(Scene_viewer_app_callback)))();
 			scene_viewer->transform_callback_list=
 				CREATE(LIST(CMZN_CALLBACK_ITEM(Scene_viewer_app_callback)))();
-			cmzn_scene_viewer_add_repaint_required_callback(scene_viewer->core_scene_viewer, My_cmzn_scene_viewer_callback, scene_viewer);
+			cmzn_sceneviewer_add_repaint_required_callback(scene_viewer->core_scene_viewer, My_cmzn_sceneviewer_callback, scene_viewer);
 			Graphics_buffer_app_add_initialise_callback(graphics_buffer,
 				Scene_viewer_app_initialise_callback, scene_viewer);
 			Graphics_buffer_app_add_resize_callback(graphics_buffer,
@@ -252,8 +252,8 @@ int DESTROY(Scene_viewer_app)(struct Scene_viewer_app **scene_viewer_app_address
 				User_interface_get_event_dispatcher(scene_viewer->user_interface),
 				scene_viewer->idle_update_callback_id);
 		}
-		cmzn_scene_viewer_remove_repaint_required_callback(scene_viewer->core_scene_viewer,
-			My_cmzn_scene_viewer_callback, scene_viewer);
+		cmzn_sceneviewer_remove_repaint_required_callback(scene_viewer->core_scene_viewer,
+			My_cmzn_sceneviewer_callback, scene_viewer);
 		DESTROY(Scene_viewer)(&(scene_viewer->core_scene_viewer));
 		if (scene_viewer->sync_callback_list)
 		{
@@ -318,7 +318,7 @@ LAST MODIFIED : 19 April 2007
 DESCRIPTION :
 ==============================================================================*/
 {
-	struct cmzn_scene_viewer_app_module *package = (struct cmzn_scene_viewer_app_module *)package_void;
+	struct cmzn_sceneviewermodule_app *package = (struct cmzn_sceneviewermodule_app *)package_void;
 
 	USE_PARAMETER(dummy_void);
 	if (scene_viewer && package)
@@ -337,7 +337,7 @@ DESCRIPTION :
 ==============================================================================*/
 {
 	int return_code;
-	struct cmzn_scene_viewer_app_module *package = (struct cmzn_scene_viewer_app_module *)package_void;
+	struct cmzn_sceneviewermodule_app *package = (struct cmzn_sceneviewermodule_app *)package_void;
 
 	if (scene_viewer && package)
 	{
@@ -554,15 +554,15 @@ from this.
 	return (return_code);
 }
 
-int cmzn_scene_viewer_module_update_Interactive_tool(
-	struct cmzn_scene_viewer_app_module *cmiss_scene_viewer_module,
+int cmzn_sceneviewermodule_update_Interactive_tool(
+	struct cmzn_sceneviewermodule_app *cmiss_sceneviewermodule,
 	struct Interactive_tool *interactive_tool)
 /*******************************************************************************
 LAST MODIFIED : 26 April 2007
 
 DESCRIPTION :
 Updates the interactive tools in each of the scene_viewers created with the
-<cmiss_scene_viewer_module> to have the same settings as the <interactive_tool>.
+<cmiss_sceneviewermodule> to have the same settings as the <interactive_tool>.
 This enables the old global commands to continue to work for all scene_viewers,
 however new code should probably modify the particular tools for the
 particular scene_viewer intended.
@@ -570,23 +570,23 @@ particular scene_viewer intended.
 {
 	int return_code;
 
-	ENTER(cmzn_scene_viewer_module_update_Interactive_tool);
-	if (cmiss_scene_viewer_module)
+	ENTER(cmzn_sceneviewermodule_update_Interactive_tool);
+	if (cmiss_sceneviewermodule)
 	{
 		return_code = FOR_EACH_OBJECT_IN_LIST(Scene_viewer_app)(
 			Scene_viewer_app_update_Interactive_tool, (void *)interactive_tool,
-			cmiss_scene_viewer_module->scene_viewer_app_list);
+			cmiss_sceneviewermodule->scene_viewer_app_list);
 	}
 	else
 	{
 		display_message(ERROR_MESSAGE,
-			"cmzn_scene_viewer_module_update_Interactive_tool.  Missing scene_viewer");
+			"cmzn_sceneviewermodule_update_Interactive_tool.  Missing scene_viewer");
 		return_code = 0;
 	}
 	LEAVE;
 
 	return (return_code);
-} /* cmzn_scene_viewer_module_update_Interactive_tool */
+} /* cmzn_sceneviewermodule_update_Interactive_tool */
 
 int Scene_viewer_automatic_tumble(struct Scene_viewer_app *scene_viewer)
 /*******************************************************************************
@@ -697,7 +697,7 @@ int Scene_viewer_app_input_transform(struct Scene_viewer_app *scene_viewer_app,
 	{
 		switch (input->type)
 		{
-			case CMZN_SCENE_VIEWER_INPUT_BUTTON_RELEASE:
+			case CMZN_SCENEVIEWERINPUT_EVENT_BUTTON_RELEASE:
 			{
 				if ((scene_viewer_app->core_scene_viewer->drag_mode == SV_DRAG_TUMBLE) &&
 					scene_viewer_app->core_scene_viewer->tumble_angle)
@@ -743,13 +743,13 @@ int Scene_viewer_app_default_input_callback(struct Scene_viewer_app *scene_viewe
 		case SCENE_VIEWER_SELECT:
 		{
 			/* can override select mode by holding down control key */
-			if (CMZN_SCENE_VIEWER_INPUT_BUTTON_PRESS==input->type)
+			if (CMZN_SCENEVIEWERINPUT_EVENT_BUTTON_PRESS==input->type)
 			{
-				if (((CMZN_SCENE_VIEWER_INPUT_MODIFIER_CONTROL & input->input_modifier)&&
-					(SCENE_VIEWER_ABSOLUTE_VIEWPORT != scene_viewer->core_scene_viewer->viewport_mode))
-					||((SCENE_VIEWER_ABSOLUTE_VIEWPORT == scene_viewer->core_scene_viewer->viewport_mode)&&
+				if (((CMZN_SCENEVIEWERINPUT_MODIFIER_CONTROL & input->modifiers)&&
+					(CMZN_SCENEVIEWER_VIEWPORT_ABSOLUTE != scene_viewer->core_scene_viewer->viewport_mode))
+					|| ((CMZN_SCENEVIEWER_VIEWPORT_ABSOLUTE == scene_viewer->core_scene_viewer->viewport_mode)&&
 					!((1==input->button_number)||
-					(CMZN_SCENE_VIEWER_INPUT_MODIFIER_BUTTON1 & input->input_modifier))))
+					(CMZN_SCENEVIEWERINPUT_MODIFIER_BUTTON1 & input->modifiers))))
 				{
 					scene_viewer->core_scene_viewer->temporary_transform_mode=1;
 				}
@@ -760,8 +760,8 @@ int Scene_viewer_app_default_input_callback(struct Scene_viewer_app *scene_viewe
 			}
 			if (scene_viewer->core_scene_viewer->temporary_transform_mode)
 			{
-				if (SCENE_VIEWER_RELATIVE_VIEWPORT == scene_viewer->core_scene_viewer->viewport_mode ||
-					SCENE_VIEWER_DISTORTING_RELATIVE_VIEWPORT == scene_viewer->core_scene_viewer->viewport_mode)
+				if (CMZN_SCENEVIEWER_VIEWPORT_RELATIVE == scene_viewer->core_scene_viewer->viewport_mode ||
+					CMZN_SCENEVIEWER_VIEWPORT_DISTORTING_RELATIVE == scene_viewer->core_scene_viewer->viewport_mode)
 				{
 					if (SCENE_VIEWER_CUSTOM != scene_viewer->core_scene_viewer->projection_mode)
 					{
@@ -771,7 +771,7 @@ int Scene_viewer_app_default_input_callback(struct Scene_viewer_app *scene_viewe
 				}
 				else
 				{
-					cmzn_scene_viewer_process_input(scene_viewer->core_scene_viewer, input);
+					cmzn_sceneviewer_process_sceneviewerinput(scene_viewer->core_scene_viewer, input);
 				}
 			}
 			else
@@ -795,9 +795,9 @@ int Scene_viewer_app_default_input_callback(struct Scene_viewer_app *scene_viewe
 		{
 			if (SCENE_VIEWER_UPDATE_ON_CLICK==scene_viewer->core_scene_viewer->input_mode)
 			{
-				if (CMZN_SCENE_VIEWER_INPUT_BUTTON_PRESS==input->type)
+				if (CMZN_SCENEVIEWERINPUT_EVENT_BUTTON_PRESS==input->type)
 				{
-					if (input->input_modifier & CMZN_SCENE_VIEWER_INPUT_MODIFIER_CONTROL)
+					if (input->modifiers & CMZN_SCENEVIEWERINPUT_MODIFIER_CONTROL)
 					{
 						Scene_viewer_view_all(scene_viewer->core_scene_viewer);
 					}
@@ -805,8 +805,8 @@ int Scene_viewer_app_default_input_callback(struct Scene_viewer_app *scene_viewe
 				scene_viewer->core_scene_viewer->update_pixel_image=1;
 				Scene_viewer_app_redraw(scene_viewer);
 			}
-			if (SCENE_VIEWER_RELATIVE_VIEWPORT==scene_viewer->core_scene_viewer->viewport_mode ||
-				SCENE_VIEWER_DISTORTING_RELATIVE_VIEWPORT==scene_viewer->core_scene_viewer->viewport_mode)
+			if (CMZN_SCENEVIEWER_VIEWPORT_RELATIVE==scene_viewer->core_scene_viewer->viewport_mode ||
+				CMZN_SCENEVIEWER_VIEWPORT_DISTORTING_RELATIVE==scene_viewer->core_scene_viewer->viewport_mode)
 			{
 				if (SCENE_VIEWER_CUSTOM != scene_viewer->core_scene_viewer->projection_mode)
 				{
@@ -816,7 +816,7 @@ int Scene_viewer_app_default_input_callback(struct Scene_viewer_app *scene_viewe
 			}
 			else
 			{
-				cmzn_scene_viewer_process_input(scene_viewer->core_scene_viewer, input);
+				cmzn_sceneviewer_process_sceneviewerinput(scene_viewer->core_scene_viewer, input);
 			}
 		} break;
 		default:
@@ -834,7 +834,6 @@ int Scene_viewer_app_default_input_callback(struct Scene_viewer_app *scene_viewe
 
 	return return_code;
 }
-
 
 int Scene_viewer_app_redraw(struct Scene_viewer_app *scene_viewer)
 /*******************************************************************************
@@ -897,7 +896,7 @@ Requests a full redraw immediately.
 			}
 		}
 		Graphics_buffer_app_make_current(scene_viewer->graphics_buffer);
-		return_code = cmzn_scene_viewer_render_scene(scene_viewer->core_scene_viewer);
+		return_code = cmzn_sceneviewer_render_scene(scene_viewer->core_scene_viewer);
 		if (scene_viewer->core_scene_viewer->swap_buffers)
 		{
 			Graphics_buffer_app_swap_buffers(scene_viewer->graphics_buffer);
@@ -985,7 +984,7 @@ extensions can get the updated frame from the backbuffer.
 	{
 		Graphics_buffer_app_make_current(scene_viewer->graphics_buffer);
 		/* always do a full redraw */
-		return_code = cmzn_scene_viewer_render_scene(scene_viewer->core_scene_viewer);
+		return_code = cmzn_sceneviewer_render_scene(scene_viewer->core_scene_viewer);
 	}
 	else
 	{
@@ -1032,7 +1031,7 @@ Updates the scene_viewer.
 			scene_viewer->core_scene_viewer->tumble_angle = 0.0;
 		}
 		Graphics_buffer_app_make_current(scene_viewer->graphics_buffer);
-		cmzn_scene_viewer_render_scene(scene_viewer->core_scene_viewer);
+		cmzn_sceneviewer_render_scene(scene_viewer->core_scene_viewer);
 		if (scene_viewer->core_scene_viewer->swap_buffers)
 		{
 			Graphics_buffer_app_swap_buffers(scene_viewer->graphics_buffer);
@@ -1519,7 +1518,7 @@ scene_viewer.
 		viewport_height = (double)(viewport[3]);
 		switch (input->type)
 		{
-			case CMZN_SCENE_VIEWER_INPUT_BUTTON_PRESS:
+			case CMZN_SCENEVIEWERINPUT_EVENT_BUTTON_PRESS:
 			{
 				interactive_event_type=INTERACTIVE_EVENT_BUTTON_PRESS;
 				centre_x=(double)(input->position_x);
@@ -1529,10 +1528,10 @@ scene_viewer.
 				/* Keep position for automatic tumbling update */
 				scene_viewer->core_scene_viewer->previous_pointer_x = input->position_x;
 				scene_viewer->core_scene_viewer->previous_pointer_y = input->position_y;
-				modifier_state=input->input_modifier;
+				modifier_state = input->modifiers;
 				mouse_event=1;
 			} break;
-			case CMZN_SCENE_VIEWER_INPUT_MOTION_NOTIFY:
+			case CMZN_SCENEVIEWERINPUT_EVENT_MOTION_NOTIFY:
 			{
 				interactive_event_type=INTERACTIVE_EVENT_MOTION_NOTIFY;
 				centre_x=(double)(input->position_x);
@@ -1542,23 +1541,23 @@ scene_viewer.
 				/* Keep position for automatic tumbling update */
 				scene_viewer->core_scene_viewer->previous_pointer_x = input->position_x;
 				scene_viewer->core_scene_viewer->previous_pointer_y = input->position_y;
-				modifier_state=input->input_modifier;
+				modifier_state = input->modifiers;
 				mouse_event=1;
 			} break;
-			case CMZN_SCENE_VIEWER_INPUT_BUTTON_RELEASE:
+			case CMZN_SCENEVIEWERINPUT_EVENT_BUTTON_RELEASE:
 			{
 				interactive_event_type=INTERACTIVE_EVENT_BUTTON_RELEASE;
 				centre_x=(double)(input->position_x);
 				/* flip y as x event has y=0 at top of window, increasing down */
 				centre_y=viewport_height-(double)(input->position_y)-1.0;
 				button_number=input->button_number;
-				modifier_state=input->input_modifier;
+				modifier_state = input->modifiers;
 				mouse_event=1;
 			}
-			case CMZN_SCENE_VIEWER_INPUT_KEY_PRESS:
+			case CMZN_SCENEVIEWERINPUT_EVENT_KEY_PRESS:
 			{
 			} break;
-			case CMZN_SCENE_VIEWER_INPUT_KEY_RELEASE:
+			case CMZN_SCENEVIEWERINPUT_EVENT_KEY_RELEASE:
 			{
 			} break;
 			default:

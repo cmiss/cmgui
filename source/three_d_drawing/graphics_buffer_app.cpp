@@ -457,7 +457,7 @@ public:
 		/* Do nothing, to avoid flashing on MSW */
 	}
 
-	void OnKeyEvent(struct Graphics_buffer_input *input)
+	void OnKeyEvent(cmzn_sceneviewerinput *input)
 	{
 		input->button_number = 0;
 		input->position_x = cursor_x;
@@ -469,7 +469,7 @@ public:
 	void OnKeyUp( wxKeyEvent& event )
 	{
 		struct Graphics_buffer_input input;
-		input.type = CMZN_SCENE_VIEWER_INPUT_KEY_RELEASE;
+		input.type = CMZN_SCENEVIEWERINPUT_EVENT_KEY_RELEASE;
 		key_code = event.GetKeyCode();
 		input.key_code = key_code;
 		int input_modifier = 0;
@@ -485,8 +485,7 @@ public:
 		{
 			input_modifier |= GRAPHICS_BUFFER_INPUT_MODIFIER_ALT;
 		}
-		input.input_modifier = static_cast<enum Graphics_buffer_input_modifier>
-			(input_modifier);
+		input.modifiers = static_cast<enum Graphics_buffer_input_modifier>(input_modifier);
 		OnKeyEvent(&input);
 		event.Skip();
 	}
@@ -494,7 +493,7 @@ public:
 	void OnKeyDown( wxKeyEvent& event )
 	{
 		struct Graphics_buffer_input input;
-		input.type = CMZN_SCENE_VIEWER_INPUT_KEY_PRESS;
+		input.type = CMZN_SCENEVIEWERINPUT_EVENT_KEY_PRESS;
 		key_code = event.GetKeyCode();
 		input.key_code = key_code;
 		int input_modifier = 0;
@@ -510,8 +509,7 @@ public:
 		{
 			input_modifier |= GRAPHICS_BUFFER_INPUT_MODIFIER_ALT;
 		}
-		input.input_modifier = static_cast<enum Graphics_buffer_input_modifier>
-			(input_modifier);
+		input.modifiers = static_cast<enum Graphics_buffer_input_modifier>(input_modifier);
 		OnKeyEvent(&input);
 		event.Skip();
 	}
@@ -521,7 +519,7 @@ public:
 		int input_modifier, return_code = 1;
 		struct Graphics_buffer_input input;
 
-		input.type = CMZN_SCENE_VIEWER_INPUT_INVALID;
+		input.type = CMZN_SCENEVIEWERINPUT_EVENT_INVALID;
 		input.button_number = 0;
 		input.key_code = key_code;
 		cursor_x = input.position_x = event.GetX();
@@ -547,7 +545,7 @@ public:
 
 		if (event.Dragging())
 		{
-			input.type = CMZN_SCENE_VIEWER_INPUT_MOTION_NOTIFY;
+			input.type = CMZN_SCENEVIEWERINPUT_EVENT_MOTION_NOTIFY;
 			if (event.LeftIsDown())
 			{
 				input_modifier |= GRAPHICS_BUFFER_INPUT_MODIFIER_BUTTON1;
@@ -560,7 +558,7 @@ public:
 				input.key_code = 0;
 				this->SetFocus();
 			}
-			input.type = CMZN_SCENE_VIEWER_INPUT_BUTTON_PRESS;
+			input.type = CMZN_SCENEVIEWERINPUT_EVENT_BUTTON_PRESS;
 			switch (event.GetButton())
 			{
 				case wxMOUSE_BTN_LEFT:
@@ -586,7 +584,7 @@ public:
 		}
 		else if (event.ButtonUp())
 		{
-			input.type = CMZN_SCENE_VIEWER_INPUT_BUTTON_RELEASE;
+			input.type = CMZN_SCENEVIEWERINPUT_EVENT_BUTTON_RELEASE;
 			switch (event.GetButton())
 			{
 				case wxMOUSE_BTN_LEFT:
@@ -616,8 +614,7 @@ public:
 			return_code = 0;
 		}
 
-		input.input_modifier = static_cast<enum Graphics_buffer_input_modifier>
-			(input_modifier);
+		input.modifiers = static_cast<enum Graphics_buffer_input_modifier>(input_modifier);
 
 		if (return_code)
 		{

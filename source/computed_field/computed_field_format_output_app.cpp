@@ -117,11 +117,6 @@ already) and allows its contents to be modified.
 
 int Computed_field_register_types_format_output(
 	struct Computed_field_package *computed_field_package)
-/*******************************************************************************
-LAST MODIFIED : 25 August 2006
-
-DESCRIPTION :
-==============================================================================*/
 {
 	int return_code;
 

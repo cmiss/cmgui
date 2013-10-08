@@ -294,21 +294,21 @@ int cmzn_context_run_main_loop(cmzn_context_app *context)
 	return return_code;
 }
 
-//-- cmzn_scene_viewer_module_id cmzn_context_app_get_default_scene_viewer_module(
+//-- cmzn_sceneviewermodule_id cmzn_context_app_get_default_sceneviewermodule(
 //-- 	cmzn_context_app *context)
 //-- {
-//-- 	cmzn_scene_viewer_module *scene_viewer_module = NULL;
-//-- 	if (context && context->UI_module && context->UI_module->scene_viewer_module)
+//-- 	cmzn_sceneviewermodule *sceneviewermodule = NULL;
+//-- 	if (context && context->UI_module && context->UI_module->sceneviewermodule)
 //-- 	{
-//-- 		scene_viewer_module = context->UI_module->scene_viewer_module;
+//-- 		sceneviewermodule = context->UI_module->sceneviewermodule;
 //-- 	}
 //-- 	else
 //-- 	{
 //-- 		display_message(ERROR_MESSAGE,
-//-- 			"cmzn_context_get_default_scene_viewer_module.  "
+//-- 			"cmzn_context_get_default_sceneviewermodule.  "
 //-- 			"Missing context or user interface");
 //-- 	}
-//-- 	return scene_viewer_module;
+//-- 	return sceneviewermodule;
 //-- }
 
 #if defined (WX_USER_INTERFACE) || (!defined (WIN32_USER_INTERFACE) && !defined (_MSC_VER))

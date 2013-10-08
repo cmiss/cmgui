@@ -143,7 +143,7 @@ Contains information for a graphics window.
 	int manager_change_status;
 
 	struct Graphics_buffer_app_package *graphics_buffer_package;
-	cmzn_scene_viewer_module_id scene_viewer_module;
+	cmzn_sceneviewermodule_id sceneviewermodule;
 #if defined (GTK_USER_INTERFACE)
 	GtkWidget *shell_window;
 #if GTK_MAJOR_VERSION >= 2
@@ -194,7 +194,7 @@ Contains information for a graphics window.
 	int antialias_mode;
 	int perturb_lines;
 	enum Scene_viewer_input_mode input_mode;
-	enum Scene_viewer_blending_mode blending_mode;
+	enum cmzn_sceneviewer_blending_mode blending_mode;
 	double depth_of_field;
 	double focal_depth;
 	/*???DB.  Do these belong here ? */
@@ -1189,7 +1189,7 @@ Callback from wxChooser<Scene> when choice is made.
 			{
 				cmzn_scene_destroy(&(graphics_window->scene));
 				graphics_window->scene = cmzn_scene_access(scene);
-				cmzn_scene_viewer_set_scene(scene_viewer->core_scene_viewer,scene);
+				cmzn_sceneviewer_set_scene(scene_viewer->core_scene_viewer,scene);
 				Graphics_window_update_now(graphics_window);
 			}
 		}
@@ -1222,7 +1222,7 @@ Callback from wxChooser<Scene> when choice is made.
 			scene_viewer=graphics_window->scene_viewer_array[pane_no];
 			if (filter)
 			{
-				cmzn_scene_viewer_set_scenefilter(scene_viewer->core_scene_viewer,filter);
+				cmzn_sceneviewer_set_scenefilter(scene_viewer->core_scene_viewer,filter);
 				Graphics_window_update_now(graphics_window);
 			}
 		}
@@ -1969,7 +1969,7 @@ etc.) in all panes of the <window>.
 				 }
 				 cmzn_scenefilter_id filter = 0;
 				 if (scene_viewer && scene_viewer->core_scene_viewer)
-					 filter = cmzn_scene_viewer_get_scenefilter(scene_viewer->core_scene_viewer);
+					 filter = cmzn_sceneviewer_get_scenefilter(scene_viewer->core_scene_viewer);
 				light_to_add=(struct Light *)NULL;
 				light_to_remove=(struct Light *)NULL;
 				rotate_command_data.set=0;
@@ -2052,7 +2052,7 @@ etc.) in all panes of the <window>.
 							}
 							if (scene)
 							{
-								cmzn_scene_viewer_set_scene(scene_viewer->core_scene_viewer,scene);
+								cmzn_sceneviewer_set_scene(scene_viewer->core_scene_viewer,scene);
 								cmzn_region_id region = cmzn_scene_get_region(scene);
 #if defined (WX_USER_INTERFACE)
 								window->wx_graphics_window->
@@ -2061,7 +2061,7 @@ etc.) in all panes of the <window>.
 							}
 							if (filter)
 							{
-								cmzn_scene_viewer_set_scenefilter(scene_viewer->core_scene_viewer,filter);
+								cmzn_sceneviewer_set_scenefilter(scene_viewer->core_scene_viewer,filter);
 								window->wx_graphics_window->
 									graphics_window_set_filter_chooser_selected_item(filter);
 							}
@@ -2401,7 +2401,7 @@ Sets if the <graphics_window> perturbs lines or not, using <perturb_lines>
 } /* Graphics_window_set_perturb_lines */
 
 int Graphics_window_set_blending_mode(struct Graphics_window *graphics_window,
-	enum Scene_viewer_blending_mode blending_mode)
+	enum cmzn_sceneviewer_blending_mode blending_mode)
 /*******************************************************************************
 LAST MODIFIED : 16 April 2003
 
@@ -2418,7 +2418,7 @@ Sets the <blending_mode> used by the <graphics_window>.
 		for (pane_no=0;(pane_no<graphics_window->number_of_scene_viewers)&&return_code;
 			pane_no++)
 		{
-			return_code=Scene_viewer_set_blending_mode(
+			return_code = cmzn_sceneviewer_set_blending_mode(
 				graphics_window->scene_viewer_array[pane_no]->core_scene_viewer,blending_mode);
 		}
 		if (return_code)
@@ -2448,8 +2448,8 @@ Parser commands for setting simple parameters applicable to the whole <window>.
 	char fast_transparency_flag,slow_transparency_flag;
 	const char **tool_names,*tool_name,*blending_mode_string,**valid_strings;
 	double depth_of_field, focal_depth, std_view_angle;
-	enum Scene_viewer_blending_mode blending_mode;
-	enum cmzn_scene_viewer_transparency_mode transparency_mode;
+	enum cmzn_sceneviewer_blending_mode blending_mode;
+	enum cmzn_sceneviewer_transparency_mode transparency_mode;
 	int antialias_mode,current_pane,i,layered_transparency,number_of_tools,
 		number_of_valid_strings,order_independent_transparency,pane_no,
 		perturb_lines,redraw,return_code,transparency_layers = 0;
@@ -2496,7 +2496,7 @@ Parser commands for setting simple parameters applicable to the whole <window>.
 					interactive_tool=(struct Interactive_tool *)NULL;
 					antialias_mode=0;
 					perturb_lines=0;
-					blending_mode=SCENE_VIEWER_BLEND_NORMAL;
+					blending_mode = CMZN_SCENEVIEWER_BLENDING_NORMAL;
 				}
 				fast_transparency_flag=0;
 				slow_transparency_flag=0;
@@ -2515,10 +2515,10 @@ Parser commands for setting simple parameters applicable to the whole <window>.
 				Option_table_add_suboption_table(option_table,antialias_option_table);
 				/* blending mode */
 				blending_mode_string =
-					ENUMERATOR_STRING(Scene_viewer_blending_mode)(blending_mode);
-				valid_strings = ENUMERATOR_GET_VALID_STRINGS(Scene_viewer_blending_mode)(
+					ENUMERATOR_STRING(cmzn_sceneviewer_blending_mode)(blending_mode);
+				valid_strings = ENUMERATOR_GET_VALID_STRINGS(cmzn_sceneviewer_blending_mode)(
 					&number_of_valid_strings,
-					(ENUMERATOR_CONDITIONAL_FUNCTION(Scene_viewer_blending_mode) *)NULL,
+					(ENUMERATOR_CONDITIONAL_FUNCTION(cmzn_sceneviewer_blending_mode) *)NULL,
 					(void *)NULL);
 				Option_table_add_enumerator(option_table, number_of_valid_strings,
 					valid_strings, &blending_mode_string);
@@ -2596,7 +2596,7 @@ Parser commands for setting simple parameters applicable to the whole <window>.
 					}
 					if (blending_mode_string)
 					{
-						STRING_TO_ENUMERATOR(Scene_viewer_blending_mode)(
+						STRING_TO_ENUMERATOR(cmzn_sceneviewer_blending_mode)(
 							blending_mode_string, &blending_mode);
 					}
 					if (return_code && graphics_window)
@@ -2695,7 +2695,7 @@ Parser commands for setting simple parameters applicable to the whole <window>.
 						{
 							if (fast_transparency_flag)
 							{
-								transparency_mode=CMZN_SCENE_VIEWER_TRANSPARENCY_FAST;
+								transparency_mode=CMZN_SCENEVIEWER_TRANSPARENCY_FAST;
 							}
 							else if (layered_transparency)
 							{
@@ -2705,22 +2705,22 @@ Parser commands for setting simple parameters applicable to the whole <window>.
 							}
 							else if (order_independent_transparency)
 							{
-								transparency_mode=CMZN_SCENE_VIEWER_TRANSPARENCY_ORDER_INDEPENDENT;
+								transparency_mode=CMZN_SCENEVIEWER_TRANSPARENCY_ORDER_INDEPENDENT;
 								transparency_layers = order_independent_transparency;
 							}
 							else
 							{
-								transparency_mode=CMZN_SCENE_VIEWER_TRANSPARENCY_SLOW;
+								transparency_mode=CMZN_SCENEVIEWER_TRANSPARENCY_SLOW;
 							}
 							for (pane_no=0;pane_no<graphics_window->number_of_scene_viewers;
 								pane_no++)
 							{
-								cmzn_scene_viewer_set_transparency_mode(
+								cmzn_sceneviewer_set_transparency_mode(
 									graphics_window->scene_viewer_array[pane_no]->core_scene_viewer,
 									transparency_mode);
 								if (order_independent_transparency)
 								{
-									cmzn_scene_viewer_set_transparency_layers(
+									cmzn_sceneviewer_set_transparency_layers(
 										graphics_window->scene_viewer_array[pane_no]->core_scene_viewer,
 										transparency_layers);
 								}
@@ -2830,13 +2830,13 @@ view angle, interest point etc.
 			if ((window=(struct Graphics_window *)window_void)&&
 				 (window->scene_viewer_array != NULL) &&
 				 (scene_viewer=window->scene_viewer_array[window->current_pane])&&
-				 cmzn_scene_viewer_get_lookat_parameters(scene_viewer->core_scene_viewer,
+				 cmzn_sceneviewer_get_lookat_parameters(scene_viewer->core_scene_viewer,
 					&(eye[0]),&(eye[1]),&(eye[2]),
 					&(lookat[0]),&(lookat[1]),&(lookat[2]),&(up[0]),&(up[1]),&(up[2]))&&
 				Scene_viewer_get_viewing_volume(scene_viewer->core_scene_viewer,&left,&right,
-					&bottom,&top,&near_plane,&far_plane)&&
-				Scene_viewer_get_view_angle(scene_viewer->core_scene_viewer,&view_angle))
+					&bottom,&top,&near_plane,&far_plane))
 			{
+				view_angle = cmzn_sceneviewer_get_view_angle(scene_viewer->core_scene_viewer);
 				view_angle *= (180.0/PI);
 			}
 			else
@@ -2984,14 +2984,14 @@ view angle, interest point etc.
 						}
 						else
 						{
-							cmzn_scene_viewer_set_lookat_parameters_non_skew(scene_viewer->core_scene_viewer,
+							cmzn_sceneviewer_set_lookat_parameters_non_skew(scene_viewer->core_scene_viewer,
 								eye[0],eye[1],eye[2],lookat[0],lookat[1],lookat[2],
 								up[0],up[1],up[2]);
 						}
 						/* must set view angle after lookat parameters */
 						if ((0.0<view_angle)&&(view_angle<180.0))
 						{
-							Scene_viewer_set_view_angle(scene_viewer->core_scene_viewer,view_angle*(PI/180.0));
+							cmzn_sceneviewer_set_view_angle(scene_viewer->core_scene_viewer, view_angle*(PI/180.0));
 						}
 						else
 						{
@@ -3000,18 +3000,18 @@ view angle, interest point etc.
 						}
 						if (absolute_viewport_flag)
 						{
-							Scene_viewer_set_viewport_mode(scene_viewer->core_scene_viewer,
-								SCENE_VIEWER_ABSOLUTE_VIEWPORT);
+							cmzn_sceneviewer_set_viewport_mode(scene_viewer->core_scene_viewer,
+								CMZN_SCENEVIEWER_VIEWPORT_ABSOLUTE);
 						}
 						if (relative_viewport_flag)
 						{
-							Scene_viewer_set_viewport_mode(scene_viewer->core_scene_viewer,
-								SCENE_VIEWER_RELATIVE_VIEWPORT);
+							cmzn_sceneviewer_set_viewport_mode(scene_viewer->core_scene_viewer,
+								CMZN_SCENEVIEWER_VIEWPORT_RELATIVE);
 						}
 						if (distorting_relative_viewport_flag)
 						{
-							Scene_viewer_set_viewport_mode(scene_viewer->core_scene_viewer,
-								SCENE_VIEWER_DISTORTING_RELATIVE_VIEWPORT);
+							cmzn_sceneviewer_set_viewport_mode(scene_viewer->core_scene_viewer,
+								CMZN_SCENEVIEWER_VIEWPORT_DISTORTING_RELATIVE);
 						}
 					}
 					/*???RC should have checks on whether you can set these for the
@@ -3158,7 +3158,7 @@ struct Graphics_window *CREATE(Graphics_window)(const char *name,
 	struct Time_keeper_app *default_time_keeper_app,
 	struct User_interface *user_interface,
 	cmzn_region_id root_region,
-	cmzn_scene_viewer_module_id scene_viewer_module)
+	cmzn_sceneviewermodule_id sceneviewermodule)
 /*******************************************************************************
 LAST MODIFIED : 6 May 2004
 
@@ -3192,7 +3192,7 @@ it.
 		(GRAPHICS_WINDOW_MONO==stereo_mode)||
 		(GRAPHICS_WINDOW_STEREO==stereo_mode))&&
 		filter_module&&scene&&interactive_tool_manager&&
-		graphics_buffer_package&&user_interface && root_region && scene_viewer_module)
+		graphics_buffer_package&&user_interface && root_region && sceneviewermodule)
 	{
 		/* Try to allocate space for the window structure */
 		if (ALLOCATE(window,struct Graphics_window,1)&&
@@ -3201,7 +3201,7 @@ it.
 			strcpy((char *)window->name,name);
 			/* initialize the fields of the window structure */
 			window->access_count=1;
-			window->scene_viewer_module = cmzn_scene_viewer_module_access(scene_viewer_module);
+			window->sceneviewermodule = cmzn_sceneviewermodule_access(sceneviewermodule);
 			window->eye_spacing=0.25;
 			window->std_view_angle=40.0;
 			window->root_region = cmzn_region_access(root_region);
@@ -3229,7 +3229,7 @@ it.
 			window->current_pane=0;
 			window->antialias_mode=0;
 			window->perturb_lines=0;
-			window->blending_mode=SCENE_VIEWER_BLEND_NORMAL;
+			window->blending_mode = CMZN_SCENEVIEWER_BLENDING_NORMAL;
 			window->depth_of_field=0.0;
 			window->focal_depth=0.0;
 			/* the input_mode set here is changed below */
@@ -3656,7 +3656,7 @@ it.
 							 cmzn_scenefilter_id filter = cmzn_scenefiltermodule_get_default_scenefilter(
 								 window->filter_module);
 							 window->scene_viewer_array[pane_no] = CREATE(Scene_viewer_app)(graphics_buffer,
-								window->scene_viewer_module, filter, window->scene, user_interface);
+								window->sceneviewermodule, filter, window->scene, user_interface);
 							 cmzn_scenefilter_destroy(&filter);
 							 if (window->scene_viewer_array[pane_no])
 							 {
@@ -3689,7 +3689,7 @@ it.
 										 window->scene_viewer_array[pane_no]->core_scene_viewer, 1.5);
 									Scene_viewer_set_zoom_rate(
 										 window->scene_viewer_array[pane_no]->core_scene_viewer, 2.0);
-									if (cmzn_scene_viewer_get_lookat_parameters(
+									if (cmzn_sceneviewer_get_lookat_parameters(
 												 window->scene_viewer_array[0]->core_scene_viewer,
 												 &(eye[0]),&(eye[1]),&(eye[2]),
 												 &(lookat[0]),&(lookat[1]),&(lookat[2]),
@@ -3969,7 +3969,7 @@ Graphics_window_destroy_CB.
 		{
 		 cmzn_region_destroy(&window->root_region);
 		}
-		cmzn_scene_viewer_module_destroy(&window->scene_viewer_module);
+		cmzn_sceneviewermodule_destroy(&window->sceneviewermodule);
 #if defined (WX_USER_INTERFACE)
 		if (window->wx_graphics_window)
 		{
@@ -4396,7 +4396,7 @@ Sets the layout mode in effect on the <window>.
 	enum Scene_viewer_projection_mode projection_mode;
 	int new_layout,new_number_of_panes,pane_no,return_code;
 #if defined (WX_USER_INTERFACE)
-	enum cmzn_scene_viewer_transparency_mode transparency_mode;
+	enum cmzn_sceneviewer_transparency_mode transparency_mode;
 	int perturb_lines;
 	struct Colour background_colour;
 	struct Graphics_buffer_app *graphics_buffer;
@@ -4418,7 +4418,7 @@ Sets the layout mode in effect on the <window>.
 		{
 #if defined (WX_USER_INTERFACE)
 			first_scene_viewer = window->scene_viewer_array[0];
-			cmzn_scene_viewer_get_lookat_parameters(first_scene_viewer->core_scene_viewer,
+			cmzn_sceneviewer_get_lookat_parameters(first_scene_viewer->core_scene_viewer,
 				&(eye[0]),&(eye[1]),&(eye[2]),
 				&(lookat[0]),&(lookat[1]),&(lookat[2]),&(up[0]),&(up[1]),&(up[2]));
 			Scene_viewer_get_viewing_volume(first_scene_viewer->core_scene_viewer,
@@ -4464,9 +4464,9 @@ Sets the layout mode in effect on the <window>.
 					if (graphics_buffer)
 					{
 						Scene_viewer_get_background_colour(first_scene_viewer->core_scene_viewer,&background_colour);
-						cmzn_scenefilter_id filter = cmzn_scene_viewer_get_scenefilter(first_scene_viewer->core_scene_viewer);
+						cmzn_scenefilter_id filter = cmzn_sceneviewer_get_scenefilter(first_scene_viewer->core_scene_viewer);
 						window->scene_viewer_array[pane_no]=
-							CREATE(Scene_viewer_app)(graphics_buffer,	window->scene_viewer_module,
+							CREATE(Scene_viewer_app)(graphics_buffer,	window->sceneviewermodule,
 								filter,window->scene, window->user_interface);
 						cmzn_scenefilter_destroy(&filter);
 						if (window->scene_viewer_array[pane_no])
@@ -4508,12 +4508,12 @@ Sets the layout mode in effect on the <window>.
 								perturb_lines);
 							Scene_viewer_set_light_model(window->scene_viewer_array[pane_no]->core_scene_viewer,
 								Scene_viewer_get_light_model(first_scene_viewer->core_scene_viewer));
-							transparency_layers = cmzn_scene_viewer_get_transparency_layers(first_scene_viewer->core_scene_viewer);
-							cmzn_scene_viewer_set_transparency_layers(window->scene_viewer_array[pane_no]->core_scene_viewer,
+							transparency_layers = cmzn_sceneviewer_get_transparency_layers(first_scene_viewer->core_scene_viewer);
+							cmzn_sceneviewer_set_transparency_layers(window->scene_viewer_array[pane_no]->core_scene_viewer,
 								transparency_layers);
-							transparency_mode = cmzn_scene_viewer_get_transparency_mode(
+							transparency_mode = cmzn_sceneviewer_get_transparency_mode(
 								first_scene_viewer->core_scene_viewer);
-							cmzn_scene_viewer_set_transparency_mode(window->scene_viewer_array[pane_no]->core_scene_viewer,
+							cmzn_sceneviewer_set_transparency_mode(window->scene_viewer_array[pane_no]->core_scene_viewer,
 								transparency_mode);
 							Scene_viewer_set_antialias_mode(
 								window->scene_viewer_array[pane_no]->core_scene_viewer,window->antialias_mode);
@@ -4633,7 +4633,7 @@ Sets the layout mode in effect on the <window>.
 						window->default_zoom_rate);
 				}
 				/* set the plan view in pane 0 */
-				if (cmzn_scene_viewer_get_lookat_parameters(window->scene_viewer_array[0]->core_scene_viewer,
+				if (cmzn_sceneviewer_get_lookat_parameters(window->scene_viewer_array[0]->core_scene_viewer,
 					&(eye[0]),&(eye[1]),&(eye[2]),
 					&(lookat[0]),&(lookat[1]),&(lookat[2]),&(up[0]),&(up[1]),&(up[2]))&&
 					axis_number_to_axis_vector(window->ortho_up_axis,up)&&
@@ -4688,7 +4688,7 @@ Sets the layout mode in effect on the <window>.
 				}
 				/* four views, 3 tied together as front, side and plan views */
 				/* set the plan view in pane 1 */
-				if (cmzn_scene_viewer_get_lookat_parameters(window->scene_viewer_array[1]->core_scene_viewer,
+				if (cmzn_sceneviewer_get_lookat_parameters(window->scene_viewer_array[1]->core_scene_viewer,
 						&(eye[0]),&(eye[1]),&(eye[2]),
 						&(lookat[0]),&(lookat[1]),&(lookat[2]),&(up[0]),&(up[1]),&(up[2]))&&
 					axis_number_to_axis_vector(window->ortho_up_axis,up)&&
@@ -4753,7 +4753,7 @@ Sets the layout mode in effect on the <window>.
 					(GRAPHICS_WINDOW_LAYOUT_FRONT_SIDE==layout_mode))
 				{
 					/* set the front view in pane 0 */
-					if (cmzn_scene_viewer_get_lookat_parameters(window->scene_viewer_array[0]->core_scene_viewer,
+					if (cmzn_sceneviewer_get_lookat_parameters(window->scene_viewer_array[0]->core_scene_viewer,
 						&(eye[0]),&(eye[1]),&(eye[2]),
 						&(lookat[0]),&(lookat[1]),&(lookat[2]),&(up[0]),&(up[1]),&(up[2]))&&
 						axis_number_to_axis_vector(window->ortho_up_axis,up)&&
@@ -5925,7 +5925,7 @@ with commands for setting these.
 	if (window && window->scene_viewer_array)
 	{
 		return_code = 1;
-		cmzn_scenefilter_id filter = cmzn_scene_viewer_get_scenefilter((window->scene_viewer_array[0]->core_scene_viewer));
+		cmzn_scenefilter_id filter = cmzn_sceneviewer_get_scenefilter((window->scene_viewer_array[0]->core_scene_viewer));
 		cmzn_scene_get_global_graphics_range(window->scene, filter,
 			&centre_x, &centre_y, &centre_z, &size_x, &size_y, &size_z);
 		cmzn_scenefilter_destroy(&filter);
@@ -6002,7 +6002,7 @@ current layout_mode, the function adjusts the view in all the panes tied to
 			Scene_viewer_get_viewing_volume(window->scene_viewer_array[pane_no]->core_scene_viewer,
 				&left,&right,&bottom,&top,&(near_plane[pane_no]),&(far_plane[pane_no]));
 		}
-		return_code=(cmzn_scene_viewer_get_lookat_parameters(
+		return_code=(cmzn_sceneviewer_get_lookat_parameters(
 			window->scene_viewer_array[changed_pane]->core_scene_viewer,&(eye[0]),&(eye[1]),&(eye[2]),
 			&(lookat[0]),&(lookat[1]),&(lookat[2]),&(up[0]),&(up[1]),&(up[2]))&&
 			Scene_viewer_get_viewing_volume(window->scene_viewer_array[changed_pane]->core_scene_viewer,
@@ -6395,11 +6395,10 @@ Writes the properties of the <window> to the command window.
 		texture_height, texture_width, top,
 		up[3], view[3], view_angle, viewport_left, viewport_top,
 		viewport_pixels_per_unit_x, viewport_pixels_per_unit_y;
-	enum Scene_viewer_blending_mode blending_mode;
 	enum Scene_viewer_buffering_mode buffering_mode;
 	enum Scene_viewer_projection_mode projection_mode;
-	enum cmzn_scene_viewer_transparency_mode transparency_mode;
-	enum Scene_viewer_viewport_mode viewport_mode;
+	enum cmzn_sceneviewer_transparency_mode transparency_mode;
+	enum cmzn_sceneviewer_viewport_mode viewport_mode;
 	int accumulation_buffer_depth,colour_buffer_depth,depth_buffer_depth,
 		height,pane_no,perturb_lines,return_code,width,
 		undistort_on,visual_id;
@@ -6427,7 +6426,7 @@ Writes the properties of the <window> to the command window.
 			display_message(INFORMATION_MESSAGE,"  scene: %s\n",name);
 			DEALLOCATE(name);
 		}
-		cmzn_scenefilter_id filter = cmzn_scene_viewer_get_scenefilter(window->scene_viewer_array[0]->core_scene_viewer);
+		cmzn_scenefilter_id filter = cmzn_sceneviewer_get_scenefilter(window->scene_viewer_array[0]->core_scene_viewer);
 		name = cmzn_scenefilter_get_name(filter);
 		if (name)
 		{
@@ -6536,7 +6535,7 @@ Writes the properties of the <window> to the command window.
 			else
 			{
 				/* parallel/perspective: write eye and interest points and up-vector */
-				cmzn_scene_viewer_get_lookat_parameters(scene_viewer,
+				cmzn_sceneviewer_get_lookat_parameters(scene_viewer,
 					&(eye[0]),&(eye[1]),&(eye[2]),&(lookat[0]),&(lookat[1]),&(lookat[2]),
 					&(up[0]),&(up[1]),&(up[2]));
 				view[0] = lookat[0] - eye[0];
@@ -6544,7 +6543,7 @@ Writes the properties of the <window> to the command window.
 				view[2] = lookat[2] - eye[2];
 				Scene_viewer_get_viewing_volume(scene_viewer,&left,&right,
 					&bottom,&top,&near_plane,&far_plane);
-				Scene_viewer_get_view_angle(scene_viewer,&view_angle);
+				view_angle = cmzn_sceneviewer_get_view_angle(scene_viewer);
 				Scene_viewer_get_horizontal_view_angle(scene_viewer,
 					&horizontal_view_angle);
 				display_message(INFORMATION_MESSAGE,
@@ -6581,9 +6580,9 @@ Writes the properties of the <window> to the command window.
 					}
 				}
 			}
-			viewport_mode=Scene_viewer_get_viewport_mode(scene_viewer);
+			viewport_mode = cmzn_sceneviewer_get_viewport_mode(scene_viewer);
 			display_message(INFORMATION_MESSAGE,"    %s\n",
-				Scene_viewer_viewport_mode_string(viewport_mode));
+				cmzn_sceneviewer_viewport_mode_string(viewport_mode));
 			Scene_viewer_get_NDC_info(scene_viewer,
 				&NDC_left,&NDC_top,&NDC_width,&NDC_height);
 			display_message(INFORMATION_MESSAGE,
@@ -6607,13 +6606,13 @@ Writes the properties of the <window> to the command window.
 			display_message(INFORMATION_MESSAGE,"  Interactive tool: %s\n",name);
 			DEALLOCATE(name);
 		}
-		transparency_mode = cmzn_scene_viewer_get_transparency_mode(scene_viewer);
+		transparency_mode = cmzn_sceneviewer_get_transparency_mode(scene_viewer);
 		display_message(INFORMATION_MESSAGE,
-			"  Transparency mode: %s\n",cmzn_scene_viewer_transparency_mode_string(
+			"  Transparency mode: %s\n",cmzn_sceneviewer_transparency_mode_string(
 				transparency_mode));
-		if (transparency_mode == CMZN_SCENE_VIEWER_TRANSPARENCY_ORDER_INDEPENDENT)
+		if (transparency_mode == CMZN_SCENEVIEWER_TRANSPARENCY_ORDER_INDEPENDENT)
 		{
-			transparency_layers = cmzn_scene_viewer_get_transparency_layers(scene_viewer);
+			transparency_layers = cmzn_sceneviewer_get_transparency_layers(scene_viewer);
 			display_message(INFORMATION_MESSAGE,"    transparency_layers: %d\n",
 				transparency_layers);
 		}
@@ -6650,9 +6649,10 @@ Writes the properties of the <window> to the command window.
 		{
 			display_message(INFORMATION_MESSAGE,"  infinite depth of field\n");
 		}
-		Scene_viewer_get_blending_mode(window->scene_viewer_array[0]->core_scene_viewer,&blending_mode);
+		enum cmzn_sceneviewer_blending_mode blending_mode =
+			cmzn_sceneviewer_get_blending_mode(window->scene_viewer_array[0]->core_scene_viewer);
 		display_message(INFORMATION_MESSAGE,"  blending_mode: %s\n",
-			ENUMERATOR_STRING(Scene_viewer_blending_mode)(blending_mode));
+			ENUMERATOR_STRING(cmzn_sceneviewer_blending_mode)(blending_mode));
 		/* OpenGL information */
 		if (Scene_viewer_get_opengl_information(window->scene_viewer_array[0],
 			&opengl_version, &opengl_vendor, &opengl_extensions, &visual_id,
@@ -6698,11 +6698,10 @@ and establishing the views in it to the command window to a com file.
 		NDC_height,NDC_left,NDC_top,NDC_width,near_plane,projection_matrix[16],right,
 		texture_height,texture_width,top,up[3],view_angle,viewport_left,
 		viewport_top,viewport_pixels_per_unit_x,viewport_pixels_per_unit_y;
-	enum Scene_viewer_blending_mode blending_mode;
 	enum Scene_viewer_buffering_mode buffering_mode;
 	enum Scene_viewer_projection_mode projection_mode;
-	enum cmzn_scene_viewer_transparency_mode transparency_mode;
-	enum Scene_viewer_viewport_mode viewport_mode;
+	enum cmzn_sceneviewer_transparency_mode transparency_mode;
+	enum cmzn_sceneviewer_viewport_mode viewport_mode;
 	int height,i,pane_no,perturb_lines,return_code,width,undistort_on;
 	unsigned int antialias, transparency_layers;
 	struct Colour colour;
@@ -6739,7 +6738,7 @@ and establishing the views in it to the command window to a com file.
 			process_message->process_command(INFORMATION_MESSAGE," scene %s",name);
 			DEALLOCATE(name);
 		}
-		cmzn_scenefilter_id filter = cmzn_scene_viewer_get_scenefilter(window->scene_viewer_array[0]->core_scene_viewer);
+		cmzn_scenefilter_id filter = cmzn_sceneviewer_get_scenefilter(window->scene_viewer_array[0]->core_scene_viewer);
 		name = cmzn_scenefilter_get_name(filter);
 		if (name)
 		{
@@ -6836,12 +6835,12 @@ and establishing the views in it to the command window to a com file.
 			else
 			{
 				/* parallel/perspective: write eye and interest points and up-vector */
-				cmzn_scene_viewer_get_lookat_parameters(scene_viewer,
+				cmzn_sceneviewer_get_lookat_parameters(scene_viewer,
 					&(eye[0]),&(eye[1]),&(eye[2]),&(lookat[0]),&(lookat[1]),&(lookat[2]),
 					&(up[0]),&(up[1]),&(up[2]));
 				Scene_viewer_get_viewing_volume(scene_viewer,&left,&right,
 					&bottom,&top,&near_plane,&far_plane);
-				Scene_viewer_get_view_angle(scene_viewer,&view_angle);
+				view_angle = cmzn_sceneviewer_get_view_angle(scene_viewer);
 				process_message->process_command(INFORMATION_MESSAGE,
 					" eye_point %g %g %g",eye[0],eye[1],eye[2]);
 				process_message->process_command(INFORMATION_MESSAGE,
@@ -6863,9 +6862,9 @@ and establishing the views in it to the command window to a com file.
 					process_message->process_command(INFORMATION_MESSAGE," allow_skew");
 				}
 			}
-			viewport_mode=Scene_viewer_get_viewport_mode(scene_viewer);
+			viewport_mode = cmzn_sceneviewer_get_viewport_mode(scene_viewer);
 			process_message->process_command(INFORMATION_MESSAGE," %s",
-				Scene_viewer_viewport_mode_string(viewport_mode));
+				cmzn_sceneviewer_viewport_mode_string(viewport_mode));
 
 
 			Scene_viewer_get_NDC_info(scene_viewer,
@@ -6921,17 +6920,18 @@ and establishing the views in it to the command window to a com file.
 		{
 			process_message->process_command(INFORMATION_MESSAGE," depth_of_field 0.0");
 		}
-		transparency_mode = cmzn_scene_viewer_get_transparency_mode(scene_viewer);
+		transparency_mode = cmzn_sceneviewer_get_transparency_mode(scene_viewer);
 		process_message->process_command(INFORMATION_MESSAGE," %s",
-			cmzn_scene_viewer_transparency_mode_string(transparency_mode));
-		if (transparency_mode == CMZN_SCENE_VIEWER_TRANSPARENCY_ORDER_INDEPENDENT)
+			cmzn_sceneviewer_transparency_mode_string(transparency_mode));
+		if (transparency_mode == CMZN_SCENEVIEWER_TRANSPARENCY_ORDER_INDEPENDENT)
 		{
-			transparency_layers = cmzn_scene_viewer_get_transparency_layers(scene_viewer);
+			transparency_layers = cmzn_sceneviewer_get_transparency_layers(scene_viewer);
 			process_message->process_command(INFORMATION_MESSAGE," %d",transparency_layers);
 		}
-		Scene_viewer_get_blending_mode(window->scene_viewer_array[0]->core_scene_viewer,&blending_mode);
+		enum cmzn_sceneviewer_blending_mode blending_mode =
+			cmzn_sceneviewer_get_blending_mode(window->scene_viewer_array[0]->core_scene_viewer);
 		process_message->process_command(INFORMATION_MESSAGE," %s",
-			ENUMERATOR_STRING(Scene_viewer_blending_mode)(blending_mode));
+			ENUMERATOR_STRING(cmzn_sceneviewer_blending_mode)(blending_mode));
 		process_message->process_command(INFORMATION_MESSAGE,";\n");
 		DEALLOCATE(prefix);
 		return_code=1;

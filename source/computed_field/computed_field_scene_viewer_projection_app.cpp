@@ -63,7 +63,7 @@ struct Computed_field *Computed_field_create_scene_viewer_projection_with_window
 	Computed_field *field = NULL;
 	if (scene_viewer)
 	{
-		field = cmzn_fieldmodule_create_field_scene_viewer_projection(field_module, scene_viewer, from_coordinate_system, to_coordinate_system);
+		field = cmzn_fieldmodule_create_field_sceneviewer_projection(field_module, scene_viewer, from_coordinate_system, to_coordinate_system);
 		cmzn_field_projection_set_window_name(field, graphics_window_name);
 		cmzn_field_projection_set_pane_number(field, pane_number);
 	}
@@ -249,21 +249,14 @@ already) and allows its contents to be modified.
 	return (return_code);
 } /* define_Computed_field_type_scene_viewer_projection */
 
-int Computed_field_register_types_scene_viewer_projection(
+int Computed_field_register_types_sceneviewer_projection(
 	struct Computed_field_package *computed_field_package,
 	struct MANAGER(Graphics_window) *graphics_window_manager)
-/*******************************************************************************
-LAST MODIFIED : 25 August 2006
-
-DESCRIPTION :
-==============================================================================*/
 {
 	int return_code;
 	Computed_field_scene_viewer_projection_package
 		*computed_field_scene_viewer_projection_package =
 		new Computed_field_scene_viewer_projection_package;
-
-	ENTER(Computed_field_register_type_scene_viewer_projection);
 	if (computed_field_package && graphics_window_manager)
 	{
 		computed_field_scene_viewer_projection_package->graphics_window_manager =
@@ -275,12 +268,8 @@ DESCRIPTION :
 	}
 	else
 	{
-		display_message(ERROR_MESSAGE,
-			"Computed_field_register_type_scene_viewer_projection.  Invalid argument(s)");
 		return_code=0;
 	}
-	LEAVE;
-
 	return (return_code);
-} /* Computed_field_register_type_scene_viewer_projection */
+}
 

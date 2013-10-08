@@ -12,10 +12,10 @@
 
 #include "interaction/interactive_tool.h"
 
-#define Scene_viewer_set_interactive_tool_by_name cmzn_scene_viewer_set_interactive_tool_by_name
+#define Scene_viewer_set_interactive_tool_by_name cmzn_sceneviewer_set_interactive_tool_by_name
 
-DECLARE_CMZN_CALLBACK_TYPES(cmzn_scene_viewer_app_module_callback, \
-	struct cmzn_scene_viewer_app_module *, void *, void);
+DECLARE_CMZN_CALLBACK_TYPES(cmzn_sceneviewermodule_app_callback, \
+	struct cmzn_sceneviewermodule_app *, void *, void);
 
 DECLARE_CMZN_CALLBACK_TYPES(Scene_viewer_app_callback, \
 	struct Scene_viewer_app *, void *, void);
@@ -23,16 +23,16 @@ DECLARE_CMZN_CALLBACK_TYPES(Scene_viewer_app_callback, \
 DECLARE_CMZN_CALLBACK_TYPES(Scene_viewer_app_input_callback, \
 	struct Scene_viewer_app *, struct Graphics_buffer_input *, int);
 
-struct cmzn_scene_viewer_app_module
+struct cmzn_sceneviewermodule_app
 /*******************************************************************************
 LAST MODIFIED : 19 January 2007
 
 DESCRIPTION:
-The default data used to create cmzn_scene_viewers.
+The default data used to create cmzn_sceneviewers.
 ==============================================================================*/
 {
 	int access_count;
-	struct cmzn_scene_viewer_module *core_scene_viewer_module;
+	struct cmzn_sceneviewermodule *core_sceneviewermodule;
 	struct Graphics_buffer_app_package *graphics_buffer_package;
 	struct User_interface *user_interface;
 	struct MANAGER(Interactive_tool) *interactive_tool_manager;
@@ -40,7 +40,7 @@ The default data used to create cmzn_scene_viewers.
 	/* List of scene_viewers created with this package,
 		generally all scene_viewers that are not in graphics windows */
 	struct LIST(Scene_viewer_app) *scene_viewer_app_list;
-	struct LIST(CMZN_CALLBACK_ITEM(cmzn_scene_viewer_app_module_callback))
+	struct LIST(CMZN_CALLBACK_ITEM(cmzn_sceneviewermodule_app_callback))
 		*destroy_callback_list;
 };
 
@@ -72,14 +72,14 @@ PROTOTYPE_LIST_FUNCTIONS(Scene_viewer_app);
 int Scene_viewer_set_interactive_tool(struct Scene_viewer_app *scene_viewer,
 	struct Interactive_tool *interactive_tool);
 
-int cmzn_scene_viewer_module_update_Interactive_tool(cmzn_scene_viewer_app_module *cmiss_scene_viewer_module,
+int cmzn_sceneviewermodule_update_Interactive_tool(cmzn_sceneviewermodule_app *cmiss_sceneviewermodule,
 	struct Interactive_tool *interactive_tool);
 /*******************************************************************************
 LAST MODIFIED : 26 April 2007
 
 DESCRIPTION :
 Updates the interactive tools in each of the scene_viewers created with the
-<cmiss_scene_viewer_module> to have the same settings as the <interactive_tool>.
+<cmiss_sceneviewermodule> to have the same settings as the <interactive_tool>.
 This enables the old global commands to continue to work for all scene_viewers,
 however new code should probably modify the particular tools for the
 particular scene_viewer intended.
@@ -153,16 +153,16 @@ int Scene_viewer_app_redraw_now_with_overrides(struct Scene_viewer_app *scene_vi
 int Scene_viewer_app_redraw_now_without_swapbuffers(
 	struct Scene_viewer_app *scene_viewer);
 
-struct cmzn_scene_viewer_app_module *CREATE(cmzn_scene_viewer_app_module)(
+struct cmzn_sceneviewermodule_app *CREATE(cmzn_sceneviewermodule_app)(
 	struct Graphics_buffer_app_package *graphics_buffer_package,
 	cmzn_graphics_module_id graphics_module,
 	cmzn_scene_id scene,
 	struct User_interface *user_interface);
 
-int DESTROY(cmzn_scene_viewer_app_module)(struct cmzn_scene_viewer_app_module **scene_viewer_app_package_address);
+int DESTROY(cmzn_sceneviewermodule_app)(struct cmzn_sceneviewermodule_app **scene_viewer_app_package_address);
 
 struct Scene_viewer_app *CREATE(Scene_viewer_app)(struct Graphics_buffer_app *graphics_buffer,
-	cmzn_scene_viewer_module_id scene_viewer_module,
+	cmzn_sceneviewermodule_id sceneviewermodule,
 	cmzn_scenefilter_id filter, struct cmzn_scene *scene,
 	struct User_interface *user_interface);
 

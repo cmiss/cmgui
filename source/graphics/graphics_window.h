@@ -155,7 +155,7 @@ struct Graphics_window *CREATE(Graphics_window)(const char *name,
 	struct Time_keeper_app *default_time_keeper_app,
 	struct User_interface *user_interface,
 	cmzn_region_id root_region,
-	cmzn_scene_viewer_module_id scene_viewer_module);
+	cmzn_sceneviewermodule_id sceneviewermodule);
 /*******************************************************************************
 LAST MODIFIED : 5 May 2004
 
