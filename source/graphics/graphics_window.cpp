@@ -2308,7 +2308,7 @@ certain values are supported 0/1 = off, 2, 4 & 8 are on.
 		for (pane_no=0;(pane_no<graphics_window->number_of_scene_viewers)&&return_code;
 			pane_no++)
 		{
-			return_code=Scene_viewer_set_antialias_mode(
+			return_code = cmzn_sceneviewer_set_antialias_sampling(
 				graphics_window->scene_viewer_array[pane_no]->core_scene_viewer,antialias_mode);
 		}
 		if (return_code)
@@ -2382,8 +2382,8 @@ Sets if the <graphics_window> perturbs lines or not, using <perturb_lines>
 		for (pane_no=0;(pane_no<graphics_window->number_of_scene_viewers)&&return_code;
 			pane_no++)
 		{
-			return_code=Scene_viewer_set_perturb_lines(
-				graphics_window->scene_viewer_array[pane_no]->core_scene_viewer,perturb_lines);
+			return_code = (CMZN_OK == cmzn_sceneviewer_set_perturb_lines_flag(
+				graphics_window->scene_viewer_array[pane_no]->core_scene_viewer, (0 != perturb_lines)));
 		}
 		if (return_code)
 		{
@@ -3322,11 +3322,11 @@ it.
 								window->scene_viewer_array[pane_no],
 								Graphics_window_Scene_viewer_view_changed,
 								window);
-							Scene_viewer_set_translation_rate(
+							cmzn_sceneviewer_set_translation_rate(
 								window->scene_viewer_array[pane_no], 2.0);
-							Scene_viewer_set_tumble_rate(
+							cmzn_sceneviewer_set_tumble_rate(
 								window->scene_viewer_array[pane_no], 1.5);
-							Scene_viewer_set_zoom_rate(
+							cmzn_sceneviewer_set_zoom_rate(
 								window->scene_viewer_array[pane_no], 2.0);
 
 							/* set the initial layout */
@@ -3458,11 +3458,11 @@ it.
 									window->scene_viewer_array[pane_no],
 									Graphics_window_Scene_viewer_view_changed,
 									window);
-								Scene_viewer_set_translation_rate(
+								cmzn_sceneviewer_set_translation_rate(
 									window->scene_viewer_array[pane_no], 2.0);
-								Scene_viewer_set_tumble_rate(
+								cmzn_sceneviewer_set_tumble_rate(
 									window->scene_viewer_array[pane_no], 1.5);
-								Scene_viewer_set_zoom_rate(
+								cmzn_sceneviewer_set_zoom_rate(
 									window->scene_viewer_array[pane_no], 2.0);
 
 								/* set the initial layout */
@@ -3683,11 +3683,11 @@ it.
 										 window->scene_viewer_array[pane_no],
 										 Graphics_window_Scene_viewer_view_changed,
 										 window);
-									Scene_viewer_set_translation_rate(
+									cmzn_sceneviewer_set_translation_rate(
 										 window->scene_viewer_array[pane_no]->core_scene_viewer, 2.0);
-									Scene_viewer_set_tumble_rate(
+									cmzn_sceneviewer_set_tumble_rate(
 										 window->scene_viewer_array[pane_no]->core_scene_viewer, 1.5);
-									Scene_viewer_set_zoom_rate(
+									cmzn_sceneviewer_set_zoom_rate(
 										 window->scene_viewer_array[pane_no]->core_scene_viewer, 2.0);
 									if (cmzn_sceneviewer_get_lookat_parameters(
 												 window->scene_viewer_array[0]->core_scene_viewer,
@@ -3836,11 +3836,11 @@ it.
 									window->scene_viewer_array[pane_no],
 									Graphics_window_Scene_viewer_view_changed,
 									window);
-								Scene_viewer_set_translation_rate(
+								cmzn_sceneviewer_set_translation_rate(
 									window->scene_viewer_array[pane_no], 2.0);
-								Scene_viewer_set_tumble_rate(
+								cmzn_sceneviewer_set_tumble_rate(
 									window->scene_viewer_array[pane_no], 1.5);
-								Scene_viewer_set_zoom_rate(
+								cmzn_sceneviewer_set_zoom_rate(
 									window->scene_viewer_array[pane_no], 2.0);
 
 								/* set the initial layout */
@@ -4488,13 +4488,13 @@ Sets the layout mode in effect on the <window>.
 								window->scene_viewer_array[pane_no],
 								Graphics_window_Scene_viewer_view_changed,
 								window);
-							Scene_viewer_set_translation_rate(
+							cmzn_sceneviewer_set_translation_rate(
 								window->scene_viewer_array[pane_no]->core_scene_viewer,
 								window->default_translate_rate);
-							Scene_viewer_set_tumble_rate(
+							cmzn_sceneviewer_set_tumble_rate(
 								window->scene_viewer_array[pane_no]->core_scene_viewer,
 								window->default_tumble_rate);
-							Scene_viewer_set_zoom_rate(
+							cmzn_sceneviewer_set_zoom_rate(
 								window->scene_viewer_array[pane_no]->core_scene_viewer,
 								window->default_zoom_rate);
 							clip_factor = 10.0;
@@ -4502,10 +4502,9 @@ Sets the layout mode in effect on the <window>.
 								window->scene_viewer_array[pane_no]->core_scene_viewer,
 								lookat[0], lookat[1], lookat[2],
 								radius, window->std_view_angle, clip_factor*radius);
-							Scene_viewer_get_perturb_lines(first_scene_viewer->core_scene_viewer,
-								&perturb_lines);
-							Scene_viewer_set_perturb_lines(window->scene_viewer_array[pane_no]->core_scene_viewer,
-								perturb_lines);
+							perturb_lines = cmzn_sceneviewer_get_perturb_lines_flag(first_scene_viewer->core_scene_viewer);
+							cmzn_sceneviewer_set_perturb_lines_flag(window->scene_viewer_array[pane_no]->core_scene_viewer,
+								0 != perturb_lines);
 							Scene_viewer_set_light_model(window->scene_viewer_array[pane_no]->core_scene_viewer,
 								Scene_viewer_get_light_model(first_scene_viewer->core_scene_viewer));
 							transparency_layers = cmzn_sceneviewer_get_transparency_layers(first_scene_viewer->core_scene_viewer);
@@ -4515,7 +4514,7 @@ Sets the layout mode in effect on the <window>.
 								first_scene_viewer->core_scene_viewer);
 							cmzn_sceneviewer_set_transparency_mode(window->scene_viewer_array[pane_no]->core_scene_viewer,
 								transparency_mode);
-							Scene_viewer_set_antialias_mode(
+							cmzn_sceneviewer_set_antialias_sampling(
 								window->scene_viewer_array[pane_no]->core_scene_viewer,window->antialias_mode);
 						}
 						else
@@ -4602,11 +4601,11 @@ Sets the layout mode in effect on the <window>.
 
 #endif /* defined (WX_USER_INTERFACE) */
 					/* re-enable tumbling in main scene viewer */
-					Scene_viewer_set_translation_rate(window->scene_viewer_array[0]->core_scene_viewer,
+					cmzn_sceneviewer_set_translation_rate(window->scene_viewer_array[0]->core_scene_viewer,
 						window->default_translate_rate);
-					Scene_viewer_set_tumble_rate(window->scene_viewer_array[0]->core_scene_viewer,
+					cmzn_sceneviewer_set_tumble_rate(window->scene_viewer_array[0]->core_scene_viewer,
 						window->default_tumble_rate);
-					Scene_viewer_set_zoom_rate(window->scene_viewer_array[0]->core_scene_viewer,
+					cmzn_sceneviewer_set_zoom_rate(window->scene_viewer_array[0]->core_scene_viewer,
 						window->default_zoom_rate);
 				}
 			} break;
@@ -4625,11 +4624,11 @@ Sets the layout mode in effect on the <window>.
 #endif /* defined (WX_USER_INTERFACE) */
 
 					/* disable tumbling in main scene viewer */
-					Scene_viewer_set_translation_rate(window->scene_viewer_array[0]->core_scene_viewer,
+					cmzn_sceneviewer_set_translation_rate(window->scene_viewer_array[0]->core_scene_viewer,
 						window->default_translate_rate);
-					Scene_viewer_set_tumble_rate(window->scene_viewer_array[0]->core_scene_viewer,
+					cmzn_sceneviewer_set_tumble_rate(window->scene_viewer_array[0]->core_scene_viewer,
 						/*tumble_rate*/0.0);
-					Scene_viewer_set_zoom_rate(window->scene_viewer_array[0]->core_scene_viewer,
+					cmzn_sceneviewer_set_zoom_rate(window->scene_viewer_array[0]->core_scene_viewer,
 						window->default_zoom_rate);
 				}
 				/* set the plan view in pane 0 */
@@ -4667,22 +4666,22 @@ Sets the layout mode in effect on the <window>.
 					/* make sure pane 0 is not using a custom projection */
 					Graphics_window_set_projection_mode(window,0,projection_mode);
 					/* re-enable tumbling in main scene viewer */
-					Scene_viewer_set_translation_rate(window->scene_viewer_array[0]->core_scene_viewer,
+					cmzn_sceneviewer_set_translation_rate(window->scene_viewer_array[0]->core_scene_viewer,
 						window->default_translate_rate);
-					Scene_viewer_set_tumble_rate(window->scene_viewer_array[0]->core_scene_viewer,
+					cmzn_sceneviewer_set_tumble_rate(window->scene_viewer_array[0]->core_scene_viewer,
 						window->default_tumble_rate);
-					Scene_viewer_set_zoom_rate(window->scene_viewer_array[0]->core_scene_viewer,
+					cmzn_sceneviewer_set_zoom_rate(window->scene_viewer_array[0]->core_scene_viewer,
 						window->default_zoom_rate);
 					/* make sure panes 1-3 use parallel projection and disable tumble */
 					for (pane_no=1;pane_no<4;pane_no++)
 					{
 						Graphics_window_set_projection_mode(window,pane_no,
 							SCENE_VIEWER_PARALLEL);
-						Scene_viewer_set_translation_rate(window->scene_viewer_array[pane_no]->core_scene_viewer,
+						cmzn_sceneviewer_set_translation_rate(window->scene_viewer_array[pane_no]->core_scene_viewer,
 							window->default_translate_rate);
-						Scene_viewer_set_tumble_rate(window->scene_viewer_array[pane_no]->core_scene_viewer,
+						cmzn_sceneviewer_set_tumble_rate(window->scene_viewer_array[pane_no]->core_scene_viewer,
 							/*tumble_rate*/0.0);
-						Scene_viewer_set_zoom_rate(window->scene_viewer_array[pane_no]->core_scene_viewer,
+						cmzn_sceneviewer_set_zoom_rate(window->scene_viewer_array[pane_no]->core_scene_viewer,
 							window->default_zoom_rate);
 					}
 				}
@@ -4728,11 +4727,11 @@ Sets the layout mode in effect on the <window>.
 					for (pane_no=0;pane_no<2;pane_no++)
 					{
 						Graphics_window_set_projection_mode(window,pane_no,projection_mode);
-						Scene_viewer_set_translation_rate(window->scene_viewer_array[pane_no]->core_scene_viewer,
+						cmzn_sceneviewer_set_translation_rate(window->scene_viewer_array[pane_no]->core_scene_viewer,
 							window->default_translate_rate);
-						Scene_viewer_set_tumble_rate(window->scene_viewer_array[pane_no]->core_scene_viewer,
+						cmzn_sceneviewer_set_tumble_rate(window->scene_viewer_array[pane_no]->core_scene_viewer,
 							window->default_tumble_rate);
-						Scene_viewer_set_zoom_rate(window->scene_viewer_array[pane_no]->core_scene_viewer,
+						cmzn_sceneviewer_set_zoom_rate(window->scene_viewer_array[pane_no]->core_scene_viewer,
 							window->default_zoom_rate);
 					}
 #if defined (WX_USER_INTERFACE)
@@ -6400,9 +6399,9 @@ Writes the properties of the <window> to the command window.
 	enum cmzn_sceneviewer_transparency_mode transparency_mode;
 	enum cmzn_sceneviewer_viewport_mode viewport_mode;
 	int accumulation_buffer_depth,colour_buffer_depth,depth_buffer_depth,
-		height,pane_no,perturb_lines,return_code,width,
+		height,pane_no,return_code,width,
 		undistort_on,visual_id;
-	unsigned int antialias, transparency_layers;
+	unsigned transparency_layers;
 	struct Colour colour;
 	struct Scene_viewer *scene_viewer = NULL;
 	struct Texture *texture;
@@ -6620,7 +6619,7 @@ Writes the properties of the <window> to the command window.
 			"  Current pane: %d\n",window->current_pane+1);
 		display_message(INFORMATION_MESSAGE,
 			"  Standard view angle: %g degrees\n",window->std_view_angle);
-		Scene_viewer_get_perturb_lines(window->scene_viewer_array[0]->core_scene_viewer,&perturb_lines);
+		bool perturb_lines = cmzn_sceneviewer_get_perturb_lines_flag(window->scene_viewer_array[0]->core_scene_viewer);
 		if (perturb_lines)
 		{
 			display_message(INFORMATION_MESSAGE,"  perturbed lines: on\n");
@@ -6629,7 +6628,7 @@ Writes the properties of the <window> to the command window.
 		{
 			display_message(INFORMATION_MESSAGE,"  perturbed lines: off\n");
 		}
-		Scene_viewer_get_antialias_mode(window->scene_viewer_array[0]->core_scene_viewer,&antialias);
+		int antialias = cmzn_sceneviewer_get_antialias_sampling(window->scene_viewer_array[0]->core_scene_viewer);
 		if (antialias)
 		{
 			display_message(INFORMATION_MESSAGE,"  anti-aliasing at %d\n",antialias);
@@ -6702,8 +6701,8 @@ and establishing the views in it to the command window to a com file.
 	enum Scene_viewer_projection_mode projection_mode;
 	enum cmzn_sceneviewer_transparency_mode transparency_mode;
 	enum cmzn_sceneviewer_viewport_mode viewport_mode;
-	int height,i,pane_no,perturb_lines,return_code,width,undistort_on;
-	unsigned int antialias, transparency_layers;
+	int height,i,pane_no,return_code,width,undistort_on;
+	unsigned transparency_layers;
 	struct Colour colour;
 	struct Scene_viewer *scene_viewer = NULL;
 	struct Texture *texture;
@@ -6891,7 +6890,7 @@ and establishing the views in it to the command window to a com file.
 			" current_pane %d",window->current_pane+1);
 		process_message->process_command(INFORMATION_MESSAGE,
 			" std_view_angle %g",window->std_view_angle);
-		Scene_viewer_get_perturb_lines(window->scene_viewer_array[0]->core_scene_viewer,&perturb_lines);
+		bool perturb_lines = cmzn_sceneviewer_get_perturb_lines_flag(window->scene_viewer_array[0]->core_scene_viewer);
 		if (perturb_lines)
 		{
 			process_message->process_command(INFORMATION_MESSAGE," perturb_lines");
@@ -6900,7 +6899,7 @@ and establishing the views in it to the command window to a com file.
 		{
 			process_message->process_command(INFORMATION_MESSAGE," normal_lines");
 		}
-		Scene_viewer_get_antialias_mode(window->scene_viewer_array[0]->core_scene_viewer,&antialias);
+		int antialias = cmzn_sceneviewer_get_antialias_sampling(window->scene_viewer_array[0]->core_scene_viewer);
 		if (antialias)
 		{
 			process_message->process_command(INFORMATION_MESSAGE," antialias %d",antialias);
