@@ -726,7 +726,7 @@ int gfx_modify_scene_graphic(struct Parse_state *state,
 		(legacy_graphic_type != LEGACY_GRAPHIC_DATA_POINTS))
 	{
 		Option_table_add_cmzn_tessellation_entry(option_table, "tessellation",
-			scene_command_data->tessellation_module, &tessellation);
+			scene_command_data->tessellationmodule, &tessellation);
 	}
 
 	/* texture_coordinates */
@@ -933,7 +933,7 @@ int gfx_modify_scene_graphic(struct Parse_state *state,
 			cmzn_glyph_id glyph = 0;
 			if (glyph_name)
 			{
-				glyph = cmzn_glyph_module_find_glyph_by_name(scene_command_data->glyph_module, glyph_name);
+				glyph = cmzn_glyphmodule_find_glyph_by_name(scene_command_data->glyphmodule, glyph_name);
 			}
 			if (glyph_name && (!glyph) && (0 != strcmp(glyph_name, "none")))
 			{
@@ -941,13 +941,13 @@ int gfx_modify_scene_graphic(struct Parse_state *state,
 					(0 == strcmp(glyph_name, "mirror_cone")) ||
 					(0 == strcmp(glyph_name, "mirror_line")))
 				{
-					glyph = cmzn_glyph_module_find_glyph_by_name(scene_command_data->glyph_module, glyph_name + 7);
+					glyph = cmzn_glyphmodule_find_glyph_by_name(scene_command_data->glyphmodule, glyph_name + 7);
 					glyph_repeat_mode = CMZN_GLYPH_REPEAT_MIRROR;
 				}
 				else if ((0 == strcmp(glyph_name, "arrow_line")) ||
 					(0 == strcmp(glyph_name, "mirror_arrow_line")))
 				{
-					glyph = cmzn_glyph_module_find_glyph_by_name(scene_command_data->glyph_module, "arrow");
+					glyph = cmzn_glyphmodule_find_glyph_by_name(scene_command_data->glyphmodule, "arrow");
 					if (glyph_name[0] == 'm')
 					{
 						glyph_repeat_mode = CMZN_GLYPH_REPEAT_MIRROR;
@@ -961,21 +961,21 @@ int gfx_modify_scene_graphic(struct Parse_state *state,
 				else if (0 == strcmp(glyph_name, "cylinder6"))
 				{
 					// just using normal cylinder, default circle divisions
-					glyph = cmzn_glyph_module_find_glyph_by_name(scene_command_data->glyph_module, "cylinder");
+					glyph = cmzn_glyphmodule_find_glyph_by_name(scene_command_data->glyphmodule, "cylinder");
 				}
 				else if (0 == strcmp(glyph_name, "cylinder_hires"))
 				{
-					glyph = cmzn_glyph_module_find_glyph_by_name(scene_command_data->glyph_module, "cylinder");
+					glyph = cmzn_glyphmodule_find_glyph_by_name(scene_command_data->glyphmodule, "cylinder");
 					circle_discretization = 48;
 				}
 				else if (0 == strcmp(glyph_name, "cylinder_solid_hires"))
 				{
-					glyph = cmzn_glyph_module_find_glyph_by_name(scene_command_data->glyph_module, "cylinder_solid");
+					glyph = cmzn_glyphmodule_find_glyph_by_name(scene_command_data->glyphmodule, "cylinder_solid");
 					circle_discretization = 48;
 				}
 				else if (0 == strcmp(glyph_name, "sphere_hires"))
 				{
-					glyph = cmzn_glyph_module_find_glyph_by_name(scene_command_data->glyph_module, "sphere");
+					glyph = cmzn_glyphmodule_find_glyph_by_name(scene_command_data->glyphmodule, "sphere");
 					circle_discretization = 48;
 				}
 				if (!glyph)
@@ -1012,11 +1012,11 @@ int gfx_modify_scene_graphic(struct Parse_state *state,
 			}
 			if (font_name)
 			{
-				cmzn_font_module_id font_module = cmzn_graphics_module_get_font_module(
+				cmzn_fontmodule_id fontmodule = cmzn_graphics_module_get_fontmodule(
 					scene_command_data->graphics_module);
-				cmzn_font *new_font = cmzn_font_module_find_font_by_name(
-					font_module, font_name);
-				cmzn_font_module_destroy(&font_module);
+				cmzn_font *new_font = cmzn_fontmodule_find_font_by_name(
+					fontmodule, font_name);
+				cmzn_fontmodule_destroy(&fontmodule);
 				if (new_font)
 				{
 					cmzn_graphic_point_attributes_set_font(point_attributes, new_font);
@@ -1042,15 +1042,15 @@ int gfx_modify_scene_graphic(struct Parse_state *state,
 
 		if ((0 != element_divisions_size) || (0 != circle_discretization))
 		{
-			cmzn_tessellation_module_id tessellationModule =
-				cmzn_graphics_module_get_tessellation_module(scene_command_data->graphics_module);
+			cmzn_tessellationmodule_id tessellationmodule =
+				cmzn_graphics_module_get_tessellationmodule(scene_command_data->graphics_module);
 			cmzn_tessellation_id fixedTessellation =
-				cmzn_tessellation_module_find_or_create_fixed_tessellation(tessellationModule,
+				cmzn_tessellationmodule_find_or_create_fixed_tessellation(tessellationmodule,
 					element_divisions_size, element_divisions, circle_discretization,
 					tessellation);
 			cmzn_graphic_set_tessellation(graphic, fixedTessellation);
 			cmzn_tessellation_destroy(&fixedTessellation);
-			cmzn_tessellation_module_destroy(&tessellationModule);
+			cmzn_tessellationmodule_destroy(&tessellationmodule);
 		}
 
 		if (legacy_graphic_type == LEGACY_GRAPHIC_CYLINDERS)

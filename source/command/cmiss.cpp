@@ -310,7 +310,7 @@ DESCRIPTION :
 	struct LIST(Io_device) *device_list;
 #endif /* defined (SELECT_DESCRIPTORS) */
 	/* list of glyphs = simple graphics objects with only geometry */
-	cmzn_glyph_module_id glyph_module;
+	cmzn_glyphmodule_id glyphmodule;
 #if defined (WX_USER_INTERFACE)
 	struct MANAGER(Comfile_window) *comfile_window_manager;
 #endif /* defined (WX_USER_INTERFACE)*/
@@ -335,7 +335,7 @@ DESCRIPTION :
 	struct cmzn_graphics_material_module *material_module;
 	struct cmzn_scenefiltermodule *filter_module;
 	struct cmzn_font *default_font;
-	struct cmzn_tessellation_module *tessellation_module;
+	struct cmzn_tessellationmodule *tessellationmodule;
 	struct MANAGER(Curve) *curve_manager;
 	struct MANAGER(Scene) *scene_manager;
 	struct Scene *default_scene;
@@ -764,7 +764,7 @@ static int gfx_create_colour_bar(struct Parse_state *state,
 			double extend_length = 0.06;
 			double bar_radius = 0.06;
 			double tick_length = 0.04;
-			double tick_divisions = 10;
+			int tick_divisions = 10;
 			char *font_name = (char *)NULL;
 
 			option_table=CREATE(Option_table)();
@@ -817,8 +817,8 @@ static int gfx_create_colour_bar(struct Parse_state *state,
 					display_message(WARNING_MESSAGE,
 						"gfx_create_colour_bar.  material option is not used; material is now taken from g_element graphic");
 				}
-				cmzn_glyph_module_begin_change(command_data->glyph_module);
-				cmzn_glyph_id glyph = cmzn_glyph_module_find_glyph_by_name(command_data->glyph_module, glyph_name);
+				cmzn_glyphmodule_begin_change(command_data->glyphmodule);
+				cmzn_glyph_id glyph = cmzn_glyphmodule_find_glyph_by_name(command_data->glyphmodule, glyph_name);
 				cmzn_glyph_colour_bar_id colour_bar = 0;
 				if (glyph)
 				{
@@ -832,7 +832,7 @@ static int gfx_create_colour_bar(struct Parse_state *state,
 				}
 				else
 				{
-					colour_bar = cmzn_glyph_module_create_colour_bar(command_data->glyph_module, spectrum);
+					colour_bar = cmzn_glyphmodule_create_colour_bar(command_data->glyphmodule, spectrum);
 					cmzn_glyph_set_name(cmzn_glyph_colour_bar_base_cast(colour_bar), glyph_name);
 					cmzn_glyph_set_managed(cmzn_glyph_colour_bar_base_cast(colour_bar), true);
 				}
@@ -864,7 +864,7 @@ static int gfx_create_colour_bar(struct Parse_state *state,
 					cmzn_glyph_colour_bar_set_tick_length(colour_bar, tick_length);
 					cmzn_glyph_colour_bar_destroy(&colour_bar);
 				}
-				cmzn_glyph_module_end_change(command_data->glyph_module);
+				cmzn_glyphmodule_end_change(command_data->glyphmodule);
 			} /* parse error, help */
 			DESTROY(Option_table)(&option_table);
 			cmzn_graphics_material_destroy(&label_material);
@@ -1485,8 +1485,8 @@ Executes a GFX CREATE FLOW_PARTICLES command.
 		}
 		if (return_code)
 		{
-			cmzn_glyph_module_begin_change(command_data->glyph_module);
-			cmzn_glyph_id glyph = cmzn_glyph_module_find_glyph_by_name(command_data->glyph_module, graphics_object_name);
+			cmzn_glyphmodule_begin_change(command_data->glyphmodule);
+			cmzn_glyph_id glyph = cmzn_glyphmodule_find_glyph_by_name(command_data->glyphmodule, graphics_object_name);
 			cmzn_glyph_static *glyphStatic = dynamic_cast<cmzn_glyph_static*>(glyph);
 			GT_object *graphics_object = 0;
 			if (glyphStatic)
@@ -1532,7 +1532,7 @@ Executes a GFX CREATE FLOW_PARTICLES command.
 				else
 				{
 					graphics_object = CREATE(GT_object)(graphics_object_name, g_POINTSET, material);
-					glyph = cmzn_glyph_module_create_glyph_static(command_data->glyph_module, graphics_object);
+					glyph = cmzn_glyphmodule_create_glyph_static(command_data->glyphmodule, graphics_object);
 					cmzn_glyph_set_managed(glyph, true);
 					cmzn_glyph_set_name(glyph, graphics_object_name);
 				}
@@ -1652,7 +1652,7 @@ Executes a GFX CREATE FLOW_PARTICLES command.
 				DEACCESS(GT_object)(&graphics_object);
 			}
 			cmzn_glyph_destroy(&glyph);
-			cmzn_glyph_module_end_change(command_data->glyph_module);
+			cmzn_glyphmodule_end_change(command_data->glyphmodule);
 		} /* parse error,help */
 		DESTROY(Option_table)(&option_table);
 		if (coordinate_field)
@@ -2869,7 +2869,7 @@ static and referred to by gfx_create_Spectrum
 					red_to_blue = 0;
 					blue_white_red = 0;
 					modify_spectrum_data.position = 0;
-					modify_spectrum_data.component = (struct cmzn_spectrum_component *)NULL;
+					modify_spectrum_data.component = (struct cmzn_spectrumcomponent *)NULL;
 					modify_spectrum_data.spectrum_minimum = cmzn_spectrum_get_minimum(
 						spectrum_to_be_modified_copy);
 					modify_spectrum_data.spectrum_maximum = cmzn_spectrum_get_maximum(
@@ -2918,7 +2918,7 @@ static and referred to by gfx_create_Spectrum
 						{
 							if ( clear )
 							{
-								cmzn_spectrum_remove_all_components(spectrum_to_be_modified_copy);
+								cmzn_spectrum_remove_all_spectrumcomponents(spectrum_to_be_modified_copy);
 							}
 							if (blue_to_red + blue_white_red +red_to_blue + lg_red_to_blue +
 								lg_blue_to_red > 1 )
@@ -3013,7 +3013,7 @@ static and referred to by gfx_create_Spectrum
 					}
 					if ( modify_spectrum_data.component )
 					{
-						DEACCESS(cmzn_spectrum_component)(&(modify_spectrum_data.component));
+						DEACCESS(cmzn_spectrumcomponent)(&(modify_spectrum_data.component));
 					}
 					DEACCESS(Scene)(&autorange_scene);
 					cmzn_scenefilter_destroy(&filter);
@@ -5743,7 +5743,7 @@ Executes a GFX DEFINE command.
 		{
 			if (state->current_token)
 			{
-				cmzn_font_module_id font_module = cmzn_graphics_module_get_font_module(
+				cmzn_fontmodule_id fontmodule = cmzn_graphics_module_get_fontmodule(
 					command_data->graphics_module);
 				option_table = CREATE(Option_table)();
 				/* curve */
@@ -5761,7 +5761,7 @@ Executes a GFX DEFINE command.
 					command_data->computed_field_package, define_Computed_field);
 				/* font */
 				Option_table_add_entry(option_table, "font", NULL,
-					font_module, gfx_define_font);
+					fontmodule, gfx_define_font);
 				/* scene */
 				Define_scene_data define_scene_data;
 				define_scene_data.root_region = command_data->root_region;
@@ -5773,10 +5773,10 @@ Executes a GFX DEFINE command.
 					command_data->filter_module, gfx_define_graphics_filter);
 				/* tessellation */
 				Option_table_add_entry(option_table, "tessellation", NULL,
-					command_data->tessellation_module, gfx_define_tessellation);
+					command_data->tessellationmodule, gfx_define_tessellation);
 				return_code = Option_table_parse(option_table, state);
 				DESTROY(Option_table)(&option_table);
-				cmzn_font_module_destroy(&font_module);
+				cmzn_fontmodule_destroy(&fontmodule);
 			}
 			else
 			{
@@ -6194,7 +6194,7 @@ Executes a GFX DESTROY GRAPHICS_OBJECT command.
 				if (strcmp(PARSER_HELP_STRING,current_token)&&
 					strcmp(PARSER_RECURSIVE_HELP_STRING,current_token))
 				{
-					cmzn_glyph_id glyph = cmzn_glyph_module_find_glyph_by_name(command_data->glyph_module, current_token);
+					cmzn_glyph_id glyph = cmzn_glyphmodule_find_glyph_by_name(command_data->glyphmodule, current_token);
 					if (glyph)
 					{
 						cmzn_glyph_set_managed(glyph, false);
@@ -6640,7 +6640,7 @@ Executes a GFX DESTROY command.
 					command_data->spectrum_manager, gfx_destroy_spectrum);
 				/* tessellation */
 				Option_table_add_entry(option_table, "tessellation", NULL,
-					command_data->tessellation_module, gfx_destroy_tessellation);
+					command_data->tessellationmodule, gfx_destroy_tessellation);
 				/* vtextures */
 				Option_table_add_entry(option_table, "vtextures", NULL,
 					command_data->volume_texture_manager, gfx_destroy_vtextures);
@@ -6698,7 +6698,7 @@ Executes a GFX DRAW command.
 			(void *)1,set_name);
 		/* glyph */
 		Option_table_add_entry(option_table,"glyph",&glyph,
-			command_data->glyph_module, set_Glyph);
+			command_data->glyphmodule, set_Glyph);
 		/* group */
 		Option_table_add_entry(option_table, "group", &region_path,
 			command_data->root_region, set_cmzn_region_path);
@@ -6707,7 +6707,7 @@ Executes a GFX DRAW command.
 			command_data->root_region,set_Scene);
 		/* default when token omitted (glyph) */
 		Option_table_add_entry(option_table,(char *)NULL,&glyph,
-			command_data->glyph_module, set_Glyph);
+			command_data->glyphmodule, set_Glyph);
 		return_code = Option_table_multi_parse(option_table,state);
 		/* no errors, not asking for help */
 		if (return_code)
@@ -7001,7 +7001,7 @@ Executes a GFX EDIT_SCENE command.  Brings up the Region_tree_viewer.
 						cmzn_graphics_material_module_get_manager(command_data->material_module),
 						defaultMaterial,
 						command_data->default_font,
-						command_data->glyph_module,
+						command_data->glyphmodule,
 						command_data->spectrum_manager,
 						command_data->volume_texture_manager,
 						command_data->user_interface)))
@@ -8031,24 +8031,24 @@ Executes a GFX EXPORT WAVEFRONT command.
 } /* gfx_export_wavefront */
 
 #if defined (USE_OPENCASCADE)
-static struct cmzn_spectrum_component *create_spectrum_component( cmzn_spectrum_component_colour_mapping colour )
+static struct cmzn_spectrumcomponent *create_spectrum_component( cmzn_spectrumcomponent_colour_mapping colour )
 {
 	int component = 1;
-	struct cmzn_spectrum_component *settings = CREATE(cmzn_spectrum_component)();
-	cmzn_spectrum_component_set_scale_type(settings, CMZN_SPECTRUM_COMPONENT_SCALE_LINEAR);
-	cmzn_spectrum_component_set_colour_mapping(settings, colour);
-	cmzn_spectrum_component_set_extend_above(settings, true);
-	cmzn_spectrum_component_set_extend_below_flag(settings, true);
-	cmzn_spectrum_component_set_colour_reverse(settings, false);
+	struct cmzn_spectrumcomponent *settings = CREATE(cmzn_spectrumcomponent)();
+	cmzn_spectrumcomponent_set_scale_type(settings, CMZN_SPECTRUMCOMPONENT_SCALE_LINEAR);
+	cmzn_spectrumcomponent_set_colour_mapping(settings, colour);
+	cmzn_spectrumcomponent_set_extend_above(settings, true);
+	cmzn_spectrumcomponent_set_extend_below_flag(settings, true);
+	cmzn_spectrumcomponent_set_colour_reverse(settings, false);
 
-	if ( colour == CMZN_SPECTRUM_COMPONENT_COLOUR_MAPPING_RED )
+	if ( colour == CMZN_SPECTRUMCOMPONENT_COLOUR_MAPPING_RED )
 		component = 1;
-	else if ( colour == CMZN_SPECTRUM_COMPONENT_COLOUR_MAPPING_GREEN )
+	else if ( colour == CMZN_SPECTRUMCOMPONENT_COLOUR_MAPPING_GREEN )
 		component = 2;
 	else
 		component = 3;
 
-	cmzn_spectrum_component_set_field_component( settings, component );
+	cmzn_spectrumcomponent_set_field_component( settings, component );
 
 	return settings;
 }
@@ -8056,31 +8056,31 @@ static struct cmzn_spectrum_component *create_spectrum_component( cmzn_spectrum_
 static int create_RGB_spectrum( struct Spectrum **spectrum, void *command_data_void )
 {
 	int return_code = 0, number_in_list = 0;
-	struct LIST(cmzn_spectrum_component) *spectrum_settings_list;
-	struct cmzn_spectrum_component *red_settings;
-	struct cmzn_spectrum_component *green_settings;
-	struct cmzn_spectrum_component *blue_settings;
+	struct LIST(cmzn_spectrumcomponent) *spectrum_settings_list;
+	struct cmzn_spectrumcomponent *red_settings;
+	struct cmzn_spectrumcomponent *green_settings;
+	struct cmzn_spectrumcomponent *blue_settings;
 	struct cmzn_command_data *command_data = (struct cmzn_command_data *)command_data_void;
 
 	if ( command_data && (NULL != ((*spectrum) = cmzn_spectrum_create_private())) &&
 		cmzn_spectrum_set_name(spectrum, "RGB"))
 	{
-		spectrum_settings_list = get_cmzn_spectrum_component_list( (*spectrum) );
-		number_in_list = NUMBER_IN_LIST(cmzn_spectrum_component)(spectrum_settings_list);
+		spectrum_settings_list = get_cmzn_spectrumcomponent_list( (*spectrum) );
+		number_in_list = NUMBER_IN_LIST(cmzn_spectrumcomponent)(spectrum_settings_list);
 		if ( number_in_list > 0 )
 		{
-			REMOVE_ALL_OBJECTS_FROM_LIST(cmzn_spectrum_component)(spectrum_settings_list);
+			REMOVE_ALL_OBJECTS_FROM_LIST(cmzn_spectrumcomponent)(spectrum_settings_list);
 		}
-		red_settings = create_spectrum_component( CMZN_SPECTRUM_COMPONENT_COLOUR_MAPPING_RED );
-		cmzn_spectrum_component_add( red_settings, /* end of list = 0 */0,
+		red_settings = create_spectrum_component( CMZN_SPECTRUMCOMPONENT_COLOUR_MAPPING_RED );
+		cmzn_spectrumcomponent_add( red_settings, /* end of list = 0 */0,
 			spectrum_settings_list );
 
-		green_settings = create_spectrum_component( CMZN_SPECTRUM_COMPONENT_COLOUR_MAPPING_GREEN );
-		cmzn_spectrum_component_add( green_settings, /* end of list = 0 */0,
+		green_settings = create_spectrum_component( CMZN_SPECTRUMCOMPONENT_COLOUR_MAPPING_GREEN );
+		cmzn_spectrumcomponent_add( green_settings, /* end of list = 0 */0,
 			spectrum_settings_list );
 
-		blue_settings = create_spectrum_component( CMZN_SPECTRUM_COMPONENT_COLOUR_MAPPING_BLUE );
-		cmzn_spectrum_component_add( blue_settings, /* end of list = 0 */0,
+		blue_settings = create_spectrum_component( CMZN_SPECTRUMCOMPONENT_COLOUR_MAPPING_BLUE );
+		cmzn_spectrumcomponent_add( blue_settings, /* end of list = 0 */0,
 			spectrum_settings_list );
 
 		Spectrum_calculate_range( (*spectrum) );
@@ -9758,7 +9758,7 @@ static int cmzn_glyph_list_contents(cmzn_glyph *glyph, void *dummy_void)
 }
 
 static int gfx_list_graphics_object(struct Parse_state *state,
-	void *dummy_to_be_modified,void *glyph_module_void)
+	void *dummy_to_be_modified,void *glyphmodule_void)
 /*******************************************************************************
 LAST MODIFIED : 26 July 1998
 
@@ -9771,16 +9771,16 @@ Executes a GFX LIST GLYPH/GRAPHICS_OBJECT command.
 
 	ENTER(gfx_list_graphics_object);
 	USE_PARAMETER(dummy_to_be_modified);
-	cmzn_glyph_module_id glyphModule = reinterpret_cast<cmzn_glyph_module *>(glyph_module_void);
+	cmzn_glyphmodule_id glyphmodule = reinterpret_cast<cmzn_glyphmodule *>(glyphmodule_void);
 	if (state)
 	{
-		if (glyphModule)
+		if (glyphmodule)
 		{
 			if (NULL != (current_token = state->current_token))
 			{
 				if (!Parse_state_help_mode(state))
 				{
-					cmzn_glyph_id glyph = cmzn_glyph_module_find_glyph_by_name(glyphModule, current_token);
+					cmzn_glyph_id glyph = cmzn_glyphmodule_find_glyph_by_name(glyphmodule, current_token);
 					if (glyph)
 					{
 						cmzn_glyph_list_contents(glyph, 0);
@@ -9803,7 +9803,7 @@ Executes a GFX LIST GLYPH/GRAPHICS_OBJECT command.
 			else
 			{
 				return_code = FOR_EACH_OBJECT_IN_MANAGER(cmzn_glyph)(
-					cmzn_glyph_list_contents, (void *)NULL, cmzn_glyph_module_get_manager(glyphModule));
+					cmzn_glyph_list_contents, (void *)NULL, cmzn_glyphmodule_get_manager(glyphmodule));
 			}
 		}
 		else
@@ -10648,7 +10648,7 @@ Executes a GFX LIST command.
 				command_data_void, gfx_list_g_element);
 			/* glyph */
 			Option_table_add_entry(option_table, "glyph", NULL,
-				command_data->glyph_module, gfx_list_graphics_object);
+				command_data->glyphmodule, gfx_list_graphics_object);
 			/* graphics_filter */
 			Option_table_add_entry(option_table, "graphics_filter", NULL,
 				(void *)command_data->filter_module, gfx_list_graphics_filter);
@@ -10689,7 +10689,7 @@ Executes a GFX LIST command.
 				command_data->spectrum_manager, gfx_list_spectrum);
 			/* tessellation */
 			Option_table_add_entry(option_table, "tessellation", NULL,
-				command_data->tessellation_module, gfx_list_tessellation);
+				command_data->tessellationmodule, gfx_list_tessellation);
 			/* texture */
 			Option_table_add_entry(option_table, "texture", NULL,
 					command_data->root_region, gfx_list_texture);
@@ -11085,7 +11085,7 @@ Executes a GFX MODIFY GRAPHICS_OBJECT command.
 	{
 		if ((!state->current_token) || (!Parse_state_help_mode(state)))
 		{
-			cmzn_glyph_id glyph = cmzn_glyph_module_find_glyph_by_name(command_data->glyph_module, state->current_token);
+			cmzn_glyph_id glyph = cmzn_glyphmodule_find_glyph_by_name(command_data->glyphmodule, state->current_token);
 			cmzn_glyph_static *glyphStatic = dynamic_cast<cmzn_glyph_static *>(glyph);
 			if (glyphStatic)
 			{
@@ -12780,7 +12780,7 @@ otherwise the file of graphics objects is read.
 					if (0 != (return_code = check_suffix(&file_name, ".exgobj")))
 					{
 						return_code=file_read_graphics_objects(file_name, command_data->io_stream_package,
-							command_data->material_module, command_data->glyph_module);
+							command_data->material_module, command_data->glyphmodule);
 					}
 				}
 			}
@@ -12957,7 +12957,7 @@ static int gfx_read_wavefront_obj(struct Parse_state *state,
 							command_data->io_stream_package,
 							graphics_object_name, render_polygon_mode, time,
 							command_data->material_module,
-							command_data->glyph_module);
+							command_data->glyphmodule);
 					}
 				}
 			}
@@ -17534,7 +17534,7 @@ Initialise all the subcomponents of cmgui and create the cmzn_command_data
 #if defined (SELECT_DESCRIPTORS)
 		command_data->device_list=(struct LIST(Io_device) *)NULL;
 #endif /* defined (SELECT_DESCRIPTORS) */
-		command_data->glyph_module=(cmzn_glyph_module_id)0;
+		command_data->glyphmodule=(cmzn_glyphmodule_id)0;
 		command_data->any_object_selection=(struct Any_object_selection *)NULL;
 		command_data->element_point_ranges_selection=(struct Element_point_ranges_selection *)NULL;
 		command_data->interactive_tool_manager=(struct MANAGER(Interactive_tool) *)NULL;
@@ -17782,10 +17782,10 @@ Initialise all the subcomponents of cmgui and create the cmzn_command_data
 			Light_model_module_get_default_light_model(command_data->light_model_module);
 
 		// ensure we have default tessellations
-		command_data->tessellation_module = cmzn_graphics_module_get_tessellation_module(command_data->graphics_module);
-		cmzn_tessellation_id default_tessellation = cmzn_tessellation_module_get_default_tessellation(command_data->tessellation_module);
+		command_data->tessellationmodule = cmzn_graphics_module_get_tessellationmodule(command_data->graphics_module);
+		cmzn_tessellation_id default_tessellation = cmzn_tessellationmodule_get_default_tessellation(command_data->tessellationmodule);
 		cmzn_tessellation_destroy(&default_tessellation);
-		cmzn_tessellation_id default_points_tessellation = cmzn_tessellation_module_get_default_points_tessellation(command_data->tessellation_module);
+		cmzn_tessellation_id default_points_tessellation = cmzn_tessellationmodule_get_default_points_tessellation(command_data->tessellationmodule);
 		cmzn_tessellation_destroy(&default_points_tessellation);
 
 		/* environment map manager */
@@ -17797,11 +17797,11 @@ Initialise all the subcomponents of cmgui and create the cmzn_command_data
 				cmzn_graphics_module_get_spectrum_manager(
 					command_data->graphics_module)))
 		{
-			cmzn_spectrum_module_id spectrum_module =
-				cmzn_graphics_module_get_spectrum_module(command_data->graphics_module);
+			cmzn_spectrummodule_id spectrummodule =
+				cmzn_graphics_module_get_spectrummodule(command_data->graphics_module);
 			command_data->default_spectrum =
-					cmzn_spectrum_module_get_default_spectrum(spectrum_module);
-			cmzn_spectrum_module_destroy(&spectrum_module);
+					cmzn_spectrummodule_get_default_spectrum(spectrummodule);
+			cmzn_spectrummodule_destroy(&spectrummodule);
 		}
 		/* create Material module and CMGUI default materials */
 		command_data->material_module = cmzn_graphics_module_get_material_module(command_data->graphics_module);
@@ -17850,9 +17850,9 @@ Initialise all the subcomponents of cmgui and create the cmzn_command_data
 		command_data->default_font = cmzn_graphics_module_get_default_font(
 			command_data->graphics_module);
 
-		command_data->glyph_module = cmzn_graphics_module_get_glyph_module(command_data->graphics_module);
-		cmzn_glyph_module_define_standard_glyphs(command_data->glyph_module);
-		cmzn_glyph_module_define_standard_cmgui_glyphs(command_data->glyph_module);
+		command_data->glyphmodule = cmzn_graphics_module_get_glyphmodule(command_data->graphics_module);
+		cmzn_glyphmodule_define_standard_glyphs(command_data->glyphmodule);
+		cmzn_glyphmodule_define_standard_cmgui_glyphs(command_data->glyphmodule);
 
 #if defined (USE_CMGUI_GRAPHICS_WINDOW)
 		command_data->graphics_buffer_package = UI_module->graphics_buffer_package;
@@ -18277,7 +18277,7 @@ NOTE: Do not call this directly: call cmzn_command_data_destroy() to deaccess.
 #endif /* defined (WX_USER_INTERFACE) */
 
 		DEACCESS(Scene)(&command_data->default_scene);
-		cmzn_glyph_module_destroy(&command_data->glyph_module);
+		cmzn_glyphmodule_destroy(&command_data->glyphmodule);
 		cmzn_graphics_module_destroy(&command_data->graphics_module);
 		DEACCESS(Time_keeper_app)(&command_data->default_time_keeper_app);
 		if (command_data->computed_field_package)
@@ -18300,7 +18300,7 @@ NOTE: Do not call this directly: call cmzn_command_data_destroy() to deaccess.
 		command_data->spectrum_manager=NULL;
 		cmzn_scenefiltermodule_destroy(&command_data->filter_module);
 		cmzn_graphics_material_module_destroy(&command_data->material_module);
-		cmzn_tessellation_module_destroy(&command_data->tessellation_module);
+		cmzn_tessellationmodule_destroy(&command_data->tessellationmodule);
 		DEACCESS(cmzn_font)(&command_data->default_font);
 		DESTROY(MANAGER(VT_volume_texture))(&command_data->volume_texture_manager);
 		DESTROY(MANAGER(Environment_map))(&command_data->environment_map_manager);

@@ -18,12 +18,12 @@
 #include "graphics/glyph_app.h"
 
 int set_Glyph(struct Parse_state *state, void *glyphAddress_void,
-	void *glyphModule_void)
+	void *glyphmodule_void)
 {
 	int return_code;
 	cmzn_glyph **glyphAddress = reinterpret_cast<cmzn_glyph **>(glyphAddress_void);
-	cmzn_glyph_module *glyphModule = reinterpret_cast<cmzn_glyph_module *>(glyphModule_void);
-	if (state && glyphAddress && glyphModule)
+	cmzn_glyphmodule *glyphmodule = reinterpret_cast<cmzn_glyphmodule *>(glyphmodule_void);
+	if (state && glyphAddress && glyphmodule)
 	{
 		const char *current_token = state->current_token;
 		if (current_token)
@@ -40,7 +40,7 @@ int set_Glyph(struct Parse_state *state, void *glyphAddress_void,
 				}
 				else
 				{
-					cmzn_glyph *glyph = cmzn_glyph_module_find_glyph_by_name(glyphModule, current_token);
+					cmzn_glyph *glyph = cmzn_glyphmodule_find_glyph_by_name(glyphmodule, current_token);
 					if (glyph)
 					{
 						if (*glyphAddress)

@@ -17,13 +17,13 @@ struct Scene_command_data
 	struct cmzn_scene *scene;
 	struct Graphical_material *default_material;
 	struct cmzn_font *default_font;
-	cmzn_glyph_module_id glyph_module;
+	cmzn_glyphmodule_id glyphmodule;
 	struct MANAGER(Computed_field) *computed_field_manager;
 	struct cmzn_region *region;
 	/* root_region used for seeding streamlines from the nodes in a region */
 	struct cmzn_region *root_region;
 	cmzn_graphics_material_module_id material_module;
-	cmzn_tessellation_module_id tessellation_module;
+	cmzn_tessellationmodule_id tessellationmodule;
 	struct Spectrum *default_spectrum;
 	struct MANAGER(Spectrum) *spectrum_manager;
 };

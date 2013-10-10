@@ -24,36 +24,36 @@ int Option_table_add_divisions_entry(struct Option_table *option_table,
 
 /***************************************************************************//**
  * Adds an entry to the <option_table> under the given <token> that selects a
- * cmzn_tessellation from the tessellation_module.
- * @param tessellation_module  Module owning tessellations.
+ * tessellation from the tessellation module.
+ * @param tessellationmodule  Module owning tessellations.
  * @param tessellation_address  Address of tessellation pointer which must be
  * NULL or ACCESSed.
  */
 int Option_table_add_cmzn_tessellation_entry(struct Option_table *option_table,
-	const char *token, struct cmzn_tessellation_module *tessellation_module,
+	const char *token, struct cmzn_tessellationmodule *tessellationmodule,
 	struct cmzn_tessellation **tessellation_address);
 
 /***************************************************************************//**
  * gfx define tessellation command.
  * @param state  Command parse state.
- * @param tessellation_module_void  cmzn_tessellation_module.
+ * @param tessellationmodule_void  cmzn_tessellationmodule.
  */
 int gfx_define_tessellation(struct Parse_state *state, void *dummy_to_be_modified,
-	void *tessellation_module_void);
+	void *tessellationmodule_void);
 
 /***************************************************************************//**
  * gfx destroy tessellation command.
  * @param state  Command parse state.
- * @param tessellation_module_void  cmzn_tessellation_module.
+ * @param tessellationmodule_void  cmzn_tessellationmodule.
  */
 int gfx_destroy_tessellation(struct Parse_state *state, void *dummy_to_be_modified,
-	void *tessellation_module_void);
+	void *tessellationmodule_void);
 
 /***************************************************************************//**
  * gfx list tessellation command.
  * @param state  Command parse state.
- * @param tessellation_module_void  cmzn_tessellation_module.
+ * @param tessellationmodule_void  cmzn_tessellationmodule.
  */
 int gfx_list_tessellation(struct Parse_state *state, void *dummy_to_be_modified,
-	void *tessellation_module_void);
+	void *tessellationmodule_void);
 

@@ -308,7 +308,7 @@ DESCRIPTION :
 		transformation_expanded, transformation_callback_flag,
 		gt_element_group_callback_flag, scene_callback_flag;
 	struct cmzn_graphics_module *graphics_module;
-	cmzn_tessellation_module_id tessellationModule;
+	cmzn_tessellationmodule_id tessellationmodule;
 	/* access gt_element_group for current_object if applicable */
 	struct cmzn_scene *scene, *edit_scene;
 	/* keep address of pointer to editor so can self-destroy */
@@ -319,7 +319,7 @@ DESCRIPTION :
 	struct MANAGER(Scene) *scene_manager;
 	struct User_interface *user_interface;
 	struct cmzn_graphic *current_graphic;
-	cmzn_glyph_module *glyphModule;
+	cmzn_glyphmodule *glyphmodule;
 	struct MANAGER(VT_volume_texture) *volume_texture_manager;
 	struct MANAGER(Computed_field) *field_manager;
 	struct MANAGER(cmzn_font) *font_manager;
@@ -707,7 +707,7 @@ public:
 	tessellation_chooser =
 		new Managed_object_chooser<cmzn_tessellation,MANAGER_CLASS(cmzn_tessellation)>(
 			tessellation_chooser_panel, /*initial*/static_cast<cmzn_tessellation*>(0),
-			cmzn_tessellation_module_get_manager(region_tree_viewer->tessellationModule),
+			cmzn_tessellationmodule_get_manager(region_tree_viewer->tessellationmodule),
 			(MANAGER_CONDITIONAL_FUNCTION(cmzn_tessellation) *)NULL, (void *)NULL,
 			region_tree_viewer->user_interface);
 	Callback_base< cmzn_tessellation* > *tessellation_callback =
@@ -2921,7 +2921,7 @@ void SetGraphic(cmzn_graphic *graphic)
 			{
 				glyph_chooser =
 						new Managed_object_chooser<cmzn_glyph, MANAGER_CLASS(cmzn_glyph)>
-						(glyph_chooser_panel, glyph, cmzn_glyph_module_get_manager(region_tree_viewer->glyphModule),
+						(glyph_chooser_panel, glyph, cmzn_glyphmodule_get_manager(region_tree_viewer->glyphmodule),
 							(LIST_CONDITIONAL_FUNCTION(cmzn_glyph) *)NULL, (void *)NULL,
 							region_tree_viewer->user_interface);
 				Callback_base< cmzn_glyph* > *glyph_callback =
@@ -3799,7 +3799,7 @@ void EditTessellation(wxCommandEvent &event)
 	if (!window)
 	{
 		TessellationDialog *dlg = new TessellationDialog(
-			region_tree_viewer->tessellationModule, this, wxID_ANY);
+			region_tree_viewer->tessellationmodule, this, wxID_ANY);
 		tessellationWindowID = dlg->GetId();
 		dlg->Show();
 	}
@@ -4207,7 +4207,7 @@ struct Region_tree_viewer *CREATE(Region_tree_viewer)(
 	struct MANAGER(Graphical_material) *graphical_material_manager,
 	struct Graphical_material *default_material,
 	struct cmzn_font *default_font,
-	cmzn_glyph_module *glyphModule,
+	cmzn_glyphmodule *glyphmodule,
 	struct MANAGER(Spectrum) *spectrum_manager,
 	struct MANAGER(VT_volume_texture) *volume_texture_manager,
 	struct User_interface *user_interface)
@@ -4223,7 +4223,7 @@ DESCRIPTION :
 	region_tree_viewer = (struct Region_tree_viewer *)NULL;
 	if (graphics_module && root_region &&
 		graphical_material_manager && default_material &&
-		glyphModule && spectrum_manager &&
+		glyphmodule && spectrum_manager &&
 		volume_texture_manager && user_interface)
 	{
 		if (ALLOCATE(region_tree_viewer,struct Region_tree_viewer,1))
@@ -4236,13 +4236,13 @@ DESCRIPTION :
 			region_tree_viewer->gt_element_group_callback_flag = 0;
 			region_tree_viewer->scene_callback_flag = 0;
 			region_tree_viewer->graphics_module = graphics_module;
-			region_tree_viewer->tessellationModule = cmzn_graphics_module_get_tessellation_module(graphics_module);
+			region_tree_viewer->tessellationmodule = cmzn_graphics_module_get_tessellationmodule(graphics_module);
 			region_tree_viewer->graphical_material_manager = graphical_material_manager;
 			region_tree_viewer->region_tree_viewer_address = (struct Region_tree_viewer **)NULL;
 			region_tree_viewer->default_material=default_material;
 			region_tree_viewer->selected_material=default_material;
 			region_tree_viewer->default_font=default_font;
-			region_tree_viewer->glyphModule = cmzn_glyph_module_access(glyphModule);
+			region_tree_viewer->glyphmodule = cmzn_glyphmodule_access(glyphmodule);
 			region_tree_viewer->user_interface=user_interface;
 			region_tree_viewer->current_graphic = (cmzn_graphic *)NULL;
 			region_tree_viewer->volume_texture_manager=volume_texture_manager;
@@ -4379,10 +4379,10 @@ DESCRIPTION :
 		}
 		if (region_tree_viewer->scene)
 			DEACCESS(cmzn_scene)(&region_tree_viewer->scene);
-		cmzn_glyph_module_destroy(&region_tree_viewer->glyphModule);
+		cmzn_glyphmodule_destroy(&region_tree_viewer->glyphmodule);
 		delete region_tree_viewer->transformation_editor;
 		delete region_tree_viewer->wx_region_tree_viewer;
-		cmzn_tessellation_module_destroy(&region_tree_viewer->tessellationModule);
+		cmzn_tessellationmodule_destroy(&region_tree_viewer->tessellationmodule);
 		DEALLOCATE(*region_tree_viewer_address);
 		*region_tree_viewer_address = NULL;
 		return_code = 1;

@@ -45,7 +45,7 @@ protected:
 class TessellationDialog: public wxDialog {
 public:
 
-    TessellationDialog(struct cmzn_tessellation_module *tessellation_module_in, wxWindow* parent, int id,
+    TessellationDialog(struct cmzn_tessellationmodule *tessellationmodule_in, wxWindow* parent, int id,
     	const wxPoint& pos=wxDefaultPosition, const wxSize& size=wxDefaultSize);
     int add_managed_object(cmzn_tessellation *tessellation);
     void manager_callback(struct MANAGER_MESSAGE(cmzn_tessellation) *message);
@@ -58,7 +58,7 @@ public:
     }
 
 private:
-    struct cmzn_tessellation_module *tessellation_module;
+    struct cmzn_tessellationmodule *tessellationmodule;
     MANAGER(cmzn_tessellation) *tessellation_manager;
     void *tessellation_manager_callback_id;
     void set_properties();

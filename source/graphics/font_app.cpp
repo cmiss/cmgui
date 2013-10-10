@@ -18,7 +18,7 @@
 
 
 int gfx_define_font(struct Parse_state *state,
-	void *dummy_to_be_modified,void *font_module_void)
+	void *dummy_to_be_modified,void *fontmodule_void)
 /*******************************************************************************
 LAST MODIFIED : 12 March 2008
 
@@ -28,9 +28,9 @@ Executes a GFX DEFINE FONT command.
 {
 	const char *current_token, *font_name;
 	int return_code;
-	cmzn_font_module_id font_module = 0;
+	cmzn_fontmodule_id fontmodule = 0;
 
-	if (state && (font_module = (cmzn_font_module_id)font_module_void))
+	if (state && (fontmodule = (cmzn_fontmodule_id)fontmodule_void))
 	{
 		if (NULL != (current_token = state->current_token))
 		{
@@ -41,19 +41,19 @@ Executes a GFX DEFINE FONT command.
 				if (shift_Parse_state(state,1)&&
 					(current_token=state->current_token))
 				{
-					cmzn_font_id font = cmzn_font_module_find_font_by_name(
-						font_module, font_name);
+					cmzn_font_id font = cmzn_fontmodule_find_font_by_name(
+						fontmodule, font_name);
 					if (!font)
 					{
-						font = cmzn_font_module_create_font(font_module);
+						font = cmzn_fontmodule_create_font(fontmodule);
 						cmzn_font_set_name(font, font_name);
 					}
 					cmzn_font_render_type render_type = cmzn_font_get_render_type(font);
-					cmzn_font_type font_type = cmzn_font_get_font_type(font);
+					cmzn_font_typeface typeface = cmzn_font_get_typeface(font);
 					char *render_type_string = cmzn_font_render_type_enum_to_string(render_type);
-					char *font_type_string = cmzn_font_type_enum_to_string(font_type);
+					char *typeface_string = cmzn_font_typeface_enum_to_string(typeface);
 					int number_of_valid_strings_render_type = 0;
-					int number_of_valid_strings_font_type = 0;
+					int number_of_valid_strings_typeface = 0;
 					const char **valid_render_type_strings = ENUMERATOR_GET_VALID_STRINGS(cmzn_font_render_type)(
 						&number_of_valid_strings_render_type,
 						(ENUMERATOR_CONDITIONAL_FUNCTION(cmzn_font_render_type) *)NULL,
@@ -67,19 +67,19 @@ Executes a GFX DEFINE FONT command.
 						all_render_types += valid_render_type_strings[i];
 					}
 					const char *all_render_types_help = all_render_types.c_str();
-					const char **valid_font_font_type_strings = ENUMERATOR_GET_VALID_STRINGS(cmzn_font_type)(
-						&number_of_valid_strings_font_type,
-						(ENUMERATOR_CONDITIONAL_FUNCTION(cmzn_font_type) *)NULL,
+					const char **valid_font_typeface_strings = ENUMERATOR_GET_VALID_STRINGS(cmzn_font_typeface)(
+						&number_of_valid_strings_typeface,
+						(ENUMERATOR_CONDITIONAL_FUNCTION(cmzn_font_typeface) *)NULL,
 						(void *)NULL);
-					std::string all_font_font_types = " ";
-					for (int i = 0; i < number_of_valid_strings_font_type; i++)
+					std::string all_font_typefaces = " ";
+					for (int i = 0; i < number_of_valid_strings_typeface; i++)
 					{
 						if (i)
-							all_font_font_types += "|";
+							all_font_typefaces += "|";
 
-						all_font_font_types += valid_font_font_type_strings[i];
+						all_font_typefaces += valid_font_typeface_strings[i];
 					}
-					const char *all_font_font_types_help = all_font_font_types.c_str();
+					const char *all_font_typefaces_help = all_font_typefaces.c_str();
 
 					struct Option_table *option_table = CREATE(Option_table)();
 					int bold_flag = 0;
@@ -97,8 +97,8 @@ Executes a GFX DEFINE FONT command.
 						&(size),NULL,set_int_non_negative);
 					Option_table_add_string_entry(option_table, "render_type",
 						&render_type_string, all_render_types_help);
-					Option_table_add_string_entry(option_table, "font_type",
-						&font_type_string, all_font_font_types_help);
+					Option_table_add_string_entry(option_table, "typeface",
+						&typeface_string, all_font_typefaces_help);
 					return_code = Option_table_multi_parse(option_table, state);
 					if (return_code)
 					{
@@ -119,39 +119,39 @@ Executes a GFX DEFINE FONT command.
 								"gfx_define_font:  Missing render_type argument");
 							return_code = 0;
 						}
-						if (font_type_string)
+						if (typeface_string)
 						{
-							STRING_TO_ENUMERATOR(cmzn_font_type)(font_type_string,
-								&font_type);
-							if (CMZN_FONT_TYPE_INVALID == font_type)
+							STRING_TO_ENUMERATOR(cmzn_font_typeface)(typeface_string,
+								&typeface);
+							if (CMZN_FONT_TYPEFACE_INVALID == typeface)
 							{
 								display_message(ERROR_MESSAGE,
-									"gfx_define_font:  Invalid true type %s", font_type_string);
+									"gfx_define_font:  Invalid true type %s", typeface_string);
 								return_code = 0;
 							}
 						}
 						else
 						{
 							display_message(ERROR_MESSAGE,
-								"gfx_define_font:  Missing font_type argument");
+								"gfx_define_font:  Missing typeface argument");
 							return_code = 0;
 						}
 						if (font)
 						{
-							cmzn_font_set_bold(font, bold_flag);
-							cmzn_font_set_italic(font, italic_flag);
+							cmzn_font_set_bold(font, 0 != bold_flag);
+							cmzn_font_set_italic(font, 0 != italic_flag);
 							cmzn_font_set_depth(font, depth);
 							cmzn_font_set_size(font, size);
-							cmzn_font_set_font_type(font, font_type);
+							cmzn_font_set_typeface(font, typeface);
 							cmzn_font_set_render_type(font, render_type);
 						}
 
 					}
 					DEALLOCATE(valid_render_type_strings);
-					DEALLOCATE(valid_font_font_type_strings);
+					DEALLOCATE(valid_font_typeface_strings);
 					cmzn_font_destroy(&font);
 					DEALLOCATE(render_type_string);
-					DEALLOCATE(font_type_string);
+					DEALLOCATE(typeface_string);
 					DESTROY(Option_table)(&option_table);
 				}
 				else

@@ -25,7 +25,7 @@
 #include "computed_field/computed_field_set_app.h"
 #include "general/enumerator_private_app.h"
 
-DEFINE_DEFAULT_OPTION_TABLE_ADD_ENUMERATOR_FUNCTION(cmzn_spectrum_component_colour_mapping);
+DEFINE_DEFAULT_OPTION_TABLE_ADD_ENUMERATOR_FUNCTION(cmzn_spectrumcomponent_colour_mapping);
 
 int gfx_modify_spectrum_settings_linear(struct Parse_state *state,
 	void *modify_spectrum_data_void,void *dummy)
@@ -41,13 +41,13 @@ parsed settings. Note that the settings are ACCESSed once on valid return.
 	char ambient,amb_diff,diffuse,emission,extend_above,
 		extend_below,fix_maximum,fix_minimum,reverse,specular,
 		transparent_above,transparent_below;
-	enum cmzn_spectrum_component_colour_mapping colour_mapping;
+	enum cmzn_spectrumcomponent_colour_mapping colour_mapping;
 	int black_band_int,component,number_of_bands,range_components,return_code;
 	float band_ratio,step_value;
 	FE_value colour_range[2],range[2];
 	struct Modify_spectrum_app_data *modify_spectrum_data;
 	struct Option_table *option_table, *render_option_table;
-	struct cmzn_spectrum_component *settings;
+	struct cmzn_spectrumcomponent *settings;
 
 	ENTER(gfx_modify_spectrum_settings_linear);
 	USE_PARAMETER(dummy);
@@ -58,14 +58,14 @@ parsed settings. Note that the settings are ACCESSed once on valid return.
 		if (modify_spectrum_data)
 		{
 			/* create the spectrum_settings: */
-			settings=modify_spectrum_data->component=CREATE(cmzn_spectrum_component)();
+			settings=modify_spectrum_data->component=CREATE(cmzn_spectrumcomponent)();
 			if (settings)
 			{
 				/* access since deaccessed in gfx_modify_spectrum */
 
-				cmzn_spectrum_component_set_scale_type(settings,CMZN_SPECTRUM_COMPONENT_SCALE_LINEAR);
+				cmzn_spectrumcomponent_set_scale_type(settings,CMZN_SPECTRUMCOMPONENT_SCALE_LINEAR);
 				settings->is_field_lookup = false;
-				colour_mapping = cmzn_spectrum_component_get_colour_mapping(settings);
+				colour_mapping = cmzn_spectrumcomponent_get_colour_mapping(settings);
 				ambient = 0;
 				amb_diff = 0;
 				band_ratio = 0.01;
@@ -86,7 +86,7 @@ parsed settings. Note that the settings are ACCESSed once on valid return.
 				colour_range[1] = 1.0;
 				range[0] = (FE_value)(modify_spectrum_data->spectrum_minimum);
 				range[1] = (FE_value)(modify_spectrum_data->spectrum_maximum);
-				component = cmzn_spectrum_component_get_field_component(settings);
+				component = cmzn_spectrumcomponent_get_field_component(settings);
 
 				option_table = CREATE(Option_table)();
 				/* band_ratio */
@@ -132,7 +132,7 @@ parsed settings. Note that the settings are ACCESSed once on valid return.
 				Option_table_add_char_flag_entry(option_table, "transparent_below",
 					&transparent_below);
 				/* conversion_mode */
-				OPTION_TABLE_ADD_ENUMERATOR(cmzn_spectrum_component_colour_mapping)(
+				OPTION_TABLE_ADD_ENUMERATOR(cmzn_spectrumcomponent_colour_mapping)(
 					option_table, &colour_mapping);
 				/* render_option */
 				render_option_table = CREATE(Option_table)();
@@ -151,12 +151,12 @@ parsed settings. Note that the settings are ACCESSed once on valid return.
 
 				if (!(return_code=Option_table_multi_parse(option_table,state)))
 				{
-					DEACCESS(cmzn_spectrum_component)(&(modify_spectrum_data->component));
+					DEACCESS(cmzn_spectrumcomponent)(&(modify_spectrum_data->component));
 				}
 				DESTROY(Option_table)(&option_table);
 				if (return_code)
 				{
-					cmzn_spectrum_component_set_colour_mapping(settings,
+					cmzn_spectrumcomponent_set_colour_mapping(settings,
 						colour_mapping);
 				}
 				if ( return_code )
@@ -178,11 +178,11 @@ parsed settings. Note that the settings are ACCESSed once on valid return.
 					}
 					else if (extend_above)
 					{
-						cmzn_spectrum_component_set_extend_above(settings, true);
+						cmzn_spectrumcomponent_set_extend_above(settings, true);
 					}
 					else if (transparent_above)
 					{
-						cmzn_spectrum_component_set_extend_above(settings, false);
+						cmzn_spectrumcomponent_set_extend_above(settings, false);
 					}
 				}
 				if ( return_code )
@@ -196,43 +196,42 @@ parsed settings. Note that the settings are ACCESSed once on valid return.
 					else if (extend_below)
 					{
 
-						cmzn_spectrum_component_set_extend_below(settings, true);
+						cmzn_spectrumcomponent_set_extend_below(settings, true);
 					}
 					else if (transparent_below)
 					{
-						cmzn_spectrum_component_set_extend_below(settings, false);
+						cmzn_spectrumcomponent_set_extend_below(settings, false);
 					}
 				}
 				if ( return_code )
 				{
-					cmzn_spectrum_component_set_field_component(settings,
-						component);
-					cmzn_spectrum_component_set_colour_minimum(settings,	colour_range[0]);
-					cmzn_spectrum_component_set_colour_maximum(settings,	colour_range[1]);
-					cmzn_spectrum_component_set_range_minimum(settings,	range[0]);
-					cmzn_spectrum_component_set_range_maximum(settings,	range[1]);
-					cmzn_spectrum_component_set_colour_reverse(settings, reverse);
-					cmzn_spectrum_component_set_number_of_bands(settings,
+					cmzn_spectrumcomponent_set_field_component(settings, component);
+					cmzn_spectrumcomponent_set_colour_minimum(settings,	colour_range[0]);
+					cmzn_spectrumcomponent_set_colour_maximum(settings,	colour_range[1]);
+					cmzn_spectrumcomponent_set_range_minimum(settings,	range[0]);
+					cmzn_spectrumcomponent_set_range_maximum(settings,	range[1]);
+					cmzn_spectrumcomponent_set_colour_reverse(settings, 0 != reverse);
+					cmzn_spectrumcomponent_set_number_of_bands(settings,
 						number_of_bands);
 					black_band_int = (band_ratio * 1000.0 + 0.5);
-					cmzn_spectrum_component_set_black_band_proportion(settings,
+					cmzn_spectrumcomponent_set_black_band_proportion(settings,
 						black_band_int);
 					/* Must set step value after setting minimum and maximum range */
-					cmzn_spectrum_component_set_step_value(settings, step_value);
+					cmzn_spectrumcomponent_set_step_value(settings, step_value);
 				}
 				/* Must set fix_maximum,fix_minimum after setting minimum and maximum range */
 				if ( return_code )
 				{
 					if (fix_maximum)
 					{
-						cmzn_spectrum_component_set_fix_maximum_flag(settings, 1);
+						cmzn_spectrumcomponent_set_fix_maximum_flag(settings, 1);
 					}
 				}
 				if ( return_code )
 				{
 					if (fix_minimum)
 					{
-						cmzn_spectrum_component_set_fix_minimum_flag(settings, 1);
+						cmzn_spectrumcomponent_set_fix_minimum_flag(settings, 1);
 					}
 				}
 			}
@@ -274,13 +273,13 @@ parsed settings. Note that the settings are ACCESSed once on valid return.
 	char ambient,amb_diff,diffuse,emission,extend_above,
 		extend_below,fix_maximum,fix_minimum,left,reverse,right,
 		specular,transparent_above,transparent_below;
-	enum cmzn_spectrum_component_colour_mapping colour_mapping;
+	enum cmzn_spectrumcomponent_colour_mapping colour_mapping;
 	int black_band_int,component,number_of_bands,range_components,return_code;
 	float band_ratio,exaggeration,step_value;
 	FE_value colour_range[2],range[2];
 	struct Modify_spectrum_app_data *modify_spectrum_data;
 	struct Option_table *option_table, *render_option_table;
-	struct cmzn_spectrum_component *settings;
+	struct cmzn_spectrumcomponent *settings;
 
 	ENTER(gfx_modify_spectrum_settings_log);
 	USE_PARAMETER(dummy);
@@ -290,12 +289,12 @@ parsed settings. Note that the settings are ACCESSed once on valid return.
 		if (modify_spectrum_data)
 		{
 			/* create the spectrum_settings: */
-			settings=modify_spectrum_data->component=CREATE(cmzn_spectrum_component)();
+			settings=modify_spectrum_data->component=CREATE(cmzn_spectrumcomponent)();
 			if (settings)
 			{
-				cmzn_spectrum_component_set_scale_type(settings,CMZN_SPECTRUM_COMPONENT_SCALE_LOG);
+				cmzn_spectrumcomponent_set_scale_type(settings,CMZN_SPECTRUMCOMPONENT_SCALE_LOG);
 				settings->is_field_lookup = false;
-				colour_mapping = cmzn_spectrum_component_get_colour_mapping(settings);
+				colour_mapping = cmzn_spectrumcomponent_get_colour_mapping(settings);
 				ambient = 0;
 				amb_diff = 0;
 				band_ratio = 0.01;
@@ -318,8 +317,8 @@ parsed settings. Note that the settings are ACCESSed once on valid return.
 				colour_range[1] = 1.0;
 				range[0] = (FE_value)(modify_spectrum_data->spectrum_minimum);
 				range[1] = (FE_value)(modify_spectrum_data->spectrum_maximum);
-				component = cmzn_spectrum_component_get_field_component(settings);
-				exaggeration =  cmzn_spectrum_component_get_exaggeration(settings);
+				component = cmzn_spectrumcomponent_get_field_component(settings);
+				exaggeration =  cmzn_spectrumcomponent_get_exaggeration(settings);
 
 				option_table = CREATE(Option_table)();
 				/* band_ratio */
@@ -374,7 +373,7 @@ parsed settings. Note that the settings are ACCESSed once on valid return.
 				Option_table_add_char_flag_entry(option_table, "transparent_below",
 					&transparent_below);
 				/* conversion_mode */
-				Option_table_add_enumerator_cmzn_spectrum_component_colour_mapping(
+				Option_table_add_enumerator_cmzn_spectrumcomponent_colour_mapping(
 					option_table, &colour_mapping);
 				/* render_option */
 				render_option_table = CREATE(Option_table)();
@@ -393,19 +392,19 @@ parsed settings. Note that the settings are ACCESSed once on valid return.
 
 				if (!(return_code=Option_table_multi_parse(option_table,state)))
 				{
-					DEACCESS(cmzn_spectrum_component)(&(modify_spectrum_data->component));
+					DEACCESS(cmzn_spectrumcomponent)(&(modify_spectrum_data->component));
 				}
 				DESTROY(Option_table)(&option_table);
 				if (return_code)
 				{
-					cmzn_spectrum_component_set_colour_mapping(settings,
+					cmzn_spectrumcomponent_set_colour_mapping(settings,
 						colour_mapping);
-					cmzn_spectrum_component_set_number_of_bands(settings,
+					cmzn_spectrumcomponent_set_number_of_bands(settings,
 						number_of_bands);
 					black_band_int = (band_ratio * 1000.0 + 0.5);
-					cmzn_spectrum_component_set_black_band_proportion(settings,
+					cmzn_spectrumcomponent_set_black_band_proportion(settings,
 						black_band_int);
-					cmzn_spectrum_component_set_step_value(settings, step_value);
+					cmzn_spectrumcomponent_set_step_value(settings, step_value);
 				}
 				if ( return_code )
 				{
@@ -426,11 +425,11 @@ parsed settings. Note that the settings are ACCESSed once on valid return.
 					}
 					else if (extend_above)
 					{
-						cmzn_spectrum_component_set_extend_above(settings, true);
+						cmzn_spectrumcomponent_set_extend_above(settings, true);
 					}
 					else if (transparent_above)
 					{
-						cmzn_spectrum_component_set_extend_above(settings, false);
+						cmzn_spectrumcomponent_set_extend_above(settings, false);
 					}
 				}
 				if ( return_code )
@@ -443,11 +442,11 @@ parsed settings. Note that the settings are ACCESSed once on valid return.
 					}
 					else if (extend_below)
 					{
-						cmzn_spectrum_component_set_extend_below(settings, true);
+						cmzn_spectrumcomponent_set_extend_below(settings, true);
 					}
 					else if (transparent_below)
 					{
-						cmzn_spectrum_component_set_extend_below(settings, false);
+						cmzn_spectrumcomponent_set_extend_below(settings, false);
 					}
 				}
 				if ( return_code )
@@ -466,35 +465,35 @@ parsed settings. Note that the settings are ACCESSed once on valid return.
 					{
 						exaggeration = -fabs(exaggeration);
 					}
-					cmzn_spectrum_component_set_exaggeration(settings, exaggeration);
+					cmzn_spectrumcomponent_set_exaggeration(settings, exaggeration);
 				}
 				if ( return_code )
 				{
-					cmzn_spectrum_component_set_field_component(settings,
+					cmzn_spectrumcomponent_set_field_component(settings,
 						component);
-					cmzn_spectrum_component_set_colour_minimum(settings,
+					cmzn_spectrumcomponent_set_colour_minimum(settings,
 						colour_range[0]);
-					cmzn_spectrum_component_set_colour_maximum(settings,
+					cmzn_spectrumcomponent_set_colour_maximum(settings,
 						colour_range[1]);
-					cmzn_spectrum_component_set_range_minimum(settings,
+					cmzn_spectrumcomponent_set_range_minimum(settings,
 						range[0]);
-					cmzn_spectrum_component_set_range_maximum(settings,
+					cmzn_spectrumcomponent_set_range_maximum(settings,
 						range[1]);
-					cmzn_spectrum_component_set_colour_reverse(settings, reverse);
+					cmzn_spectrumcomponent_set_colour_reverse(settings, reverse);
 				}
 				/* Must set fix_maximum,fix_minimum after setting minimum and maximum range */
 				if ( return_code )
 				{
 					if (fix_maximum)
 					{
-						cmzn_spectrum_component_set_fix_maximum_flag(settings, 1);
+						cmzn_spectrumcomponent_set_fix_maximum_flag(settings, 1);
 					}
 				}
 				if ( return_code )
 				{
 					if (fix_minimum)
 					{
-						cmzn_spectrum_component_set_fix_minimum_flag(settings, 1);
+						cmzn_spectrumcomponent_set_fix_minimum_flag(settings, 1);
 					}
 				}
 			}
@@ -533,14 +532,14 @@ If return_code is 1, returns the completed Modify_spectrum_app_data with the
 parsed settings. Note that the settings are ACCESSed once on valid return.
 ==============================================================================*/
 {
-	enum cmzn_spectrum_component_colour_mapping colour_mapping;
+	enum cmzn_spectrumcomponent_colour_mapping colour_mapping;
 	int component, return_code;
 	struct Computed_field *input_field, *output_field;
 	struct Modify_spectrum_app_data *modify_spectrum_data;
 	struct Option_table *option_table;
 	struct Set_Computed_field_conditional_data set_input_field_data,
 		set_output_field_data;
-	struct cmzn_spectrum_component *settings;
+	struct cmzn_spectrumcomponent *settings;
 
 	ENTER(gfx_modify_spectrum_settings_field);
 	USE_PARAMETER(dummy);
@@ -550,14 +549,14 @@ parsed settings. Note that the settings are ACCESSed once on valid return.
 		if (modify_spectrum_data)
 		{
 			/* create the spectrum_settings: */
-			settings=modify_spectrum_data->component=CREATE(cmzn_spectrum_component)();
+			settings=modify_spectrum_data->component=CREATE(cmzn_spectrumcomponent)();
 			if (settings)
 			{
-				cmzn_spectrum_component_set_scale_type(settings,CMZN_SPECTRUM_COMPONENT_SCALE_INVALID);
+				cmzn_spectrumcomponent_set_scale_type(settings,CMZN_SPECTRUMCOMPONENT_SCALE_INVALID);
 				settings->is_field_lookup = true;
 
-				colour_mapping = cmzn_spectrum_component_get_colour_mapping(settings);
-				component = cmzn_spectrum_component_get_field_component(settings);
+				colour_mapping = cmzn_spectrumcomponent_get_colour_mapping(settings);
+				component = cmzn_spectrumcomponent_get_field_component(settings);
 
 				input_field = (struct Computed_field *)NULL;
 				output_field = (struct Computed_field *)NULL;
@@ -593,12 +592,12 @@ parsed settings. Note that the settings are ACCESSed once on valid return.
 					&output_field, &set_output_field_data,
 					set_Computed_field_conditional);
 				/* conversion_mode */
-				Option_table_add_enumerator_cmzn_spectrum_component_colour_mapping(
+				Option_table_add_enumerator_cmzn_spectrumcomponent_colour_mapping(
 					option_table, &colour_mapping);
 
 				if (!(return_code=Option_table_multi_parse(option_table,state)))
 				{
-					DEACCESS(cmzn_spectrum_component)(&(modify_spectrum_data->component));
+					DEACCESS(cmzn_spectrumcomponent)(&(modify_spectrum_data->component));
 				}
 				DESTROY(Option_table)(&option_table);
 				if (return_code)
@@ -630,9 +629,9 @@ parsed settings. Note that the settings are ACCESSed once on valid return.
 							output_field);
 						settings->changed = 1;
 					}
-					cmzn_spectrum_component_set_field_component(settings,
+					cmzn_spectrumcomponent_set_field_component(settings,
 						component);
-					cmzn_spectrum_component_set_colour_mapping(settings,
+					cmzn_spectrumcomponent_set_colour_mapping(settings,
 						colour_mapping);
 				}
 				DEACCESS(Computed_field)(&input_field);
@@ -662,9 +661,9 @@ parsed settings. Note that the settings are ACCESSed once on valid return.
 	return (return_code);
 } /* gfx_modify_spectrum_field */
 
-int cmzn_spectrum_component_modify(struct cmzn_spectrum_component *component,
-	struct cmzn_spectrum_component *new_component,
-	struct LIST(cmzn_spectrum_component) *list_of_components)
+int cmzn_spectrumcomponent_modify(struct cmzn_spectrumcomponent *component,
+	struct cmzn_spectrumcomponent *new_component,
+	struct LIST(cmzn_spectrumcomponent) *list_of_components)
 /*******************************************************************************
 LAST MODIFIED : 10 March 1998
 
@@ -675,30 +674,30 @@ priority. Sets component->changed to force graphics to be regenerated.
 {
 	int return_code,old_position;
 
-	ENTER(cmzn_spectrum_component_modify);
+	ENTER(cmzn_spectrumcomponent_modify);
 	if (component&&new_component&&list_of_components)
 	{
 		/* make sure graphics for these component are regenerated */
 		component->changed=1;
 		/* make sure position stays the same */
 		old_position=component->position;
-		return_code=COPY(cmzn_spectrum_component)(component,new_component);
+		return_code=COPY(cmzn_spectrumcomponent)(component,new_component);
 		component->position=old_position;
 	}
 	else
 	{
-		display_message(ERROR_MESSAGE,"cmzn_spectrum_component_modify.  "
+		display_message(ERROR_MESSAGE,"cmzn_spectrumcomponent_modify.  "
 			"Invalid argument(s)");
 		return_code=0;
 	}
 	LEAVE;
 
 	return (return_code);
-} /* cmzn_spectrum_component_modify */
+} /* cmzn_spectrumcomponent_modify */
 
 
-char *cmzn_spectrum_component_string(struct cmzn_spectrum_component *component,
-	enum cmzn_spectrum_component_string_details component_detail)
+char *cmzn_spectrumcomponent_string(struct cmzn_spectrumcomponent *component,
+	enum cmzn_spectrumcomponent_string_details component_detail)
 /*******************************************************************************
 LAST MODIFIED : 15 March 2002
 
@@ -711,7 +710,7 @@ included in the string. User must remember to DEALLOCATE the name afterwards.
 	char *name,*component_string,temp_string[80];
 	int error;
 
-	ENTER(cmzn_spectrum_component_string);
+	ENTER(cmzn_spectrumcomponent_string);
 	component_string=(char *)NULL;
 	error=0;
 	if (component&&(
@@ -726,11 +725,11 @@ included in the string. User must remember to DEALLOCATE the name afterwards.
 		}
 		switch (component->component_scale)
 		{
-			case CMZN_SPECTRUM_COMPONENT_SCALE_LINEAR:
+			case CMZN_SPECTRUMCOMPONENT_SCALE_LINEAR:
 			{
 				append_string(&component_string,"linear",&error);
 			} break;
-			case CMZN_SPECTRUM_COMPONENT_SCALE_LOG:
+			case CMZN_SPECTRUMCOMPONENT_SCALE_LOG:
 			{
 				sprintf(temp_string,"log exaggeration %g",fabs(component->exaggeration));
 				append_string(&component_string,temp_string,&error);
@@ -743,7 +742,7 @@ included in the string. User must remember to DEALLOCATE the name afterwards.
 					append_string(&component_string," right",&error);
 				}
 			} break;
-			case CMZN_SPECTRUM_COMPONENT_SCALE_INVALID:
+			case CMZN_SPECTRUMCOMPONENT_SCALE_INVALID:
 			{
 				if (component->is_field_lookup)
 				{
@@ -771,7 +770,7 @@ included in the string. User must remember to DEALLOCATE the name afterwards.
 			default:
 			{
 				display_message(ERROR_MESSAGE,
-					"cmzn_spectrum_component_string.  Unknown element component type");
+					"cmzn_spectrumcomponent_string.  Unknown element component type");
 			} break;
 		}
 		if ( component->reverse )
@@ -781,11 +780,11 @@ included in the string. User must remember to DEALLOCATE the name afterwards.
 		sprintf(temp_string," range %g %g",component->minimum,
 			component->maximum);
 		append_string(&component_string,temp_string,&error);
-		if ((component->extend_above)&&(component->colour_mapping!=CMZN_SPECTRUM_COMPONENT_COLOUR_MAPPING_STEP))
+		if ((component->extend_above)&&(component->colour_mapping!=CMZN_SPECTRUMCOMPONENT_COLOUR_MAPPING_STEP))
 		{
 			append_string(&component_string," extend_above",&error);
 		}
-		if ((component->extend_below)&&(component->colour_mapping!=CMZN_SPECTRUM_COMPONENT_COLOUR_MAPPING_STEP))
+		if ((component->extend_below)&&(component->colour_mapping!=CMZN_SPECTRUMCOMPONENT_COLOUR_MAPPING_STEP))
 		{
 			append_string(&component_string," extend_below",&error);
 		}
@@ -797,37 +796,37 @@ included in the string. User must remember to DEALLOCATE the name afterwards.
 		{
 			append_string(&component_string," fix_minimum",&error);
 		}
-		if (component->component_scale == CMZN_SPECTRUM_COMPONENT_SCALE_LINEAR ||
-			component->component_scale == CMZN_SPECTRUM_COMPONENT_SCALE_LOG )
+		if (component->component_scale == CMZN_SPECTRUMCOMPONENT_SCALE_LINEAR ||
+			component->component_scale == CMZN_SPECTRUMCOMPONENT_SCALE_LOG )
 		{
 			switch (component->colour_mapping)
 			{
-				case CMZN_SPECTRUM_COMPONENT_COLOUR_MAPPING_ALPHA:
-				case CMZN_SPECTRUM_COMPONENT_COLOUR_MAPPING_BLUE:
-				case CMZN_SPECTRUM_COMPONENT_COLOUR_MAPPING_GREEN:
-				case CMZN_SPECTRUM_COMPONENT_COLOUR_MAPPING_MONOCHROME:
-				case CMZN_SPECTRUM_COMPONENT_COLOUR_MAPPING_RAINBOW:
-				case CMZN_SPECTRUM_COMPONENT_COLOUR_MAPPING_RED:
-				case CMZN_SPECTRUM_COMPONENT_COLOUR_MAPPING_WHITE_TO_BLUE:
-				case CMZN_SPECTRUM_COMPONENT_COLOUR_MAPPING_WHITE_TO_RED:
-				case CMZN_SPECTRUM_COMPONENT_COLOUR_MAPPING_WHITE_TO_GREEN:
+				case CMZN_SPECTRUMCOMPONENT_COLOUR_MAPPING_ALPHA:
+				case CMZN_SPECTRUMCOMPONENT_COLOUR_MAPPING_BLUE:
+				case CMZN_SPECTRUMCOMPONENT_COLOUR_MAPPING_GREEN:
+				case CMZN_SPECTRUMCOMPONENT_COLOUR_MAPPING_MONOCHROME:
+				case CMZN_SPECTRUMCOMPONENT_COLOUR_MAPPING_RAINBOW:
+				case CMZN_SPECTRUMCOMPONENT_COLOUR_MAPPING_RED:
+				case CMZN_SPECTRUMCOMPONENT_COLOUR_MAPPING_WHITE_TO_BLUE:
+				case CMZN_SPECTRUMCOMPONENT_COLOUR_MAPPING_WHITE_TO_RED:
+				case CMZN_SPECTRUMCOMPONENT_COLOUR_MAPPING_WHITE_TO_GREEN:
 				{
 					sprintf(temp_string," %s colour_range %g %g",
-						ENUMERATOR_STRING(cmzn_spectrum_component_colour_mapping)(component->colour_mapping),
+						ENUMERATOR_STRING(cmzn_spectrumcomponent_colour_mapping)(component->colour_mapping),
 						component->min_value, component->max_value);
 					append_string(&component_string,temp_string,&error);
 				} break;
 				default:
 				{
 				} break;
-				case CMZN_SPECTRUM_COMPONENT_COLOUR_MAPPING_BANDED:
+				case CMZN_SPECTRUMCOMPONENT_COLOUR_MAPPING_BANDED:
 				{
 					sprintf(temp_string," banded number_of_bands %d band_ratio %g",
 						component->number_of_bands,
 						(ZnReal)(component->black_band_proportion)/1000.0);
 					append_string(&component_string,temp_string,&error);
 				} break;
-				case CMZN_SPECTRUM_COMPONENT_COLOUR_MAPPING_STEP:
+				case CMZN_SPECTRUMCOMPONENT_COLOUR_MAPPING_STEP:
 				{
 					sprintf(temp_string," step_texture step_value %g",component->step_value);
 					append_string(&component_string,temp_string,&error);
@@ -839,15 +838,15 @@ included in the string. User must remember to DEALLOCATE the name afterwards.
 	}
 	else
 	{
-		display_message(ERROR_MESSAGE,"cmzn_spectrum_component_string.  "
+		display_message(ERROR_MESSAGE,"cmzn_spectrumcomponent_string.  "
 			"Invalid argument(s)");
 	}
 	LEAVE;
 
 	return component_string;
-} /* cmzn_spectrum_component_string */
+} /* cmzn_spectrumcomponent_string */
 
-int cmzn_spectrum_component_list_contents(struct cmzn_spectrum_component *component,
+int cmzn_spectrumcomponent_list_contents(struct cmzn_spectrumcomponent *component,
 	void *list_data_void)
 /*******************************************************************************
 LAST MODIFIED : 22 January 2002
@@ -860,13 +859,13 @@ Writes out the <component> as a text string in the command window with the
 {
 	int return_code;
 	char *component_string,line[80];
-	struct cmzn_spectrum_component_list_data *list_data;
+	struct cmzn_spectrumcomponent_list_data *list_data;
 
-	ENTER(cmzn_spectrum_component_list_contents);
+	ENTER(cmzn_spectrumcomponent_list_contents);
 	if (component&&
-		(list_data=(struct cmzn_spectrum_component_list_data *)list_data_void))
+		(list_data=(struct cmzn_spectrumcomponent_list_data *)list_data_void))
 	{
-		component_string=cmzn_spectrum_component_string(component,
+		component_string=cmzn_spectrumcomponent_string(component,
 			list_data->component_string_detail);
 		if (component_string)
 		{
@@ -898,15 +897,15 @@ Writes out the <component> as a text string in the command window with the
 	else
 	{
 		display_message(ERROR_MESSAGE,
-			"cmzn_spectrum_component_list_contents.  Invalid argument(s)");
+			"cmzn_spectrumcomponent_list_contents.  Invalid argument(s)");
 		return_code=0;
 	}
 	LEAVE;
 
 	return (return_code);
-} /* cmzn_spectrum_component_list_contents */
+} /* cmzn_spectrumcomponent_list_contents */
 
-int cmzn_spectrum_component_write_contents(struct cmzn_spectrum_component *component,
+int cmzn_spectrumcomponent_write_contents(struct cmzn_spectrumcomponent *component,
 	void *list_data_void)
 /*******************************************************************************
 LAST MODIFIED : 22 January 2002
@@ -919,13 +918,13 @@ Writes out the <component> as a text string in the command window with the
 {
 	int return_code;
 	char *component_string,line[80];
-	struct cmzn_spectrum_component_list_data *list_data;
+	struct cmzn_spectrumcomponent_list_data *list_data;
 
-	ENTER(cmzn_spectrum_component_write_contents);
-	list_data=(struct cmzn_spectrum_component_list_data *)list_data_void;
+	ENTER(cmzn_spectrumcomponent_write_contents);
+	list_data=(struct cmzn_spectrumcomponent_list_data *)list_data_void;
 	if (component&&list_data)
 	{
-		component_string=cmzn_spectrum_component_string(component,
+		component_string=cmzn_spectrumcomponent_string(component,
 			list_data->component_string_detail);
 		if (component_string)
 		{
@@ -957,10 +956,10 @@ Writes out the <component> as a text string in the command window with the
 	else
 	{
 		display_message(ERROR_MESSAGE,
-			"cmzn_spectrum_component_list_contents.  Invalid argument(s)");
+			"cmzn_spectrumcomponent_list_contents.  Invalid argument(s)");
 		return_code=0;
 	}
 	LEAVE;
 
 	return (return_code);
-} /* cmzn_spectrum_component_write_contents */
+} /* cmzn_spectrumcomponent_write_contents */

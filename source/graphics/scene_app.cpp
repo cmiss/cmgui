@@ -376,19 +376,19 @@ int cmzn_scene_fill_scene_command_data(cmzn_scene_id scene,
 			cmzn_graphics_module_get_default_font(scene->graphics_module);
 		scene_command_data->spectrum_manager =
 			cmzn_graphics_module_get_spectrum_manager(scene->graphics_module);
-		cmzn_spectrum_module_id spectrum_module =
-			cmzn_graphics_module_get_spectrum_module(scene->graphics_module);
+		cmzn_spectrummodule_id spectrummodule =
+			cmzn_graphics_module_get_spectrummodule(scene->graphics_module);
 		scene_command_data->default_spectrum =
-				cmzn_spectrum_module_get_default_spectrum(spectrum_module);
-		cmzn_spectrum_module_destroy(&spectrum_module);
-		scene_command_data->glyph_module =
-			cmzn_graphics_module_get_glyph_module(scene->graphics_module);
+				cmzn_spectrummodule_get_default_spectrum(spectrummodule);
+		cmzn_spectrummodule_destroy(&spectrummodule);
+		scene_command_data->glyphmodule =
+			cmzn_graphics_module_get_glyphmodule(scene->graphics_module);
 		scene_command_data->computed_field_manager =
 			 cmzn_region_get_Computed_field_manager(scene->region);
 		scene_command_data->region = scene->region;
 		scene_command_data->root_region = cmzn_region_get_root(scene->region);
-		scene_command_data->tessellation_module =
-			cmzn_graphics_module_get_tessellation_module(scene->graphics_module);
+		scene_command_data->tessellationmodule =
+			cmzn_graphics_module_get_tessellationmodule(scene->graphics_module);
 		return_code = 1;
 	}
 	return return_code;
@@ -404,8 +404,8 @@ int cmzn_scene_cleanup_scene_command_data(
 		cmzn_graphics_material_destroy(&scene_command_data->default_material);
 		cmzn_font_destroy(&scene_command_data->default_font);
 		cmzn_spectrum_destroy(&scene_command_data->default_spectrum);
-		cmzn_glyph_module_destroy(&(scene_command_data->glyph_module));
-		cmzn_tessellation_module_destroy(&(scene_command_data->tessellation_module));
+		cmzn_glyphmodule_destroy(&(scene_command_data->glyphmodule));
+		cmzn_tessellationmodule_destroy(&(scene_command_data->tessellationmodule));
 		cmzn_region_destroy(&(scene_command_data->root_region));
 		return_code = 1;
 	}
