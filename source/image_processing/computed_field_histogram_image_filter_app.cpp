@@ -192,7 +192,7 @@ already) and allows its contents to be modified.
 				if (return_code)
 				{
 					return_code = field_modify->update_field_and_deaccess(
-						cmzn_fieldmodule_create_field_histogram_image_filter(
+						cmzn_fieldmodule_create_field_imagefilter_histogram(
 							field_modify->get_field_module(),
 							source_field, numberOfBins, marginalScale, histogramMinimum, histogramMaximum));
 				}

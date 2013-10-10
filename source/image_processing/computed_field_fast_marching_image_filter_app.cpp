@@ -221,7 +221,7 @@ already) and allows its contents to be modified.
 			if (return_code)
 			{
 				return_code = field_modify->update_field_and_deaccess(
-					cmzn_fieldmodule_create_field_fast_marching_image_filter(
+					cmzn_fieldmodule_create_field_imagefilter_fast_marching(
 						field_modify->get_field_module(),
 						source_field, stopping_value, num_seed_points, dimension,
 						seed_points, seed_values, output_size));

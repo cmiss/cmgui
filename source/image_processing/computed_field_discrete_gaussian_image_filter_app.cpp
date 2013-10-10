@@ -96,10 +96,16 @@ already) and allows its contents to be modified.
 			}
 			if (return_code)
 			{
-				return_code = field_modify->update_field_and_deaccess(
-					cmzn_fieldmodule_create_field_discrete_gaussian_image_filter(
-						field_modify->get_field_module(),
-						source_field, variance, maxKernelWidth));
+				cmzn_field_id filter_field = cmzn_fieldmodule_create_field_imagefilter_discrete_gaussian(
+					field_modify->get_field_module(), source_field);
+				cmzn_field_imagefilter_discrete_gaussian_id imagefilter =
+					cmzn_field_cast_imagefilter_discrete_gaussian(filter_field);
+				cmzn_field_imagefilter_discrete_gaussian_set_variance(imagefilter,
+					variance);
+				cmzn_field_imagefilter_discrete_gaussian_set_max_kernel_width(imagefilter,
+					maxKernelWidth);
+				cmzn_field_imagefilter_discrete_gaussian_destroy(&imagefilter);
+				return_code = field_modify->update_field_and_deaccess(filter_field);
 			}
 
 			if (!return_code)

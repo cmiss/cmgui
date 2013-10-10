@@ -98,10 +98,16 @@ int define_Computed_field_type_binary_threshold_image_filter(struct Parse_state 
 			}
 			if (return_code)
 			{
-				return_code = field_modify->update_field_and_deaccess(
-					cmzn_fieldmodule_create_field_binary_threshold_image_filter(
-						field_modify->get_field_module(),
-						source_field, lower_threshold, upper_threshold));
+				cmzn_field_id filter_field = cmzn_fieldmodule_create_field_imagefilter_binary_threshold(
+					field_modify->get_field_module(), source_field);
+				cmzn_field_imagefilter_binary_threshold_id imagefilter =
+					cmzn_field_cast_imagefilter_binary_threshold(filter_field);
+				cmzn_field_imagefilter_binary_threshold_set_lower_threshold(imagefilter,
+					lower_threshold);
+				cmzn_field_imagefilter_binary_threshold_set_upper_threshold(imagefilter,
+					upper_threshold);
+				cmzn_field_imagefilter_binary_threshold_destroy(&imagefilter);
+				return_code = field_modify->update_field_and_deaccess(filter_field);
 			}
 
 			if (!return_code)
