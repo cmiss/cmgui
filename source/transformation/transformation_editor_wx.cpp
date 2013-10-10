@@ -628,7 +628,6 @@ transformation encoded in 4x4 <transformation_matrix>.
 ==============================================================================*/
 {
 	Dof3_data direction, position; //, global_direction, global_position;
-	const char *text_entry;
 	Triple scale_factor;
 	struct Parse_state *temp_state;
 
@@ -667,7 +666,7 @@ transformation encoded in 4x4 <transformation_matrix>.
 	Transformation_editor_wx_position_text_ctrl_z->GetValue().ToDouble(&position.data[2]);
 
 	wxString scale_factor_string = Transformation_editor_wx_position_text_ctrl_scale_factor->GetValue();
-	text_entry = scale_factor_string.mb_str(wxConvUTF8);
+	const char *text_entry = scale_factor_string.mb_str(wxConvUTF8);
 	if (text_entry)
 	{
 		temp_state = create_Parse_state(text_entry);
@@ -684,7 +683,6 @@ transformation encoded in 4x4 <transformation_matrix>.
 				scale_factor[i] = static_cast<GLfloat>(dscale_factor[i]);
 			}
 		}
-		DEALLOCATE(text_entry);
 	}
 	position_direction_to_transformation_matrix(
 		&position, &direction,&(transformation_editor_transformation_matrix));
