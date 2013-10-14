@@ -22,7 +22,6 @@ Provides the wxWidgets interface to manipulate spectrum settings.
 #include "zinc/glyph.h"
 #include "zinc/scene.h"
 #include "zinc/graphicsmaterial.h"
-#include "zinc/graphicsmodule.h"
 #include "zinc/scene.h"
 #include "command/parser.h"
 #include "general/debug.h"
@@ -1048,7 +1047,7 @@ int set_autorange_scene()
 	cmzn_region_id current_region = spectrum_region_chooser->get_region();
 	if (spectrum_editor->autorange_scene)
 		cmzn_scene_destroy(&spectrum_editor->autorange_scene);
-	spectrum_editor->autorange_scene = cmzn_region_get_scene_internal(current_region);
+	spectrum_editor->autorange_scene = cmzn_region_get_scene(current_region);
 	return 1;
 }
 

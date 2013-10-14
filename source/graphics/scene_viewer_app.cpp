@@ -6,6 +6,7 @@
 
 #include "general/debug.h"
 #include "general/message.h"
+#include "graphics/graphics_module.h"
 #include "graphics/scene_viewer.h"
 #include "graphics/scene_viewer_app.h"
 #include "three_d_drawing/graphics_buffer.h"
@@ -64,20 +65,21 @@ DEFINE_CMZN_CALLBACK_FUNCTIONS(Scene_viewer_app_input_callback,
 
 struct cmzn_sceneviewermodule_app *CREATE(cmzn_sceneviewermodule_app)(
 	struct Graphics_buffer_app_package *graphics_buffer_package,
-	cmzn_graphics_module_id graphics_module,
 	cmzn_scene_id scene,
 	struct User_interface *user_interface)
 {
 	struct cmzn_sceneviewermodule_app *sceneviewermodule;
-	if (graphics_buffer_package&&graphics_module&&scene&&user_interface)
+	if (graphics_buffer_package&&scene&&user_interface)
 	{
 		/* allocate memory for the scene_viewer structure */
 		if (ALLOCATE(sceneviewermodule,struct cmzn_sceneviewermodule_app,1))
 		{
 			sceneviewermodule->access_count = 1;
 			sceneviewermodule->graphics_buffer_package = graphics_buffer_package;
+			cmzn_graphics_module* graphics_module = cmzn_scene_get_graphics_module(scene);
 			sceneviewermodule->core_sceneviewermodule =
 				cmzn_graphics_module_get_sceneviewermodule(graphics_module);
+			cmzn_graphics_module_destroy(&graphics_module);
 			sceneviewermodule->user_interface = user_interface;
 			sceneviewermodule->scene_viewer_app_list = CREATE(LIST(Scene_viewer_app))();
 			sceneviewermodule->destroy_callback_list=

@@ -22,7 +22,6 @@ codes used to build scene editor with wxWidgets.
 #include "zinc/scene.h"
 #include "zinc/graphic.h"
 #include "zinc/graphicsmaterial.h"
-#include "zinc/graphicsmodule.h"
 #include "zinc/spectrum.h"
 #include "zinc/status.h"
 #include "general/debug.h"
@@ -3619,7 +3618,7 @@ void TreeControlSelectionChanged(wxTreeEvent &event)
 	if (region_tree_viewer->testing_tree_ctrl->GetSelections(array)
 		&& data && (region = data->GetRegion()))
 	{
-		scene = cmzn_region_get_scene_internal(region);
+		scene = cmzn_region_get_scene(region);
 		if (scene)
 		{
 			Region_tree_viewer_set_active_scene(region_tree_viewer, scene);
@@ -3720,7 +3719,7 @@ void SetVisibilityOfTreeId(wxTreeItemId current_item_id, bool flag)
 			region_tree_viewer->testing_tree_ctrl->GetItemData(current_item_id));
 	if ((region = data->GetRegion()))
 	{
-		scene = cmzn_region_get_scene_internal(region);
+		scene = cmzn_region_get_scene(region);
 		if (scene)
 		{
 			cmzn_scene_set_visibility_flag(scene, flag);
@@ -4185,7 +4184,7 @@ void Region_tree_viewer_setup_region_tree(Region_tree_viewer *region_tree_viewer
 		region_tree_viewer->testing_tree_ctrl->SetTreeIdRegionWithCallback(
 			current, region_tree_viewer->root_region);
 		region_tree_viewer->testing_tree_ctrl->add_all_child_regions_to_tree_item(current);
-		scene = cmzn_region_get_scene_internal(region_tree_viewer->root_region);
+		scene = cmzn_region_get_scene(region_tree_viewer->root_region);
 		REACCESS(cmzn_scene)(&region_tree_viewer->scene,
 			scene);
 		DEACCESS(cmzn_scene)(&scene);

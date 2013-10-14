@@ -1180,7 +1180,7 @@ Callback from wxChooser<Scene> when choice is made.
 	if ((graphics_window->scene_viewer_array) &&
 		(scene_viewer = graphics_window->scene_viewer_array[0]))
 	{
-		cmzn_scene_id scene = cmzn_region_get_scene_internal(region);
+		cmzn_scene_id scene = cmzn_region_get_scene(region);
 		for (pane_no=0;pane_no<graphics_window->number_of_scene_viewers;
 			pane_no++)
 		{

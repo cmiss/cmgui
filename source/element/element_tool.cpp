@@ -34,6 +34,7 @@ Interactive tool for selecting elements with mouse and other devices.
 #include "interaction/interactive_event.h"
 #include "graphics/scene.h"
 #include "graphics/graphic.h"
+#include "graphics/graphics_module.h"
 #include "graphics/material.h"
 #include "graphics/scene_picker.hpp"
 #include "region/cmiss_region.h"
@@ -138,7 +139,7 @@ int Element_tool_destroy_selected_elements(struct Element_tool *element_tool)
 	if (element_tool->region)
 	{
 		return_code = 1;
-		cmzn_scene *root_scene = cmzn_region_get_scene_internal(
+		cmzn_scene *root_scene = cmzn_region_get_scene(
 			element_tool->region);
 		cmzn_field_group_id selection_group = cmzn_scene_get_selection_group(root_scene);
 		if (selection_group)
@@ -365,7 +366,7 @@ release.
 								if (element_tool->region)
 								{
 									cmzn_scene *root_scene =
-										cmzn_region_get_scene_internal(element_tool->region);
+										cmzn_region_get_scene(element_tool->region);
 									cmzn_field_group_id root_group =
 										cmzn_scene_get_selection_group(root_scene);
 									if (root_group)
@@ -380,7 +381,7 @@ release.
 							{
 								cmzn_region_id temp_region = FE_region_get_cmzn_region(
 									FE_element_get_FE_region(picked_element));
-								cmzn_scene_id tempScene = cmzn_region_get_scene_internal(temp_region);
+								cmzn_scene_id tempScene = cmzn_region_get_scene(temp_region);
 								REACCESS(cmzn_scene)(&(element_tool->scene),
 									tempScene);
 								cmzn_scene_destroy(&tempScene);
@@ -476,7 +477,7 @@ release.
 										temp_interaction_volume);
 									if (element_tool->region)
 									{
-										cmzn_scene_id region_scene = cmzn_region_get_scene_internal(
+										cmzn_scene_id region_scene = cmzn_region_get_scene(
 											element_tool->region);
 										cmzn_field_group_id selection_group =
 											cmzn_scene_get_or_create_selection_group(region_scene);
@@ -512,7 +513,7 @@ release.
 		}
 		if (element_tool->region)
 		{
-			cmzn_scene *root_scene = cmzn_region_get_scene_internal(
+			cmzn_scene *root_scene = cmzn_region_get_scene(
 				element_tool->region);
 			cmzn_scene_flush_tree_selections(root_scene);
 			cmzn_scene_destroy(&root_scene);

@@ -11,7 +11,6 @@
 
 #include "time/time_keeper_app.hpp"
 #include "zinc/fieldgroup.h"
-#include "zinc/graphicsmodule.h"
 #include "command/cmiss.h"
 #include "context/context.h"
 #include "context/context_app.h"

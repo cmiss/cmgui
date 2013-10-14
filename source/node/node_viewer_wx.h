@@ -13,7 +13,6 @@
 #if !defined (NODE_VIEWER_WX_H)
 #define NODE_VIEWER_WX_H
  
-#include "zinc/types/graphicsmoduleid.h"
 #include "zinc/types/regionid.h"
 #include "zinc/types/timekeeperid.h"
 
@@ -39,7 +38,6 @@ struct Node_viewer *Node_viewer_create(
 	struct Node_viewer **node_viewer_address,
 	const char *dialog_title,
 	cmzn_region_id root_region, cmzn_field_domain_type domain_type,
-	cmzn_graphics_module_id graphics_module,
 	struct Time_keeper_app *time_keeper_app);
 
 /***************************************************************************//**

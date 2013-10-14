@@ -155,7 +155,6 @@ int Scene_viewer_app_redraw_now_without_swapbuffers(
 
 struct cmzn_sceneviewermodule_app *CREATE(cmzn_sceneviewermodule_app)(
 	struct Graphics_buffer_app_package *graphics_buffer_package,
-	cmzn_graphics_module_id graphics_module,
 	cmzn_scene_id scene,
 	struct User_interface *user_interface);
 

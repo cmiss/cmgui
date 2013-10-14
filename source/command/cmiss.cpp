@@ -31,7 +31,6 @@
 #include "zinc/fieldsubobjectgroup.h"
 #include "zinc/glyph.h"
 #include "zinc/graphicsmaterial.h"
-#include "zinc/graphicsmodule.h"
 #include "zinc/region.h"
 #include "zinc/scene.h"
 #include "zinc/sceneviewer.h"
@@ -942,7 +941,7 @@ static int process_modify_element_group(cmzn_field_group_id group,
 	cmzn_mesh_group_id selection_mesh_group = 0;
 	if (selected_flag)
 	{
-		cmzn_scene *scene = cmzn_region_get_scene_internal(region);
+		cmzn_scene *scene = cmzn_region_get_scene(region);
 		cmzn_field_group_id selection_group = cmzn_scene_get_selection_group(scene);
 		if (selection_group)
 		{
@@ -2246,7 +2245,6 @@ Executes a GFX CREATE NODE_VIEWER command.
 						&(command_data->node_viewer),
 						"Node Viewer",
 						command_data->root_region, CMZN_FIELD_DOMAIN_NODES,
-						command_data->graphics_module,
 						command_data->default_time_keeper_app)))
 					{
 						return_code=1;
@@ -2323,7 +2321,6 @@ Executes a GFX CREATE DATA_VIEWER command.
 						&(command_data->node_viewer),
 						"Data Viewer",
 						command_data->root_region, CMZN_FIELD_DOMAIN_DATA,
-						command_data->graphics_module,
 						command_data->default_time_keeper_app)))
 					{
 						return_code=1;
@@ -2651,7 +2648,7 @@ Executes a GFX CREATE SNAKE command.
 		}
 		if (return_code)
 		{
-			cmzn_scene *scene = cmzn_graphics_module_get_scene(command_data->graphics_module, source_region);
+			cmzn_scene *scene = cmzn_region_get_scene(source_region);
 			cmzn_field_group_id selection_group = NULL;
 			if (scene)
 			{
@@ -5989,7 +5986,7 @@ static int gfx_destroy_elements(struct Parse_state *state,
 			cmzn_field_group_id selection_group = NULL;
 			if (selected_flag)
 			{
-				cmzn_scene *scene = cmzn_region_get_scene_internal(region);
+				cmzn_scene *scene = cmzn_region_get_scene(region);
 				if (scene)
 				{
 					selection_group = cmzn_scene_get_selection_group(scene);
@@ -6380,7 +6377,7 @@ static int gfx_destroy_nodes(struct Parse_state *state,
 			cmzn_field_group_id selection_group = NULL;
 			if (selected_flag)
 			{
-				cmzn_scene *scene = cmzn_region_get_scene_internal(region);
+				cmzn_scene *scene = cmzn_region_get_scene(region);
 				if (scene)
 				{
 					selection_group = cmzn_scene_get_selection_group(scene);
@@ -6720,7 +6717,7 @@ Executes a GFX DRAW command.
 				}
 				cmzn_region_id region = cmzn_scene_get_region(scene);
 				cmzn_scene_id scene =
-					cmzn_graphics_module_get_scene(command_data->graphics_module, region);
+					cmzn_region_get_scene(region);
 				return_code = cmzn_scene_add_glyph(scene, glyph, graphic_name);
 				cmzn_scene_destroy(&scene);
 			}
@@ -6881,7 +6878,7 @@ Executes a GFX EDIT GRAPHICS_OBJECT command.
 					struct Apply_transformation_data data;
 					struct cmzn_scene *scene = NULL;
 					gtMatrix identity = {{1,0,0,0},{0,1,0,0},{0,0,1,0},{0,0,0,1}};
-					scene = cmzn_graphics_module_get_scene(command_data->graphics_module, region);
+					scene = cmzn_region_get_scene(region);
 					if (scene)
 					{
 						if (cmzn_scene_has_transformation(scene)&&
@@ -8706,7 +8703,7 @@ int gfx_evaluate(struct Parse_state *state, void *dummy_to_be_modified,
 						if (selected_flag)
 						{
 							cmzn_scene_id scene =
-								cmzn_graphics_module_get_scene(command_data->graphics_module, region);
+								cmzn_region_get_scene(region);
 							if (scene)
 							{
 								selection_group = cmzn_scene_get_selection_group(scene);
@@ -9212,7 +9209,7 @@ Executes a GFX LIST ELEMENT.
 			cmzn_mesh_group_id selection_mesh_group = 0;
 			if (selected_flag)
 			{
-				cmzn_scene *scene = cmzn_region_get_scene_internal(region);
+				cmzn_scene *scene = cmzn_region_get_scene(region);
 				cmzn_field_group_id selection_group = cmzn_scene_get_selection_group(scene);
 				if (selection_group)
 				{
@@ -9382,7 +9379,7 @@ use node_manager and node_selection.
 			cmzn_nodeset_group_id selection_nodeset_group = 0;
 			if (selected_flag)
 			{
-				cmzn_scene *scene = cmzn_region_get_scene_internal(region);
+				cmzn_scene *scene = cmzn_region_get_scene(region);
 				cmzn_field_group_id selection_group = cmzn_scene_get_selection_group(scene);
 				if (selection_group)
 				{
@@ -9673,7 +9670,7 @@ int cmzn_region_list_scene(cmzn_region_id region, int commands_flag, int recursi
 		return 0;
 	int return_code = 1;
 	char *region_path = cmzn_region_get_path(region);
-	cmzn_scene_id scene = cmzn_region_get_scene_internal(region);
+	cmzn_scene_id scene = cmzn_region_get_scene(region);
 	if (commands_flag)
 	{
 		int error = 0;
@@ -10375,7 +10372,7 @@ Executes a GFX LIST TRANSFORMATION.
 				}
 				if (region)
 				{
-					cmzn_scene *scene = cmzn_region_get_scene_internal(region);
+					cmzn_scene *scene = cmzn_region_get_scene(region);
 					if (scene)
 					{
 						if (commands_flag)
@@ -11043,7 +11040,7 @@ Parameter <help_mode> should be NULL when calling this function.
 		}
 		if (return_code)
 		{
-			struct cmzn_scene *scene = cmzn_region_get_scene_internal(region);
+			struct cmzn_scene *scene = cmzn_region_get_scene(region);
 			return_code = cmzn_scene_execute_command_internal(scene, group, state);
 			cmzn_scene_destroy(&scene);
 		} /* parse error,help */
@@ -11298,7 +11295,7 @@ static int gfx_modify_node_group(struct Parse_state *state,
 				cmzn_nodeset_group_id selection_nodeset_group = 0;
 				if (selected_flag)
 				{
-					cmzn_scene *scene = cmzn_region_get_scene_internal(region);
+					cmzn_scene *scene = cmzn_region_get_scene(region);
 					cmzn_field_group_id selection_group = cmzn_scene_get_selection_group(scene);
 					if (selection_group)
 					{
@@ -11625,7 +11622,7 @@ static int gfx_modify_nodes(struct Parse_state *state,
 			cmzn_field_group_id selection_group = NULL;
 			if (selected_flag)
 			{
-				cmzn_scene *scene = cmzn_region_get_scene_internal(region);
+				cmzn_scene *scene = cmzn_region_get_scene(region);
 				if (scene)
 				{
 					selection_group = cmzn_scene_get_selection_group(scene);
@@ -13205,8 +13202,7 @@ Executes a GFX SELECT command.
 					{
 						if (region)
 						{
-							cmzn_scene *local_scene = cmzn_graphics_module_get_scene(
-								command_data->graphics_module, region);
+							cmzn_scene *local_scene = cmzn_region_get_scene(region);
 							cmzn_scene_add_selection_from_node_list(local_scene,
 								node_list, /* use_data */1);
 							cmzn_scene_destroy(&local_scene);
@@ -13236,8 +13232,7 @@ Executes a GFX SELECT command.
 								FE_element_list_from_region_and_selection_group(
 									region, dimension, multi_range, NULL, conditional_field, time)))
 						{
-							cmzn_scene *local_scene = cmzn_graphics_module_get_scene(
-								command_data->graphics_module, region);
+							cmzn_scene *local_scene = cmzn_region_get_scene(region);
 							cmzn_scene_add_selection_from_element_list_of_dimension(local_scene,element_list, dimension);
 							cmzn_scene_destroy(&local_scene);
 							if (verbose_flag)
@@ -13264,8 +13259,7 @@ Executes a GFX SELECT command.
 								FE_element_list_from_region_and_selection_group(
 									region, /*dimension*/2, multi_range, NULL, conditional_field, time)))
 						{
-							cmzn_scene *local_scene = cmzn_graphics_module_get_scene(
-								command_data->graphics_module, region);
+							cmzn_scene *local_scene = cmzn_region_get_scene(region);
 							cmzn_scene_add_selection_from_element_list_of_dimension(local_scene,element_list, 2);
 							cmzn_scene_destroy(&local_scene);
 							if (verbose_flag)
@@ -13336,8 +13330,7 @@ Executes a GFX SELECT command.
 								FE_element_list_from_region_and_selection_group(
 									region, /*dimension*/1, multi_range, NULL, conditional_field, time)))
 						{
-							cmzn_scene *local_scene = cmzn_graphics_module_get_scene(
-								command_data->graphics_module, region);
+							cmzn_scene *local_scene = cmzn_region_get_scene(region);
 							cmzn_scene_add_selection_from_element_list_of_dimension(local_scene,element_list, 1);
 							cmzn_scene_destroy(&local_scene);
 							if (verbose_flag)
@@ -13363,8 +13356,7 @@ Executes a GFX SELECT command.
 					{
 						if (region)
 						{
-							cmzn_scene *local_scene = cmzn_graphics_module_get_scene(
-								command_data->graphics_module, region);
+							cmzn_scene *local_scene = cmzn_region_get_scene(region);
 							cmzn_scene_add_selection_from_node_list(local_scene,
 								node_list, /* use_data */0);
 							cmzn_scene_destroy(&local_scene);
@@ -13571,8 +13563,7 @@ Executes a GFX UNSELECT command.
 					{
 						if (region)
 						{
-							cmzn_scene *local_scene = cmzn_graphics_module_get_scene(
-								command_data->graphics_module, region);
+							cmzn_scene *local_scene = cmzn_region_get_scene(region);
 							cmzn_scene_remove_selection_from_node_list(local_scene,
 								node_list, /* use_data */1);
 							cmzn_scene_destroy(&local_scene);
@@ -13602,8 +13593,7 @@ Executes a GFX UNSELECT command.
 								FE_element_list_from_region_and_selection_group(
 									region, dimension, multi_range, NULL, conditional_field, time)))
 						{
-							cmzn_scene *local_scene = cmzn_graphics_module_get_scene(
-								command_data->graphics_module, region);
+							cmzn_scene *local_scene = cmzn_region_get_scene(region);
 							cmzn_scene_remove_selection_from_element_list_of_dimension(local_scene,element_list, dimension);
 							cmzn_scene_destroy(&local_scene);
 							if (verbose_flag)
@@ -13630,8 +13620,7 @@ Executes a GFX UNSELECT command.
 								FE_element_list_from_region_and_selection_group(
 									region, /*dimension*/2, multi_range, NULL, conditional_field, time)))
 						{
-							cmzn_scene *local_scene = cmzn_graphics_module_get_scene(
-								command_data->graphics_module, region);
+							cmzn_scene *local_scene = cmzn_region_get_scene(region);
 							cmzn_scene_remove_selection_from_element_list_of_dimension(local_scene,element_list, 2);
 							cmzn_scene_destroy(&local_scene);
 							if (verbose_flag)
@@ -13702,8 +13691,7 @@ Executes a GFX UNSELECT command.
 								FE_element_list_from_region_and_selection_group(
 									region, /*dimension*/1, multi_range, NULL, conditional_field, time)))
 						{
-							cmzn_scene *local_scene = cmzn_graphics_module_get_scene(
-								command_data->graphics_module, region);
+							cmzn_scene *local_scene = cmzn_region_get_scene(region);
 							cmzn_scene_remove_selection_from_element_list_of_dimension(local_scene, element_list, 1);
 							cmzn_scene_destroy(&local_scene);
 							if (verbose_flag)
@@ -13729,8 +13717,7 @@ Executes a GFX UNSELECT command.
 					{
 						if (region)
 						{
-							cmzn_scene *local_scene = cmzn_graphics_module_get_scene(
-								command_data->graphics_module, region);
+							cmzn_scene *local_scene = cmzn_region_get_scene(region);
 							cmzn_scene_remove_selection_from_node_list(local_scene,
 								node_list, /* use_data */0);
 							cmzn_scene_destroy(&local_scene);
@@ -14217,7 +14204,7 @@ static int gfx_set_transformation(struct Parse_state *state,
 				}
 				if (return_code)
 				{
-					cmzn_scene *scene = cmzn_region_get_scene_internal(region);
+					cmzn_scene *scene = cmzn_region_get_scene(region);
 					if (scene)
 					{
 						if (computed_field)
@@ -14310,7 +14297,7 @@ static int gfx_set_visibility(struct Parse_state *state,
 		}
 		if (return_code)
 		{
-			cmzn_scene_id scene = cmzn_region_get_scene_internal(region);
+			cmzn_scene_id scene = cmzn_region_get_scene(region);
 			if (part_graphic_name)
 			{
 				cmzn_scene_begin_change(scene);
@@ -18012,8 +17999,7 @@ Initialise all the subcomponents of cmgui and create the cmzn_command_data
 		/* scene manager */
 		/*???RC & SAB.   LOTS of managers need to be created before this
 		  and the User_interface too */
-		command_data->default_scene = cmzn_graphics_module_get_scene(
-			command_data->graphics_module, command_data->root_region);
+		command_data->default_scene = cmzn_region_get_scene(command_data->root_region);
 		if (command_data->computed_field_package && command_data->default_time_keeper_app)
 		{
 			Computed_field_register_types_time(command_data->computed_field_package,

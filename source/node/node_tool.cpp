@@ -256,7 +256,7 @@ int Node_tool_destroy_selected_nodes(struct Node_tool *node_tool)
 	if (node_tool->region)
 	{
 		return_code = 1;
-		cmzn_scene *root_scene = cmzn_region_get_scene_internal(
+		cmzn_scene *root_scene = cmzn_region_get_scene(
 			node_tool->root_region);
 		cmzn_field_group_id selection_group = cmzn_scene_get_selection_group(root_scene);
 		if (selection_group)
@@ -1180,7 +1180,7 @@ try to enforce that the node is created on that element.
 			cmzn_fieldmodule_begin_change(field_module);
 			cmzn_fieldcache_id field_cache = cmzn_fieldmodule_create_fieldcache(field_module);
 			node_tool_coordinate_field=node_tool->coordinate_field;
-			scene = cmzn_region_get_scene_internal(node_tool->region);
+			scene = cmzn_region_get_scene(node_tool->region);
 			if (top_scene && scene)
 			{
 				graphic = cmzn_scene_get_first_graphic(scene);
@@ -1467,7 +1467,7 @@ release.
 						if (picked_node)
 						{
 							cmzn_region_id temp_region = FE_region_get_cmzn_region(FE_node_get_FE_region(picked_node));
-							top_scene = cmzn_region_get_scene_internal(temp_region);
+							top_scene = cmzn_region_get_scene(temp_region);
 							cmzn_fieldmodule_id field_module = cmzn_region_get_fieldmodule(temp_region);
 							cmzn_fieldmodule_begin_change(field_module);
 							cmzn_fieldcache_id field_cache = cmzn_fieldmodule_create_fieldcache(field_module);
@@ -1553,7 +1553,7 @@ release.
 						{
 							if (node_tool->root_region)
 							{
-								cmzn_scene *root_scene = cmzn_region_get_scene_internal(
+								cmzn_scene *root_scene = cmzn_region_get_scene(
 									node_tool->root_region);
 								cmzn_field_group_id root_group = cmzn_scene_get_selection_group(root_scene);
 								if (root_group)
@@ -1864,7 +1864,7 @@ release.
 										temp_interaction_volume);
 									if (node_tool->root_region)
 									{
-										cmzn_scene_id region_scene = cmzn_region_get_scene_internal(
+										cmzn_scene_id region_scene = cmzn_region_get_scene(
 											node_tool->root_region);
 										cmzn_field_group_id selection_group =
 											cmzn_scene_get_or_create_selection_group(region_scene);
@@ -1932,7 +1932,7 @@ release.
 		}
 		if (node_tool->root_region)
 		{
-			cmzn_scene *root_scene = cmzn_region_get_scene_internal(
+			cmzn_scene *root_scene = cmzn_region_get_scene(
 				node_tool->root_region);
 			cmzn_scene_flush_tree_selections(root_scene);
 			cmzn_scene_destroy(&root_scene);
@@ -2362,7 +2362,7 @@ Set the selected option in the Coordinate Field chooser.
 						(LIST_CONDITIONAL_FUNCTION(FE_field) *)NULL,(void *)NULL,
 						fe_field_list)))
 		{
-			cmzn_scene *scene = cmzn_region_get_scene_internal(node_tool->region);
+			cmzn_scene *scene = cmzn_region_get_scene(node_tool->region);
 			if (scene)
 			{
 				cmzn_field_group_id selection_group = cmzn_scene_get_selection_group(scene);
@@ -2847,7 +2847,7 @@ static void Node_tool_Computed_field_change(
 	node_tool =	(struct Node_tool *)node_tool_void;
 	if (message && node_tool && node_tool->element_create_enabled)
 	{
-		cmzn_scene *scene = cmzn_region_get_scene_internal(node_tool->region);
+		cmzn_scene *scene = cmzn_region_get_scene(node_tool->region);
 		if (scene)
 		{
 			cmzn_field_group_id selection_group = cmzn_scene_get_selection_group(scene);

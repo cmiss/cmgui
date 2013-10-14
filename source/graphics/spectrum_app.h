@@ -7,7 +7,7 @@
 #include "configure/cmgui_configure.h"
 #endif /* defined (BUILD_WITH_CMAKE) */
 #include "command/parser.h"
-#include "zinc/graphicsmodule.h"
+
 int set_Spectrum(struct Parse_state *state,void *spectrum_address_void,
 	void *spectrum_manager_void);
 /*******************************************************************************

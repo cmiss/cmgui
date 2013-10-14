@@ -262,7 +262,7 @@ Updates the node locations for the <emoter_slider>
 					transformation[3][0] = shared_data->weights[0];
 					transformation[3][1] = shared_data->weights[1];
 					transformation[3][2] = shared_data->weights[2];
-					cmzn_scene *scene = cmzn_region_get_scene_internal(shared_data->region);
+					cmzn_scene *scene = cmzn_region_get_scene(shared_data->region);
 					cmzn_scene_set_transformation(scene, &transformation);
 					cmzn_scene_destroy(&scene);
 				}

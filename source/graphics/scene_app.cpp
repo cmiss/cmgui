@@ -44,7 +44,7 @@ int gfx_modify_scene_general(struct Parse_state *state,
 	if (state && cmiss_region)
 	{
 		/* if possible, get defaults from element_group on default scene */
-		cmzn_scene_id scene = cmzn_region_get_scene_internal(cmiss_region);
+		cmzn_scene_id scene = cmzn_region_get_scene(cmiss_region);
 		if (scene)
 		{
 			cmzn_field_id default_coordinate_field = scene->default_coordinate_field;
@@ -648,7 +648,7 @@ Modifier function to set the scene from a command.
 				if (return_code && scene_region)
 				{
 					cmzn_scene_destroy(scene_address);
-					*scene_address = cmzn_region_get_scene_internal(scene_region);
+					*scene_address = cmzn_region_get_scene(scene_region);
 				}
 				else
 				{

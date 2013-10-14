@@ -13,6 +13,7 @@ DESCRIPTION :
 
 #include "zinc/graphic.h"
 #include "zinc/graphicsmaterial.h"
+#include "zinc/timekeeper.h"
 #include "time/time_keeper_app.hpp"
 #include "comfile/comfile.h"
 #include "command/command_window.h"
@@ -245,10 +246,9 @@ struct User_interface_module *User_interface_module_create(
 		{
 			if (graphics_module)
 			{
-				cmzn_scene_id default_scene =
-					cmzn_graphics_module_get_scene(graphics_module, root_region);
+				cmzn_scene_id default_scene =	cmzn_region_get_scene(root_region);
 				UI_module->sceneviewermodule = CREATE(cmzn_sceneviewermodule_app)(
-					UI_module->graphics_buffer_package, graphics_module, default_scene,
+					UI_module->graphics_buffer_package, default_scene,
 					UI_module->user_interface);
 				cmzn_scene_destroy(&default_scene);
 			}

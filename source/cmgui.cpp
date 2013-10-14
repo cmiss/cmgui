@@ -17,7 +17,6 @@ DESCRIPTION :
 #include "configure/version.h"
 
 #include "context/context_app.h"
-#include "zinc/graphicsmodule.h"
 #include "command/cmiss.h"
 #include "context/context_app.h"
 #include "context/user_interface_module.h"

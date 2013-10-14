@@ -15,7 +15,6 @@
 #endif /* defined (1) */
 
 #include "zinc/core.h"
-#include "zinc/graphicsmodule.h"
 #include "zinc/fieldcache.h"
 #include "zinc/fieldfiniteelement.h"
 #include "zinc/fieldmodule.h"
@@ -57,7 +56,6 @@ class wxNodeViewer;
  */
 struct Node_viewer
 {
-	cmzn_graphics_module_id graphics_module;
 	struct Node_viewer **node_viewer_address;
 	cmzn_node_id current_node;
 	struct cmzn_region *region;
@@ -569,7 +567,7 @@ static void Node_viewer_Computed_field_change(
 	node_viewer = (struct Node_viewer *)node_viewer_void;
 	if (message && node_viewer)
 	{
-		cmzn_scene_id scene = cmzn_graphics_module_get_scene(node_viewer->graphics_module, node_viewer->region);
+		cmzn_scene_id scene = cmzn_region_get_scene(node_viewer->region);
 		if (scene)
 		{
 			cmzn_field_group_id selection_group = cmzn_scene_get_selection_group(scene);
@@ -644,18 +642,16 @@ struct Node_viewer *Node_viewer_create(
 	struct Node_viewer **node_viewer_address,
 	const char *dialog_title,
 	cmzn_region_id root_region, cmzn_field_domain_type domain_type,
-	cmzn_graphics_module_id graphics_module,
 	struct Time_keeper_app *time_keeper_app)
 {
 	struct Node_viewer *node_viewer;
 	ENTER(CREATE(Node_viewer));
 	node_viewer = (struct Node_viewer *)NULL;
-	if (node_viewer_address && dialog_title && root_region && graphics_module)
+	if (node_viewer_address && dialog_title && root_region)
 	{
 		/* allocate memory */
 		if (ALLOCATE(node_viewer,struct Node_viewer,1))
 		{
-			node_viewer->graphics_module = cmzn_graphics_module_access(graphics_module);
 			node_viewer->region = root_region;
 			node_viewer->computed_field_manager =
 				cmzn_region_get_Computed_field_manager(node_viewer->region);
@@ -757,7 +753,6 @@ int Node_viewer_destroy(struct Node_viewer **node_viewer_address)
 		}
 		cmzn_timenotifier_destroy(&(node_viewer->timenotifier));
 		DEACCESS(Time_keeper_app)(&(node_viewer->time_keeper_app));
-		cmzn_graphics_module_destroy(&(node_viewer->graphics_module));
 		DEALLOCATE(*node_viewer_address);
 		return_code=1;
 	}
