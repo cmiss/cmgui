@@ -141,7 +141,7 @@ int gfx_define_tessellation_contents(struct Parse_state *state, void *tessellati
 			"Defines tessellation objects which control how finite elements are "
 			"subdivided into graphics. The minimum_divisions option gives the "
 			"minimum number of linear segments approximating geometry in each xi "
-			"dimension of the element. If the coordinate field of a graphic uses "
+			"dimension of the element. If the coordinate field of a graphics uses "
 			"non-linear basis functions the minimum_divisions is multiplied by "
 			"the refinement_factors to give the refined number of segments. "
 			"Both minimum_divisions and refinement_factors use the last supplied "

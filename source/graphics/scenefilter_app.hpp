@@ -1,7 +1,7 @@
 /**
  * scenefilter_app.hpp
  *
- * Declaration of scene graphic filter classes and functions.
+ * Declaration of scene filter classes and functions.
  */
 /* OpenCMISS-Cmgui Application
 *
@@ -20,7 +20,7 @@
 #include "general/object.h"
 
 struct cmzn_rendition;
-struct cmzn_graphic;
+struct cmzn_graphics;
 
 DECLARE_LIST_TYPES(cmzn_scenefilter);
 

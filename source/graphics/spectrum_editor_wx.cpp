@@ -26,7 +26,7 @@ Provides the wxWidgets interface to manipulate spectrum settings.
 #include "command/parser.h"
 #include "general/debug.h"
 #include "graphics/glyph_colour_bar.hpp"
-#include "graphics/graphic.h"
+#include "graphics/graphics.h"
 #include "graphics/graphics_module.h"
 #include "graphics/scene.h"
 #include "graphics/scene_app.h"
@@ -173,20 +173,19 @@ static int make_colour_bar(struct Spectrum_editor *spectrum_editor)
 		spectrum_editor->colourBar->setLabelDivisions(labelDivisions);
 		spectrum_editor->colourBar->setLabelMaterial(spectrum_editor->labelMaterial);
 
-		cmzn_graphic *graphic = cmzn_scene_get_first_graphic(spectrum_editor->spectrum_editor_scene);
-		if (!graphic)
+		cmzn_graphics *graphics = cmzn_scene_get_first_graphics(spectrum_editor->spectrum_editor_scene);
+		if (!graphics)
 		{
-			cmzn_graphic_points *points = cmzn_scene_create_graphic_points(spectrum_editor->spectrum_editor_scene);
-			graphic = cmzn_graphic_points_base_cast(points);
-			cmzn_graphic_set_name(graphic, "Spectrum Editor Colour Bar");
-			cmzn_graphic_set_material(graphic, spectrum_editor->editorMaterial);
+			graphics = cmzn_scene_create_graphics_points(spectrum_editor->spectrum_editor_scene);
+			cmzn_graphics_set_name(graphics, "Spectrum Editor Colour Bar");
+			cmzn_graphics_set_material(graphics, spectrum_editor->editorMaterial);
 		}
-		cmzn_graphic_point_attributes_id pointAttr = cmzn_graphic_get_point_attributes(graphic);
-		cmzn_graphic_point_attributes_set_glyph(pointAttr, spectrum_editor->colourBar);
+		cmzn_graphicspointattributes_id pointAttr = cmzn_graphics_get_graphicspointattributes(graphics);
+		cmzn_graphicspointattributes_set_glyph(pointAttr, spectrum_editor->colourBar);
 		const double one = 1.0;
-		cmzn_graphic_point_attributes_set_base_size(pointAttr, 1, &one);
-		cmzn_graphic_point_attributes_destroy(&pointAttr);
-		cmzn_graphic_destroy(&graphic);
+		cmzn_graphicspointattributes_set_base_size(pointAttr, 1, &one);
+		cmzn_graphicspointattributes_destroy(&pointAttr);
+		cmzn_graphics_destroy(&graphics);
 		cmzn_scene_end_change(spectrum_editor->spectrum_editor_scene);
 		Scene_viewer_app_redraw(spectrum_editor->spectrum_editor_scene_viewer);
 		if (spectrum_editor->spectrum_panel)

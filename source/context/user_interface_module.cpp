@@ -1,17 +1,14 @@
-/*******************************************************************************
-FILE : User_intrefac_module.c
-
-LAST MODIFIED : 7 January 2003
-
-DESCRIPTION :
-==============================================================================*/
+/**
+ * FILE : user_interface_module.c
+ *
+ */
 /* OpenCMISS-Cmgui Application
 *
 * This Source Code Form is subject to the terms of the Mozilla Public
 * License, v. 2.0. If a copy of the MPL was not distributed with this
 * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#include "zinc/graphic.h"
+#include "zinc/graphics.h"
 #include "zinc/graphicsmaterial.h"
 #include "zinc/timekeeper.h"
 #include "time/time_keeper_app.hpp"

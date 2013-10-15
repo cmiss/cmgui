@@ -13,7 +13,7 @@ SET(APP_HDRS
     source/computed_field/computed_field_scene_viewer_projection_app.h
     source/finite_element/finite_element_app.h
     source/finite_element/finite_element_app.h
-    source/graphics/graphic_app.h
+    source/graphics/graphics_app.h
     source/general/geometry_app.h
     source/general/enumerator_private_app.h
     source/general/enumerator_app.h

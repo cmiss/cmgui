@@ -180,7 +180,7 @@ release.
 //									scene_picked_object_list,(struct cmzn_region *)NULL,
 //									(struct Scene_picked_object **)NULL,
 //									(struct cmzn_rendition **)NULL,
-//									(struct cmzn_graphic **)NULL)))
+//									(struct cmzn_graphics **)NULL)))
 //							{
 //								/* Execute command_field of picked_element_point */
 //								if (element_point_tool->command_field)

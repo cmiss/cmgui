@@ -33,7 +33,7 @@ Interactive tool for selecting elements with mouse and other devices.
 #include "interaction/interaction_volume.h"
 #include "interaction/interactive_event.h"
 #include "graphics/scene.h"
-#include "graphics/graphic.h"
+#include "graphics/graphics.h"
 #include "graphics/graphics_module.h"
 #include "graphics/material.h"
 #include "graphics/scene_picker.hpp"

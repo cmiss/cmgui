@@ -20,7 +20,7 @@ codes used to build scene editor with wxWidgets.
 #include <vector>
 
 #include "zinc/scene.h"
-#include "zinc/graphic.h"
+#include "zinc/graphics.h"
 #include "zinc/graphicsmaterial.h"
 #include "zinc/spectrum.h"
 #include "zinc/status.h"
@@ -59,7 +59,7 @@ codes used to build scene editor with wxWidgets.
 #include "graphics/region_tree_viewer_wx.h"
 #include "graphics/font.h"
 #include "graphics/scene.h"
-#include "graphics/graphic.h"
+#include "graphics/graphics.h"
 #include "graphics/graphics_module.h"
 #include "graphics/scene_coordinate_system.hpp"
 #include "graphics/tessellation.hpp"
@@ -317,7 +317,7 @@ DESCRIPTION :
 	struct cmzn_font *default_font;
 	struct MANAGER(Scene) *scene_manager;
 	struct User_interface *user_interface;
-	struct cmzn_graphic *current_graphic;
+	struct cmzn_graphics *current_graphics;
 	cmzn_glyphmodule *glyphmodule;
 	struct MANAGER(VT_volume_texture) *volume_texture_manager;
 	struct MANAGER(Computed_field) *field_manager;
@@ -331,7 +331,7 @@ DESCRIPTION :
 	wxScrolledWindow *sceneediting;
 	wxFrame *frame;
 	wxCheckListBox *checklistbox;
-	wxCheckListBox *graphiclistbox;
+	wxCheckListBox *graphicslistbox;
 	wxCmguiHierachicalTree *testing_tree_ctrl;
 	wxImageList *ImageList;
 	wxSplitterWindow *lowersplitter;
@@ -356,21 +356,21 @@ void Region_tree_viewer_set_active_scene(
 	struct Region_tree_viewer *region_tree_viewer, struct cmzn_scene *scene);
 
 // new prototypes
-static int Region_tree_viewer_add_graphic_item(
-	struct cmzn_graphic *graphic, void *region_tree_viewer_void);
+static int Region_tree_viewer_add_graphics_item(
+	struct cmzn_graphics *graphics, void *region_tree_viewer_void);
 
 /***************************************************************************//**
- *Get and set the display of graphic
+ *Get and set the display of graphics
  */
-static int get_and_set_cmzn_graphic_widgets(void *region_tree_viewer_void);
+static int get_and_set_cmzn_graphics_widgets(void *region_tree_viewer_void);
 
 /***************************************************************************//**
- * Iterator function for Rendition_editor_update_Graphic_item.
+ * Iterator function for Rendition_editor_update_Graphics_item.
  */
-static int Region_tree_viewer_add_graphic(
-	struct cmzn_graphic *graphic, void *region_tree_viewer_void);
+static int Region_tree_viewer_add_graphics(
+	struct cmzn_graphics *graphics, void *region_tree_viewer_void);
 
-void Region_tree_viewer_set_graphic_widgets_for_scene(Region_tree_viewer *region_tree_viewer);
+void Region_tree_viewer_set_graphics_widgets_for_scene(Region_tree_viewer *region_tree_viewer);
 
 /*
 Module functions
@@ -448,13 +448,13 @@ void wxCmguiHierachicalTree::SendLeftDownEvent(wxMouseEvent& event)
 };
 
 /**
- * Graphic types that can be added in the scene editor. More than actual number
- * of graphic types as some options allow preset attributes. e.g
- * NODE_POINTS creates a POINTS graphic with DOMAIN_NODES and a default
+ * Graphics types that can be added in the scene editor. More than actual number
+ * of graphics types as some options allow preset attributes. e.g
+ * NODE_POINTS creates a POINTS graphics with DOMAIN_NODES and a default
  * coordinate field.
- * Ensure Add_graphic_type_string has a string for each valid enum.
+ * Ensure Add_graphics_type_string has a string for each valid enum.
  */
-enum Add_graphic_type
+enum Add_graphics_type
 {
 	ADD_GRAPHIC_TYPE_INVALID = 0,
 	ADD_GRAPHIC_TYPE_POINTS,
@@ -467,9 +467,9 @@ enum Add_graphic_type
 	ADD_GRAPHIC_TYPE_STREAMLINES
 };
 
-const char *Add_graphic_type_string(Add_graphic_type add_graphic_type)
+const char *Add_graphics_type_string(Add_graphics_type add_graphics_type)
 {
-	switch (add_graphic_type)
+	switch (add_graphics_type)
 	{
 	case ADD_GRAPHIC_TYPE_POINTS:
 		return "Points";
@@ -542,7 +542,7 @@ class wxRegionTreeViewer : public wxFrame
 		*texture_coordinates_chooser_panel, *render_polygon_mode_chooser_panel,
 		*seed_element_panel, *subgroup_field_chooser_panel, *tessellation_chooser_panel;
 	wxWindow *glyphbox,*glyphline;
-	wxChoice *facechoice, *add_graphic_choice;
+	wxChoice *facechoice, *add_graphics_choice;
 	wxString TempText;
 	DEFINE_MANAGER_CLASS(Computed_field);
 	Managed_object_chooser<Computed_field,MANAGER_CLASS(Computed_field)>
@@ -553,12 +553,12 @@ class wxRegionTreeViewer : public wxFrame
 	Managed_object_chooser<Graphical_material,MANAGER_CLASS(Graphical_material)>
 	*selected_material_chooser;
 	/*
-	DEFINE_ENUMERATOR_TYPE_CLASS(cmzn_graphic_type);
-	Enumerator_chooser<ENUMERATOR_TYPE_CLASS(cmzn_graphic_type)>
-	*graphic_type_chooser;
+	DEFINE_ENUMERATOR_TYPE_CLASS(cmzn_graphics_type);
+	Enumerator_chooser<ENUMERATOR_TYPE_CLASS(cmzn_graphics_type)>
+	*graphics_type_chooser;
 	*/
-	DEFINE_ENUMERATOR_TYPE_CLASS(cmzn_graphic_select_mode);
-	Enumerator_chooser<ENUMERATOR_TYPE_CLASS(cmzn_graphic_select_mode)>
+	DEFINE_ENUMERATOR_TYPE_CLASS(cmzn_graphics_select_mode);
+	Enumerator_chooser<ENUMERATOR_TYPE_CLASS(cmzn_graphics_select_mode)>
 	*select_mode_chooser;
 	Managed_object_chooser<Computed_field,MANAGER_CLASS(Computed_field)>
 	*data_field_chooser;
@@ -600,8 +600,8 @@ class wxRegionTreeViewer : public wxFrame
 	Managed_object_chooser<Computed_field,MANAGER_CLASS(Computed_field)>
 	*sample_density_field_chooser;
 	wxFeElementTextChooser *seed_element_chooser;
-	DEFINE_ENUMERATOR_TYPE_CLASS(cmzn_graphic_line_attributes_shape);
-	Enumerator_chooser<ENUMERATOR_TYPE_CLASS(cmzn_graphic_line_attributes_shape)>
+	DEFINE_ENUMERATOR_TYPE_CLASS(cmzn_graphicslineattributes_shape);
+	Enumerator_chooser<ENUMERATOR_TYPE_CLASS(cmzn_graphicslineattributes_shape)>
 		*line_shape_chooser;
 	DEFINE_ENUMERATOR_TYPE_CLASS(cmzn_scene_coordinate_system);
 	Enumerator_chooser<ENUMERATOR_TYPE_CLASS(cmzn_scene_coordinate_system)>
@@ -613,11 +613,11 @@ class wxRegionTreeViewer : public wxFrame
 	*streamline_data_type_chooser;
 	Managed_object_chooser<Computed_field,MANAGER_CLASS(Computed_field)>
 	*texture_coord_field_chooser;
-	DEFINE_ENUMERATOR_TYPE_CLASS(cmzn_graphic_render_polygon_mode);
-	Enumerator_chooser<ENUMERATOR_TYPE_CLASS(cmzn_graphic_render_polygon_mode)>
+	DEFINE_ENUMERATOR_TYPE_CLASS(cmzn_graphics_render_polygon_mode);
+	Enumerator_chooser<ENUMERATOR_TYPE_CLASS(cmzn_graphics_render_polygon_mode)>
 	*render_polygon_mode_chooser;
-	DEFINE_ENUMERATOR_TYPE_CLASS(cmzn_graphic_streamlines_track_direction);
-	Enumerator_chooser<ENUMERATOR_TYPE_CLASS(cmzn_graphic_streamlines_track_direction)>
+	DEFINE_ENUMERATOR_TYPE_CLASS(cmzn_graphics_streamlines_track_direction);
+	Enumerator_chooser<ENUMERATOR_TYPE_CLASS(cmzn_graphics_streamlines_track_direction)>
 		*streamlines_track_direction_chooser;
 	wxWindowID tessellationWindowID;
 public:
@@ -669,21 +669,21 @@ public:
 	selected_material_chooser_panel->Fit();
 	tessellationWindowID = 0;
 
-	wxPanel *add_graphic_chooser_panel = XRCCTRL(*this, "AddGraphicChooserPanel", wxPanel);
-	add_graphic_choice = new wxChoice(add_graphic_chooser_panel, /*id*/-1, wxPoint(0,0), wxSize(-1,-1));
-	add_graphic_choice->Append(wxString::FromAscii("Add..."), (void *)ADD_GRAPHIC_TYPE_INVALID);
-	add_graphic_choice->Append(wxString::FromAscii("---"), (void *)ADD_GRAPHIC_TYPE_INVALID);
+	wxPanel *add_graphics_chooser_panel = XRCCTRL(*this, "AddGraphicsChooserPanel", wxPanel);
+	add_graphics_choice = new wxChoice(add_graphics_chooser_panel, /*id*/-1, wxPoint(0,0), wxSize(-1,-1));
+	add_graphics_choice->Append(wxString::FromAscii("Add..."), (void *)ADD_GRAPHIC_TYPE_INVALID);
+	add_graphics_choice->Append(wxString::FromAscii("---"), (void *)ADD_GRAPHIC_TYPE_INVALID);
 	for (size_t i = 1; ; ++i)
 	{
-		const char *add_graphic_type_string =
-			Add_graphic_type_string(static_cast<Add_graphic_type>(i));
-		if (!add_graphic_type_string)
+		const char *add_graphics_type_string =
+			Add_graphics_type_string(static_cast<Add_graphics_type>(i));
+		if (!add_graphics_type_string)
 			break;
-		add_graphic_choice->Append(wxString::FromAscii(add_graphic_type_string), reinterpret_cast<void *>(i));
+		add_graphics_choice->Append(wxString::FromAscii(add_graphics_type_string), reinterpret_cast<void *>(i));
 	}
-	add_graphic_choice->SetSelection(0);
-	add_graphic_choice->Connect(wxEVT_COMMAND_CHOICE_SELECTED,
-		wxCommandEventHandler(wxRegionTreeViewer::AddGraphicChoice), NULL, this);
+	add_graphics_choice->SetSelection(0);
+	add_graphics_choice->Connect(wxEVT_COMMAND_CHOICE_SELECTED,
+		wxCommandEventHandler(wxRegionTreeViewer::AddGraphicsChoice), NULL, this);
 
 	data_field_chooser = NULL;
 	/* Set the spectrum_chooser*/
@@ -757,7 +757,7 @@ public:
 	tessellationbutton = NULL;
 
 	XRCCTRL(*this,"NameTextField", wxTextCtrl)->Connect(wxEVT_KILL_FOCUS,
-		wxCommandEventHandler(wxRegionTreeViewer::GraphicEditorNameText),
+		wxCommandEventHandler(wxRegionTreeViewer::GraphicsEditorNameText),
 		NULL, this);
 	XRCCTRL(*this,"IsoScalarTextCtrl", wxTextCtrl)->Connect(wxEVT_KILL_FOCUS,
 		wxCommandEventHandler(wxRegionTreeViewer::EnterIsoScalar),
@@ -830,8 +830,8 @@ public:
 		delete coordinate_field_chooser;
 		delete graphical_material_chooser;
 		delete selected_material_chooser;
-		delete add_graphic_choice;
-		//delete graphic_type_chooser;
+		delete add_graphics_choice;
+		//delete graphics_type_chooser;
 		delete select_mode_chooser;
 		delete data_field_chooser;
 		delete spectrum_chooser;
@@ -902,11 +902,11 @@ DESCRIPTION :
 Callback from wxChooser<Coordinate Field> when choice is made.
 ==============================================================================*/
 	{
-		cmzn_graphic_set_coordinate_field(
-			region_tree_viewer->current_graphic, coordinate_field);
+		cmzn_graphics_set_coordinate_field(
+			region_tree_viewer->current_graphics, coordinate_field);
 		Region_tree_viewer_autoapply(region_tree_viewer->scene,
 			region_tree_viewer->edit_scene);
-		//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphic);
+		//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphics);
 		return(1);
 	}
 
@@ -919,11 +919,11 @@ DESCRIPTION :
 Callback from wxChooser<Coordinate Field> when choice is made.
 ==============================================================================*/
 	{
-		cmzn_graphic_set_coordinate_system(
-			region_tree_viewer->current_graphic, coordinate_system);
+		cmzn_graphics_set_coordinate_system(
+			region_tree_viewer->current_graphics, coordinate_system);
 		Region_tree_viewer_autoapply(region_tree_viewer->scene,
 			region_tree_viewer->edit_scene);
-		//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphic);
+		//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphics);
 		return(1);
 	}
 
@@ -935,11 +935,11 @@ DESCRIPTION :
 Callback from wxChooser<Graphical Material> when choice is made.
 ==============================================================================*/
 	{
-		cmzn_graphic_set_material(region_tree_viewer->current_graphic,
+		cmzn_graphics_set_material(region_tree_viewer->current_graphics,
 			material);
 		Region_tree_viewer_autoapply(region_tree_viewer->scene,
 			region_tree_viewer->edit_scene);
-		Region_tree_viewer_wx_set_list_string(region_tree_viewer->current_graphic);
+		Region_tree_viewer_wx_set_list_string(region_tree_viewer->current_graphics);
 		return(1);
 	}
 
@@ -951,15 +951,15 @@ DESCRIPTION :
 Callback from wxChooser<Selected Material> when choice is made.
 ==============================================================================*/
 {
-	cmzn_graphic_set_selected_material(region_tree_viewer->current_graphic,
+	cmzn_graphics_set_selected_material(region_tree_viewer->current_graphics,
 		selected_material);
 	Region_tree_viewer_autoapply(region_tree_viewer->scene,
 		region_tree_viewer->edit_scene);
-	Region_tree_viewer_wx_set_list_string(region_tree_viewer->current_graphic);
+	Region_tree_viewer_wx_set_list_string(region_tree_viewer->current_graphics);
 	return(1);
 }
 
-int select_mode_callback(enum cmzn_graphic_select_mode select_mode)
+int select_mode_callback(enum cmzn_graphics_select_mode select_mode)
 /*******************************************************************************
 LAST MODIFIED : 19 March 2007
 
@@ -967,11 +967,11 @@ DESCRIPTION :
 Callback from wxChooser<select mode> when choice is made.
 ==============================================================================*/
 {
-	cmzn_graphic_set_select_mode(
-		region_tree_viewer->current_graphic, select_mode);
+	cmzn_graphics_set_select_mode(
+		region_tree_viewer->current_graphics, select_mode);
 	Region_tree_viewer_autoapply(region_tree_viewer->scene,
 		region_tree_viewer->edit_scene);
-	//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphic);
+	//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphics);
 	return 1;
 }
 
@@ -980,10 +980,10 @@ Callback from wxChooser<select mode> when choice is made.
  */
 int line_orientation_scale_field_callback(Computed_field *orientation_scale_field)
 {
-	cmzn_graphic_line_attributes_id line_attributes =
-		cmzn_graphic_get_line_attributes(region_tree_viewer->current_graphic);
-	cmzn_graphic_line_attributes_set_orientation_scale_field(line_attributes, orientation_scale_field);
-	cmzn_graphic_line_attributes_destroy(&line_attributes);
+	cmzn_graphicslineattributes_id line_attributes =
+		cmzn_graphics_get_graphicslineattributes(region_tree_viewer->current_graphics);
+	cmzn_graphicslineattributes_set_orientation_scale_field(line_attributes, orientation_scale_field);
+	cmzn_graphicslineattributes_destroy(&line_attributes);
 	if (orientation_scale_field)
 	{
 		linescalefactorstextctrl->Enable();
@@ -994,7 +994,7 @@ int line_orientation_scale_field_callback(Computed_field *orientation_scale_fiel
 	}
 	Region_tree_viewer_autoapply(region_tree_viewer->scene,
 		region_tree_viewer->edit_scene);
-	//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphic);
+	//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphics);
 	return 1;
 }
 
@@ -1003,13 +1003,13 @@ int line_orientation_scale_field_callback(Computed_field *orientation_scale_fiel
  */
 int isoscalar_callback(Computed_field *isoscalar_field)
 {
-	cmzn_graphic_contours_id contours =
-		cmzn_graphic_cast_contours(region_tree_viewer->current_graphic);
-	cmzn_graphic_contours_set_isoscalar_field(contours, isoscalar_field);
-	cmzn_graphic_contours_destroy(&contours);
+	cmzn_graphics_contours_id contours =
+		cmzn_graphics_cast_contours(region_tree_viewer->current_graphics);
+	cmzn_graphics_contours_set_isoscalar_field(contours, isoscalar_field);
+	cmzn_graphics_contours_destroy(&contours);
 	Region_tree_viewer_autoapply(region_tree_viewer->scene,
 		region_tree_viewer->edit_scene);
-	//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphic);
+	//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphics);
 
 	return 1;
 }
@@ -1019,14 +1019,14 @@ int isoscalar_callback(Computed_field *isoscalar_field)
  */
 int glyph_callback(cmzn_glyph *glyph)
 {
-	cmzn_graphic_point_attributes_id point_attributes =
-		cmzn_graphic_get_point_attributes(region_tree_viewer->current_graphic);
-	cmzn_graphic_point_attributes_set_glyph(point_attributes, reinterpret_cast<cmzn_glyph_id>(glyph));
-	cmzn_graphic_point_attributes_destroy(&point_attributes);
+	cmzn_graphicspointattributes_id point_attributes =
+		cmzn_graphics_get_graphicspointattributes(region_tree_viewer->current_graphics);
+	cmzn_graphicspointattributes_set_glyph(point_attributes, reinterpret_cast<cmzn_glyph_id>(glyph));
+	cmzn_graphicspointattributes_destroy(&point_attributes);
 	/* inform the client of the change */
 	Region_tree_viewer_autoapply(region_tree_viewer->scene,
 		region_tree_viewer->edit_scene);
-	//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphic);
+	//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphics);
 	return 1;
 }
 
@@ -1035,14 +1035,14 @@ int glyph_callback(cmzn_glyph *glyph)
  */
 int glyph_repeat_mode_callback(enum cmzn_glyph_repeat_mode glyph_repeat_mode)
 {
-	cmzn_graphic_point_attributes_id point_attributes =
-		cmzn_graphic_get_point_attributes(region_tree_viewer->current_graphic);
-	cmzn_graphic_point_attributes_set_glyph_repeat_mode(point_attributes, glyph_repeat_mode);
-	cmzn_graphic_point_attributes_destroy(&point_attributes);
+	cmzn_graphicspointattributes_id point_attributes =
+		cmzn_graphics_get_graphicspointattributes(region_tree_viewer->current_graphics);
+	cmzn_graphicspointattributes_set_glyph_repeat_mode(point_attributes, glyph_repeat_mode);
+	cmzn_graphicspointattributes_destroy(&point_attributes);
 	/* inform the client of the change */
 	Region_tree_viewer_autoapply(region_tree_viewer->scene,
 		region_tree_viewer->edit_scene);
-	//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphic);
+	//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphics);
 	return 1;
 }
 
@@ -1051,11 +1051,11 @@ int glyph_repeat_mode_callback(enum cmzn_glyph_repeat_mode glyph_repeat_mode)
  */
 int orientation_scale_callback(Computed_field *orientation_scale_field)
 {
-	cmzn_graphic_point_attributes_id point_attributes =
-		cmzn_graphic_get_point_attributes(region_tree_viewer->current_graphic);
-	cmzn_graphic_point_attributes_set_orientation_scale_field(point_attributes,
+	cmzn_graphicspointattributes_id point_attributes =
+		cmzn_graphics_get_graphicspointattributes(region_tree_viewer->current_graphics);
+	cmzn_graphicspointattributes_set_orientation_scale_field(point_attributes,
 		orientation_scale_field);
-	cmzn_graphic_point_attributes_destroy(&point_attributes);
+	cmzn_graphicspointattributes_destroy(&point_attributes);
 	glyphscalefactorstext	=XRCCTRL(*this,"GlyphScaleFactorsText",wxStaticText);
 	glyphscalefactorstextctrl=XRCCTRL(*this,"GlyphScaleFactorsTextCtrl",wxTextCtrl);
 	if (orientation_scale_field)
@@ -1071,7 +1071,7 @@ int orientation_scale_callback(Computed_field *orientation_scale_field)
 	/* inform the client of the change */
 	Region_tree_viewer_autoapply(region_tree_viewer->scene,
 		region_tree_viewer->edit_scene);
-	//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphic);
+	//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphics);
 	return 1;
 }
 
@@ -1080,14 +1080,14 @@ int orientation_scale_callback(Computed_field *orientation_scale_field)
  */
 int variable_scale_callback(Computed_field *signed_scale_field)
 {
-	cmzn_graphic_point_attributes_id point_attributes =
-		cmzn_graphic_get_point_attributes(region_tree_viewer->current_graphic);
-	cmzn_graphic_point_attributes_set_signed_scale_field(point_attributes,
+	cmzn_graphicspointattributes_id point_attributes =
+		cmzn_graphics_get_graphicspointattributes(region_tree_viewer->current_graphics);
+	cmzn_graphicspointattributes_set_signed_scale_field(point_attributes,
 		signed_scale_field);
-	cmzn_graphic_point_attributes_destroy(&point_attributes);
+	cmzn_graphicspointattributes_destroy(&point_attributes);
 	Region_tree_viewer_autoapply(region_tree_viewer->scene,
 		region_tree_viewer->edit_scene);
-	//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphic);
+	//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphics);
 	return 1;
 }
 
@@ -1096,23 +1096,23 @@ int variable_scale_callback(Computed_field *signed_scale_field)
  */
 int label_callback(Computed_field *label_field)
 {
-	cmzn_graphic_point_attributes_id point_attributes =
-		cmzn_graphic_get_point_attributes(region_tree_viewer->current_graphic);
-	cmzn_graphic_point_attributes_set_label_field(point_attributes, label_field);
-	cmzn_graphic_point_attributes_destroy(&point_attributes);
+	cmzn_graphicspointattributes_id point_attributes =
+		cmzn_graphics_get_graphicspointattributes(region_tree_viewer->current_graphics);
+	cmzn_graphicspointattributes_set_label_field(point_attributes, label_field);
+	cmzn_graphicspointattributes_destroy(&point_attributes);
 	Region_tree_viewer_autoapply(region_tree_viewer->scene,
 	   region_tree_viewer->edit_scene);
-	//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphic);
+	//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphics);
 	return 1;
 }
 
 int subgroup_field_callback(Computed_field *subgroup_field)
 {
-	cmzn_graphic_set_subgroup_field(region_tree_viewer->current_graphic,
+	cmzn_graphics_set_subgroup_field(region_tree_viewer->current_graphics,
 		subgroup_field);
 	Region_tree_viewer_autoapply(region_tree_viewer->scene,
 		region_tree_viewer->edit_scene);
-	Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphic);
+	Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphics);
 
 	return 1;
 }
@@ -1122,13 +1122,13 @@ int subgroup_field_callback(Computed_field *subgroup_field)
  */
 int font_callback(cmzn_font *font)
 {
-	cmzn_graphic_point_attributes_id point_attributes =
-		cmzn_graphic_get_point_attributes(region_tree_viewer->current_graphic);
-	cmzn_graphic_point_attributes_set_font(point_attributes, font);
-	cmzn_graphic_point_attributes_destroy(&point_attributes);
+	cmzn_graphicspointattributes_id point_attributes =
+		cmzn_graphics_get_graphicspointattributes(region_tree_viewer->current_graphics);
+	cmzn_graphicspointattributes_set_font(point_attributes, font);
+	cmzn_graphicspointattributes_destroy(&point_attributes);
 	Region_tree_viewer_autoapply(region_tree_viewer->scene,
 	 region_tree_viewer->edit_scene);
-	//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphic);
+	//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphics);
 	return 1;
 }
 
@@ -1142,10 +1142,10 @@ void show_sampling_widgets()
 	sample_density_field_chooser_panel=XRCCTRL(*this,"DensityFieldChooserPanel",wxPanel);
 	xitext=XRCCTRL(*this,"XiText",wxStaticText);
 	xitextctrl=XRCCTRL(*this,"XiTextCtrl",wxTextCtrl);
-	const int domain_dimension = cmzn_graphic_get_domain_dimension(region_tree_viewer->current_graphic);
-	cmzn_graphic_sampling_attributes_id sampling = cmzn_graphic_get_sampling_attributes(region_tree_viewer->current_graphic);
+	const int domain_dimension = cmzn_graphics_get_domain_dimension(region_tree_viewer->current_graphics);
+	cmzn_graphicssamplingattributes_id sampling = cmzn_graphics_get_graphicssamplingattributes(region_tree_viewer->current_graphics);
 	cmzn_element_point_sample_mode sample_mode = sampling ?
-		cmzn_graphic_sampling_attributes_get_mode(sampling) : CMZN_ELEMENT_POINT_SAMPLE_MODE_INVALID;
+		cmzn_graphicssamplingattributes_get_mode(sampling) : CMZN_ELEMENT_POINT_SAMPLE_MODE_INVALID;
 	if (sampling && (domain_dimension > 0))
 	{
 		sample_mode_text->Enable();
@@ -1188,7 +1188,7 @@ void show_sampling_widgets()
 		tessellation_field_text->Disable();
 		tessellation_field_chooser_panel->Disable();
 	}
-	cmzn_graphic_sampling_attributes_destroy(&sampling);
+	cmzn_graphicssamplingattributes_destroy(&sampling);
 }
 
 /**
@@ -1196,10 +1196,10 @@ void show_sampling_widgets()
  */
 int domain_type_callback(enum cmzn_field_domain_type domain_type)
  {
-	if (CMZN_OK != cmzn_graphic_set_domain_type(region_tree_viewer->current_graphic,domain_type))
+	if (CMZN_OK != cmzn_graphics_set_domain_type(region_tree_viewer->current_graphics,domain_type))
 	{
-		// user chose an invalid domain type for the graphic
-		domain_type_chooser->set_value(cmzn_graphic_get_domain_type(region_tree_viewer->current_graphic));
+		// user chose an invalid domain type for the graphics
+		domain_type_chooser->set_value(cmzn_graphics_get_domain_type(region_tree_viewer->current_graphics));
 		return 1;
 	}
 
@@ -1211,7 +1211,7 @@ int domain_type_callback(enum cmzn_field_domain_type domain_type)
 	{
 		exteriorcheckbox->Enable();
 		facecheckbox->Enable();
-		cmzn_graphic_set_exterior(region_tree_viewer->current_graphic,
+		cmzn_graphics_set_exterior(region_tree_viewer->current_graphics,
 			exteriorcheckbox->IsChecked());
 		cmzn_element_face_type face;
 		if (facecheckbox->IsChecked())
@@ -1224,7 +1224,7 @@ int domain_type_callback(enum cmzn_field_domain_type domain_type)
 			facechoice->Disable();
 			face= CMZN_ELEMENT_FACE_ALL;
 		}
-		cmzn_graphic_set_face(region_tree_viewer->current_graphic,face);
+		cmzn_graphics_set_face(region_tree_viewer->current_graphics,face);
 	}
 	else
 	{
@@ -1236,25 +1236,25 @@ int domain_type_callback(enum cmzn_field_domain_type domain_type)
 
 	Region_tree_viewer_autoapply(region_tree_viewer->scene,
 	  region_tree_viewer->edit_scene);
-	Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphic);
+	Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphics);
 	return 1;
  }
 
 /** Callback from wxChooser<cmzn_element_point_sample_mode> when choice is made. */
 int sample_mode_callback(enum cmzn_element_point_sample_mode sample_mode)
 {
-	cmzn_graphic_sampling_attributes_id sampling = cmzn_graphic_get_sampling_attributes(region_tree_viewer->current_graphic);
+	cmzn_graphicssamplingattributes_id sampling = cmzn_graphics_get_graphicssamplingattributes(region_tree_viewer->current_graphics);
 	if (sampling)
 	{
-		cmzn_graphic_sampling_attributes_set_mode(sampling, sample_mode);
+		cmzn_graphicssamplingattributes_set_mode(sampling, sample_mode);
 	}
-	cmzn_graphic_sampling_attributes_destroy(&sampling);
+	cmzn_graphicssamplingattributes_destroy(&sampling);
 	show_sampling_widgets();
 
 	/* inform the client of the change */
 	Region_tree_viewer_autoapply(region_tree_viewer->scene,
 		region_tree_viewer->edit_scene);
-	//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphic);
+	//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphics);
 
 	return 1;
 }
@@ -1262,27 +1262,27 @@ int sample_mode_callback(enum cmzn_element_point_sample_mode sample_mode)
 /** Callback from wxChooser<tessellation field> when choice is made.*/
 int tessellation_field_callback(Computed_field *tessellation_field)
 {
-	cmzn_graphic_set_tessellation_field(
-		region_tree_viewer->current_graphic, tessellation_field);
+	cmzn_graphics_set_tessellation_field(
+		region_tree_viewer->current_graphics, tessellation_field);
 	Region_tree_viewer_autoapply(region_tree_viewer->scene,
 		region_tree_viewer->edit_scene);
-	//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphic);
+	//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphics);
 	return 1;
 }
 
 /** Callback from wxChooser<xi Point Denstiy Field> when choice is made. */
 int sample_density_callback(Computed_field *sample_density_field)
 {
-	cmzn_graphic_sampling_attributes_id sampling = cmzn_graphic_get_sampling_attributes(region_tree_viewer->current_graphic);
+	cmzn_graphicssamplingattributes_id sampling = cmzn_graphics_get_graphicssamplingattributes(region_tree_viewer->current_graphics);
 	if (sampling)
 	{
-		cmzn_graphic_sampling_attributes_set_density_field(sampling, sample_density_field);
+		cmzn_graphicssamplingattributes_set_density_field(sampling, sample_density_field);
 	}
-	cmzn_graphic_sampling_attributes_destroy(&sampling);
+	cmzn_graphicssamplingattributes_destroy(&sampling);
 
 	Region_tree_viewer_autoapply(region_tree_viewer->scene,
 	 region_tree_viewer->edit_scene);
-	//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphic);
+	//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphics);
 	return 1;
 }
 
@@ -1294,33 +1294,33 @@ DESCRIPTION :
 Callback from wxChooser<Seed Element> when choice is made.
 ==============================================================================*/
 {
-	cmzn_graphic_set_seed_element(region_tree_viewer->current_graphic,
+	cmzn_graphics_set_seed_element(region_tree_viewer->current_graphics,
 		seed_element);
 	Region_tree_viewer_autoapply(region_tree_viewer->scene,
 		region_tree_viewer->edit_scene);
-	//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphic);
+	//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphics);
 	return 1;
 }
 
 /**
- * Callback from wxChooser<cmzn_graphic_line_attributes_shape> when choice is made.
+ * Callback from wxChooser<cmzn_graphicslineattributes_shape> when choice is made.
  */
-int line_shape_callback(enum cmzn_graphic_line_attributes_shape line_shape)
+int line_shape_callback(enum cmzn_graphicslineattributes_shape line_shape)
 {
-	cmzn_graphic_line_attributes_id line_attributes =
-		cmzn_graphic_get_line_attributes(region_tree_viewer->current_graphic);
-	if (CMZN_OK == cmzn_graphic_line_attributes_set_shape(line_attributes, line_shape))
+	cmzn_graphicslineattributes_id line_attributes =
+		cmzn_graphics_get_graphicslineattributes(region_tree_viewer->current_graphics);
+	if (CMZN_OK == cmzn_graphicslineattributes_set_shape(line_attributes, line_shape))
 	{
 		Region_tree_viewer_autoapply(region_tree_viewer->scene,
 			region_tree_viewer->edit_scene);
-		//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphic);
+		//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphics);
 	}
 	else
 	{
-		// restore current shape as some shapes not supported for all graphic types
-		line_shape_chooser->set_value(cmzn_graphic_line_attributes_get_shape(line_attributes));
+		// restore current shape as some shapes not supported for all graphics types
+		line_shape_chooser->set_value(cmzn_graphicslineattributes_get_shape(line_attributes));
 	}
-	cmzn_graphic_line_attributes_destroy(&line_attributes);
+	cmzn_graphicslineattributes_destroy(&line_attributes);
 	return 1;
 }
 
@@ -1332,23 +1332,23 @@ void EnterLineBaseSize(wxCommandEvent &event)
 	const char *text_entry = wxTextEntry.mb_str(wxConvUTF8);
 	if (text_entry)
 	{
-		cmzn_graphic_line_attributes_id line_attributes =
-			cmzn_graphic_get_line_attributes(region_tree_viewer->current_graphic);
+		cmzn_graphicslineattributes_id line_attributes =
+			cmzn_graphics_get_graphicslineattributes(region_tree_viewer->current_graphics);
 		Parse_state *temp_state = create_Parse_state(text_entry);
 		double lineBaseSize[2];
 		if (set_double_product(temp_state, lineBaseSize, reinterpret_cast<void*>(2)))
 		{
-			cmzn_graphic_line_attributes_set_base_size(line_attributes, 2, lineBaseSize);
+			cmzn_graphicslineattributes_set_base_size(line_attributes, 2, lineBaseSize);
 			Region_tree_viewer_autoapply(region_tree_viewer->scene,
 				region_tree_viewer->edit_scene);
-			//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphic);
+			//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphics);
 		}
 		destroy_Parse_state(&temp_state);
-		cmzn_graphic_line_attributes_get_base_size(line_attributes, 2, lineBaseSize);
+		cmzn_graphicslineattributes_get_base_size(line_attributes, 2, lineBaseSize);
 		char temp_string[100];
 		sprintf(temp_string, "%g*%g", lineBaseSize[0], lineBaseSize[1]);
 		linebasesizetextctrl->ChangeValue(wxString::FromAscii(temp_string));
-		cmzn_graphic_line_attributes_destroy(&line_attributes);
+		cmzn_graphicslineattributes_destroy(&line_attributes);
 	}
 	else
 	{
@@ -1364,23 +1364,23 @@ void EnterLineScaleFactors(wxCommandEvent &event)
 	const char *text_entry = wxTextEntry.mb_str(wxConvUTF8);
 	if (text_entry)
 	{
-		cmzn_graphic_line_attributes_id line_attributes =
-			cmzn_graphic_get_line_attributes(region_tree_viewer->current_graphic);
+		cmzn_graphicslineattributes_id line_attributes =
+			cmzn_graphics_get_graphicslineattributes(region_tree_viewer->current_graphics);
 		Parse_state *temp_state = create_Parse_state(text_entry);
 		double lineScaleFactors[2];
 		if (set_double_product(temp_state, lineScaleFactors, reinterpret_cast<void*>(2)))
 		{
-			cmzn_graphic_line_attributes_set_scale_factors(line_attributes, 2, lineScaleFactors);
+			cmzn_graphicslineattributes_set_scale_factors(line_attributes, 2, lineScaleFactors);
 			Region_tree_viewer_autoapply(region_tree_viewer->scene,
 				region_tree_viewer->edit_scene);
-			//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphic);
+			//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphics);
 		}
 		destroy_Parse_state(&temp_state);
-		cmzn_graphic_line_attributes_get_scale_factors(line_attributes, 2, lineScaleFactors);
+		cmzn_graphicslineattributes_get_scale_factors(line_attributes, 2, lineScaleFactors);
 		char temp_string[100];
 		sprintf(temp_string, "%g*%g", lineScaleFactors[0], lineScaleFactors[1]);
 		linescalefactorstextctrl->ChangeValue(wxString::FromAscii(temp_string));
-		cmzn_graphic_line_attributes_destroy(&line_attributes);
+		cmzn_graphicslineattributes_destroy(&line_attributes);
 	}
 	else
 	{
@@ -1393,12 +1393,12 @@ void EnterLineScaleFactors(wxCommandEvent &event)
  */
 int stream_vector_callback(Computed_field *stream_vector_field)
 {
-	cmzn_graphic_streamlines_id streamlines = cmzn_graphic_cast_streamlines(region_tree_viewer->current_graphic);
-	cmzn_graphic_streamlines_set_stream_vector_field(streamlines, stream_vector_field);
-	cmzn_graphic_streamlines_destroy(&streamlines);
+	cmzn_graphics_streamlines_id streamlines = cmzn_graphics_cast_streamlines(region_tree_viewer->current_graphics);
+	cmzn_graphics_streamlines_set_stream_vector_field(streamlines, stream_vector_field);
+	cmzn_graphics_streamlines_destroy(&streamlines);
 	Region_tree_viewer_autoapply(region_tree_viewer->scene,
 		region_tree_viewer->edit_scene);
-	//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphic);
+	//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphics);
 	return 1;
 }
 
@@ -1408,16 +1408,16 @@ int stream_vector_callback(Computed_field *stream_vector_field)
 int streamline_data_type_callback(enum Streamline_data_type streamline_data_type)
 {
 	enum Streamline_data_type old_streamline_data_type =
-		cmzn_graphic_get_streamline_data_type(region_tree_viewer->current_graphic);
+		cmzn_graphics_get_streamline_data_type(region_tree_viewer->current_graphics);
 	if (streamline_data_type != old_streamline_data_type)
 	{
-		cmzn_graphic_set_streamline_data_type(region_tree_viewer->current_graphic, streamline_data_type);
+		cmzn_graphics_set_streamline_data_type(region_tree_viewer->current_graphics, streamline_data_type);
 		cmzn_spectrum_id spectrum = 0;
 		if (STREAM_NO_DATA != streamline_data_type)
 		{
 			spectrum = spectrum_chooser->get_object();
 		}
-		cmzn_graphic_set_spectrum(region_tree_viewer->current_graphic, spectrum);
+		cmzn_graphics_set_spectrum(region_tree_viewer->current_graphics, spectrum);
 		data_chooser_panel=XRCCTRL(*this,"DataChooserPanel",wxPanel);
 		spectrumtext=XRCCTRL(*this, "SpectrumText", wxStaticText);
 		spectrum_chooser_panel=XRCCTRL(*this,"SpectrumChooserPanel", wxPanel);
@@ -1442,7 +1442,7 @@ int streamline_data_type_callback(enum Streamline_data_type streamline_data_type
 		/* inform the client of the change */
 		Region_tree_viewer_autoapply(region_tree_viewer->scene,
 			region_tree_viewer->edit_scene);
-		//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphic);
+		//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphics);
 	}
 	return 1;
 }
@@ -1452,13 +1452,13 @@ int streamline_data_type_callback(enum Streamline_data_type streamline_data_type
  */
 int data_field_callback(Computed_field *data_field)
 {
-	cmzn_graphic_set_data_field(region_tree_viewer->current_graphic, data_field);
+	cmzn_graphics_set_data_field(region_tree_viewer->current_graphics, data_field);
 	cmzn_spectrum_id spectrum = 0;
 	if (data_field)
 	{
 		spectrum = spectrum_chooser->get_object();
 	}
-	cmzn_graphic_set_spectrum(region_tree_viewer->current_graphic, spectrum);
+	cmzn_graphics_set_spectrum(region_tree_viewer->current_graphics, spectrum);
 	spectrumtext=XRCCTRL(*this, "SpectrumText", wxStaticText);
 	spectrum_chooser_panel=XRCCTRL(*this,"SpectrumChooserPanel", wxPanel);
 	if (data_field)
@@ -1474,7 +1474,7 @@ int data_field_callback(Computed_field *data_field)
 
 	Region_tree_viewer_autoapply(region_tree_viewer->scene,
 		region_tree_viewer->edit_scene);
-	//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphic);
+	//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphics);
 	return 1;
 }
 
@@ -1483,10 +1483,10 @@ int data_field_callback(Computed_field *data_field)
  */
 int spectrum_callback(Spectrum *spectrum)
 {
-	cmzn_graphic_set_spectrum(region_tree_viewer->current_graphic, spectrum);
+	cmzn_graphics_set_spectrum(region_tree_viewer->current_graphics, spectrum);
 	Region_tree_viewer_autoapply(region_tree_viewer->scene,
 		region_tree_viewer->edit_scene);
-	//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphic);
+	//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphics);
 	return 1;
 }
 
@@ -1495,11 +1495,11 @@ int spectrum_callback(Spectrum *spectrum)
  */
 int tessellation_callback(cmzn_tessellation *tessellation)
 {
-	cmzn_graphic_set_tessellation(
-		region_tree_viewer->current_graphic, tessellation);
+	cmzn_graphics_set_tessellation(
+		region_tree_viewer->current_graphics, tessellation);
 	Region_tree_viewer_autoapply(region_tree_viewer->scene,
 		region_tree_viewer->edit_scene);
-	//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphic);
+	//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphics);
 	return 1;
 }
 
@@ -1511,24 +1511,24 @@ DESCRIPTION :
 Callback from wxChooser<Texture Coord Field> when choice is made.
 ==============================================================================*/
 {
-	cmzn_graphic_set_texture_coordinate_field(
-		region_tree_viewer->current_graphic, texture_coord_field);
+	cmzn_graphics_set_texture_coordinate_field(
+		region_tree_viewer->current_graphics, texture_coord_field);
 			/* inform the client of the change */
 	Region_tree_viewer_autoapply(region_tree_viewer->scene,
 				  region_tree_viewer->edit_scene);
-	//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphic);
+	//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphics);
 	return 1;
 }
 
 /** Callback from wxChooser<Render Type> when choice is made. */
-int render_polygon_mode_callback(enum cmzn_graphic_render_polygon_mode render_polygon_mode)
+int render_polygon_mode_callback(enum cmzn_graphics_render_polygon_mode render_polygon_mode)
 {
-	cmzn_graphic_set_render_polygon_mode(
-		region_tree_viewer->current_graphic, render_polygon_mode);
+	cmzn_graphics_set_render_polygon_mode(
+		region_tree_viewer->current_graphics, render_polygon_mode);
 	/* inform the client of the change */
 	Region_tree_viewer_autoapply(region_tree_viewer->scene,
 		region_tree_viewer->edit_scene);
-	//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphic);
+	//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphics);
 	return 1;
 }
 
@@ -1615,32 +1615,32 @@ void Region_tree_viewer_autoapply(cmzn_scene *destination, cmzn_scene *source)
 	}
 }
 
-void Region_tree_viewer_wx_set_list_string(cmzn_graphic *graphic)
+void Region_tree_viewer_wx_set_list_string(cmzn_graphics *graphics)
 {
 	unsigned int selection;
-	char *graphic_string;
-	graphicalitemschecklist=XRCCTRL(*this,"cmznGraphicListBox",wxCheckListBox);
+	char *graphics_string;
+	graphicalitemschecklist=XRCCTRL(*this,"GraphicsListBox",wxCheckListBox);
 	selection=graphicalitemschecklist->GetSelection();
 	bool check = graphicalitemschecklist->IsChecked(selection);
-	graphic_string = cmzn_graphic_get_summary_string(graphic);
-	graphicalitemschecklist->SetString(selection, wxString::FromAscii(graphic_string));
+	graphics_string = cmzn_graphics_get_summary_string(graphics);
+	graphicalitemschecklist->SetString(selection, wxString::FromAscii(graphics_string));
 	graphicalitemschecklist->Check(selection,check);
-	DEALLOCATE(graphic_string);
+	DEALLOCATE(graphics_string);
 }
 
 /***************************************************************************//**
  * When changes have been made by the user, renew the label on the list
  */
-void Region_tree_viewer_renew_label_on_list(cmzn_graphic *graphic)
+void Region_tree_viewer_renew_label_on_list(cmzn_graphics *graphics)
 {
-	graphicalitemschecklist=XRCCTRL(*this,"cmznGraphicListBox",wxCheckListBox);
-	int position = cmzn_scene_get_graphic_position(
-		region_tree_viewer->edit_scene, graphic);
+	graphicalitemschecklist=XRCCTRL(*this,"GraphicsListBox",wxCheckListBox);
+	int position = cmzn_scene_get_graphics_position(
+		region_tree_viewer->edit_scene, graphics);
 	bool check = graphicalitemschecklist->IsChecked(position - 1);
-	char *graphic_string = cmzn_graphic_get_summary_string(region_tree_viewer->current_graphic);
-	graphicalitemschecklist->SetString(position-1, wxString::FromAscii(graphic_string));
+	char *graphics_string = cmzn_graphics_get_summary_string(region_tree_viewer->current_graphics);
+	graphicalitemschecklist->SetString(position-1, wxString::FromAscii(graphics_string));
 	graphicalitemschecklist->Check(position-1, check);
-	DEALLOCATE(graphic_string);
+	DEALLOCATE(graphics_string);
 }
 
 void ResetWindow(wxSplitterEvent& event)
@@ -1716,20 +1716,20 @@ void ApplyClicked(wxCommandEvent &event)
 	}
 }
 
-void Region_tree_viewer_wx_update_current_graphic(cmzn_graphic *graphic)
+void Region_tree_viewer_wx_update_current_graphics(cmzn_graphics *graphics)
 {
 	wxScrolledWindow *sceneeditingpanel= XRCCTRL(*this, "SceneEditing",wxScrolledWindow);
 	sceneeditingpanel->Enable();
 	sceneeditingpanel->Show();
-	graphicalitemschecklist=XRCCTRL(*this,"cmznGraphicListBox",wxCheckListBox);
-	REACCESS(cmzn_graphic)(&region_tree_viewer->current_graphic, graphic);
+	graphicalitemschecklist=XRCCTRL(*this,"GraphicsListBox",wxCheckListBox);
+	REACCESS(cmzn_graphics)(&region_tree_viewer->current_graphics, graphics);
 }
 
-void Region_tree_viewer_wx_update_graphic_widgets()
+void Region_tree_viewer_wx_update_graphics_widgets()
 {
 	wxScrolledWindow *sceneeditingpanel = XRCCTRL(*this, "SceneEditing",wxScrolledWindow);
 	sceneeditingpanel->Freeze();
-	get_and_set_cmzn_graphic_widgets((void *)region_tree_viewer);
+	get_and_set_cmzn_graphics_widgets((void *)region_tree_viewer);
 	sceneeditingpanel->Thaw();
 	sceneeditingpanel->Layout();
 	if (region_tree_viewer->lowersplitter)
@@ -1741,177 +1741,177 @@ void Region_tree_viewer_wx_update_graphic_widgets()
 	}
 }
 
-void GraphicListBoxProcessSelection(int selection)
+void GraphicsListBoxProcessSelection(int selection)
 {
 	if (-1 != selection)
 	{
-		cmzn_graphic *temp_graphic = cmzn_scene_get_graphic_at_position(
+		cmzn_graphics *temp_graphics = cmzn_scene_get_graphics_at_position(
 			region_tree_viewer->edit_scene, selection+1);
-		Region_tree_viewer_wx_update_current_graphic(temp_graphic);
-		Region_tree_viewer_wx_update_graphic_widgets();
-		if (temp_graphic)
+		Region_tree_viewer_wx_update_current_graphics(temp_graphics);
+		Region_tree_viewer_wx_update_graphics_widgets();
+		if (temp_graphics)
 		{
-			cmzn_graphic_destroy(&temp_graphic);
+			cmzn_graphics_destroy(&temp_graphics);
 		}
 	}
 }
 
-void GraphicListBoxChecked(wxCommandEvent &event)
+void GraphicsListBoxChecked(wxCommandEvent &event)
 {
 	int selection = event.GetInt();
 	graphicalitemschecklist->SetSelection(selection);
-	GraphicListBoxProcessSelection(selection);
-	cmzn_graphic *temp_graphic = cmzn_scene_get_graphic_at_position(
+	GraphicsListBoxProcessSelection(selection);
+	cmzn_graphics *temp_graphics = cmzn_scene_get_graphics_at_position(
 		region_tree_viewer->edit_scene, selection+1);
-	cmzn_graphic_set_visibility_flag(temp_graphic,
+	cmzn_graphics_set_visibility_flag(temp_graphics,
 		graphicalitemschecklist->IsChecked(selection));
 	Region_tree_viewer_autoapply(region_tree_viewer->scene,
 		region_tree_viewer->edit_scene);
-	cmzn_graphic_destroy(&temp_graphic);
+	cmzn_graphics_destroy(&temp_graphics);
 }
 
-void GraphicListBoxClicked(wxCommandEvent &event)
+void GraphicsListBoxClicked(wxCommandEvent &event)
 {
-	GraphicListBoxProcessSelection(event.GetInt());
+	GraphicsListBoxProcessSelection(event.GetInt());
 }
 
 /**
  * @param domain_type  If not CMZN_FIELD_DOMAIN_TYPE_INVALID, set for
- * new graphic and also set coordinate field.
+ * new graphics and also set coordinate field.
  */
-void AddGraphic(cmzn_graphic_type graphic_type,
-	cmzn_field_domain_type domain_type, cmzn_graphic *graphic_to_copy)
+void AddGraphics(cmzn_graphics_type graphics_type,
+	cmzn_field_domain_type domain_type, cmzn_graphics *graphics_to_copy)
 {
-	cmzn_graphic *graphic = cmzn_scene_create_graphic_app(
-		region_tree_viewer->edit_scene, graphic_type, graphic_to_copy);
-	if (graphic)
+	cmzn_graphics *graphics = cmzn_scene_create_graphics_app(
+		region_tree_viewer->edit_scene, graphics_type, graphics_to_copy);
+	if (graphics)
 	{
-		// make sure new graphic is visible (if copy)
-		cmzn_graphic_set_visibility_flag(graphic, true);
+		// make sure new graphics is visible (if copy)
+		cmzn_graphics_set_visibility_flag(graphics, true);
 		// set domain and initial coordinate field if appropriate
 		if (domain_type != CMZN_FIELD_DOMAIN_TYPE_INVALID)
 		{
-			cmzn_graphic_set_domain_type(graphic, domain_type);
+			cmzn_graphics_set_domain_type(graphics, domain_type);
 			cmzn_field_id coordinate_field = cmzn_scene_guess_coordinate_field(
 				region_tree_viewer->edit_scene, domain_type);
 			if (coordinate_field)
-				cmzn_graphic_set_coordinate_field(graphic, coordinate_field);
+				cmzn_graphics_set_coordinate_field(graphics, coordinate_field);
 		}
-		cmzn_scene_add_graphic(region_tree_viewer->edit_scene, graphic, 0);
-		//Update the list of graphic
-		wxCheckListBox *graphicalitemschecklist =  XRCCTRL(*this, "cmznGraphicListBox",wxCheckListBox);
+		cmzn_scene_add_graphics(region_tree_viewer->edit_scene, graphics, 0);
+		//Update the list of graphics
+		wxCheckListBox *graphicalitemschecklist =  XRCCTRL(*this, "GraphicsListBox",wxCheckListBox);
 		graphicalitemschecklist->SetSelection(wxNOT_FOUND);
 		graphicalitemschecklist->Clear();
-		for_each_graphic_in_cmzn_scene(region_tree_viewer->edit_scene,
-			Region_tree_viewer_add_graphic_item, (void *)region_tree_viewer);
+		for_each_graphics_in_cmzn_scene(region_tree_viewer->edit_scene,
+			Region_tree_viewer_add_graphics_item, (void *)region_tree_viewer);
 		graphicalitemschecklist->SetSelection((graphicalitemschecklist->GetCount()-1));
 		sceneediting =
 			XRCCTRL(*this, "SceneEditing", wxScrolledWindow);
 		sceneediting->Freeze();
-		cmzn_graphic *temp_graphic = cmzn_scene_get_graphic_at_position(
+		cmzn_graphics *temp_graphics = cmzn_scene_get_graphics_at_position(
 			region_tree_viewer->edit_scene, graphicalitemschecklist->GetCount());
-		Region_tree_viewer_wx_update_current_graphic(temp_graphic);
-		cmzn_graphic_destroy(&temp_graphic);
-		Region_tree_viewer_wx_update_graphic_widgets();
+		Region_tree_viewer_wx_update_current_graphics(temp_graphics);
+		cmzn_graphics_destroy(&temp_graphics);
+		Region_tree_viewer_wx_update_graphics_widgets();
 		Region_tree_viewer_autoapply(region_tree_viewer->scene,
 			region_tree_viewer->edit_scene);
 		sceneediting->Thaw();
 		sceneediting->Layout();
-		DEACCESS(cmzn_graphic)(&graphic);
+		DEACCESS(cmzn_graphics)(&graphics);
 	}
 }
 
-void AddGraphicChoice(wxCommandEvent &event)
+void AddGraphicsChoice(wxCommandEvent &event)
 {
 	wxString wxChoiceLabel = event.GetString();
 	const char *choiceLabel = wxChoiceLabel.mb_str(wxConvUTF8);
 	size_t tmp = reinterpret_cast<size_t>(event.GetClientData());
-	Add_graphic_type add_graphic_type = static_cast<Add_graphic_type>(tmp);
-	if (Add_graphic_type_string(add_graphic_type))
+	Add_graphics_type add_graphics_type = static_cast<Add_graphics_type>(tmp);
+	if (Add_graphics_type_string(add_graphics_type))
 	{
-		cmzn_graphic_type graphic_type = CMZN_GRAPHIC_TYPE_INVALID;
+		cmzn_graphics_type graphics_type = CMZN_GRAPHICS_TYPE_INVALID;
 		cmzn_field_domain_type domain_type = CMZN_FIELD_DOMAIN_TYPE_INVALID;
-		switch (add_graphic_type)
+		switch (add_graphics_type)
 		{
 		case ADD_GRAPHIC_TYPE_POINTS:
-			graphic_type = CMZN_GRAPHIC_POINTS;
+			graphics_type = CMZN_GRAPHICS_POINTS;
 			break;
 		case ADD_GRAPHIC_TYPE_NODE_POINTS:
 			domain_type = CMZN_FIELD_DOMAIN_NODES;
-			graphic_type = CMZN_GRAPHIC_POINTS;
+			graphics_type = CMZN_GRAPHICS_POINTS;
 			break;
 		case ADD_GRAPHIC_TYPE_DATA_POINTS:
 			domain_type = CMZN_FIELD_DOMAIN_DATA;
-			graphic_type = CMZN_GRAPHIC_POINTS;
+			graphics_type = CMZN_GRAPHICS_POINTS;
 			break;
 		case ADD_GRAPHIC_TYPE_ELEMENT_POINTS:
 			domain_type = CMZN_FIELD_DOMAIN_MESH_HIGHEST_DIMENSION;
-			graphic_type = CMZN_GRAPHIC_POINTS;
+			graphics_type = CMZN_GRAPHICS_POINTS;
 			break;
 		case ADD_GRAPHIC_TYPE_LINES:
 			domain_type = CMZN_FIELD_DOMAIN_MESH_1D;
-			graphic_type = CMZN_GRAPHIC_LINES;
+			graphics_type = CMZN_GRAPHICS_LINES;
 			break;
 		case ADD_GRAPHIC_TYPE_SURFACES:
 			domain_type = CMZN_FIELD_DOMAIN_MESH_2D;
-			graphic_type = CMZN_GRAPHIC_SURFACES;
+			graphics_type = CMZN_GRAPHICS_SURFACES;
 			break;
 		case ADD_GRAPHIC_TYPE_CONTOURS:
-			graphic_type = CMZN_GRAPHIC_CONTOURS;
+			graphics_type = CMZN_GRAPHICS_CONTOURS;
 			domain_type = CMZN_FIELD_DOMAIN_MESH_3D;
 			break;
 		case ADD_GRAPHIC_TYPE_STREAMLINES:
 			domain_type = CMZN_FIELD_DOMAIN_MESH_HIGHEST_DIMENSION;
-			graphic_type = CMZN_GRAPHIC_STREAMLINES;
+			graphics_type = CMZN_GRAPHICS_STREAMLINES;
 			break;
 		case ADD_GRAPHIC_TYPE_INVALID:
 			break;
 		}
-		AddGraphic(graphic_type, domain_type, (cmzn_graphic *)0);
+		AddGraphics(graphics_type, domain_type, (cmzn_graphics *)0);
 	}
-	add_graphic_choice->SetSelection(0);
+	add_graphics_choice->SetSelection(0);
 }
 
-void CopyGraphic(wxCommandEvent &event)
+void CopyGraphics(wxCommandEvent &event)
 {
 	USE_PARAMETER(event);
-	if (region_tree_viewer->current_graphic)
+	if (region_tree_viewer->current_graphics)
 	{
-		AddGraphic(cmzn_graphic_get_graphic_type(region_tree_viewer->current_graphic),
-		 CMZN_FIELD_DOMAIN_TYPE_INVALID, region_tree_viewer->current_graphic);
+		AddGraphics(cmzn_graphics_get_graphics_type(region_tree_viewer->current_graphics),
+		 CMZN_FIELD_DOMAIN_TYPE_INVALID, region_tree_viewer->current_graphics);
 	}
 }
 
-void RemoveFromGraphicList(wxCommandEvent &event)
+void RemoveFromGraphicsList(wxCommandEvent &event)
 {
 	unsigned int position;
 
 	USE_PARAMETER(event);
 
-	if (region_tree_viewer->edit_scene && region_tree_viewer->current_graphic)
+	if (region_tree_viewer->edit_scene && region_tree_viewer->current_graphics)
 	{
-		graphicalitemschecklist=XRCCTRL(*this,"cmznGraphicListBox",wxCheckListBox);
-		position = cmzn_scene_get_graphic_position(
-			region_tree_viewer->edit_scene, region_tree_viewer->current_graphic);
-		cmzn_scene_remove_graphic(
-			region_tree_viewer->edit_scene, region_tree_viewer->current_graphic);
+		graphicalitemschecklist=XRCCTRL(*this,"GraphicsListBox",wxCheckListBox);
+		position = cmzn_scene_get_graphics_position(
+			region_tree_viewer->edit_scene, region_tree_viewer->current_graphics);
+		cmzn_scene_remove_graphics(
+			region_tree_viewer->edit_scene, region_tree_viewer->current_graphics);
 		graphicalitemschecklist->Clear();
-		for_each_graphic_in_cmzn_scene(region_tree_viewer->edit_scene,
-			Region_tree_viewer_add_graphic_item, (void *)region_tree_viewer);
+		for_each_graphics_in_cmzn_scene(region_tree_viewer->edit_scene,
+			Region_tree_viewer_add_graphics_item, (void *)region_tree_viewer);
 		if (graphicalitemschecklist->GetCount() < position)
 		{
 			--position;
 		}
-		cmzn_graphic *temp_graphic = cmzn_scene_get_graphic_at_position(
+		cmzn_graphics *temp_graphics = cmzn_scene_get_graphics_at_position(
 			region_tree_viewer->edit_scene, position);
-		Region_tree_viewer_wx_update_current_graphic(temp_graphic);
-		Region_tree_viewer_wx_update_graphic_widgets();
+		Region_tree_viewer_wx_update_current_graphics(temp_graphics);
+		Region_tree_viewer_wx_update_graphics_widgets();
 		Region_tree_viewer_autoapply(region_tree_viewer->scene,
 			region_tree_viewer->edit_scene);
-		if (temp_graphic)
+		if (temp_graphics)
 		{
 			graphicalitemschecklist->SetSelection(position-1);
-			cmzn_graphic_destroy(&temp_graphic);
+			cmzn_graphics_destroy(&temp_graphics);
 		}
 		else
 		{
@@ -1924,53 +1924,53 @@ void RemoveFromGraphicList(wxCommandEvent &event)
 	}
 }
 
-void MoveUpInGraphicList(wxCommandEvent &event)
+void MoveUpInGraphicsList(wxCommandEvent &event)
 {
 	USE_PARAMETER(event);
 	int position;
-	cmzn_graphic *graphic;
+	cmzn_graphics *graphics;
 	if (region_tree_viewer->edit_scene)
 	{
-		if (1 < (position = cmzn_scene_get_graphic_position(
-								region_tree_viewer->edit_scene, region_tree_viewer->current_graphic)))
+		if (1 < (position = cmzn_scene_get_graphics_position(
+								region_tree_viewer->edit_scene, region_tree_viewer->current_graphics)))
 		{
-			graphic = region_tree_viewer->current_graphic;
-			ACCESS(cmzn_graphic)(graphic);
-			cmzn_scene_remove_graphic(region_tree_viewer->edit_scene,
-				region_tree_viewer->current_graphic);
-			cmzn_scene_add_graphic(region_tree_viewer->edit_scene,
-				region_tree_viewer->current_graphic, position - 1);
-			DEACCESS(cmzn_graphic)(&graphic);
-			graphicalitemschecklist=XRCCTRL(*this,"cmznGraphicListBox",wxCheckListBox);
+			graphics = region_tree_viewer->current_graphics;
+			ACCESS(cmzn_graphics)(graphics);
+			cmzn_scene_remove_graphics(region_tree_viewer->edit_scene,
+				region_tree_viewer->current_graphics);
+			cmzn_scene_add_graphics(region_tree_viewer->edit_scene,
+				region_tree_viewer->current_graphics, position - 1);
+			DEACCESS(cmzn_graphics)(&graphics);
+			graphicalitemschecklist=XRCCTRL(*this,"GraphicsListBox",wxCheckListBox);
 			graphicalitemschecklist->SetSelection(wxNOT_FOUND);
 			graphicalitemschecklist->Clear();
-			for_each_graphic_in_cmzn_scene(region_tree_viewer->edit_scene,
-				Region_tree_viewer_add_graphic_item, (void *)region_tree_viewer);
+			for_each_graphics_in_cmzn_scene(region_tree_viewer->edit_scene,
+				Region_tree_viewer_add_graphics_item, (void *)region_tree_viewer);
 			graphicalitemschecklist->SetSelection(position-2);
-			cmzn_graphic *temp_graphic = cmzn_scene_get_graphic_at_position(
+			cmzn_graphics *temp_graphics = cmzn_scene_get_graphics_at_position(
 				region_tree_viewer->edit_scene, position-1);
-			Region_tree_viewer_wx_update_current_graphic(temp_graphic);
-			Region_tree_viewer_wx_update_graphic_widgets();
-			cmzn_graphic_destroy(&temp_graphic);
+			Region_tree_viewer_wx_update_current_graphics(temp_graphics);
+			Region_tree_viewer_wx_update_graphics_widgets();
+			cmzn_graphics_destroy(&temp_graphics);
 			Region_tree_viewer_autoapply(region_tree_viewer->scene,
 				region_tree_viewer->edit_scene);
-			/* By default the graphic name is the position, so it needs to be updated
-					even though the graphic hasn't actually changed */
+			/* By default the graphics name is the position, so it needs to be updated
+					even though the graphics hasn't actually changed */
 			/* inform the client of the change */
 		}
 	}
 	else
 	{
 		display_message(ERROR_MESSAGE,
-			"MoveUpInGraphicList.  Invalid argument(s)");
+			"MoveUpInGraphicsList.  Invalid argument(s)");
 	}
 }
 
-	void MoveDownInGraphicList(wxCommandEvent &event)
+	void MoveDownInGraphicsList(wxCommandEvent &event)
 	{
 
 		int position;
-		cmzn_graphic *graphic;
+		cmzn_graphics *graphics;
 
 	 USE_PARAMETER(event);
 
@@ -1978,48 +1978,48 @@ void MoveUpInGraphicList(wxCommandEvent &event)
 		{
 			if (cmzn_scene_get_number_of_graphics(
 						region_tree_viewer->edit_scene) >
-				(position = cmzn_scene_get_graphic_position(
-					region_tree_viewer->edit_scene, region_tree_viewer->current_graphic)))
+				(position = cmzn_scene_get_graphics_position(
+					region_tree_viewer->edit_scene, region_tree_viewer->current_graphics)))
 			{
-				graphic = region_tree_viewer->current_graphic;
-				ACCESS(cmzn_graphic)(graphic);
-				cmzn_scene_remove_graphic(region_tree_viewer->edit_scene,
-					region_tree_viewer->current_graphic);
-				cmzn_scene_add_graphic(region_tree_viewer->edit_scene,
-					region_tree_viewer->current_graphic, position + 1);
-				DEACCESS(cmzn_graphic)(&graphic);
-				graphicalitemschecklist=XRCCTRL(*this,"cmznGraphicListBox",wxCheckListBox);
+				graphics = region_tree_viewer->current_graphics;
+				ACCESS(cmzn_graphics)(graphics);
+				cmzn_scene_remove_graphics(region_tree_viewer->edit_scene,
+					region_tree_viewer->current_graphics);
+				cmzn_scene_add_graphics(region_tree_viewer->edit_scene,
+					region_tree_viewer->current_graphics, position + 1);
+				DEACCESS(cmzn_graphics)(&graphics);
+				graphicalitemschecklist=XRCCTRL(*this,"GraphicsListBox",wxCheckListBox);
 				graphicalitemschecklist->SetSelection(wxNOT_FOUND);
 				graphicalitemschecklist->Clear();
-				for_each_graphic_in_cmzn_scene(region_tree_viewer->edit_scene,
-					Region_tree_viewer_add_graphic_item, (void *)region_tree_viewer);
+				for_each_graphics_in_cmzn_scene(region_tree_viewer->edit_scene,
+					Region_tree_viewer_add_graphics_item, (void *)region_tree_viewer);
 				graphicalitemschecklist->SetSelection(position);
-				cmzn_graphic *temp_graphic = cmzn_scene_get_graphic_at_position(
+				cmzn_graphics *temp_graphics = cmzn_scene_get_graphics_at_position(
 					region_tree_viewer->edit_scene, position+1);
-				Region_tree_viewer_wx_update_current_graphic(temp_graphic);
-				Region_tree_viewer_wx_update_graphic_widgets();
-				cmzn_graphic_destroy(&temp_graphic);
+				Region_tree_viewer_wx_update_current_graphics(temp_graphics);
+				Region_tree_viewer_wx_update_graphics_widgets();
+				cmzn_graphics_destroy(&temp_graphics);
 				Region_tree_viewer_autoapply(region_tree_viewer->scene,
 					region_tree_viewer->edit_scene);
-				/* By default the graphic name is the position, so it needs to be updated
-					even though the graphic hasn't actually changed */
+				/* By default the graphics name is the position, so it needs to be updated
+					even though the graphics hasn't actually changed */
 				/* inform the client of the change */
 			}
 		}
 		else
 		{
 			display_message(ERROR_MESSAGE,
-				"MoveDownInGraphicList.  Invalid argument(s)");
+				"MoveDownInGraphicsList.  Invalid argument(s)");
 		}
 	}
 
-	void GraphicEditorNameText(wxCommandEvent &event)
+	void GraphicsEditorNameText(wxCommandEvent &event)
 	{
 		USE_PARAMETER(event);
-		if (region_tree_viewer->current_graphic)
+		if (region_tree_viewer->current_graphics)
 		{
-			graphicalitemschecklist=XRCCTRL(*this,"cmznGraphicListBox",wxCheckListBox);
-			char *name = cmzn_graphic_get_name_internal(region_tree_viewer->current_graphic);
+			graphicalitemschecklist=XRCCTRL(*this,"GraphicsListBox",wxCheckListBox);
+			char *name = cmzn_graphics_get_name_internal(region_tree_viewer->current_graphics);
 			nametextfield = XRCCTRL(*this, "NameTextField", wxTextCtrl);
 			wxString wxTextEntry = nametextfield->GetValue();
 			const char *text_entry = wxTextEntry.mb_str(wxConvUTF8);
@@ -2029,38 +2029,38 @@ void MoveUpInGraphicList(wxCommandEvent &event)
 				sscanf(text_entry, "%s", new_name);
 				if (strcmp(name, new_name))
 				{
-					cmzn_graphic_set_name(
-						region_tree_viewer->current_graphic, new_name);
+					cmzn_graphics_set_name(
+						region_tree_viewer->current_graphics, new_name);
 						/* inform the client of the change */
 					nametextfield->SetValue(wxString::FromAscii(new_name));
 					Region_tree_viewer_autoapply(region_tree_viewer->scene,
 						region_tree_viewer->edit_scene);
-					Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphic);
+					Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphics);
 				}
 				DEALLOCATE(new_name);
 			}
 			else
 			{
 				display_message(ERROR_MESSAGE,
-					"GraphicEditorNameText.  Missing text");
+					"GraphicsEditorNameText.  Missing text");
 			}
 			DEALLOCATE(name);
 		}
 		else
 		{
 			display_message(ERROR_MESSAGE,
-			 "GraphicEditorNameText.  Invalid argument(s)");
+			 "GraphicsEditorNameText.  Invalid argument(s)");
 		}
 	}
 
 void EnterIsoScalar(wxCommandEvent &event)
 {
 	USE_PARAMETER(event);
-	if (!(region_tree_viewer && region_tree_viewer->current_graphic))
+	if (!(region_tree_viewer && region_tree_viewer->current_graphics))
 		return;
 
-	cmzn_graphic_contours_id contours =
-		cmzn_graphic_cast_contours(region_tree_viewer->current_graphic);
+	cmzn_graphics_contours_id contours =
+		cmzn_graphics_cast_contours(region_tree_viewer->current_graphics);
 
 	isovaluelistradiobutton=XRCCTRL(*this,"IsoValueListRadioButton",wxRadioButton);
 	isoscalartextctrl=XRCCTRL(*this,"IsoScalarTextCtrl",wxTextCtrl);
@@ -2093,10 +2093,10 @@ void EnterIsoScalar(wxCommandEvent &event)
 					valid_value = 0;
 				}
 			}
-			cmzn_graphic_contours_set_list_isovalues(contours, static_cast<int>(isovalues.size()), isovalues.data());
+			cmzn_graphics_contours_set_list_isovalues(contours, static_cast<int>(isovalues.size()), isovalues.data());
 			Region_tree_viewer_autoapply(region_tree_viewer->scene,
 				region_tree_viewer->edit_scene);
-			//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphic);		/* inform the client of the change */
+			//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphics);		/* inform the client of the change */
 		}
 		else
 		{
@@ -2104,13 +2104,13 @@ void EnterIsoScalar(wxCommandEvent &event)
 		}
 
 		// always redisplay current values
-		int number_of_isovalues = cmzn_graphic_contours_get_list_isovalues(contours, 0, 0);
+		int number_of_isovalues = cmzn_graphics_contours_get_list_isovalues(contours, 0, 0);
 		if (number_of_isovalues)
 		{
 			char *vector_temp_string = 0;
 			char temp_string[50];
 			double *isovalues = new double[number_of_isovalues];
-			cmzn_graphic_contours_get_list_isovalues(contours, number_of_isovalues, isovalues);
+			cmzn_graphics_contours_get_list_isovalues(contours, number_of_isovalues, isovalues);
 			int error = 0;
 			for (int i = 0 ; !error && (i < number_of_isovalues) ; i++)
 			{
@@ -2129,17 +2129,17 @@ void EnterIsoScalar(wxCommandEvent &event)
 			isoscalartextctrl->SetValue(wxString());
 		}
 	}
-	cmzn_graphic_contours_destroy(&contours);
+	cmzn_graphics_contours_destroy(&contours);
 }
 
 void EnterIsoRange(wxCommandEvent &event)
 {
 	USE_PARAMETER(event);
-	if (!(region_tree_viewer && region_tree_viewer->current_graphic))
+	if (!(region_tree_viewer && region_tree_viewer->current_graphics))
 		return;
 
-	cmzn_graphic_contours_id contours =
-		cmzn_graphic_cast_contours(region_tree_viewer->current_graphic);
+	cmzn_graphics_contours_id contours =
+		cmzn_graphics_cast_contours(region_tree_viewer->current_graphics);
 
 	isovaluesequenceradiobutton=XRCCTRL(*this,"IsoValueSequenceRadioButton",wxRadioButton);
 	isovaluesequencenumbertextctrl=XRCCTRL(*this,"IsoValueSequenceNumberTextCtrl",wxTextCtrl);
@@ -2189,7 +2189,7 @@ void EnterIsoRange(wxCommandEvent &event)
 			display_message(ERROR_MESSAGE, "EnterIsoRange.  Missing text");
 		}
 
-		cmzn_graphic_contours_set_range_isovalues(contours,
+		cmzn_graphics_contours_set_range_isovalues(contours,
 			number_of_isovalues, first_isovalue, last_isovalue);
 
 		/* always restore strings to actual value in use */
@@ -2204,9 +2204,9 @@ void EnterIsoRange(wxCommandEvent &event)
 		/* inform the client of the change */
 		Region_tree_viewer_autoapply(region_tree_viewer->scene,
 			region_tree_viewer->edit_scene);
-		//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphic);
+		//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphics);
 	}
-	cmzn_graphic_contours_destroy(&contours);
+	cmzn_graphics_contours_destroy(&contours);
 }
 
 void EnterGlyphOffset(wxCommandEvent &event)
@@ -2217,22 +2217,22 @@ void EnterGlyphOffset(wxCommandEvent &event)
 	const char *text_entry = wxTextEntry.mb_str(wxConvUTF8);
 	if (text_entry)
 	{
-		cmzn_graphic_point_attributes_id point_attributes =
-			cmzn_graphic_get_point_attributes(region_tree_viewer->current_graphic);
+		cmzn_graphicspointattributes_id point_attributes =
+			cmzn_graphics_get_graphicspointattributes(region_tree_viewer->current_graphics);
 		Parse_state *temp_state = create_Parse_state(text_entry);
 		const int number_of_components = 3;
 		double glyph_offset[3] = { 0.0, 0.0, 0.0 };
 		set_double_vector(temp_state, glyph_offset, (void *)&number_of_components);
-		cmzn_graphic_point_attributes_set_glyph_offset(point_attributes, number_of_components, glyph_offset);
+		cmzn_graphicspointattributes_set_glyph_offset(point_attributes, number_of_components, glyph_offset);
 		Region_tree_viewer_autoapply(region_tree_viewer->scene,
 			region_tree_viewer->edit_scene);
-		//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphic);
+		//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphics);
 		destroy_Parse_state(&temp_state);
-		cmzn_graphic_point_attributes_get_glyph_offset(point_attributes, number_of_components, glyph_offset);
+		cmzn_graphicspointattributes_get_glyph_offset(point_attributes, number_of_components, glyph_offset);
 		char temp_string[100];
 		sprintf(temp_string, "%g,%g,%g", glyph_offset[0], glyph_offset[1], glyph_offset[2]);
 		offsettextctrl->ChangeValue(wxString::FromAscii(temp_string));
-		cmzn_graphic_point_attributes_destroy(&point_attributes);
+		cmzn_graphicspointattributes_destroy(&point_attributes);
 	}
 	else
 	{
@@ -2249,22 +2249,22 @@ void EnterLabelOffset(wxCommandEvent &event)
 	const char *text_entry = wxTextEntry.mb_str(wxConvUTF8);
 	if (text_entry)
 	{
-		cmzn_graphic_point_attributes_id point_attributes =
-			cmzn_graphic_get_point_attributes(region_tree_viewer->current_graphic);
+		cmzn_graphicspointattributes_id point_attributes =
+			cmzn_graphics_get_graphicspointattributes(region_tree_viewer->current_graphics);
 		Parse_state *temp_state = create_Parse_state(text_entry);
 		const int number_of_components = 3;
 		double label_offset[3] = { 0.0, 0.0, 0.0 };
 		set_double_vector(temp_state, label_offset, (void *)&number_of_components);
-		cmzn_graphic_point_attributes_set_label_offset(point_attributes, number_of_components, label_offset);
+		cmzn_graphicspointattributes_set_label_offset(point_attributes, number_of_components, label_offset);
 		Region_tree_viewer_autoapply(region_tree_viewer->scene,
 			region_tree_viewer->edit_scene);
-		//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphic);
+		//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphics);
 		destroy_Parse_state(&temp_state);
-		cmzn_graphic_point_attributes_get_label_offset(point_attributes, number_of_components, label_offset);
+		cmzn_graphicspointattributes_get_label_offset(point_attributes, number_of_components, label_offset);
 		char temp_string[100];
 		sprintf(temp_string, "%g,%g,%g", label_offset[0], label_offset[1], label_offset[2]);
 		labeloffsettextctrl->ChangeValue(wxString::FromAscii(temp_string));
-		cmzn_graphic_point_attributes_destroy(&point_attributes);
+		cmzn_graphicspointattributes_destroy(&point_attributes);
 	}
 	else
 	{
@@ -2289,17 +2289,17 @@ void EnterStaticLabelText(wxCommandEvent &event)
 	const char *text_entry = wxTextEntry.mb_str(wxConvUTF8);
 	if (text_entry)
 	{
-		cmzn_graphic_point_attributes_id point_attributes =
-			cmzn_graphic_get_point_attributes(region_tree_viewer->current_graphic);
+		cmzn_graphicspointattributes_id point_attributes =
+			cmzn_graphics_get_graphicspointattributes(region_tree_viewer->current_graphics);
 		if (0 == strlen(text_entry))
 		{
 			text_entry = 0;
 		}
-		cmzn_graphic_point_attributes_set_label_text(point_attributes, i + 1, text_entry);
+		cmzn_graphicspointattributes_set_label_text(point_attributes, i + 1, text_entry);
 		Region_tree_viewer_autoapply(region_tree_viewer->scene,
 			region_tree_viewer->edit_scene);
-		//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphic);
-		cmzn_graphic_point_attributes_destroy(&point_attributes);
+		//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphics);
+		cmzn_graphicspointattributes_destroy(&point_attributes);
 	}
 }
 
@@ -2311,24 +2311,24 @@ void EnterGlyphSize(wxCommandEvent &event)
 	const char *text_entry = wxTextEntry.mb_str(wxConvUTF8);
 	if (text_entry)
 	{
-		cmzn_graphic_point_attributes_id point_attributes =
-			cmzn_graphic_get_point_attributes(region_tree_viewer->current_graphic);
+		cmzn_graphicspointattributes_id point_attributes =
+			cmzn_graphics_get_graphicspointattributes(region_tree_viewer->current_graphics);
 		Parse_state *temp_state = create_Parse_state(text_entry);
 		const int number_of_components = 3;
 		double point_base_size[3];
 		if (set_double_product(temp_state, point_base_size, reinterpret_cast<void *>(3)))
 		{
-			cmzn_graphic_point_attributes_set_base_size(point_attributes, number_of_components, point_base_size);
+			cmzn_graphicspointattributes_set_base_size(point_attributes, number_of_components, point_base_size);
 			Region_tree_viewer_autoapply(region_tree_viewer->scene,
 				region_tree_viewer->edit_scene);
-			//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphic);
+			//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphics);
 		}
 		destroy_Parse_state(&temp_state);
-		cmzn_graphic_point_attributes_get_base_size(point_attributes, number_of_components, point_base_size);
+		cmzn_graphicspointattributes_get_base_size(point_attributes, number_of_components, point_base_size);
 		char temp_string[100];
 		sprintf(temp_string, "%g*%g*%g", point_base_size[0], point_base_size[1], point_base_size[2]);
 		baseglyphsizetextctrl->ChangeValue(wxString::FromAscii(temp_string));
-		cmzn_graphic_point_attributes_destroy(&point_attributes);
+		cmzn_graphicspointattributes_destroy(&point_attributes);
 	}
 	else
 	{
@@ -2345,24 +2345,24 @@ void EnterGlyphScale(wxCommandEvent &event)
 	const char *text_entry = wxTextEntry.mb_str(wxConvUTF8);
 	if (text_entry)
 	{
-		cmzn_graphic_point_attributes_id point_attributes =
-			cmzn_graphic_get_point_attributes(region_tree_viewer->current_graphic);
+		cmzn_graphicspointattributes_id point_attributes =
+			cmzn_graphics_get_graphicspointattributes(region_tree_viewer->current_graphics);
 		Parse_state *temp_state = create_Parse_state(text_entry);
 		const int number_of_components = 3;
 		double point_scale_factors[3];
 		if (set_double_product(temp_state, point_scale_factors, reinterpret_cast<void *>(3)))
 		{
-			cmzn_graphic_point_attributes_set_scale_factors(point_attributes, number_of_components, point_scale_factors);
+			cmzn_graphicspointattributes_set_scale_factors(point_attributes, number_of_components, point_scale_factors);
 			Region_tree_viewer_autoapply(region_tree_viewer->scene,
 				region_tree_viewer->edit_scene);
-			//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphic);
+			//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphics);
 		}
 		destroy_Parse_state(&temp_state);
-		cmzn_graphic_point_attributes_get_scale_factors(point_attributes, number_of_components, point_scale_factors);
+		cmzn_graphicspointattributes_get_scale_factors(point_attributes, number_of_components, point_scale_factors);
 		char temp_string[100];
 		sprintf(temp_string, "%g*%g*%g", point_scale_factors[0], point_scale_factors[1], point_scale_factors[2]);
 		glyphscalefactorstextctrl->ChangeValue(wxString::FromAscii(temp_string));
-		cmzn_graphic_point_attributes_destroy(&point_attributes);
+		cmzn_graphicspointattributes_destroy(&point_attributes);
 	}
 	else
 	{
@@ -2376,14 +2376,14 @@ void EnterGlyphScale(wxCommandEvent &event)
 	{
 		wxTextCtrl *overlay_textctrl = XRCCTRL(*this, "OverlayTextCtrl", wxTextCtrl);
 		char temp_string[50];
-		cmzn_graphic_enable_overlay(region_tree_viewer->current_graphic,event.IsChecked());
+		cmzn_graphics_enable_overlay(region_tree_viewer->current_graphics,event.IsChecked());
 		Region_tree_viewer_autoapply(region_tree_viewer->scene,
 			region_tree_viewer->edit_scene);
 		if (event.IsChecked())
 		{
 			overlay_textctrl->Enable();
-			sprintf(temp_string,"%d ",cmzn_graphic_get_overlay_order(
-								region_tree_viewer->current_graphic));
+			sprintf(temp_string,"%d ",cmzn_graphics_get_overlay_order(
+								region_tree_viewer->current_graphics));
 			overlay_textctrl->SetValue(temp_string);
 		}
 		else
@@ -2400,7 +2400,7 @@ void EnterGlyphScale(wxCommandEvent &event)
 		USE_PARAMETER(event);
 		const char *text_entry=const_cast<char *>(overlay_textctrl->GetValue().mb_str(wxConvUTF8));
 		sscanf(text_entry,"%d",&new_overlay_order);
-		cmzn_graphic_set_overlay_order(region_tree_viewer->current_graphic, new_overlay_order);
+		cmzn_graphics_set_overlay_order(region_tree_viewer->current_graphics, new_overlay_order);
 		Region_tree_viewer_autoapply(region_tree_viewer->scene,
 			region_tree_viewer->edit_scene);
 	}
@@ -2414,32 +2414,32 @@ void SeedElementChecked(wxCommandEvent &event)
 	USE_PARAMETER(event);
 	if (seedelementcheckbox->IsChecked())
 	{
-			cmzn_graphic_set_seed_element(region_tree_viewer->current_graphic, seed_element_chooser->get_object());
+			cmzn_graphics_set_seed_element(region_tree_viewer->current_graphics, seed_element_chooser->get_object());
 			seed_element_panel->Enable();
 	}
 	else
 	{
-			cmzn_graphic_set_seed_element(region_tree_viewer->current_graphic,(FE_element*)NULL);
+			cmzn_graphics_set_seed_element(region_tree_viewer->current_graphics,(FE_element*)NULL);
 			seed_element_panel->Disable();
 	}
 	Region_tree_viewer_autoapply(region_tree_viewer->scene,
 		region_tree_viewer->edit_scene);
-	//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphic);
+	//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphics);
 
 }
 
 void EnterSampleLocation(wxCommandEvent &event)
 {
 	USE_PARAMETER(event);
-	cmzn_graphic_sampling_attributes_id sampling =
-		cmzn_graphic_get_sampling_attributes(region_tree_viewer->current_graphic);
+	cmzn_graphicssamplingattributes_id sampling =
+		cmzn_graphics_get_graphicssamplingattributes(region_tree_viewer->current_graphics);
 	xitext=XRCCTRL(*this,"XiText",wxStaticText);
 	xitextctrl=XRCCTRL(*this,"XiTextCtrl",wxTextCtrl);
 	char temp_string[100];
 	const int number_of_components=3;
 	struct Parse_state *temp_state;
 	double sample_location[number_of_components];
-	if (CMZN_OK == cmzn_graphic_sampling_attributes_get_location(sampling, number_of_components, sample_location))
+	if (CMZN_OK == cmzn_graphicssamplingattributes_get_location(sampling, number_of_components, sample_location))
 	{
 		/* Get the text string */
 		wxString wxTextEntry = xitextctrl->GetValue();
@@ -2451,11 +2451,11 @@ void EnterSampleLocation(wxCommandEvent &event)
 			if (temp_state)
 			{
 				set_double_vector(temp_state, sample_location, (void *)&number_of_components);
-				cmzn_graphic_sampling_attributes_set_location(sampling, number_of_components, sample_location);
+				cmzn_graphicssamplingattributes_set_location(sampling, number_of_components, sample_location);
 				/* inform the client of the change */
 				Region_tree_viewer_autoapply(region_tree_viewer->scene,
 					region_tree_viewer->edit_scene);
-				//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphic);
+				//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphics);
 				destroy_Parse_state(&temp_state);
 			}
 		}
@@ -2468,12 +2468,12 @@ void EnterSampleLocation(wxCommandEvent &event)
 		sprintf(temp_string,"%g,%g,%g", sample_location[0], sample_location[1], sample_location[2]);
 		xitextctrl->ChangeValue(wxString::FromAscii(temp_string));
 	}
-	cmzn_graphic_sampling_attributes_destroy(&sampling);
+	cmzn_graphicssamplingattributes_destroy(&sampling);
 }
 
 void EnterStreamlineLength(wxCommandEvent &event)
 {
-	cmzn_graphic_streamlines_id streamlines = cmzn_graphic_cast_streamlines(region_tree_viewer->current_graphic);
+	cmzn_graphics_streamlines_id streamlines = cmzn_graphics_cast_streamlines(region_tree_viewer->current_graphics);
 	streamlineslengthtextctrl = XRCCTRL(*this, "StreamlinesLengthTextCtrl", wxTextCtrl);
 	wxString wxTextEntry = streamlineslengthtextctrl->GetValue();
 	const char *text_entry = wxTextEntry.mb_str(wxConvUTF8);
@@ -2481,32 +2481,32 @@ void EnterStreamlineLength(wxCommandEvent &event)
 	{
 		double streamline_length = 0.0;
 		sscanf(text_entry, "%lg", &streamline_length);
-		if (cmzn_graphic_streamlines_set_track_length(streamlines, streamline_length))
+		if (cmzn_graphics_streamlines_set_track_length(streamlines, streamline_length))
 		{
 			/* inform the client of the change */
 			Region_tree_viewer_autoapply(region_tree_viewer->scene,
 				region_tree_viewer->edit_scene);
-			//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphic);
+			//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphics);
 		}
 	}
 	char temp_string[50];
-	double streamline_length = cmzn_graphic_streamlines_get_track_length(streamlines);
+	double streamline_length = cmzn_graphics_streamlines_get_track_length(streamlines);
 	sprintf(temp_string, "%g", streamline_length);
 	streamlineslengthtextctrl->SetValue(wxString::FromAscii(temp_string));
-	cmzn_graphic_streamlines_destroy(&streamlines);
+	cmzn_graphics_streamlines_destroy(&streamlines);
 }
 
 /**
- * Callback from wxChooser<cmzn_graphic_streamlines_track_direction> when choice is made.
+ * Callback from wxChooser<cmzn_graphics_streamlines_track_direction> when choice is made.
  */
-int streamlines_track_direction_callback(enum cmzn_graphic_streamlines_track_direction track_direction)
+int streamlines_track_direction_callback(enum cmzn_graphics_streamlines_track_direction track_direction)
 {
-	cmzn_graphic_streamlines_id streamlines = cmzn_graphic_cast_streamlines(region_tree_viewer->current_graphic);
-	cmzn_graphic_streamlines_set_track_direction(streamlines, track_direction);
-	cmzn_graphic_streamlines_destroy(&streamlines);
+	cmzn_graphics_streamlines_id streamlines = cmzn_graphics_cast_streamlines(region_tree_viewer->current_graphics);
+	cmzn_graphics_streamlines_set_track_direction(streamlines, track_direction);
+	cmzn_graphics_streamlines_destroy(&streamlines);
 	Region_tree_viewer_autoapply(region_tree_viewer->scene,
 		region_tree_viewer->edit_scene);
-	//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphic);
+	//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphics);
 	return 1;
 }
 
@@ -2520,12 +2520,12 @@ void EnterLineWidth(wxCommandEvent &event)
 	if (text_entry)
 	{
 		sscanf(text_entry, "%lf", &lineWidth);
-		cmzn_graphic_set_render_line_width(region_tree_viewer->current_graphic, lineWidth);
+		cmzn_graphics_set_render_line_width(region_tree_viewer->current_graphics, lineWidth);
 		Region_tree_viewer_autoapply(region_tree_viewer->scene,
 			region_tree_viewer->edit_scene);
 	}
 	/* redisplay actual value in use */
-	lineWidth = cmzn_graphic_get_render_line_width(region_tree_viewer->current_graphic);
+	lineWidth = cmzn_graphics_get_render_line_width(region_tree_viewer->current_graphics);
 	char temp_string[50];
 	sprintf(temp_string, "%g", lineWidth);
 	line_width_text_ctrl->SetValue(wxString::FromAscii(temp_string));
@@ -2541,12 +2541,12 @@ void EnterPointSize(wxCommandEvent &event)
 	if (text_entry)
 	{
 		sscanf(text_entry, "%lf", &pointSize);
-		cmzn_graphic_set_render_point_size(region_tree_viewer->current_graphic, pointSize);
+		cmzn_graphics_set_render_point_size(region_tree_viewer->current_graphics, pointSize);
 		Region_tree_viewer_autoapply(region_tree_viewer->scene,
 			region_tree_viewer->edit_scene);
 	}
 	/* redisplay actual value in use */
-	pointSize = cmzn_graphic_get_render_point_size(region_tree_viewer->current_graphic);
+	pointSize = cmzn_graphics_get_render_point_size(region_tree_viewer->current_graphics);
 	char temp_string[50];
 	sprintf(temp_string, "%g", pointSize);
 	point_size_text_ctrl->SetValue(wxString::FromAscii(temp_string));
@@ -2556,12 +2556,12 @@ void ExteriorChecked(wxCommandEvent &event)
 {
 	USE_PARAMETER(event);
 	exteriorcheckbox=XRCCTRL(*this,"ExteriorCheckBox",wxCheckBox);
-	cmzn_graphic_set_exterior(region_tree_viewer->current_graphic,
+	cmzn_graphics_set_exterior(region_tree_viewer->current_graphics,
 		exteriorcheckbox->IsChecked());
 		/* inform the client of the change */
 	Region_tree_viewer_autoapply(region_tree_viewer->scene,
 		region_tree_viewer->edit_scene);
-	//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphic);
+	//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphics);
 }
 
 void FaceChecked(wxCommandEvent &event)
@@ -2580,10 +2580,10 @@ void FaceChecked(wxCommandEvent &event)
 		facechoice->Disable();
 		face = CMZN_ELEMENT_FACE_ALL;
 	}
-	cmzn_graphic_set_face(region_tree_viewer->current_graphic,face);
+	cmzn_graphics_set_face(region_tree_viewer->current_graphics,face);
 	Region_tree_viewer_autoapply(region_tree_viewer->scene,
 		region_tree_viewer->edit_scene);
-	//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphic);
+	//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphics);
  }
 
 void FaceChosen(wxCommandEvent &event)
@@ -2592,38 +2592,38 @@ void FaceChosen(wxCommandEvent &event)
 	USE_PARAMETER(event);
 	facechoice=XRCCTRL(*this, "FaceChoice",wxChoice);
 	face = static_cast<cmzn_element_face_type>(facechoice->GetSelection() + CMZN_ELEMENT_FACE_XI1_0);
-	cmzn_graphic_set_face(region_tree_viewer->current_graphic, face);
+	cmzn_graphics_set_face(region_tree_viewer->current_graphics, face);
 	Region_tree_viewer_autoapply(region_tree_viewer->scene,
 		region_tree_viewer->edit_scene);
-	//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphic);
+	//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphics);
 }
 
-void SetBothMaterialChooser(cmzn_graphic *graphic)
+void SetBothMaterialChooser(cmzn_graphics *graphics)
 {
-	cmzn_graphics_material_id material = cmzn_graphic_get_material(graphic);
+	cmzn_graphics_material_id material = cmzn_graphics_get_material(graphics);
 	graphical_material_chooser->set_object(material);
 	cmzn_graphics_material_destroy(&material);
-	cmzn_graphics_material_id selected_material = cmzn_graphic_get_selected_material(graphic);
+	cmzn_graphics_material_id selected_material = cmzn_graphics_get_selected_material(graphics);
 	selected_material_chooser->set_object(selected_material);
 	cmzn_graphics_material_destroy(&selected_material);
 }
 
-void SetGraphic(cmzn_graphic *graphic)
+void SetGraphics(cmzn_graphics *graphics)
 {
 	int error;
 	cmzn_element_face_type face = CMZN_ELEMENT_FACE_INVALID;
 	char temp_string[100], *vector_temp_string;
-	enum cmzn_graphic_render_polygon_mode render_polygon_mode;
+	enum cmzn_graphics_render_polygon_mode render_polygon_mode;
 	struct FE_element *seed_element;
 	struct FE_region *fe_region;
 
-	const cmzn_graphic_type graphic_type = cmzn_graphic_get_graphic_type(graphic);
-	const int domain_dimension = cmzn_graphic_get_domain_dimension(graphic);
-	cmzn_graphic_line_attributes_id line_attributes =
-		cmzn_graphic_get_line_attributes(graphic);
-	cmzn_graphic_point_attributes_id point_attributes =
-		cmzn_graphic_get_point_attributes(graphic);
-	cmzn_graphic_contours_id contours = cmzn_graphic_cast_contours(graphic);
+	const cmzn_graphics_type graphics_type = cmzn_graphics_get_graphics_type(graphics);
+	const int domain_dimension = cmzn_graphics_get_domain_dimension(graphics);
+	cmzn_graphicslineattributes_id line_attributes =
+		cmzn_graphics_get_graphicslineattributes(graphics);
+	cmzn_graphicspointattributes_id point_attributes =
+		cmzn_graphics_get_graphicspointattributes(graphics);
+	cmzn_graphics_contours_id contours = cmzn_graphics_cast_contours(graphics);
 
 	coordinate_field_chooser_panel =
 		XRCCTRL(*this, "CoordinateFieldChooserPanel",wxPanel);
@@ -2631,10 +2631,10 @@ void SetGraphic(cmzn_graphic *graphic)
 		XRCCTRL(*this, "CoordinateFieldStaticText",wxStaticText);
 
 	cmzn_field_id temp_coordinate_field = 0;
-	if (0 != region_tree_viewer->current_graphic)
+	if (0 != region_tree_viewer->current_graphics)
 	{
 		temp_coordinate_field =
-			cmzn_graphic_get_coordinate_field(region_tree_viewer->current_graphic);
+			cmzn_graphics_get_coordinate_field(region_tree_viewer->current_graphics);
 	}
 	if (coordinate_field_chooser ==NULL)
 	{
@@ -2656,8 +2656,8 @@ void SetGraphic(cmzn_graphic *graphic)
 	cmzn_field_destroy(&temp_coordinate_field);
 
 	enum cmzn_scene_coordinate_system coordinate_system;
-	coordinate_system = cmzn_graphic_get_coordinate_system(
-		region_tree_viewer->current_graphic);
+	coordinate_system = cmzn_graphics_get_coordinate_system(
+		region_tree_viewer->current_graphics);
 	coordinate_system_chooser->set_value(coordinate_system);
 
 	lineshapetext = XRCCTRL(*this, "LineShapeText", wxStaticText);
@@ -2670,17 +2670,17 @@ void SetGraphic(cmzn_graphic *graphic)
 	line_orientation_scale_field_chooser_panel = XRCCTRL(*this, "LineOrientationScaleFieldChooserPanel", wxPanel);
 	if (line_attributes)
 	{
-		cmzn_graphic_line_attributes_shape line_shape = cmzn_graphic_line_attributes_get_shape(line_attributes);
+		cmzn_graphicslineattributes_shape line_shape = cmzn_graphicslineattributes_get_shape(line_attributes);
 		if (0 == line_shape_chooser)
 		{
-			line_shape_chooser = new Enumerator_chooser<ENUMERATOR_TYPE_CLASS(cmzn_graphic_line_attributes_shape)>(
+			line_shape_chooser = new Enumerator_chooser<ENUMERATOR_TYPE_CLASS(cmzn_graphicslineattributes_shape)>(
 				line_shape_chooser_panel, line_shape,
-				(ENUMERATOR_CONDITIONAL_FUNCTION(cmzn_graphic_line_attributes_shape) *)NULL,
+				(ENUMERATOR_CONDITIONAL_FUNCTION(cmzn_graphicslineattributes_shape) *)NULL,
 				(void *)NULL, region_tree_viewer->user_interface);
 			line_shape_chooser_panel->Fit();
-			Callback_base< enum cmzn_graphic_line_attributes_shape > *line_shape_callback =
-				new Callback_member_callback< enum cmzn_graphic_line_attributes_shape,
-					wxRegionTreeViewer, int (wxRegionTreeViewer::*)(enum cmzn_graphic_line_attributes_shape) >(
+			Callback_base< enum cmzn_graphicslineattributes_shape > *line_shape_callback =
+				new Callback_member_callback< enum cmzn_graphicslineattributes_shape,
+					wxRegionTreeViewer, int (wxRegionTreeViewer::*)(enum cmzn_graphicslineattributes_shape) >(
 						this, &wxRegionTreeViewer::line_shape_callback);
 			line_shape_chooser->set_callback(line_shape_callback);
 		}
@@ -2689,21 +2689,21 @@ void SetGraphic(cmzn_graphic *graphic)
 		line_shape_chooser_panel->Show();
 
 		double lineBaseSize[2];
-		cmzn_graphic_line_attributes_get_base_size(line_attributes, 2, lineBaseSize);
+		cmzn_graphicslineattributes_get_base_size(line_attributes, 2, lineBaseSize);
 		sprintf(temp_string, "%g*%g", lineBaseSize[0], lineBaseSize[1]);
 		linebasesizetextctrl->SetValue(wxString::FromAscii(temp_string));
 		linebasesizetext->Show();
 		linebasesizetextctrl->Show();
 
 		double lineScaleFactors[2];
-		cmzn_graphic_line_attributes_get_scale_factors(line_attributes, 2, lineScaleFactors);
+		cmzn_graphicslineattributes_get_scale_factors(line_attributes, 2, lineScaleFactors);
 		sprintf(temp_string, "%g*%g", lineScaleFactors[0], lineScaleFactors[1]);
 		linescalefactorstextctrl->SetValue(wxString::FromAscii(temp_string));
 		linescalefactorstext->Show();
 		linescalefactorstextctrl->Show();
 
 		cmzn_field_id orientationScaleField =
-			cmzn_graphic_line_attributes_get_orientation_scale_field(line_attributes);
+			cmzn_graphicslineattributes_get_orientation_scale_field(line_attributes);
 		if (line_orientation_scale_field_chooser == NULL)
 		{
 			line_orientation_scale_field_chooser = new Managed_object_chooser<Computed_field,MANAGER_CLASS(Computed_field)>(
@@ -2759,22 +2759,22 @@ void SetGraphic(cmzn_graphic *graphic)
 	if (contours)
 	{
 		cmzn_field_id isoscalar_field =
-			cmzn_graphic_contours_get_isoscalar_field(contours);
-		int number_of_isovalues = cmzn_graphic_contours_get_list_isovalues(contours, 0, 0);
+			cmzn_graphics_contours_get_isoscalar_field(contours);
+		int number_of_isovalues = cmzn_graphics_contours_get_list_isovalues(contours, 0, 0);
 		double *isovalues = 0;
 		double first_isovalue, last_isovalue;
 		if (number_of_isovalues)
 		{
 			isovalues = new double[number_of_isovalues];
-			cmzn_graphic_contours_get_list_isovalues(contours, number_of_isovalues, isovalues);
+			cmzn_graphics_contours_get_list_isovalues(contours, number_of_isovalues, isovalues);
 		}
 		else
 		{
-			number_of_isovalues = cmzn_graphic_contours_get_range_number_of_isovalues(contours);
-			first_isovalue = cmzn_graphic_contours_get_range_first_isovalue(contours);
-			last_isovalue = cmzn_graphic_contours_get_range_last_isovalue(contours);
+			number_of_isovalues = cmzn_graphics_contours_get_range_number_of_isovalues(contours);
+			first_isovalue = cmzn_graphics_contours_get_range_first_isovalue(contours);
+			last_isovalue = cmzn_graphics_contours_get_range_last_isovalue(contours);
 		}
-		double decimation_threshold = cmzn_graphic_contours_get_decimation_threshold(contours);
+		double decimation_threshold = cmzn_graphics_contours_get_decimation_threshold(contours);
 
 		isoscalar_chooser_panel->Show();
 		isoscalartextctrl->Show();
@@ -2862,11 +2862,11 @@ void SetGraphic(cmzn_graphic *graphic)
 		/* overlay disabled
 		wxCheckBox *overlay_checkbox = XRCCTRL(*this, "OverlayCheckBox", wxCheckBox);
 		wxTextCtrl *overlay_textctrl = XRCCTRL(*this, "OverlayTextCtrl", wxTextCtrl);
-		if (CMZN_GRAPHIC_STATIC == graphic_type)
+		if (CMZN_GRAPHICS_STATIC == graphics_type)
 		{
-			overlay_checkbox->SetValue(cmzn_graphic_is_overlay(graphic));
+			overlay_checkbox->SetValue(cmzn_graphics_is_overlay(graphics));
 			overlay_checkbox->Show();
-			if (cmzn_graphic_is_overlay(graphic))
+			if (cmzn_graphics_is_overlay(graphics))
 			{
 				overlay_textctrl->Enable();
 			}
@@ -2874,7 +2874,7 @@ void SetGraphic(cmzn_graphic *graphic)
 			{
 				overlay_textctrl->Disable();
 			}
-			sprintf(temp_string,"%d ",cmzn_graphic_get_overlay_order(graphic));
+			sprintf(temp_string,"%d ",cmzn_graphics_get_overlay_order(graphics));
 			overlay_textctrl->SetValue(temp_string);
 			overlay_textctrl->Show();
 		}
@@ -2887,17 +2887,17 @@ void SetGraphic(cmzn_graphic *graphic)
 		*/
 		if (point_attributes)
 		{
-			cmzn_glyph_id glyph = cmzn_graphic_point_attributes_get_glyph(point_attributes);
+			cmzn_glyph_id glyph = cmzn_graphicspointattributes_get_glyph(point_attributes);
 			cmzn_field_id orientation_scale_field =
-				cmzn_graphic_point_attributes_get_orientation_scale_field(point_attributes);
+				cmzn_graphicspointattributes_get_orientation_scale_field(point_attributes);
 			cmzn_field_id signed_scale_field =
-				cmzn_graphic_point_attributes_get_signed_scale_field(point_attributes);
+				cmzn_graphicspointattributes_get_signed_scale_field(point_attributes);
 			double point_base_size[3], glyph_offset[3], point_scale_factors[3];
-			cmzn_graphic_point_attributes_get_base_size(point_attributes, 3, point_base_size);
-			cmzn_graphic_point_attributes_get_glyph_offset(point_attributes, 3, glyph_offset);
-			cmzn_graphic_point_attributes_get_scale_factors(point_attributes, 3, point_scale_factors);
+			cmzn_graphicspointattributes_get_base_size(point_attributes, 3, point_base_size);
+			cmzn_graphicspointattributes_get_glyph_offset(point_attributes, 3, glyph_offset);
+			cmzn_graphicspointattributes_get_scale_factors(point_attributes, 3, point_scale_factors);
 			cmzn_glyph_repeat_mode glyph_repeat_mode =
-				cmzn_graphic_point_attributes_get_glyph_repeat_mode(point_attributes);
+				cmzn_graphicspointattributes_get_glyph_repeat_mode(point_attributes);
 
 			/* turn on callbacks */
 			glyph_chooser_panel->Show();
@@ -3040,7 +3040,7 @@ void SetGraphic(cmzn_graphic *graphic)
 		staticlabeltextctrl[2] = XRCCTRL(*this,"StaticLabelTextCtrl3",wxTextCtrl);
 		if (point_attributes)
 		{
-			cmzn_field_id label_field = cmzn_graphic_point_attributes_get_label_field(point_attributes);
+			cmzn_field_id label_field = cmzn_graphicspointattributes_get_label_field(point_attributes);
 			if (label_field_chooser == NULL)
 			{
 					label_field_chooser =
@@ -3062,7 +3062,7 @@ void SetGraphic(cmzn_graphic *graphic)
 			label_chooser_panel->Show();
 
 			double label_offset[3];
-			cmzn_graphic_point_attributes_get_label_offset(point_attributes, 3, label_offset);
+			cmzn_graphicspointattributes_get_label_offset(point_attributes, 3, label_offset);
 			sprintf(temp_string,"%g,%g,%g",
 				label_offset[0], label_offset[1], label_offset[2]);
 			labeloffsettextctrl->SetValue(wxString::FromAscii(temp_string));
@@ -3071,7 +3071,7 @@ void SetGraphic(cmzn_graphic *graphic)
 			staticlabeltext->Show();
 			for (int i = 0; i < 3; ++i)
 			{
-				char *label_text = cmzn_graphic_point_attributes_get_label_text(point_attributes, i + 1);
+				char *label_text = cmzn_graphicspointattributes_get_label_text(point_attributes, i + 1);
 				staticlabeltextctrl[i]->SetValue(wxString::FromAscii(label_text ? label_text : ""));
 				if (label_text)
 				{
@@ -3080,7 +3080,7 @@ void SetGraphic(cmzn_graphic *graphic)
 				staticlabeltextctrl[i]->Show();
 			}
 
-			cmzn_font_id font = cmzn_graphic_point_attributes_get_font(point_attributes);
+			cmzn_font_id font = cmzn_graphicspointattributes_get_font(point_attributes);
 			if (font_chooser == NULL)
 			{
 					font_chooser =
@@ -3127,7 +3127,7 @@ void SetGraphic(cmzn_graphic *graphic)
 		wxStaticText *subgroup_field_text=XRCCTRL(*this,"SubgroupFieldText",wxStaticText);
 		subgroup_field_chooser_panel = XRCCTRL(*this,"SubgroupFieldChooserPanel",wxPanel);
 
-		cmzn_field_id subgroup_field = cmzn_graphic_get_subgroup_field(graphic);
+		cmzn_field_id subgroup_field = cmzn_graphics_get_subgroup_field(graphics);
 		if (subgroup_field_chooser == NULL)
 		{
 			subgroup_field_chooser =
@@ -3155,20 +3155,20 @@ void SetGraphic(cmzn_graphic *graphic)
 		if (select_mode_chooser == NULL)
 		{
 			select_mode_chooser =
-				new Enumerator_chooser<ENUMERATOR_TYPE_CLASS(cmzn_graphic_select_mode)>
-				(select_mode_chooser_panel, CMZN_GRAPHIC_SELECT_ON,
-					(ENUMERATOR_CONDITIONAL_FUNCTION(cmzn_graphic_select_mode) *)NULL,
+				new Enumerator_chooser<ENUMERATOR_TYPE_CLASS(cmzn_graphics_select_mode)>
+				(select_mode_chooser_panel, CMZN_GRAPHICS_SELECT_ON,
+					(ENUMERATOR_CONDITIONAL_FUNCTION(cmzn_graphics_select_mode) *)NULL,
 					(void *)NULL, region_tree_viewer->user_interface);
 			select_mode_chooser_panel->Fit();
-			Callback_base< enum cmzn_graphic_select_mode > *select_mode_callback =
-				new Callback_member_callback< enum cmzn_graphic_select_mode,
-				wxRegionTreeViewer, int (wxRegionTreeViewer::*)(enum cmzn_graphic_select_mode) >
+			Callback_base< enum cmzn_graphics_select_mode > *select_mode_callback =
+				new Callback_member_callback< enum cmzn_graphics_select_mode,
+				wxRegionTreeViewer, int (wxRegionTreeViewer::*)(enum cmzn_graphics_select_mode) >
 				(this, &wxRegionTreeViewer::select_mode_callback);
 			select_mode_chooser->set_callback(select_mode_callback);
 		}
 		select_mode_chooser_panel->Show();
 		select_mode_text->Show();
-		select_mode_chooser->set_value(cmzn_graphic_get_select_mode(graphic));
+		select_mode_chooser->set_value(cmzn_graphics_get_select_mode(graphics));
 
 		domain_type_chooser_panel =
 			XRCCTRL(*this, "DomainTypeChooserPanel", wxPanel);
@@ -3189,12 +3189,12 @@ void SetGraphic(cmzn_graphic *graphic)
 		}
 		domain_type_chooser_panel->Show();
 		domaintypetext->Show();
-		domain_type_chooser->set_value(cmzn_graphic_get_domain_type(graphic));
+		domain_type_chooser->set_value(cmzn_graphics_get_domain_type(graphics));
 
 		tessellationtext=XRCCTRL(*this,"TessellationStaticText",wxStaticText);
 		tessellation_chooser_panel=XRCCTRL(*this, "TessellationChooserPanel",wxPanel);
 		tessellationbutton=XRCCTRL(*this,"TessellationButton",wxButton);
-		cmzn_tessellation *tessellation = cmzn_graphic_get_tessellation(graphic);
+		cmzn_tessellation *tessellation = cmzn_graphics_get_tessellation(graphics);
 		tessellation_chooser->set_object(tessellation);
 		tessellation_chooser_panel->Show();
 		tessellationtext->Show();
@@ -3207,7 +3207,7 @@ void SetGraphic(cmzn_graphic *graphic)
 		wxStaticText *tessellation_field_text = XRCCTRL(*this, "TessellationFieldText", wxStaticText);
 		tessellation_field_chooser_panel = XRCCTRL(*this, "TessellationFieldChooserPanel", wxPanel);
 
-		cmzn_field_id tessellation_field = cmzn_graphic_get_tessellation_field(graphic);
+		cmzn_field_id tessellation_field = cmzn_graphics_get_tessellation_field(graphics);
 		if (tessellation_field_chooser == NULL)
 		{
 			tessellation_field_chooser =
@@ -3235,10 +3235,10 @@ void SetGraphic(cmzn_graphic *graphic)
 		sample_density_field_chooser_panel=XRCCTRL(*this,"DensityFieldChooserPanel",wxPanel);
 		xitext=XRCCTRL(*this,"XiText",wxStaticText);
 		xitextctrl=XRCCTRL(*this,"XiTextCtrl",wxTextCtrl);
-		cmzn_graphic_sampling_attributes_id sampling = cmzn_graphic_get_sampling_attributes(graphic);
+		cmzn_graphicssamplingattributes_id sampling = cmzn_graphics_get_graphicssamplingattributes(graphics);
 		if (sampling)
 		{
-			cmzn_element_point_sample_mode sample_mode = cmzn_graphic_sampling_attributes_get_mode(sampling);
+			cmzn_element_point_sample_mode sample_mode = cmzn_graphicssamplingattributes_get_mode(sampling);
 			if (0 == sample_mode_chooser)
 			{
 				sample_mode_chooser =
@@ -3257,7 +3257,7 @@ void SetGraphic(cmzn_graphic *graphic)
 			sample_mode_text->Show();
 			sample_mode_chooser->set_value(sample_mode);
 
-			cmzn_field_id sample_density_field = cmzn_graphic_sampling_attributes_get_density_field(sampling);
+			cmzn_field_id sample_density_field = cmzn_graphicssamplingattributes_get_density_field(sampling);
 			if (sample_density_field_chooser == NULL)
 			{
 				sample_density_field_chooser =
@@ -3278,25 +3278,25 @@ void SetGraphic(cmzn_graphic *graphic)
 			sample_density_field_chooser->set_object(sample_density_field);
 
 			double sample_location[3];
-			cmzn_graphic_sampling_attributes_get_location(sampling, 3, sample_location);
+			cmzn_graphicssamplingattributes_get_location(sampling, 3, sample_location);
 			sprintf(temp_string,"%g,%g,%g",sample_location[0],sample_location[1],sample_location[2]);
 			xitextctrl->SetValue(wxString::FromAscii(temp_string));
 		}
-		cmzn_graphic_sampling_attributes_destroy(&sampling);
+		cmzn_graphicssamplingattributes_destroy(&sampling);
 		show_sampling_widgets();
 
 		/* seed element */
 		seed_element_panel = XRCCTRL(*this, "SeedElementPanel", wxPanel);
 		seedelementcheckbox = XRCCTRL(*this, "SeedElementCheckBox", wxCheckBox);
 
-		if (CMZN_GRAPHIC_STREAMLINES==graphic_type)
+		if (CMZN_GRAPHICS_STREAMLINES==graphics_type)
 		{
 			seed_element_panel->Show();
 			seedelementcheckbox->Show();
 			fe_region = cmzn_region_get_FE_region(cmzn_scene_get_region(
 				region_tree_viewer->edit_scene));
 			seed_element =
-				cmzn_graphic_get_seed_element(graphic);
+				cmzn_graphics_get_seed_element(graphics);
 			if (seed_element_chooser == NULL)
 			{
 				seed_element_chooser = new wxFeElementTextChooser(seed_element_panel,
@@ -3331,10 +3331,10 @@ void SetGraphic(cmzn_graphic *graphic)
 		streamlines_track_direction_chooser_panel = XRCCTRL(*this, "StreamlinesTrackDirectionChooserPanel",wxPanel);
 		streamlineslengthtext = XRCCTRL(*this, "StreamlinesLengthText",wxStaticText);
 		streamlineslengthtextctrl = XRCCTRL(*this,"StreamlinesLengthTextCtrl",wxTextCtrl);
-		cmzn_graphic_streamlines_id streamlines = cmzn_graphic_cast_streamlines(graphic);
+		cmzn_graphics_streamlines_id streamlines = cmzn_graphics_cast_streamlines(graphics);
 		if (streamlines)
 		{
-			cmzn_field_id stream_vector_field = cmzn_graphic_streamlines_get_stream_vector_field(streamlines);
+			cmzn_field_id stream_vector_field = cmzn_graphics_streamlines_get_stream_vector_field(streamlines);
 			if (stream_vector_chooser == NULL)
 			{
 				stream_vector_chooser =
@@ -3353,24 +3353,24 @@ void SetGraphic(cmzn_graphic *graphic)
 			stream_vector_chooser->set_object(stream_vector_field);
 			cmzn_field_destroy(&stream_vector_field);
 
-			cmzn_graphic_streamlines_track_direction streamlines_track_direction =
-				cmzn_graphic_streamlines_get_track_direction(streamlines);
+			cmzn_graphics_streamlines_track_direction streamlines_track_direction =
+				cmzn_graphics_streamlines_get_track_direction(streamlines);
 			if (0 == streamlines_track_direction_chooser)
 			{
-				streamlines_track_direction_chooser = new Enumerator_chooser<ENUMERATOR_TYPE_CLASS(cmzn_graphic_streamlines_track_direction)>(
+				streamlines_track_direction_chooser = new Enumerator_chooser<ENUMERATOR_TYPE_CLASS(cmzn_graphics_streamlines_track_direction)>(
 					streamlines_track_direction_chooser_panel, streamlines_track_direction,
-					(ENUMERATOR_CONDITIONAL_FUNCTION(cmzn_graphic_streamlines_track_direction) *)NULL,
+					(ENUMERATOR_CONDITIONAL_FUNCTION(cmzn_graphics_streamlines_track_direction) *)NULL,
 					(void *)NULL, region_tree_viewer->user_interface);
 				streamlines_track_direction_chooser_panel->Fit();
-				Callback_base< enum cmzn_graphic_streamlines_track_direction > *streamlines_track_direction_callback =
-					new Callback_member_callback< enum cmzn_graphic_streamlines_track_direction,
-						wxRegionTreeViewer, int (wxRegionTreeViewer::*)(enum cmzn_graphic_streamlines_track_direction) >(
+				Callback_base< enum cmzn_graphics_streamlines_track_direction > *streamlines_track_direction_callback =
+					new Callback_member_callback< enum cmzn_graphics_streamlines_track_direction,
+						wxRegionTreeViewer, int (wxRegionTreeViewer::*)(enum cmzn_graphics_streamlines_track_direction) >(
 							this, &wxRegionTreeViewer::streamlines_track_direction_callback);
 				streamlines_track_direction_chooser->set_callback(streamlines_track_direction_callback);
 			}
 			streamlines_track_direction_chooser->set_value(streamlines_track_direction);
 
-			double streamline_length = cmzn_graphic_streamlines_get_track_length(streamlines);
+			double streamline_length = cmzn_graphics_streamlines_get_track_length(streamlines);
 			sprintf(temp_string,"%g",streamline_length);
 			streamlineslengthtextctrl->SetValue(wxString::FromAscii(temp_string));
 
@@ -3388,13 +3388,13 @@ void SetGraphic(cmzn_graphic *graphic)
 			streamlineslengthtext->Hide();
 			streamlineslengthtextctrl->Hide();
 		}
-		cmzn_graphic_streamlines_destroy(&streamlines);
+		cmzn_graphics_streamlines_destroy(&streamlines);
 
 		line_width_text=XRCCTRL(*this, "LineWidthText", wxStaticText);
 		line_width_text_ctrl=XRCCTRL(*this, "LineWidthTextCtrl", wxTextCtrl);
 		line_width_text->Show();
 		line_width_text_ctrl->Show();
-		double line_width = cmzn_graphic_get_render_line_width(graphic);
+		double line_width = cmzn_graphics_get_render_line_width(graphics);
 		sprintf(temp_string, "%g", line_width);
 		line_width_text_ctrl->SetValue(wxString::FromAscii(temp_string));
 		line_width_text_ctrl->Enable();
@@ -3403,7 +3403,7 @@ void SetGraphic(cmzn_graphic *graphic)
 		point_size_text_ctrl=XRCCTRL(*this, "PointSizeTextCtrl", wxTextCtrl);
 		point_size_text->Show();
 		point_size_text_ctrl->Show();
-		double point_size = cmzn_graphic_get_render_point_size(graphic);
+		double point_size = cmzn_graphics_get_render_point_size(graphics);
 		sprintf(temp_string, "%g", point_size);
 		point_size_text_ctrl->SetValue(wxString::FromAscii(temp_string));
 		point_size_text_ctrl->Enable();
@@ -3418,9 +3418,9 @@ void SetGraphic(cmzn_graphic *graphic)
 		if (data_field_chooser == NULL)
 		{
 			cmzn_field_id temp_data_field = 0;
-			if (region_tree_viewer->current_graphic != NULL)
+			if (region_tree_viewer->current_graphics != NULL)
 			{
-				temp_data_field = cmzn_graphic_get_data_field(region_tree_viewer->current_graphic);
+				temp_data_field = cmzn_graphics_get_data_field(region_tree_viewer->current_graphics);
 			}
 			data_field_chooser =
 				new Managed_object_chooser<Computed_field,MANAGER_CLASS(Computed_field)>
@@ -3438,11 +3438,11 @@ void SetGraphic(cmzn_graphic *graphic)
 		datatext->Show();
 		data_chooser_panel->Show();
 
-		cmzn_field_id data_field = cmzn_graphic_get_data_field(graphic);
+		cmzn_field_id data_field = cmzn_graphics_get_data_field(graphics);
 		data_field_chooser->set_object(data_field);
 		if (data_field)
 		{
-			cmzn_spectrum_id spectrum = cmzn_graphic_get_spectrum(graphic);
+			cmzn_spectrum_id spectrum = cmzn_graphics_get_spectrum(graphics);
 			spectrum_chooser->set_object(spectrum);
 			data_chooser_panel->Enable();
 			spectrumtext->Enable();
@@ -3450,12 +3450,12 @@ void SetGraphic(cmzn_graphic *graphic)
 			cmzn_spectrum_destroy(&spectrum);
 		}
 
-		if (CMZN_GRAPHIC_STREAMLINES==graphic_type)
+		if (CMZN_GRAPHICS_STREAMLINES==graphics_type)
 		{
 			streamlinedatatypetext->Show();
 			streamline_data_type_chooser_panel->Show();
 			enum Streamline_data_type streamline_data_type =
-				cmzn_graphic_get_streamline_data_type(graphic);
+				cmzn_graphics_get_streamline_data_type(graphics);
 			if (streamline_data_type_chooser == NULL)
 			{
 				streamline_data_type_chooser=
@@ -3481,13 +3481,13 @@ void SetGraphic(cmzn_graphic *graphic)
 
 		wxStaticText *texturecoordinatestext = XRCCTRL(*this, "TextureCoordinatesText", wxStaticText);
 		texture_coordinates_chooser_panel = XRCCTRL(*this, "TextureCoordinatesChooserPanel", wxPanel);
-		if ((graphic_type == CMZN_GRAPHIC_SURFACES) ||
-			(graphic_type == CMZN_GRAPHIC_CONTOURS) ||
-			(graphic_type == CMZN_GRAPHIC_LINES))
+		if ((graphics_type == CMZN_GRAPHICS_SURFACES) ||
+			(graphics_type == CMZN_GRAPHICS_CONTOURS) ||
+			(graphics_type == CMZN_GRAPHICS_LINES))
 		{
 			texture_coordinates_chooser_panel->Show();
 			texturecoordinatestext->Show();
-			cmzn_field_id texture_coordinate_field = cmzn_graphic_get_texture_coordinate_field(graphic);
+			cmzn_field_id texture_coordinate_field = cmzn_graphics_get_texture_coordinate_field(graphics);
 			if (texture_coord_field_chooser == NULL)
 			{
 				texture_coord_field_chooser =
@@ -3517,18 +3517,18 @@ void SetGraphic(cmzn_graphic *graphic)
 		render_polygon_mode_chooser_panel=XRCCTRL(*this,"RenderPolygonModeChooserPanel",wxPanel);
 		render_polygon_mode_text->Show();
 		render_polygon_mode_chooser_panel->Show();
-		render_polygon_mode=cmzn_graphic_get_render_polygon_mode(graphic);
+		render_polygon_mode=cmzn_graphics_get_render_polygon_mode(graphics);
 		if (render_polygon_mode_chooser == NULL)
 		{
 			render_polygon_mode_chooser =
-					new Enumerator_chooser<ENUMERATOR_TYPE_CLASS(cmzn_graphic_render_polygon_mode)>
+					new Enumerator_chooser<ENUMERATOR_TYPE_CLASS(cmzn_graphics_render_polygon_mode)>
 					(render_polygon_mode_chooser_panel, render_polygon_mode,
-						(ENUMERATOR_CONDITIONAL_FUNCTION(cmzn_graphic_render_polygon_mode) *)NULL,
+						(ENUMERATOR_CONDITIONAL_FUNCTION(cmzn_graphics_render_polygon_mode) *)NULL,
 						(void *)NULL, region_tree_viewer->user_interface);
 			render_polygon_mode_chooser_panel->Fit();
-			Callback_base< enum cmzn_graphic_render_polygon_mode > *render_polygon_mode_callback =
-					new Callback_member_callback< enum cmzn_graphic_render_polygon_mode,
-					wxRegionTreeViewer, int (wxRegionTreeViewer::*)(enum cmzn_graphic_render_polygon_mode) >
+			Callback_base< enum cmzn_graphics_render_polygon_mode > *render_polygon_mode_callback =
+					new Callback_member_callback< enum cmzn_graphics_render_polygon_mode,
+					wxRegionTreeViewer, int (wxRegionTreeViewer::*)(enum cmzn_graphics_render_polygon_mode) >
 					(this, &wxRegionTreeViewer::render_polygon_mode_callback);
 			render_polygon_mode_chooser->set_callback(render_polygon_mode_callback);
 		}
@@ -3537,7 +3537,7 @@ void SetGraphic(cmzn_graphic *graphic)
 		exteriorcheckbox=XRCCTRL(*this,"ExteriorCheckBox",wxCheckBox);
 		facecheckbox=XRCCTRL(*this, "FaceCheckBox",wxCheckBox);
 		facechoice=XRCCTRL(*this, "FaceChoice",wxChoice);
-		cmzn_field_domain_type domain_type = cmzn_graphic_get_domain_type(graphic);
+		cmzn_field_domain_type domain_type = cmzn_graphics_get_domain_type(graphics);
 		exteriorcheckbox->Show();
 		facecheckbox->Show();
 		facechoice->Show();
@@ -3553,8 +3553,8 @@ void SetGraphic(cmzn_graphic *graphic)
 			facecheckbox->Disable();
 			facechoice->Disable();
 		}
-		exteriorcheckbox->SetValue(cmzn_graphic_is_exterior(graphic));
-		face = cmzn_graphic_get_face(graphic);
+		exteriorcheckbox->SetValue(cmzn_graphics_is_exterior(graphics));
+		face = cmzn_graphics_get_face(graphics);
 		if (face >= CMZN_ELEMENT_FACE_XI1_0)
 		{
 			facecheckbox->SetValue(1);
@@ -3566,10 +3566,10 @@ void SetGraphic(cmzn_graphic *graphic)
 			facecheckbox->SetValue(0);
 			facechoice->Disable();
 		}
-		cmzn_graphic_contours_destroy(&contours);
-		cmzn_graphic_line_attributes_destroy(&line_attributes);
-		cmzn_graphic_point_attributes_destroy(&point_attributes);
-} /*SetGraphic*/
+		cmzn_graphics_contours_destroy(&contours);
+		cmzn_graphicslineattributes_destroy(&line_attributes);
+		cmzn_graphicspointattributes_destroy(&point_attributes);
+} /*SetGraphics*/
 
 const char *GetRegionPathFromTreeItemId(wxTreeItemId current_item_id)
 {
@@ -3624,7 +3624,7 @@ void TreeControlSelectionChanged(wxTreeEvent &event)
 			Region_tree_viewer_set_active_scene(region_tree_viewer, scene);
 			region_tree_viewer->lowersplitter->Enable();
 			region_tree_viewer->lowersplitter->Show();
-			Region_tree_viewer_set_graphic_widgets_for_scene(region_tree_viewer);
+			Region_tree_viewer_set_graphics_widgets_for_scene(region_tree_viewer);
 			if (region_tree_viewer->sceneediting)
 			{
 				if (!cmzn_scene_get_number_of_graphics(scene))
@@ -3645,15 +3645,15 @@ void TreeControlSelectionChanged(wxTreeEvent &event)
 	{
 		Region_tree_viewer_set_active_scene(
 				region_tree_viewer, NULL);
-		if (!region_tree_viewer->graphiclistbox)
-			region_tree_viewer->graphiclistbox = XRCCTRL(
-				*this, "cmznGraphicListBox",wxCheckListBox);
-		region_tree_viewer->graphiclistbox->SetSelection(wxNOT_FOUND);
-		region_tree_viewer->graphiclistbox->Clear();
+		if (!region_tree_viewer->graphicslistbox)
+			region_tree_viewer->graphicslistbox = XRCCTRL(
+				*this, "GraphicsListBox",wxCheckListBox);
+		region_tree_viewer->graphicslistbox->SetSelection(wxNOT_FOUND);
+		region_tree_viewer->graphicslistbox->Clear();
 		region_tree_viewer->lowersplitter->Disable();
 		region_tree_viewer->lowersplitter->Hide();
 		region_tree_viewer->sceneediting->Hide();
-		Region_tree_viewer_set_graphic_widgets_for_scene(region_tree_viewer);
+		Region_tree_viewer_set_graphics_widgets_for_scene(region_tree_viewer);
 	}
 
 	if (region_tree_viewer->lowersplitter)
@@ -3821,13 +3821,13 @@ BEGIN_EVENT_TABLE(wxRegionTreeViewer, wxFrame)
 	EVT_CHECKBOX(XRCID("AutoCheckBox"),wxRegionTreeViewer::AutoChecked)
 	EVT_BUTTON(XRCID("ApplyButton"),wxRegionTreeViewer::ApplyClicked)
 	EVT_BUTTON(XRCID("RevertButton"),wxRegionTreeViewer::RevertClicked)
-	EVT_CHECKLISTBOX(XRCID("cmznGraphicListBox"), wxRegionTreeViewer::GraphicListBoxChecked)
-	EVT_TEXT_ENTER(XRCID("NameTextField"),wxRegionTreeViewer::GraphicEditorNameText)
-	EVT_LISTBOX(XRCID("cmznGraphicListBox"), wxRegionTreeViewer::GraphicListBoxClicked)
-	EVT_BUTTON(XRCID("CopyButton"),wxRegionTreeViewer::CopyGraphic)
-	EVT_BUTTON(XRCID("DeleteButton"),wxRegionTreeViewer::RemoveFromGraphicList)
-	EVT_BUTTON(XRCID("UpButton"),wxRegionTreeViewer::MoveUpInGraphicList)
-	EVT_BUTTON(XRCID("DownButton"),wxRegionTreeViewer::MoveDownInGraphicList)
+	EVT_CHECKLISTBOX(XRCID("GraphicsListBox"), wxRegionTreeViewer::GraphicsListBoxChecked)
+	EVT_TEXT_ENTER(XRCID("NameTextField"),wxRegionTreeViewer::GraphicsEditorNameText)
+	EVT_LISTBOX(XRCID("GraphicsListBox"), wxRegionTreeViewer::GraphicsListBoxClicked)
+	EVT_BUTTON(XRCID("CopyButton"),wxRegionTreeViewer::CopyGraphics)
+	EVT_BUTTON(XRCID("DeleteButton"),wxRegionTreeViewer::RemoveFromGraphicsList)
+	EVT_BUTTON(XRCID("UpButton"),wxRegionTreeViewer::MoveUpInGraphicsList)
+	EVT_BUTTON(XRCID("DownButton"),wxRegionTreeViewer::MoveDownInGraphicsList)
 	EVT_RADIOBUTTON(XRCID("IsoValueListRadioButton"), wxRegionTreeViewer::EnterIsoScalar)
 	EVT_RADIOBUTTON(XRCID("IsoValueSequenceRadioButton"), wxRegionTreeViewer::EnterIsoRange)
 	EVT_TEXT_ENTER(XRCID("IsoScalarTextCtrl"),wxRegionTreeViewer::EnterIsoScalar)
@@ -3875,33 +3875,33 @@ int Region_tree_viewer_revert_changes(Region_tree_viewer *region_tree_viewer)
 
 		if (region_tree_viewer->scene)
 		{
-			if (!region_tree_viewer->graphiclistbox)
+			if (!region_tree_viewer->graphicslistbox)
 			{
-				region_tree_viewer->graphiclistbox =  XRCCTRL(*region_tree_viewer->wx_region_tree_viewer,
-					"cmznGraphicListBox",wxCheckListBox);
+				region_tree_viewer->graphicslistbox =  XRCCTRL(*region_tree_viewer->wx_region_tree_viewer,
+					"GraphicsListBox",wxCheckListBox);
 			}
 
-			int selection=	region_tree_viewer->graphiclistbox->GetSelection();
-			region_tree_viewer->graphiclistbox->SetSelection(wxNOT_FOUND);
-			region_tree_viewer->graphiclistbox->Clear();
-			for_each_graphic_in_cmzn_scene(region_tree_viewer->scene,
-				Region_tree_viewer_add_graphic_item, (void *)region_tree_viewer);
+			int selection=	region_tree_viewer->graphicslistbox->GetSelection();
+			region_tree_viewer->graphicslistbox->SetSelection(wxNOT_FOUND);
+			region_tree_viewer->graphicslistbox->Clear();
+			for_each_graphics_in_cmzn_scene(region_tree_viewer->scene,
+				Region_tree_viewer_add_graphics_item, (void *)region_tree_viewer);
 			DEACCESS(cmzn_scene)(&region_tree_viewer->edit_scene);
 			region_tree_viewer->edit_scene = create_editor_copy_cmzn_scene(region_tree_viewer->scene);
-			int num = 	region_tree_viewer->graphiclistbox->GetCount();
+			int num = 	region_tree_viewer->graphicslistbox->GetCount();
 			if (selection >= num)
 			{
 				selection = 0;
 			}
-			region_tree_viewer->graphiclistbox->SetSelection(selection);
+			region_tree_viewer->graphicslistbox->SetSelection(selection);
 			region_tree_viewer->lowersplitter->Show();
 			region_tree_viewer->wx_region_tree_viewer->
 				Region_tree_viewer_wx_set_manager_in_choosers(region_tree_viewer);
-			cmzn_graphic *temp_graphic = cmzn_scene_get_graphic_at_position(
+			cmzn_graphics *temp_graphics = cmzn_scene_get_graphics_at_position(
 				region_tree_viewer->edit_scene, selection+1);
-			region_tree_viewer->wx_region_tree_viewer->Region_tree_viewer_wx_update_current_graphic(temp_graphic);
-			region_tree_viewer->wx_region_tree_viewer->Region_tree_viewer_wx_update_graphic_widgets();
-			cmzn_graphic_destroy(&temp_graphic);
+			region_tree_viewer->wx_region_tree_viewer->Region_tree_viewer_wx_update_current_graphics(temp_graphics);
+			region_tree_viewer->wx_region_tree_viewer->Region_tree_viewer_wx_update_graphics_widgets();
+			cmzn_graphics_destroy(&temp_graphics);
 			if (region_tree_viewer->transformation_editor)
 			{
 				cmzn_scene_get_transformation(region_tree_viewer->scene,
@@ -3974,11 +3974,11 @@ void Region_tree_viewer_set_active_scene(
 	{
 		int previous_selection;
 		if (region_tree_viewer->edit_scene
-			&& region_tree_viewer->current_graphic)
+			&& region_tree_viewer->current_graphics)
 		{
-			previous_selection = cmzn_scene_get_graphic_position(
+			previous_selection = cmzn_scene_get_graphics_position(
 				region_tree_viewer->edit_scene,
-				region_tree_viewer->current_graphic);
+				region_tree_viewer->current_graphics);
 		}
 		else
 		{
@@ -4007,48 +4007,48 @@ void Region_tree_viewer_set_active_scene(
 		{
 			previous_selection = 1;
 		}
-		if (!region_tree_viewer->graphiclistbox)
+		if (!region_tree_viewer->graphicslistbox)
 		{
-			region_tree_viewer->graphiclistbox
-				= XRCCTRL(*region_tree_viewer->wx_region_tree_viewer, "cmznGraphicListBox",wxCheckListBox);
+			region_tree_viewer->graphicslistbox
+				= XRCCTRL(*region_tree_viewer->wx_region_tree_viewer, "GraphicsListBox",wxCheckListBox);
 		}
-		region_tree_viewer->graphiclistbox->SetSelection(wxNOT_FOUND);
-		region_tree_viewer->graphiclistbox->Clear();
+		region_tree_viewer->graphicslistbox->SetSelection(wxNOT_FOUND);
+		region_tree_viewer->graphicslistbox->Clear();
 		if (region_tree_viewer->edit_scene)
 		{
 			if (cmzn_scene_get_number_of_graphics(
 				region_tree_viewer->edit_scene) > 0)
 			{
-				for_each_graphic_in_cmzn_scene(region_tree_viewer->edit_scene,
-					Region_tree_viewer_add_graphic, (void *) region_tree_viewer);
+				for_each_graphics_in_cmzn_scene(region_tree_viewer->edit_scene,
+					Region_tree_viewer_add_graphics, (void *) region_tree_viewer);
 				int num = cmzn_scene_get_number_of_graphics(
 					region_tree_viewer->edit_scene);
-				cmzn_graphic *temp_graphic = NULL;
+				cmzn_graphics *temp_graphics = NULL;
 				if (num > previous_selection)
 				{
 					num = previous_selection;
 				}
-				temp_graphic = cmzn_scene_get_graphic_at_position(
+				temp_graphics = cmzn_scene_get_graphics_at_position(
 					region_tree_viewer->edit_scene, num);
-				region_tree_viewer->wx_region_tree_viewer->Region_tree_viewer_wx_update_current_graphic(
-					temp_graphic);
-				region_tree_viewer->graphiclistbox->SetSelection(num - 1);
-				REACCESS(cmzn_graphic)(&region_tree_viewer->current_graphic,
-					temp_graphic);
-				if (temp_graphic)
-					cmzn_graphic_destroy(&temp_graphic);
+				region_tree_viewer->wx_region_tree_viewer->Region_tree_viewer_wx_update_current_graphics(
+					temp_graphics);
+				region_tree_viewer->graphicslistbox->SetSelection(num - 1);
+				REACCESS(cmzn_graphics)(&region_tree_viewer->current_graphics,
+					temp_graphics);
+				if (temp_graphics)
+					cmzn_graphics_destroy(&temp_graphics);
 				region_tree_viewer->lowersplitter->Enable();
 				region_tree_viewer->lowersplitter->Show();
 			}
 			else
 			{
-				if (region_tree_viewer->current_graphic)
+				if (region_tree_viewer->current_graphics)
 				{
-					DEACCESS(cmzn_graphic)(&region_tree_viewer->current_graphic);
+					DEACCESS(cmzn_graphics)(&region_tree_viewer->current_graphics);
 				}
 				region_tree_viewer->lowersplitter->Enable();
 				region_tree_viewer->lowersplitter->Show();
-				region_tree_viewer->wx_region_tree_viewer->Region_tree_viewer_wx_update_current_graphic(NULL);
+				region_tree_viewer->wx_region_tree_viewer->Region_tree_viewer_wx_update_current_graphics(NULL);
 			}
 			region_tree_viewer->field_manager
 				= cmzn_region_get_Computed_field_manager(cmzn_scene_get_region(
@@ -4081,30 +4081,30 @@ void Region_tree_viewer_set_active_scene(
 	{
 		REACCESS(cmzn_scene)(&region_tree_viewer->scene, NULL);
 		REACCESS(cmzn_scene)(&region_tree_viewer->edit_scene, NULL);
-		REACCESS(cmzn_graphic)(&region_tree_viewer->current_graphic, NULL);
+		REACCESS(cmzn_graphics)(&region_tree_viewer->current_graphics, NULL);
 		region_tree_viewer->field_manager = NULL;
 		region_tree_viewer->wx_region_tree_viewer->Region_tree_viewer_wx_set_manager_in_choosers(region_tree_viewer);
 	}
 }
 
 /***************************************************************************//**
- *Get and set the display of graphic
+ *Get and set the display of graphics
  */
-static int get_and_set_cmzn_graphic_widgets(void *region_tree_viewer_void)
+static int get_and_set_cmzn_graphics_widgets(void *region_tree_viewer_void)
 {
 	Region_tree_viewer *region_tree_viewer = static_cast<Region_tree_viewer*>(region_tree_viewer_void);
 
 	/*for the text field*/
-	if (region_tree_viewer->current_graphic)
+	if (region_tree_viewer->current_graphics)
 	{
-		char *name = cmzn_graphic_get_name_internal(region_tree_viewer->current_graphic);
+		char *name = cmzn_graphics_get_name_internal(region_tree_viewer->current_graphics);
 		wxTextCtrl *nametextfield = XRCCTRL(*region_tree_viewer->wx_region_tree_viewer, "NameTextField", wxTextCtrl);
 		nametextfield->SetValue(wxString::FromAscii(name));
 		DEALLOCATE(name);
 
 		/*for the selected and material chooser*/
-		region_tree_viewer->wx_region_tree_viewer->SetBothMaterialChooser(region_tree_viewer->current_graphic);
-		region_tree_viewer->wx_region_tree_viewer->SetGraphic(region_tree_viewer->current_graphic);
+		region_tree_viewer->wx_region_tree_viewer->SetBothMaterialChooser(region_tree_viewer->current_graphics);
+		region_tree_viewer->wx_region_tree_viewer->SetGraphics(region_tree_viewer->current_graphics);
 	}
 	wxFrame *frame=XRCCTRL(*region_tree_viewer->wx_region_tree_viewer, "CmguiRegionTreeViewer", wxFrame);
 	frame->Layout();
@@ -4112,37 +4112,37 @@ static int get_and_set_cmzn_graphic_widgets(void *region_tree_viewer_void)
 }
 
 /***************************************************************************//**
- * Iterator function for scene_editor_update_Graphic_item.
+ * Iterator function for scene_editor_update_Graphics_item.
  */
-static int Region_tree_viewer_add_graphic_item(
-	struct cmzn_graphic *graphic, void *region_tree_viewer_void)
+static int Region_tree_viewer_add_graphics_item(
+	struct cmzn_graphics *graphics, void *region_tree_viewer_void)
 {
-	char *graphic_string;
+	char *graphics_string;
 	int return_code;
 	struct Region_tree_viewer *region_tree_viewer;
-	ENTER(Region_tree_viewer_add_graphic_item);
-	if (graphic && (region_tree_viewer = static_cast<Region_tree_viewer*>(region_tree_viewer_void)))
+	ENTER(Region_tree_viewer_add_graphics_item);
+	if (graphics && (region_tree_viewer = static_cast<Region_tree_viewer*>(region_tree_viewer_void)))
 	{
-		graphic_string = cmzn_graphic_get_summary_string(graphic);
-		wxCheckListBox *graphicalitemschecklist =  XRCCTRL(*region_tree_viewer->wx_region_tree_viewer, "cmznGraphicListBox",wxCheckListBox);
-		graphicalitemschecklist->Append(wxString::FromAscii(graphic_string));
-		if (cmzn_graphic_get_visibility_flag(graphic))
+		graphics_string = cmzn_graphics_get_summary_string(graphics);
+		wxCheckListBox *graphicalitemschecklist =  XRCCTRL(*region_tree_viewer->wx_region_tree_viewer, "GraphicsListBox",wxCheckListBox);
+		graphicalitemschecklist->Append(wxString::FromAscii(graphics_string));
+		if (cmzn_graphics_get_visibility_flag(graphics))
 		{
 				graphicalitemschecklist->Check((graphicalitemschecklist->GetCount()-1), true);
 		}
-		DEALLOCATE(graphic_string);
+		DEALLOCATE(graphics_string);
 		return_code = 1;
 	}
 	else
 	{
 		display_message(ERROR_MESSAGE,
-			"Region_tree_viewer_add_graphic_item.  Invalid argument(s)");
+			"Region_tree_viewer_add_graphics_item.  Invalid argument(s)");
 		return_code = 0;
 	}
 	LEAVE;
 
 	return (return_code);
-} /* Region_tree_viewer_add_graphic_item */
+} /* Region_tree_viewer_add_graphics_item */
 
 #endif /* defined (WX_USER_INTERFACE) */
 
@@ -4243,7 +4243,7 @@ DESCRIPTION :
 			region_tree_viewer->default_font=default_font;
 			region_tree_viewer->glyphmodule = cmzn_glyphmodule_access(glyphmodule);
 			region_tree_viewer->user_interface=user_interface;
-			region_tree_viewer->current_graphic = (cmzn_graphic *)NULL;
+			region_tree_viewer->current_graphics = (cmzn_graphics *)NULL;
 			region_tree_viewer->volume_texture_manager=volume_texture_manager;
 			region_tree_viewer->field_manager=(MANAGER(Computed_field)*)NULL;
 			region_tree_viewer->font_manager=cmzn_graphics_module_get_font_manager(graphics_module);
@@ -4251,7 +4251,7 @@ DESCRIPTION :
 			region_tree_viewer->root_region = root_region;
 			region_tree_viewer->current_region = NULL;
 			region_tree_viewer->wx_region_tree_viewer = (wxRegionTreeViewer *)NULL;
-			region_tree_viewer->graphiclistbox = (wxCheckListBox *)NULL;
+			region_tree_viewer->graphicslistbox = (wxCheckListBox *)NULL;
 			region_tree_viewer->scene = (cmzn_scene *)NULL;
 			region_tree_viewer->edit_scene = (cmzn_scene *)NULL;
 			wxLogNull logNo;
@@ -4289,8 +4289,8 @@ DESCRIPTION :
 			region_tree_viewer->frame->Layout();
 			region_tree_viewer->sceneediting =
 				XRCCTRL(*region_tree_viewer->wx_region_tree_viewer, "SceneEditing", wxScrolledWindow);
-			region_tree_viewer->graphiclistbox =
-				XRCCTRL(*region_tree_viewer->wx_region_tree_viewer, "cmznGraphicListBox",wxCheckListBox);
+			region_tree_viewer->graphicslistbox =
+				XRCCTRL(*region_tree_viewer->wx_region_tree_viewer, "GraphicsListBox",wxCheckListBox);
 			region_tree_viewer->sceneediting->Layout();
 			region_tree_viewer->sceneediting->SetScrollbars(10,10,40,40);
 			region_tree_viewer->verticalsplitter=XRCCTRL(*region_tree_viewer->wx_region_tree_viewer,"VerticalSplitter",wxSplitterWindow);
@@ -4354,8 +4354,8 @@ DESCRIPTION :
 	if (region_tree_viewer_address && (region_tree_viewer = *region_tree_viewer_address) &&
 		(region_tree_viewer->region_tree_viewer_address == region_tree_viewer_address))
 	{
-		if (region_tree_viewer->current_graphic)
-			DEACCESS(cmzn_graphic)(&region_tree_viewer->current_graphic);
+		if (region_tree_viewer->current_graphics)
+			DEACCESS(cmzn_graphics)(&region_tree_viewer->current_graphics);
 		if (region_tree_viewer->edit_scene)
 			DEACCESS(cmzn_scene)(&region_tree_viewer->edit_scene);
 		if (region_tree_viewer->scene)
@@ -4426,18 +4426,18 @@ De-iconifies and brings the scene editor to the front.
 } /* Region_tree_viewer_bring_to_front */
 
 /***************************************************************************//**
-* Setup the graphic widgets.
+* Setup the graphics widgets.
 *
 * @param region_tree_viewer scene editor to be be modified
 */
-void Region_tree_viewer_set_graphic_widgets_for_scene(Region_tree_viewer *region_tree_viewer)
+void Region_tree_viewer_set_graphics_widgets_for_scene(Region_tree_viewer *region_tree_viewer)
 {
-	ENTER(Region_tree_viewer_set_graphic_widgets_for_scene);
+	ENTER(Region_tree_viewer_set_graphics_widgets_for_scene);
 	if (region_tree_viewer && region_tree_viewer->scene)
 	{
 		region_tree_viewer->wx_region_tree_viewer->
 			Region_tree_viewer_wx_set_manager_in_choosers(region_tree_viewer);
-		get_and_set_cmzn_graphic_widgets((void *)region_tree_viewer);
+		get_and_set_cmzn_graphics_widgets((void *)region_tree_viewer);
 		region_tree_viewer->lowersplitter->Enable();
 		region_tree_viewer->lowersplitter->Show();
 	}
@@ -4449,7 +4449,7 @@ static int Region_tree_viewer_wx_scene_change(
 {
 	Region_tree_viewer *region_tree_viewer;
 	int return_code;
-	//	wxCheckListBox *cmiss_graphic_checklist;
+	//	wxCheckListBox *cmiss_graphics_checklist;
 
 	if (scene &&
 		(region_tree_viewer = (struct Region_tree_viewer *)region_tree_viewer_void))
@@ -4483,32 +4483,29 @@ static int Region_tree_viewer_wx_scene_change(
 	return return_code;
 }
 
-static int Region_tree_viewer_add_graphic(
-	struct cmzn_graphic *graphic, void *region_tree_viewer_void)
+static int Region_tree_viewer_add_graphics(
+	struct cmzn_graphics *graphics, void *region_tree_viewer_void)
 {
-	char *graphic_string;
+	char *graphics_string;
 	int return_code;
 	struct Region_tree_viewer *region_tree_viewer;
-	ENTER(Region_tree_viewer_add_graphic);
-	if (graphic && (region_tree_viewer = static_cast<Region_tree_viewer*>(region_tree_viewer_void)))
+	if (graphics && (region_tree_viewer = static_cast<Region_tree_viewer*>(region_tree_viewer_void)))
 	{
-		graphic_string = cmzn_graphic_get_summary_string(graphic);
-		wxCheckListBox *graphicchecklist =  XRCCTRL(*region_tree_viewer->wx_region_tree_viewer, "cmznGraphicListBox",wxCheckListBox);
-		graphicchecklist->Append(wxString::FromAscii(graphic_string));
-		if (cmzn_graphic_get_visibility_flag(graphic))
+		graphics_string = cmzn_graphics_get_summary_string(graphics);
+		wxCheckListBox *graphicschecklist =  XRCCTRL(*region_tree_viewer->wx_region_tree_viewer, "GraphicsListBox",wxCheckListBox);
+		graphicschecklist->Append(wxString::FromAscii(graphics_string));
+		if (cmzn_graphics_get_visibility_flag(graphics))
 		{
-			graphicchecklist->Check((graphicchecklist->GetCount()-1), true);
+			graphicschecklist->Check((graphicschecklist->GetCount()-1), true);
 		}
-		DEALLOCATE(graphic_string);
+		DEALLOCATE(graphics_string);
 		return_code = 1;
 	}
 	else
 	{
 		display_message(ERROR_MESSAGE,
-			"Region_tree_viewer_add_graphic.  Invalid argument(s)");
+			"Region_tree_viewer_add_graphics.  Invalid argument(s)");
 		return_code = 0;
 	}
-	LEAVE;
-
 	return (return_code);
-} /* Region_tree_viewer_add_element_graphic_item */
+}

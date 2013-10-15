@@ -37,7 +37,7 @@ int gfx_modify_scene_general(struct Parse_state *state,
 	void *cmiss_region_void, void *dummy_void);
 
 /**
- * Lists the general graphic defined for <scene>.
+ * Lists the general graphics defined for <scene>.
  */
 int cmzn_scene_list_contents(struct cmzn_scene *scene);
 
@@ -50,24 +50,24 @@ int cmzn_scene_execute_command_internal(cmzn_scene_id scene,
 	cmzn_field_group_id group, struct Parse_state *state);
 
 /**
- * Convenience function for drawing a glyph as a point graphic with the
+ * Convenience function for drawing a glyph as a point graphics with the
  * given name using all other defaults.
  */
 int cmzn_scene_add_glyph(struct cmzn_scene *scene,
-	cmzn_glyph *glyph, const char *cmiss_graphic_name);
+	cmzn_glyph *glyph, const char *graphics_name);
 
 /**
- * Makes a new graphic of the supplied graphic_type, optionally a copy of an
- * existing graphic.
+ * Makes a new graphics of the supplied graphics_type, optionally a copy of an
+ * existing graphics.
  *
- * @param scene  Source of graphics defaults if creating a new graphic.
- * @param graphic_type  The type of the new graphic.
- * @param graphic_to_copy  Optional graphic to copy settings from if of
- * same graphic_type.
+ * @param scene  Source of graphics defaults if creating a new graphics.
+ * @param graphics_type  The type of the new graphics.
+ * @param graphics_to_copy  Optional graphics to copy settings from if of
+ * same graphics_type.
  * @return  1 on success, 0 on failure.
  */
-cmzn_graphic* cmzn_scene_create_graphic_app(cmzn_scene *scene,
-	cmzn_graphic_type graphic_type, cmzn_graphic *graphic_to_copy);
+cmzn_graphics* cmzn_scene_create_graphics_app(cmzn_scene *scene,
+	cmzn_graphics_type graphics_type, cmzn_graphics *graphics_to_copy);
 
 float Scene_time(struct Scene *scene);
 

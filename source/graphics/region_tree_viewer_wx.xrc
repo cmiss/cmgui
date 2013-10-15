@@ -83,7 +83,7 @@
 														<orient>wxHORIZONTAL</orient>
 														<object class ="sizeritem">
 															<flag>wxALIGN_CENTRE</flag>
-															<object class = "wxPanel" name="AddGraphicChooserPanel">
+															<object class = "wxPanel" name="AddGraphicsChooserPanel">
 																<size>150,26</size>
 															</object>
 														</object>
@@ -118,7 +118,7 @@
 												<object class ="sizeritem">
 													<flag>wxEXPAND</flag>
 													<option>1</option>
-													<object class="wxCheckListBox" name="cmznGraphicListBox">
+													<object class="wxCheckListBox" name="GraphicsListBox">
 														<style>wxLB_HSCROLL</style>
 													</object>
 												</object>

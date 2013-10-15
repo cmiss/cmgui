@@ -17,7 +17,7 @@ Scene input.
 
 #include <math.h>
 #include "zinc/fieldcache.h"
-#include "zinc/graphic.h"
+#include "zinc/graphics.h"
 #include "zinc/graphicsmaterial.h"
 #include "zinc/scene.h"
 #include "zinc/scenepicker.h"
@@ -41,7 +41,7 @@ Scene input.
 #include "finite_element/finite_element.h"
 #include "finite_element/finite_element_region.h"
 #include "graphics/scene.h"
-#include "graphics/graphic.h"
+#include "graphics/graphics.h"
 #include "graphics/scene.h"
 #include "graphics/scene_picker.hpp"
 #include "region/cmiss_region.h"
@@ -129,7 +129,7 @@ changes in node position and derivatives etc.
 	int motion_detected;
 
 	struct cmzn_scene *scene;
-	struct cmzn_graphic *graphic;
+	struct cmzn_graphics *graphics;
 	void *computed_field_manager_callback_id;
 	struct Interaction_volume *last_interaction_volume;
 	struct GT_object *rubber_band;
@@ -1079,7 +1079,7 @@ object's coordinate field.
 		if (rc_coordinate_field != 0)
 		{
 			cmzn_field_id picked_coordinate_field =
-				cmzn_graphic_get_coordinate_field(node_tool->graphic);
+				cmzn_graphics_get_coordinate_field(node_tool->graphics);
 			cmzn_field_id rc_picked_coordinate_field = Computed_field_begin_wrap_coordinate_field(
 				picked_coordinate_field);
 
@@ -1156,7 +1156,7 @@ try to enforce that the node is created on that element.
 
 	merged_node = (struct FE_node *)NULL;
 	cmzn_scene *scene = 0;
-	cmzn_graphic *graphic = 0;
+	cmzn_graphics *graphics = 0;
 	if (!node_tool || !interaction_volume)
 	{
 		display_message(ERROR_MESSAGE,
@@ -1183,17 +1183,17 @@ try to enforce that the node is created on that element.
 			scene = cmzn_region_get_scene(node_tool->region);
 			if (top_scene && scene)
 			{
-				graphic = cmzn_scene_get_first_graphic(scene);
-				while (graphic)
+				graphics = cmzn_scene_get_first_graphics(scene);
+				while (graphics)
 				{
-					if ((CMZN_GRAPHIC_POINTS == cmzn_graphic_get_graphic_type(graphic)) &&
-						(cmzn_graphic_get_domain_type(graphic) == node_tool->domain_type))
+					if ((CMZN_GRAPHICS_POINTS == cmzn_graphics_get_graphics_type(graphics)) &&
+						(cmzn_graphics_get_domain_type(graphics) == node_tool->domain_type))
 					{
 						break;
 					}
-					cmzn_graphic_id ref_graphic = graphic;
-					graphic = cmzn_scene_get_next_graphic(scene, ref_graphic);
-					cmzn_graphic_destroy(&ref_graphic);
+					cmzn_graphics_id ref_graphics = graphics;
+					graphics = cmzn_scene_get_next_graphics(scene, ref_graphics);
+					cmzn_graphics_destroy(&ref_graphics);
 				}
 			}
 			rc_coordinate_field=
@@ -1300,12 +1300,12 @@ try to enforce that the node is created on that element.
 		if ((!merged_node) || (!scene))
 		{
 			cmzn_scene_destroy(&scene);
-			cmzn_graphic_destroy(&graphic);
+			cmzn_graphics_destroy(&graphics);
 		}
 		REACCESS(cmzn_scene)(&(node_tool->scene),
 			scene);
-		REACCESS(cmzn_graphic)(&(node_tool->graphic),
-			graphic);
+		REACCESS(cmzn_graphics)(&(node_tool->graphics),
+			graphics);
 	}
 	if (scene)
 	{
@@ -1335,8 +1335,8 @@ Resets current edit. Called on button release or when tool deactivated.
 			(struct Interaction_volume *)NULL);
 		REACCESS(cmzn_scene)(&(node_tool->scene),
 			(struct cmzn_scene *)NULL);
-		REACCESS(cmzn_graphic)(&(node_tool->graphic),
-			(struct cmzn_graphic *)NULL);
+		REACCESS(cmzn_graphics)(&(node_tool->graphics),
+			(struct cmzn_graphics *)NULL);
 	}
 	else
 	{
@@ -1405,7 +1405,7 @@ release.
 	struct FE_element *nearest_element;
 	struct FE_node *picked_node;
 	struct cmzn_scene *top_scene = NULL, *scene = 0;
-	struct cmzn_graphic *graphic = NULL, *graphic_element = NULL;
+	struct cmzn_graphics *graphics = 0;
 	struct Interaction_volume *interaction_volume,*temp_interaction_volume;
 	struct Node_tool *node_tool;
 	cmzn_scene_picker_id scene_picker = 0;
@@ -1429,7 +1429,7 @@ release.
 					/* interaction only works with first mouse button */
 					if (1==Interactive_event_get_button_number(event))
 					{
-						cmzn_graphic *nearest_graphic = NULL, *nearest_node_graphic = NULL;
+						cmzn_graphics *nearest_graphics = NULL, *nearest_node_graphics = NULL;
 						cmzn_scene_picker_set_interaction_volume(scene_picker,
 							interaction_volume);
 						REACCESS(Interaction_volume)(&(node_tool->last_interaction_volume),
@@ -1441,19 +1441,19 @@ release.
 							if (node_tool->domain_type == CMZN_FIELD_DOMAIN_DATA)
 							{
 								picked_node = cmzn_scene_picker_get_nearest_data(scene_picker);
-								nearest_node_graphic = cmzn_scene_picker_get_nearest_data_graphic(scene_picker);
+								nearest_node_graphics = cmzn_scene_picker_get_nearest_data_graphics(scene_picker);
 							}
 							else
 							{
 								picked_node = cmzn_scene_picker_get_nearest_node(scene_picker);
-								nearest_node_graphic = cmzn_scene_picker_get_nearest_node_graphic(scene_picker);
+								nearest_node_graphics = cmzn_scene_picker_get_nearest_node_graphics(scene_picker);
 							}
 						}
 
 						if (node_tool->constrain_to_surface)
 						{
-							nearest_graphic = cmzn_scene_picker_get_nearest_graphic(scene_picker);
-							if (nearest_graphic && CMZN_GRAPHIC_SURFACES == cmzn_graphic_get_graphic_type(nearest_graphic))
+							nearest_graphics = cmzn_scene_picker_get_nearest_graphics(scene_picker);
+							if (nearest_graphics && CMZN_GRAPHICS_SURFACES == cmzn_graphics_get_graphics_type(nearest_graphics))
 							{
 								nearest_element = cmzn_scene_picker_get_nearest_element(scene_picker);
 								cmzn_node_destroy(&picked_node);
@@ -1491,7 +1491,7 @@ release.
 							}
 							REACCESS(cmzn_scene)(&(node_tool->scene),
 								scene);
-							REACCESS(cmzn_graphic)(&(node_tool->graphic),nearest_node_graphic);
+							REACCESS(cmzn_graphics)(&(node_tool->graphics),nearest_node_graphics);
 							if (node_tool->define_enabled)
 							{
 								cmzn_fieldcache_set_node(field_cache, picked_node);
@@ -1514,7 +1514,7 @@ release.
 								cmzn_field_id nearest_element_coordinate_field = 0;
 								if (nearest_element)
 								{
-									nearest_element_coordinate_field = cmzn_graphic_get_coordinate_field(nearest_graphic);
+									nearest_element_coordinate_field = cmzn_graphics_get_coordinate_field(nearest_graphics);
 								}
 								/* If we are creating on elements and no element was selected then
 										don't create */
@@ -1574,10 +1574,10 @@ release.
 						}
 						if (picked_node)
 							cmzn_node_destroy(&picked_node);
-						if (nearest_graphic)
-							cmzn_graphic_destroy(&nearest_graphic);
-						if (nearest_node_graphic)
-							cmzn_graphic_destroy(&nearest_node_graphic);
+						if (nearest_graphics)
+							cmzn_graphics_destroy(&nearest_graphics);
+						if (nearest_node_graphics)
+							cmzn_graphics_destroy(&nearest_node_graphics);
 						if (nearest_element)
 							cmzn_element_destroy(&nearest_element);
 					}
@@ -1602,11 +1602,11 @@ release.
 							{
 								if ( 0 != (nearest_element=cmzn_scene_picker_get_nearest_element(scene_picker)))
 								{
-									cmzn_graphic *nearest_element_graphic =
-										cmzn_scene_picker_get_nearest_element_graphic(scene_picker);
+									cmzn_graphics *nearest_element_graphics =
+										cmzn_scene_picker_get_nearest_element_graphics(scene_picker);
 									nearest_element_coordinate_field =
-										cmzn_graphic_get_coordinate_field(nearest_element_graphic);
-									cmzn_graphic_destroy(&nearest_element_graphic);
+										cmzn_graphics_get_coordinate_field(nearest_element_graphics);
+									cmzn_graphics_destroy(&nearest_element_graphics);
 								}
 							}
 							cmzn_region_id temp_region = cmzn_scene_get_region(node_tool->scene);
@@ -1663,7 +1663,7 @@ release.
 								}
 								else
 								{
-									coordinate_field = cmzn_graphic_get_coordinate_field(node_tool->graphic);
+									coordinate_field = cmzn_graphics_get_coordinate_field(node_tool->graphics);
 								}
 								edit_info.coordinate_field=coordinate_field;
 								/* get coordinate_field in RC coordinates */
@@ -1672,7 +1672,7 @@ release.
 								edit_info.orientation_scale_field=(struct Computed_field *)NULL;
 								edit_info.wrapper_orientation_scale_field=
 									(struct Computed_field *)NULL;
-								if (!node_tool->graphic)
+								if (!node_tool->graphics)
 								{
 									edit_info.glyph_centre[0] = 0.0;
 									edit_info.glyph_centre[1] = 0.0;
@@ -1683,14 +1683,14 @@ release.
 								}
 								else
 								{
-									cmzn_graphic_point_attributes_id point_attributes =
-										cmzn_graphic_get_point_attributes(node_tool->graphic);
+									cmzn_graphicspointattributes_id point_attributes =
+										cmzn_graphics_get_graphicspointattributes(node_tool->graphics);
 									if (!point_attributes)
 									{
 										return_code = 0;
 									}
 									cmzn_field_id orientation_scale_field =
-										cmzn_graphic_point_attributes_get_orientation_scale_field(point_attributes);
+										cmzn_graphicspointattributes_get_orientation_scale_field(point_attributes);
 									if (orientation_scale_field)
 									{
 										edit_info.orientation_scale_field = orientation_scale_field;
@@ -1699,13 +1699,13 @@ release.
 												orientation_scale_field, edit_info.rc_coordinate_field);
 									}
 									cmzn_field_id signed_scale_field =
-										cmzn_graphic_point_attributes_get_signed_scale_field(point_attributes);
+										cmzn_graphicspointattributes_get_signed_scale_field(point_attributes);
 									edit_info.variable_scale_field = signed_scale_field;
 
 									double point_base_size[3], point_offset[3], point_scale_factors[3];
-									cmzn_graphic_point_attributes_get_base_size(point_attributes, 3, point_base_size);
-									cmzn_graphic_point_attributes_get_glyph_offset(point_attributes, 3, point_offset);
-									cmzn_graphic_point_attributes_get_scale_factors(point_attributes, 3, point_scale_factors);
+									cmzn_graphicspointattributes_get_base_size(point_attributes, 3, point_base_size);
+									cmzn_graphicspointattributes_get_glyph_offset(point_attributes, 3, point_offset);
+									cmzn_graphicspointattributes_get_scale_factors(point_attributes, 3, point_scale_factors);
 									for (int i = 0; i < 3; ++i)
 									{
 										edit_info.glyph_centre[i] = static_cast<GLfloat>(point_offset[i]);
@@ -1714,7 +1714,7 @@ release.
 									}
 									cmzn_field_destroy(&orientation_scale_field);
 									cmzn_field_destroy(&signed_scale_field);
-									cmzn_graphic_point_attributes_destroy(&point_attributes);
+									cmzn_graphicspointattributes_destroy(&point_attributes);
 								}
 								/* work out transformation information */
 								/* best we can do is use world coordinates;
@@ -3240,7 +3240,7 @@ struct Node_tool *CREATE(Node_tool)(
 			node_tool->last_picked_node=(struct FE_node *)NULL;
 
 			node_tool->scene=(struct cmzn_scene *)NULL;
-			node_tool->graphic=(struct cmzn_graphic *)NULL;
+			node_tool->graphics=(struct cmzn_graphics *)NULL;
 
 			node_tool->last_interaction_volume=(struct Interaction_volume *)NULL;
 			node_tool->rubber_band=(struct GT_object *)NULL;
@@ -3302,9 +3302,9 @@ structure itself.
 		{
 			DEACCESS(Interaction_volume)(&(node_tool->last_interaction_volume));
 		}
-		if (node_tool->graphic)
+		if (node_tool->graphics)
 		{
-			cmzn_graphic_destroy(&(node_tool->graphic));
+			cmzn_graphics_destroy(&(node_tool->graphics));
 		}
 		if (node_tool->scene)
 		{

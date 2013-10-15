@@ -110,7 +110,7 @@
 #include "graphics/material.h"
 #include "graphics/glyph.hpp"
 #include "graphics/glyph_colour_bar.hpp"
-#include "graphics/graphic.h"
+#include "graphics/graphics.h"
 #include "graphics/graphics_module.h"
 #include "graphics/render_to_finite_elements.h"
 #include "graphics/render_stl.h"
@@ -814,7 +814,7 @@ static int gfx_create_colour_bar(struct Parse_state *state,
 				if (material)
 				{
 					display_message(WARNING_MESSAGE,
-						"gfx_create_colour_bar.  material option is not used; material is now taken from g_element graphic");
+						"gfx_create_colour_bar.  material option is not used; material is now taken from g_element graphics");
 				}
 				cmzn_glyphmodule_begin_change(command_data->glyphmodule);
 				cmzn_glyph_id glyph = cmzn_glyphmodule_find_glyph_by_name(command_data->glyphmodule, glyph_name);
@@ -5037,7 +5037,7 @@ Executes a DETACH command.
 #endif /* defined (SELECT_DESCRIPTORS) */
 
 void export_object_name_parser(const char *path_name, const char **scene_name,
-	const char **graphic_name)
+	const char **graphics_name)
 {
 	const char *slash_pointer, *dot_pointer;
 	int total_length, length;
@@ -5051,7 +5051,7 @@ void export_object_name_parser(const char *path_name, const char **scene_name,
 		{
 			if ((dot_pointer - path_name) < total_length)
 			{
-				*graphic_name = duplicate_string(dot_pointer + 1);
+				*graphics_name = duplicate_string(dot_pointer + 1);
 			}
 			total_length = dot_pointer - path_name;
 		}
@@ -5307,7 +5307,7 @@ static int gfx_convert_graphics(struct Parse_state *state,
 		char *coordinate_field_name = 0;
 		cmzn_field_id coordinate_field = 0;
 		const char *scene_name = 0;
-		const char *graphic_name = NULL;
+		const char *graphics_name = NULL;
 		cmzn_scene_id scene = 0;
 		char *scene_path_name = 0;
 		cmzn_scenefilter_id filter =
@@ -5321,7 +5321,7 @@ static int gfx_convert_graphics(struct Parse_state *state,
 			"With mode 'render_surface_node_cloud', nodes are created at points in the lines and "
 			"surfaces sampled according to a Poisson distribution with the supplied densities. "
 			"The surface_density gives the base expected number of points per unit area, and if the "
-			"graphic has a data field, the value of its first component scaled by surface_density_scale_factor "
+			"graphics has a data field, the value of its first component scaled by surface_density_scale_factor "
 			"is added to the expected number. Separate values for lines control the expected number per unit length.");
 		/* coordinate */
 		Option_table_add_string_entry(option_table,"coordinate",&coordinate_field_name,
@@ -5353,7 +5353,7 @@ static int gfx_convert_graphics(struct Parse_state *state,
 			if (scene_path_name)
 			{
 				export_object_name_parser(scene_path_name, &scene_name,
-					&graphic_name);
+					&graphics_name);
 			}
 			if (coordinate_field_name &&
 				(coordinate_field = FIND_BY_IDENTIFIER_IN_MANAGER(Computed_field,name)(
@@ -5404,7 +5404,7 @@ static int gfx_convert_graphics(struct Parse_state *state,
 
 		if (return_code)
 		{
-			render_to_finite_elements(input_region, graphic_name, filter, render_mode,
+			render_to_finite_elements(input_region, graphics_name, filter, render_mode,
 				region, group, coordinate_field, static_cast<cmzn_nodeset_id>(0),
 				line_density, line_density_scale_factor, surface_density, surface_density_scale_factor);
 		}
@@ -5424,9 +5424,9 @@ static int gfx_convert_graphics(struct Parse_state *state,
 		{
 			DEALLOCATE(scene_name);
 		}
-		if (graphic_name)
+		if (graphics_name)
 		{
-			DEALLOCATE(graphic_name);
+			DEALLOCATE(graphics_name);
 		}
 		if (input_region)
 		{
@@ -6687,11 +6687,11 @@ Executes a GFX DRAW command.
 	{
 		cmzn_glyph *glyph = 0;
 		cmzn_scene_id scene = cmzn_scene_access(command_data->default_scene);
-		char *graphic_name = 0;
+		char *graphics_name = 0;
 		char *region_path = 0;
 		option_table=CREATE(Option_table)();
 		/* as */
-		Option_table_add_entry(option_table,"as",&graphic_name,
+		Option_table_add_entry(option_table,"as",&graphics_name,
 			(void *)1,set_name);
 		/* glyph */
 		Option_table_add_entry(option_table,"glyph",&glyph,
@@ -6711,14 +6711,14 @@ Executes a GFX DRAW command.
 		{
 			if (glyph)
 			{
-				if (!graphic_name)
+				if (!graphics_name)
 				{
-					graphic_name = cmzn_glyph_get_name(glyph);
+					graphics_name = cmzn_glyph_get_name(glyph);
 				}
 				cmzn_region_id region = cmzn_scene_get_region(scene);
 				cmzn_scene_id scene =
 					cmzn_region_get_scene(region);
-				return_code = cmzn_scene_add_glyph(scene, glyph, graphic_name);
+				return_code = cmzn_scene_add_glyph(scene, glyph, graphics_name);
 				cmzn_scene_destroy(&scene);
 			}
 			else if (region_path)
@@ -6735,9 +6735,9 @@ Executes a GFX DRAW command.
 			DEALLOCATE(region_path);
 		}
 		cmzn_glyph_destroy(&glyph);
-		if (graphic_name)
+		if (graphics_name)
 		{
-			DEALLOCATE(graphic_name);
+			DEALLOCATE(graphics_name);
 		}
 	}
 	else
@@ -12881,7 +12881,7 @@ static int gfx_read_wavefront_obj(struct Parse_state *state,
 {
 	char *file_name, *graphics_object_name,	*specified_graphics_object_name;
 	const char *render_polygon_mode_string, **valid_strings;
-	enum cmzn_graphic_render_polygon_mode render_polygon_mode;
+	enum cmzn_graphics_render_polygon_mode render_polygon_mode;
 	float time;
 	int number_of_valid_strings, return_code;
 	struct cmzn_command_data *command_data;
@@ -12906,11 +12906,11 @@ static int gfx_read_wavefront_obj(struct Parse_state *state,
 			Option_table_add_entry(option_table,"as",&specified_graphics_object_name,
 				(void *)1,set_name);
 			/* render_polygon_mode */
-			render_polygon_mode = CMZN_GRAPHIC_RENDER_POLYGON_SHADED;
-			render_polygon_mode_string = ENUMERATOR_STRING(cmzn_graphic_render_polygon_mode)(render_polygon_mode);
-			valid_strings = ENUMERATOR_GET_VALID_STRINGS(cmzn_graphic_render_polygon_mode)(
+			render_polygon_mode = CMZN_GRAPHICS_RENDER_POLYGON_SHADED;
+			render_polygon_mode_string = ENUMERATOR_STRING(cmzn_graphics_render_polygon_mode)(render_polygon_mode);
+			valid_strings = ENUMERATOR_GET_VALID_STRINGS(cmzn_graphics_render_polygon_mode)(
 				&number_of_valid_strings,
-				(ENUMERATOR_CONDITIONAL_FUNCTION(cmzn_graphic_render_polygon_mode) *)NULL, (void *)NULL);
+				(ENUMERATOR_CONDITIONAL_FUNCTION(cmzn_graphics_render_polygon_mode) *)NULL, (void *)NULL);
 			Option_table_add_enumerator(option_table,number_of_valid_strings,
 				valid_strings,&render_polygon_mode_string);
 			DEALLOCATE(valid_strings);
@@ -12924,7 +12924,7 @@ static int gfx_read_wavefront_obj(struct Parse_state *state,
 			DESTROY(Option_table)(&option_table);
 			if (return_code)
 			{
-				STRING_TO_ENUMERATOR(cmzn_graphic_render_polygon_mode)(render_polygon_mode_string, &render_polygon_mode);
+				STRING_TO_ENUMERATOR(cmzn_graphics_render_polygon_mode)(render_polygon_mode_string, &render_polygon_mode);
 				if (!file_name)
 				{
 					if (!(file_name = confirmation_get_read_filename(".obj",
@@ -14258,7 +14258,7 @@ static int gfx_set_visibility(struct Parse_state *state,
 	{
 		char on_flag = 0;
 		char off_flag = 0;
-		char *part_graphic_name = 0;
+		char *part_graphics_name = 0;
 		char *region_path = 0;
 		Option_table *option_table = CREATE(Option_table)();
 		Option_table_add_help(option_table,
@@ -14267,7 +14267,7 @@ static int gfx_set_visibility(struct Parse_state *state,
 			"specified, sets visibility for all graphics in region whose name contains the string.");
 		Option_table_add_char_flag_entry(option_table, "off", &off_flag);
 		Option_table_add_char_flag_entry(option_table, "on", &on_flag);
-		Option_table_add_string_entry(option_table, "name", &part_graphic_name, " PART_GRAPHIC_NAME");
+		Option_table_add_string_entry(option_table, "name", &part_graphics_name, " PART_GRAPHIC_NAME");
 		Option_table_add_default_string_entry(option_table, &region_path, " REGION_PATH");
 		return_code = Option_table_multi_parse(option_table, state);
 		DESTROY(Option_table)(&option_table);
@@ -14298,30 +14298,30 @@ static int gfx_set_visibility(struct Parse_state *state,
 		if (return_code)
 		{
 			cmzn_scene_id scene = cmzn_region_get_scene(region);
-			if (part_graphic_name)
+			if (part_graphics_name)
 			{
 				cmzn_scene_begin_change(scene);
-				// support legacy command files by changing visibility of each graphic using group as its subgroup field
-				cmzn_graphic_id graphic = cmzn_scene_get_first_graphic(scene);
+				// support legacy command files by changing visibility of each graphics using group as its subgroup field
+				cmzn_graphics_id graphics = cmzn_scene_get_first_graphics(scene);
 				int number_matched = 0;
-				while (graphic)
+				while (graphics)
 				{
-					char *graphic_name = cmzn_graphic_get_name_internal(graphic);
-					if (strstr(graphic_name, part_graphic_name))
+					char *graphics_name = cmzn_graphics_get_name_internal(graphics);
+					if (strstr(graphics_name, part_graphics_name))
 					{
-						bool visibility_flag = on_flag ? true : (off_flag ? false : !cmzn_graphic_get_visibility_flag(graphic));
-						cmzn_graphic_set_visibility_flag(graphic, visibility_flag);
+						bool visibility_flag = on_flag ? true : (off_flag ? false : !cmzn_graphics_get_visibility_flag(graphics));
+						cmzn_graphics_set_visibility_flag(graphics, visibility_flag);
 						++number_matched;
 					}
-					DEALLOCATE(graphic_name);
-					cmzn_graphic_id temp = cmzn_scene_get_next_graphic(scene, graphic);
-					cmzn_graphic_destroy(&graphic);
-					graphic = temp;
+					DEALLOCATE(graphics_name);
+					cmzn_graphics_id temp = cmzn_scene_get_next_graphics(scene, graphics);
+					cmzn_graphics_destroy(&graphics);
+					graphics = temp;
 				}
 				cmzn_scene_end_change(scene);
 				if (0 == number_matched)
 				{
-					display_message(WARNING_MESSAGE, "gfx set visibility:  No graphics matched name '%s'", part_graphic_name);
+					display_message(WARNING_MESSAGE, "gfx set visibility:  No graphics matched name '%s'", part_graphics_name);
 				}
 			}
 			else
@@ -14334,8 +14334,8 @@ static int gfx_set_visibility(struct Parse_state *state,
 		cmzn_region_destroy(&region);
 		if (region_path)
 			DEALLOCATE(region_path);
-		if (part_graphic_name)
-			DEALLOCATE(part_graphic_name);
+		if (part_graphics_name)
+			DEALLOCATE(part_graphics_name);
 	}
 	else
 	{

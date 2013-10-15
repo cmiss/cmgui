@@ -38,7 +38,7 @@ interest and set scene_viewer values directly.
 #include "general/object.h"
 #include "general/photogrammetry.h"
 #include "graphics/colour.h"
-#include "graphics/graphic.h"
+#include "graphics/graphics.h"
 #include "graphics/graphics_window.h"
 #include "graphics/graphics_window_private.hpp"
 #if defined (WX_USER_INTERFACE)

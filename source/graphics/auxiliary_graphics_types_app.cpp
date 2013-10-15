@@ -19,7 +19,7 @@
 #include "user_interface/user_interface.h"
 #include "graphics/auxiliary_graphics_types.h"
 
-int set_graphic_face_type(struct Parse_state *state, void *face_type_address_void,
+int set_graphics_face_type(struct Parse_state *state, void *face_type_address_void,
 	void *dummy_user_data)
 {
 	int return_code = 1;
@@ -67,7 +67,7 @@ int set_graphic_face_type(struct Parse_state *state, void *face_type_address_voi
 				}
 				else
 				{
-					display_message(ERROR_MESSAGE, "set_graphic_face_type.  Invalid face type %s", current_token);
+					display_message(ERROR_MESSAGE, "set_graphics_face_type.  Invalid face type %s", current_token);
 					return_code = 0;
 				}
 			}
@@ -79,13 +79,13 @@ int set_graphic_face_type(struct Parse_state *state, void *face_type_address_voi
 		}
 		else
 		{
-			display_message(ERROR_MESSAGE, "set_graphic_face_type.  Missing face type");
+			display_message(ERROR_MESSAGE, "set_graphics_face_type.  Missing face type");
 			return_code = 0;
 		}
 	}
 	else
 	{
-		display_message(ERROR_MESSAGE,"set_graphic_face_type.  Invalid argument(s)");
+		display_message(ERROR_MESSAGE,"set_graphics_face_type.  Invalid argument(s)");
 		return_code = 0;
 	}
 	return (return_code);

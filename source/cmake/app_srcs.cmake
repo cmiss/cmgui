@@ -53,7 +53,7 @@ SET(APP_SRCS
     source/finite_element/finite_element_app.cpp
     source/finite_element/finite_element_region_app.cpp
     source/graphics/glyph_app.cpp
-    source/graphics/graphic_app.cpp
+    source/graphics/graphics_app.cpp
     source/graphics/font_app.cpp
     source/computed_field/computed_field_conditional_app.cpp
     source/graphics/tessellation_app.cpp

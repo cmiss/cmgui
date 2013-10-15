@@ -23,7 +23,7 @@
 #include "finite_element/finite_element_region_app.h"
 #include "graphics/font.h"
 // insert app headers here
-#include "graphics/graphic_app.h"
+#include "graphics/graphics_app.h"
 #include "general/enumerator_private.hpp"
 #include "graphics/scene_app.h"
 #include "region/cmiss_region_app.h"
@@ -109,19 +109,19 @@ int gfx_modify_scene_general(struct Parse_state *state,
 						// remove only graphics using group as subgroup field
 						cmzn_scene_begin_change(scene);
 						cmzn_field_id group_field = cmzn_field_group_base_cast(group);
-						// support legacy command files by changing visibility of each graphic using group as its subgroup field
-						cmzn_graphic_id graphic = cmzn_scene_get_first_graphic(scene);
-						while (graphic)
+						// support legacy command files by changing visibility of each graphics using group as its subgroup field
+						cmzn_graphics_id graphics = cmzn_scene_get_first_graphics(scene);
+						while (graphics)
 						{
-							cmzn_graphic_id this_graphic = graphic;
-							graphic = cmzn_scene_get_next_graphic(scene, this_graphic);
-							cmzn_field_id subgroup_field = cmzn_graphic_get_subgroup_field(this_graphic);
+							cmzn_graphics_id this_graphics = graphics;
+							graphics = cmzn_scene_get_next_graphics(scene, this_graphics);
+							cmzn_field_id subgroup_field = cmzn_graphics_get_subgroup_field(this_graphics);
 							if (subgroup_field == group_field)
 							{
-								cmzn_scene_remove_graphic(scene, this_graphic);
+								cmzn_scene_remove_graphics(scene, this_graphics);
 							}
 							cmzn_field_destroy(&subgroup_field);
-							cmzn_graphic_destroy(&this_graphic);
+							cmzn_graphics_destroy(&this_graphics);
 						}
 						cmzn_scene_end_change(scene);
 					}
@@ -137,7 +137,7 @@ int gfx_modify_scene_general(struct Parse_state *state,
 					{
 						display_message(WARNING_MESSAGE,
 							"Change of default_coordinate field can have unexpected results. "
-							"Please specify coordinate field for each graphic instead.");
+							"Please specify coordinate field for each graphics instead.");
 						display_parse_state_location(state);
 					}
 					cmzn_scene_set_default_coordinate_field(scene, default_coordinate_field);
@@ -174,44 +174,44 @@ int gfx_modify_scene_general(struct Parse_state *state,
 struct cmzn_scene_process_temp_data
 {
 	 class Process_list_or_write_command_class *process_message;
-	 struct cmzn_graphic_list_data *list_data;
+	 struct cmzn_graphics_list_data *list_data;
 };
 
 /***************************************************************************//**
- * Writes out the <graphic> as a text string in the command window with the
- * <graphic_string_detail>, <line_prefix> and <line_suffix> given in the
+ * Writes out the <graphics> as a text string in the command window with the
+ * <graphics_string_detail>, <line_prefix> and <line_suffix> given in the
  * <list_data>.
  */
-int cmzn_scene_process_cmzn_graphic_list_contents(
-	 struct cmzn_graphic *graphic,	void *process_temp_data_void)
+int cmzn_scene_process_cmzn_graphics_list_contents(
+	 struct cmzn_graphics *graphics,	void *process_temp_data_void)
 {
 	int return_code;
-	char *graphic_string; /*,line[40];*/
-	struct cmzn_graphic_list_data *list_data;
+	char *graphics_string; /*,line[40];*/
+	struct cmzn_graphics_list_data *list_data;
 	class Process_list_or_write_command_class *process_message;
 	struct cmzn_scene_process_temp_data *process_temp_data;
 
-	ENTER(cmzn_scene_process_cmzn_graphic_list_contents);
-	if (graphic&&
+	ENTER(cmzn_scene_process_cmzn_graphics_list_contents);
+	if (graphics&&
 		 (process_temp_data=(struct cmzn_scene_process_temp_data *)process_temp_data_void))
 	{
 		 if (NULL != (process_message = process_temp_data->process_message) &&
 			 NULL != (list_data = process_temp_data->list_data))
 		 {
-			 if (NULL != (graphic_string=cmzn_graphic_string(graphic,
-						 list_data->graphic_string_detail)))
+			 if (NULL != (graphics_string=cmzn_graphics_string(graphics,
+						 list_data->graphics_string_detail)))
 				{
 					 if (list_data->line_prefix)
 					 {
 							process_message->process_command(INFORMATION_MESSAGE,list_data->line_prefix);
 					 }
-					 process_message->process_command(INFORMATION_MESSAGE,"%s",graphic_string);
+					 process_message->process_command(INFORMATION_MESSAGE,"%s",graphics_string);
 					 if (list_data->line_suffix)
 					 {
 							process_message->process_command(INFORMATION_MESSAGE,list_data->line_suffix);
 					 }
 					 process_message->process_command(INFORMATION_MESSAGE,"\n");
-					 DEALLOCATE(graphic_string);
+					 DEALLOCATE(graphics_string);
 					 return_code=1;
 				}
 			 return_code= 1;
@@ -224,7 +224,7 @@ int cmzn_scene_process_cmzn_graphic_list_contents(
 	else
 	{
 		 display_message(ERROR_MESSAGE,
-				"cmzn_scene_process_cmzn_graphic_list_contents.  Invalid argument(s)");
+				"cmzn_scene_process_cmzn_graphics_list_contents.  Invalid argument(s)");
 		 return_code=0;
 	}
 	LEAVE;
@@ -240,7 +240,7 @@ int cmzn_scene_process_list_or_write_window_commands(struct cmzn_scene *scene,
 	 const char *command_prefix, const char *command_suffix, class Process_list_or_write_command_class *process_message)
 {
 	int return_code;
-	struct cmzn_graphic_list_data list_data;
+	struct cmzn_graphics_list_data list_data;
 
 	ENTER(cmzn_scene_process_list_or_write_window_command);
 	if (scene && command_prefix)
@@ -252,7 +252,7 @@ int cmzn_scene_process_list_or_write_window_commands(struct cmzn_scene *scene,
 			process_message->process_command(INFORMATION_MESSAGE,command_suffix);
 		}
 		process_message->process_command(INFORMATION_MESSAGE,"\n");
-		list_data.graphic_string_detail=GRAPHIC_STRING_COMPLETE;
+		list_data.graphics_string_detail=GRAPHICS_STRING_COMPLETE;
 		list_data.line_prefix=command_prefix;
 		list_data.line_suffix=command_suffix;
 		struct cmzn_scene_process_temp_data *process_temp_data;
@@ -260,8 +260,8 @@ int cmzn_scene_process_list_or_write_window_commands(struct cmzn_scene *scene,
 		{
 			 process_temp_data->process_message = process_message;
 			 process_temp_data->list_data = &list_data;
-			 return_code=FOR_EACH_OBJECT_IN_LIST(cmzn_graphic)(
-					cmzn_scene_process_cmzn_graphic_list_contents,(void *)process_temp_data,
+			 return_code=FOR_EACH_OBJECT_IN_LIST(cmzn_graphics)(
+					cmzn_scene_process_cmzn_graphics_list_contents,(void *)process_temp_data,
 					scene->list_of_graphics);
 			 DEALLOCATE(process_temp_data);
 		}
@@ -301,7 +301,7 @@ int cmzn_scene_list_contents(struct cmzn_scene *scene)
 {
 	char *name = 0;
 	int return_code;
-	struct cmzn_graphic_list_data list_data;
+	struct cmzn_graphics_list_data list_data;
 
 	ENTER(cmzn_scene_list_contents);
 	if (scene)
@@ -332,20 +332,20 @@ int cmzn_scene_list_contents(struct cmzn_scene *scene)
 			}
 			display_message(INFORMATION_MESSAGE, "\"\n");
 		}
-		if (0 < NUMBER_IN_LIST(cmzn_graphic)(
+		if (0 < NUMBER_IN_LIST(cmzn_graphics)(
 			scene->list_of_graphics))
 		{
 			display_message(INFORMATION_MESSAGE,"  graphics objects defined:\n");
-			list_data.graphic_string_detail=GRAPHIC_STRING_COMPLETE_PLUS;
+			list_data.graphics_string_detail=GRAPHICS_STRING_COMPLETE_PLUS;
 			list_data.line_prefix="  ";
 			list_data.line_suffix="";
-			return_code=FOR_EACH_OBJECT_IN_LIST(cmzn_graphic)(
-				cmzn_graphic_list_contents,(void *)&list_data,
+			return_code=FOR_EACH_OBJECT_IN_LIST(cmzn_graphics)(
+				cmzn_graphics_list_contents,(void *)&list_data,
 				scene->list_of_graphics);
 		}
 		else
 		{
-			display_message(INFORMATION_MESSAGE,"  no graphics graphic defined\n");
+			display_message(INFORMATION_MESSAGE,"  no graphics graphics defined\n");
 			return_code=1;
 		}
 	}
@@ -425,16 +425,16 @@ int cmzn_scene_execute_command_internal(cmzn_scene_id scene,
 			struct Modify_scene_data modify_scene_data;
 			modify_scene_data.delete_flag = 0;
 			modify_scene_data.position = -1;
-			modify_scene_data.graphic = (struct cmzn_graphic *)NULL;
-			modify_scene_data.modify_this_graphic = 0;
+			modify_scene_data.graphics = (struct cmzn_graphics *)NULL;
+			modify_scene_data.modify_this_graphics = 0;
 			modify_scene_data.group = group;
 			int previous_state_index;
 			if (state && (previous_state_index = state->current_index))
 			{
 				option_table = CREATE(Option_table)();
 				/* as */
-				char *graphic_name = (char *)NULL;
-				Option_table_add_name_entry(option_table, "as", &graphic_name);
+				char *graphics_name = (char *)NULL;
+				Option_table_add_name_entry(option_table, "as", &graphics_name);
 				/* default to absorb everything else */
 				char *dummy_string = (char *)NULL;
 				Option_table_add_name_entry(option_table, (char *)NULL, &dummy_string);
@@ -442,20 +442,20 @@ int cmzn_scene_execute_command_internal(cmzn_scene_id scene,
 				DESTROY(Option_table)(&option_table);
 				if (return_code)
 				{
-					if (graphic_name && (modify_scene_data.graphic =
-						cmzn_scene_get_first_graphic_with_condition(
-							scene, cmzn_graphic_has_name, (void *)graphic_name)))
+					if (graphics_name && (modify_scene_data.graphics =
+						cmzn_scene_get_first_graphics_with_condition(
+							scene, cmzn_graphics_has_name, (void *)graphics_name)))
 					{
-						ACCESS(cmzn_graphic)(modify_scene_data.graphic);
+						ACCESS(cmzn_graphics)(modify_scene_data.graphics);
 					}
 				}
 				if (dummy_string)
 				{
 					DEALLOCATE(dummy_string);
 				}
-				if (graphic_name)
+				if (graphics_name)
 				{
-					DEALLOCATE(graphic_name);
+					DEALLOCATE(graphics_name);
 				}
 				/* Return back to where we were */
 				shift_Parse_state(state, previous_state_index - state->current_index);
@@ -515,15 +515,15 @@ int cmzn_scene_execute_command_internal(cmzn_scene_id scene,
 				gfx_modify_scene_surfaces);
 
 			return_code = Option_table_parse(option_table, state);
-			if (return_code && (modify_scene_data.graphic))
+			if (return_code && (modify_scene_data.graphics))
 			{
 				return_code = cmzn_region_modify_scene(scene->region,
-					modify_scene_data.graphic,
+					modify_scene_data.graphics,
 					modify_scene_data.delete_flag,
 					modify_scene_data.position);
 			} /* parse error,help */
 			DESTROY(Option_table)(&option_table);
-			cmzn_graphic_destroy(&modify_scene_data.graphic);
+			cmzn_graphics_destroy(&modify_scene_data.graphics);
 			cmzn_scene_cleanup_scene_command_data(&scene_command_data);
 		}
 	}
@@ -550,65 +550,65 @@ int cmzn_scene_execute_command(cmzn_scene_id scene, const char *command_string)
 
 // GRC needed?
 int cmzn_scene_add_glyph(struct cmzn_scene *scene,
-	cmzn_glyph *glyph, const char *cmiss_graphic_name)
+	cmzn_glyph *glyph, const char *graphics_name)
 {
 	int return_code = 0;
 	if (scene && glyph)
 	{
-		if (!FIRST_OBJECT_IN_LIST_THAT(cmzn_graphic)(cmzn_graphic_has_name,
-				(void *)cmiss_graphic_name, scene->list_of_graphics))
+		if (!FIRST_OBJECT_IN_LIST_THAT(cmzn_graphics)(cmzn_graphics_has_name,
+				(void *)graphics_name, scene->list_of_graphics))
 		{
 			cmzn_scene_begin_change(scene);
-			cmzn_graphic *graphic = cmzn_graphic_points_base_cast(cmzn_scene_create_graphic_points(scene));
-			cmzn_graphic_set_name(graphic, cmiss_graphic_name);
-			cmzn_graphic_point_attributes_id point_attributes = cmzn_graphic_get_point_attributes(graphic);
-			cmzn_graphic_point_attributes_set_glyph(point_attributes, reinterpret_cast<cmzn_glyph_id>(glyph));
+			cmzn_graphics *graphics = cmzn_scene_create_graphics_points(scene);
+			cmzn_graphics_set_name(graphics, graphics_name);
+			cmzn_graphicspointattributes_id point_attributes = cmzn_graphics_get_graphicspointattributes(graphics);
+			cmzn_graphicspointattributes_set_glyph(point_attributes, reinterpret_cast<cmzn_glyph_id>(glyph));
 			const double one = 1.0;
-			cmzn_graphic_point_attributes_set_base_size(point_attributes, 1, &one);
-			cmzn_graphic_point_attributes_destroy(&point_attributes);
-			cmzn_graphic_destroy(&graphic);
+			cmzn_graphicspointattributes_set_base_size(point_attributes, 1, &one);
+			cmzn_graphicspointattributes_destroy(&point_attributes);
+			cmzn_graphics_destroy(&graphics);
 			cmzn_scene_end_change(scene);
 			return_code = 1;
 		}
 		else
 		{
 			display_message(ERROR_MESSAGE,
-				"cmzn_scene_add_glyph.  Graphic with the same name already exists");
+				"cmzn_scene_add_glyph.  Graphics with the same name already exists");
 		}
 	}
 	return return_code;
 }
 
-cmzn_graphic* cmzn_scene_create_graphic_app(cmzn_scene *scene,
-	cmzn_graphic_type graphic_type, cmzn_graphic *graphic_to_copy)
+cmzn_graphics* cmzn_scene_create_graphics_app(cmzn_scene *scene,
+	cmzn_graphics_type graphics_type, cmzn_graphics *graphics_to_copy)
 {
-	cmzn_graphic *graphic = CREATE(cmzn_graphic)(graphic_type);
-	if (graphic_to_copy &&
-		(graphic_type == cmzn_graphic_get_graphic_type(graphic_to_copy)))
+	cmzn_graphics *graphics = CREATE(cmzn_graphics)(graphics_type);
+	if (graphics_to_copy &&
+		(graphics_type == cmzn_graphics_get_graphics_type(graphics_to_copy)))
 	{
-		cmzn_graphic_copy_without_graphics_object(graphic, graphic_to_copy);
+		cmzn_graphics_copy_without_graphics_object(graphics, graphics_to_copy);
 	}
 	else
 	{
-		cmzn_scene_set_minimum_graphic_defaults(scene, graphic);
-		cmzn_graphic_line_attributes_id line_attributes = cmzn_graphic_get_line_attributes(graphic);
-		cmzn_graphic_point_attributes_id point_attributes = cmzn_graphic_get_point_attributes(graphic);
-		if (graphic_type == CMZN_GRAPHIC_STREAMLINES)
+		cmzn_scene_set_minimum_graphics_defaults(scene, graphics);
+		cmzn_graphicslineattributes_id line_attributes = cmzn_graphics_get_graphicslineattributes(graphics);
+		cmzn_graphicspointattributes_id point_attributes = cmzn_graphics_get_graphicspointattributes(graphics);
+		if (graphics_type == CMZN_GRAPHICS_STREAMLINES)
 		{
 			// use previous default of 1.0 for streamline width
 			const double one = 1.0;
-			cmzn_graphic_line_attributes_set_base_size(line_attributes, 1, &one);
+			cmzn_graphicslineattributes_set_base_size(line_attributes, 1, &one);
 		}
 		if (point_attributes)
 		{
 			// use previous default of 1.0 for base size
 			const double one = 1.0;
-			cmzn_graphic_point_attributes_set_base_size(point_attributes, 1, &one);
+			cmzn_graphicspointattributes_set_base_size(point_attributes, 1, &one);
 		}
-		cmzn_graphic_line_attributes_destroy(&line_attributes);
-		cmzn_graphic_point_attributes_destroy(&point_attributes);
+		cmzn_graphicslineattributes_destroy(&line_attributes);
+		cmzn_graphicspointattributes_destroy(&point_attributes);
 	}
-	return (graphic);
+	return (graphics);
 }
 
 int set_Scene(struct Parse_state *state,

@@ -9,7 +9,7 @@
 #include "general/debug.h"
 #include "general/message.h"
 #include "command/parser.h"
-#include "graphics/graphic.h"
+#include "graphics/graphics.h"
 #include "graphics/scenefilter.hpp"
 #include "graphics/scenefilter_app.hpp"
 
@@ -238,33 +238,33 @@ int gfx_define_graphics_filter_contents(struct Parse_state *state, void *graphic
 {
 	int return_code = 1, number_of_valid_strings = 0;
 	struct Define_graphics_filter_data *filter_data = (struct Define_graphics_filter_data *)filter_data_void;
-	char *match_graphic_name, match_visibility_flags, *match_region_path;
-	enum cmzn_graphic_type graphic_type;
-	const char **valid_strings = NULL, *graphic_type_string = NULL;
+	char *match_graphics_name, match_visibility_flags, *match_region_path;
+	enum cmzn_graphics_type graphics_type;
+	const char **valid_strings = NULL, *graphics_type_string = NULL;
 	if (state && filter_data)
 	{
 		cmzn_scenefilter_id *graphics_filter_handle = (cmzn_scenefilter_id *)graphics_filter_handle_void; // can be null
 		cmzn_scenefilter_id graphics_filter = *graphics_filter_handle;
-		match_graphic_name = NULL;
+		match_graphics_name = NULL;
 		match_visibility_flags = 0;
 		match_region_path = NULL;
-		graphic_type = CMZN_GRAPHIC_TYPE_INVALID;
+		graphics_type = CMZN_GRAPHICS_TYPE_INVALID;
 		int inverse = 0;
 		if (graphics_filter)
 		{
 			inverse = static_cast<int>(graphics_filter->isInverse());
 		}
-		valid_strings = ENUMERATOR_GET_VALID_STRINGS(cmzn_graphic_type)(
+		valid_strings = ENUMERATOR_GET_VALID_STRINGS(cmzn_graphics_type)(
 			&number_of_valid_strings,
-			(ENUMERATOR_CONDITIONAL_FUNCTION(cmzn_graphic_type) *)NULL, (void *)NULL);
+			(ENUMERATOR_CONDITIONAL_FUNCTION(cmzn_graphics_type) *)NULL, (void *)NULL);
 
 		struct Option_table *option_table = CREATE(Option_table)();
 		Option_table_add_help(option_table," Filter to set up what will be and "
 				"what will not be included in a scene. The optional inverse_match "
-				"flag will invert the filter's match criterion. The behaviour is to show matching graphic "
-				"with the matching criteria. <match_graphic_name> filters graphic with the matching name. "
-				"<match_visibility_flags> filters graphic with the setting on the visibility flag. "
-				"<match_region_path> filters graphic in the specified region or its subregion. "
+				"flag will invert the filter's match criterion. The behaviour is to show matching graphics "
+				"with the matching criteria. <match_graphics_name> filters graphics with the matching name. "
+				"<match_visibility_flags> filters graphics with the setting on the visibility flag. "
+				"<match_region_path> filters graphics in the specified region or its subregion. "
 				"<operator_or> filters the scene using the logical operation 'or' on a collective of filters. "
 				"<operator_and> filters the scene using the logical operation 'and' on a collective of filters. "
 				"Filters created earlier can be added or removed from the <operator_or> and <operator_and> filter.");
@@ -274,10 +274,10 @@ int gfx_define_graphics_filter_contents(struct Parse_state *state, void *graphic
 		Option_table_add_entry(option_table, "operator_and", graphics_filter_handle_void, filter_data_void,
 			gfx_define_graphics_filter_operator_and);
 		Option_table_add_enumerator(option_table,number_of_valid_strings,
-			valid_strings,&(graphic_type_string));
+			valid_strings,&(graphics_type_string));
 		DEALLOCATE(valid_strings);
-		Option_table_add_string_entry(option_table, "match_graphic_name",
-			&(match_graphic_name), " MATCH_NAME");
+		Option_table_add_string_entry(option_table, "match_graphics_name",
+			&(match_graphics_name), " MATCH_NAME");
 		Option_table_add_char_flag_entry(option_table, "match_visibility_flags",
 			&(match_visibility_flags));
 		Option_table_add_string_entry(option_table, "match_region_path",
@@ -288,7 +288,7 @@ int gfx_define_graphics_filter_contents(struct Parse_state *state, void *graphic
 		if (return_code)
 		{
 			int number_of_match_criteria = match_visibility_flags +
-				(NULL != match_region_path) +	(NULL != match_graphic_name);
+				(NULL != match_region_path) +	(NULL != match_graphics_name);
 			if (1 < number_of_match_criteria)
 			{
 				display_message(ERROR_MESSAGE,
@@ -307,10 +307,10 @@ int gfx_define_graphics_filter_contents(struct Parse_state *state, void *graphic
 					graphics_filter = cmzn_scenefiltermodule_create_scenefilter_visibility_flags(
 						filter_data->filter_module);
 				}
-				else if (match_graphic_name)
+				else if (match_graphics_name)
 				{
-					graphics_filter = cmzn_scenefiltermodule_create_scenefilter_graphic_name(
-						filter_data->filter_module, match_graphic_name);
+					graphics_filter = cmzn_scenefiltermodule_create_scenefilter_graphics_name(
+						filter_data->filter_module, match_graphics_name);
 				}
 				else if (match_region_path)
 				{
@@ -329,11 +329,11 @@ int gfx_define_graphics_filter_contents(struct Parse_state *state, void *graphic
 							match_region_path);
 					}
 				}
-				else if (graphic_type_string)
+				else if (graphics_type_string)
 				{
-					STRING_TO_ENUMERATOR(cmzn_graphic_type)(graphic_type_string, &graphic_type);
-					graphics_filter = cmzn_scenefiltermodule_create_scenefilter_graphic_type(
-						filter_data->filter_module, graphic_type);
+					STRING_TO_ENUMERATOR(cmzn_graphics_type)(graphics_type_string, &graphics_type);
+					graphics_filter = cmzn_scenefiltermodule_create_scenefilter_graphics_type(
+						filter_data->filter_module, graphics_type);
 				}
 			}
 
@@ -343,12 +343,12 @@ int gfx_define_graphics_filter_contents(struct Parse_state *state, void *graphic
 				*graphics_filter_handle = graphics_filter;
 			}
 		}
-		if (match_graphic_name)
-			DEALLOCATE(match_graphic_name);
+		if (match_graphics_name)
+			DEALLOCATE(match_graphics_name);
 		if (match_region_path)
 			DEALLOCATE(match_region_path);
-		if (graphic_type_string)
-			DEALLOCATE(graphic_type_string);
+		if (graphics_type_string)
+			DEALLOCATE(graphics_type_string);
 	}
 	else
 	{

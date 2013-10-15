@@ -9,7 +9,7 @@
 #endif /* defined (BUILD_WITH_CMAKE) */
 
 #include "zinc/fieldmodule.h"
-#include "zinc/graphic.h"
+#include "zinc/graphics.h"
 #include "zinc/graphicsmaterial.h"
 #include "zinc/font.h"
 #include "zinc/region.h"
@@ -21,7 +21,8 @@
 #include "general/message.h"
 #include "command/parser.h"
 #include "graphics/glyph.hpp"
-#include "graphics/graphic.h"
+#include "graphics/graphics.h"
+#include "graphics/graphics_app.h"
 #include "graphics/graphics_module.h"
 #include "graphics/scene.h"
 #include "graphics/scene_coordinate_system.hpp"
@@ -37,7 +38,7 @@
 #include "finite_element/finite_element_region_app.h"
 #include "graphics/tessellation_app.hpp"
 
-enum Legacy_graphic_type
+enum Legacy_graphics_type
 {
 	LEGACY_GRAPHIC_NONE,
 	LEGACY_GRAPHIC_POINT,
@@ -48,94 +49,94 @@ enum Legacy_graphic_type
 	LEGACY_GRAPHIC_ISO_SURFACES
 };
 
-int gfx_modify_scene_graphic(struct Parse_state *state,
-	enum cmzn_graphic_type graphic_type,
-	enum Legacy_graphic_type legacy_graphic_type, const char *help_text,
+int gfx_modify_scene_graphics(struct Parse_state *state,
+	enum cmzn_graphics_type graphics_type,
+	enum Legacy_graphics_type legacy_graphics_type, const char *help_text,
 	struct Modify_scene_data *modify_scene_data,
 	struct Scene_command_data *scene_command_data)
 {
 	if (!(state && scene_command_data && modify_scene_data))
 	{
 		display_message(ERROR_MESSAGE,
-			"gfx_modify_scene_graphic.  Invalid argument(s)");
+			"gfx_modify_scene_graphics.  Invalid argument(s)");
 		return 0;
 	}
-	cmzn_graphic_id graphic = 0;
-	if (modify_scene_data->modify_this_graphic)
+	cmzn_graphics_id graphics = 0;
+	if (modify_scene_data->modify_this_graphics)
 	{
-		graphic = cmzn_graphic_access(modify_scene_data->graphic);
-		graphic_type = cmzn_graphic_get_graphic_type(graphic);
+		graphics = cmzn_graphics_access(modify_scene_data->graphics);
+		graphics_type = cmzn_graphics_get_graphics_type(graphics);
 	}
 	else
 	{
-		graphic = cmzn_scene_create_graphic_app(scene_command_data->scene,
-			graphic_type, modify_scene_data->graphic);
-		switch (legacy_graphic_type)
+		graphics = cmzn_scene_create_graphics_app(scene_command_data->scene,
+			graphics_type, modify_scene_data->graphics);
+		switch (legacy_graphics_type)
 		{
 		case LEGACY_GRAPHIC_NODE_POINTS:
-			cmzn_graphic_set_domain_type(graphic, CMZN_FIELD_DOMAIN_NODES);
+			cmzn_graphics_set_domain_type(graphics, CMZN_FIELD_DOMAIN_NODES);
 			break;
 		case LEGACY_GRAPHIC_DATA_POINTS:
-			cmzn_graphic_set_domain_type(graphic, CMZN_FIELD_DOMAIN_DATA);
+			cmzn_graphics_set_domain_type(graphics, CMZN_FIELD_DOMAIN_DATA);
 			break;
 		case LEGACY_GRAPHIC_ELEMENT_POINTS:
-			cmzn_graphic_set_domain_type(graphic, CMZN_FIELD_DOMAIN_MESH_HIGHEST_DIMENSION);
+			cmzn_graphics_set_domain_type(graphics, CMZN_FIELD_DOMAIN_MESH_HIGHEST_DIMENSION);
 			break;
 		default:
 			// do nothing
 			break;
 		}
-		if (legacy_graphic_type == LEGACY_GRAPHIC_CYLINDERS)
+		if (legacy_graphics_type == LEGACY_GRAPHIC_CYLINDERS)
 		{
-			cmzn_graphic_line_attributes_id line_attributes = cmzn_graphic_get_line_attributes(graphic);
-			cmzn_graphic_line_attributes_set_shape(line_attributes, CMZN_GRAPHIC_LINE_ATTRIBUTES_SHAPE_CIRCLE_EXTRUSION);
+			cmzn_graphicslineattributes_id line_attributes = cmzn_graphics_get_graphicslineattributes(graphics);
+			cmzn_graphicslineattributes_set_shape(line_attributes, CMZN_GRAPHICSLINEATTRIBUTES_SHAPE_CIRCLE_EXTRUSION);
 			const double two = 2;
 			// default scale factor is 2.0 for radius to diameter conversion
-			cmzn_graphic_line_attributes_set_scale_factors(line_attributes, 1, &two);
-			cmzn_graphic_line_attributes_destroy(&line_attributes);
+			cmzn_graphicslineattributes_set_scale_factors(line_attributes, 1, &two);
+			cmzn_graphicslineattributes_destroy(&line_attributes);
 		}
-		cmzn_scene_set_graphics_defaults_gfx_modify(scene_command_data->scene, graphic);
+		cmzn_scene_set_graphics_defaults_gfx_modify(scene_command_data->scene, graphics);
 		if (modify_scene_data->group)
 		{
-			cmzn_field_id subgroup_field = cmzn_graphic_get_subgroup_field(graphic);
+			cmzn_field_id subgroup_field = cmzn_graphics_get_subgroup_field(graphics);
 			if (subgroup_field)
 			{
 				cmzn_field_destroy(&subgroup_field);
 			}
 			else
 			{
-				cmzn_graphic_set_subgroup_field(graphic,
+				cmzn_graphics_set_subgroup_field(graphics,
 					cmzn_field_group_base_cast(modify_scene_data->group));
 			}
 		}
 	}
-	if (!graphic)
+	if (!graphics)
 	{
 		display_message(ERROR_MESSAGE,
-			"gfx_modify_scene_graphic.  Could not create graphic");
+			"gfx_modify_scene_graphics.  Could not create graphics");
 		return 0;
 	}
-	REACCESS(cmzn_graphic)(&(modify_scene_data->graphic), graphic);
+	REACCESS(cmzn_graphics)(&(modify_scene_data->graphics), graphics);
 
 	int return_code = 1;
 
 	int number_of_valid_strings;
 	const char **valid_strings;
 	char *seed_nodeset_name = 0;
-	if (graphic->seed_nodeset)
+	if (graphics->seed_nodeset)
 	{
-		seed_nodeset_name = cmzn_nodeset_get_name(graphic->seed_nodeset);
+		seed_nodeset_name = cmzn_nodeset_get_name(graphics->seed_nodeset);
 	}
-	cmzn_graphic_contours_id contours = cmzn_graphic_cast_contours(graphic);
-	cmzn_graphic_streamlines_id streamlines = cmzn_graphic_cast_streamlines(graphic);
-	cmzn_graphic_line_attributes_id line_attributes = cmzn_graphic_get_line_attributes(graphic);
+	cmzn_graphics_contours_id contours = cmzn_graphics_cast_contours(graphics);
+	cmzn_graphics_streamlines_id streamlines = cmzn_graphics_cast_streamlines(graphics);
+	cmzn_graphicslineattributes_id line_attributes = cmzn_graphics_get_graphicslineattributes(graphics);
 	cmzn_field_id line_orientation_scale_field = 0;
-	cmzn_graphic_point_attributes_id point_attributes = cmzn_graphic_get_point_attributes(graphic);
-	cmzn_graphic_sampling_attributes_id sampling =
-		((legacy_graphic_type == LEGACY_GRAPHIC_POINT) ||
-		(legacy_graphic_type == LEGACY_GRAPHIC_NODE_POINTS) ||
-		(legacy_graphic_type == LEGACY_GRAPHIC_DATA_POINTS)) ?
-		0 : cmzn_graphic_get_sampling_attributes(graphic);
+	cmzn_graphicspointattributes_id point_attributes = cmzn_graphics_get_graphicspointattributes(graphics);
+	cmzn_graphicssamplingattributes_id sampling =
+		((legacy_graphics_type == LEGACY_GRAPHIC_POINT) ||
+		(legacy_graphics_type == LEGACY_GRAPHIC_NODE_POINTS) ||
+		(legacy_graphics_type == LEGACY_GRAPHIC_DATA_POINTS)) ?
+		0 : cmzn_graphics_get_graphicssamplingattributes(graphics);
 
 	cmzn_field_id isoscalar_field = 0;
 	int number_of_isovalues = 0;
@@ -146,17 +147,17 @@ int gfx_modify_scene_graphic(struct Parse_state *state,
 	double decimation_threshold = 0;
 	if (contours)
 	{
-		isoscalar_field = cmzn_graphic_contours_get_isoscalar_field(contours);
-		number_of_isovalues = cmzn_graphic_contours_get_list_isovalues(contours, 0, 0);
+		isoscalar_field = cmzn_graphics_contours_get_isoscalar_field(contours);
+		number_of_isovalues = cmzn_graphics_contours_get_list_isovalues(contours, 0, 0);
 		if (number_of_isovalues)
 		{
 			ALLOCATE(isovalues, double, number_of_isovalues);
-			cmzn_graphic_contours_get_list_isovalues(contours, number_of_isovalues, isovalues);
+			cmzn_graphics_contours_get_list_isovalues(contours, number_of_isovalues, isovalues);
 		}
-		range_number_of_isovalues = cmzn_graphic_contours_get_range_number_of_isovalues(contours);
-		first_isovalue = cmzn_graphic_contours_get_range_first_isovalue(contours);
-		last_isovalue = cmzn_graphic_contours_get_range_last_isovalue(contours);
-		decimation_threshold = cmzn_graphic_contours_get_decimation_threshold(contours);
+		range_number_of_isovalues = cmzn_graphics_contours_get_range_number_of_isovalues(contours);
+		first_isovalue = cmzn_graphics_contours_get_range_first_isovalue(contours);
+		last_isovalue = cmzn_graphics_contours_get_range_last_isovalue(contours);
+		decimation_threshold = cmzn_graphics_contours_get_decimation_threshold(contours);
 	}
 
 	Option_table *option_table = CREATE(Option_table)();
@@ -166,7 +167,7 @@ int gfx_modify_scene_graphic(struct Parse_state *state,
 	}
 
 	/* as */
-	char *name = cmzn_graphic_get_name(graphic);
+	char *name = cmzn_graphics_get_name(graphics);
 	Option_table_add_entry(option_table,"as", &name,
 		(void *)1,set_name);
 
@@ -174,7 +175,7 @@ int gfx_modify_scene_graphic(struct Parse_state *state,
 	const char *sample_mode_string = 0;
 	if (sampling)
 	{
-		cmzn_element_point_sample_mode sample_mode = cmzn_graphic_sampling_attributes_get_mode(sampling);
+		cmzn_element_point_sample_mode sample_mode = cmzn_graphicssamplingattributes_get_mode(sampling);
 		sample_mode_string = ENUMERATOR_STRING(cmzn_element_point_sample_mode)(sample_mode);
 		valid_strings = ENUMERATOR_GET_VALID_STRINGS(cmzn_element_point_sample_mode)(
 			&number_of_valid_strings,
@@ -208,12 +209,12 @@ int gfx_modify_scene_graphic(struct Parse_state *state,
 	double glyph_offset[3];
 	if (point_attributes)
 	{
-		cmzn_graphic_point_attributes_get_glyph_offset(point_attributes, 3, glyph_offset);
+		cmzn_graphicspointattributes_get_glyph_offset(point_attributes, 3, glyph_offset);
 	}
 
 	/* glyph centre: note equal to negative of point offset! */
 	double glyph_centre[3];
-	if (point_attributes && (legacy_graphic_type != LEGACY_GRAPHIC_NONE))
+	if (point_attributes && (legacy_graphics_type != LEGACY_GRAPHIC_NONE))
 	{
 		for (int i = 0; i < 3; i++)
 		{
@@ -224,7 +225,7 @@ int gfx_modify_scene_graphic(struct Parse_state *state,
 
 	/* circle_discretization */
 	int circle_discretization = 0;
-	if (legacy_graphic_type == LEGACY_GRAPHIC_CYLINDERS)
+	if (legacy_graphics_type == LEGACY_GRAPHIC_CYLINDERS)
 	{
 		Option_table_add_entry(option_table, "circle_discretization",
 			(void *)&circle_discretization, (void *)NULL,
@@ -233,15 +234,15 @@ int gfx_modify_scene_graphic(struct Parse_state *state,
 
 	/* constant_radius */
 	double constant_radius = 0;
-	if (legacy_graphic_type == LEGACY_GRAPHIC_CYLINDERS)
+	if (legacy_graphics_type == LEGACY_GRAPHIC_CYLINDERS)
 	{
-		cmzn_graphic_line_attributes_get_base_size(line_attributes, 1, &constant_radius);
+		cmzn_graphicslineattributes_get_base_size(line_attributes, 1, &constant_radius);
 		constant_radius *= 0.5; // convert from diameter
 		Option_table_add_double_entry(option_table, "constant_radius", &constant_radius);
 	}
 
 	/* coordinate */
-	cmzn_field_id coordinate_field = cmzn_graphic_get_coordinate_field(graphic);
+	cmzn_field_id coordinate_field = cmzn_graphics_get_coordinate_field(graphics);
 	Set_Computed_field_conditional_data set_coordinate_field_data;
 	set_coordinate_field_data.computed_field_manager = scene_command_data->computed_field_manager;
 	set_coordinate_field_data.conditional_function = Computed_field_has_up_to_3_numerical_components;
@@ -250,7 +251,7 @@ int gfx_modify_scene_graphic(struct Parse_state *state,
 		&coordinate_field, &set_coordinate_field_data);
 
 	/* coordinate system */
-	cmzn_scene_coordinate_system coordinate_system = cmzn_graphic_get_coordinate_system(graphic);
+	cmzn_scene_coordinate_system coordinate_system = cmzn_graphics_get_coordinate_system(graphics);
 	const char *coordinate_system_string =
 		ENUMERATOR_STRING(cmzn_scene_coordinate_system)(coordinate_system);
 	valid_strings = ENUMERATOR_GET_VALID_STRINGS(cmzn_scene_coordinate_system)(
@@ -262,7 +263,7 @@ int gfx_modify_scene_graphic(struct Parse_state *state,
 	DEALLOCATE(valid_strings);
 
 	/* data */
-	cmzn_field_id data_field = cmzn_graphic_get_data_field(graphic);
+	cmzn_field_id data_field = cmzn_graphics_get_data_field(graphics);
 	Set_Computed_field_conditional_data set_data_field_data;
 	set_data_field_data.computed_field_manager = scene_command_data->computed_field_manager;
 	set_data_field_data.conditional_function = Computed_field_has_numerical_components;
@@ -289,7 +290,7 @@ int gfx_modify_scene_graphic(struct Parse_state *state,
 	set_sample_density_field_data.conditional_function_user_data = (void *)NULL;
 	if (sampling)
 	{
-		sample_density_field = cmzn_graphic_sampling_attributes_get_density_field(sampling);
+		sample_density_field = cmzn_graphicssamplingattributes_get_density_field(sampling);
 		Option_table_add_Computed_field_conditional_entry(option_table, "density",
 			&sample_density_field, &set_sample_density_field_data);
 	}
@@ -297,21 +298,21 @@ int gfx_modify_scene_graphic(struct Parse_state *state,
 	/* discretization */
 	int element_divisions_size = 0;
 	int *element_divisions = 0;
-	if ((legacy_graphic_type == LEGACY_GRAPHIC_ELEMENT_POINTS) ||
-		(graphic_type == CMZN_GRAPHIC_STREAMLINES))
+	if ((legacy_graphics_type == LEGACY_GRAPHIC_ELEMENT_POINTS) ||
+		(graphics_type == CMZN_GRAPHICS_STREAMLINES))
 	{
 		Option_table_add_divisions_entry(option_table, "discretization",
 			&element_divisions, &element_divisions_size);
 	}
 
 	/* domain type */
-	cmzn_field_domain_type domain_type = cmzn_graphic_get_domain_type(graphic);
+	cmzn_field_domain_type domain_type = cmzn_graphics_get_domain_type(graphics);
 	const char *domain_type_string = ENUMERATOR_STRING(cmzn_field_domain_type)(domain_type);
-	if ((legacy_graphic_type != LEGACY_GRAPHIC_POINT) &&
-		(legacy_graphic_type != LEGACY_GRAPHIC_NODE_POINTS) &&
-		(legacy_graphic_type != LEGACY_GRAPHIC_DATA_POINTS) &&
-		(legacy_graphic_type != LEGACY_GRAPHIC_ELEMENT_POINTS) &&
-		(legacy_graphic_type != LEGACY_GRAPHIC_ISO_SURFACES))
+	if ((legacy_graphics_type != LEGACY_GRAPHIC_POINT) &&
+		(legacy_graphics_type != LEGACY_GRAPHIC_NODE_POINTS) &&
+		(legacy_graphics_type != LEGACY_GRAPHIC_DATA_POINTS) &&
+		(legacy_graphics_type != LEGACY_GRAPHIC_ELEMENT_POINTS) &&
+		(legacy_graphics_type != LEGACY_GRAPHIC_ISO_SURFACES))
 	{
 		valid_strings = ENUMERATOR_GET_VALID_STRINGS(cmzn_field_domain_type)(
 			&number_of_valid_strings,
@@ -325,12 +326,12 @@ int gfx_modify_scene_graphic(struct Parse_state *state,
 	/* deprecated streamline_type ellipse/line/rectangle/ribbon/cylinder
 	 * (replaced with line_shape, some with same token so not migrated) */
 	const char *streamline_type_strings[3] = { "ellipse", "rectangle", "cylinder" };
-	const struct { enum cmzn_graphic_line_attributes_shape shape; FE_value thickness_to_width_ratio; }
+	const struct { enum cmzn_graphicslineattributes_shape shape; FE_value thickness_to_width_ratio; }
 		streamline_type_to_line_shape[] =
 		{
-			{ CMZN_GRAPHIC_LINE_ATTRIBUTES_SHAPE_CIRCLE_EXTRUSION, 0.2 },
-			{ CMZN_GRAPHIC_LINE_ATTRIBUTES_SHAPE_SQUARE_EXTRUSION, 0.2 },
-			{ CMZN_GRAPHIC_LINE_ATTRIBUTES_SHAPE_CIRCLE_EXTRUSION, 1.0 }
+			{ CMZN_GRAPHICSLINEATTRIBUTES_SHAPE_CIRCLE_EXTRUSION, 0.2 },
+			{ CMZN_GRAPHICSLINEATTRIBUTES_SHAPE_SQUARE_EXTRUSION, 0.2 },
+			{ CMZN_GRAPHICSLINEATTRIBUTES_SHAPE_CIRCLE_EXTRUSION, 1.0 }
 		};
 	const char *streamline_type_string = 0;
 	if (streamlines)
@@ -339,10 +340,10 @@ int gfx_modify_scene_graphic(struct Parse_state *state,
 	}
 
 	/* exterior */
-	char exterior_flag = static_cast<char>(cmzn_graphic_is_exterior(graphic));
-	if ((legacy_graphic_type != LEGACY_GRAPHIC_POINT) &&
-		(legacy_graphic_type != LEGACY_GRAPHIC_NODE_POINTS) &&
-		(legacy_graphic_type != LEGACY_GRAPHIC_DATA_POINTS))
+	char exterior_flag = static_cast<char>(cmzn_graphics_is_exterior(graphics));
+	if ((legacy_graphics_type != LEGACY_GRAPHIC_POINT) &&
+		(legacy_graphics_type != LEGACY_GRAPHIC_NODE_POINTS) &&
+		(legacy_graphics_type != LEGACY_GRAPHIC_DATA_POINTS))
 	{
 		Option_table_add_entry(option_table, "exterior", &exterior_flag,
 			NULL, set_char_flag);
@@ -350,13 +351,13 @@ int gfx_modify_scene_graphic(struct Parse_state *state,
 
 	/* face */
 	enum cmzn_element_face_type face_type = CMZN_ELEMENT_FACE_ALL;
-	if ((legacy_graphic_type != LEGACY_GRAPHIC_POINT) &&
-		(legacy_graphic_type != LEGACY_GRAPHIC_NODE_POINTS) &&
-		(legacy_graphic_type != LEGACY_GRAPHIC_DATA_POINTS))
+	if ((legacy_graphics_type != LEGACY_GRAPHIC_POINT) &&
+		(legacy_graphics_type != LEGACY_GRAPHIC_NODE_POINTS) &&
+		(legacy_graphics_type != LEGACY_GRAPHIC_DATA_POINTS))
 	{
-		face_type = cmzn_graphic_get_face(graphic);
+		face_type = cmzn_graphics_get_face(graphics);
 		Option_table_add_entry(option_table,"face", &face_type,
-			NULL, set_graphic_face_type);
+			NULL, set_graphics_face_type);
 	}
 
 	/* first_iso_value */
@@ -377,7 +378,7 @@ int gfx_modify_scene_graphic(struct Parse_state *state,
 	char *glyph_name = 0;
 	if (point_attributes)
 	{
-		cmzn_glyph_id glyph = cmzn_graphic_point_attributes_get_glyph(point_attributes);
+		cmzn_glyph_id glyph = cmzn_graphicspointattributes_get_glyph(point_attributes);
 		if (glyph)
 		{
 			glyph_name = cmzn_glyph_get_name(glyph);
@@ -389,7 +390,7 @@ int gfx_modify_scene_graphic(struct Parse_state *state,
 	/* deprecated: glyph scaling mode constant/scalar/vector/axes/general (redundant) */
 	const char *deprecated_glyph_scaling_mode_strings[] = { "constant", "scalar", "vector", "axes", "general" };
 	const char *glyph_scaling_mode_string = 0;
-	if ((legacy_graphic_type != LEGACY_GRAPHIC_NONE) && point_attributes)
+	if ((legacy_graphics_type != LEGACY_GRAPHIC_NONE) && point_attributes)
 	{
 		Option_table_add_enumerator(option_table, /*number_of_valid_strings*/5,
 			deprecated_glyph_scaling_mode_strings, &glyph_scaling_mode_string);
@@ -428,7 +429,7 @@ int gfx_modify_scene_graphic(struct Parse_state *state,
 	set_label_field_data.conditional_function_user_data = (void *)NULL;
 	if (point_attributes)
 	{
-		label_field = cmzn_graphic_point_attributes_get_label_field(point_attributes);
+		label_field = cmzn_graphicspointattributes_get_label_field(point_attributes);
 		Option_table_add_Computed_field_conditional_entry(option_table, "label",
 			&label_field, &set_label_field_data);
 	}
@@ -437,7 +438,7 @@ int gfx_modify_scene_graphic(struct Parse_state *state,
 	double label_offset[3];
 	if (point_attributes)
 	{
-		cmzn_graphic_point_attributes_get_label_offset(point_attributes, 3, label_offset);
+		cmzn_graphicspointattributes_get_label_offset(point_attributes, 3, label_offset);
 		Option_table_add_double_vector_entry(option_table, "label_offset", label_offset, &three);
 	}
 
@@ -457,14 +458,14 @@ int gfx_modify_scene_graphic(struct Parse_state *state,
 	if (point_attributes)
 	{
 		Option_table_add_Computed_field_conditional_entry(option_table, "ldensity",
-			&(graphic->label_density_field), &set_label_density_field_data);
+			&(graphics->label_density_field), &set_label_density_field_data);
 	}
 
 	/* streamline length */
 	double streamline_length = 0;
 	if (streamlines)
 	{
-		streamline_length = cmzn_graphic_streamlines_get_track_length(streamlines);
+		streamline_length = cmzn_graphics_streamlines_get_track_length(streamlines);
 		Option_table_add_non_negative_double_entry(option_table,"length", &streamline_length);
 	}
 
@@ -472,11 +473,11 @@ int gfx_modify_scene_graphic(struct Parse_state *state,
 	const char *line_shape_string = 0;
 	if (line_attributes)
 	{
-		line_shape_string = ENUMERATOR_STRING(cmzn_graphic_line_attributes_shape)(
-			cmzn_graphic_line_attributes_get_shape(line_attributes));
-		valid_strings = ENUMERATOR_GET_VALID_STRINGS(cmzn_graphic_line_attributes_shape)(
+		line_shape_string = ENUMERATOR_STRING(cmzn_graphicslineattributes_shape)(
+			cmzn_graphicslineattributes_get_shape(line_attributes));
+		valid_strings = ENUMERATOR_GET_VALID_STRINGS(cmzn_graphicslineattributes_shape)(
 			&number_of_valid_strings,
-			(ENUMERATOR_CONDITIONAL_FUNCTION(cmzn_graphic_line_attributes_shape) *)0,
+			(ENUMERATOR_CONDITIONAL_FUNCTION(cmzn_graphicslineattributes_shape) *)0,
 			(void *)NULL);
 		Option_table_add_enumerator(option_table, number_of_valid_strings,
 			valid_strings, &line_shape_string);
@@ -486,9 +487,9 @@ int gfx_modify_scene_graphic(struct Parse_state *state,
 	/* line_base_size */
 	const int line_base_size_count = 2;
 	double line_base_size[2] = { 0.0, 0.0 };
-	if (line_attributes && (legacy_graphic_type != LEGACY_GRAPHIC_CYLINDERS))
+	if (line_attributes && (legacy_graphics_type != LEGACY_GRAPHIC_CYLINDERS))
 	{
-		cmzn_graphic_line_attributes_get_base_size(line_attributes, 2, line_base_size);
+		cmzn_graphicslineattributes_get_base_size(line_attributes, 2, line_base_size);
 		Option_table_add_double_product_entry(option_table, "line_base_size",
 			line_base_size_count, line_base_size);
 	}
@@ -496,19 +497,19 @@ int gfx_modify_scene_graphic(struct Parse_state *state,
 	/* line_scale_factors */
 	const int line_scale_factors_count = 2;
 	double line_scale_factors[2] = { 1.0, 1.0 };
-	if (line_attributes && (legacy_graphic_type != LEGACY_GRAPHIC_CYLINDERS))
+	if (line_attributes && (legacy_graphics_type != LEGACY_GRAPHIC_CYLINDERS))
 	{
-		cmzn_graphic_line_attributes_get_scale_factors(line_attributes, 2, line_scale_factors);
+		cmzn_graphicslineattributes_get_scale_factors(line_attributes, 2, line_scale_factors);
 		Option_table_add_double_product_entry(option_table, "line_scale_factors",
 			line_scale_factors_count, line_scale_factors);
 	}
 
 	/* line_width */
-	double line_width = cmzn_graphic_get_render_line_width(graphic);
+	double line_width = cmzn_graphics_get_render_line_width(graphics);
 	Option_table_add_positive_double_entry(option_table, "line_width", &line_width);
 
 	/* material */
-	cmzn_graphics_material_id material = cmzn_graphic_get_material(graphic);
+	cmzn_graphics_material_id material = cmzn_graphics_get_material(graphics);
 	Option_table_add_set_Material_entry(option_table, "material", &material,
 		scene_command_data->material_module);
 
@@ -517,7 +518,7 @@ int gfx_modify_scene_graphic(struct Parse_state *state,
 	if (point_attributes)
 	{
 		glyph_repeat_mode_string = ENUMERATOR_STRING(cmzn_glyph_repeat_mode)(
-			cmzn_graphic_point_attributes_get_glyph_repeat_mode(point_attributes));
+			cmzn_graphicspointattributes_get_glyph_repeat_mode(point_attributes));
 		valid_strings = ENUMERATOR_GET_VALID_STRINGS(cmzn_glyph_repeat_mode)(
 			&number_of_valid_strings,
 			(ENUMERATOR_CONDITIONAL_FUNCTION(cmzn_glyph_repeat_mode) *)NULL,
@@ -528,16 +529,16 @@ int gfx_modify_scene_graphic(struct Parse_state *state,
 	}
 
 	/* native_discretization (tessellation_field) */
-	cmzn_field_id tessellation_field = cmzn_graphic_get_tessellation_field(graphic);
+	cmzn_field_id tessellation_field = cmzn_graphics_get_tessellation_field(graphics);
 	Set_Computed_field_conditional_data set_tessellation_field_data;
 	set_tessellation_field_data.computed_field_manager = scene_command_data->computed_field_manager;
 	set_tessellation_field_data.conditional_function = (MANAGER_CONDITIONAL_FUNCTION(Computed_field) *)NULL;
 	set_tessellation_field_data.conditional_function_user_data = (void *)NULL;
-	if ((legacy_graphic_type != LEGACY_GRAPHIC_POINT) &&
-		(legacy_graphic_type != LEGACY_GRAPHIC_NODE_POINTS) &&
-		(legacy_graphic_type != LEGACY_GRAPHIC_DATA_POINTS))
+	if ((legacy_graphics_type != LEGACY_GRAPHIC_POINT) &&
+		(legacy_graphics_type != LEGACY_GRAPHIC_NODE_POINTS) &&
+		(legacy_graphics_type != LEGACY_GRAPHIC_DATA_POINTS))
 	{
-		tessellation_field = cmzn_graphic_get_tessellation_field(graphic);
+		tessellation_field = cmzn_graphics_get_tessellation_field(graphics);
 		Option_table_add_Computed_field_conditional_entry(option_table, "native_discretization",
 			&tessellation_field, &set_tessellation_field_data);
 	}
@@ -546,7 +547,7 @@ int gfx_modify_scene_graphic(struct Parse_state *state,
 	Streamline_data_type streamline_data_type = STREAM_NO_DATA;
 	const char *streamline_data_type_string =
 		ENUMERATOR_STRING(Streamline_data_type)(streamline_data_type);
-	if (graphic_type == CMZN_GRAPHIC_STREAMLINES)
+	if (graphics_type == CMZN_GRAPHICS_STREAMLINES)
 	{
 		valid_strings = ENUMERATOR_GET_VALID_STRINGS(Streamline_data_type)(
 			&number_of_valid_strings,
@@ -558,7 +559,7 @@ int gfx_modify_scene_graphic(struct Parse_state *state,
 	}
 
 	/* glyph offset */
-	if (point_attributes && (legacy_graphic_type == LEGACY_GRAPHIC_NONE))
+	if (point_attributes && (legacy_graphics_type == LEGACY_GRAPHIC_NONE))
 	{
 		Option_table_add_double_vector_entry(option_table, "offset", glyph_offset, &three);
 	}
@@ -571,13 +572,13 @@ int gfx_modify_scene_graphic(struct Parse_state *state,
 	set_orientation_scale_field_data.conditional_function_user_data = (void *)NULL;
 	if (point_attributes)
 	{
-		orientation_scale_field = cmzn_graphic_point_attributes_get_orientation_scale_field(point_attributes);
+		orientation_scale_field = cmzn_graphicspointattributes_get_orientation_scale_field(point_attributes);
 		Option_table_add_Computed_field_conditional_entry(option_table, "orientation",
 			&orientation_scale_field, &set_orientation_scale_field_data);
 	}
 
 	/* point_size */
-	double point_size = cmzn_graphic_get_render_point_size(graphic);
+	double point_size = cmzn_graphics_get_render_point_size(graphics);
 	Option_table_add_positive_double_entry(option_table, "point_size", &point_size);
 
 	/* position */
@@ -589,10 +590,10 @@ int gfx_modify_scene_graphic(struct Parse_state *state,
 	set_radius_scalar_field_data.computed_field_manager = scene_command_data->computed_field_manager;
 	set_radius_scalar_field_data.conditional_function = Computed_field_is_scalar;
 	set_radius_scalar_field_data.conditional_function_user_data = (void *)NULL;
-	if (legacy_graphic_type == LEGACY_GRAPHIC_CYLINDERS)
+	if (legacy_graphics_type == LEGACY_GRAPHIC_CYLINDERS)
 	{
 		line_orientation_scale_field =
-			cmzn_graphic_line_attributes_get_orientation_scale_field(line_attributes);
+			cmzn_graphicslineattributes_get_orientation_scale_field(line_attributes);
 		Option_table_add_Computed_field_conditional_entry(option_table, "radius_scalar",
 			&line_orientation_scale_field, &set_radius_scalar_field_data);
 	}
@@ -606,11 +607,11 @@ int gfx_modify_scene_graphic(struct Parse_state *state,
 
 	/* render_polygon_mode: render_shaded|render_wireframe */
 	const char *render_polygon_mode_string = 0;
-	cmzn_graphic_render_polygon_mode render_polygon_mode =  cmzn_graphic_get_render_polygon_mode(graphic);
-	render_polygon_mode_string = ENUMERATOR_STRING(cmzn_graphic_render_polygon_mode)(render_polygon_mode);
-	valid_strings = ENUMERATOR_GET_VALID_STRINGS(cmzn_graphic_render_polygon_mode)(
+	cmzn_graphics_render_polygon_mode render_polygon_mode =  cmzn_graphics_get_render_polygon_mode(graphics);
+	render_polygon_mode_string = ENUMERATOR_STRING(cmzn_graphics_render_polygon_mode)(render_polygon_mode);
+	valid_strings = ENUMERATOR_GET_VALID_STRINGS(cmzn_graphics_render_polygon_mode)(
 		&number_of_valid_strings,
-		(ENUMERATOR_CONDITIONAL_FUNCTION(cmzn_graphic_render_polygon_mode) *)NULL, (void *)NULL);
+		(ENUMERATOR_CONDITIONAL_FUNCTION(cmzn_graphics_render_polygon_mode) *)NULL, (void *)NULL);
 	Option_table_add_enumerator(option_table,number_of_valid_strings,
 		valid_strings,&render_polygon_mode_string);
 	DEALLOCATE(valid_strings);
@@ -619,11 +620,11 @@ int gfx_modify_scene_graphic(struct Parse_state *state,
 	const char *streamlines_track_direction_string = 0;
 	if (streamlines)
 	{
-		streamlines_track_direction_string = ENUMERATOR_STRING(cmzn_graphic_streamlines_track_direction)(
-			cmzn_graphic_streamlines_get_track_direction(streamlines));
-		valid_strings = ENUMERATOR_GET_VALID_STRINGS(cmzn_graphic_streamlines_track_direction)(
+		streamlines_track_direction_string = ENUMERATOR_STRING(cmzn_graphics_streamlines_track_direction)(
+			cmzn_graphics_streamlines_get_track_direction(streamlines));
+		valid_strings = ENUMERATOR_GET_VALID_STRINGS(cmzn_graphics_streamlines_track_direction)(
 			&number_of_valid_strings,
-			(ENUMERATOR_CONDITIONAL_FUNCTION(cmzn_graphic_streamlines_track_direction) *)0, (void *)0);
+			(ENUMERATOR_CONDITIONAL_FUNCTION(cmzn_graphics_streamlines_track_direction) *)0, (void *)0);
 		Option_table_add_enumerator(option_table, number_of_valid_strings,
 			valid_strings, &streamlines_track_direction_string);
 		DEALLOCATE(valid_strings);
@@ -631,9 +632,9 @@ int gfx_modify_scene_graphic(struct Parse_state *state,
 
 	/* deprecated cylinder radius scale_factor (replaced with line_scale_factors) */
 	double radius_scale_factor = 0;
-	if (legacy_graphic_type == LEGACY_GRAPHIC_CYLINDERS)
+	if (legacy_graphics_type == LEGACY_GRAPHIC_CYLINDERS)
 	{
-		cmzn_graphic_line_attributes_get_scale_factors(line_attributes, 1, &radius_scale_factor);
+		cmzn_graphicslineattributes_get_scale_factors(line_attributes, 1, &radius_scale_factor);
 		radius_scale_factor *= 0.5; // convert from diameter
 		Option_table_add_entry(option_table, "scale_factor",
 			&radius_scale_factor, NULL, set_double);
@@ -643,22 +644,22 @@ int gfx_modify_scene_graphic(struct Parse_state *state,
 	double glyph_scale_factors[3];
 	if (point_attributes)
 	{
-		cmzn_graphic_point_attributes_get_scale_factors(point_attributes, 3, glyph_scale_factors);
+		cmzn_graphicspointattributes_get_scale_factors(point_attributes, 3, glyph_scale_factors);
 		Option_table_add_double_product_entry(option_table, "scale_factors", 3, glyph_scale_factors);
 	}
 
 	/* secondary_material (was: multipass_pass1_material) */
-	if (graphic_type == CMZN_GRAPHIC_LINES)
+	if (graphics_type == CMZN_GRAPHICS_LINES)
 	{
-		Option_table_add_set_Material_entry(option_table, "secondary_material", &(graphic->secondary_material),
+		Option_table_add_set_Material_entry(option_table, "secondary_material", &(graphics->secondary_material),
 			scene_command_data->material_module);
 	}
 
 	/* seed_element */
-	if (graphic_type == CMZN_GRAPHIC_STREAMLINES)
+	if (graphics_type == CMZN_GRAPHICS_STREAMLINES)
 	{
 		Option_table_add_entry(option_table, "seed_element",
-			&(graphic->seed_element), cmzn_region_get_FE_region(scene_command_data->region),
+			&(graphics->seed_element), cmzn_region_get_FE_region(scene_command_data->region),
 			set_FE_element_top_level_FE_region);
 	}
 
@@ -667,32 +668,32 @@ int gfx_modify_scene_graphic(struct Parse_state *state,
 	set_seed_mesh_location_field_data.conditional_function = Computed_field_has_value_type_mesh_location;
 	set_seed_mesh_location_field_data.conditional_function_user_data = (void *)NULL;
 	set_seed_mesh_location_field_data.computed_field_manager = scene_command_data->computed_field_manager;
-	if (graphic_type == CMZN_GRAPHIC_STREAMLINES)
+	if (graphics_type == CMZN_GRAPHICS_STREAMLINES)
 	{
 		Option_table_add_Computed_field_conditional_entry(option_table, "seed_node_mesh_location_field",
-			&(graphic->seed_node_mesh_location_field), &set_seed_mesh_location_field_data);
+			&(graphics->seed_node_mesh_location_field), &set_seed_mesh_location_field_data);
 	}
 
 	// seed_nodeset
-	if (graphic_type == CMZN_GRAPHIC_STREAMLINES)
+	if (graphics_type == CMZN_GRAPHICS_STREAMLINES)
 	{
 		Option_table_add_string_entry(option_table, "seed_nodeset", &seed_nodeset_name,
 			" NODE_GROUP_FIELD_NAME|[GROUP_NAME.]nodes|datapoints|none");
 	}
 
 	/* select_mode */
-	enum cmzn_graphic_select_mode select_mode = cmzn_graphic_get_select_mode(graphic);
-	const char *select_mode_string = ENUMERATOR_STRING(cmzn_graphic_select_mode)(select_mode);
-	valid_strings = ENUMERATOR_GET_VALID_STRINGS(cmzn_graphic_select_mode)(
+	enum cmzn_graphics_select_mode select_mode = cmzn_graphics_get_select_mode(graphics);
+	const char *select_mode_string = ENUMERATOR_STRING(cmzn_graphics_select_mode)(select_mode);
+	valid_strings = ENUMERATOR_GET_VALID_STRINGS(cmzn_graphics_select_mode)(
 		&number_of_valid_strings,
-		(ENUMERATOR_CONDITIONAL_FUNCTION(cmzn_graphic_select_mode) *)NULL,
+		(ENUMERATOR_CONDITIONAL_FUNCTION(cmzn_graphics_select_mode) *)NULL,
 		(void *)NULL);
 	Option_table_add_enumerator(option_table,number_of_valid_strings,
 		valid_strings,&select_mode_string);
 	DEALLOCATE(valid_strings);
 
 	/* selected_material */
-	cmzn_graphics_material_id selected_material = cmzn_graphic_get_selected_material(graphic);
+	cmzn_graphics_material_id selected_material = cmzn_graphics_get_selected_material(graphics);
 	Option_table_add_set_Material_entry(option_table, "selected_material", &selected_material,
 		scene_command_data->material_module);
 
@@ -700,18 +701,18 @@ int gfx_modify_scene_graphic(struct Parse_state *state,
 	double glyph_base_size[3];
 	if (point_attributes)
 	{
-		cmzn_graphic_point_attributes_get_base_size(point_attributes, 3, glyph_base_size);
+		cmzn_graphicspointattributes_get_base_size(point_attributes, 3, glyph_base_size);
 		Option_table_add_double_product_entry(option_table, "size", 3, glyph_base_size);
 	}
 
 	/* spectrum */
-	cmzn_spectrum_id spectrum = cmzn_graphic_get_spectrum(graphic);
+	cmzn_spectrum_id spectrum = cmzn_graphics_get_spectrum(graphics);
 	Option_table_add_entry(option_table,"spectrum",
 		&spectrum, scene_command_data->spectrum_manager,
 		set_Spectrum);
 
 	/* subgroup field */
-	cmzn_field_id subgroup_field = cmzn_graphic_get_subgroup_field(graphic);
+	cmzn_field_id subgroup_field = cmzn_graphics_get_subgroup_field(graphics);
 	Set_Computed_field_conditional_data set_subgroup_field_data;
 	set_subgroup_field_data.computed_field_manager = scene_command_data->computed_field_manager;
 	set_subgroup_field_data.conditional_function = Computed_field_is_scalar;
@@ -720,24 +721,24 @@ int gfx_modify_scene_graphic(struct Parse_state *state,
 		&subgroup_field, &set_subgroup_field_data);
 
 	/* tessellation */
-	cmzn_tessellation_id tessellation = cmzn_graphic_get_tessellation(graphic);
-	if ((legacy_graphic_type != LEGACY_GRAPHIC_POINT) &&
-		(legacy_graphic_type != LEGACY_GRAPHIC_NODE_POINTS) &&
-		(legacy_graphic_type != LEGACY_GRAPHIC_DATA_POINTS))
+	cmzn_tessellation_id tessellation = cmzn_graphics_get_tessellation(graphics);
+	if ((legacy_graphics_type != LEGACY_GRAPHIC_POINT) &&
+		(legacy_graphics_type != LEGACY_GRAPHIC_NODE_POINTS) &&
+		(legacy_graphics_type != LEGACY_GRAPHIC_DATA_POINTS))
 	{
 		Option_table_add_cmzn_tessellation_entry(option_table, "tessellation",
 			scene_command_data->tessellationmodule, &tessellation);
 	}
 
 	/* texture_coordinates */
-	cmzn_field_id texture_coordinate_field = cmzn_graphic_get_texture_coordinate_field(graphic);
+	cmzn_field_id texture_coordinate_field = cmzn_graphics_get_texture_coordinate_field(graphics);
 	Set_Computed_field_conditional_data set_texture_coordinate_field_data;
 	set_texture_coordinate_field_data.computed_field_manager = scene_command_data->computed_field_manager;
 	set_texture_coordinate_field_data.conditional_function = Computed_field_has_up_to_3_numerical_components;
 	set_texture_coordinate_field_data.conditional_function_user_data = (void *)NULL;
-	if ((graphic_type == CMZN_GRAPHIC_SURFACES) ||
-		(graphic_type == CMZN_GRAPHIC_CONTOURS) ||
-		(graphic_type == CMZN_GRAPHIC_LINES))
+	if ((graphics_type == CMZN_GRAPHICS_SURFACES) ||
+		(graphics_type == CMZN_GRAPHICS_CONTOURS) ||
+		(graphics_type == CMZN_GRAPHICS_LINES))
 	{
 		Option_table_add_Computed_field_conditional_entry(option_table, "texture_coordinates",
 			&texture_coordinate_field, &set_texture_coordinate_field_data);
@@ -752,8 +753,8 @@ int gfx_modify_scene_graphic(struct Parse_state *state,
 		CMZN_FIELD_DOMAIN_MESH_1D
 	};
 	const char *use_element_type_string = 0;
-	if ((legacy_graphic_type == LEGACY_GRAPHIC_ISO_SURFACES) ||
-		(legacy_graphic_type == LEGACY_GRAPHIC_ELEMENT_POINTS))
+	if ((legacy_graphics_type == LEGACY_GRAPHIC_ISO_SURFACES) ||
+		(legacy_graphics_type == LEGACY_GRAPHIC_ELEMENT_POINTS))
 	{
 		Option_table_add_enumerator(option_table, 3, use_element_type_strings, &use_element_type_string);
 	}
@@ -766,7 +767,7 @@ int gfx_modify_scene_graphic(struct Parse_state *state,
 	set_signed_scale_field_data.conditional_function_user_data = (void *)NULL;
 	if (point_attributes)
 	{
-		signed_scale_field = cmzn_graphic_point_attributes_get_signed_scale_field(point_attributes);
+		signed_scale_field = cmzn_graphicspointattributes_get_signed_scale_field(point_attributes);
 		Option_table_add_Computed_field_conditional_entry(option_table, "variable_scale",
 			&signed_scale_field, &set_signed_scale_field_data);
 	}
@@ -779,18 +780,18 @@ int gfx_modify_scene_graphic(struct Parse_state *state,
 	set_stream_vector_field_data.conditional_function_user_data = (void *)NULL;
 	if (streamlines)
 	{
-		stream_vector_field = cmzn_graphic_streamlines_get_stream_vector_field(streamlines);
+		stream_vector_field = cmzn_graphics_streamlines_get_stream_vector_field(streamlines);
 		Option_table_add_Computed_field_conditional_entry(option_table, "vector",
 			&stream_vector_field, &set_stream_vector_field_data);
 	}
 
 	/* visible/invisible */
-	int visibility_flag = static_cast<int>(cmzn_graphic_get_visibility_flag(graphic));
+	int visibility_flag = static_cast<int>(cmzn_graphics_get_visibility_flag(graphics));
 	Option_table_add_switch(option_table, "visible", "invisible", &visibility_flag);
 
 	/* deprecated: streamline width (replaced with line_base_size) */
 	double streamline_width = 0.0;
-	if (graphic_type == CMZN_GRAPHIC_STREAMLINES)
+	if (graphics_type == CMZN_GRAPHICS_STREAMLINES)
 	{
 		Option_table_add_double_entry(option_table, "width", &streamline_width);
 	}
@@ -802,7 +803,7 @@ int gfx_modify_scene_graphic(struct Parse_state *state,
 	{
 		sample_location_components = 3;
 		ALLOCATE(sample_location, double, sample_location_components);
-		cmzn_graphic_sampling_attributes_get_location(sampling, sample_location_components, sample_location);
+		cmzn_graphicssamplingattributes_get_location(sampling, sample_location_components, sample_location);
 		Option_table_add_variable_length_double_vector_entry(option_table, "xi",
 			&sample_location_components, &sample_location);
 	}
@@ -811,26 +812,26 @@ int gfx_modify_scene_graphic(struct Parse_state *state,
 	{
 		if (name)
 		{
-			cmzn_graphic_set_name(graphic, name);
+			cmzn_graphics_set_name(graphics, name);
 		}
-		cmzn_graphic_set_subgroup_field(graphic, subgroup_field);
-		cmzn_graphic_set_coordinate_field(graphic, coordinate_field);
-		cmzn_graphic_set_data_field(graphic, data_field);
+		cmzn_graphics_set_subgroup_field(graphics, subgroup_field);
+		cmzn_graphics_set_coordinate_field(graphics, coordinate_field);
+		cmzn_graphics_set_data_field(graphics, data_field);
 		bool use_spectrum = (0 != data_field);
-		cmzn_graphic_set_exterior(graphic, (0 != exterior_flag));
-		cmzn_graphic_set_face(graphic, face_type);
-		cmzn_graphic_set_tessellation(graphic, tessellation);
-		cmzn_graphic_set_tessellation_field(graphic, tessellation_field);
-		if ((graphic_type == CMZN_GRAPHIC_SURFACES) ||
-			(graphic_type == CMZN_GRAPHIC_CONTOURS) ||
-			(graphic_type == CMZN_GRAPHIC_LINES))
+		cmzn_graphics_set_exterior(graphics, (0 != exterior_flag));
+		cmzn_graphics_set_face(graphics, face_type);
+		cmzn_graphics_set_tessellation(graphics, tessellation);
+		cmzn_graphics_set_tessellation_field(graphics, tessellation_field);
+		if ((graphics_type == CMZN_GRAPHICS_SURFACES) ||
+			(graphics_type == CMZN_GRAPHICS_CONTOURS) ||
+			(graphics_type == CMZN_GRAPHICS_LINES))
 		{
-			cmzn_graphic_set_texture_coordinate_field(graphic, texture_coordinate_field);
+			cmzn_graphics_set_texture_coordinate_field(graphics, texture_coordinate_field);
 		}
-		cmzn_graphic_set_material(graphic, material);
-		cmzn_graphic_set_render_line_width(graphic, line_width);
-		cmzn_graphic_set_render_point_size(graphic, point_size);
-		cmzn_graphic_set_selected_material(graphic, selected_material);
+		cmzn_graphics_set_material(graphics, material);
+		cmzn_graphics_set_render_line_width(graphics, line_width);
+		cmzn_graphics_set_render_point_size(graphics, point_size);
+		cmzn_graphics_set_selected_material(graphics, selected_material);
 
 		if (contours)
 		{
@@ -840,7 +841,7 @@ int gfx_modify_scene_graphic(struct Parse_state *state,
 					"gfx_modify_scene_iso_surfaces.  Missing iso_scalar field");
 				return_code=0;
 			}
-			cmzn_graphic_contours_set_isoscalar_field(contours, isoscalar_field);
+			cmzn_graphics_contours_set_isoscalar_field(contours, isoscalar_field);
 			if (((0 < range_number_of_isovalues) && isovalues) ||
 				((0 >= range_number_of_isovalues) && (0 == isovalues)))
 			{
@@ -850,16 +851,16 @@ int gfx_modify_scene_graphic(struct Parse_state *state,
 			}
 			else if (range_number_of_isovalues)
 			{
-				cmzn_graphic_contours_set_range_isovalues(contours, range_number_of_isovalues, first_isovalue, last_isovalue);
+				cmzn_graphics_contours_set_range_isovalues(contours, range_number_of_isovalues, first_isovalue, last_isovalue);
 			}
 			else
 			{
-				cmzn_graphic_contours_set_list_isovalues(contours, number_of_isovalues, isovalues);
+				cmzn_graphics_contours_set_list_isovalues(contours, number_of_isovalues, isovalues);
 			}
-			cmzn_graphic_contours_set_decimation_threshold(contours, decimation_threshold);
+			cmzn_graphics_contours_set_decimation_threshold(contours, decimation_threshold);
 		}
 
-		cmzn_graphic_set_visibility_flag(graphic, 0 != visibility_flag);
+		cmzn_graphics_set_visibility_flag(graphics, 0 != visibility_flag);
 
 		if (sampling)
 		{
@@ -887,16 +888,16 @@ int gfx_modify_scene_graphic(struct Parse_state *state,
 					"No density field specified for sample mode 'cell_poisson'");
 				return_code = 0;
 			}
-			cmzn_graphic_sampling_attributes_set_mode(sampling, sample_mode);
-			cmzn_graphic_sampling_attributes_set_density_field(sampling, sample_density_field);
-			cmzn_graphic_sampling_attributes_set_location(sampling, sample_location_components, sample_location);
+			cmzn_graphicssamplingattributes_set_mode(sampling, sample_mode);
+			cmzn_graphicssamplingattributes_set_density_field(sampling, sample_density_field);
+			cmzn_graphicssamplingattributes_set_location(sampling, sample_location_components, sample_location);
 		}
 
-		if ((graphic_type != CMZN_GRAPHIC_LINES) &&
-			(graphic_type != CMZN_GRAPHIC_SURFACES))
+		if ((graphics_type != CMZN_GRAPHICS_LINES) &&
+			(graphics_type != CMZN_GRAPHICS_SURFACES))
 		{
 			STRING_TO_ENUMERATOR(cmzn_field_domain_type)(domain_type_string, &domain_type);
-			cmzn_graphic_set_domain_type(graphic, domain_type);
+			cmzn_graphics_set_domain_type(graphics, domain_type);
 		}
 		// translate legacy use_element_type to domain_type
 		if (use_element_type_string)
@@ -906,7 +907,7 @@ int gfx_modify_scene_graphic(struct Parse_state *state,
 				if (fuzzy_string_compare_same_length(use_element_type_string, use_element_type_strings[i]))
 				{
 					domain_type = use_element_type_to_domain_type[i];
-					cmzn_graphic_set_domain_type(graphic, domain_type);
+					cmzn_graphics_set_domain_type(graphics, domain_type);
 					break;
 				}
 			}
@@ -916,7 +917,7 @@ int gfx_modify_scene_graphic(struct Parse_state *state,
 		{
 			cmzn_glyph_repeat_mode glyph_repeat_mode = CMZN_GLYPH_REPEAT_NONE;
 			STRING_TO_ENUMERATOR(cmzn_glyph_repeat_mode)(glyph_repeat_mode_string, &glyph_repeat_mode);
-			if (legacy_graphic_type == LEGACY_GRAPHIC_POINT)
+			if (legacy_graphics_type == LEGACY_GRAPHIC_POINT)
 			{
 				// scale factors and orientation were never used, and offset was in model units.
 				// now the offset is in multiples of glyph axes, i.e. need divide by the base size
@@ -984,12 +985,12 @@ int gfx_modify_scene_graphic(struct Parse_state *state,
 					return_code = 0;
 				}
 			}
-			cmzn_graphic_point_attributes_set_glyph(point_attributes, glyph);
+			cmzn_graphicspointattributes_set_glyph(point_attributes, glyph);
 			cmzn_glyph_destroy(&glyph);
-			cmzn_graphic_point_attributes_set_glyph_repeat_mode(point_attributes, glyph_repeat_mode);
-			cmzn_graphic_point_attributes_set_orientation_scale_field(point_attributes, orientation_scale_field);
+			cmzn_graphicspointattributes_set_glyph_repeat_mode(point_attributes, glyph_repeat_mode);
+			cmzn_graphicspointattributes_set_orientation_scale_field(point_attributes, orientation_scale_field);
 
-			if (legacy_graphic_type != LEGACY_GRAPHIC_NONE)
+			if (legacy_graphics_type != LEGACY_GRAPHIC_NONE)
 			{
 				// reverse centre to get offset:
 				for (int i = 0; i < 3; i++)
@@ -997,17 +998,17 @@ int gfx_modify_scene_graphic(struct Parse_state *state,
 					glyph_offset[i] = (glyph_centre[i] != 0.0) ? -glyph_centre[i] : 0.0;
 				}
 			}
-			cmzn_graphic_point_attributes_set_glyph_offset(point_attributes, 3, glyph_offset);
-			cmzn_graphic_point_attributes_set_base_size(point_attributes, 3, glyph_base_size);
-			cmzn_graphic_point_attributes_set_scale_factors(point_attributes, 3, glyph_scale_factors);
-			cmzn_graphic_point_attributes_set_signed_scale_field(point_attributes, signed_scale_field);
-			cmzn_graphic_point_attributes_set_label_field(point_attributes, label_field);
-			cmzn_graphic_point_attributes_set_label_offset(point_attributes, 3, label_offset);
+			cmzn_graphicspointattributes_set_glyph_offset(point_attributes, 3, glyph_offset);
+			cmzn_graphicspointattributes_set_base_size(point_attributes, 3, glyph_base_size);
+			cmzn_graphicspointattributes_set_scale_factors(point_attributes, 3, glyph_scale_factors);
+			cmzn_graphicspointattributes_set_signed_scale_field(point_attributes, signed_scale_field);
+			cmzn_graphicspointattributes_set_label_field(point_attributes, label_field);
+			cmzn_graphicspointattributes_set_label_offset(point_attributes, 3, label_offset);
 			if (0 < label_strings.number_of_strings)
 			{
 				for (int i = 0; i < label_strings.number_of_strings; ++i)
 				{
-					cmzn_graphic_point_attributes_set_label_text(point_attributes, i + 1, label_strings.strings[i]);
+					cmzn_graphicspointattributes_set_label_text(point_attributes, i + 1, label_strings.strings[i]);
 				}
 			}
 			if (font_name)
@@ -1019,7 +1020,7 @@ int gfx_modify_scene_graphic(struct Parse_state *state,
 				cmzn_fontmodule_destroy(&fontmodule);
 				if (new_font)
 				{
-					cmzn_graphic_point_attributes_set_font(point_attributes, new_font);
+					cmzn_graphicspointattributes_set_font(point_attributes, new_font);
 					cmzn_font_destroy(&new_font);
 				}
 				else
@@ -1031,14 +1032,14 @@ int gfx_modify_scene_graphic(struct Parse_state *state,
 
 		STRING_TO_ENUMERATOR(cmzn_scene_coordinate_system)(
 			coordinate_system_string, &coordinate_system);
-		cmzn_graphic_set_coordinate_system(graphic, coordinate_system);
+		cmzn_graphics_set_coordinate_system(graphics, coordinate_system);
 
-		cmzn_graphic_render_polygon_mode render_polygon_mode;
-		STRING_TO_ENUMERATOR(cmzn_graphic_render_polygon_mode)(render_polygon_mode_string, &render_polygon_mode);
-		cmzn_graphic_set_render_polygon_mode(graphic, render_polygon_mode);
+		cmzn_graphics_render_polygon_mode render_polygon_mode;
+		STRING_TO_ENUMERATOR(cmzn_graphics_render_polygon_mode)(render_polygon_mode_string, &render_polygon_mode);
+		cmzn_graphics_set_render_polygon_mode(graphics, render_polygon_mode);
 
-		STRING_TO_ENUMERATOR(cmzn_graphic_select_mode)(select_mode_string, &select_mode);
-		cmzn_graphic_set_select_mode(graphic, select_mode);
+		STRING_TO_ENUMERATOR(cmzn_graphics_select_mode)(select_mode_string, &select_mode);
+		cmzn_graphics_set_select_mode(graphics, select_mode);
 
 		if ((0 != element_divisions_size) || (0 != circle_discretization))
 		{
@@ -1048,12 +1049,12 @@ int gfx_modify_scene_graphic(struct Parse_state *state,
 				cmzn_tessellationmodule_find_or_create_fixed_tessellation(tessellationmodule,
 					element_divisions_size, element_divisions, circle_discretization,
 					tessellation);
-			cmzn_graphic_set_tessellation(graphic, fixedTessellation);
+			cmzn_graphics_set_tessellation(graphics, fixedTessellation);
 			cmzn_tessellation_destroy(&fixedTessellation);
 			cmzn_tessellationmodule_destroy(&tessellationmodule);
 		}
 
-		if (legacy_graphic_type == LEGACY_GRAPHIC_CYLINDERS)
+		if (legacy_graphics_type == LEGACY_GRAPHIC_CYLINDERS)
 		{
 			// convert radius to diameter
 			line_base_size[1] = line_base_size[0] = 2.0*constant_radius;
@@ -1073,12 +1074,12 @@ int gfx_modify_scene_graphic(struct Parse_state *state,
 					cmzn_fieldmodule_find_nodeset_by_name(field_module, seed_nodeset_name);
 				if (seed_nodeset || (fuzzy_string_compare(seed_nodeset_name, "none")))
 				{
-					if (graphic->seed_nodeset)
+					if (graphics->seed_nodeset)
 					{
-						cmzn_nodeset_destroy(&graphic->seed_nodeset);
+						cmzn_nodeset_destroy(&graphics->seed_nodeset);
 					}
 					// take over reference:
-					graphic->seed_nodeset = seed_nodeset;
+					graphics->seed_nodeset = seed_nodeset;
 				}
 				else
 				{
@@ -1088,8 +1089,8 @@ int gfx_modify_scene_graphic(struct Parse_state *state,
 				}
 				cmzn_fieldmodule_destroy(&field_module);
 			}
-			if ((graphic->seed_node_mesh_location_field && (!graphic->seed_nodeset)) ||
-				((!graphic->seed_node_mesh_location_field) && graphic->seed_nodeset))
+			if ((graphics->seed_node_mesh_location_field && (!graphics->seed_nodeset)) ||
+				((!graphics->seed_node_mesh_location_field) && graphics->seed_nodeset))
 			{
 				display_message(ERROR_MESSAGE,
 					"Must specify both seed_nodeset and seed_node_mesh_location_field, or neither");
@@ -1097,12 +1098,12 @@ int gfx_modify_scene_graphic(struct Parse_state *state,
 			}
 			if (return_code)
 			{
-				cmzn_graphic_streamlines_set_stream_vector_field(streamlines, stream_vector_field);
-				cmzn_graphic_streamlines_set_track_length(streamlines, streamline_length);
-				cmzn_graphic_streamlines_track_direction streamlines_track_direction;
-				STRING_TO_ENUMERATOR(cmzn_graphic_streamlines_track_direction)(
+				cmzn_graphics_streamlines_set_stream_vector_field(streamlines, stream_vector_field);
+				cmzn_graphics_streamlines_set_track_length(streamlines, streamline_length);
+				cmzn_graphics_streamlines_track_direction streamlines_track_direction;
+				STRING_TO_ENUMERATOR(cmzn_graphics_streamlines_track_direction)(
 					streamlines_track_direction_string, &streamlines_track_direction);
-				cmzn_graphic_streamlines_set_track_direction(streamlines, streamlines_track_direction);
+				cmzn_graphics_streamlines_set_track_direction(streamlines, streamlines_track_direction);
 				// translate deprecated streamline_type to line_shape, and width to line_base_size[2] depending on type
 				if (streamline_type_string)
 				{
@@ -1111,7 +1112,7 @@ int gfx_modify_scene_graphic(struct Parse_state *state,
 						if (fuzzy_string_compare_same_length(streamline_type_string, streamline_type_strings[i]))
 						{
 							// set line_shape_string for processing below!
-							line_shape_string = ENUMERATOR_STRING(cmzn_graphic_line_attributes_shape)(streamline_type_to_line_shape[i].shape);
+							line_shape_string = ENUMERATOR_STRING(cmzn_graphicslineattributes_shape)(streamline_type_to_line_shape[i].shape);
 							line_base_size[0] = streamline_width;
 							line_base_size[1] = streamline_width*streamline_type_to_line_shape[i].thickness_to_width_ratio;
 							break;
@@ -1143,40 +1144,40 @@ int gfx_modify_scene_graphic(struct Parse_state *state,
 					}
 				}
 				use_spectrum = (STREAM_NO_DATA != streamline_data_type);
-				cmzn_graphic_set_streamline_data_type(graphic, streamline_data_type);
+				cmzn_graphics_set_streamline_data_type(graphics, streamline_data_type);
 			}
 		}
 		if (use_spectrum)
 		{
 			if (spectrum)
 			{
-				cmzn_graphic_set_spectrum(graphic, spectrum);
+				cmzn_graphics_set_spectrum(graphics, spectrum);
 			}
 			else
 			{
-				cmzn_graphic_set_spectrum(graphic, scene_command_data->default_spectrum);
+				cmzn_graphics_set_spectrum(graphics, scene_command_data->default_spectrum);
 			}
 		}
 		else
 		{
-			cmzn_graphic_set_spectrum(graphic, static_cast<cmzn_spectrum *>(0));
+			cmzn_graphics_set_spectrum(graphics, static_cast<cmzn_spectrum *>(0));
 		}
 
 		if (line_attributes)
 		{
-			cmzn_graphic_line_attributes_shape line_shape;
-			STRING_TO_ENUMERATOR(cmzn_graphic_line_attributes_shape)(line_shape_string, &line_shape);
-			cmzn_graphic_line_attributes_set_shape(line_attributes, line_shape);
-			cmzn_graphic_line_attributes_set_base_size(line_attributes, 2, line_base_size);
-			cmzn_graphic_line_attributes_set_scale_factors(line_attributes, 2, line_scale_factors);
-			cmzn_graphic_line_attributes_set_orientation_scale_field(line_attributes, line_orientation_scale_field);
+			cmzn_graphicslineattributes_shape line_shape;
+			STRING_TO_ENUMERATOR(cmzn_graphicslineattributes_shape)(line_shape_string, &line_shape);
+			cmzn_graphicslineattributes_set_shape(line_attributes, line_shape);
+			cmzn_graphicslineattributes_set_base_size(line_attributes, 2, line_base_size);
+			cmzn_graphicslineattributes_set_scale_factors(line_attributes, 2, line_scale_factors);
+			cmzn_graphicslineattributes_set_orientation_scale_field(line_attributes, line_orientation_scale_field);
 		}
 	}
 	DESTROY(Option_table)(&option_table);
 	if (!return_code)
 	{
 		/* parse error, help */
-		cmzn_graphic_destroy(&(modify_scene_data->graphic));
+		cmzn_graphics_destroy(&(modify_scene_data->graphics));
 	}
 	if (glyph_name)
 	{
@@ -1214,14 +1215,14 @@ int gfx_modify_scene_graphic(struct Parse_state *state,
 	{
 		DEALLOCATE(seed_nodeset_name);
 	}
-	cmzn_graphic_destroy(&graphic);
+	cmzn_graphics_destroy(&graphics);
 	if (isovalues)
 		DEALLOCATE(isovalues);
-	cmzn_graphic_contours_destroy(&contours);
-	cmzn_graphic_streamlines_destroy(&streamlines);
-	cmzn_graphic_line_attributes_destroy(&line_attributes);
-	cmzn_graphic_point_attributes_destroy(&point_attributes);
-	cmzn_graphic_sampling_attributes_destroy(&sampling);
+	cmzn_graphics_contours_destroy(&contours);
+	cmzn_graphics_streamlines_destroy(&streamlines);
+	cmzn_graphicslineattributes_destroy(&line_attributes);
+	cmzn_graphicspointattributes_destroy(&point_attributes);
+	cmzn_graphicssamplingattributes_destroy(&sampling);
 	cmzn_spectrum_destroy(&spectrum);
 	cmzn_tessellation_destroy(&tessellation);
 	cmzn_graphics_material_destroy(&material);
@@ -1243,11 +1244,11 @@ int gfx_modify_scene_contours(struct Parse_state *state,
 		"The <coordinate> parameter optionally overrides the groups default coordinate field.  "
 		"If a <data> field is specified then the <spectrum> is used to render the data values as colour on the generated isosurface.  "
 		"If a <decimation_threshold> is specified then the resulting iso_surface will be decimated according to the threshold.  "
-		"If <delete> is specified then if the graphic matches an existing setting (either by parameters or name) then it will be removed.  "
+		"If <delete> is specified then if the graphics matches an existing setting (either by parameters or name) then it will be removed.  "
 		"If <exterior> is specified then only faces with one parent will be selected when <use_faces> is specified.  "
 		"If <face> is specified then only that face will be selected when <use_faces> is specified.  "
 		"The <material> is used to render the surface.  "
-		"You can specify the <position> the graphic has in the graphic list.  "
+		"You can specify the <position> the graphics has in the graphics list.  "
 		"You can specify the <line_width>, this option only applies when <use_faces> is specified.  "
 		"You can render a mesh as solid <render_shaded> or as a wireframe <render_wireframe>.  "
 		"If <select_on> is active then the element tool will select the elements the iso_surface was generated from.  "
@@ -1255,9 +1256,9 @@ int gfx_modify_scene_contours(struct Parse_state *state,
 		"If <draw_selected> is active then iso_surfaces will only be generated in elements that are selected.  "
 		"Conversely, if <draw_unselected> is active then iso_surfaces will only be generated in elements that are not selected.  "
 		"The <texture_coordinates> are used to lay out a texture if the <material> contains a texture.  "
-		"A graphic can be made <visible> or <invisible>.  ";
+		"A graphics can be made <visible> or <invisible>.  ";
 
-	return gfx_modify_scene_graphic(state, CMZN_GRAPHIC_CONTOURS,
+	return gfx_modify_scene_graphics(state, CMZN_GRAPHICS_CONTOURS,
 		LEGACY_GRAPHIC_NONE, help_text,
 		reinterpret_cast<Modify_scene_data *>(modify_scene_data_void),
 		reinterpret_cast<Scene_command_data *>(scene_command_data_void));
@@ -1266,7 +1267,7 @@ int gfx_modify_scene_contours(struct Parse_state *state,
 int gfx_modify_scene_cylinders(struct Parse_state *state,
 	void *modify_scene_data_void,void *scene_command_data_void)
 {
-	return gfx_modify_scene_graphic(state, CMZN_GRAPHIC_LINES,
+	return gfx_modify_scene_graphics(state, CMZN_GRAPHICS_LINES,
 		LEGACY_GRAPHIC_CYLINDERS, /*help_text*/(const char *)0,
 		reinterpret_cast<Modify_scene_data *>(modify_scene_data_void),
 		reinterpret_cast<Scene_command_data *>(scene_command_data_void));
@@ -1276,7 +1277,7 @@ int gfx_modify_scene_data_points(struct Parse_state *state,
 	void *modify_scene_data_void,void *scene_command_data_void)
 {
 	const char *help_text = "Deprecated; use points with domain_data option instead.";
-	return gfx_modify_scene_graphic(state, CMZN_GRAPHIC_POINTS,
+	return gfx_modify_scene_graphics(state, CMZN_GRAPHICS_POINTS,
 		LEGACY_GRAPHIC_DATA_POINTS, help_text,
 		reinterpret_cast<Modify_scene_data *>(modify_scene_data_void),
 		reinterpret_cast<Scene_command_data *>(scene_command_data_void));
@@ -1286,7 +1287,7 @@ int gfx_modify_scene_element_points(struct Parse_state *state,
 	void *modify_scene_data_void,void *scene_command_data_void)
 {
 	const char *help_text = "Deprecated; use points with domain_elements* option instead.";
-	return gfx_modify_scene_graphic(state, CMZN_GRAPHIC_POINTS,
+	return gfx_modify_scene_graphics(state, CMZN_GRAPHICS_POINTS,
 		LEGACY_GRAPHIC_ELEMENT_POINTS, help_text,
 		reinterpret_cast<Modify_scene_data *>(modify_scene_data_void),
 		reinterpret_cast<Scene_command_data *>(scene_command_data_void));
@@ -1296,7 +1297,7 @@ int gfx_modify_scene_iso_surfaces(struct Parse_state *state,
 	void *modify_scene_data_void,void *scene_command_data_void)
 {
 	const char *help_text = "Deprecated; use contours with domain_elements* option instead.";
-	return gfx_modify_scene_graphic(state, CMZN_GRAPHIC_CONTOURS,
+	return gfx_modify_scene_graphics(state, CMZN_GRAPHICS_CONTOURS,
 		LEGACY_GRAPHIC_ISO_SURFACES, help_text,
 		reinterpret_cast<Modify_scene_data *>(modify_scene_data_void),
 		reinterpret_cast<Scene_command_data *>(scene_command_data_void));
@@ -1305,7 +1306,7 @@ int gfx_modify_scene_iso_surfaces(struct Parse_state *state,
 int gfx_modify_scene_lines(struct Parse_state *state,
 	void *modify_scene_data_void,void *scene_command_data_void)
 {
-	return gfx_modify_scene_graphic(state, CMZN_GRAPHIC_LINES,
+	return gfx_modify_scene_graphics(state, CMZN_GRAPHICS_LINES,
 		LEGACY_GRAPHIC_NONE, /*help_text*/(const char *)0,
 		reinterpret_cast<Modify_scene_data *>(modify_scene_data_void),
 		reinterpret_cast<Scene_command_data *>(scene_command_data_void));
@@ -1315,7 +1316,7 @@ int gfx_modify_scene_node_points(struct Parse_state *state,
 	void *modify_scene_data_void,void *scene_command_data_void)
 {
 	const char *help_text = "Deprecated; use points with domain_nodes option instead.";
-	return gfx_modify_scene_graphic(state, CMZN_GRAPHIC_POINTS,
+	return gfx_modify_scene_graphics(state, CMZN_GRAPHICS_POINTS,
 		LEGACY_GRAPHIC_NODE_POINTS, help_text,
 		reinterpret_cast<Modify_scene_data *>(modify_scene_data_void),
 		reinterpret_cast<Scene_command_data *>(scene_command_data_void));
@@ -1325,7 +1326,7 @@ int gfx_modify_scene_point(struct Parse_state *state,
 	void *modify_scene_data_void,void *scene_command_data_void)
 {
 	const char *help_text = "Deprecated; use points with domain_point option instead.";
-	return gfx_modify_scene_graphic(state, CMZN_GRAPHIC_POINTS,
+	return gfx_modify_scene_graphics(state, CMZN_GRAPHICS_POINTS,
 		LEGACY_GRAPHIC_POINT, help_text,
 		reinterpret_cast<Modify_scene_data *>(modify_scene_data_void),
 		reinterpret_cast<Scene_command_data *>(scene_command_data_void));
@@ -1334,7 +1335,7 @@ int gfx_modify_scene_point(struct Parse_state *state,
 int gfx_modify_scene_streamlines(struct Parse_state *state,
 	void *modify_scene_data_void,void *scene_command_data_void)
 {
-	return gfx_modify_scene_graphic(state, CMZN_GRAPHIC_STREAMLINES,
+	return gfx_modify_scene_graphics(state, CMZN_GRAPHICS_STREAMLINES,
 		LEGACY_GRAPHIC_NONE, /*help_text*/(const char *)0,
 		reinterpret_cast<Modify_scene_data *>(modify_scene_data_void),
 		reinterpret_cast<Scene_command_data *>(scene_command_data_void));
@@ -1343,7 +1344,7 @@ int gfx_modify_scene_streamlines(struct Parse_state *state,
 int gfx_modify_scene_surfaces(struct Parse_state *state,
 	void *modify_scene_data_void,void *scene_command_data_void)
 {
-	return gfx_modify_scene_graphic(state, CMZN_GRAPHIC_SURFACES,
+	return gfx_modify_scene_graphics(state, CMZN_GRAPHICS_SURFACES,
 		LEGACY_GRAPHIC_NONE, /*help_text*/(const char *)0,
 		reinterpret_cast<Modify_scene_data *>(modify_scene_data_void),
 		reinterpret_cast<Scene_command_data *>(scene_command_data_void));
@@ -1352,7 +1353,7 @@ int gfx_modify_scene_surfaces(struct Parse_state *state,
 int gfx_modify_scene_points(struct Parse_state *state,
 	void *modify_scene_data_void,void *scene_command_data_void)
 {
-	return gfx_modify_scene_graphic(state, CMZN_GRAPHIC_POINTS,
+	return gfx_modify_scene_graphics(state, CMZN_GRAPHICS_POINTS,
 		LEGACY_GRAPHIC_NONE, /*help_text*/(const char *)0,
 		reinterpret_cast<Modify_scene_data *>(modify_scene_data_void),
 		reinterpret_cast<Scene_command_data *>(scene_command_data_void));
