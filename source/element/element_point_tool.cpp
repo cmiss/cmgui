@@ -150,7 +150,7 @@ release.
 //	struct LIST(Scene_picked_object) *scene_picked_object_list;
 //	struct Multi_range *multi_range;
 //	struct Scene *scene;
-//	cmzn_scene_picker_id scene_picker = 0;
+//	cmzn_scenepicker_id scenepicker = 0;
 //
 //	ENTER(Element_point_tool_interactive_event_handler);
 //	if (device_id&&event&&(element_point_tool=

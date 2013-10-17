@@ -213,7 +213,7 @@ release.
 
 	struct cmzn_scene *scene = 0;
 	FE_value_triple *xi_points;
-	cmzn_scene_picker_id scene_picker = 0;
+	cmzn_scenepicker_id scenepicker = 0;
 
 	ENTER(Element_tool_interactive_event_handler);
 	if (device_id&&event&&(element_tool=
@@ -224,7 +224,7 @@ release.
 		scene=Interactive_event_get_scene(event);
 		if (scene != 0)
 		{
-			scene_picker = cmzn_scene_create_picker(scene);
+			scenepicker = cmzn_scene_create_scenepicker(scene);
 			event_type=Interactive_event_get_type(event);
 			input_modifier=Interactive_event_get_input_modifier(event);
 			shift_pressed=(INTERACTIVE_EVENT_MODIFIER_SHIFT & input_modifier);
@@ -272,7 +272,7 @@ release.
 			}
 			cmzn_graphics_module_destroy(&graphics_module);
 			// Possible optimisation: don't pick streamlines
-			cmzn_scene_picker_set_scenefilter(scene_picker, combined_filter);
+			cmzn_scenepicker_set_scenefilter(scenepicker, combined_filter);
 			switch (event_type)
 			{
 			case INTERACTIVE_EVENT_BUTTON_PRESS:
@@ -280,12 +280,12 @@ release.
 					/* interaction only works with first mouse button */
 					if (1==Interactive_event_get_button_number(event))
 					{
-						cmzn_scene_picker_set_interaction_volume(scene_picker,
+						cmzn_scenepicker_set_interaction_volume(scenepicker,
 							interaction_volume);
-						if (scene_picker != 0)
+						if (scenepicker != 0)
 						{
 							element_tool->picked_element_was_unselected=1;
-							picked_element = cmzn_scene_picker_get_nearest_element(scene_picker);
+							picked_element = cmzn_scenepicker_get_nearest_element(scenepicker);
 							if (0 != picked_element)
 							{
 								/* Open command_field of picked_element in browser */
@@ -473,7 +473,7 @@ release.
 //								}
 //								if (INTERACTIVE_EVENT_BUTTON_RELEASE==event_type)
 								{
-									cmzn_scene_picker_set_interaction_volume(scene_picker,
+									cmzn_scenepicker_set_interaction_volume(scenepicker,
 										temp_interaction_volume);
 									if (element_tool->region)
 									{
@@ -483,7 +483,7 @@ release.
 											cmzn_scene_get_or_create_selection_group(region_scene);
 										if (selection_group)
 										{
-											cmzn_scene_picker_add_picked_elements_to_group(scene_picker,
+											cmzn_scenepicker_add_picked_elements_to_group(scenepicker,
 												selection_group);
 											cmzn_field_group_destroy(&selection_group);
 										}
@@ -505,11 +505,11 @@ release.
 						"Element_tool_interactive_event_handler.  Unknown event type");
 				} break;
 			}
-			cmzn_scene_picker_set_scenefilter(scene_picker, static_cast<cmzn_scenefilter_id>(0));
+			cmzn_scenepicker_set_scenefilter(scenepicker, static_cast<cmzn_scenefilter_id>(0));
 			cmzn_scenefilter_destroy(&combined_filter);
 			cmzn_scenefiltermodule_end_change(filter_module);
 			cmzn_scenefiltermodule_destroy(&filter_module);
-			cmzn_scene_picker_destroy(&scene_picker);
+			cmzn_scenepicker_destroy(&scenepicker);
 		}
 		if (element_tool->region)
 		{

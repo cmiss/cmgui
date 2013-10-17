@@ -1408,7 +1408,7 @@ release.
 	struct cmzn_graphics *graphics = 0;
 	struct Interaction_volume *interaction_volume,*temp_interaction_volume;
 	struct Node_tool *node_tool;
-	cmzn_scene_picker_id scene_picker = 0;
+	cmzn_scenepicker_id scenepicker = 0;
 
 	if (device_id&&event&&(node_tool=
 		(struct Node_tool *)node_tool_void))
@@ -1418,7 +1418,7 @@ release.
 		scene = Interactive_event_get_scene(event);
 		if (scene != 0)
 		{
-			scene_picker = cmzn_scene_create_picker(scene);
+			scenepicker = cmzn_scene_create_scenepicker(scene);
 			event_type=Interactive_event_get_type(event);
 			input_modifier=Interactive_event_get_input_modifier(event);
 			shift_pressed=(INTERACTIVE_EVENT_MODIFIER_SHIFT & input_modifier);
@@ -1430,7 +1430,7 @@ release.
 					if (1==Interactive_event_get_button_number(event))
 					{
 						cmzn_graphics *nearest_graphics = NULL, *nearest_node_graphics = NULL;
-						cmzn_scene_picker_set_interaction_volume(scene_picker,
+						cmzn_scenepicker_set_interaction_volume(scenepicker,
 							interaction_volume);
 						REACCESS(Interaction_volume)(&(node_tool->last_interaction_volume),
 							interaction_volume);
@@ -1440,22 +1440,22 @@ release.
 						{
 							if (node_tool->domain_type == CMZN_FIELD_DOMAIN_DATA)
 							{
-								picked_node = cmzn_scene_picker_get_nearest_data(scene_picker);
-								nearest_node_graphics = cmzn_scene_picker_get_nearest_data_graphics(scene_picker);
+								picked_node = cmzn_scenepicker_get_nearest_data(scenepicker);
+								nearest_node_graphics = cmzn_scenepicker_get_nearest_data_graphics(scenepicker);
 							}
 							else
 							{
-								picked_node = cmzn_scene_picker_get_nearest_node(scene_picker);
-								nearest_node_graphics = cmzn_scene_picker_get_nearest_node_graphics(scene_picker);
+								picked_node = cmzn_scenepicker_get_nearest_node(scenepicker);
+								nearest_node_graphics = cmzn_scenepicker_get_nearest_node_graphics(scenepicker);
 							}
 						}
 
 						if (node_tool->constrain_to_surface)
 						{
-							nearest_graphics = cmzn_scene_picker_get_nearest_graphics(scene_picker);
+							nearest_graphics = cmzn_scenepicker_get_nearest_graphics(scenepicker);
 							if (nearest_graphics && CMZN_GRAPHICS_SURFACES == cmzn_graphics_get_graphics_type(nearest_graphics))
 							{
-								nearest_element = cmzn_scene_picker_get_nearest_element(scene_picker);
+								nearest_element = cmzn_scenepicker_get_nearest_element(scenepicker);
 								cmzn_node_destroy(&picked_node);
 							}
 							if (picked_node && nearest_element)
@@ -1600,10 +1600,10 @@ release.
 						{
 							if (node_tool->constrain_to_surface)
 							{
-								if ( 0 != (nearest_element=cmzn_scene_picker_get_nearest_element(scene_picker)))
+								if ( 0 != (nearest_element=cmzn_scenepicker_get_nearest_element(scenepicker)))
 								{
 									cmzn_graphics *nearest_element_graphics =
-										cmzn_scene_picker_get_nearest_element_graphics(scene_picker);
+										cmzn_scenepicker_get_nearest_element_graphics(scenepicker);
 									nearest_element_coordinate_field =
 										cmzn_graphics_get_coordinate_field(nearest_element_graphics);
 									cmzn_graphics_destroy(&nearest_element_graphics);
@@ -1860,7 +1860,7 @@ release.
 								}
 								if (INTERACTIVE_EVENT_BUTTON_RELEASE==event_type)
 								{
-									cmzn_scene_picker_set_interaction_volume(scene_picker,
+									cmzn_scenepicker_set_interaction_volume(scenepicker,
 										temp_interaction_volume);
 									if (node_tool->root_region)
 									{
@@ -1871,9 +1871,9 @@ release.
 										if (selection_group)
 										{
 											if (node_tool->domain_type == CMZN_FIELD_DOMAIN_DATA)
-												cmzn_scene_picker_add_picked_data_to_group(scene_picker, selection_group);
+												cmzn_scenepicker_add_picked_data_to_group(scenepicker, selection_group);
 											else
-												cmzn_scene_picker_add_picked_nodes_to_group(scene_picker, selection_group);
+												cmzn_scenepicker_add_picked_nodes_to_group(scenepicker, selection_group);
 											cmzn_field_group_destroy(&selection_group);
 										}
 										cmzn_scene_destroy(&region_scene);
@@ -1938,8 +1938,8 @@ release.
 			cmzn_scene_destroy(&root_scene);
 		}
 		cmzn_region_end_hierarchical_change(node_tool->root_region);
-		if (scene_picker)
-			cmzn_scene_picker_destroy(&scene_picker);
+		if (scenepicker)
+			cmzn_scenepicker_destroy(&scenepicker);
 	}
 	else
 	{
