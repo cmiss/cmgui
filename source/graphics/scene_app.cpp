@@ -446,6 +446,7 @@ int cmzn_scene_execute_command_internal(cmzn_scene_id scene,
 						cmzn_scene_get_first_graphics_with_condition(
 							scene, cmzn_graphics_has_name, (void *)graphics_name)))
 					{
+						modify_scene_data.modify_this_graphics = 1;
 						ACCESS(cmzn_graphics)(modify_scene_data.graphics);
 					}
 				}
