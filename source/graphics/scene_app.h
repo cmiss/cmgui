@@ -22,7 +22,7 @@ struct Scene_command_data
 	struct cmzn_region *region;
 	/* root_region used for seeding streamlines from the nodes in a region */
 	struct cmzn_region *root_region;
-	cmzn_graphics_material_module_id material_module;
+	cmzn_materialmodule_id materialmodule;
 	cmzn_tessellationmodule_id tessellationmodule;
 	struct Spectrum *default_spectrum;
 	struct MANAGER(Spectrum) *spectrum_manager;

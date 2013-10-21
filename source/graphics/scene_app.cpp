@@ -5,7 +5,7 @@
 * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "zinc/glyph.h"
-#include "zinc/graphicsmaterial.h"
+#include "zinc/material.h"
 #include "zinc/status.h"
 #include "zinc/tessellation.h"
 #include "general/debug.h"
@@ -368,10 +368,10 @@ int cmzn_scene_fill_scene_command_data(cmzn_scene_id scene,
 	{
 		scene_command_data->graphics_module = scene->graphics_module;
 		scene_command_data->scene = scene;
-		scene_command_data->material_module =
-			cmzn_graphics_module_get_material_module(scene->graphics_module);
+		scene_command_data->materialmodule =
+			cmzn_graphics_module_get_materialmodule(scene->graphics_module);
 		scene_command_data->default_material =
-			cmzn_graphics_material_module_get_default_material(scene_command_data->material_module);
+			cmzn_materialmodule_get_default_material(scene_command_data->materialmodule);
 		scene_command_data->default_font =
 			cmzn_graphics_module_get_default_font(scene->graphics_module);
 		scene_command_data->spectrum_manager =
@@ -400,8 +400,8 @@ int cmzn_scene_cleanup_scene_command_data(
 	int return_code = 0;
 	if (scene_command_data)
 	{
-		cmzn_graphics_material_module_destroy(&(scene_command_data->material_module));
-		cmzn_graphics_material_destroy(&scene_command_data->default_material);
+		cmzn_materialmodule_destroy(&(scene_command_data->materialmodule));
+		cmzn_material_destroy(&scene_command_data->default_material);
 		cmzn_font_destroy(&scene_command_data->default_font);
 		cmzn_spectrum_destroy(&scene_command_data->default_spectrum);
 		cmzn_glyphmodule_destroy(&(scene_command_data->glyphmodule));

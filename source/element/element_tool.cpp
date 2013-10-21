@@ -15,7 +15,7 @@ Interactive tool for selecting elements with mouse and other devices.
 #include "configure/cmgui_configure.h"
 #endif /* defined (1) */
 #include "zinc/fieldcache.h"
-#include "zinc/graphicsmaterial.h"
+#include "zinc/material.h"
 #include "zinc/scene.h"
 #include "zinc/scenefilter.h"
 #include "command/command.h"
@@ -81,7 +81,7 @@ struct Element_tool
 	/* needed for destroy button */
 	struct cmzn_region *region;
 	struct Element_point_ranges_selection *element_point_ranges_selection;
-	cmzn_graphics_material *rubber_band_material;
+	cmzn_material *rubber_band_material;
 	struct Time_keeper_app *time_keeper_app;
 	struct User_interface *user_interface;
 	/* user-settable flags */
@@ -833,7 +833,7 @@ struct Element_tool *CREATE(Element_tool)(
 	struct MANAGER(Interactive_tool) *interactive_tool_manager,
 	struct cmzn_region *region,
 	struct Element_point_ranges_selection *element_point_ranges_selection,
-	cmzn_graphics_material *rubber_band_material,
+	cmzn_material *rubber_band_material,
 	struct User_interface *user_interface,
 	struct Time_keeper_app *time_keeper_app)
 /*******************************************************************************
@@ -861,7 +861,7 @@ Selects elements in <element_selection> in response to interactive_events.
 			element_tool->element_point_ranges_selection=
 				element_point_ranges_selection;
 			element_tool->rubber_band_material=
-				cmzn_graphics_material_access(rubber_band_material);
+				cmzn_material_access(rubber_band_material);
 			element_tool->user_interface=user_interface;
 			element_tool->time_keeper_app = (struct Time_keeper_app *)NULL;
 			element_tool->scene=(struct cmzn_scene *)NULL;
@@ -942,7 +942,7 @@ structure itself.
 		REACCESS(Interaction_volume)(&(element_tool->last_interaction_volume),
 			(struct Interaction_volume *)NULL);
 		REACCESS(GT_object)(&(element_tool->rubber_band),(struct GT_object *)NULL);
-		cmzn_graphics_material_destroy(&(element_tool->rubber_band_material));
+		cmzn_material_destroy(&(element_tool->rubber_band_material));
 		if (element_tool->time_keeper_app)
 		{
 			DEACCESS(Time_keeper_app)(&(element_tool->time_keeper_app));

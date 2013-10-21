@@ -20,7 +20,7 @@ Widgets for editing a graphical material.
 #endif /* defined (1) */
 #include "graphics/graphics_module.h"
 #include "graphics/scene.h"
-#include "zinc/graphicsmaterial.h"
+#include "zinc/material.h"
 #include "three_d_drawing/graphics_buffer.h"
 #include "command/parser.h"
 #include "computed_field/computed_field.h"
@@ -78,7 +78,7 @@ deaccess it.
 	Colour_editor *ambient_colour_editor, *diffuse_colour_editor, *emitted_colour_editor,
 		*specular_colour_editor;
 	void *material_manager_callback_id;
-	cmzn_graphics_material_module *material_module;
+	cmzn_materialmodule *materialmodule;
 	cmzn_graphics_module *graphics_module;
   cmzn_region *root_region;
 }; /* Material_editor */
@@ -358,7 +358,7 @@ Destroys the <*material_editor_address> and sets
 		(material_editor = *material_editor_address))
 	{
 		Material_editor_remove_widgets(material_editor);
-		cmzn_graphics_material_module_destroy(&material_editor->material_module);
+		cmzn_materialmodule_destroy(&material_editor->materialmodule);
 		cmzn_graphics_module_destroy(&material_editor->graphics_module);
 		cmzn_region_destroy(&material_editor->root_region);
 		DEALLOCATE(*material_editor_address);
@@ -449,19 +449,19 @@ void material_editor_wx_update_image_field(Material_editor *material_editor,
 {
 	if (selection == 0)
 	{
-		cmzn_graphics_material_set_image_field(material_editor->edit_material,	1, field);
+		cmzn_material_set_image_field(material_editor->edit_material,	1, field);
 	}
 	else if (selection == 1)
 	{
-		cmzn_graphics_material_set_image_field(material_editor->edit_material,	2, field);
+		cmzn_material_set_image_field(material_editor->edit_material,	2, field);
 	}
 	else if (selection == 2)
 	{
-		cmzn_graphics_material_set_image_field(material_editor->edit_material,	3, field);
+		cmzn_material_set_image_field(material_editor->edit_material,	3, field);
 	}
 	else if (selection == 3)
 	{
-		cmzn_graphics_material_set_image_field(material_editor->edit_material,	4, field);
+		cmzn_material_set_image_field(material_editor->edit_material,	4, field);
 	}
 	 material_editor_update_picture(material_editor);
 }
@@ -738,13 +738,13 @@ void OnMaterialEditorTextureChoice(wxCommandEvent& event)
 	int num = event.GetSelection();
 	cmzn_field_image_id field = NULL;
 	if (num == 0)
-		field = cmzn_graphics_material_get_image_field(material_editor->edit_material,	1);
+		field = cmzn_material_get_image_field(material_editor->edit_material,	1);
 	else if (num == 1)
-		field = cmzn_graphics_material_get_image_field(material_editor->edit_material,	2);
+		field = cmzn_material_get_image_field(material_editor->edit_material,	2);
 	else if (num == 2)
-		field = cmzn_graphics_material_get_image_field(material_editor->edit_material,	3);
+		field = cmzn_material_get_image_field(material_editor->edit_material,	3);
 	else if (num == 3)
-		field =	cmzn_graphics_material_get_image_field(material_editor->edit_material,	4);
+		field =	cmzn_material_get_image_field(material_editor->edit_material,	4);
 	Set_region_and_image_field_chooser(cmzn_field_image_base_cast(field));
 	if (field)
 		cmzn_field_image_destroy(&field);
@@ -805,8 +805,8 @@ void OnMaterialEditorCreateNewMaterial(wxCommandEvent& event)
 	if (NewMaterialDialog->ShowModal() == wxID_OK)
 	{
 		wxString material_string = NewMaterialDialog->GetValue();
-		material = cmzn_graphics_material_create_private();
-		cmzn_graphics_material_set_name(material, material_string.mb_str(wxConvUTF8));
+		material = cmzn_material_create_private();
+		cmzn_material_set_name(material, material_string.mb_str(wxConvUTF8));
 		if (material != NULL)
 		{
 			if(MANAGER_COPY_WITHOUT_IDENTIFIER(Graphical_material,name)
@@ -814,13 +814,13 @@ void OnMaterialEditorCreateNewMaterial(wxCommandEvent& event)
 			{
 				material_copy_bump_mapping_and_per_pixel_lighting_flag(material_editor->edit_material,
 					material);
-				cmzn_graphics_material_set_managed(material, true);
+				cmzn_material_set_managed(material, true);
 				ADD_OBJECT_TO_MANAGER(Graphical_material)(
 					material, material_editor->graphical_material_manager);
 				make_current_material(material_editor, material);
 				material_editor_wx_set_material(material_editor,material);
 			}
-			cmzn_graphics_material_destroy(&material);
+			cmzn_material_destroy(&material);
 		}
 	}
 	delete NewMaterialDialog;
@@ -867,7 +867,7 @@ void OnMaterialEditorAdvancedSettingsChanged(wxCommandEvent& event)
 	bump_mapping_flag = 0;
 	if (material_editor->material_editor_per_pixel_checkbox->IsChecked())
 	{
-		cmzn_field_image_id field = cmzn_graphics_material_get_image_field(material_editor->edit_material, 2);
+		cmzn_field_image_id field = cmzn_material_get_image_field(material_editor->edit_material, 2);
 		if (field)
 		{
 			material_editor->material_editor_bump_mapping_checkbox->Enable(true);
@@ -1135,7 +1135,7 @@ int Material_editor_remove_widgets(struct Material_editor *material_editor)
 		}
 		if (material_editor->edit_material)
 		{
-			cmzn_graphics_material_destroy(&(material_editor->edit_material));
+			cmzn_material_destroy(&(material_editor->edit_material));
 		}
 		if (material_editor->graphics_buffer)
 		{
@@ -1178,9 +1178,9 @@ Creates a Material_editor.
 				/* initialise the structure */
 				material_editor->material_manager_callback_id=(void *)NULL;
 				material_editor->background=0; /* tri-colour */
-				material_editor->material_module = cmzn_graphics_module_get_material_module(graphics_module);
+				material_editor->materialmodule = cmzn_graphics_module_get_materialmodule(graphics_module);
 				material_editor->graphical_material_manager =
-					cmzn_graphics_material_module_get_manager(material_editor->material_module);
+					cmzn_materialmodule_get_manager(material_editor->materialmodule);
 				material_editor->graphics_module = cmzn_graphics_module_access(graphics_module);
 				material_editor->root_region = cmzn_region_access(root_region);
 				material_editor->graphics_buffer = (struct Graphics_buffer_app *)NULL;
@@ -1241,12 +1241,12 @@ Sets the <material> to be edited by the <material_editor>.
 		return_code=1;
 		if (material_editor->edit_material)
 		{
-			cmzn_graphics_material_destroy(&(material_editor->edit_material));
+			cmzn_material_destroy(&(material_editor->edit_material));
 		}
 		if (material)
 		{
-			material_editor->edit_material = cmzn_graphics_material_create_private();
-			cmzn_graphics_material_set_name(material_editor->edit_material, "copy");
+			material_editor->edit_material = cmzn_material_create_private();
+			cmzn_material_set_name(material_editor->edit_material, "copy");
 
 			/* create a copy for editing */
 			if ((0 != material_editor->edit_material)&&
@@ -1299,7 +1299,7 @@ Sets the <material> to be edited by the <material_editor>.
 							shininess);
 				}
 
-				field=cmzn_graphics_material_get_image_field(material_editor->edit_material, 1);
+				field=cmzn_material_get_image_field(material_editor->edit_material, 1);
 				material_editor->wx_material_editor->Set_region_and_image_field_chooser(cmzn_field_image_base_cast(field));
 				if (field)
 					cmzn_field_image_destroy(&field);
@@ -1308,7 +1308,7 @@ Sets the <material> to be edited by the <material_editor>.
 				if (per_pixel_set)
 				{
 					 material_editor->material_editor_per_pixel_checkbox->SetValue(true);
-					 field=cmzn_graphics_material_get_image_field(material_editor->edit_material, 2);
+					 field=cmzn_material_get_image_field(material_editor->edit_material, 2);
 					 if (field)
 					 {
 							material_editor->material_editor_bump_mapping_checkbox->Enable(true);
@@ -1339,7 +1339,7 @@ Sets the <material> to be edited by the <material_editor>.
 			{
 				if (material_editor->edit_material)
 				{
-					cmzn_graphics_material_destroy(&(material_editor->edit_material));
+					cmzn_material_destroy(&(material_editor->edit_material));
 				}
 				display_message(ERROR_MESSAGE,
 					"material_editor_wx_set_material.  Could not make copy of material");

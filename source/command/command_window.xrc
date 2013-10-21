@@ -76,7 +76,7 @@
       <object class = "wxMenuItem" name="GraphicsthreeDWindow">
         <label>3-D Window</label>
       </object>
-      <object class = "wxMenuItem" name="GraphicsMaterialeditor">
+      <object class = "wxMenuItem" name="Materialeditor">
         <label>Material editor</label>
       </object>
       <object class = "wxMenuItem" name="GraphicsSceneeditor">

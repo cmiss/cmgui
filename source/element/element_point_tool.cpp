@@ -16,7 +16,7 @@ Interactive tool for selecting element/grid points with mouse and other devices.
 #endif /* defined (1) */
 
 #include "zinc/fieldmodule.h"
-#include "zinc/graphicsmaterial.h"
+#include "zinc/material.h"
 #include "command/command.h"
 #include "computed_field/computed_field.h"
 #include "computed_field/computed_field_finite_element.h"
@@ -622,7 +622,7 @@ Creates an Element_point_tool with Interactive_tool in
 			element_point_tool->element_point_ranges_selection=
 				element_point_ranges_selection;
 			element_point_tool->rubber_band_material=
-				cmzn_graphics_material_access(rubber_band_material);
+				cmzn_material_access(rubber_band_material);
 			element_point_tool->user_interface=user_interface;
 			element_point_tool->time_keeper_app = (struct Time_keeper_app *)NULL;
 			if (time_keeper_app)
@@ -695,7 +695,7 @@ structure itself.
 			(struct Interaction_volume *)NULL);
 		REACCESS(GT_object)(&(element_point_tool->rubber_band),
 			(struct GT_object *)NULL);
-		cmzn_graphics_material_destroy(&(element_point_tool->rubber_band_material));
+		cmzn_material_destroy(&(element_point_tool->rubber_band_material));
 		if (element_point_tool->time_keeper_app)
 		{
 			DEACCESS(Time_keeper_app)(&(element_point_tool->time_keeper_app));

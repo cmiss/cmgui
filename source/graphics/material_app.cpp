@@ -6,7 +6,7 @@
 
 
 #include "zinc/zincconfigure.h"
-#include "zinc/graphicsmaterial.h"
+#include "zinc/material.h"
 #include "zinc/region.h"
 #if 1
 #include "configure/cmgui_configure.h"
@@ -26,7 +26,7 @@
 //static struct Material_program_uniform *CREATE(Material_program_uniform)(char *name)
 
 int gfx_create_material(struct Parse_state *state,
-	void *dummy_to_be_modified, void *material_module_void)
+	void *dummy_to_be_modified, void *materialmodule_void)
 /*******************************************************************************
 LAST MODIFIED : 20 November 2003
 
@@ -39,7 +39,7 @@ If the material already exists, then behaves like gfx modify material.
 	int material_is_new,return_code;
 	struct Graphical_material *material;
 	struct Material_module_app *app_module = 0;
-	struct cmzn_graphics_material_module *material_module = 0;
+	struct cmzn_materialmodule *materialmodule = 0;
 
 	ENTER(gfx_create_material);
 	USE_PARAMETER(dummy_to_be_modified);
@@ -48,28 +48,28 @@ If the material already exists, then behaves like gfx modify material.
 		current_token=state->current_token;
 		if (current_token)
 		{
-			app_module=(struct Material_module_app *)material_module_void;
-			if (app_module && (NULL != (material_module =
-				(struct cmzn_graphics_material_module *)app_module->module)))
+			app_module=(struct Material_module_app *)materialmodule_void;
+			if (app_module && (NULL != (materialmodule =
+				(struct cmzn_materialmodule *)app_module->module)))
 			{
 				if (strcmp(PARSER_HELP_STRING,current_token)&&
 					strcmp(PARSER_RECURSIVE_HELP_STRING,current_token))
 				{
 					/* if there is an existing material of that name, just modify it */
-					material=cmzn_graphics_material_module_find_material_by_name(material_module, current_token);
+					material=cmzn_materialmodule_find_material_by_name(materialmodule, current_token);
 					if (!material)
 					{
-						material = cmzn_graphics_material_create_private();
-						cmzn_graphics_material_set_name(material, current_token);
+						material = cmzn_material_create_private();
+						cmzn_material_set_name(material, current_token);
 						if (material)
 						{
 							/*???DB.  Temporary */
-							cmzn_graphics_material_id defaultMaterial =
-								cmzn_graphics_material_module_get_default_material(material_module);
+							cmzn_material_id defaultMaterial =
+								cmzn_materialmodule_get_default_material(materialmodule);
 							MANAGER_COPY_WITHOUT_IDENTIFIER(Graphical_material,name)(material,
 								defaultMaterial);
 							if (defaultMaterial)
-								cmzn_graphics_material_destroy(&defaultMaterial);
+								cmzn_material_destroy(&defaultMaterial);
 						}
 						material_is_new=1;
 					}
@@ -83,7 +83,7 @@ If the material already exists, then behaves like gfx modify material.
 						if (state->current_token)
 						{
 							return_code=modify_Graphical_material(state,(void *)material,
-								material_module_void);
+								materialmodule_void);
 						}
 						else
 						{
@@ -91,11 +91,11 @@ If the material already exists, then behaves like gfx modify material.
 						}
 						if (material_is_new)
 						{
-							cmzn_graphics_material_set_managed(material, true);
+							cmzn_material_set_managed(material, true);
 							ADD_OBJECT_TO_MANAGER(Graphical_material)(material,
-								cmzn_graphics_material_module_get_manager(material_module));
+								cmzn_materialmodule_get_manager(materialmodule));
 						}
-						cmzn_graphics_material_destroy(&material);
+						cmzn_material_destroy(&material);
 					}
 					else
 					{
@@ -107,14 +107,14 @@ If the material already exists, then behaves like gfx modify material.
 				else
 				{
 					return_code=modify_Graphical_material(state,(void *)NULL,
-						material_module_void);
+						materialmodule_void);
 					return_code=1;
 				}
 			}
 			else
 			{
 				display_message(ERROR_MESSAGE,
-					"gfx_create_material.  Missing material_module_void");
+					"gfx_create_material.  Missing materialmodule_void");
 				return_code=0;
 			}
 		}
@@ -284,7 +284,7 @@ int Material_program_uniform_set_float_vector(struct Material_program_uniform *u
 	unsigned int number_of_values, double *values);
 
 int modify_Graphical_material(struct Parse_state *state,void *material_void,
-	void *material_module_void)
+	void *materialmodule_void)
 /*******************************************************************************
 LAST MODIFIED : 4 July 2007
 
@@ -305,7 +305,7 @@ DESCRIPTION :
 		process, return_code;
 	struct Graphical_material *material_to_be_modified,
 		*material_to_be_modified_copy;
-	struct cmzn_graphics_material_module *material_module = 0;
+	struct cmzn_materialmodule *materialmodule = 0;
 	struct Material_module_app *app_module = 0;
 	struct Option_table *help_option_table, *option_table, *mode_option_table;
 	double *uniform_values;
@@ -313,9 +313,9 @@ DESCRIPTION :
 	ENTER(modify_Graphical_material);
 	if (state)
 	{
-		app_module=(struct Material_module_app *)material_module_void;
-		if (app_module && (NULL != (material_module =
-			(struct cmzn_graphics_material_module *)app_module->module)))
+		app_module=(struct Material_module_app *)materialmodule_void;
+		if (app_module && (NULL != (materialmodule =
+			(struct cmzn_materialmodule *)app_module->module)))
 		{
 			current_token=state->current_token;
 			if (current_token)
@@ -325,10 +325,10 @@ DESCRIPTION :
 				if (material_to_be_modified)
 				{
 					if (IS_MANAGED(Graphical_material)(material_to_be_modified,
-						cmzn_graphics_material_module_get_manager(material_module)))
+						cmzn_materialmodule_get_manager(materialmodule)))
 					{
-						material_to_be_modified_copy = cmzn_graphics_material_create_private();
-						cmzn_graphics_material_set_name(material_to_be_modified_copy, "copy");
+						material_to_be_modified_copy = cmzn_material_create_private();
+						cmzn_material_set_name(material_to_be_modified_copy, "copy");
 						if (material_to_be_modified_copy)
 						{
 							MANAGER_COPY_WITHOUT_IDENTIFIER(Graphical_material,name)(
@@ -355,14 +355,14 @@ DESCRIPTION :
 						strcmp(PARSER_RECURSIVE_HELP_STRING,current_token))
 					{
 						material_to_be_modified=FIND_BY_IDENTIFIER_IN_MANAGER(Graphical_material,name)(current_token,
-							cmzn_graphics_material_module_get_manager(material_module));
+							cmzn_materialmodule_get_manager(materialmodule));
 						if (material_to_be_modified)
 						{
 							return_code=shift_Parse_state(state,1);
 							if (return_code)
 							{
-								material_to_be_modified_copy = cmzn_graphics_material_create_private();
-								cmzn_graphics_material_set_name(material_to_be_modified_copy, "copy");
+								material_to_be_modified_copy = cmzn_material_create_private();
+								cmzn_material_set_name(material_to_be_modified_copy, "copy");
 								if (material_to_be_modified_copy)
 								{
 									MANAGER_COPY_WITHOUT_IDENTIFIER(Graphical_material,name)(
@@ -387,25 +387,25 @@ DESCRIPTION :
 					}
 					else
 					{
-						material_to_be_modified = cmzn_graphics_material_create_private();
-						cmzn_graphics_material_set_name(material_to_be_modified, "help");
+						material_to_be_modified = cmzn_material_create_private();
+						cmzn_material_set_name(material_to_be_modified, "help");
 						if (material_to_be_modified)
 						{
-							cmzn_graphics_material *default_material =
-								cmzn_graphics_material_module_get_default_material(material_module);
+							cmzn_material *default_material =
+								cmzn_materialmodule_get_default_material(materialmodule);
 							if (default_material)
 							{
 								MANAGER_COPY_WITHOUT_IDENTIFIER(Graphical_material,name)(
 									material_to_be_modified,default_material);
-								cmzn_graphics_material_destroy(&default_material);
+								cmzn_material_destroy(&default_material);
 							}
 							help_option_table = CREATE(Option_table)();
 							Option_table_add_entry(help_option_table, "MATERIAL_NAME",
-								material_to_be_modified, material_module_void,
+								material_to_be_modified, materialmodule_void,
 								modify_Graphical_material);
 							return_code=Option_table_parse(help_option_table, state);
 							DESTROY(Option_table)(&help_option_table);
-							cmzn_graphics_material_destroy(&material_to_be_modified);
+							cmzn_material_destroy(&material_to_be_modified);
 						}
 						else
 						{
@@ -531,7 +531,7 @@ DESCRIPTION :
 						"colour_lookup_red", &colour_lookup_red_flag);
 					Option_table_add_entry(option_table, "colour_lookup_spectrum",
 						&(material_to_be_modified_copy->spectrum),
-						cmzn_graphics_material_module_get_spectrum_manager(material_module),
+						cmzn_materialmodule_get_spectrum_manager(materialmodule),
 						set_Spectrum);
 					Option_table_add_entry(option_table, "diffuse",
 						&(material_to_be_modified_copy->diffuse), NULL,
@@ -799,10 +799,10 @@ DESCRIPTION :
 							{
 								MANAGER_MODIFY_NOT_IDENTIFIER(Graphical_material,name)(
 									material_to_be_modified,material_to_be_modified_copy,
-									cmzn_graphics_material_module_get_manager(material_module));
+									cmzn_materialmodule_get_manager(materialmodule));
 								material_copy_bump_mapping_and_per_pixel_lighting_flag(
 									 material_to_be_modified_copy, material_to_be_modified);
-								cmzn_graphics_material_destroy(&material_to_be_modified_copy);
+								cmzn_material_destroy(&material_to_be_modified_copy);
 							}
 							else
 							{
@@ -813,7 +813,7 @@ DESCRIPTION :
 						{
 							if (material_to_be_modified)
 							{
-								cmzn_graphics_material_destroy(&material_to_be_modified_copy);
+								cmzn_material_destroy(&material_to_be_modified_copy);
 							}
 						}
 					}
@@ -900,7 +900,7 @@ Modifier function to set the material from a command.
 					{
 						if (*material_address)
 						{
-							cmzn_graphics_material_destroy(material_address);
+							cmzn_material_destroy(material_address);
 							*material_address=(struct Graphical_material *)NULL;
 						}
 						return_code=1;
@@ -913,8 +913,8 @@ Modifier function to set the material from a command.
 						{
 							if (*material_address!=temp_material)
 							{
-								cmzn_graphics_material_destroy(material_address);
-								*material_address=cmzn_graphics_material_access(temp_material);
+								cmzn_material_destroy(material_address);
+								*material_address=cmzn_material_access(temp_material);
 							}
 							return_code=1;
 						}
@@ -974,13 +974,13 @@ Modifier function to set the material from a command.
 
 int Option_table_add_set_Material_entry(
 	struct Option_table *option_table, const char *token,
-	struct Graphical_material **material, struct cmzn_graphics_material_module *material_module)
+	struct Graphical_material **material, struct cmzn_materialmodule *materialmodule)
 /*******************************************************************************
 LAST MODIFIED : 20 November 2003
 
 DESCRIPTION :
 Adds the given <token> to the <option_table>.  The <material> is selected from
-the <material_module> by name.
+the <materialmodule> by name.
 ==============================================================================*/
 {
 	int return_code;
@@ -989,7 +989,7 @@ the <material_module> by name.
 	if (option_table && token)
 	{
 		return_code = Option_table_add_entry(option_table, token, (void *)material,
-			(void *)cmzn_graphics_material_module_get_manager(material_module), set_Graphical_material);
+			(void *)cmzn_materialmodule_get_manager(materialmodule), set_Graphical_material);
 	}
 	else
 	{

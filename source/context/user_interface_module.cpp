@@ -9,7 +9,7 @@
 * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "zinc/graphics.h"
-#include "zinc/graphicsmaterial.h"
+#include "zinc/material.h"
 #include "zinc/timekeeper.h"
 #include "time/time_keeper_app.hpp"
 #include "comfile/comfile.h"
@@ -173,10 +173,10 @@ struct User_interface_module *User_interface_module_create(
 		UI_module->interactive_tool_manager=CREATE(MANAGER(Interactive_tool))();
 		if (UI_module->user_interface)
 		{
-			struct cmzn_graphics_material_module *material_module =
-				cmzn_graphics_module_get_material_module(graphics_module);
-			cmzn_graphics_material_id defaultMaterial =
-				cmzn_graphics_material_module_get_default_material(material_module);
+			struct cmzn_materialmodule *materialmodule =
+				cmzn_graphics_module_get_materialmodule(graphics_module);
+			cmzn_material_id defaultMaterial =
+				cmzn_materialmodule_get_default_material(materialmodule);
 			UI_module->transform_tool=create_Interactive_tool_transform(
 				UI_module->user_interface);
 			ADD_OBJECT_TO_MANAGER(Interactive_tool)(UI_module->transform_tool,
@@ -216,8 +216,8 @@ struct User_interface_module *User_interface_module_create(
 				defaultMaterial,
 				UI_module->user_interface,
 				UI_module->default_time_keeper_app);
-			cmzn_graphics_material_destroy(&defaultMaterial);
-			cmzn_graphics_material_module_destroy(&material_module);
+			cmzn_material_destroy(&defaultMaterial);
+			cmzn_materialmodule_destroy(&materialmodule);
 		}
 		if (UI_module->user_interface)
 		{

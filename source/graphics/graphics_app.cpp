@@ -10,7 +10,7 @@
 
 #include "zinc/fieldmodule.h"
 #include "zinc/graphics.h"
-#include "zinc/graphicsmaterial.h"
+#include "zinc/material.h"
 #include "zinc/font.h"
 #include "zinc/region.h"
 #include "zinc/spectrum.h"
@@ -509,9 +509,9 @@ int gfx_modify_scene_graphics(struct Parse_state *state,
 	Option_table_add_positive_double_entry(option_table, "line_width", &line_width);
 
 	/* material */
-	cmzn_graphics_material_id material = cmzn_graphics_get_material(graphics);
+	cmzn_material_id material = cmzn_graphics_get_material(graphics);
 	Option_table_add_set_Material_entry(option_table, "material", &material,
-		scene_command_data->material_module);
+		scene_command_data->materialmodule);
 
 	/* glyph repeat mode REPEAT_NONE|REPEAT_AXES_2D|REPEAT_AXES_3D|REPEAT_MIRROR */
 	const char *glyph_repeat_mode_string = 0;
@@ -652,7 +652,7 @@ int gfx_modify_scene_graphics(struct Parse_state *state,
 	if (graphics_type == CMZN_GRAPHICS_LINES)
 	{
 		Option_table_add_set_Material_entry(option_table, "secondary_material", &(graphics->secondary_material),
-			scene_command_data->material_module);
+			scene_command_data->materialmodule);
 	}
 
 	/* seed_element */
@@ -693,9 +693,9 @@ int gfx_modify_scene_graphics(struct Parse_state *state,
 	DEALLOCATE(valid_strings);
 
 	/* selected_material */
-	cmzn_graphics_material_id selected_material = cmzn_graphics_get_selected_material(graphics);
+	cmzn_material_id selected_material = cmzn_graphics_get_selected_material(graphics);
 	Option_table_add_set_Material_entry(option_table, "selected_material", &selected_material,
-		scene_command_data->material_module);
+		scene_command_data->materialmodule);
 
 	/* glyph base size */
 	double glyph_base_size[3];
@@ -1225,8 +1225,8 @@ int gfx_modify_scene_graphics(struct Parse_state *state,
 	cmzn_graphicssamplingattributes_destroy(&sampling);
 	cmzn_spectrum_destroy(&spectrum);
 	cmzn_tessellation_destroy(&tessellation);
-	cmzn_graphics_material_destroy(&material);
-	cmzn_graphics_material_destroy(&selected_material);
+	cmzn_material_destroy(&material);
+	cmzn_material_destroy(&selected_material);
 	DEALLOCATE(name);
 	return return_code;
 }

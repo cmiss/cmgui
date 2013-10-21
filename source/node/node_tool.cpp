@@ -18,7 +18,7 @@ Scene input.
 #include <math.h>
 #include "zinc/fieldcache.h"
 #include "zinc/graphics.h"
-#include "zinc/graphicsmaterial.h"
+#include "zinc/material.h"
 #include "zinc/scene.h"
 #include "zinc/scenepicker.h"
 #include "time/time_keeper_app.hpp"
@@ -3176,7 +3176,7 @@ struct Node_tool *CREATE(Node_tool)(
 			node_tool->fe_region=(struct FE_region *)NULL;
 			node_tool->domain_type = domain_type;
 			node_tool->rubber_band_material=
-				cmzn_graphics_material_access(rubber_band_material);
+				cmzn_material_access(rubber_band_material);
 			node_tool->user_interface=user_interface;
 			node_tool->time_keeper_app = (struct Time_keeper_app *)NULL;
 			node_tool->computed_field_manager_callback_id = NULL;
@@ -3291,7 +3291,7 @@ structure itself.
 			DEACCESS(FE_element)(&node_tool->template_element);
 		}
 		REACCESS(GT_object)(&(node_tool->rubber_band),(struct GT_object *)NULL);
-		cmzn_graphics_material_destroy(&(node_tool->rubber_band_material));
+		cmzn_material_destroy(&(node_tool->rubber_band_material));
 		if (node_tool->last_picked_node)
 			cmzn_node_destroy(&(node_tool->last_picked_node));
 		if (node_tool->time_keeper_app)

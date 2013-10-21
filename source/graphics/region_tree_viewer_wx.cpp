@@ -21,7 +21,7 @@ codes used to build scene editor with wxWidgets.
 
 #include "zinc/scene.h"
 #include "zinc/graphics.h"
-#include "zinc/graphicsmaterial.h"
+#include "zinc/material.h"
 #include "zinc/spectrum.h"
 #include "zinc/status.h"
 #include "general/debug.h"
@@ -2600,12 +2600,12 @@ void FaceChosen(wxCommandEvent &event)
 
 void SetBothMaterialChooser(cmzn_graphics *graphics)
 {
-	cmzn_graphics_material_id material = cmzn_graphics_get_material(graphics);
+	cmzn_material_id material = cmzn_graphics_get_material(graphics);
 	graphical_material_chooser->set_object(material);
-	cmzn_graphics_material_destroy(&material);
-	cmzn_graphics_material_id selected_material = cmzn_graphics_get_selected_material(graphics);
+	cmzn_material_destroy(&material);
+	cmzn_material_id selected_material = cmzn_graphics_get_selected_material(graphics);
 	selected_material_chooser->set_object(selected_material);
-	cmzn_graphics_material_destroy(&selected_material);
+	cmzn_material_destroy(&selected_material);
 }
 
 void SetGraphics(cmzn_graphics *graphics)

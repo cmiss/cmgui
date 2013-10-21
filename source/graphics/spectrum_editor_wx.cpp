@@ -21,7 +21,7 @@ Provides the wxWidgets interface to manipulate spectrum settings.
 
 #include "zinc/glyph.h"
 #include "zinc/scene.h"
-#include "zinc/graphicsmaterial.h"
+#include "zinc/material.h"
 #include "zinc/scene.h"
 #include "command/parser.h"
 #include "general/debug.h"
@@ -2155,13 +2155,13 @@ Creates a spectrum_editor widget.
 					 spectrum_editor->spectrum_lower_panel->SetScrollbars(10,10,10,40);
 					 spectrum_editor->spectrum_higher_panel->SetScrollbars(10,10,40,40);
 					 return_code = 1;
-					 spectrum_editor->editorMaterial = cmzn_graphics_material_create_private();
-					 cmzn_graphics_material_set_name(spectrum_editor->editorMaterial, "editorMaterial");
+					 spectrum_editor->editorMaterial = cmzn_material_create_private();
+					 cmzn_material_set_name(spectrum_editor->editorMaterial, "editorMaterial");
 					 Graphical_material_set_ambient(spectrum_editor->editorMaterial, &black );
 					 Graphical_material_set_diffuse(spectrum_editor->editorMaterial, &black );
 					 Graphical_material_set_shininess(spectrum_editor->editorMaterial, 0.3 );
-					 spectrum_editor->labelMaterial = cmzn_graphics_material_create_private();
-					 cmzn_graphics_material_set_name(spectrum_editor->labelMaterial, "labelMaterial");
+					 spectrum_editor->labelMaterial = cmzn_material_create_private();
+					 cmzn_material_set_name(spectrum_editor->labelMaterial, "labelMaterial");
 					 Graphical_material_set_ambient(spectrum_editor->labelMaterial, &white );
 					 Graphical_material_set_diffuse(spectrum_editor->labelMaterial, &white );
 					 Graphical_material_set_shininess(spectrum_editor->labelMaterial, 0.3 );
@@ -2326,8 +2326,8 @@ Destroys the <*spectrum_editor_address> and sets
 	{
 		return_code = 1;
 		delete spectrum_editor->wx_spectrum_editor;
-		cmzn_graphics_material_destroy(&spectrum_editor->editorMaterial);
-		cmzn_graphics_material_destroy(&spectrum_editor->labelMaterial);
+		cmzn_material_destroy(&spectrum_editor->editorMaterial);
+		cmzn_material_destroy(&spectrum_editor->labelMaterial);
 		cmzn_glyph_colour_bar_destroy(&spectrum_editor->colourBar);
 		if (spectrum_editor->autorange_scene)
 		{

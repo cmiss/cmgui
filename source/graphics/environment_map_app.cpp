@@ -4,7 +4,7 @@
 * License, v. 2.0. If a copy of the MPL was not distributed with this
 * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#include "zinc/graphicsmaterial.h"
+#include "zinc/material.h"
 #include "general/debug.h"
 #include "general/manager.h"
 #include "command/parser.h"
@@ -42,7 +42,7 @@ Set the <environment_map> to face materials.
 					face_no=0;
 					while (return_code&&(face_no<6)&&
 						((environment_map->face_material)[face_no]=
-						cmzn_graphics_material_access(FIND_BY_IDENTIFIER_IN_MANAGER(Graphical_material,name)(
+						cmzn_material_access(FIND_BY_IDENTIFIER_IN_MANAGER(Graphical_material,name)(
 						state->current_token,graphical_material_manager)))&&
 						shift_Parse_state(state,1))
 					{
