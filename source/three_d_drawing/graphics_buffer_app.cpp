@@ -257,7 +257,9 @@ struct Graphics_buffer_app
 
 struct Graphics_buffer_package *Graphics_buffer_package_get_core_package(struct Graphics_buffer_app_package* package)
 {
-	return package->core_package;
+	if (package)
+		return package->core_package;
+	return 0;
 }
 
 
