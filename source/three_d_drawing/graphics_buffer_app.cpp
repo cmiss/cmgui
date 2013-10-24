@@ -521,7 +521,7 @@ public:
 		int input_modifier, return_code = 1;
 		struct Graphics_buffer_input input;
 
-		input.type = CMZN_SCENEVIEWERINPUT_EVENT_INVALID;
+		input.type = CMZN_SCENEVIEWERINPUT_EVENT_TYPE_INVALID;
 		input.button_number = 0;
 		input.key_code = key_code;
 		cursor_x = input.position_x = event.GetX();

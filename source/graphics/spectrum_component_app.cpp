@@ -552,7 +552,7 @@ parsed settings. Note that the settings are ACCESSed once on valid return.
 			settings=modify_spectrum_data->component=CREATE(cmzn_spectrumcomponent)();
 			if (settings)
 			{
-				cmzn_spectrumcomponent_set_scale_type(settings,CMZN_SPECTRUMCOMPONENT_SCALE_INVALID);
+				cmzn_spectrumcomponent_set_scale_type(settings,CMZN_SPECTRUMCOMPONENT_SCALE_TYPE_INVALID);
 				settings->is_field_lookup = true;
 
 				colour_mapping = cmzn_spectrumcomponent_get_colour_mapping(settings);
@@ -742,7 +742,7 @@ included in the string. User must remember to DEALLOCATE the name afterwards.
 					append_string(&component_string," right",&error);
 				}
 			} break;
-			case CMZN_SPECTRUMCOMPONENT_SCALE_INVALID:
+			case CMZN_SPECTRUMCOMPONENT_SCALE_TYPE_INVALID:
 			{
 				if (component->is_field_lookup)
 				{

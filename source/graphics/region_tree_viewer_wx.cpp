@@ -2611,7 +2611,7 @@ void SetBothMaterialChooser(cmzn_graphics *graphics)
 void SetGraphics(cmzn_graphics *graphics)
 {
 	int error;
-	cmzn_element_face_type face = CMZN_ELEMENT_FACE_INVALID;
+	cmzn_element_face_type face = CMZN_ELEMENT_FACE_TYPE_INVALID;
 	char temp_string[100], *vector_temp_string;
 	enum cmzn_graphics_render_polygon_mode render_polygon_mode;
 	struct FE_element *seed_element;

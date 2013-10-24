@@ -1485,7 +1485,7 @@ DESCRIPTION :
 Callback for the settings type.
 ==============================================================================*/
 {
-	 enum cmzn_spectrumcomponent_scale_type new_spectrum_type = CMZN_SPECTRUMCOMPONENT_SCALE_INVALID;
+	 enum cmzn_spectrumcomponent_scale_type new_spectrum_type = CMZN_SPECTRUMCOMPONENT_SCALE_TYPE_INVALID;
 	 struct cmzn_spectrumcomponent *settings;
 	 int selection;
 	 const char *string_selection;
