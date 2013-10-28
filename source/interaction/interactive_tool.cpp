@@ -17,7 +17,6 @@ content of the global selections and objects with text input.
 * License, v. 2.0. If a copy of the MPL was not distributed with this
 * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 #include "zinc/graphics.h"
-#include "zinc/interactivetool.h"
 #include "general/debug.h"
 #include "general/list_private.h"
 #include "general/manager_private.h"
@@ -703,48 +702,3 @@ Up to calling function to deallocate the returned array AND the strings in it.
 
 	return (tool_names);
 } /* interactive_tool_manager_get_tool_names */
-
-int cmzn_interactive_tool_execute_command(cmzn_interactive_tool_id interactive_tool,
-	const char *command)
-{
-	int return_code = 0;
-	if (interactive_tool && command)
-	{
-		if (0 == strcmp(interactive_tool->name, "node_tool") ||
-			0 == strcmp(interactive_tool->name, "data_tool"))
-		{
-			struct Node_tool *node_tool =
-				(struct Node_tool *)(Interactive_tool_get_tool_data(interactive_tool));
-			return_code = Node_tool_execute_command(node_tool, command);
-		}
-		else if (Interactive_tool_is_Transform_tool(interactive_tool))
-		{
-			return_code = Transform_tool_execute_command(interactive_tool, command);
-		}
-	}
-
-	return return_code;
-}
-
-cmzn_interactive_tool_id cmzn_interactive_tool_access(cmzn_interactive_tool_id interactive_tool)
-{
-	cmzn_interactive_tool_id return_interactive_tool = 0;
-	if (interactive_tool)
-	{
-		return_interactive_tool = ACCESS(Interactive_tool)(return_interactive_tool);
-	}
-
-	return return_interactive_tool;
-}
-
-int cmzn_interactive_tool_destroy(cmzn_interactive_tool_id *interactive_tool)
-{
-	int return_code = 0;
-	if (interactive_tool)
-	{
-		DEACCESS(Interactive_tool)(interactive_tool);
-		return_code = 1;
-	}
-
-	return return_code;
-}
