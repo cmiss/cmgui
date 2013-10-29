@@ -12848,8 +12848,11 @@ static int gfx_read_region(struct Parse_state *state,
 				cmzn_streaminformation_id streaminformation = cmzn_region_create_streaminformation(region);
 				cmzn_streamresource_id resource = cmzn_streaminformation_create_streamresource_file(
 					streaminformation, file_name);
-				return_code = cmzn_region_read(region, streaminformation);
+				cmzn_streaminformation_region_id streaminformation_region =
+					cmzn_streaminformation_cast_region(streaminformation);
+				return_code = cmzn_region_read(region, streaminformation_region);
 				cmzn_streamresource_destroy(&resource);
+				cmzn_streaminformation_region_destroy(&streaminformation_region);
 				cmzn_streaminformation_destroy(&streaminformation);
 				if (!return_code)
 				{
