@@ -982,8 +982,7 @@ object cause updates.
 } /* Element_point_viewer_FE_region_change */
 
 static int element_point_viewer_time_change_callback(
-	struct Time_object *time_object, double current_time,
-	void *element_point_field_viewer_void)
+	double current_time,	void *element_point_field_viewer_void)
 /*******************************************************************************
 LAST MODIFIED : 6 June 2007
 
@@ -995,9 +994,8 @@ DESCRIPTION :
 
 	ENTER(element_point_viewer_time_change_callback);
 	USE_PARAMETER(current_time);
-	if (time_object && (element_point_viewer =
-				(struct Element_point_viewer *)
-		element_point_field_viewer_void))
+	if ((element_point_viewer =
+		(struct Element_point_viewer *)element_point_field_viewer_void))
 	{
 		 //		element_point_field_viewer_widget_update_values(element_point_field_viewer);
 		return_code = 1;
@@ -2606,19 +2604,19 @@ pass unmanaged elements in the element_point_identifier to this widget.
 				{
 					 if (!element_point_viewer->time_object_callback)
 					 {
-							element_point_viewer->time_object_callback =
-								 cmzn_timenotifier_add_callback(element_point_viewer->time_object,
+							if (CMZN_OK == cmzn_timenotifier_set_callback(element_point_viewer->time_object,
 										element_point_viewer_time_change_callback,
-										(void *)element_point_viewer);
+										(void *)element_point_viewer))
+							{
+								element_point_viewer->time_object_callback = 1;
+							}
 					 }
 				}
 				else
 				{
 					 if (element_point_viewer->time_object_callback)
 					 {
-							cmzn_timenotifier_remove_callback(element_point_viewer->time_object,
-								 element_point_viewer_time_change_callback,
-								 (void *)element_point_viewer);
+							cmzn_timenotifier_clear_callback(element_point_viewer->time_object);
 							element_point_viewer->time_object_callback = 0;
 					 }
 				}

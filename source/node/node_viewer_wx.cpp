@@ -485,8 +485,7 @@ int Node_viewer_remove_unused_collpane(struct Node_viewer *node_viewer)
 }
 
 static int node_field_time_change_callback(
-	cmzn_timenotifier_id timenotifier, double current_time,
-	void *node_viewer_void)
+	double current_time, void *node_viewer_void)
 /*******************************************************************************
 LAST MODIFIED : 5 December 2001
 
@@ -497,8 +496,7 @@ DESCRIPTION :
 	struct Node_viewer *node_viewer;
 
 	USE_PARAMETER(current_time);
-	if(timenotifier && (node_viewer =
-			(struct Node_viewer *)node_viewer_void))
+	if((node_viewer =	(struct Node_viewer *)node_viewer_void))
 	{
 // 		node_viewer_widget_update_values(node_viewer);
 		return_code = 1;
@@ -537,7 +535,7 @@ int Node_viewer_update_collpane(struct Node_viewer *node_viewer)
 		{
 			if (!node_viewer->timenotifier_callback)
 			{
-				if (CMZN_OK == cmzn_timenotifier_add_callback(node_viewer->timenotifier,
+				if (CMZN_OK == cmzn_timenotifier_set_callback(node_viewer->timenotifier,
 					node_field_time_change_callback, (void *)node_viewer))
 				{
 					node_viewer->timenotifier_callback = 1;
@@ -548,8 +546,7 @@ int Node_viewer_update_collpane(struct Node_viewer *node_viewer)
 		{
 			if (node_viewer->timenotifier_callback)
 			{
-				cmzn_timenotifier_remove_callback(node_viewer->timenotifier,
-					node_field_time_change_callback, (void *)node_viewer);
+				cmzn_timenotifier_clear_callback(node_viewer->timenotifier);
 				node_viewer->timenotifier_callback = 0;
 			}
 		}
