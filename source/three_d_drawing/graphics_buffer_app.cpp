@@ -479,6 +479,12 @@ public:
 		{
 			input_modifier |= GRAPHICS_BUFFER_INPUT_MODIFIER_SHIFT;
 		}
+#if defined (DARWIN)
+		if (event.CmdDown())
+		{
+			input_modifier |= GRAPHICS_BUFFER_INPUT_MODIFIER_SHIFT;
+		}
+#endif
 		if (event.ControlDown())
 		{
 			input_modifier |= GRAPHICS_BUFFER_INPUT_MODIFIER_CONTROL;
@@ -503,6 +509,12 @@ public:
 		{
 			input_modifier |= GRAPHICS_BUFFER_INPUT_MODIFIER_SHIFT;
 		}
+#if defined (DARWIN)
+		if (event.CmdDown())
+		{
+			input_modifier |= GRAPHICS_BUFFER_INPUT_MODIFIER_SHIFT;
+		}
+#endif
 		if (event.ControlDown())
 		{
 			input_modifier |= GRAPHICS_BUFFER_INPUT_MODIFIER_CONTROL;
@@ -536,6 +548,12 @@ public:
 		{
 			input_modifier |= GRAPHICS_BUFFER_INPUT_MODIFIER_SHIFT;
 		}
+#if defined (DARWIN)
+		if (event.CmdDown())
+		{
+			input_modifier |= GRAPHICS_BUFFER_INPUT_MODIFIER_SHIFT;
+		}
+#endif
 		if (event.ControlDown())
 		{
 			input_modifier |= GRAPHICS_BUFFER_INPUT_MODIFIER_CONTROL;
