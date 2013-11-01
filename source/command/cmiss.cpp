@@ -289,6 +289,7 @@ DESCRIPTION :
 	char *cm_examples_directory,*cm_parameters_file_name,*example_directory,
 		*examples_directory,*example_comfile,
 		*example_requirements,*help_directory,*help_url;
+	bool start_event_dispatcher;
 	struct Console *command_console;
 #if defined (USE_CMGUI_COMMAND_WINDOW)
 	struct Command_window *command_window;
@@ -16418,6 +16419,7 @@ Executes a QUIT command.
 			if (NULL != (command_data = (struct cmzn_command_data *)command_data_void))
 			{
 				User_interface_end_application_loop(command_data->user_interface);
+				command_data->start_event_dispatcher = false;
 				return_code=1;
 			}
 			else
@@ -17551,6 +17553,7 @@ Initialise all the subcomponents of cmgui and create the cmzn_command_data
 		command_data->default_time_keeper_app = (struct Time_keeper_app *)NULL;
 		command_data->help_directory=(char *)NULL;
 		command_data->help_url=(char *)NULL;
+		command_data->start_event_dispatcher=true;
 #if defined (USE_PERL_INTERPRETER)
 		command_data->interpreter = (struct Interpreter *)NULL;
 #endif /* defined (USE_PERL_INTERPRETER) */
@@ -18414,7 +18417,7 @@ Process events until some events request the program to finish.
 
 	ENTER(cmzn_command_data_main_loop);
 	/* main processing / loop */
-	if (command_data && command_data->event_dispatcher)
+	if (command_data && command_data->event_dispatcher && command_data->start_event_dispatcher)
 	{
 		/* user interface loop */
 		return_code=Event_dispatcher_main_loop(command_data->event_dispatcher);
