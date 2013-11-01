@@ -21,8 +21,8 @@ const char computed_field_threshold_image_filter_type_string[] = "threshold_filt
 
 int cmzn_field_get_type_threshold_image_filter(struct Computed_field *field,
 	struct Computed_field **source_field,
-	enum cmzn_field_imagefilter_threshold_mode *threshold_mode,
-	double *outside_value, double *below_value,	double *above_value);
+	enum cmzn_field_imagefilter_threshold_condition *condition,
+	double *outsideValue, double *lowerValue,	double *upperValue);
 
 int define_Computed_field_type_threshold_image_filter(struct Parse_state *state,
 	void *field_modify_void, void *computed_field_simple_package_void)
@@ -34,11 +34,6 @@ Converts <field> into type COMPUTED_FIELD_THRESHOLD_IMAGE_FILTER (if it is not
 already) and allows its contents to be modified.
 ==============================================================================*/
 {
-
-	enum cmzn_field_imagefilter_threshold_mode threshold_mode;
-
-	double outside_value, below_value, above_value;
-
 	int return_code;
 	struct Computed_field *source_field;
 	Computed_field_modify_data *field_modify;
@@ -54,10 +49,10 @@ already) and allows its contents to be modified.
 		source_field = (struct Computed_field *)NULL;
 
 		/* default values */
-		threshold_mode = CMZN_FIELD_IMAGEFILTER_THRESHOLD_MODE_BELOW;
-		outside_value = 0.0;
-		below_value = 0.5;
-		above_value = 0.5;
+		enum cmzn_field_imagefilter_threshold_condition condition = CMZN_FIELD_IMAGEFILTER_THRESHOLD_CONDITION_BELOW;
+		double outside_value = 0.0;
+		double below_value = 0.5;
+		double above_value = 0.5;
 
 		if ((NULL != field_modify->get_field()) &&
 			(computed_field_threshold_image_filter_type_string ==
@@ -65,8 +60,7 @@ already) and allows its contents to be modified.
 		{
 			return_code =
 				cmzn_field_get_type_threshold_image_filter(field_modify->get_field(), &source_field,
-					&threshold_mode, &outside_value,
-					&below_value, &above_value);
+					&condition, &outside_value, &below_value, &above_value);
 		}
 		if (return_code)
 		{
@@ -88,8 +82,8 @@ already) and allows its contents to be modified.
 			Option_table_add_entry(option_table, "field", &source_field,
 				&set_source_field_data, set_Computed_field_conditional);
 			/* threshold_mode */
-			OPTION_TABLE_ADD_ENUMERATOR(cmzn_field_imagefilter_threshold_mode)(option_table,
-				&threshold_mode);
+			OPTION_TABLE_ADD_ENUMERATOR(cmzn_field_imagefilter_threshold_condition)(option_table,
+				&condition);
 			/* outside_value */
 			Option_table_add_double_entry(option_table, "outside_value",
 				&outside_value);
@@ -120,14 +114,10 @@ already) and allows its contents to be modified.
 					field_modify->get_field_module(), source_field);
 				cmzn_field_imagefilter_threshold_id imagefilter =
 					cmzn_field_cast_imagefilter_threshold(filter_field);
-				cmzn_field_imagefilter_threshold_set_mode(imagefilter,
-					threshold_mode);
-				cmzn_field_imagefilter_threshold_set_outside_value(imagefilter,
-					outside_value);
-				cmzn_field_imagefilter_threshold_set_below(imagefilter,
-					below_value);
-				cmzn_field_imagefilter_threshold_set_above(imagefilter,
-					above_value);
+				cmzn_field_imagefilter_threshold_set_condition(imagefilter, condition);
+				cmzn_field_imagefilter_threshold_set_outside_value(imagefilter, outside_value);
+				cmzn_field_imagefilter_threshold_set_lower_threshold(imagefilter, below_value);
+				cmzn_field_imagefilter_threshold_set_upper_threshold(imagefilter, above_value);
 				cmzn_field_imagefilter_threshold_destroy(&imagefilter);
 				return_code = field_modify->update_field_and_deaccess(filter_field);
 			}
@@ -189,5 +179,5 @@ DESCRIPTION :
 	return (return_code);
 } /* Computed_field_register_types_threshold_image_filter */
 
-DEFINE_DEFAULT_OPTION_TABLE_ADD_ENUMERATOR_FUNCTION(cmzn_field_imagefilter_threshold_mode);
+DEFINE_DEFAULT_OPTION_TABLE_ADD_ENUMERATOR_FUNCTION(cmzn_field_imagefilter_threshold_condition);
 
