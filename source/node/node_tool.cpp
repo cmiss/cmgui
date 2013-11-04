@@ -1186,7 +1186,7 @@ try to enforce that the node is created on that element.
 				graphics = cmzn_scene_get_first_graphics(scene);
 				while (graphics)
 				{
-					if ((CMZN_GRAPHICS_POINTS == cmzn_graphics_get_graphics_type(graphics)) &&
+					if ((CMZN_GRAPHICS_TYPE_POINTS == cmzn_graphics_get_graphics_type(graphics)) &&
 						(cmzn_graphics_get_domain_type(graphics) == node_tool->domain_type))
 					{
 						break;
@@ -1453,7 +1453,7 @@ release.
 						if (node_tool->constrain_to_surface)
 						{
 							nearest_graphics = cmzn_scenepicker_get_nearest_graphics(scenepicker);
-							if (nearest_graphics && CMZN_GRAPHICS_SURFACES == cmzn_graphics_get_graphics_type(nearest_graphics))
+							if (nearest_graphics && CMZN_GRAPHICS_TYPE_SURFACES == cmzn_graphics_get_graphics_type(nearest_graphics))
 							{
 								nearest_element = cmzn_scenepicker_get_nearest_element(scenepicker);
 								cmzn_node_destroy(&picked_node);

@@ -12910,7 +12910,7 @@ static int gfx_read_wavefront_obj(struct Parse_state *state,
 			Option_table_add_entry(option_table,"as",&specified_graphics_object_name,
 				(void *)1,set_name);
 			/* render_polygon_mode */
-			render_polygon_mode = CMZN_GRAPHICS_RENDER_POLYGON_SHADED;
+			render_polygon_mode = CMZN_GRAPHICS_RENDER_POLYGON_MODE_SHADED;
 			render_polygon_mode_string = ENUMERATOR_STRING(cmzn_graphics_render_polygon_mode)(render_polygon_mode);
 			valid_strings = ENUMERATOR_GET_VALID_STRINGS(cmzn_graphics_render_polygon_mode)(
 				&number_of_valid_strings,

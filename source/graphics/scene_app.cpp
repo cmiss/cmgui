@@ -594,7 +594,7 @@ cmzn_graphics* cmzn_scene_create_graphics_app(cmzn_scene *scene,
 		cmzn_scene_set_minimum_graphics_defaults(scene, graphics);
 		cmzn_graphicslineattributes_id line_attributes = cmzn_graphics_get_graphicslineattributes(graphics);
 		cmzn_graphicspointattributes_id point_attributes = cmzn_graphics_get_graphicspointattributes(graphics);
-		if (graphics_type == CMZN_GRAPHICS_STREAMLINES)
+		if (graphics_type == CMZN_GRAPHICS_TYPE_STREAMLINES)
 		{
 			// use previous default of 1.0 for streamline width
 			const double one = 1.0;

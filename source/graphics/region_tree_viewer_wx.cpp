@@ -600,8 +600,8 @@ class wxRegionTreeViewer : public wxFrame
 	Managed_object_chooser<Computed_field,MANAGER_CLASS(Computed_field)>
 	*sample_density_field_chooser;
 	wxFeElementTextChooser *seed_element_chooser;
-	DEFINE_ENUMERATOR_TYPE_CLASS(cmzn_graphicslineattributes_shape);
-	Enumerator_chooser<ENUMERATOR_TYPE_CLASS(cmzn_graphicslineattributes_shape)>
+	DEFINE_ENUMERATOR_TYPE_CLASS(cmzn_graphicslineattributes_shape_type);
+	Enumerator_chooser<ENUMERATOR_TYPE_CLASS(cmzn_graphicslineattributes_shape_type)>
 		*line_shape_chooser;
 	DEFINE_ENUMERATOR_TYPE_CLASS(cmzn_scene_coordinate_system);
 	Enumerator_chooser<ENUMERATOR_TYPE_CLASS(cmzn_scene_coordinate_system)>
@@ -1303,13 +1303,13 @@ Callback from wxChooser<Seed Element> when choice is made.
 }
 
 /**
- * Callback from wxChooser<cmzn_graphicslineattributes_shape> when choice is made.
+ * Callback from wxChooser<cmzn_graphicslineattributes_shape_type> when choice is made.
  */
-int line_shape_callback(enum cmzn_graphicslineattributes_shape line_shape)
+int line_shape_callback(enum cmzn_graphicslineattributes_shape_type line_shape)
 {
 	cmzn_graphicslineattributes_id line_attributes =
 		cmzn_graphics_get_graphicslineattributes(region_tree_viewer->current_graphics);
-	if (CMZN_OK == cmzn_graphicslineattributes_set_shape(line_attributes, line_shape))
+	if (CMZN_OK == cmzn_graphicslineattributes_set_shape_type(line_attributes, line_shape))
 	{
 		Region_tree_viewer_autoapply(region_tree_viewer->scene,
 			region_tree_viewer->edit_scene);
@@ -1318,7 +1318,7 @@ int line_shape_callback(enum cmzn_graphicslineattributes_shape line_shape)
 	else
 	{
 		// restore current shape as some shapes not supported for all graphics types
-		line_shape_chooser->set_value(cmzn_graphicslineattributes_get_shape(line_attributes));
+		line_shape_chooser->set_value(cmzn_graphicslineattributes_get_shape_type(line_attributes));
 	}
 	cmzn_graphicslineattributes_destroy(&line_attributes);
 	return 1;
@@ -1834,35 +1834,35 @@ void AddGraphicsChoice(wxCommandEvent &event)
 		switch (add_graphics_type)
 		{
 		case ADD_GRAPHIC_TYPE_POINTS:
-			graphics_type = CMZN_GRAPHICS_POINTS;
+			graphics_type = CMZN_GRAPHICS_TYPE_POINTS;
 			break;
 		case ADD_GRAPHIC_TYPE_NODE_POINTS:
 			domain_type = CMZN_FIELD_DOMAIN_NODES;
-			graphics_type = CMZN_GRAPHICS_POINTS;
+			graphics_type = CMZN_GRAPHICS_TYPE_POINTS;
 			break;
 		case ADD_GRAPHIC_TYPE_DATA_POINTS:
 			domain_type = CMZN_FIELD_DOMAIN_DATA;
-			graphics_type = CMZN_GRAPHICS_POINTS;
+			graphics_type = CMZN_GRAPHICS_TYPE_POINTS;
 			break;
 		case ADD_GRAPHIC_TYPE_ELEMENT_POINTS:
 			domain_type = CMZN_FIELD_DOMAIN_MESH_HIGHEST_DIMENSION;
-			graphics_type = CMZN_GRAPHICS_POINTS;
+			graphics_type = CMZN_GRAPHICS_TYPE_POINTS;
 			break;
 		case ADD_GRAPHIC_TYPE_LINES:
 			domain_type = CMZN_FIELD_DOMAIN_MESH_1D;
-			graphics_type = CMZN_GRAPHICS_LINES;
+			graphics_type = CMZN_GRAPHICS_TYPE_LINES;
 			break;
 		case ADD_GRAPHIC_TYPE_SURFACES:
 			domain_type = CMZN_FIELD_DOMAIN_MESH_2D;
-			graphics_type = CMZN_GRAPHICS_SURFACES;
+			graphics_type = CMZN_GRAPHICS_TYPE_SURFACES;
 			break;
 		case ADD_GRAPHIC_TYPE_CONTOURS:
-			graphics_type = CMZN_GRAPHICS_CONTOURS;
+			graphics_type = CMZN_GRAPHICS_TYPE_CONTOURS;
 			domain_type = CMZN_FIELD_DOMAIN_MESH_3D;
 			break;
 		case ADD_GRAPHIC_TYPE_STREAMLINES:
 			domain_type = CMZN_FIELD_DOMAIN_MESH_HIGHEST_DIMENSION;
-			graphics_type = CMZN_GRAPHICS_STREAMLINES;
+			graphics_type = CMZN_GRAPHICS_TYPE_STREAMLINES;
 			break;
 		case ADD_GRAPHIC_TYPE_INVALID:
 			break;
@@ -2670,17 +2670,17 @@ void SetGraphics(cmzn_graphics *graphics)
 	line_orientation_scale_field_chooser_panel = XRCCTRL(*this, "LineOrientationScaleFieldChooserPanel", wxPanel);
 	if (line_attributes)
 	{
-		cmzn_graphicslineattributes_shape line_shape = cmzn_graphicslineattributes_get_shape(line_attributes);
+		cmzn_graphicslineattributes_shape_type line_shape = cmzn_graphicslineattributes_get_shape_type(line_attributes);
 		if (0 == line_shape_chooser)
 		{
-			line_shape_chooser = new Enumerator_chooser<ENUMERATOR_TYPE_CLASS(cmzn_graphicslineattributes_shape)>(
+			line_shape_chooser = new Enumerator_chooser<ENUMERATOR_TYPE_CLASS(cmzn_graphicslineattributes_shape_type)>(
 				line_shape_chooser_panel, line_shape,
-				(ENUMERATOR_CONDITIONAL_FUNCTION(cmzn_graphicslineattributes_shape) *)NULL,
+				(ENUMERATOR_CONDITIONAL_FUNCTION(cmzn_graphicslineattributes_shape_type) *)NULL,
 				(void *)NULL, region_tree_viewer->user_interface);
 			line_shape_chooser_panel->Fit();
-			Callback_base< enum cmzn_graphicslineattributes_shape > *line_shape_callback =
-				new Callback_member_callback< enum cmzn_graphicslineattributes_shape,
-					wxRegionTreeViewer, int (wxRegionTreeViewer::*)(enum cmzn_graphicslineattributes_shape) >(
+			Callback_base< enum cmzn_graphicslineattributes_shape_type > *line_shape_callback =
+				new Callback_member_callback< enum cmzn_graphicslineattributes_shape_type,
+					wxRegionTreeViewer, int (wxRegionTreeViewer::*)(enum cmzn_graphicslineattributes_shape_type) >(
 						this, &wxRegionTreeViewer::line_shape_callback);
 			line_shape_chooser->set_callback(line_shape_callback);
 		}
@@ -3156,7 +3156,7 @@ void SetGraphics(cmzn_graphics *graphics)
 		{
 			select_mode_chooser =
 				new Enumerator_chooser<ENUMERATOR_TYPE_CLASS(cmzn_graphics_select_mode)>
-				(select_mode_chooser_panel, CMZN_GRAPHICS_SELECT_ON,
+				(select_mode_chooser_panel, CMZN_GRAPHICS_SELECT_MODE_ON,
 					(ENUMERATOR_CONDITIONAL_FUNCTION(cmzn_graphics_select_mode) *)NULL,
 					(void *)NULL, region_tree_viewer->user_interface);
 			select_mode_chooser_panel->Fit();
@@ -3289,7 +3289,7 @@ void SetGraphics(cmzn_graphics *graphics)
 		seed_element_panel = XRCCTRL(*this, "SeedElementPanel", wxPanel);
 		seedelementcheckbox = XRCCTRL(*this, "SeedElementCheckBox", wxCheckBox);
 
-		if (CMZN_GRAPHICS_STREAMLINES==graphics_type)
+		if (CMZN_GRAPHICS_TYPE_STREAMLINES==graphics_type)
 		{
 			seed_element_panel->Show();
 			seedelementcheckbox->Show();
@@ -3450,7 +3450,7 @@ void SetGraphics(cmzn_graphics *graphics)
 			cmzn_spectrum_destroy(&spectrum);
 		}
 
-		if (CMZN_GRAPHICS_STREAMLINES==graphics_type)
+		if (CMZN_GRAPHICS_TYPE_STREAMLINES==graphics_type)
 		{
 			streamlinedatatypetext->Show();
 			streamline_data_type_chooser_panel->Show();
@@ -3481,9 +3481,9 @@ void SetGraphics(cmzn_graphics *graphics)
 
 		wxStaticText *texturecoordinatestext = XRCCTRL(*this, "TextureCoordinatesText", wxStaticText);
 		texture_coordinates_chooser_panel = XRCCTRL(*this, "TextureCoordinatesChooserPanel", wxPanel);
-		if ((graphics_type == CMZN_GRAPHICS_SURFACES) ||
-			(graphics_type == CMZN_GRAPHICS_CONTOURS) ||
-			(graphics_type == CMZN_GRAPHICS_LINES))
+		if ((graphics_type == CMZN_GRAPHICS_TYPE_SURFACES) ||
+			(graphics_type == CMZN_GRAPHICS_TYPE_CONTOURS) ||
+			(graphics_type == CMZN_GRAPHICS_TYPE_LINES))
 		{
 			texture_coordinates_chooser_panel->Show();
 			texturecoordinatestext->Show();

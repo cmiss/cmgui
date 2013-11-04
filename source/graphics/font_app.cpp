@@ -49,9 +49,9 @@ Executes a GFX DEFINE FONT command.
 						cmzn_font_set_name(font, font_name);
 					}
 					cmzn_font_render_type render_type = cmzn_font_get_render_type(font);
-					cmzn_font_typeface typeface = cmzn_font_get_typeface(font);
+					cmzn_font_typeface_type typeface = cmzn_font_get_typeface_type(font);
 					char *render_type_string = cmzn_font_render_type_enum_to_string(render_type);
-					char *typeface_string = cmzn_font_typeface_enum_to_string(typeface);
+					char *typeface_string = cmzn_font_typeface_type_enum_to_string(typeface);
 					int number_of_valid_strings_render_type = 0;
 					int number_of_valid_strings_typeface = 0;
 					const char **valid_render_type_strings = ENUMERATOR_GET_VALID_STRINGS(cmzn_font_render_type)(
@@ -67,9 +67,9 @@ Executes a GFX DEFINE FONT command.
 						all_render_types += valid_render_type_strings[i];
 					}
 					const char *all_render_types_help = all_render_types.c_str();
-					const char **valid_font_typeface_strings = ENUMERATOR_GET_VALID_STRINGS(cmzn_font_typeface)(
+					const char **valid_font_typeface_strings = ENUMERATOR_GET_VALID_STRINGS(cmzn_font_typeface_type)(
 						&number_of_valid_strings_typeface,
-						(ENUMERATOR_CONDITIONAL_FUNCTION(cmzn_font_typeface) *)NULL,
+						(ENUMERATOR_CONDITIONAL_FUNCTION(cmzn_font_typeface_type) *)NULL,
 						(void *)NULL);
 					std::string all_font_typefaces = " ";
 					for (int i = 0; i < number_of_valid_strings_typeface; i++)
@@ -85,7 +85,7 @@ Executes a GFX DEFINE FONT command.
 					int bold_flag = 0;
 					int italic_flag = 0;
 					float depth = (float)cmzn_font_get_depth(font);
-					int size = cmzn_font_get_size(font);
+					int point_size = cmzn_font_get_point_size(font);
 					/* bold */
 					Option_table_add_entry(option_table, "bold",
 						(void *)&bold_flag, NULL, set_char_flag);
@@ -94,7 +94,7 @@ Executes a GFX DEFINE FONT command.
 					Option_table_add_entry(option_table,"depth",
 						&(depth),NULL,set_float);
 					Option_table_add_entry(option_table,"size",
-						&(size),NULL,set_int_non_negative);
+						&(point_size),NULL,set_int_non_negative);
 					Option_table_add_string_entry(option_table, "render_type",
 						&render_type_string, all_render_types_help);
 					Option_table_add_string_entry(option_table, "typeface",
@@ -121,9 +121,9 @@ Executes a GFX DEFINE FONT command.
 						}
 						if (typeface_string)
 						{
-							STRING_TO_ENUMERATOR(cmzn_font_typeface)(typeface_string,
+							STRING_TO_ENUMERATOR(cmzn_font_typeface_type)(typeface_string,
 								&typeface);
-							if (CMZN_FONT_TYPEFACE_INVALID == typeface)
+							if (CMZN_FONT_TYPEFACE_TYPE_INVALID == typeface)
 							{
 								display_message(ERROR_MESSAGE,
 									"gfx_define_font:  Invalid true type %s", typeface_string);
@@ -141,8 +141,8 @@ Executes a GFX DEFINE FONT command.
 							cmzn_font_set_bold(font, 0 != bold_flag);
 							cmzn_font_set_italic(font, 0 != italic_flag);
 							cmzn_font_set_depth(font, depth);
-							cmzn_font_set_size(font, size);
-							cmzn_font_set_typeface(font, typeface);
+							cmzn_font_set_point_size(font, point_size);
+							cmzn_font_set_typeface_type(font, typeface);
 							cmzn_font_set_render_type(font, render_type);
 						}
 
