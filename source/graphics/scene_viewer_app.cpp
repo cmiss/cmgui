@@ -747,11 +747,11 @@ int Scene_viewer_app_default_input_callback(struct Scene_viewer_app *scene_viewe
 			/* can override select mode by holding down control key */
 			if (CMZN_SCENEVIEWERINPUT_EVENT_TYPE_BUTTON_PRESS==input->type)
 			{
-				if (((CMZN_SCENEVIEWERINPUT_MODIFIER_CONTROL & input->modifiers)&&
+				if (((CMZN_SCENEVIEWERINPUT_MODIFIER_FLAG_CONTROL & input->modifiers)&&
 					(CMZN_SCENEVIEWER_VIEWPORT_MODE_ABSOLUTE != scene_viewer->core_scene_viewer->viewport_mode))
 					|| ((CMZN_SCENEVIEWER_VIEWPORT_MODE_ABSOLUTE == scene_viewer->core_scene_viewer->viewport_mode)&&
 					!((1==input->button_number)||
-					(CMZN_SCENEVIEWERINPUT_MODIFIER_BUTTON1 & input->modifiers))))
+					(CMZN_SCENEVIEWERINPUT_MODIFIER_FLAG_BUTTON1 & input->modifiers))))
 				{
 					scene_viewer->core_scene_viewer->temporary_transform_mode=1;
 				}
@@ -799,7 +799,7 @@ int Scene_viewer_app_default_input_callback(struct Scene_viewer_app *scene_viewe
 			{
 				if (CMZN_SCENEVIEWERINPUT_EVENT_TYPE_BUTTON_PRESS==input->type)
 				{
-					if (input->modifiers & CMZN_SCENEVIEWERINPUT_MODIFIER_CONTROL)
+					if (input->modifiers & CMZN_SCENEVIEWERINPUT_MODIFIER_FLAG_CONTROL)
 					{
 						Scene_viewer_view_all(scene_viewer->core_scene_viewer);
 					}
