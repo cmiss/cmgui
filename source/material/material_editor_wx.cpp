@@ -392,7 +392,7 @@ Increments the background pattern.
 	material_editor = (struct Material_editor *)material_editor_void;
 	if (material_editor != NULL)
 	{
-		if (CMZN_SCENEVIEWERINPUT_EVENT_BUTTON_PRESS == input->type)
+		if (CMZN_SCENEVIEWERINPUT_EVENT_TYPE_BUTTON_PRESS == input->type)
 		{
 			(material_editor->background)++;
 			if (material_editor->background>2)

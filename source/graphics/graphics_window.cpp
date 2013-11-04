@@ -2496,7 +2496,7 @@ Parser commands for setting simple parameters applicable to the whole <window>.
 					interactive_tool=(struct Interactive_tool *)NULL;
 					antialias_mode=0;
 					perturb_lines=0;
-					blending_mode = CMZN_SCENEVIEWER_BLENDING_NORMAL;
+					blending_mode = CMZN_SCENEVIEWER_BLENDING_MODE_NORMAL;
 				}
 				fast_transparency_flag=0;
 				slow_transparency_flag=0;
@@ -2695,7 +2695,7 @@ Parser commands for setting simple parameters applicable to the whole <window>.
 						{
 							if (fast_transparency_flag)
 							{
-								transparency_mode=CMZN_SCENEVIEWER_TRANSPARENCY_FAST;
+								transparency_mode=CMZN_SCENEVIEWER_TRANSPARENCY_MODE_FAST;
 							}
 							else if (layered_transparency)
 							{
@@ -2705,12 +2705,12 @@ Parser commands for setting simple parameters applicable to the whole <window>.
 							}
 							else if (order_independent_transparency)
 							{
-								transparency_mode=CMZN_SCENEVIEWER_TRANSPARENCY_ORDER_INDEPENDENT;
+								transparency_mode=CMZN_SCENEVIEWER_TRANSPARENCY_MODE_ORDER_INDEPENDENT;
 								transparency_layers = order_independent_transparency;
 							}
 							else
 							{
-								transparency_mode=CMZN_SCENEVIEWER_TRANSPARENCY_SLOW;
+								transparency_mode=CMZN_SCENEVIEWER_TRANSPARENCY_MODE_SLOW;
 							}
 							for (pane_no=0;pane_no<graphics_window->number_of_scene_viewers;
 								pane_no++)
@@ -3001,17 +3001,17 @@ view angle, interest point etc.
 						if (absolute_viewport_flag)
 						{
 							cmzn_sceneviewer_set_viewport_mode(scene_viewer->core_scene_viewer,
-								CMZN_SCENEVIEWER_VIEWPORT_ABSOLUTE);
+								CMZN_SCENEVIEWER_VIEWPORT_MODE_ABSOLUTE);
 						}
 						if (relative_viewport_flag)
 						{
 							cmzn_sceneviewer_set_viewport_mode(scene_viewer->core_scene_viewer,
-								CMZN_SCENEVIEWER_VIEWPORT_RELATIVE);
+								CMZN_SCENEVIEWER_VIEWPORT_MODE_RELATIVE);
 						}
 						if (distorting_relative_viewport_flag)
 						{
 							cmzn_sceneviewer_set_viewport_mode(scene_viewer->core_scene_viewer,
-								CMZN_SCENEVIEWER_VIEWPORT_DISTORTING_RELATIVE);
+								CMZN_SCENEVIEWER_VIEWPORT_MODE_DISTORTING_RELATIVE);
 						}
 					}
 					/*???RC should have checks on whether you can set these for the
@@ -3229,7 +3229,7 @@ it.
 			window->current_pane=0;
 			window->antialias_mode=0;
 			window->perturb_lines=0;
-			window->blending_mode = CMZN_SCENEVIEWER_BLENDING_NORMAL;
+			window->blending_mode = CMZN_SCENEVIEWER_BLENDING_MODE_NORMAL;
 			window->depth_of_field=0.0;
 			window->focal_depth=0.0;
 			/* the input_mode set here is changed below */
@@ -6609,7 +6609,7 @@ Writes the properties of the <window> to the command window.
 		display_message(INFORMATION_MESSAGE,
 			"  Transparency mode: %s\n",cmzn_sceneviewer_transparency_mode_string(
 				transparency_mode));
-		if (transparency_mode == CMZN_SCENEVIEWER_TRANSPARENCY_ORDER_INDEPENDENT)
+		if (transparency_mode == CMZN_SCENEVIEWER_TRANSPARENCY_MODE_ORDER_INDEPENDENT)
 		{
 			transparency_layers = cmzn_sceneviewer_get_transparency_layers(scene_viewer);
 			display_message(INFORMATION_MESSAGE,"    transparency_layers: %d\n",
@@ -6922,7 +6922,7 @@ and establishing the views in it to the command window to a com file.
 		transparency_mode = cmzn_sceneviewer_get_transparency_mode(scene_viewer);
 		process_message->process_command(INFORMATION_MESSAGE," %s",
 			cmzn_sceneviewer_transparency_mode_string(transparency_mode));
-		if (transparency_mode == CMZN_SCENEVIEWER_TRANSPARENCY_ORDER_INDEPENDENT)
+		if (transparency_mode == CMZN_SCENEVIEWER_TRANSPARENCY_MODE_ORDER_INDEPENDENT)
 		{
 			transparency_layers = cmzn_sceneviewer_get_transparency_layers(scene_viewer);
 			process_message->process_command(INFORMATION_MESSAGE," %d",transparency_layers);

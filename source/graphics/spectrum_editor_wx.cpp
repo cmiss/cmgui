@@ -1943,7 +1943,7 @@ Callback for when input is received by the scene_viewer.
 	spectrum_editor=(struct Spectrum_editor *)spectrum_editor_void;
 	if (spectrum_editor != 0)
 	{
-		if (CMZN_SCENEVIEWERINPUT_EVENT_BUTTON_PRESS==input->type)
+		if (CMZN_SCENEVIEWERINPUT_EVENT_TYPE_BUTTON_PRESS==input->type)
 		{
 			/* Increment the type - cycles through label divisions and colours */
 			spectrum_editor->viewer_type++;

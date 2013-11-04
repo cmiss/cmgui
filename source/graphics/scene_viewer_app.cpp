@@ -699,7 +699,7 @@ int Scene_viewer_app_input_transform(struct Scene_viewer_app *scene_viewer_app,
 	{
 		switch (input->type)
 		{
-			case CMZN_SCENEVIEWERINPUT_EVENT_BUTTON_RELEASE:
+			case CMZN_SCENEVIEWERINPUT_EVENT_TYPE_BUTTON_RELEASE:
 			{
 				if ((scene_viewer_app->core_scene_viewer->drag_mode == SV_DRAG_TUMBLE) &&
 					scene_viewer_app->core_scene_viewer->tumble_angle)
@@ -745,11 +745,11 @@ int Scene_viewer_app_default_input_callback(struct Scene_viewer_app *scene_viewe
 		case SCENE_VIEWER_SELECT:
 		{
 			/* can override select mode by holding down control key */
-			if (CMZN_SCENEVIEWERINPUT_EVENT_BUTTON_PRESS==input->type)
+			if (CMZN_SCENEVIEWERINPUT_EVENT_TYPE_BUTTON_PRESS==input->type)
 			{
 				if (((CMZN_SCENEVIEWERINPUT_MODIFIER_CONTROL & input->modifiers)&&
-					(CMZN_SCENEVIEWER_VIEWPORT_ABSOLUTE != scene_viewer->core_scene_viewer->viewport_mode))
-					|| ((CMZN_SCENEVIEWER_VIEWPORT_ABSOLUTE == scene_viewer->core_scene_viewer->viewport_mode)&&
+					(CMZN_SCENEVIEWER_VIEWPORT_MODE_ABSOLUTE != scene_viewer->core_scene_viewer->viewport_mode))
+					|| ((CMZN_SCENEVIEWER_VIEWPORT_MODE_ABSOLUTE == scene_viewer->core_scene_viewer->viewport_mode)&&
 					!((1==input->button_number)||
 					(CMZN_SCENEVIEWERINPUT_MODIFIER_BUTTON1 & input->modifiers))))
 				{
@@ -762,8 +762,8 @@ int Scene_viewer_app_default_input_callback(struct Scene_viewer_app *scene_viewe
 			}
 			if (scene_viewer->core_scene_viewer->temporary_transform_mode)
 			{
-				if (CMZN_SCENEVIEWER_VIEWPORT_RELATIVE == scene_viewer->core_scene_viewer->viewport_mode ||
-					CMZN_SCENEVIEWER_VIEWPORT_DISTORTING_RELATIVE == scene_viewer->core_scene_viewer->viewport_mode)
+				if (CMZN_SCENEVIEWER_VIEWPORT_MODE_RELATIVE == scene_viewer->core_scene_viewer->viewport_mode ||
+					CMZN_SCENEVIEWER_VIEWPORT_MODE_DISTORTING_RELATIVE == scene_viewer->core_scene_viewer->viewport_mode)
 				{
 					if (SCENE_VIEWER_CUSTOM != scene_viewer->core_scene_viewer->projection_mode)
 					{
@@ -797,7 +797,7 @@ int Scene_viewer_app_default_input_callback(struct Scene_viewer_app *scene_viewe
 		{
 			if (SCENE_VIEWER_UPDATE_ON_CLICK==scene_viewer->core_scene_viewer->input_mode)
 			{
-				if (CMZN_SCENEVIEWERINPUT_EVENT_BUTTON_PRESS==input->type)
+				if (CMZN_SCENEVIEWERINPUT_EVENT_TYPE_BUTTON_PRESS==input->type)
 				{
 					if (input->modifiers & CMZN_SCENEVIEWERINPUT_MODIFIER_CONTROL)
 					{
@@ -807,8 +807,8 @@ int Scene_viewer_app_default_input_callback(struct Scene_viewer_app *scene_viewe
 				scene_viewer->core_scene_viewer->update_pixel_image=1;
 				Scene_viewer_app_redraw(scene_viewer);
 			}
-			if (CMZN_SCENEVIEWER_VIEWPORT_RELATIVE==scene_viewer->core_scene_viewer->viewport_mode ||
-				CMZN_SCENEVIEWER_VIEWPORT_DISTORTING_RELATIVE==scene_viewer->core_scene_viewer->viewport_mode)
+			if (CMZN_SCENEVIEWER_VIEWPORT_MODE_RELATIVE==scene_viewer->core_scene_viewer->viewport_mode ||
+				CMZN_SCENEVIEWER_VIEWPORT_MODE_DISTORTING_RELATIVE==scene_viewer->core_scene_viewer->viewport_mode)
 			{
 				if (SCENE_VIEWER_CUSTOM != scene_viewer->core_scene_viewer->projection_mode)
 				{
@@ -1520,7 +1520,7 @@ scene_viewer.
 		viewport_height = (double)(viewport[3]);
 		switch (input->type)
 		{
-			case CMZN_SCENEVIEWERINPUT_EVENT_BUTTON_PRESS:
+			case CMZN_SCENEVIEWERINPUT_EVENT_TYPE_BUTTON_PRESS:
 			{
 				interactive_event_type=INTERACTIVE_EVENT_BUTTON_PRESS;
 				centre_x=(double)(input->position_x);
@@ -1533,7 +1533,7 @@ scene_viewer.
 				modifier_state = input->modifiers;
 				mouse_event=1;
 			} break;
-			case CMZN_SCENEVIEWERINPUT_EVENT_MOTION_NOTIFY:
+			case CMZN_SCENEVIEWERINPUT_EVENT_TYPE_MOTION_NOTIFY:
 			{
 				interactive_event_type=INTERACTIVE_EVENT_MOTION_NOTIFY;
 				centre_x=(double)(input->position_x);
@@ -1546,7 +1546,7 @@ scene_viewer.
 				modifier_state = input->modifiers;
 				mouse_event=1;
 			} break;
-			case CMZN_SCENEVIEWERINPUT_EVENT_BUTTON_RELEASE:
+			case CMZN_SCENEVIEWERINPUT_EVENT_TYPE_BUTTON_RELEASE:
 			{
 				interactive_event_type=INTERACTIVE_EVENT_BUTTON_RELEASE;
 				centre_x=(double)(input->position_x);
@@ -1556,10 +1556,10 @@ scene_viewer.
 				modifier_state = input->modifiers;
 				mouse_event=1;
 			}
-			case CMZN_SCENEVIEWERINPUT_EVENT_KEY_PRESS:
+			case CMZN_SCENEVIEWERINPUT_EVENT_TYPE_KEY_PRESS:
 			{
 			} break;
-			case CMZN_SCENEVIEWERINPUT_EVENT_KEY_RELEASE:
+			case CMZN_SCENEVIEWERINPUT_EVENT_TYPE_KEY_RELEASE:
 			{
 			} break;
 			default:
