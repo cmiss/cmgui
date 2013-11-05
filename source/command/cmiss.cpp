@@ -988,7 +988,7 @@ static int process_modify_element_group(cmzn_field_group_id group,
 		cmzn_nodeset_group_id remove_nodeset_group = 0;
 		if (manage_nodes)
 		{
-			cmzn_nodeset_id master_nodeset = cmzn_fieldmodule_find_nodeset_by_domain_type(field_module, CMZN_FIELD_DOMAIN_NODES);
+			cmzn_nodeset_id master_nodeset = cmzn_fieldmodule_find_nodeset_by_domain_type(field_module, CMZN_FIELD_DOMAIN_TYPE_NODES);
 			cmzn_field_node_group_id modify_node_group = cmzn_field_group_get_node_group(group, master_nodeset);
 			if ((!modify_node_group) && add_flag)
 				modify_node_group = cmzn_field_group_create_node_group(group, master_nodeset);
@@ -1294,7 +1294,7 @@ static int gfx_create_group(struct Parse_state *state,
 							case 2: // data
 							{
 								cmzn_nodeset_id master_nodeset = cmzn_fieldmodule_find_nodeset_by_domain_type(field_module,
-									(object_type == 1) ? CMZN_FIELD_DOMAIN_NODES : CMZN_FIELD_DOMAIN_DATA);
+									(object_type == 1) ? CMZN_FIELD_DOMAIN_TYPE_NODES : CMZN_FIELD_DOMAIN_TYPE_DATAPOINTS);
 								cmzn_field_node_group_id node_group = cmzn_field_group_create_node_group(group, master_nodeset);
 								cmzn_nodeset_group_id modify_nodeset_group = cmzn_field_node_group_get_nodeset(node_group);
 								cmzn_nodeiterator_id iter = cmzn_nodeset_create_nodeiterator(master_nodeset);
@@ -2245,7 +2245,7 @@ Executes a GFX CREATE NODE_VIEWER command.
 					if (NULL != (command_data->node_viewer = Node_viewer_create(
 						&(command_data->node_viewer),
 						"Node Viewer",
-						command_data->root_region, CMZN_FIELD_DOMAIN_NODES,
+						command_data->root_region, CMZN_FIELD_DOMAIN_TYPE_NODES,
 						command_data->default_time_keeper_app)))
 					{
 						return_code=1;
@@ -2321,7 +2321,7 @@ Executes a GFX CREATE DATA_VIEWER command.
 					if (NULL != (command_data->node_viewer = Node_viewer_create(
 						&(command_data->node_viewer),
 						"Data Viewer",
-						command_data->root_region, CMZN_FIELD_DOMAIN_DATA,
+						command_data->root_region, CMZN_FIELD_DOMAIN_TYPE_DATAPOINTS,
 						command_data->default_time_keeper_app)))
 					{
 						return_code=1;
@@ -2667,7 +2667,7 @@ Executes a GFX CREATE SNAKE command.
 				cmzn_mesh_group_id mesh_group = 0;
 				if (group)
 				{
-					cmzn_nodeset_id master_nodeset = cmzn_fieldmodule_find_nodeset_by_domain_type(field_module, CMZN_FIELD_DOMAIN_NODES);
+					cmzn_nodeset_id master_nodeset = cmzn_fieldmodule_find_nodeset_by_domain_type(field_module, CMZN_FIELD_DOMAIN_TYPE_NODES);
 					cmzn_field_node_group_id node_group = cmzn_field_group_get_node_group(group, master_nodeset);
 					if (!node_group)
 						node_group = cmzn_field_group_create_node_group(group, master_nodeset);
@@ -4687,14 +4687,14 @@ Executes a GFX CREATE WINDOW command.
 							cmzn_materialmodule_get_default_material(command_data->materialmodule);
 						Node_tool_set_execute_command(CREATE(Node_tool)(
 								interactive_tool_manager,
-								command_data->root_region, CMZN_FIELD_DOMAIN_NODES,
+								command_data->root_region, CMZN_FIELD_DOMAIN_TYPE_NODES,
 								defaultMaterial,
 								command_data->user_interface,
 								command_data->default_time_keeper_app),
 								command_data->execute_command);
 						Node_tool_set_execute_command(CREATE(Node_tool)(
 								interactive_tool_manager,
-								command_data->root_region, CMZN_FIELD_DOMAIN_DATA,
+								command_data->root_region, CMZN_FIELD_DOMAIN_TYPE_DATAPOINTS,
 								defaultMaterial,
 								command_data->user_interface,
 								command_data->default_time_keeper_app),
@@ -8714,7 +8714,7 @@ int gfx_evaluate(struct Parse_state *state, void *dummy_to_be_modified,
 						if (node_region_path || data_region_path)
 						{
 							cmzn_nodeset_id nodeset = cmzn_fieldmodule_find_nodeset_by_domain_type(
-								field_module, node_region_path ? CMZN_FIELD_DOMAIN_NODES : CMZN_FIELD_DOMAIN_DATA);
+								field_module, node_region_path ? CMZN_FIELD_DOMAIN_TYPE_NODES : CMZN_FIELD_DOMAIN_TYPE_DATAPOINTS);
 							if (group)
 							{
 								cmzn_field_node_group_id node_group = cmzn_field_group_get_node_group(group, nodeset);
@@ -9376,7 +9376,7 @@ use node_manager and node_selection.
 		{
 			cmzn_fieldmodule_id field_module = cmzn_region_get_fieldmodule(region);
 			cmzn_nodeset_id master_nodeset = cmzn_fieldmodule_find_nodeset_by_domain_type(field_module,
-				use_data ? CMZN_FIELD_DOMAIN_DATA : CMZN_FIELD_DOMAIN_NODES);
+				use_data ? CMZN_FIELD_DOMAIN_TYPE_DATAPOINTS : CMZN_FIELD_DOMAIN_TYPE_NODES);
 			cmzn_nodeset_group_id selection_nodeset_group = 0;
 			if (selected_flag)
 			{
@@ -11292,7 +11292,7 @@ static int gfx_modify_node_group(struct Parse_state *state,
 			{
 				cmzn_fieldmodule_id field_module = cmzn_region_get_fieldmodule(region);
 				cmzn_nodeset_id master_nodeset = cmzn_fieldmodule_find_nodeset_by_domain_type(field_module,
-					use_data ? CMZN_FIELD_DOMAIN_DATA : CMZN_FIELD_DOMAIN_NODES);
+					use_data ? CMZN_FIELD_DOMAIN_TYPE_DATAPOINTS : CMZN_FIELD_DOMAIN_TYPE_NODES);
 				cmzn_nodeset_group_id selection_nodeset_group = 0;
 				if (selected_flag)
 				{
@@ -11638,7 +11638,7 @@ static int gfx_modify_nodes(struct Parse_state *state,
 				return_code = 0;
 			}
 			cmzn_nodeset_id nodeset = cmzn_fieldmodule_find_nodeset_by_domain_type(field_module,
-				use_data ? CMZN_FIELD_DOMAIN_DATA : CMZN_FIELD_DOMAIN_NODES);
+				use_data ? CMZN_FIELD_DOMAIN_TYPE_DATAPOINTS : CMZN_FIELD_DOMAIN_TYPE_NODES);
 			cmzn_nodetemplate_id node_template = cmzn_nodeset_create_nodetemplate(nodeset);
 			if (define_field_name)
 			{
@@ -15031,8 +15031,8 @@ Can also write individual groups with the <group> option.
 				 {
 						if (!(exfile_return_code = write_exregion_file_of_name(temp_exfile,
 							region, group, root_region,
-							/*write_elements*/CMZN_FIELD_DOMAIN_MESH_1D|CMZN_FIELD_DOMAIN_MESH_2D|
-							CMZN_FIELD_DOMAIN_MESH_3D|CMZN_FIELD_DOMAIN_MESH_HIGHEST_DIMENSION,
+							/*write_elements*/CMZN_FIELD_DOMAIN_TYPE_MESH1D|CMZN_FIELD_DOMAIN_TYPE_MESH2D|
+							CMZN_FIELD_DOMAIN_TYPE_MESH3D|CMZN_FIELD_DOMAIN_TYPE_MESH_HIGHEST_DIMENSION,
 							/*write_nodes*/1, /*write_data*/1,
 							write_fields_mode, field_names.number_of_strings, field_names.strings,
 							time, write_criterion, write_recursion)))
@@ -15434,8 +15434,8 @@ Can also write individual element groups with the <group> option.
 				if (0 != (return_code = check_suffix(&file_name, ".exelem")))
 				{
 					return_code = write_exregion_file_of_name(file_name, region, group, root_region,
-						/*write_elements*/CMZN_FIELD_DOMAIN_MESH_1D|CMZN_FIELD_DOMAIN_MESH_2D|
-						CMZN_FIELD_DOMAIN_MESH_3D|CMZN_FIELD_DOMAIN_MESH_HIGHEST_DIMENSION,
+						/*write_elements*/CMZN_FIELD_DOMAIN_TYPE_MESH1D|CMZN_FIELD_DOMAIN_TYPE_MESH2D|
+						CMZN_FIELD_DOMAIN_TYPE_MESH3D|CMZN_FIELD_DOMAIN_TYPE_MESH_HIGHEST_DIMENSION,
 						(int)nodes_flag, /*write_data*/(int)data_flag,
 						write_fields_mode, field_names.number_of_strings, field_names.strings,
 						time, write_criterion, write_recursion);

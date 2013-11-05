@@ -74,13 +74,13 @@ int gfx_modify_scene_graphics(struct Parse_state *state,
 		switch (legacy_graphics_type)
 		{
 		case LEGACY_GRAPHIC_NODE_POINTS:
-			cmzn_graphics_set_domain_type(graphics, CMZN_FIELD_DOMAIN_NODES);
+			cmzn_graphics_set_field_domain_type(graphics, CMZN_FIELD_DOMAIN_TYPE_NODES);
 			break;
 		case LEGACY_GRAPHIC_DATA_POINTS:
-			cmzn_graphics_set_domain_type(graphics, CMZN_FIELD_DOMAIN_DATA);
+			cmzn_graphics_set_field_domain_type(graphics, CMZN_FIELD_DOMAIN_TYPE_DATAPOINTS);
 			break;
 		case LEGACY_GRAPHIC_ELEMENT_POINTS:
-			cmzn_graphics_set_domain_type(graphics, CMZN_FIELD_DOMAIN_MESH_HIGHEST_DIMENSION);
+			cmzn_graphics_set_field_domain_type(graphics, CMZN_FIELD_DOMAIN_TYPE_MESH_HIGHEST_DIMENSION);
 			break;
 		default:
 			// do nothing
@@ -172,37 +172,37 @@ int gfx_modify_scene_graphics(struct Parse_state *state,
 		(void *)1,set_name);
 
 	/* element points sample mode: cell_centres/cell_corners/cell_density/set_location */
-	const char *sample_mode_string = 0;
+	const char *sampling_mode_string = 0;
 	if (sampling)
 	{
-		cmzn_element_point_sample_mode sample_mode = cmzn_graphicssamplingattributes_get_mode(sampling);
-		sample_mode_string = ENUMERATOR_STRING(cmzn_element_point_sample_mode)(sample_mode);
-		valid_strings = ENUMERATOR_GET_VALID_STRINGS(cmzn_element_point_sample_mode)(
+		cmzn_element_point_sampling_mode sampling_mode = cmzn_graphicssamplingattributes_get_element_point_sampling_mode(sampling);
+		sampling_mode_string = ENUMERATOR_STRING(cmzn_element_point_sampling_mode)(sampling_mode);
+		valid_strings = ENUMERATOR_GET_VALID_STRINGS(cmzn_element_point_sampling_mode)(
 			&number_of_valid_strings,
-			(ENUMERATOR_CONDITIONAL_FUNCTION(cmzn_element_point_sample_mode) *)NULL,
+			(ENUMERATOR_CONDITIONAL_FUNCTION(cmzn_element_point_sampling_mode) *)NULL,
 			(void *)NULL);
 		Option_table_add_enumerator(option_table,number_of_valid_strings,
-			valid_strings,&sample_mode_string);
+			valid_strings,&sampling_mode_string);
 		DEALLOCATE(valid_strings);
 	}
 
 	/* deprecated sample modes:
 	   cell_density, cell_random -> cell_poisson (with warnings)
 	   exact_xi -> set_location */
-	const char *old_sample_mode_strings[] = { "cell_density", "cell_random", "exact_xi" };
-	const enum cmzn_element_point_sample_mode old_to_new_sample_mode[] =
+	const char *old_sampling_mode_strings[] = { "cell_density", "cell_random", "exact_xi" };
+	const enum cmzn_element_point_sampling_mode old_to_new_sampling_mode[] =
 	{
-		CMZN_ELEMENT_POINT_SAMPLE_CELL_POISSON,
-		CMZN_ELEMENT_POINT_SAMPLE_CELL_POISSON,
-		CMZN_ELEMENT_POINT_SAMPLE_SET_LOCATION
+		CMZN_ELEMENT_POINT_SAMPLING_MODE_CELL_POISSON,
+		CMZN_ELEMENT_POINT_SAMPLING_MODE_CELL_POISSON,
+		CMZN_ELEMENT_POINT_SAMPLING_MODE_SET_LOCATION
 	};
-	const int old_sample_mode_strings_count =
-		sizeof(old_to_new_sample_mode) / sizeof(cmzn_element_point_sample_mode);
-	const char *old_sample_mode_string = 0;
+	const int old_sampling_mode_strings_count =
+		sizeof(old_to_new_sampling_mode) / sizeof(cmzn_element_point_sampling_mode);
+	const char *old_sampling_mode_string = 0;
 	if (sampling)
 	{
-		Option_table_add_enumerator(option_table, old_sample_mode_strings_count,
-			old_sample_mode_strings, &old_sample_mode_string);
+		Option_table_add_enumerator(option_table, old_sampling_mode_strings_count,
+			old_sampling_mode_strings, &old_sampling_mode_string);
 	}
 
 	int three = 3;
@@ -306,7 +306,7 @@ int gfx_modify_scene_graphics(struct Parse_state *state,
 	}
 
 	/* domain type */
-	cmzn_field_domain_type domain_type = cmzn_graphics_get_domain_type(graphics);
+	cmzn_field_domain_type domain_type = cmzn_graphics_get_field_domain_type(graphics);
 	const char *domain_type_string = ENUMERATOR_STRING(cmzn_field_domain_type)(domain_type);
 	if ((legacy_graphics_type != LEGACY_GRAPHIC_POINT) &&
 		(legacy_graphics_type != LEGACY_GRAPHIC_NODE_POINTS) &&
@@ -350,12 +350,12 @@ int gfx_modify_scene_graphics(struct Parse_state *state,
 	}
 
 	/* face */
-	enum cmzn_element_face_type face_type = CMZN_ELEMENT_FACE_ALL;
+	enum cmzn_element_face_type face_type = CMZN_ELEMENT_FACE_TYPE_ALL;
 	if ((legacy_graphics_type != LEGACY_GRAPHIC_POINT) &&
 		(legacy_graphics_type != LEGACY_GRAPHIC_NODE_POINTS) &&
 		(legacy_graphics_type != LEGACY_GRAPHIC_DATA_POINTS))
 	{
-		face_type = cmzn_graphics_get_face(graphics);
+		face_type = cmzn_graphics_get_element_face_type(graphics);
 		Option_table_add_entry(option_table,"face", &face_type,
 			NULL, set_graphics_face_type);
 	}
@@ -748,9 +748,9 @@ int gfx_modify_scene_graphics(struct Parse_state *state,
 	const char *use_element_type_strings[] = { "use_elements", "use_faces", "use_lines" };
 	const enum cmzn_field_domain_type use_element_type_to_domain_type[] =
 	{
-		CMZN_FIELD_DOMAIN_MESH_HIGHEST_DIMENSION,
-		CMZN_FIELD_DOMAIN_MESH_2D,
-		CMZN_FIELD_DOMAIN_MESH_1D
+		CMZN_FIELD_DOMAIN_TYPE_MESH_HIGHEST_DIMENSION,
+		CMZN_FIELD_DOMAIN_TYPE_MESH2D,
+		CMZN_FIELD_DOMAIN_TYPE_MESH1D
 	};
 	const char *use_element_type_string = 0;
 	if ((legacy_graphics_type == LEGACY_GRAPHIC_ISO_SURFACES) ||
@@ -819,7 +819,7 @@ int gfx_modify_scene_graphics(struct Parse_state *state,
 		cmzn_graphics_set_data_field(graphics, data_field);
 		bool use_spectrum = (0 != data_field);
 		cmzn_graphics_set_exterior(graphics, (0 != exterior_flag));
-		cmzn_graphics_set_face(graphics, face_type);
+		cmzn_graphics_set_element_face_type(graphics, face_type);
 		cmzn_graphics_set_tessellation(graphics, tessellation);
 		cmzn_graphics_set_tessellation_field(graphics, tessellation_field);
 		if ((graphics_type == CMZN_GRAPHICS_TYPE_SURFACES) ||
@@ -864,31 +864,31 @@ int gfx_modify_scene_graphics(struct Parse_state *state,
 
 		if (sampling)
 		{
-			cmzn_element_point_sample_mode sample_mode;
-			STRING_TO_ENUMERATOR(cmzn_element_point_sample_mode)(
-				sample_mode_string, &sample_mode);
-			if (old_sample_mode_string)
+			cmzn_element_point_sampling_mode sampling_mode;
+			STRING_TO_ENUMERATOR(cmzn_element_point_sampling_mode)(
+				sampling_mode_string, &sampling_mode);
+			if (old_sampling_mode_string)
 			{
-				for (int i = 0; i < old_sample_mode_strings_count; ++i)
+				for (int i = 0; i < old_sampling_mode_strings_count; ++i)
 				{
-					if (old_sample_mode_string == old_sample_mode_strings[i])
+					if (old_sampling_mode_string == old_sampling_mode_strings[i])
 					{
-						sample_mode = old_to_new_sample_mode[i];
+						sampling_mode = old_to_new_sampling_mode[i];
 					}
 				}
-				if (CMZN_ELEMENT_POINT_SAMPLE_CELL_POISSON == sample_mode)
+				if (CMZN_ELEMENT_POINT_SAMPLING_MODE_CELL_POISSON == sampling_mode)
 				{
-					display_message(WARNING_MESSAGE, "Migrating obsolete sampling mode '%s' to cell_poisson", old_sample_mode_string);
+					display_message(WARNING_MESSAGE, "Migrating obsolete sampling mode '%s' to cell_poisson", old_sampling_mode_string);
 				}
 			}
-			if ((CMZN_ELEMENT_POINT_SAMPLE_CELL_POISSON == sample_mode) &&
+			if ((CMZN_ELEMENT_POINT_SAMPLING_MODE_CELL_POISSON == sampling_mode) &&
 				(0 == sample_density_field))
 			{
 				display_message(ERROR_MESSAGE,
 					"No density field specified for sample mode 'cell_poisson'");
 				return_code = 0;
 			}
-			cmzn_graphicssamplingattributes_set_mode(sampling, sample_mode);
+			cmzn_graphicssamplingattributes_set_element_point_sampling_mode(sampling, sampling_mode);
 			cmzn_graphicssamplingattributes_set_density_field(sampling, sample_density_field);
 			cmzn_graphicssamplingattributes_set_location(sampling, sample_location_components, sample_location);
 		}
@@ -897,7 +897,7 @@ int gfx_modify_scene_graphics(struct Parse_state *state,
 			(graphics_type != CMZN_GRAPHICS_TYPE_SURFACES))
 		{
 			STRING_TO_ENUMERATOR(cmzn_field_domain_type)(domain_type_string, &domain_type);
-			cmzn_graphics_set_domain_type(graphics, domain_type);
+			cmzn_graphics_set_field_domain_type(graphics, domain_type);
 		}
 		// translate legacy use_element_type to domain_type
 		if (use_element_type_string)
@@ -907,7 +907,7 @@ int gfx_modify_scene_graphics(struct Parse_state *state,
 				if (fuzzy_string_compare_same_length(use_element_type_string, use_element_type_strings[i]))
 				{
 					domain_type = use_element_type_to_domain_type[i];
-					cmzn_graphics_set_domain_type(graphics, domain_type);
+					cmzn_graphics_set_field_domain_type(graphics, domain_type);
 					break;
 				}
 			}

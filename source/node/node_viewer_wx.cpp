@@ -655,7 +655,7 @@ struct Node_viewer *Node_viewer_create(
 			node_viewer->node_viewer_address = node_viewer_address;
 			node_viewer->domain_type = domain_type;
 			node_viewer->fe_region = cmzn_region_get_FE_region(root_region);
-			if (domain_type == CMZN_FIELD_DOMAIN_DATA)
+			if (domain_type == CMZN_FIELD_DOMAIN_TYPE_DATAPOINTS)
 			{
 				node_viewer->fe_region = FE_region_get_data_FE_region(node_viewer->fe_region);
 			}
@@ -1069,7 +1069,7 @@ in this region only.
 			{
 				node_viewer->fe_region = cmzn_region_get_FE_region(region);
 
-				if (node_viewer->domain_type = CMZN_FIELD_DOMAIN_DATA)
+				if (node_viewer->domain_type = CMZN_FIELD_DOMAIN_TYPE_DATAPOINTS)
 				{
 					node_viewer->fe_region = FE_region_get_data_FE_region(
 						node_viewer->fe_region);

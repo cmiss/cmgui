@@ -28,7 +28,7 @@ returned in this location, for the calling function to use or destroy.
 {
 	const char *current_token;
 	const char **valid_strings,*sample_mode_string;
-	enum cmzn_element_point_sample_mode sample_mode;
+	enum cmzn_element_point_sampling_mode sampling_mode;
 	float xi[MAXIMUM_ELEMENT_XI_DIMENSIONS];
 	int dimension, i, number_of_xi_points, number_of_valid_strings, return_code,
 		start, stop;
@@ -47,8 +47,8 @@ returned in this location, for the calling function to use or destroy.
 	{
 		element_point_ranges_identifier.element=(struct FE_element *)NULL;
 		element_point_ranges_identifier.top_level_element=(struct FE_element *)NULL;
-		element_point_ranges_identifier.sample_mode=
-			CMZN_ELEMENT_POINT_SAMPLE_SET_LOCATION;
+		element_point_ranges_identifier.sampling_mode=
+			CMZN_ELEMENT_POINT_SAMPLING_MODE_SET_LOCATION;
 		for (i=0;i<MAXIMUM_ELEMENT_XI_DIMENSIONS;i++)
 		{
 			element_point_ranges_identifier.exact_xi[i]=xi[i]=0.5;
@@ -185,16 +185,15 @@ returned in this location, for the calling function to use or destroy.
 						}
 					}
 				}
-				/* sample_mode */
+				/* sampling_mode */
 				if (return_code)
 				{
 					option_table = CREATE(Option_table)();
-					sample_mode =
-						element_point_ranges_identifier.sample_mode;
+					sampling_mode = element_point_ranges_identifier.sampling_mode;
 					sample_mode_string =
-						ENUMERATOR_STRING(cmzn_element_point_sample_mode)(sample_mode);
+						ENUMERATOR_STRING(cmzn_element_point_sampling_mode)(sampling_mode);
 					valid_strings=
-						cmzn_element_point_sample_mode_get_valid_strings_for_Element_point_ranges(
+						cmzn_element_point_sampling_mode_get_valid_strings_for_Element_point_ranges(
 							&number_of_valid_strings);
 					Option_table_add_enumerator(option_table,number_of_valid_strings,
 						valid_strings,&sample_mode_string);
@@ -202,10 +201,9 @@ returned in this location, for the calling function to use or destroy.
 					return_code=Option_table_parse(option_table,state);
 					if (return_code)
 					{
-						STRING_TO_ENUMERATOR(cmzn_element_point_sample_mode)(
-							sample_mode_string, &sample_mode);
-						element_point_ranges_identifier.sample_mode =
-							sample_mode;
+						STRING_TO_ENUMERATOR(cmzn_element_point_sampling_mode)(
+							sample_mode_string, &sampling_mode);
+						element_point_ranges_identifier.sampling_mode = sampling_mode;
 					}
 					DESTROY(Option_table)(&option_table);
 				}
@@ -217,10 +215,10 @@ returned in this location, for the calling function to use or destroy.
 					{
 						element_point_ranges_identifier.number_in_xi[i]=1;
 					}
-					switch (element_point_ranges_identifier.sample_mode)
+					switch (element_point_ranges_identifier.sampling_mode)
 					{
-						case CMZN_ELEMENT_POINT_SAMPLE_CELL_CORNERS:
-						case CMZN_ELEMENT_POINT_SAMPLE_CELL_CENTRES:
+						case CMZN_ELEMENT_POINT_SAMPLING_MODE_CELL_CORNERS:
+						case CMZN_ELEMENT_POINT_SAMPLING_MODE_CELL_CENTRES:
 						{
 							/* number_in_xi */
 							return_code=set_int_vector(state,
@@ -231,7 +229,7 @@ returned in this location, for the calling function to use or destroy.
 								/* check number_in_xi are all > 0 */
 								if ((!FE_element_get_xi_points(
 									element_point_ranges_identifier.element,
-									element_point_ranges_identifier.sample_mode,
+									element_point_ranges_identifier.sampling_mode,
 									element_point_ranges_identifier.number_in_xi,
 									element_point_ranges_identifier.exact_xi,
 									(cmzn_fieldcache_id)0,
@@ -247,7 +245,7 @@ returned in this location, for the calling function to use or destroy.
 								}
 							}
 						} break;
-						case CMZN_ELEMENT_POINT_SAMPLE_SET_LOCATION:
+						case CMZN_ELEMENT_POINT_SAMPLING_MODE_SET_LOCATION:
 						{
 							/* xi */
 							return_code=set_float_vector(state,(void *)xi,(void *)&dimension);
@@ -259,7 +257,7 @@ returned in this location, for the calling function to use or destroy.
 						default:
 						{
 							display_message(ERROR_MESSAGE,
-								"set_Element_point_ranges.  Invalid sample_mode");
+								"set_Element_point_ranges.  Invalid sampling_mode");
 							return_code=0;
 						}
 					}
@@ -271,10 +269,10 @@ returned in this location, for the calling function to use or destroy.
 						&element_point_ranges_identifier);
 					if (element_point_ranges)
 					{
-						switch (element_point_ranges_identifier.sample_mode)
+						switch (element_point_ranges_identifier.sampling_mode)
 						{
-							case CMZN_ELEMENT_POINT_SAMPLE_CELL_CORNERS:
-							case CMZN_ELEMENT_POINT_SAMPLE_CELL_CENTRES:
+							case CMZN_ELEMENT_POINT_SAMPLING_MODE_CELL_CORNERS:
+							case CMZN_ELEMENT_POINT_SAMPLING_MODE_CELL_CENTRES:
 							{
 								/* ranges */
 								if (set_Multi_range(state,
@@ -302,7 +300,7 @@ returned in this location, for the calling function to use or destroy.
 									return_code=0;
 								}
 							} break;
-							case CMZN_ELEMENT_POINT_SAMPLE_SET_LOCATION:
+							case CMZN_ELEMENT_POINT_SAMPLING_MODE_SET_LOCATION:
 							{
 								if (!Multi_range_add_range(Element_point_ranges_get_ranges(element_point_ranges),0,0))
 								{

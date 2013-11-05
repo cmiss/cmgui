@@ -242,25 +242,25 @@ release.
 				if (element_tool->select_lines_enabled)
 				{
 					element_filter = cmzn_scenefiltermodule_create_scenefilter_domain_type(
-						filter_module, CMZN_FIELD_DOMAIN_MESH_1D);
+						filter_module, CMZN_FIELD_DOMAIN_TYPE_MESH1D);
 					cmzn_scenefilter_operator_append_operand(or_filter, element_filter);
 					cmzn_scenefilter_destroy(&element_filter);
 				}
 				if (element_tool->select_faces_enabled)
 				{
 					element_filter = cmzn_scenefiltermodule_create_scenefilter_domain_type(
-						filter_module, CMZN_FIELD_DOMAIN_MESH_2D);
+						filter_module, CMZN_FIELD_DOMAIN_TYPE_MESH2D);
 					cmzn_scenefilter_operator_append_operand(or_filter, element_filter);
 					cmzn_scenefilter_destroy(&element_filter);
 				}
 				if (element_tool->select_elements_enabled)
 				{
 					element_filter = cmzn_scenefiltermodule_create_scenefilter_domain_type(
-						filter_module, CMZN_FIELD_DOMAIN_MESH_HIGHEST_DIMENSION);
+						filter_module, CMZN_FIELD_DOMAIN_TYPE_MESH_HIGHEST_DIMENSION);
 					cmzn_scenefilter_operator_append_operand(or_filter, element_filter);
 					cmzn_scenefilter_destroy(&element_filter);
 					element_filter = cmzn_scenefiltermodule_create_scenefilter_domain_type(
-						filter_module, CMZN_FIELD_DOMAIN_MESH_3D);
+						filter_module, CMZN_FIELD_DOMAIN_TYPE_MESH3D);
 					cmzn_scenefilter_operator_append_operand(or_filter, element_filter);
 					cmzn_scenefilter_destroy(&element_filter);
 				}

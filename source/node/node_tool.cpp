@@ -263,7 +263,7 @@ int Node_tool_destroy_selected_nodes(struct Node_tool *node_tool)
 		{
 			cmzn_field_group_for_each_group_hierarchical(selection_group,
 				cmzn_field_group_destroy_all_nodes, (void *)&(node_tool->domain_type));
-			if (node_tool->domain_type == CMZN_FIELD_DOMAIN_DATA)
+			if (node_tool->domain_type == CMZN_FIELD_DOMAIN_TYPE_DATAPOINTS)
 			{
 				cmzn_field_group_clear_region_tree_data(selection_group);
 			}
@@ -1187,7 +1187,7 @@ try to enforce that the node is created on that element.
 				while (graphics)
 				{
 					if ((CMZN_GRAPHICS_TYPE_POINTS == cmzn_graphics_get_graphics_type(graphics)) &&
-						(cmzn_graphics_get_domain_type(graphics) == node_tool->domain_type))
+						(cmzn_graphics_get_field_domain_type(graphics) == node_tool->domain_type))
 					{
 						break;
 					}
@@ -1438,7 +1438,7 @@ release.
 						nearest_element = (struct FE_element *)NULL;
 						if (node_tool->select_enabled)
 						{
-							if (node_tool->domain_type == CMZN_FIELD_DOMAIN_DATA)
+							if (node_tool->domain_type == CMZN_FIELD_DOMAIN_TYPE_DATAPOINTS)
 							{
 								picked_node = cmzn_scenepicker_get_nearest_data(scenepicker);
 								nearest_node_graphics = cmzn_scenepicker_get_nearest_data_graphics(scenepicker);
@@ -1558,7 +1558,7 @@ release.
 								cmzn_field_group_id root_group = cmzn_scene_get_selection_group(root_scene);
 								if (root_group)
 								{
-									if (node_tool->domain_type == CMZN_FIELD_DOMAIN_NODES)
+									if (node_tool->domain_type == CMZN_FIELD_DOMAIN_TYPE_NODES)
 										cmzn_field_group_clear_region_tree_node(root_group);
 									else
 										cmzn_field_group_clear_region_tree_data(root_group);
@@ -1822,7 +1822,7 @@ release.
 									struct LIST(FE_node) *temp_node_list = CREATE(LIST(FE_node))();
 									ADD_OBJECT_TO_LIST(FE_node)(node_tool->last_picked_node, temp_node_list);
 									cmzn_scene_remove_selection_from_node_list(node_tool->scene,
-										temp_node_list, (node_tool->domain_type == CMZN_FIELD_DOMAIN_DATA));
+										temp_node_list, (node_tool->domain_type == CMZN_FIELD_DOMAIN_TYPE_DATAPOINTS));
 									DESTROY(LIST(FE_node))(&temp_node_list);
 								}
 							}
@@ -1870,7 +1870,7 @@ release.
 											cmzn_scene_get_or_create_selection_group(region_scene);
 										if (selection_group)
 										{
-											if (node_tool->domain_type == CMZN_FIELD_DOMAIN_DATA)
+											if (node_tool->domain_type == CMZN_FIELD_DOMAIN_TYPE_DATAPOINTS)
 												cmzn_scenepicker_add_picked_data_to_group(scenepicker, selection_group);
 											else
 												cmzn_scenepicker_add_picked_nodes_to_group(scenepicker, selection_group);
@@ -2065,7 +2065,7 @@ public:
 		second_element_staticbox = XRCCTRL(*this, "SecondElementStaticBox",wxWindow);
 
 		Title = XRCCTRL(*this,"NodeSizer",wxWindow);
-		if (node_tool->domain_type == CMZN_FIELD_DOMAIN_DATA)
+		if (node_tool->domain_type == CMZN_FIELD_DOMAIN_TYPE_DATAPOINTS)
 		{
 			 Title->SetLabel(wxT("Data Tool"));
 			 create_elements_checkbox->Hide();
@@ -2370,7 +2370,7 @@ Set the selected option in the Coordinate Field chooser.
 				{
 					node_list = FE_node_list_from_region_and_selection_group(
 						node_tool->region, NULL, cmzn_field_group_base_cast(selection_group),
-						NULL, 0, (node_tool->domain_type == CMZN_FIELD_DOMAIN_DATA));
+						NULL, 0, (node_tool->domain_type == CMZN_FIELD_DOMAIN_TYPE_DATAPOINTS));
 					FE_region_begin_change(node_tool->fe_region);
 					FE_region_undefine_FE_field_in_FE_node_list(
 						node_tool->fe_region, fe_field, node_list, &number_in_elements);
@@ -3088,7 +3088,7 @@ in this region only.
 			if (region)
 			{
 				node_tool->fe_region = cmzn_region_get_FE_region(region);
-				if (node_tool->domain_type == CMZN_FIELD_DOMAIN_DATA)
+				if (node_tool->domain_type == CMZN_FIELD_DOMAIN_TYPE_DATAPOINTS)
 				{
 					node_tool->fe_region = FE_region_get_data_FE_region(node_tool->fe_region);
 				}
@@ -3208,7 +3208,7 @@ struct Node_tool *CREATE(Node_tool)(
 			node_tool->command_field = (struct Computed_field *)NULL;
 			node_tool->element_xi_field = (struct Computed_field *)NULL;
 			/* interactive_tool */
-			if (node_tool->domain_type == CMZN_FIELD_DOMAIN_DATA)
+			if (node_tool->domain_type == CMZN_FIELD_DOMAIN_TYPE_DATAPOINTS)
 			{
 				tool_name="data_tool";
 				tool_display_name="Data tool";
@@ -4392,7 +4392,7 @@ Which tool that is being modified is passed in <node_tool_void>.
 		region = NULL;
 		group = NULL;
 #if defined (WX_USER_INTERFACE)
-		if (node_tool && (node_tool->domain_type == CMZN_FIELD_DOMAIN_NODES))
+		if (node_tool && (node_tool->domain_type == CMZN_FIELD_DOMAIN_TYPE_NODES))
 		{
 			element_create_enabled = 0;
 			element_dimension = 2;
@@ -4425,7 +4425,7 @@ Which tool that is being modified is passed in <node_tool_void>.
 				xi_field_name = cmzn_field_get_name(element_xi_field);
 			}
 #if defined (WX_USER_INTERFACE)
-		if (node_tool && (node_tool->domain_type == CMZN_FIELD_DOMAIN_NODES))
+		if (node_tool && (node_tool->domain_type == CMZN_FIELD_DOMAIN_TYPE_NODES))
 		{
 			 element_create_enabled = Node_tool_get_element_create_enabled(node_tool);
 			 element_dimension =
@@ -4449,7 +4449,7 @@ Which tool that is being modified is passed in <node_tool_void>.
 		/* define/no_define */
 		Option_table_add_switch(option_table,"define","no_define",&define_enabled);
 #if defined (WX_USER_INTERFACE)
-		if (node_tool && (node_tool->domain_type == CMZN_FIELD_DOMAIN_NODES))
+		if (node_tool && (node_tool->domain_type == CMZN_FIELD_DOMAIN_TYPE_NODES))
 		{
 			 /* create/no_create */
 			 Option_table_add_switch(option_table,"element_create","no_element_create",&element_create_enabled);
@@ -4549,7 +4549,7 @@ Which tool that is being modified is passed in <node_tool_void>.
 				Node_tool_set_constrain_to_surface(node_tool,constrain_to_surface);
 				Node_tool_set_motion_update_enabled(node_tool,motion_update_enabled);
 #if defined (WX_USER_INTERFACE)
-				if (node_tool->domain_type == CMZN_FIELD_DOMAIN_NODES)
+				if (node_tool->domain_type == CMZN_FIELD_DOMAIN_TYPE_NODES)
 				{
 					Node_tool_set_element_dimension(node_tool,element_dimension);
 					Node_tool_set_element_create_enabled(node_tool,element_create_enabled);

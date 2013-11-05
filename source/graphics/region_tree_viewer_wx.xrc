@@ -517,12 +517,12 @@
 													<orient>wxHORIZONTAL</orient>
 													<object class="sizeritem">
 														<flag>wxALIGN_CENTRE_VERTICAL</flag>
-														<object class	="wxStaticText" name="SampleModeText">
+														<object class	="wxStaticText" name="SamplingModeText">
 															<label>Point sample mode:</label>
 														</object>
 													</object>
 													<object class="sizeritem">
-														<object class	="wxPanel" name="SampleModeChooserPanel">
+														<object class	="wxPanel" name="SamplingModeChooserPanel">
 															<size>200,30</size>
 														</object>
 													</object>

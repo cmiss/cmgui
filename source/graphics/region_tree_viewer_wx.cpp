@@ -512,7 +512,7 @@ class wxRegionTreeViewer : public wxFrame
 	wxListBox *scenelistbox,*graphicalitemslistbox;
 	wxStaticText *currentsceneobjecttext,
 		*isoscalartext, *glyphtext, *offsettext, *baseglyphsizetext, *select_mode_text,
-		*glyphscalefactorstext, *domaintypetext, *sample_mode_text,
+		*glyphscalefactorstext, *domaintypetext, *sampling_mode_text,
 		*tessellationtext, *glyph_repeat_mode_text, *labeloffsettext,
 		*sample_density_field_text, *xitext,
 		*lineshapetext, *streamlineslengthtext, *streamvectortext,
@@ -534,7 +534,7 @@ class wxRegionTreeViewer : public wxFrame
 		*glyph_repeat_mode_chooser_panel,
 		*orientation_scale_field_chooser_panel, *variable_scale_field_chooser_panel,
 		*label_chooser_panel, *font_chooser_panel, *select_mode_chooser_panel,
-		*domain_type_chooser_panel, *sample_mode_chooser_panel,
+		*domain_type_chooser_panel, *sampling_mode_chooser_panel,
 		*tessellation_field_chooser_panel, *sample_density_field_chooser_panel,
 		*line_shape_chooser_panel, *stream_vector_chooser_panel,
 		*streamline_data_type_chooser_panel,
@@ -589,9 +589,9 @@ class wxRegionTreeViewer : public wxFrame
 	DEFINE_ENUMERATOR_TYPE_CLASS(cmzn_field_domain_type);
 	Enumerator_chooser<ENUMERATOR_TYPE_CLASS(cmzn_field_domain_type)>
 		*domain_type_chooser;
-	DEFINE_ENUMERATOR_TYPE_CLASS(cmzn_element_point_sample_mode);
-	Enumerator_chooser<ENUMERATOR_TYPE_CLASS(cmzn_element_point_sample_mode)>
-		*sample_mode_chooser;
+	DEFINE_ENUMERATOR_TYPE_CLASS(cmzn_element_point_sampling_mode);
+	Enumerator_chooser<ENUMERATOR_TYPE_CLASS(cmzn_element_point_sampling_mode)>
+		*sampling_mode_chooser;
 	DEFINE_MANAGER_CLASS(cmzn_tessellation);
 	Managed_object_chooser<cmzn_tessellation,MANAGER_CLASS(cmzn_tessellation)>
 		*tessellation_chooser;
@@ -743,7 +743,7 @@ public:
 	subgroup_field_chooser= NULL;
 	font_chooser=NULL;
 	domain_type_chooser = NULL;
-	sample_mode_chooser = NULL;
+	sampling_mode_chooser = NULL;
 	tessellation_field_chooser = NULL;
 	sample_density_field_chooser =NULL;
 	line_shape_chooser = NULL;
@@ -844,7 +844,7 @@ public:
 		delete label_field_chooser;
 		delete subgroup_field_chooser;
 		delete domain_type_chooser;
-		delete sample_mode_chooser;
+		delete sampling_mode_chooser;
 		delete tessellation_chooser;
 		delete tessellation_field_chooser;
 		delete sample_density_field_chooser;
@@ -1134,8 +1134,8 @@ int font_callback(cmzn_font *font)
 
 void show_sampling_widgets()
 {
-	sample_mode_text = XRCCTRL(*this,"SampleModeText",wxStaticText);
-	sample_mode_chooser_panel= XRCCTRL(*this,"SampleModeChooserPanel",wxPanel);
+	sampling_mode_text = XRCCTRL(*this,"SamplingModeText",wxStaticText);
+	sampling_mode_chooser_panel= XRCCTRL(*this,"SamplingModeChooserPanel",wxPanel);
 	wxStaticText *tessellation_field_text=XRCCTRL(*this,"TessellationFieldText",wxStaticText);
 	tessellation_field_chooser_panel=XRCCTRL(*this, "TessellationFieldChooserPanel",wxPanel);
 	sample_density_field_text=XRCCTRL(*this, "DensityFieldText",wxStaticText);
@@ -1144,20 +1144,20 @@ void show_sampling_widgets()
 	xitextctrl=XRCCTRL(*this,"XiTextCtrl",wxTextCtrl);
 	const int domain_dimension = cmzn_graphics_get_domain_dimension(region_tree_viewer->current_graphics);
 	cmzn_graphicssamplingattributes_id sampling = cmzn_graphics_get_graphicssamplingattributes(region_tree_viewer->current_graphics);
-	cmzn_element_point_sample_mode sample_mode = sampling ?
-		cmzn_graphicssamplingattributes_get_mode(sampling) : CMZN_ELEMENT_POINT_SAMPLE_MODE_INVALID;
+	cmzn_element_point_sampling_mode sampling_mode = sampling ?
+		cmzn_graphicssamplingattributes_get_element_point_sampling_mode(sampling) : CMZN_ELEMENT_POINT_SAMPLING_MODE_INVALID;
 	if (sampling && (domain_dimension > 0))
 	{
-		sample_mode_text->Enable();
-		sample_mode_chooser_panel->Enable();
+		sampling_mode_text->Enable();
+		sampling_mode_chooser_panel->Enable();
 	}
 	else
 	{
-		sample_mode_text->Disable();
-		sample_mode_chooser_panel->Disable();
+		sampling_mode_text->Disable();
+		sampling_mode_chooser_panel->Disable();
 	}
 	if (sampling && (domain_dimension > 0) &&
-		(CMZN_ELEMENT_POINT_SAMPLE_CELL_POISSON == sample_mode))
+		(CMZN_ELEMENT_POINT_SAMPLING_MODE_CELL_POISSON == sampling_mode))
 	{
 		sample_density_field_text->Enable();
 		sample_density_field_chooser_panel->Enable();
@@ -1168,7 +1168,7 @@ void show_sampling_widgets()
 		sample_density_field_chooser_panel->Disable();
 	}
 	if (sampling && (domain_dimension > 0) &&
-		(CMZN_ELEMENT_POINT_SAMPLE_SET_LOCATION == sample_mode))
+		(CMZN_ELEMENT_POINT_SAMPLING_MODE_SET_LOCATION == sampling_mode))
 	{
 		xitext->Enable();
 		xitextctrl->Enable();
@@ -1178,7 +1178,7 @@ void show_sampling_widgets()
 		xitext->Disable();
 		xitextctrl->Disable();
 	}
-	if ((domain_dimension > 0) && (CMZN_ELEMENT_POINT_SAMPLE_SET_LOCATION != sample_mode))
+	if ((domain_dimension > 0) && (CMZN_ELEMENT_POINT_SAMPLING_MODE_SET_LOCATION != sampling_mode))
 	{
 		tessellation_field_text->Enable();
 		tessellation_field_chooser_panel->Enable();
@@ -1196,18 +1196,18 @@ void show_sampling_widgets()
  */
 int domain_type_callback(enum cmzn_field_domain_type domain_type)
  {
-	if (CMZN_OK != cmzn_graphics_set_domain_type(region_tree_viewer->current_graphics,domain_type))
+	if (CMZN_OK != cmzn_graphics_set_field_domain_type(region_tree_viewer->current_graphics,domain_type))
 	{
 		// user chose an invalid domain type for the graphics
-		domain_type_chooser->set_value(cmzn_graphics_get_domain_type(region_tree_viewer->current_graphics));
+		domain_type_chooser->set_value(cmzn_graphics_get_field_domain_type(region_tree_viewer->current_graphics));
 		return 1;
 	}
 
 	exteriorcheckbox=XRCCTRL(*this,"ExteriorCheckBox",wxCheckBox);
 	facecheckbox=XRCCTRL(*this, "FaceCheckBox",wxCheckBox);
 	facechoice=XRCCTRL(*this, "FaceChoice",wxChoice);
-	if ((CMZN_FIELD_DOMAIN_MESH_1D == domain_type) ||
-		(CMZN_FIELD_DOMAIN_MESH_2D == domain_type))
+	if ((CMZN_FIELD_DOMAIN_TYPE_MESH1D == domain_type) ||
+		(CMZN_FIELD_DOMAIN_TYPE_MESH2D == domain_type))
 	{
 		exteriorcheckbox->Enable();
 		facecheckbox->Enable();
@@ -1217,14 +1217,14 @@ int domain_type_callback(enum cmzn_field_domain_type domain_type)
 		if (facecheckbox->IsChecked())
 		{
 			facechoice->Enable();
-			face = static_cast<cmzn_element_face_type>(facechoice->GetSelection() + CMZN_ELEMENT_FACE_XI1_0);
+			face = static_cast<cmzn_element_face_type>(facechoice->GetSelection() + CMZN_ELEMENT_FACE_TYPE_XI1_0);
 		}
 		else
 		{
 			facechoice->Disable();
-			face= CMZN_ELEMENT_FACE_ALL;
+			face= CMZN_ELEMENT_FACE_TYPE_ALL;
 		}
-		cmzn_graphics_set_face(region_tree_viewer->current_graphics,face);
+		cmzn_graphics_set_element_face_type(region_tree_viewer->current_graphics,face);
 	}
 	else
 	{
@@ -1240,14 +1240,12 @@ int domain_type_callback(enum cmzn_field_domain_type domain_type)
 	return 1;
  }
 
-/** Callback from wxChooser<cmzn_element_point_sample_mode> when choice is made. */
-int sample_mode_callback(enum cmzn_element_point_sample_mode sample_mode)
+/** Callback from wxChooser<cmzn_element_point_sampling_mode> when choice is made. */
+int sampling_mode_callback(enum cmzn_element_point_sampling_mode sampling_mode)
 {
 	cmzn_graphicssamplingattributes_id sampling = cmzn_graphics_get_graphicssamplingattributes(region_tree_viewer->current_graphics);
 	if (sampling)
-	{
-		cmzn_graphicssamplingattributes_set_mode(sampling, sample_mode);
-	}
+		cmzn_graphicssamplingattributes_set_element_point_sampling_mode(sampling, sampling_mode);
 	cmzn_graphicssamplingattributes_destroy(&sampling);
 	show_sampling_widgets();
 
@@ -1791,7 +1789,7 @@ void AddGraphics(cmzn_graphics_type graphics_type,
 		// set domain and initial coordinate field if appropriate
 		if (domain_type != CMZN_FIELD_DOMAIN_TYPE_INVALID)
 		{
-			cmzn_graphics_set_domain_type(graphics, domain_type);
+			cmzn_graphics_set_field_domain_type(graphics, domain_type);
 			cmzn_field_id coordinate_field = cmzn_scene_guess_coordinate_field(
 				region_tree_viewer->edit_scene, domain_type);
 			if (coordinate_field)
@@ -1837,31 +1835,31 @@ void AddGraphicsChoice(wxCommandEvent &event)
 			graphics_type = CMZN_GRAPHICS_TYPE_POINTS;
 			break;
 		case ADD_GRAPHIC_TYPE_NODE_POINTS:
-			domain_type = CMZN_FIELD_DOMAIN_NODES;
+			domain_type = CMZN_FIELD_DOMAIN_TYPE_NODES;
 			graphics_type = CMZN_GRAPHICS_TYPE_POINTS;
 			break;
 		case ADD_GRAPHIC_TYPE_DATA_POINTS:
-			domain_type = CMZN_FIELD_DOMAIN_DATA;
+			domain_type = CMZN_FIELD_DOMAIN_TYPE_DATAPOINTS;
 			graphics_type = CMZN_GRAPHICS_TYPE_POINTS;
 			break;
 		case ADD_GRAPHIC_TYPE_ELEMENT_POINTS:
-			domain_type = CMZN_FIELD_DOMAIN_MESH_HIGHEST_DIMENSION;
+			domain_type = CMZN_FIELD_DOMAIN_TYPE_MESH_HIGHEST_DIMENSION;
 			graphics_type = CMZN_GRAPHICS_TYPE_POINTS;
 			break;
 		case ADD_GRAPHIC_TYPE_LINES:
-			domain_type = CMZN_FIELD_DOMAIN_MESH_1D;
+			domain_type = CMZN_FIELD_DOMAIN_TYPE_MESH1D;
 			graphics_type = CMZN_GRAPHICS_TYPE_LINES;
 			break;
 		case ADD_GRAPHIC_TYPE_SURFACES:
-			domain_type = CMZN_FIELD_DOMAIN_MESH_2D;
+			domain_type = CMZN_FIELD_DOMAIN_TYPE_MESH2D;
 			graphics_type = CMZN_GRAPHICS_TYPE_SURFACES;
 			break;
 		case ADD_GRAPHIC_TYPE_CONTOURS:
 			graphics_type = CMZN_GRAPHICS_TYPE_CONTOURS;
-			domain_type = CMZN_FIELD_DOMAIN_MESH_3D;
+			domain_type = CMZN_FIELD_DOMAIN_TYPE_MESH3D;
 			break;
 		case ADD_GRAPHIC_TYPE_STREAMLINES:
-			domain_type = CMZN_FIELD_DOMAIN_MESH_HIGHEST_DIMENSION;
+			domain_type = CMZN_FIELD_DOMAIN_TYPE_MESH_HIGHEST_DIMENSION;
 			graphics_type = CMZN_GRAPHICS_TYPE_STREAMLINES;
 			break;
 		case ADD_GRAPHIC_TYPE_INVALID:
@@ -2573,14 +2571,14 @@ void FaceChecked(wxCommandEvent &event)
 	if (facecheckbox->IsChecked())
 	{
 		facechoice->Enable();
-		face = static_cast<cmzn_element_face_type>(facechoice->GetSelection() + CMZN_ELEMENT_FACE_XI1_0);
+		face = static_cast<cmzn_element_face_type>(facechoice->GetSelection() + CMZN_ELEMENT_FACE_TYPE_XI1_0);
 	}
 	else
 	{
 		facechoice->Disable();
-		face = CMZN_ELEMENT_FACE_ALL;
+		face = CMZN_ELEMENT_FACE_TYPE_ALL;
 	}
-	cmzn_graphics_set_face(region_tree_viewer->current_graphics,face);
+	cmzn_graphics_set_element_face_type(region_tree_viewer->current_graphics,face);
 	Region_tree_viewer_autoapply(region_tree_viewer->scene,
 		region_tree_viewer->edit_scene);
 	//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphics);
@@ -2591,8 +2589,8 @@ void FaceChosen(wxCommandEvent &event)
 	cmzn_element_face_type face;
 	USE_PARAMETER(event);
 	facechoice=XRCCTRL(*this, "FaceChoice",wxChoice);
-	face = static_cast<cmzn_element_face_type>(facechoice->GetSelection() + CMZN_ELEMENT_FACE_XI1_0);
-	cmzn_graphics_set_face(region_tree_viewer->current_graphics, face);
+	face = static_cast<cmzn_element_face_type>(facechoice->GetSelection() + CMZN_ELEMENT_FACE_TYPE_XI1_0);
+	cmzn_graphics_set_element_face_type(region_tree_viewer->current_graphics, face);
 	Region_tree_viewer_autoapply(region_tree_viewer->scene,
 		region_tree_viewer->edit_scene);
 	//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphics);
@@ -3177,7 +3175,7 @@ void SetGraphics(cmzn_graphics *graphics)
 		{
 			domain_type_chooser =
 				new Enumerator_chooser<ENUMERATOR_TYPE_CLASS(cmzn_field_domain_type)>
-				(domain_type_chooser_panel, CMZN_FIELD_DOMAIN_POINT,
+				(domain_type_chooser_panel, CMZN_FIELD_DOMAIN_TYPE_POINT,
 					(ENUMERATOR_CONDITIONAL_FUNCTION(cmzn_field_domain_type) *)NULL,
 					(void *)NULL, region_tree_viewer->user_interface, /*is bitmask*/ true);
 			domain_type_chooser_panel->Fit();
@@ -3189,7 +3187,7 @@ void SetGraphics(cmzn_graphics *graphics)
 		}
 		domain_type_chooser_panel->Show();
 		domaintypetext->Show();
-		domain_type_chooser->set_value(cmzn_graphics_get_domain_type(graphics));
+		domain_type_chooser->set_value(cmzn_graphics_get_field_domain_type(graphics));
 
 		tessellationtext=XRCCTRL(*this,"TessellationStaticText",wxStaticText);
 		tessellation_chooser_panel=XRCCTRL(*this, "TessellationChooserPanel",wxPanel);
@@ -3229,8 +3227,8 @@ void SetGraphics(cmzn_graphics *graphics)
 		tessellation_field_chooser->set_object(tessellation_field);
 		cmzn_field_destroy(&tessellation_field);
 
-		sample_mode_text = XRCCTRL(*this,"SampleModeText",wxStaticText);
-		sample_mode_chooser_panel= XRCCTRL(*this,"SampleModeChooserPanel",wxPanel);
+		sampling_mode_text = XRCCTRL(*this,"SamplingModeText",wxStaticText);
+		sampling_mode_chooser_panel= XRCCTRL(*this,"SamplingModeChooserPanel",wxPanel);
 		sample_density_field_text=XRCCTRL(*this, "DensityFieldText",wxStaticText);
 		sample_density_field_chooser_panel=XRCCTRL(*this,"DensityFieldChooserPanel",wxPanel);
 		xitext=XRCCTRL(*this,"XiText",wxStaticText);
@@ -3238,24 +3236,24 @@ void SetGraphics(cmzn_graphics *graphics)
 		cmzn_graphicssamplingattributes_id sampling = cmzn_graphics_get_graphicssamplingattributes(graphics);
 		if (sampling)
 		{
-			cmzn_element_point_sample_mode sample_mode = cmzn_graphicssamplingattributes_get_mode(sampling);
-			if (0 == sample_mode_chooser)
+			cmzn_element_point_sampling_mode sampling_mode = cmzn_graphicssamplingattributes_get_element_point_sampling_mode(sampling);
+			if (0 == sampling_mode_chooser)
 			{
-				sample_mode_chooser =
-					new Enumerator_chooser<ENUMERATOR_TYPE_CLASS(cmzn_element_point_sample_mode)>
-					(sample_mode_chooser_panel, sample_mode,
-						(ENUMERATOR_CONDITIONAL_FUNCTION(cmzn_element_point_sample_mode) *)NULL,
+				sampling_mode_chooser =
+					new Enumerator_chooser<ENUMERATOR_TYPE_CLASS(cmzn_element_point_sampling_mode)>
+					(sampling_mode_chooser_panel, sampling_mode,
+						(ENUMERATOR_CONDITIONAL_FUNCTION(cmzn_element_point_sampling_mode) *)NULL,
 						(void *)NULL, region_tree_viewer->user_interface);
-				sample_mode_chooser_panel->Fit();
-				Callback_base< enum cmzn_element_point_sample_mode > *sample_mode_callback =
-					new Callback_member_callback< enum cmzn_element_point_sample_mode,
-					wxRegionTreeViewer, int (wxRegionTreeViewer::*)(enum cmzn_element_point_sample_mode) >
-					(this, &wxRegionTreeViewer::sample_mode_callback);
-				sample_mode_chooser->set_callback(sample_mode_callback);
+				sampling_mode_chooser_panel->Fit();
+				Callback_base< enum cmzn_element_point_sampling_mode > *sampling_mode_callback =
+					new Callback_member_callback< enum cmzn_element_point_sampling_mode,
+					wxRegionTreeViewer, int (wxRegionTreeViewer::*)(enum cmzn_element_point_sampling_mode) >
+					(this, &wxRegionTreeViewer::sampling_mode_callback);
+				sampling_mode_chooser->set_callback(sampling_mode_callback);
 			}
-			sample_mode_chooser_panel->Show();
-			sample_mode_text->Show();
-			sample_mode_chooser->set_value(sample_mode);
+			sampling_mode_chooser_panel->Show();
+			sampling_mode_text->Show();
+			sampling_mode_chooser->set_value(sampling_mode);
 
 			cmzn_field_id sample_density_field = cmzn_graphicssamplingattributes_get_density_field(sampling);
 			if (sample_density_field_chooser == NULL)
@@ -3537,12 +3535,12 @@ void SetGraphics(cmzn_graphics *graphics)
 		exteriorcheckbox=XRCCTRL(*this,"ExteriorCheckBox",wxCheckBox);
 		facecheckbox=XRCCTRL(*this, "FaceCheckBox",wxCheckBox);
 		facechoice=XRCCTRL(*this, "FaceChoice",wxChoice);
-		cmzn_field_domain_type domain_type = cmzn_graphics_get_domain_type(graphics);
+		cmzn_field_domain_type domain_type = cmzn_graphics_get_field_domain_type(graphics);
 		exteriorcheckbox->Show();
 		facecheckbox->Show();
 		facechoice->Show();
-		if ((CMZN_FIELD_DOMAIN_MESH_1D == domain_type) ||
-			(CMZN_FIELD_DOMAIN_MESH_2D == domain_type))
+		if ((CMZN_FIELD_DOMAIN_TYPE_MESH1D == domain_type) ||
+			(CMZN_FIELD_DOMAIN_TYPE_MESH2D == domain_type))
 		{
 			exteriorcheckbox->Enable();
 			facecheckbox->Enable();
@@ -3554,12 +3552,12 @@ void SetGraphics(cmzn_graphics *graphics)
 			facechoice->Disable();
 		}
 		exteriorcheckbox->SetValue(cmzn_graphics_is_exterior(graphics));
-		face = cmzn_graphics_get_face(graphics);
-		if (face >= CMZN_ELEMENT_FACE_XI1_0)
+		face = cmzn_graphics_get_element_face_type(graphics);
+		if (face >= CMZN_ELEMENT_FACE_TYPE_XI1_0)
 		{
 			facecheckbox->SetValue(1);
 			facechoice->Enable();
-			facechoice->SetSelection(static_cast<int>(face) - CMZN_ELEMENT_FACE_XI1_0);
+			facechoice->SetSelection(static_cast<int>(face) - CMZN_ELEMENT_FACE_TYPE_XI1_0);
 		}
 		else
 		{

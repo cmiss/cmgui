@@ -50,8 +50,8 @@ Global functions
 
 /**
  * Creates a Node_tool for editing nodes/data from the region tree.
- * Domain type may be CMZN_FIELD_DOMAIN_NODES or CMZN_FIELD_DOMAIN_DATA.
- * <element_manager> should be NULL for CMZN_FIELD_DOMAIN_DATA.
+ * Domain type may be CMZN_FIELD_DOMAIN_TYPE_NODES or CMZN_FIELD_DOMAIN_TYPE_DATAPOINTS.
+ * <element_manager> should be NULL for CMZN_FIELD_DOMAIN_TYPE_DATAPOINTS.
  */
 struct Node_tool *CREATE(Node_tool)(
 	struct MANAGER(Interactive_tool) *interactive_tool_manager,

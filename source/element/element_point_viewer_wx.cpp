@@ -160,7 +160,7 @@ static int Element_point_viewer_refresh_sample_mode(
 LAST MODIFIED : 13 June 2007
 
 DESCRIPTION :
-Updates the cmzn_element_point_sample_mode shown in the chooser to match that for the
+Updates the cmzn_element_point_sampling_mode shown in the chooser to match that for the
 current point.
 ==============================================================================*/
 
@@ -209,8 +209,8 @@ writes the discretization in use, otherwise N/A.
 					} break;
 				}
 				is_sensitive=is_editable=
-					(CMZN_ELEMENT_POINT_SAMPLE_SET_LOCATION != element_point_viewer->
-						element_point_identifier.sample_mode);
+					(CMZN_ELEMENT_POINT_SAMPLING_MODE_SET_LOCATION != element_point_viewer->
+						element_point_identifier.sampling_mode);
 				}
 				else
 				{
@@ -263,8 +263,8 @@ writes its number, otherwise N/A.
 			{
 				sprintf(temp_string,"%d",element_point_viewer->element_point_number);
 				is_sensitive=is_editable=
-					(CMZN_ELEMENT_POINT_SAMPLE_SET_LOCATION != element_point_viewer->
-						element_point_identifier.sample_mode);
+					(CMZN_ELEMENT_POINT_SAMPLING_MODE_SET_LOCATION != element_point_viewer->
+						element_point_identifier.sampling_mode);
 			}
 			else
 			{
@@ -334,8 +334,8 @@ value otherwise N/A.
 						sprintf(temp_string,"%g, %g, %g",xi[0],xi[1],xi[2]);
 					} break;
 				}
-				is_editable=(CMZN_ELEMENT_POINT_SAMPLE_SET_LOCATION == element_point_viewer->
-					element_point_identifier.sample_mode);
+				is_editable=(CMZN_ELEMENT_POINT_SAMPLING_MODE_SET_LOCATION == element_point_viewer->
+					element_point_identifier.sampling_mode);
 				is_sensitive=1;
 			}
 			else
@@ -581,8 +581,8 @@ is supplied.
 	if (element_point_identifier&&number_in_xi)
 	{
 		if (element_point_identifier->element&&field&&
-			(CMZN_ELEMENT_POINT_SAMPLE_CELL_CORNERS==
-				element_point_identifier->sample_mode)&&
+			(CMZN_ELEMENT_POINT_SAMPLING_MODE_CELL_CORNERS==
+				element_point_identifier->sampling_mode)&&
 			Computed_field_get_native_discretization_in_element(field,
 				element_point_identifier->element,number_in_xi))
 		{
@@ -705,7 +705,7 @@ Ensures xi is correct for the currently selected element point, if any.
 		{
 			return_code = FE_element_get_numbered_xi_point(
 				element_point_viewer->element_point_identifier.element,
-				element_point_viewer->element_point_identifier.sample_mode,
+				element_point_viewer->element_point_identifier.sampling_mode,
 				element_point_viewer->element_point_identifier.number_in_xi,
 				element_point_viewer->element_point_identifier.exact_xi,
 				(cmzn_fieldcache_id)0,
@@ -868,7 +868,7 @@ LAST MODIFIED : 30 May 2000
 
 DESCRIPTION :
 If there is a grid field defined for the element, gets its discretization and
-sets the cmzn_element_point_sample_mode to CMZN_ELEMENT_POINT_SAMPLE_CELL_CORNERS, otherwise
+sets the cmzn_element_point_sampling_mode to CMZN_ELEMENT_POINT_SAMPLING_MODE_CELL_CORNERS, otherwise
 leaves the current discretization/mode intact.
 ==============================================================================*/
 {
@@ -893,8 +893,8 @@ leaves the current discretization/mode intact.
 			get_FE_element_field_component_grid_map_number_in_xi(element,grid_fe_field,
 				/*component_number*/0,
 				element_point_viewer->element_point_identifier.number_in_xi);
-			element_point_viewer->element_point_identifier.sample_mode=
-				CMZN_ELEMENT_POINT_SAMPLE_CELL_CORNERS;
+			element_point_viewer->element_point_identifier.sampling_mode=
+				CMZN_ELEMENT_POINT_SAMPLING_MODE_CELL_CORNERS;
 		}
 	}
 	else
@@ -1075,8 +1075,8 @@ class wxElementPointViewer : public wxFrame
 	 wxFeElementTextChooser *top_level_element_text_chooser;
 	 wxFrame *frame;
 	 wxTextCtrl *discretizationtextctrl, *pointtextctrl;
-	 DEFINE_ENUMERATOR_TYPE_CLASS(cmzn_element_point_sample_mode);
-	 Enumerator_chooser<ENUMERATOR_TYPE_CLASS(cmzn_element_point_sample_mode)>
+	 DEFINE_ENUMERATOR_TYPE_CLASS(cmzn_element_point_sampling_mode);
+	 Enumerator_chooser<ENUMERATOR_TYPE_CLASS(cmzn_element_point_sampling_mode)>
 	 *element_sample_mode_chooser;
 	 DEFINE_MANAGER_CLASS(Computed_field);
 	 Managed_object_chooser<Computed_field,MANAGER_CLASS(Computed_field)>
@@ -1120,15 +1120,15 @@ public:
 
 			element_point_viewer->element_sample_mode_chooser_panel=XRCCTRL(
 				 *this,"XiDiscretizationModePanel",wxPanel);
-			element_sample_mode_chooser = new Enumerator_chooser<ENUMERATOR_TYPE_CLASS(cmzn_element_point_sample_mode)>
+			element_sample_mode_chooser = new Enumerator_chooser<ENUMERATOR_TYPE_CLASS(cmzn_element_point_sampling_mode)>
 				 (element_point_viewer->element_sample_mode_chooser_panel,
-						element_point_viewer->element_point_identifier.sample_mode,
-						(ENUMERATOR_CONDITIONAL_FUNCTION(cmzn_element_point_sample_mode) *)NULL,
+						element_point_viewer->element_point_identifier.sampling_mode,
+						(ENUMERATOR_CONDITIONAL_FUNCTION(cmzn_element_point_sampling_mode) *)NULL,
 						(void *)NULL, element_point_viewer->user_interface);
 			element_point_viewer->element_sample_mode_chooser_panel->Fit();
-			Callback_base< enum cmzn_element_point_sample_mode > *element_sample_mode_callback =
-				 new Callback_member_callback<enum cmzn_element_point_sample_mode,
-				 wxElementPointViewer, int(wxElementPointViewer::*)(enum cmzn_element_point_sample_mode)>
+			Callback_base< enum cmzn_element_point_sampling_mode > *element_sample_mode_callback =
+				 new Callback_member_callback<enum cmzn_element_point_sampling_mode,
+				 wxElementPointViewer, int(wxElementPointViewer::*)(enum cmzn_element_point_sampling_mode)>
 				 (this, &wxElementPointViewer::element_sample_mode_callback);
 			element_sample_mode_chooser->set_callback(element_sample_mode_callback);
 			if (element_point_viewer->element_point_identifier.element)
@@ -1234,14 +1234,14 @@ Callback from wxTextChooser when text is entered.
 									element_point_viewer->element_point_identifier.element,
 									element_point_viewer->element_point_identifier.top_level_element,
 									(LIST_CONDITIONAL_FUNCTION(FE_element) *)NULL, (void *)NULL,
-									/*face_number*/CMZN_ELEMENT_FACE_ALL, element_to_top_level);
+									/*face_number*/CMZN_ELEMENT_FACE_TYPE_ALL, element_to_top_level);
 						top_level_element_text_chooser->set_object(
 							 element_point_viewer->element_point_identifier.top_level_element);
 						//				top_element_text_callback(
 						// 					 element_point_viewer->element_point_identifier.top_level_element);
 						element_point_viewer->element_point_number=0;
-						if (CMZN_ELEMENT_POINT_SAMPLE_CELL_CORNERS==
-							 element_point_viewer->element_point_identifier.sample_mode)
+						if (CMZN_ELEMENT_POINT_SAMPLING_MODE_CELL_CORNERS==
+							 element_point_viewer->element_point_identifier.sampling_mode)
 						{
 							 Element_point_viewer_get_grid(element_point_viewer);
 						}
@@ -1301,8 +1301,8 @@ Callback from wxTextChooser when text is entered.
 						element_point_viewer->element_point_identifier.top_level_element=
 							 top_level_element;
 						/* get the element point at the centre of top_level_element */
-						element_point_viewer->element_point_identifier.sample_mode=
-							 CMZN_ELEMENT_POINT_SAMPLE_SET_LOCATION;
+						element_point_viewer->element_point_identifier.sampling_mode=
+							 CMZN_ELEMENT_POINT_SAMPLING_MODE_SET_LOCATION;
 						for (i=0;i<MAXIMUM_ELEMENT_XI_DIMENSIONS;i++)
 						{
 							 element_point_viewer->element_point_identifier.number_in_xi[i]=1;
@@ -1337,7 +1337,7 @@ Callback from wxTextChooser when text is entered.
 			return 1;
 }
 
-int element_sample_mode_callback(enum cmzn_element_point_sample_mode sample_mode)
+int element_sample_mode_callback(enum cmzn_element_point_sampling_mode sampling_mode)
 /*******************************************************************************
 LAST MODIFIED : 22 March 2007
 
@@ -1353,15 +1353,15 @@ Callback from wxChooser<xi Discretization Mode> when choice is made.
 		/* store old identifier unless in case new one is invalid */
 		COPY(Element_point_ranges_identifier)(&temp_element_point_identifier,
 			&(element_point_viewer->element_point_identifier));
-		if (sample_mode)
+		if (sampling_mode)
 		{
-			element_point_viewer->element_point_identifier.sample_mode=
-				sample_mode;
-			if (CMZN_ELEMENT_POINT_SAMPLE_CELL_CORNERS==sample_mode)
+			element_point_viewer->element_point_identifier.sampling_mode=
+				sampling_mode;
+			if (CMZN_ELEMENT_POINT_SAMPLING_MODE_CELL_CORNERS==sampling_mode)
 			{
 				Element_point_viewer_get_grid(element_point_viewer);
 			}
-			else if (CMZN_ELEMENT_POINT_SAMPLE_SET_LOCATION==sample_mode)
+			else if (CMZN_ELEMENT_POINT_SAMPLING_MODE_SET_LOCATION==sampling_mode)
 			{
 				for (i=0;i<MAXIMUM_ELEMENT_XI_DIMENSIONS;i++)
 				{
@@ -1829,8 +1829,8 @@ data, and then changes the correct value in the array structure.
 		value_string=tmpstr.mb_str(wxConvUTF8);
 		if (value_string)
 		{
-			if ((CMZN_ELEMENT_POINT_SAMPLE_CELL_CORNERS==element_point_field_viewer->
-				element_point_identifier.sample_mode)&&
+			if ((CMZN_ELEMENT_POINT_SAMPLING_MODE_CELL_CORNERS==element_point_field_viewer->
+				element_point_identifier.sampling_mode)&&
 				Computed_field_get_native_discretization_in_element(field,element,
 					number_in_xi))
 			{
@@ -1975,7 +1975,7 @@ struct Computed_field *get_grid_field()
 	 if (element_sample_mode_chooser)
 	 {
 			element_sample_mode_chooser->set_value(element_point_viewer->
-				 element_point_identifier.sample_mode);
+				 element_point_identifier.sampling_mode);
 	 }
 }
 
@@ -2229,8 +2229,8 @@ fields.
 				element_point_viewer->element_point_identifier.top_level_element=
 					 (struct FE_element *)NULL;
 				element_point_viewer->element_copy=(struct FE_element *)NULL;
-				element_point_viewer->element_point_identifier.sample_mode=
-					 CMZN_ELEMENT_POINT_SAMPLE_SET_LOCATION;
+				element_point_viewer->element_point_identifier.sampling_mode=
+					 CMZN_ELEMENT_POINT_SAMPLING_MODE_SET_LOCATION;
 				//				element_point_viewer->time_object_callback = 0;
 				element_point_viewer->number_of_components=-1;
 				for (i=0;i<MAXIMUM_ELEMENT_XI_DIMENSIONS;i++)
@@ -2579,7 +2579,7 @@ pass unmanaged elements in the element_point_identifier to this widget.
 				element_point_viewer->current_field=field;
 				FE_element_get_numbered_xi_point(
 					 element_point_identifier->element,
-					 element_point_identifier->sample_mode,
+					 element_point_identifier->sampling_mode,
 					 element_point_identifier->number_in_xi,
 					 element_point_identifier->exact_xi,
 					 (cmzn_fieldcache_id)0,
@@ -2888,7 +2888,7 @@ static int Element_point_viewer_refresh_sample_mode(
 LAST MODIFIED : 19 March 2001
 
 DESCRIPTION :
-Updates the cmzn_element_point_sample_mode shown in the chooser to match that for the
+Updates the cmzn_element_point_sampling_mode shown in the chooser to match that for the
 current point.
 ==============================================================================*/
 {
