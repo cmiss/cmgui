@@ -485,7 +485,7 @@ int Node_viewer_remove_unused_collpane(struct Node_viewer *node_viewer)
 }
 
 static int node_field_time_change_callback(
-	double current_time, void *node_viewer_void)
+	cmzn_timenotifierevent_id timenotifierevent, void *node_viewer_void)
 /*******************************************************************************
 LAST MODIFIED : 5 December 2001
 
@@ -495,7 +495,7 @@ DESCRIPTION :
 	int return_code;
 	struct Node_viewer *node_viewer;
 
-	USE_PARAMETER(current_time);
+	USE_PARAMETER(timenotifierevent);
 	if((node_viewer =	(struct Node_viewer *)node_viewer_void))
 	{
 // 		node_viewer_widget_update_values(node_viewer);

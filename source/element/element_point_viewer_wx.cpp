@@ -982,7 +982,7 @@ object cause updates.
 } /* Element_point_viewer_FE_region_change */
 
 static int element_point_viewer_time_change_callback(
-	double current_time,	void *element_point_field_viewer_void)
+	cmzn_timenotifierevent_id timenotifierevent,	void *element_point_field_viewer_void)
 /*******************************************************************************
 LAST MODIFIED : 6 June 2007
 
@@ -993,7 +993,7 @@ DESCRIPTION :
 	struct Element_point_viewer *element_point_viewer;
 
 	ENTER(element_point_viewer_time_change_callback);
-	USE_PARAMETER(current_time);
+	USE_PARAMETER(timenotifierevent);
 	if ((element_point_viewer =
 		(struct Element_point_viewer *)element_point_field_viewer_void))
 	{
