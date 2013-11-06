@@ -11437,7 +11437,7 @@ static int gfx_modify_node_group(struct Parse_state *state,
 struct cmzn_nodal_derivatives_data
 {
 	int number_of_derivatives; // initialise to -1
-	enum cmzn_node_value_type *derivatives; // initialise to NULL
+	enum cmzn_node_value_label *derivatives; // initialise to NULL
 };
 
 /***************************************************************************//**
@@ -11474,16 +11474,16 @@ static int set_cmzn_nodal_derivatives(struct Parse_state *state,
 			while (state->current_token)
 			{
 				// stop when derivatives not recognised
-				enum cmzn_node_value_type nodal_value_type =
-					cmzn_node_value_type_enum_from_string(state->current_token);
-				if (nodal_value_type != CMZN_NODE_VALUE_TYPE_INVALID)
+				enum cmzn_node_value_label node_value_label =
+					cmzn_node_value_label_enum_from_string(state->current_token);
+				if (node_value_label != CMZN_NODE_VALUE_LABEL_INVALID)
 				{
-					enum cmzn_node_value_type *temp;
-					if (REALLOCATE(temp, derivatives_data->derivatives, enum cmzn_node_value_type,
+					enum cmzn_node_value_label *temp;
+					if (REALLOCATE(temp, derivatives_data->derivatives, enum cmzn_node_value_label,
 						derivatives_data->number_of_derivatives + 1))
 					{
 						derivatives_data->derivatives = temp;
-						derivatives_data->derivatives[derivatives_data->number_of_derivatives] = nodal_value_type;
+						derivatives_data->derivatives[derivatives_data->number_of_derivatives] = node_value_label;
 						++derivatives_data->number_of_derivatives;
 						return_code = shift_Parse_state(state, 1);
 					}
@@ -11650,17 +11650,12 @@ static int gfx_modify_nodes(struct Parse_state *state,
 				{
 					for (int i = 0; i < derivatives_data.number_of_derivatives; ++i)
 					{
-						if (!cmzn_nodetemplate_define_derivative(node_template, field,
-							/*component_number=all*/-1, derivatives_data.derivatives[i]))
+						if (!cmzn_nodetemplate_set_value_number_of_versions(node_template, field,
+							/*component_number=all*/-1, derivatives_data.derivatives[i], number_of_versions))
 						{
 							return_code = 0;
 							break;
 						}
-					}
-					if ((number_of_versions > 1) && !cmzn_nodetemplate_define_versions(node_template, field,
-						/*component_number=all*/-1, number_of_versions))
-					{
-						return_code = 0;
 					}
 				}
 			}

@@ -104,7 +104,7 @@ object cause updates.
 ==============================================================================*/
 
 int Node_viewer_update_collpane(struct Node_viewer *node_viewer);
-char *node_viewer_get_component_value_string(struct Node_viewer *node_viewer, cmzn_field_id field, int component_number, enum cmzn_node_value_type nodal_value_type, int version);
+char *node_viewer_get_component_value_string(struct Node_viewer *node_viewer, cmzn_field_id field, int component_number, enum cmzn_node_value_label node_value_label, int version);
 
 static int node_viewer_setup_components(
 	struct Node_viewer *node_viewer, cmzn_node_id node, cmzn_field_id field, bool &time_varying_field);
@@ -289,7 +289,7 @@ after a collapsible pane is opened/closed.
 	 }
 
 	void NodeViewerTextEntered(wxTextCtrl *textctrl, Node_viewer *node_viewer,
-		cmzn_field_id field, int component_number, enum cmzn_node_value_type nodal_value_type, int version)
+		cmzn_field_id field, int component_number, enum cmzn_node_value_label node_value_label, int version)
 	{
 		if (textctrl && node_viewer && field && node_viewer->current_node)
 		{
@@ -310,9 +310,9 @@ after a collapsible pane is opened/closed.
 				case CMZN_FIELD_VALUE_TYPE_REAL:
 					{
 						cmzn_field_id assignField = 0;
-						if ((nodal_value_type != CMZN_NODE_VALUE) || (version != 1))
+						if ((node_value_label != CMZN_NODE_VALUE_LABEL_VALUE) || (version != 1))
 						{
-							assignField = cmzn_fieldmodule_create_field_node_value(field_module, field, nodal_value_type, version);
+							assignField = cmzn_fieldmodule_create_field_node_value(field_module, field, node_value_label, version);
 						}
 						else
 						{
@@ -345,7 +345,7 @@ after a collapsible pane is opened/closed.
 					display_message(ERROR_MESSAGE, "Cannot set this field's value");
 				}
 				/* refresh value shown in the text field widgets */
-				char *temp_string = node_viewer_get_component_value_string(node_viewer, field, component_number, nodal_value_type, version);
+				char *temp_string = node_viewer_get_component_value_string(node_viewer, field, component_number, node_value_label, version);
 				if (temp_string != NULL)
 				{
 					textctrl->SetValue(wxString::FromAscii(temp_string));
@@ -385,7 +385,7 @@ class wxNodeViewerTextCtrl : public wxTextCtrl
 	 Node_viewer *node_viewer;
 	 cmzn_field_id field;
 	 int component_number;
-	 enum cmzn_node_value_type nodal_value_type;
+	 enum cmzn_node_value_label node_value_label;
 	 int version;
 
 public:
@@ -393,10 +393,10 @@ public:
   wxNodeViewerTextCtrl(Node_viewer *node_viewer,
 		 cmzn_field_id field,
 		 int component_number,
-		 enum cmzn_node_value_type nodal_value_type,
+		 enum cmzn_node_value_label node_value_label,
 		 int version) :
 		 node_viewer(node_viewer), field(field), component_number(component_number),
-		 nodal_value_type(nodal_value_type), version(version)
+		 node_value_label(node_value_label), version(version)
   {
   }
 
@@ -408,7 +408,7 @@ public:
   {
 	USE_PARAMETER(event);
 		 node_viewer->wx_node_viewer->NodeViewerTextEntered
-				(this, node_viewer, field, component_number, nodal_value_type, version);
+				(this, node_viewer, field, component_number, node_value_label, version);
    }
 
 };
@@ -851,7 +851,7 @@ object cause updates.
  * Get field component value as string
  */
 char *node_viewer_get_component_value_string(Node_viewer *node_viewer, cmzn_field_id field,
-	int component_number, enum cmzn_node_value_type nodal_value_type, int version)
+	int component_number, enum cmzn_node_value_label node_value_label, int version)
 {
 	char *new_value_string = 0;
 	if (node_viewer && field && node_viewer->current_node)
@@ -871,9 +871,9 @@ char *node_viewer_get_component_value_string(Node_viewer *node_viewer, cmzn_fiel
 			// must be numeric
 			cmzn_fieldmodule_begin_change(field_module);
 			cmzn_field_id useField = 0;
-			if ((nodal_value_type != CMZN_NODE_VALUE) || (version != 1))
+			if ((node_value_label != CMZN_NODE_VALUE_LABEL_VALUE) || (version != 1))
 			{
-				useField = cmzn_fieldmodule_create_field_node_value(field_module, field, nodal_value_type, version);
+				useField = cmzn_fieldmodule_create_field_node_value(field_module, field, node_value_label, version);
 			}
 			else
 			{
@@ -903,7 +903,7 @@ char *node_viewer_get_component_value_string(Node_viewer *node_viewer, cmzn_fiel
 
 
 int node_viewer_add_textctrl(Node_viewer *node_viewer, cmzn_field_id field,
-	int component_number, cmzn_node_value_type nodal_value_type, int version)
+	int component_number, cmzn_node_value_label node_value_label, int version)
 /*******************************************************************************
 LAST MODIFIED : 24 April 2007
 
@@ -913,9 +913,9 @@ Add textctrl box onto the viewer.
 {
 	char *temp_string;
 	wxNodeViewerTextCtrl *node_viewer_text =
-		new wxNodeViewerTextCtrl(node_viewer, field, component_number, nodal_value_type, version);
+		new wxNodeViewerTextCtrl(node_viewer, field, component_number, node_value_label, version);
 	temp_string = node_viewer_get_component_value_string(
-		node_viewer, field, component_number, nodal_value_type, version);
+		node_viewer, field, component_number, node_value_label, version);
 	if (temp_string != NULL)
 	{
 		node_viewer_text ->Create(node_viewer->win, -1, wxString::FromAscii(temp_string),wxDefaultPosition,
@@ -944,23 +944,23 @@ Add textctrl box onto the viewer.
 static int node_viewer_setup_components(
 	struct Node_viewer *node_viewer, cmzn_node_id node, cmzn_field_id field, bool &time_varying_field)
 {
-	struct cmzn_node_value_type_label
+	struct cmzn_node_value_label_label
 	{
-		enum cmzn_node_value_type type;
+		enum cmzn_node_value_label type;
 		const char *label;
 	};
-	const cmzn_node_value_type_label all_nodal_value_types[] =
+	const cmzn_node_value_label_label all_node_value_labels[] =
 	{
-		{ CMZN_NODE_VALUE, "value" },
-		{ CMZN_NODE_D_DS1, "d/ds1" },
-		{ CMZN_NODE_D_DS2, "d/ds2" },
-		{ CMZN_NODE_D_DS3, "d/ds3" },
-		{ CMZN_NODE_D2_DS1DS2, "d2/ds1ds2" },
-		{ CMZN_NODE_D2_DS1DS3, "d2/ds1ds3" },
-		{ CMZN_NODE_D2_DS2DS3, "d2/ds2ds3" },
-		{ CMZN_NODE_D3_DS1DS2DS3, "d3/ds1ds2ds3" }
+		{ CMZN_NODE_VALUE_LABEL_VALUE, "value" },
+		{ CMZN_NODE_VALUE_LABEL_D_DS1, "d/ds1" },
+		{ CMZN_NODE_VALUE_LABEL_D_DS2, "d/ds2" },
+		{ CMZN_NODE_VALUE_LABEL_D_DS3, "d/ds3" },
+		{ CMZN_NODE_VALUE_LABEL_D2_DS1DS2, "d2/ds1ds2" },
+		{ CMZN_NODE_VALUE_LABEL_D2_DS1DS3, "d2/ds1ds3" },
+		{ CMZN_NODE_VALUE_LABEL_D2_DS2DS3, "d2/ds2ds3" },
+		{ CMZN_NODE_VALUE_LABEL_D3_DS1DS2DS3, "d3/ds1ds2ds3" }
 	};
-	const int all_nodal_value_types_count = sizeof(all_nodal_value_types) / sizeof(cmzn_node_value_type_label);
+	const int all_node_value_labels_count = sizeof(all_node_value_labels) / sizeof(cmzn_node_value_label_label);
 	int return_code = 0;
 	wxString tmp_string;
 	if (node_viewer && node && field)
@@ -969,11 +969,11 @@ static int node_viewer_setup_components(
 		const int number_of_components = cmzn_field_get_number_of_components(field);
 		cmzn_field_finite_element_id feField = cmzn_field_cast_finite_element(field);
 		cmzn_nodetemplate_id nodeTemplate = 0;
-		enum cmzn_node_value_type nodal_value_types[8];
+		enum cmzn_node_value_label node_value_labels[8];
 		const char *nodal_value_labels[8];
-		nodal_value_types[0] = CMZN_NODE_VALUE;
+		node_value_labels[0] = CMZN_NODE_VALUE_LABEL_VALUE;
 		nodal_value_labels[0] = "value";
-		int number_of_nodal_value_types = 1;
+		int number_of_node_value_labels = 1;
 		if (feField)
 		{
 			cmzn_fieldmodule_id field_module = cmzn_region_get_fieldmodule(node_viewer->region);
@@ -983,25 +983,25 @@ static int node_viewer_setup_components(
 			cmzn_nodetemplate_define_field_from_node(nodeTemplate, field, node);
 			cmzn_nodeset_destroy(&nodeset);
 			cmzn_fieldmodule_destroy(&field_module);
-			for (int i = 1; i < all_nodal_value_types_count; ++i)
+			for (int i = 1; i < all_node_value_labels_count; ++i)
 			{
-				enum cmzn_node_value_type nodal_value_type = all_nodal_value_types[i].type;
-				if (cmzn_nodetemplate_has_derivative(nodeTemplate,
-					field, /*component_number*/-1, nodal_value_type))
+				enum cmzn_node_value_label node_value_label = all_node_value_labels[i].type;
+				if (0 < cmzn_nodetemplate_get_value_number_of_versions(nodeTemplate,
+					field, /*component_number*/-1, node_value_label))
 				{
-					nodal_value_types[number_of_nodal_value_types] = nodal_value_type;
-					nodal_value_labels[number_of_nodal_value_types] = all_nodal_value_types[i].label;
-					++number_of_nodal_value_types;
+					node_value_labels[number_of_node_value_labels] = node_value_label;
+					nodal_value_labels[number_of_node_value_labels] = all_node_value_labels[i].label;
+					++number_of_node_value_labels;
 				}
 			}
 		}
 
 		// first row is blank cell followed by nodal value type labels
 		node_viewer->grid_field = new wxGridSizer(
-			number_of_components + 1, number_of_nodal_value_types + 1, 1, 1);
+			number_of_components + 1, number_of_node_value_labels + 1, 1, 1);
 		node_viewer->grid_field->Add(new wxStaticText(
 			node_viewer->win, -1, wxT("")), 1, wxEXPAND|wxADJUST_MINSIZE, 0);
-		for (int nodal_value_no = 0; nodal_value_no < number_of_nodal_value_types; ++nodal_value_no)
+		for (int nodal_value_no = 0; nodal_value_no < number_of_node_value_labels; ++nodal_value_no)
 		{
 			tmp_string = wxString::FromAscii(nodal_value_labels[nodal_value_no]);
 			node_viewer->grid_field->Add(new wxStaticText(node_viewer->win, -1, tmp_string),1,
@@ -1019,13 +1019,13 @@ static int node_viewer_setup_components(
 				wxALIGN_CENTER_HORIZONTAL|wxADJUST_MINSIZE, 0);
 			cmzn_deallocate(new_string);
 
-			for (int nodal_value_no = 0; nodal_value_no < number_of_nodal_value_types; ++nodal_value_no)
+			for (int nodal_value_no = 0; nodal_value_no < number_of_node_value_labels; ++nodal_value_no)
 			{
-				enum cmzn_node_value_type nodal_value_type = nodal_value_types[nodal_value_no];
-				if (!feField || cmzn_nodetemplate_has_derivative(nodeTemplate,
-					field, comp_no, nodal_value_type))
+				enum cmzn_node_value_label node_value_label = node_value_labels[nodal_value_no];
+				if (!feField || (0 < cmzn_nodetemplate_get_value_number_of_versions(
+					nodeTemplate, field, comp_no, node_value_label)))
 				{
-					node_viewer_add_textctrl(node_viewer, field, comp_no, nodal_value_type, 1);
+					node_viewer_add_textctrl(node_viewer, field, comp_no, node_value_label, 1);
 				}
 				else
 				{
