@@ -191,10 +191,17 @@ already) and allows its contents to be modified.
 
 				if (return_code)
 				{
-					return_code = field_modify->update_field_and_deaccess(
-						cmzn_fieldmodule_create_field_imagefilter_histogram(
-							field_modify->get_field_module(),
-							source_field, numberOfBins, marginalScale, histogramMinimum, histogramMaximum));
+					cmzn_field_id filter_field = cmzn_fieldmodule_create_field_imagefilter_histogram(
+						field_modify->get_field_module(), source_field);
+					cmzn_field_imagefilter_histogram_id imagefilter =
+						cmzn_field_cast_imagefilter_histogram(filter_field);
+					cmzn_field_imagefilter_histogram_set_number_of_bins(imagefilter,
+						source_field->number_of_components, numberOfBins);
+					cmzn_field_imagefilter_histogram_set_compute_minimum_values(imagefilter,
+						source_field->number_of_components, histogramMinimum);
+					cmzn_field_imagefilter_histogram_set_marginal_scale(imagefilter, marginalScale);
+					cmzn_field_imagefilter_histogram_destroy(&imagefilter);
+					return_code = field_modify->update_field_and_deaccess(filter_field);
 				}
 
 				if (!return_code)

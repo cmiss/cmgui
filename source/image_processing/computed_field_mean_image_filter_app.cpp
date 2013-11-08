@@ -141,7 +141,7 @@ already) and allows its contents to be modified.
 					return_code = field_modify->update_field_and_deaccess(
 						cmzn_fieldmodule_create_field_imagefilter_mean(
 							field_modify->get_field_module(),
-							source_field, radius_sizes));
+							source_field, dimension, radius_sizes));
 				}
 
 				if (!return_code)
