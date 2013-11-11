@@ -251,12 +251,12 @@ int gfx_modify_scene_graphics(struct Parse_state *state,
 		&coordinate_field, &set_coordinate_field_data);
 
 	/* coordinate system */
-	cmzn_scene_coordinate_system coordinate_system = cmzn_graphics_get_coordinate_system(graphics);
+	cmzn_scenecoordinatesystem coordinate_system = cmzn_graphics_get_scenecoordinatesystem(graphics);
 	const char *coordinate_system_string =
-		ENUMERATOR_STRING(cmzn_scene_coordinate_system)(coordinate_system);
-	valid_strings = ENUMERATOR_GET_VALID_STRINGS(cmzn_scene_coordinate_system)(
+		ENUMERATOR_STRING(cmzn_scenecoordinatesystem)(coordinate_system);
+	valid_strings = ENUMERATOR_GET_VALID_STRINGS(cmzn_scenecoordinatesystem)(
 		&number_of_valid_strings,
-		(ENUMERATOR_CONDITIONAL_FUNCTION(cmzn_scene_coordinate_system) *)NULL,
+		(ENUMERATOR_CONDITIONAL_FUNCTION(cmzn_scenecoordinatesystem) *)NULL,
 		(void *)NULL);
 	Option_table_add_enumerator(option_table, number_of_valid_strings,
 		valid_strings, &coordinate_system_string);
@@ -1030,9 +1030,9 @@ int gfx_modify_scene_graphics(struct Parse_state *state,
 			}
 		}
 
-		STRING_TO_ENUMERATOR(cmzn_scene_coordinate_system)(
+		STRING_TO_ENUMERATOR(cmzn_scenecoordinatesystem)(
 			coordinate_system_string, &coordinate_system);
-		cmzn_graphics_set_coordinate_system(graphics, coordinate_system);
+		cmzn_graphics_set_scenecoordinatesystem(graphics, coordinate_system);
 
 		cmzn_graphics_render_polygon_mode render_polygon_mode;
 		STRING_TO_ENUMERATOR(cmzn_graphics_render_polygon_mode)(render_polygon_mode_string, &render_polygon_mode);

@@ -603,8 +603,8 @@ class wxRegionTreeViewer : public wxFrame
 	DEFINE_ENUMERATOR_TYPE_CLASS(cmzn_graphicslineattributes_shape_type);
 	Enumerator_chooser<ENUMERATOR_TYPE_CLASS(cmzn_graphicslineattributes_shape_type)>
 		*line_shape_chooser;
-	DEFINE_ENUMERATOR_TYPE_CLASS(cmzn_scene_coordinate_system);
-	Enumerator_chooser<ENUMERATOR_TYPE_CLASS(cmzn_scene_coordinate_system)>
+	DEFINE_ENUMERATOR_TYPE_CLASS(cmzn_scenecoordinatesystem);
+	Enumerator_chooser<ENUMERATOR_TYPE_CLASS(cmzn_scenecoordinatesystem)>
 	*coordinate_system_chooser;
 	Managed_object_chooser<Computed_field,MANAGER_CLASS(Computed_field)>
 	*stream_vector_chooser;
@@ -718,18 +718,18 @@ public:
 	wxPanel *coordinate_system_chooser_panel =
 		XRCCTRL(*this, "CoordinateSystemChooserPanel", wxPanel);
 	coordinate_system_chooser =
-		new Enumerator_chooser<ENUMERATOR_TYPE_CLASS(cmzn_scene_coordinate_system)>
+		new Enumerator_chooser<ENUMERATOR_TYPE_CLASS(cmzn_scenecoordinatesystem)>
 		(coordinate_system_chooser_panel,
-			CMZN_SCENE_COORDINATE_SYSTEM_LOCAL,
-				(ENUMERATOR_CONDITIONAL_FUNCTION(cmzn_scene_coordinate_system) *)NULL,
+			CMZN_SCENECOORDINATESYSTEM_LOCAL,
+				(ENUMERATOR_CONDITIONAL_FUNCTION(cmzn_scenecoordinatesystem) *)NULL,
 				(void *)NULL, region_tree_viewer->user_interface);
 	coordinate_system_chooser_panel->Fit();
-	Callback_base< enum cmzn_scene_coordinate_system > *coordinate_system_callback =
-		new Callback_member_callback< enum cmzn_scene_coordinate_system,
-				wxRegionTreeViewer, int (wxRegionTreeViewer::*)(enum cmzn_scene_coordinate_system) >
-		(this, &wxRegionTreeViewer::Region_tree_viewer_coordinate_system_callback);
+	Callback_base< enum cmzn_scenecoordinatesystem > *coordinate_system_callback =
+		new Callback_member_callback< enum cmzn_scenecoordinatesystem,
+				wxRegionTreeViewer, int (wxRegionTreeViewer::*)(enum cmzn_scenecoordinatesystem) >
+		(this, &wxRegionTreeViewer::Region_tree_viewer_scenecoordinatesystem_callback);
 	coordinate_system_chooser->set_callback(coordinate_system_callback);
-	coordinate_system_chooser->set_value(CMZN_SCENE_COORDINATE_SYSTEM_LOCAL);
+	coordinate_system_chooser->set_value(CMZN_SCENECOORDINATESYSTEM_LOCAL);
 	coordinate_system_chooser_panel->Fit();
 
 	select_mode_chooser = NULL;
@@ -910,8 +910,8 @@ Callback from wxChooser<Coordinate Field> when choice is made.
 		return(1);
 	}
 
-int Region_tree_viewer_coordinate_system_callback(
-	enum cmzn_scene_coordinate_system coordinate_system)
+int Region_tree_viewer_scenecoordinatesystem_callback(
+	enum cmzn_scenecoordinatesystem coordinate_system)
 /*******************************************************************************
 LAST MODIFIED : 19 March 2007
 
@@ -919,7 +919,7 @@ DESCRIPTION :
 Callback from wxChooser<Coordinate Field> when choice is made.
 ==============================================================================*/
 	{
-		cmzn_graphics_set_coordinate_system(
+		cmzn_graphics_set_scenecoordinatesystem(
 			region_tree_viewer->current_graphics, coordinate_system);
 		Region_tree_viewer_autoapply(region_tree_viewer->scene,
 			region_tree_viewer->edit_scene);
@@ -2653,8 +2653,8 @@ void SetGraphics(cmzn_graphics *graphics)
 	coordinatefieldstatictext->Show();
 	cmzn_field_destroy(&temp_coordinate_field);
 
-	enum cmzn_scene_coordinate_system coordinate_system;
-	coordinate_system = cmzn_graphics_get_coordinate_system(
+	enum cmzn_scenecoordinatesystem coordinate_system;
+	coordinate_system = cmzn_graphics_get_scenecoordinatesystem(
 		region_tree_viewer->current_graphics);
 	coordinate_system_chooser->set_value(coordinate_system);
 
