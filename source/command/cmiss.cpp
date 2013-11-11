@@ -8029,19 +8029,19 @@ Executes a GFX EXPORT WAVEFRONT command.
 } /* gfx_export_wavefront */
 
 #if defined (USE_OPENCASCADE)
-static struct cmzn_spectrumcomponent *create_spectrum_component( cmzn_spectrumcomponent_colour_mapping colour )
+static struct cmzn_spectrumcomponent *create_spectrum_component( cmzn_spectrumcomponent_colour_mapping_type colour )
 {
 	int component = 1;
 	struct cmzn_spectrumcomponent *settings = CREATE(cmzn_spectrumcomponent)();
-	cmzn_spectrumcomponent_set_scale_type(settings, CMZN_SPECTRUMCOMPONENT_SCALE_LINEAR);
-	cmzn_spectrumcomponent_set_colour_mapping(settings, colour);
+	cmzn_spectrumcomponent_set_scale_type(settings, CMZN_SPECTRUMCOMPONENT_SCALE_TYPE_LINEAR);
+	cmzn_spectrumcomponent_set_colour_mapping_type(settings, colour);
 	cmzn_spectrumcomponent_set_extend_above(settings, true);
 	cmzn_spectrumcomponent_set_extend_below_flag(settings, true);
 	cmzn_spectrumcomponent_set_colour_reverse(settings, false);
 
-	if ( colour == CMZN_SPECTRUMCOMPONENT_COLOUR_MAPPING_RED )
+	if ( colour == CMZN_SPECTRUMCOMPONENT_COLOUR_MAPPING_TYPE_RED )
 		component = 1;
-	else if ( colour == CMZN_SPECTRUMCOMPONENT_COLOUR_MAPPING_GREEN )
+	else if ( colour == CMZN_SPECTRUMCOMPONENT_COLOUR_MAPPING_TYPE_GREEN )
 		component = 2;
 	else
 		component = 3;
@@ -8069,15 +8069,15 @@ static int create_RGB_spectrum( struct Spectrum **spectrum, void *command_data_v
 		{
 			REMOVE_ALL_OBJECTS_FROM_LIST(cmzn_spectrumcomponent)(spectrum_settings_list);
 		}
-		red_settings = create_spectrum_component( CMZN_SPECTRUMCOMPONENT_COLOUR_MAPPING_RED );
+		red_settings = create_spectrum_component( CMZN_SPECTRUMCOMPONENT_COLOUR_MAPPING_TYPE_RED );
 		cmzn_spectrumcomponent_add( red_settings, /* end of list = 0 */0,
 			spectrum_settings_list );
 
-		green_settings = create_spectrum_component( CMZN_SPECTRUMCOMPONENT_COLOUR_MAPPING_GREEN );
+		green_settings = create_spectrum_component( CMZN_SPECTRUMCOMPONENT_COLOUR_MAPPING_TYPE_GREEN );
 		cmzn_spectrumcomponent_add( green_settings, /* end of list = 0 */0,
 			spectrum_settings_list );
 
-		blue_settings = create_spectrum_component( CMZN_SPECTRUMCOMPONENT_COLOUR_MAPPING_BLUE );
+		blue_settings = create_spectrum_component( CMZN_SPECTRUMCOMPONENT_COLOUR_MAPPING_TYPE_BLUE );
 		cmzn_spectrumcomponent_add( blue_settings, /* end of list = 0 */0,
 			spectrum_settings_list );
 

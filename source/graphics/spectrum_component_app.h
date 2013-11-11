@@ -67,7 +67,7 @@ Changes the contents of component to match new_component, with no change in
 priority.
 ==============================================================================*/
 
-PROTOTYPE_OPTION_TABLE_ADD_ENUMERATOR_FUNCTION(cmzn_spectrumcomponent_colour_mapping);
+PROTOTYPE_OPTION_TABLE_ADD_ENUMERATOR_FUNCTION(cmzn_spectrumcomponent_colour_mapping_type);
 
 enum cmzn_spectrumcomponent_string_details
 /*******************************************************************************

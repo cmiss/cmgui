@@ -513,7 +513,7 @@ int gfx_modify_scene_graphics(struct Parse_state *state,
 	Option_table_add_set_Material_entry(option_table, "material", &material,
 		scene_command_data->materialmodule);
 
-	/* glyph repeat mode REPEAT_NONE|REPEAT_AXES_2D|REPEAT_AXES_3D|REPEAT_MIRROR */
+	/* glyph repeat mode REPEAT_MODE_NONE|REPEAT_MODE_AXES_2D|REPEAT_MODE_AXES_3D|REPEAT_MODE_MIRROR */
 	const char *glyph_repeat_mode_string = 0;
 	if (point_attributes)
 	{
@@ -915,7 +915,7 @@ int gfx_modify_scene_graphics(struct Parse_state *state,
 
 		if (point_attributes)
 		{
-			cmzn_glyph_repeat_mode glyph_repeat_mode = CMZN_GLYPH_REPEAT_NONE;
+			cmzn_glyph_repeat_mode glyph_repeat_mode = CMZN_GLYPH_REPEAT_MODE_NONE;
 			STRING_TO_ENUMERATOR(cmzn_glyph_repeat_mode)(glyph_repeat_mode_string, &glyph_repeat_mode);
 			if (legacy_graphics_type == LEGACY_GRAPHIC_POINT)
 			{
@@ -943,7 +943,7 @@ int gfx_modify_scene_graphics(struct Parse_state *state,
 					(0 == strcmp(glyph_name, "mirror_line")))
 				{
 					glyph = cmzn_glyphmodule_find_glyph_by_name(scene_command_data->glyphmodule, glyph_name + 7);
-					glyph_repeat_mode = CMZN_GLYPH_REPEAT_MIRROR;
+					glyph_repeat_mode = CMZN_GLYPH_REPEAT_MODE_MIRROR;
 				}
 				else if ((0 == strcmp(glyph_name, "arrow_line")) ||
 					(0 == strcmp(glyph_name, "mirror_arrow_line")))
@@ -951,7 +951,7 @@ int gfx_modify_scene_graphics(struct Parse_state *state,
 					glyph = cmzn_glyphmodule_find_glyph_by_name(scene_command_data->glyphmodule, "arrow");
 					if (glyph_name[0] == 'm')
 					{
-						glyph_repeat_mode = CMZN_GLYPH_REPEAT_MIRROR;
+						glyph_repeat_mode = CMZN_GLYPH_REPEAT_MODE_MIRROR;
 					}
 					// fix lateral scaling of old arrow_line glyph; now unit width arrow
 					glyph_base_size[1] *= 0.25;

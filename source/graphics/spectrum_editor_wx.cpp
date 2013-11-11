@@ -95,7 +95,7 @@ Contains all the information carried by the graphical element editor widget.
 	 wxCheckBox *spectrum_reverse_checkbox, *spectrum_extend_below_check,
 			*spectrum_extend_above_check, *spectrum_fix_minimum_check,
 			*spectrum_fix_maximum_check;
-	 wxChoice *spectrum_colour_mapping_choice, *spectrum_type_choice;
+	 wxChoice *spectrum_colour_mapping_type_choice, *spectrum_type_choice;
 	 wxRadioBox *spectrum_overwrite_colour_radiobox, *spectrum_left_right_radio_box;
 	 wxScrolledWindow *spectrum_higher_panel, *spectrum_lower_panel;
 	 void *material_manager_callback_id;
@@ -387,11 +387,11 @@ current settings in spectrum_editor_settings.
 			spectrum_editor->current_settings);
 		switch (current_type)
 		{
-			case CMZN_SPECTRUMCOMPONENT_SCALE_LINEAR:
+			case CMZN_SPECTRUMCOMPONENT_SCALE_TYPE_LINEAR:
 			{
 				spectrum_editor->spectrum_type_choice->SetStringSelection(wxT("Linear"));
 			} break;
-			case CMZN_SPECTRUMCOMPONENT_SCALE_LOG:
+			case CMZN_SPECTRUMCOMPONENT_SCALE_TYPE_LOG:
 			{
 				spectrum_editor->spectrum_type_choice->SetStringSelection(wxT("Log"));
 			} break;
@@ -422,7 +422,7 @@ Changes the currently chosen settings.
 {
 	 char temp_string[50];
 	 enum cmzn_spectrumcomponent_scale_type type;
-	 enum cmzn_spectrumcomponent_colour_mapping colour_mapping = CMZN_SPECTRUMCOMPONENT_COLOUR_MAPPING_ALPHA;
+	 enum cmzn_spectrumcomponent_colour_mapping_type colour_mapping_type = CMZN_SPECTRUMCOMPONENT_COLOUR_MAPPING_TYPE_ALPHA;
 	 float exaggeration, step_value, band_ratio;
 	 int component, number_of_bands, black_band_proportion; //,i, num_children, number_of_bands, black_band_proportion,
 	 bool extend, fix;
@@ -442,55 +442,55 @@ Changes the currently chosen settings.
 						spectrum_editor->spectrum_reverse_checkbox->SetValue(
 							cmzn_spectrumcomponent_is_colour_reverse(new_settings));
 				 }
-				 if (spectrum_editor->spectrum_colour_mapping_choice)
+				 if (spectrum_editor->spectrum_colour_mapping_type_choice)
 				 {
-						colour_mapping = cmzn_spectrumcomponent_get_colour_mapping(
+						colour_mapping_type = cmzn_spectrumcomponent_get_colour_mapping_type(
 							 new_settings);
-						switch (colour_mapping)
+						switch (colour_mapping_type)
 						{
-							 case CMZN_SPECTRUMCOMPONENT_COLOUR_MAPPING_ALPHA:
+							 case CMZN_SPECTRUMCOMPONENT_COLOUR_MAPPING_TYPE_ALPHA:
 							 {
-									spectrum_editor->spectrum_colour_mapping_choice->SetStringSelection(wxT("Alpha"));
+									spectrum_editor->spectrum_colour_mapping_type_choice->SetStringSelection(wxT("Alpha"));
 							 } break;
-							 case CMZN_SPECTRUMCOMPONENT_COLOUR_MAPPING_BLUE:
+							 case CMZN_SPECTRUMCOMPONENT_COLOUR_MAPPING_TYPE_BLUE:
 							 {
-									spectrum_editor->spectrum_colour_mapping_choice->SetStringSelection(wxT("Blue"));
+									spectrum_editor->spectrum_colour_mapping_type_choice->SetStringSelection(wxT("Blue"));
 							 } break;
-							 case CMZN_SPECTRUMCOMPONENT_COLOUR_MAPPING_GREEN:
+							 case CMZN_SPECTRUMCOMPONENT_COLOUR_MAPPING_TYPE_GREEN:
 							 {
-									spectrum_editor->spectrum_colour_mapping_choice->SetStringSelection(wxT("Green"));
+									spectrum_editor->spectrum_colour_mapping_type_choice->SetStringSelection(wxT("Green"));
 							 } break;
-							 case CMZN_SPECTRUMCOMPONENT_COLOUR_MAPPING_MONOCHROME:
+							 case CMZN_SPECTRUMCOMPONENT_COLOUR_MAPPING_TYPE_MONOCHROME:
 							 {
-									spectrum_editor->spectrum_colour_mapping_choice->SetStringSelection(wxT("Monochrome"));
+									spectrum_editor->spectrum_colour_mapping_type_choice->SetStringSelection(wxT("Monochrome"));
 							 } break;
-							 case CMZN_SPECTRUMCOMPONENT_COLOUR_MAPPING_RAINBOW:
+							 case CMZN_SPECTRUMCOMPONENT_COLOUR_MAPPING_TYPE_RAINBOW:
 							 {
-									spectrum_editor->spectrum_colour_mapping_choice->SetStringSelection(wxT("Rainbow"));
+									spectrum_editor->spectrum_colour_mapping_type_choice->SetStringSelection(wxT("Rainbow"));
 							 } break;
-							 case CMZN_SPECTRUMCOMPONENT_COLOUR_MAPPING_RED:
+							 case CMZN_SPECTRUMCOMPONENT_COLOUR_MAPPING_TYPE_RED:
 							 {
-									spectrum_editor->spectrum_colour_mapping_choice->SetStringSelection(wxT("Red"));
+									spectrum_editor->spectrum_colour_mapping_type_choice->SetStringSelection(wxT("Red"));
 							 } break;
-							 case CMZN_SPECTRUMCOMPONENT_COLOUR_MAPPING_WHITE_TO_BLUE:
+							 case CMZN_SPECTRUMCOMPONENT_COLOUR_MAPPING_TYPE_WHITE_TO_BLUE:
 							 {
-									spectrum_editor->spectrum_colour_mapping_choice->SetStringSelection(wxT("White to blue"));
+									spectrum_editor->spectrum_colour_mapping_type_choice->SetStringSelection(wxT("White to blue"));
 							 } break;
-							 case CMZN_SPECTRUMCOMPONENT_COLOUR_MAPPING_WHITE_TO_GREEN:
+							 case CMZN_SPECTRUMCOMPONENT_COLOUR_MAPPING_TYPE_WHITE_TO_GREEN:
 							 {
-									spectrum_editor->spectrum_colour_mapping_choice->SetStringSelection(wxT("White to green"));
+									spectrum_editor->spectrum_colour_mapping_type_choice->SetStringSelection(wxT("White to green"));
 							 } break;
-							 case CMZN_SPECTRUMCOMPONENT_COLOUR_MAPPING_STEP:
+							 case CMZN_SPECTRUMCOMPONENT_COLOUR_MAPPING_TYPE_STEP:
 							 {
-									spectrum_editor->spectrum_colour_mapping_choice->SetStringSelection(wxT("Step"));
+									spectrum_editor->spectrum_colour_mapping_type_choice->SetStringSelection(wxT("Step"));
 							 } break;
-							 case CMZN_SPECTRUMCOMPONENT_COLOUR_MAPPING_BANDED:
+							 case CMZN_SPECTRUMCOMPONENT_COLOUR_MAPPING_TYPE_BANDED:
 							 {
-									spectrum_editor->spectrum_colour_mapping_choice->SetStringSelection(wxT("Contour bands"));
+									spectrum_editor->spectrum_colour_mapping_type_choice->SetStringSelection(wxT("Contour bands"));
 							 } break;
-							 case CMZN_SPECTRUMCOMPONENT_COLOUR_MAPPING_WHITE_TO_RED:
+							 case CMZN_SPECTRUMCOMPONENT_COLOUR_MAPPING_TYPE_WHITE_TO_RED:
 							 {
-									spectrum_editor->spectrum_colour_mapping_choice->SetStringSelection(wxT("White to red"));
+									spectrum_editor->spectrum_colour_mapping_type_choice->SetStringSelection(wxT("White to red"));
 							 } break;
 						}
 				 }
@@ -509,7 +509,7 @@ Changes the currently chosen settings.
 							 spectrum_editor->spectrum_left_right_radio_box->SetSelection(1);
 						}
 				 }
-				 if (CMZN_SPECTRUMCOMPONENT_SCALE_LOG == type)
+				 if (CMZN_SPECTRUMCOMPONENT_SCALE_TYPE_LOG == type)
 				 {
 						spectrum_editor->spectrum_exaggeration_text->Enable(true);
 						spectrum_editor->spectrum_left_right_radio_box->Enable(true);
@@ -538,7 +538,7 @@ Changes the currently chosen settings.
 					sprintf(temp_string,"%10g",band_ratio);
 					spectrum_editor->spectrum_ratio_of_black_bands_text->SetValue(wxString::FromAscii(temp_string));
 				}
-				if (CMZN_SPECTRUMCOMPONENT_COLOUR_MAPPING_BANDED == colour_mapping)
+				if (CMZN_SPECTRUMCOMPONENT_COLOUR_MAPPING_TYPE_BANDED == colour_mapping_type)
 				{
 					 spectrum_editor->spectrum_number_of_bands_text->Enable(true);
 					 spectrum_editor->spectrum_ratio_of_black_bands_text->Enable(true);
@@ -554,7 +554,7 @@ Changes the currently chosen settings.
 					sprintf(temp_string,"%10g",step_value);
 					spectrum_editor->spectrum_editor_step_value_text->SetValue(wxString::FromAscii(temp_string));
 				}
-				if (CMZN_SPECTRUMCOMPONENT_COLOUR_MAPPING_STEP == colour_mapping)
+				if (CMZN_SPECTRUMCOMPONENT_COLOUR_MAPPING_TYPE_STEP == colour_mapping_type)
 				{
 					 spectrum_editor->spectrum_editor_step_value_text->Enable(true);
 				}
@@ -600,8 +600,8 @@ Changes the currently chosen settings.
 				{
 					sprintf(temp_string,"%10g", cmzn_spectrumcomponent_get_colour_minimum(new_settings));
 					spectrum_editor->spectrum_normalised_colour_range_min_text->SetValue(wxString::FromAscii(temp_string));
-					if (CMZN_SPECTRUMCOMPONENT_COLOUR_MAPPING_BANDED == colour_mapping
-						|| CMZN_SPECTRUMCOMPONENT_COLOUR_MAPPING_STEP == colour_mapping)
+					if (CMZN_SPECTRUMCOMPONENT_COLOUR_MAPPING_TYPE_BANDED == colour_mapping_type
+						|| CMZN_SPECTRUMCOMPONENT_COLOUR_MAPPING_TYPE_STEP == colour_mapping_type)
 					{
 						spectrum_editor->spectrum_normalised_colour_range_min_text->Enable(false);
 					}
@@ -614,7 +614,7 @@ Changes the currently chosen settings.
 				{
 					sprintf(temp_string,"%10g", cmzn_spectrumcomponent_get_colour_maximum(new_settings));
 					spectrum_editor->spectrum_normalised_colour_range_max_text->SetValue(wxString::FromAscii(temp_string));
-					if (CMZN_SPECTRUMCOMPONENT_COLOUR_MAPPING_BANDED == colour_mapping || CMZN_SPECTRUMCOMPONENT_COLOUR_MAPPING_STEP == colour_mapping)
+					if (CMZN_SPECTRUMCOMPONENT_COLOUR_MAPPING_TYPE_BANDED == colour_mapping_type || CMZN_SPECTRUMCOMPONENT_COLOUR_MAPPING_TYPE_STEP == colour_mapping_type)
 					{
 						spectrum_editor->spectrum_normalised_colour_range_max_text->Enable(false);
 					}
@@ -1308,7 +1308,7 @@ Callback for Spectrum settings.
 	 spectrum_editor_wx_key_presssed(spectrum_editor, "Cancel");
 }
 
-void OnSpectrumColourMappingChoice(wxCommandEvent &event)
+void OnSpectrumColourMappingTypeChoice(wxCommandEvent &event)
 /*******************************************************************************
 LAST MODIFIED : 4 September 2007
 
@@ -1316,12 +1316,12 @@ DESCRIPTION :
 Callback for colour settings
 ==============================================================================*/
 {
-	enum cmzn_spectrumcomponent_colour_mapping new_colour_mapping = CMZN_SPECTRUMCOMPONENT_COLOUR_MAPPING_ALPHA;
+	enum cmzn_spectrumcomponent_colour_mapping_type new_colour_mapping_type = CMZN_SPECTRUMCOMPONENT_COLOUR_MAPPING_TYPE_ALPHA;
 	struct cmzn_spectrumcomponent *settings;
 	const char *string_selection;
 	int selection;
 
-	ENTER(OnSpectrumColourMappingChoice);
+	ENTER(OnSpectrumColourMappingTypeChoice);
 
 	USE_PARAMETER(event);
 	selection = spectrum_editor->spectrum_settings_checklist->GetSelection();
@@ -1329,57 +1329,57 @@ Callback for colour settings
 		 (settings = cmzn_spectrum_get_component_at_position(spectrum_editor->edit_spectrum,selection+1)))
 	{
 		/* get the widget from the call data */
-		wxString tmpstr = spectrum_editor->spectrum_colour_mapping_choice->GetStringSelection();
+		wxString tmpstr = spectrum_editor->spectrum_colour_mapping_type_choice->GetStringSelection();
 		string_selection = tmpstr.mb_str(wxConvUTF8);
 		if (string_selection != 0)
 		{
 			if (strcmp(string_selection, "Alpha") == 0)
 			{
-				new_colour_mapping = CMZN_SPECTRUMCOMPONENT_COLOUR_MAPPING_ALPHA;
+				new_colour_mapping_type = CMZN_SPECTRUMCOMPONENT_COLOUR_MAPPING_TYPE_ALPHA;
 			}
 			else if (strcmp(string_selection, "Blue") == 0)
 			{
-				new_colour_mapping = CMZN_SPECTRUMCOMPONENT_COLOUR_MAPPING_BLUE;
+				new_colour_mapping_type = CMZN_SPECTRUMCOMPONENT_COLOUR_MAPPING_TYPE_BLUE;
 			}
 			else if (strcmp(string_selection, "Green") == 0)
 			{
-				new_colour_mapping = CMZN_SPECTRUMCOMPONENT_COLOUR_MAPPING_GREEN;
+				new_colour_mapping_type = CMZN_SPECTRUMCOMPONENT_COLOUR_MAPPING_TYPE_GREEN;
 			}
 			else if (strcmp(string_selection, "Monochrome") == 0)
 			{
-				new_colour_mapping = CMZN_SPECTRUMCOMPONENT_COLOUR_MAPPING_MONOCHROME;
+				new_colour_mapping_type = CMZN_SPECTRUMCOMPONENT_COLOUR_MAPPING_TYPE_MONOCHROME;
 			}
 			else if (strcmp(string_selection, "Rainbow") == 0)
 			{
-				new_colour_mapping = CMZN_SPECTRUMCOMPONENT_COLOUR_MAPPING_RAINBOW;
+				new_colour_mapping_type = CMZN_SPECTRUMCOMPONENT_COLOUR_MAPPING_TYPE_RAINBOW;
 			}
 			else if (strcmp(string_selection, "Red") == 0)
 			{
-				new_colour_mapping = CMZN_SPECTRUMCOMPONENT_COLOUR_MAPPING_RED;
+				new_colour_mapping_type = CMZN_SPECTRUMCOMPONENT_COLOUR_MAPPING_TYPE_RED;
 			}
 			else if (strcmp(string_selection, "White to blue") == 0)
 			{
-				new_colour_mapping = CMZN_SPECTRUMCOMPONENT_COLOUR_MAPPING_WHITE_TO_BLUE;
+				new_colour_mapping_type = CMZN_SPECTRUMCOMPONENT_COLOUR_MAPPING_TYPE_WHITE_TO_BLUE;
 			}
 			else if (strcmp(string_selection, "White to green") == 0)
 			{
-				new_colour_mapping = CMZN_SPECTRUMCOMPONENT_COLOUR_MAPPING_WHITE_TO_GREEN;
+				new_colour_mapping_type = CMZN_SPECTRUMCOMPONENT_COLOUR_MAPPING_TYPE_WHITE_TO_GREEN;
 			}
 			else if (strcmp(string_selection, "Step") == 0)
 			{
-				new_colour_mapping = CMZN_SPECTRUMCOMPONENT_COLOUR_MAPPING_STEP;
+				new_colour_mapping_type = CMZN_SPECTRUMCOMPONENT_COLOUR_MAPPING_TYPE_STEP;
 			}
 			else if (strcmp(string_selection, "Contour Bands") == 0)
 			{
-				new_colour_mapping = CMZN_SPECTRUMCOMPONENT_COLOUR_MAPPING_BANDED;
+				new_colour_mapping_type = CMZN_SPECTRUMCOMPONENT_COLOUR_MAPPING_TYPE_BANDED;
 			}
 			else if (strcmp(string_selection, "White to red") == 0)
 			{
-				new_colour_mapping = CMZN_SPECTRUMCOMPONENT_COLOUR_MAPPING_WHITE_TO_RED;
+				new_colour_mapping_type = CMZN_SPECTRUMCOMPONENT_COLOUR_MAPPING_TYPE_WHITE_TO_RED;
 			}
-			if (cmzn_spectrumcomponent_get_colour_mapping(settings) != new_colour_mapping)
+			if (cmzn_spectrumcomponent_get_colour_mapping_type(settings) != new_colour_mapping_type)
 			{
-				if (cmzn_spectrumcomponent_set_colour_mapping(settings, new_colour_mapping))
+				if (cmzn_spectrumcomponent_set_colour_mapping_type(settings, new_colour_mapping_type))
 				{
 					spectrum_editor_wx_update_settings(spectrum_editor, settings);
 				}
@@ -1396,7 +1396,7 @@ Callback for colour settings
 	else
 	{
 		display_message(ERROR_MESSAGE,
-			"OnSpectrumColourMappingChoice.  Invalid argument(s)");
+			"OnSpectrumColourMappingTypeChoice.  Invalid argument(s)");
 	}
 	LEAVE;
 }
@@ -1414,7 +1414,7 @@ Callback for the colour_value text widgets.
 	struct cmzn_spectrumcomponent *settings;
 	int selection;
 
-	ENTER(OnSpectrumColourMappingChoice);
+	ENTER(OnSpectrumColourMappingTypeChoice);
 	USE_PARAMETER(event);
 	selection = spectrum_editor->spectrum_settings_checklist->GetSelection();
 	if (spectrum_editor &&
@@ -1503,11 +1503,11 @@ Callback for the settings type.
 			{
 				 if (strcmp(string_selection, "Linear") == 0)
 				 {
-						new_spectrum_type = CMZN_SPECTRUMCOMPONENT_SCALE_LINEAR;
+						new_spectrum_type = CMZN_SPECTRUMCOMPONENT_SCALE_TYPE_LINEAR;
 				 }
 				 else if (strcmp(string_selection, "Log") == 0)
 				 {
-						new_spectrum_type = CMZN_SPECTRUMCOMPONENT_SCALE_LOG;
+						new_spectrum_type = CMZN_SPECTRUMCOMPONENT_SCALE_TYPE_LOG;
 				 }
 				 if (cmzn_spectrumcomponent_get_scale_type(settings) != new_spectrum_type)
 				 {
@@ -1854,7 +1854,7 @@ BEGIN_EVENT_TABLE(wxSpectrumEditor, wxFrame)
 	 EVT_BUTTON(XRCID("wxSpectrumApplyButton"),wxSpectrumEditor::OnSpectrumSettingListApplyPressed)
 	 EVT_BUTTON(XRCID("wxSpectrumRevertButton"),wxSpectrumEditor::OnSpectrumSettingListRevertPressed)
 	 EVT_BUTTON(XRCID("wxSpectrumCancelButton"),wxSpectrumEditor::OnSpectrumSettingListCancelPressed)
-	 EVT_CHOICE(XRCID("wxSpectrumColourChoice"),wxSpectrumEditor::OnSpectrumColourMappingChoice)
+	 EVT_CHOICE(XRCID("wxSpectrumColourChoice"),wxSpectrumEditor::OnSpectrumColourMappingTypeChoice)
 	 EVT_TEXT_ENTER(XRCID("wxSpectrumNormalisedColourRangeMin"), wxSpectrumEditor::OnSpectrumNormalisedColourRangeValueEntered)
 	 EVT_TEXT_ENTER(XRCID("wxSpectrumNormalisedColourRangeMax"), wxSpectrumEditor::OnSpectrumNormalisedColourRangeValueEntered)
 	 EVT_CHECKBOX(XRCID("wxSpectrumReverseCheck"), wxSpectrumEditor::OnSpectrumSettingsReverseChecked)
@@ -2056,7 +2056,7 @@ Creates a spectrum_editor widget.
 				spectrum_editor->spectrum_settings_up_button = NULL;
 				spectrum_editor->spectrum_settings_dn_button = NULL;
 				spectrum_editor->spectrum_reverse_checkbox = NULL;
-				spectrum_editor->spectrum_colour_mapping_choice = NULL;
+				spectrum_editor->spectrum_colour_mapping_type_choice = NULL;
 				spectrum_editor->spectrum_exaggeration_text = NULL;
 				spectrum_editor->spectrum_left_right_radio_box = NULL;
 				spectrum_editor->spectrum_data_component_text = NULL;
@@ -2104,7 +2104,7 @@ Creates a spectrum_editor widget.
 					 "wxSpectrumSettingsDn", wxButton);
 				spectrum_editor->spectrum_reverse_checkbox = XRCCTRL(*spectrum_editor->wx_spectrum_editor,
 					 "wxSpectrumReverseCheck", wxCheckBox);
-				spectrum_editor->spectrum_colour_mapping_choice = XRCCTRL(*spectrum_editor->wx_spectrum_editor,
+				spectrum_editor->spectrum_colour_mapping_type_choice = XRCCTRL(*spectrum_editor->wx_spectrum_editor,
 					 "wxSpectrumColourChoice", wxChoice);
 				spectrum_editor->spectrum_exaggeration_text = XRCCTRL(*spectrum_editor->wx_spectrum_editor,
 					 "wxSpectrumExaggerationTextCtrl", wxTextCtrl);

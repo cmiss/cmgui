@@ -25,7 +25,7 @@
 #include "computed_field/computed_field_set_app.h"
 #include "general/enumerator_private_app.h"
 
-DEFINE_DEFAULT_OPTION_TABLE_ADD_ENUMERATOR_FUNCTION(cmzn_spectrumcomponent_colour_mapping);
+DEFINE_DEFAULT_OPTION_TABLE_ADD_ENUMERATOR_FUNCTION(cmzn_spectrumcomponent_colour_mapping_type);
 
 int gfx_modify_spectrum_settings_linear(struct Parse_state *state,
 	void *modify_spectrum_data_void,void *dummy)
@@ -41,7 +41,7 @@ parsed settings. Note that the settings are ACCESSed once on valid return.
 	char ambient,amb_diff,diffuse,emission,extend_above,
 		extend_below,fix_maximum,fix_minimum,reverse,specular,
 		transparent_above,transparent_below;
-	enum cmzn_spectrumcomponent_colour_mapping colour_mapping;
+	enum cmzn_spectrumcomponent_colour_mapping_type colour_mapping_type;
 	int black_band_int,component,number_of_bands,range_components,return_code;
 	float band_ratio,step_value;
 	FE_value colour_range[2],range[2];
@@ -63,9 +63,9 @@ parsed settings. Note that the settings are ACCESSed once on valid return.
 			{
 				/* access since deaccessed in gfx_modify_spectrum */
 
-				cmzn_spectrumcomponent_set_scale_type(settings,CMZN_SPECTRUMCOMPONENT_SCALE_LINEAR);
+				cmzn_spectrumcomponent_set_scale_type(settings,CMZN_SPECTRUMCOMPONENT_SCALE_TYPE_LINEAR);
 				settings->is_field_lookup = false;
-				colour_mapping = cmzn_spectrumcomponent_get_colour_mapping(settings);
+				colour_mapping_type = cmzn_spectrumcomponent_get_colour_mapping_type(settings);
 				ambient = 0;
 				amb_diff = 0;
 				band_ratio = 0.01;
@@ -132,8 +132,8 @@ parsed settings. Note that the settings are ACCESSed once on valid return.
 				Option_table_add_char_flag_entry(option_table, "transparent_below",
 					&transparent_below);
 				/* conversion_mode */
-				OPTION_TABLE_ADD_ENUMERATOR(cmzn_spectrumcomponent_colour_mapping)(
-					option_table, &colour_mapping);
+				OPTION_TABLE_ADD_ENUMERATOR(cmzn_spectrumcomponent_colour_mapping_type)(
+					option_table, &colour_mapping_type);
 				/* render_option */
 				render_option_table = CREATE(Option_table)();
 				Option_table_add_char_flag_entry(render_option_table, "ambient",
@@ -156,8 +156,8 @@ parsed settings. Note that the settings are ACCESSed once on valid return.
 				DESTROY(Option_table)(&option_table);
 				if (return_code)
 				{
-					cmzn_spectrumcomponent_set_colour_mapping(settings,
-						colour_mapping);
+					cmzn_spectrumcomponent_set_colour_mapping_type(settings,
+						colour_mapping_type);
 				}
 				if ( return_code )
 				{
@@ -273,7 +273,7 @@ parsed settings. Note that the settings are ACCESSed once on valid return.
 	char ambient,amb_diff,diffuse,emission,extend_above,
 		extend_below,fix_maximum,fix_minimum,left,reverse,right,
 		specular,transparent_above,transparent_below;
-	enum cmzn_spectrumcomponent_colour_mapping colour_mapping;
+	enum cmzn_spectrumcomponent_colour_mapping_type colour_mapping_type;
 	int black_band_int,component,number_of_bands,range_components,return_code;
 	float band_ratio,exaggeration,step_value;
 	FE_value colour_range[2],range[2];
@@ -292,9 +292,9 @@ parsed settings. Note that the settings are ACCESSed once on valid return.
 			settings=modify_spectrum_data->component=CREATE(cmzn_spectrumcomponent)();
 			if (settings)
 			{
-				cmzn_spectrumcomponent_set_scale_type(settings,CMZN_SPECTRUMCOMPONENT_SCALE_LOG);
+				cmzn_spectrumcomponent_set_scale_type(settings,CMZN_SPECTRUMCOMPONENT_SCALE_TYPE_LOG);
 				settings->is_field_lookup = false;
-				colour_mapping = cmzn_spectrumcomponent_get_colour_mapping(settings);
+				colour_mapping_type = cmzn_spectrumcomponent_get_colour_mapping_type(settings);
 				ambient = 0;
 				amb_diff = 0;
 				band_ratio = 0.01;
@@ -373,8 +373,8 @@ parsed settings. Note that the settings are ACCESSed once on valid return.
 				Option_table_add_char_flag_entry(option_table, "transparent_below",
 					&transparent_below);
 				/* conversion_mode */
-				Option_table_add_enumerator_cmzn_spectrumcomponent_colour_mapping(
-					option_table, &colour_mapping);
+				Option_table_add_enumerator_cmzn_spectrumcomponent_colour_mapping_type(
+					option_table, &colour_mapping_type);
 				/* render_option */
 				render_option_table = CREATE(Option_table)();
 				Option_table_add_char_flag_entry(render_option_table, "ambient",
@@ -397,8 +397,8 @@ parsed settings. Note that the settings are ACCESSed once on valid return.
 				DESTROY(Option_table)(&option_table);
 				if (return_code)
 				{
-					cmzn_spectrumcomponent_set_colour_mapping(settings,
-						colour_mapping);
+					cmzn_spectrumcomponent_set_colour_mapping_type(settings,
+						colour_mapping_type);
 					cmzn_spectrumcomponent_set_number_of_bands(settings,
 						number_of_bands);
 					black_band_int = (band_ratio * 1000.0 + 0.5);
@@ -532,7 +532,7 @@ If return_code is 1, returns the completed Modify_spectrum_app_data with the
 parsed settings. Note that the settings are ACCESSed once on valid return.
 ==============================================================================*/
 {
-	enum cmzn_spectrumcomponent_colour_mapping colour_mapping;
+	enum cmzn_spectrumcomponent_colour_mapping_type colour_mapping_type;
 	int component, return_code;
 	struct Computed_field *input_field, *output_field;
 	struct Modify_spectrum_app_data *modify_spectrum_data;
@@ -555,7 +555,7 @@ parsed settings. Note that the settings are ACCESSed once on valid return.
 				cmzn_spectrumcomponent_set_scale_type(settings,CMZN_SPECTRUMCOMPONENT_SCALE_TYPE_INVALID);
 				settings->is_field_lookup = true;
 
-				colour_mapping = cmzn_spectrumcomponent_get_colour_mapping(settings);
+				colour_mapping_type = cmzn_spectrumcomponent_get_colour_mapping_type(settings);
 				component = cmzn_spectrumcomponent_get_field_component(settings);
 
 				input_field = (struct Computed_field *)NULL;
@@ -592,8 +592,8 @@ parsed settings. Note that the settings are ACCESSed once on valid return.
 					&output_field, &set_output_field_data,
 					set_Computed_field_conditional);
 				/* conversion_mode */
-				Option_table_add_enumerator_cmzn_spectrumcomponent_colour_mapping(
-					option_table, &colour_mapping);
+				Option_table_add_enumerator_cmzn_spectrumcomponent_colour_mapping_type(
+					option_table, &colour_mapping_type);
 
 				if (!(return_code=Option_table_multi_parse(option_table,state)))
 				{
@@ -631,8 +631,8 @@ parsed settings. Note that the settings are ACCESSed once on valid return.
 					}
 					cmzn_spectrumcomponent_set_field_component(settings,
 						component);
-					cmzn_spectrumcomponent_set_colour_mapping(settings,
-						colour_mapping);
+					cmzn_spectrumcomponent_set_colour_mapping_type(settings,
+						colour_mapping_type);
 				}
 				DEACCESS(Computed_field)(&input_field);
 				DEACCESS(Computed_field)(&output_field);
@@ -725,11 +725,11 @@ included in the string. User must remember to DEALLOCATE the name afterwards.
 		}
 		switch (component->component_scale)
 		{
-			case CMZN_SPECTRUMCOMPONENT_SCALE_LINEAR:
+			case CMZN_SPECTRUMCOMPONENT_SCALE_TYPE_LINEAR:
 			{
 				append_string(&component_string,"linear",&error);
 			} break;
-			case CMZN_SPECTRUMCOMPONENT_SCALE_LOG:
+			case CMZN_SPECTRUMCOMPONENT_SCALE_TYPE_LOG:
 			{
 				sprintf(temp_string,"log exaggeration %g",fabs(component->exaggeration));
 				append_string(&component_string,temp_string,&error);
@@ -780,11 +780,11 @@ included in the string. User must remember to DEALLOCATE the name afterwards.
 		sprintf(temp_string," range %g %g",component->minimum,
 			component->maximum);
 		append_string(&component_string,temp_string,&error);
-		if ((component->extend_above)&&(component->colour_mapping!=CMZN_SPECTRUMCOMPONENT_COLOUR_MAPPING_STEP))
+		if ((component->extend_above)&&(component->colour_mapping_type!=CMZN_SPECTRUMCOMPONENT_COLOUR_MAPPING_TYPE_STEP))
 		{
 			append_string(&component_string," extend_above",&error);
 		}
-		if ((component->extend_below)&&(component->colour_mapping!=CMZN_SPECTRUMCOMPONENT_COLOUR_MAPPING_STEP))
+		if ((component->extend_below)&&(component->colour_mapping_type!=CMZN_SPECTRUMCOMPONENT_COLOUR_MAPPING_TYPE_STEP))
 		{
 			append_string(&component_string," extend_below",&error);
 		}
@@ -796,37 +796,37 @@ included in the string. User must remember to DEALLOCATE the name afterwards.
 		{
 			append_string(&component_string," fix_minimum",&error);
 		}
-		if (component->component_scale == CMZN_SPECTRUMCOMPONENT_SCALE_LINEAR ||
-			component->component_scale == CMZN_SPECTRUMCOMPONENT_SCALE_LOG )
+		if (component->component_scale == CMZN_SPECTRUMCOMPONENT_SCALE_TYPE_LINEAR ||
+			component->component_scale == CMZN_SPECTRUMCOMPONENT_SCALE_TYPE_LOG )
 		{
-			switch (component->colour_mapping)
+			switch (component->colour_mapping_type)
 			{
-				case CMZN_SPECTRUMCOMPONENT_COLOUR_MAPPING_ALPHA:
-				case CMZN_SPECTRUMCOMPONENT_COLOUR_MAPPING_BLUE:
-				case CMZN_SPECTRUMCOMPONENT_COLOUR_MAPPING_GREEN:
-				case CMZN_SPECTRUMCOMPONENT_COLOUR_MAPPING_MONOCHROME:
-				case CMZN_SPECTRUMCOMPONENT_COLOUR_MAPPING_RAINBOW:
-				case CMZN_SPECTRUMCOMPONENT_COLOUR_MAPPING_RED:
-				case CMZN_SPECTRUMCOMPONENT_COLOUR_MAPPING_WHITE_TO_BLUE:
-				case CMZN_SPECTRUMCOMPONENT_COLOUR_MAPPING_WHITE_TO_RED:
-				case CMZN_SPECTRUMCOMPONENT_COLOUR_MAPPING_WHITE_TO_GREEN:
+				case CMZN_SPECTRUMCOMPONENT_COLOUR_MAPPING_TYPE_ALPHA:
+				case CMZN_SPECTRUMCOMPONENT_COLOUR_MAPPING_TYPE_BLUE:
+				case CMZN_SPECTRUMCOMPONENT_COLOUR_MAPPING_TYPE_GREEN:
+				case CMZN_SPECTRUMCOMPONENT_COLOUR_MAPPING_TYPE_MONOCHROME:
+				case CMZN_SPECTRUMCOMPONENT_COLOUR_MAPPING_TYPE_RAINBOW:
+				case CMZN_SPECTRUMCOMPONENT_COLOUR_MAPPING_TYPE_RED:
+				case CMZN_SPECTRUMCOMPONENT_COLOUR_MAPPING_TYPE_WHITE_TO_BLUE:
+				case CMZN_SPECTRUMCOMPONENT_COLOUR_MAPPING_TYPE_WHITE_TO_RED:
+				case CMZN_SPECTRUMCOMPONENT_COLOUR_MAPPING_TYPE_WHITE_TO_GREEN:
 				{
 					sprintf(temp_string," %s colour_range %g %g",
-						ENUMERATOR_STRING(cmzn_spectrumcomponent_colour_mapping)(component->colour_mapping),
+						ENUMERATOR_STRING(cmzn_spectrumcomponent_colour_mapping_type)(component->colour_mapping_type),
 						component->min_value, component->max_value);
 					append_string(&component_string,temp_string,&error);
 				} break;
 				default:
 				{
 				} break;
-				case CMZN_SPECTRUMCOMPONENT_COLOUR_MAPPING_BANDED:
+				case CMZN_SPECTRUMCOMPONENT_COLOUR_MAPPING_TYPE_BANDED:
 				{
 					sprintf(temp_string," banded number_of_bands %d band_ratio %g",
 						component->number_of_bands,
 						(ZnReal)(component->black_band_proportion)/1000.0);
 					append_string(&component_string,temp_string,&error);
 				} break;
-				case CMZN_SPECTRUMCOMPONENT_COLOUR_MAPPING_STEP:
+				case CMZN_SPECTRUMCOMPONENT_COLOUR_MAPPING_TYPE_STEP:
 				{
 					sprintf(temp_string," step_texture step_value %g",component->step_value);
 					append_string(&component_string,temp_string,&error);
