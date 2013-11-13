@@ -484,7 +484,7 @@ int Node_viewer_remove_unused_collpane(struct Node_viewer *node_viewer)
 	return return_code;
 }
 
-static int node_field_time_change_callback(
+static void node_field_time_change_callback(
 	cmzn_timenotifierevent_id timenotifierevent, void *node_viewer_void)
 /*******************************************************************************
 LAST MODIFIED : 5 December 2001
@@ -492,22 +492,17 @@ LAST MODIFIED : 5 December 2001
 DESCRIPTION :
 ==============================================================================*/
 {
-	int return_code;
 	struct Node_viewer *node_viewer;
 
-	USE_PARAMETER(timenotifierevent);
 	if((node_viewer =	(struct Node_viewer *)node_viewer_void))
 	{
 // 		node_viewer_widget_update_values(node_viewer);
-		return_code = 1;
 	}
 	else
 	{
 		display_message(ERROR_MESSAGE,
 			"node_field_viewer_widget_time_change_callback.  Invalid argument(s)");
-		return_code = 0;
 	}
-	return(return_code);
 } /* node_field_viewer_widget_time_change_callback */
 
 int Node_viewer_update_collpane(struct Node_viewer *node_viewer)

@@ -981,7 +981,7 @@ object cause updates.
 	LEAVE;
 } /* Element_point_viewer_FE_region_change */
 
-static int element_point_viewer_time_change_callback(
+static void element_point_viewer_time_change_callback(
 	cmzn_timenotifierevent_id timenotifierevent,	void *element_point_field_viewer_void)
 /*******************************************************************************
 LAST MODIFIED : 6 June 2007
@@ -989,7 +989,6 @@ LAST MODIFIED : 6 June 2007
 DESCRIPTION :
 ==============================================================================*/
 {
-	int return_code;
 	struct Element_point_viewer *element_point_viewer;
 
 	ENTER(element_point_viewer_time_change_callback);
@@ -998,17 +997,14 @@ DESCRIPTION :
 		(struct Element_point_viewer *)element_point_field_viewer_void))
 	{
 		 //		element_point_field_viewer_widget_update_values(element_point_field_viewer);
-		return_code = 1;
 	}
 	else
 	{
 		display_message(ERROR_MESSAGE,
 			"element_point_viewer_time_change_callback.  "
 			"Invalid argument(s)");
-		return_code = 0;
 	}
-	LEAVE;
-	return(return_code);
+
 } /* element_point_viewer_time_change_callback */
 
 /***************************************************************************//**
