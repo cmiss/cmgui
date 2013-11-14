@@ -15,10 +15,13 @@
 #endif /* defined (1) */
 
 #include "zinc/core.h"
+#include "zinc/field.h"
 #include "zinc/fieldcache.h"
 #include "zinc/fieldfiniteelement.h"
+#include "zinc/fieldgroup.h"
 #include "zinc/fieldmodule.h"
 #include "zinc/fieldsubobjectgroup.h"
+#include "zinc/region.h"
 #include "zinc/scene.h"
 #include "zinc/status.h"
 #include "zinc/timenotifier.h"
@@ -27,6 +30,7 @@
 // GRC want to eliminate following 2 includes
 #include "computed_field/computed_field.h"
 #include "finite_element/finite_element.h"
+#include "finite_element/finite_element_region.h"
 #include "general/debug.h"
 #include "general/mystring.h"
 #include "node/node_viewer_wx.h"
@@ -1064,7 +1068,7 @@ in this region only.
 			{
 				node_viewer->fe_region = cmzn_region_get_FE_region(region);
 
-				if (node_viewer->domain_type = CMZN_FIELD_DOMAIN_TYPE_DATAPOINTS)
+				if (node_viewer->domain_type == CMZN_FIELD_DOMAIN_TYPE_DATAPOINTS)
 				{
 					node_viewer->fe_region = FE_region_get_data_FE_region(
 						node_viewer->fe_region);

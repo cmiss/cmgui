@@ -22,9 +22,10 @@ from FE.
 // #include "choose/text_choose_class.hpp"
 
 #include "general/debug.h"
-#include "finite_element/finite_element_region.h"
 #include "general/message.h"
 #include "user_interface/user_interface.h"
+
+struct FE_region;
 
 template < class FE_object, class FE_region_method_class > class FE_object_text_chooser : public wxTextCtrl
 /*****************************************************************************
