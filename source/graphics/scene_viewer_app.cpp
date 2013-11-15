@@ -133,10 +133,14 @@ int DESTROY(cmzn_sceneviewermodule_app)(
 	return return_code;
 }
 
-void My_cmzn_sceneviewer_callback(cmzn_sceneviewer_id /* scene_viewer */,
-		void * /*callback_data*/, void *user_data)
+void My_cmzn_sceneviewer_callback(cmzn_sceneviewerevent_id event, void *user_data)
 {
-	Scene_viewer_app_redraw((struct Scene_viewer_app *)user_data);
+	cmzn_sceneviewerevent_change_flags changeFlags =
+		cmzn_sceneviewerevent_get_change_flags(event);
+	if (changeFlags & CMZN_SCENEVIEWEREVENT_CHANGE_FLAG_REPAINT_REQUIRED)
+	{
+		Scene_viewer_app_redraw((struct Scene_viewer_app *)user_data);
+	}
 }
 
 struct Scene_viewer_app *CREATE(Scene_viewer_app)(struct Graphics_buffer_app *graphics_buffer,
@@ -151,7 +155,7 @@ struct Scene_viewer_app *CREATE(Scene_viewer_app)(struct Graphics_buffer_app *gr
 		{
 			scene_viewer->access_count = 1;
 			scene_viewer->graphics_buffer = ACCESS(Graphics_buffer_app)(graphics_buffer);
-			scene_viewer->core_scene_viewer = create_Scene_viewer_from_package(
+			scene_viewer->core_scene_viewer = create_Scene_viewer_from_module(
 				Graphics_buffer_app_get_core_buffer(graphics_buffer), sceneviewermodule);
 			cmzn_sceneviewer_set_scene(scene_viewer->core_scene_viewer, scene);
 			cmzn_sceneviewer_set_scenefilter(scene_viewer->core_scene_viewer, filter);
@@ -170,10 +174,10 @@ struct Scene_viewer_app *CREATE(Scene_viewer_app)(struct Graphics_buffer_app *gr
 				Scene_viewer_app_default_input_callback,NULL);
 			scene_viewer->sync_callback_list=
 				CREATE(LIST(CMZN_CALLBACK_ITEM(Scene_viewer_app_callback)))();
-			scene_viewer->transform_callback_list=
-				CREATE(LIST(CMZN_CALLBACK_ITEM(Scene_viewer_app_callback)))();
-			cmzn_sceneviewer_add_repaint_required_callback(scene_viewer->core_scene_viewer,
-				My_cmzn_sceneviewer_callback, scene_viewer);
+			scene_viewer->notifier = cmzn_sceneviewer_create_sceneviewernotifier(
+				scene_viewer->core_scene_viewer);
+			cmzn_sceneviewernotifier_set_callback(scene_viewer->notifier,
+				My_cmzn_sceneviewer_callback, (void *)scene_viewer);
 			Graphics_buffer_app_add_initialise_callback(graphics_buffer,
 				Scene_viewer_app_initialise_callback, scene_viewer);
 			Graphics_buffer_app_add_resize_callback(graphics_buffer,
@@ -224,9 +228,10 @@ struct Scene_viewer_app *Scene_viewer_app_for_spectrum_create(struct Graphics_bu
 				Scene_viewer_app_default_input_callback,NULL);
 			scene_viewer->sync_callback_list=
 				CREATE(LIST(CMZN_CALLBACK_ITEM(Scene_viewer_app_callback)))();
-			scene_viewer->transform_callback_list=
-				CREATE(LIST(CMZN_CALLBACK_ITEM(Scene_viewer_app_callback)))();
-			cmzn_sceneviewer_add_repaint_required_callback(scene_viewer->core_scene_viewer, My_cmzn_sceneviewer_callback, scene_viewer);
+			scene_viewer->notifier = cmzn_sceneviewer_create_sceneviewernotifier(
+				scene_viewer->core_scene_viewer);
+			cmzn_sceneviewernotifier_set_callback(scene_viewer->notifier,
+				My_cmzn_sceneviewer_callback, (void *)scene_viewer);
 			Graphics_buffer_app_add_initialise_callback(graphics_buffer,
 				Scene_viewer_app_initialise_callback, scene_viewer);
 			Graphics_buffer_app_add_resize_callback(graphics_buffer,
@@ -254,18 +259,16 @@ int DESTROY(Scene_viewer_app)(struct Scene_viewer_app **scene_viewer_app_address
 				User_interface_get_event_dispatcher(scene_viewer->user_interface),
 				scene_viewer->idle_update_callback_id);
 		}
-		cmzn_sceneviewer_remove_repaint_required_callback(scene_viewer->core_scene_viewer,
-			My_cmzn_sceneviewer_callback, scene_viewer);
-		DESTROY(Scene_viewer)(&(scene_viewer->core_scene_viewer));
+		if (scene_viewer->notifier)
+		{
+			cmzn_sceneviewernotifier_destroy(&scene_viewer->notifier);
+		}
+		if (scene_viewer->core_scene_viewer)
+			cmzn_sceneviewer_destroy(&(scene_viewer->core_scene_viewer));
 		if (scene_viewer->sync_callback_list)
 		{
 			DESTROY(LIST(CMZN_CALLBACK_ITEM(Scene_viewer_app_callback)))(
 				&scene_viewer->sync_callback_list);
-		}
-		if (scene_viewer->transform_callback_list)
-		{
-			DESTROY(LIST(CMZN_CALLBACK_ITEM(Scene_viewer_app_callback)))(
-				&scene_viewer->transform_callback_list);
 		}
 		if (scene_viewer->input_callback_list)
 		{
@@ -310,25 +313,6 @@ DESCRIPTION :
 }
 
 DECLARE_LIST_FUNCTIONS(Scene_viewer_app)
-
-void Scene_viewer_app_destroy_remove_from_package(
-	struct Scene_viewer_app *scene_viewer,
-	void *dummy_void, void *package_void)
-/*******************************************************************************
-LAST MODIFIED : 19 April 2007
-
-DESCRIPTION :
-==============================================================================*/
-{
-	struct cmzn_sceneviewermodule_app *package = (struct cmzn_sceneviewermodule_app *)package_void;
-
-	USE_PARAMETER(dummy_void);
-	if (scene_viewer && package)
-	{
-		REMOVE_OBJECT_FROM_LIST(Scene_viewer_app)(scene_viewer,
-			package->scene_viewer_app_list);
-	}
-}
 
 int Scene_viewer_app_destroy_from_package(
 	struct Scene_viewer_app *scene_viewer, void *package_void)
@@ -679,16 +663,6 @@ Rotates the scene_viewer when the tumble is active.
 
 	return (return_code);
 } /* Scene_viewer_automatic_tumble */
-
-void Scene_viewer_app_set_transform_flag(struct Scene_viewer_app *scene_viewer)
-{
-	if (scene_viewer)
-	{
-		scene_viewer->core_scene_viewer->transform_flag = 1;
-		CMZN_CALLBACK_LIST_CALL(Scene_viewer_app_callback)(scene_viewer->transform_callback_list,
-			scene_viewer, NULL);
-	}
-}
 
 int Scene_viewer_app_input_transform(struct Scene_viewer_app *scene_viewer_app,
 	struct Graphics_buffer_input *input)
@@ -1108,7 +1082,6 @@ of the callbacks registered after your handler then return false.
 {
 	int return_code;
 
-	ENTER(Scene_viewer_add_input_callback);
 	if (scene_viewer&&function)
 	{
 		if (add_first)
@@ -1126,20 +1099,19 @@ of the callbacks registered after your handler then return false.
 		if (!return_code)
 		{
 			display_message(ERROR_MESSAGE,
-				"Scene_viewer_add_input_callback.  Could not add callback");
+				"Scene_viewer_app_add_input_callback.  Could not add callback");
 			return_code=0;
 		}
 	}
 	else
 	{
 		display_message(ERROR_MESSAGE,
-			"Scene_viewer_add_input_callback.  Invalid argument(s)");
+			"Scene_viewer_app_add_input_callback.  Invalid argument(s)");
 		return_code=0;
 	}
-	LEAVE;
 
 	return (return_code);
-} /* Scene_viewer_add_input_callback */
+}
 
 int Scene_viewer_app_remove_input_callback(struct Scene_viewer_app *scene_viewer,
 	CMZN_CALLBACK_FUNCTION(Scene_viewer_app_input_callback) *function,
@@ -1154,7 +1126,6 @@ Removes the callback calling <function> with <user_data> from
 {
 	int return_code;
 
-	ENTER(Scene_viewer_remove_input_callback);
 	if (scene_viewer&&function)
 	{
 		if (CMZN_CALLBACK_LIST_REMOVE_CALLBACK(Scene_viewer_app_input_callback)(
@@ -1165,20 +1136,19 @@ Removes the callback calling <function> with <user_data> from
 		else
 		{
 			display_message(ERROR_MESSAGE,
-				"Scene_viewer_remove_input_callback.  Could not remove callback");
+				"Scene_viewer_app_remove_input_callback.  Could not remove callback");
 			return_code=0;
 		}
 	}
 	else
 	{
 		display_message(ERROR_MESSAGE,
-			"Scene_viewer_remove_input_callback.  Invalid argument(s)");
+			"Scene_viewer_app_remove_input_callback.  Invalid argument(s)");
 		return_code=0;
 	}
-	LEAVE;
 
 	return (return_code);
-} /* Scene_viewer_remove_input_callback */
+} /* Scene_viewer_app_remove_input_callback */
 
 int Scene_viewer_app_add_sync_callback(struct Scene_viewer_app *scene_viewer,
 	CMZN_CALLBACK_FUNCTION(Scene_viewer_app_callback) *function,void *user_data)
@@ -1256,80 +1226,6 @@ struct Graphics_buffer_app *Scene_viewer_app_get_graphics_buffer(struct Scene_vi
 {
 	return scene_viewer->graphics_buffer;
 }
-
-int Scene_viewer_app_add_transform_callback(struct Scene_viewer_app *scene_viewer,
-	CMZN_CALLBACK_FUNCTION(Scene_viewer_app_callback) *function,void *user_data)
-/*******************************************************************************
-LAST MODIFIED : 5 July 2000
-
-DESCRIPTION :
-==============================================================================*/
-{
-	int return_code;
-
-	ENTER(Scene_viewer_add_transform_callback);
-	if (scene_viewer&&function)
-	{
-		if (CMZN_CALLBACK_LIST_ADD_CALLBACK(Scene_viewer_app_callback)(
-			scene_viewer->transform_callback_list,function,user_data))
-		{
-			return_code=1;
-		}
-		else
-		{
-			display_message(ERROR_MESSAGE,
-				"Scene_viewer_add_transform_callback.  Could not add callback");
-			return_code=0;
-		}
-	}
-	else
-	{
-		display_message(ERROR_MESSAGE,
-			"Scene_viewer_add_transform_callback.  Invalid argument(s)");
-		return_code=0;
-	}
-	LEAVE;
-
-	return (return_code);
-} /* Scene_viewer_add_transform_callback */
-
-int Scene_viewer_app_remove_transform_callback(struct Scene_viewer_app *scene_viewer,
-	CMZN_CALLBACK_FUNCTION(Scene_viewer_app_callback) *function,void *user_data)
-/*******************************************************************************
-LAST MODIFIED : 5 July 2000
-
-DESCRIPTION :
-Removes the callback calling <function> with <user_data> from
-<scene_viewer>.
-==============================================================================*/
-{
-	int return_code;
-
-	ENTER(Scene_viewer_remove_transform_callback);
-	if (scene_viewer&&function)
-	{
-		if (CMZN_CALLBACK_LIST_REMOVE_CALLBACK(Scene_viewer_app_callback)(
-			scene_viewer->transform_callback_list,function,user_data))
-		{
-			return_code=1;
-		}
-		else
-		{
-			display_message(ERROR_MESSAGE,
-				"Scene_viewer_remove_transform_callback.  Could not remove callback");
-			return_code=0;
-		}
-	}
-	else
-	{
-		display_message(ERROR_MESSAGE,
-			"Scene_viewer_remove_transform_callback.  Invalid argument(s)");
-		return_code=0;
-	}
-	LEAVE;
-
-	return (return_code);
-} /* Scene_viewer_remove_transform_callback */
 
 int Scene_viewer_set_interactive_tool(struct Scene_viewer_app *scene_viewer,
 	struct Interactive_tool *interactive_tool)

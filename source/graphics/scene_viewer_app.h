@@ -61,8 +61,7 @@ struct Scene_viewer_app
 	struct LIST(CMZN_CALLBACK_ITEM(Scene_viewer_app_input_callback)) *input_callback_list;
 	/* list of callbacks requested by other objects when view changes */
 	struct LIST(CMZN_CALLBACK_ITEM(Scene_viewer_app_callback)) *sync_callback_list;
-	struct LIST(CMZN_CALLBACK_ITEM(Scene_viewer_app_callback)) *transform_callback_list;
-
+	cmzn_sceneviewernotifier_id notifier;
 };
 
 DECLARE_LIST_TYPES(Scene_viewer_app);
@@ -95,24 +94,6 @@ DESCRIPTION :
 ==============================================================================*/
 
 int Scene_viewer_app_remove_sync_callback(struct Scene_viewer_app *scene_viewer,
-	CMZN_CALLBACK_FUNCTION(Scene_viewer_app_callback) *function,void *user_data);
-/*******************************************************************************
-LAST MODIFIED : 5 July 2000
-
-DESCRIPTION :
-Removes the callback calling <function> with <user_data> from
-<scene_viewer>.
-==============================================================================*/
-
-int Scene_viewer_app_add_transform_callback(struct Scene_viewer_app *scene_viewer,
-	CMZN_CALLBACK_FUNCTION(Scene_viewer_app_callback) *function,void *user_data);
-/*******************************************************************************
-LAST MODIFIED : 5 July 2000
-
-DESCRIPTION :
-==============================================================================*/
-
-int Scene_viewer_app_remove_transform_callback(struct Scene_viewer_app *scene_viewer,
 	CMZN_CALLBACK_FUNCTION(Scene_viewer_app_callback) *function,void *user_data);
 /*******************************************************************************
 LAST MODIFIED : 5 July 2000
