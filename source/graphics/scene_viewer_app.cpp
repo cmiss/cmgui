@@ -741,7 +741,6 @@ int Scene_viewer_app_default_input_callback(struct Scene_viewer_app *scene_viewe
 				{
 					if (SCENE_VIEWER_CUSTOM != scene_viewer->core_scene_viewer->projection_mode)
 					{
-						Scene_viewer_app_input_transform(scene_viewer, input);
 						Scene_viewer_input_transform(scene_viewer->core_scene_viewer, input);
 					}
 				}
