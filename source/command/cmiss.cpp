@@ -17719,7 +17719,7 @@ Initialise all the subcomponents of cmgui and create the cmzn_command_data
 		{
 			command_data->examples_directory = examples_directory;
 		}
-		else if (NULL != (examples_environment = getenv("CMZN_EXAMPLES")))
+		else if (NULL != (examples_environment = getenv("CMGUI_EXAMPLES")))
 		{
 			command_data->examples_directory = duplicate_string(examples_environment);
 		}
