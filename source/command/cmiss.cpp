@@ -272,6 +272,8 @@
 #include "computed_field/computed_field_set_app.h"
 #include "context/context_app.h"
 #include "three_d_drawing/graphics_buffer_app.h"
+
+#include "image_io/analyze.h"
 /*
 Module types
 ------------
@@ -4116,7 +4118,18 @@ Modifies the properties of a texture.
 							}
 							if (return_code)
 							{
-								if (NULL != (cmgui_image = Cmgui_image_read(cmgui_image_information)))
+								Image_file_format image_file_format = UNKNOWN_IMAGE_FILE_FORMAT;
+								Image_file_format_from_file_name(image_data.image_file_name, &image_file_format);
+								cmgui_image = 0;
+								if (image_file_format == ANALYZE_FILE_FORMAT)
+								{
+									cmgui_image = Cmgui_image_read_analyze(cmgui_image_information);
+								}
+								else
+								{
+									cmgui_image = Cmgui_image_read(cmgui_image_information);
+								}
+								if (cmgui_image != 0)
 								{
 									char *property, *value;
 
