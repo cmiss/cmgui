@@ -157,6 +157,8 @@ struct Scene_viewer_app *CREATE(Scene_viewer_app)(struct Graphics_buffer_app *gr
 			scene_viewer->graphics_buffer = ACCESS(Graphics_buffer_app)(graphics_buffer);
 			scene_viewer->core_scene_viewer = create_Scene_viewer_from_module(
 				Graphics_buffer_app_get_core_buffer(graphics_buffer), sceneviewermodule);
+			cmzn_sceneviewer_set_projection_mode(scene_viewer->core_scene_viewer,
+				CMZN_SCENEVIEWER_PROJECTION_MODE_PARALLEL);
 			cmzn_sceneviewer_set_scene(scene_viewer->core_scene_viewer, scene);
 			cmzn_sceneviewer_set_scenefilter(scene_viewer->core_scene_viewer, filter);
 			scene_viewer->user_interface = user_interface;

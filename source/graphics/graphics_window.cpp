@@ -3726,6 +3726,8 @@ it.
 									/* initial view is of all of the current scene */
 									Graphics_window_view_all(window);
 									window->wx_graphics_window->Show();
+									window->wx_perspective_button->SetValue((
+										SCENE_VIEWER_PERSPECTIVE == Graphics_window_get_projection_mode(window, 0)));
 							 }
 							 else
 							 {
