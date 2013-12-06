@@ -44,7 +44,8 @@ Maintains legacy version that is set with a texture.
 ==============================================================================*/
 {
 	double minimum, maximum;
-	int return_code;
+	int return_code, dimension;
+	double *sizes, original_sizes[3];
 	struct Computed_field *source_field,*texture_coordinate_field;
 	Computed_field_image_package
 		*computed_field_image_package;
@@ -68,6 +69,10 @@ Maintains legacy version that is set with a texture.
 		texture_coordinate_field = (struct Computed_field *)NULL;
 		source_field = (struct Computed_field *)NULL;
 		texture = (struct Texture *)NULL;
+		dimension = 3;
+		original_sizes[0] = 1;
+		original_sizes[1] = 1;
+		original_sizes[2] = 1;
 		number_of_bytes_per_component = 1;
 		if ((NULL != field_modify->get_field()) &&
 			(computed_field_image_type_string ==
@@ -76,6 +81,10 @@ Maintains legacy version that is set with a texture.
 			return_code = Computed_field_get_type_image(field_modify->get_field(),
 				&texture_coordinate_field, &source_field, &texture, &minimum, &maximum,
 				&native_texture);
+			if (return_code && native_texture && texture)
+			{
+				Texture_get_physical_size(texture, &original_sizes[0], &original_sizes[1],&original_sizes[2]);
+			}
 		}
 		if (return_code)
 		{
@@ -112,13 +121,9 @@ Maintains legacy version that is set with a texture.
 				"valid coordinates within the image.  "
 				"Normally the resulting colour values are real values for 0 to 1.  "
 				"The <minimum> and <maximum> values can be used to rerange the colour values.  "
-				"The <native_texture> or <not_native_texture> flag indicates whether "
-				"this sample texture computed field will supply this textures "
-				"dimensions as the default resolution to a modify texture evaluate_image "
-				"command that is using this field.  This is normally what you want "
-				"but the flag gives you the ability to discriminate which texture "
-				"should be used in a pipeline of fields.  "
-				"See examples a/reimage, a/create_slices and a/image_sampling.  "
+				"The <texture_coordinates_sizes> will set the texture_width,"
+				"texture_height and texture_depth used by the coordinates field to determined"
+				"the texel location."
 			);
 			/* coordinates */
 			set_source_field_data.computed_field_manager=
@@ -131,15 +136,15 @@ Maintains legacy version that is set with a texture.
 			Option_table_add_entry(option_table, "field", &source_field,
 				&set_source_field_data, set_Computed_field_conditional);
 			/* specify_number_of_bytes_per_component */
-			Option_table_add_entry(option_table,
-					"number_of_bytes_per_component",
-				&number_of_bytes_per_component,NULL,set_int_non_negative);
+			Option_table_add_int_non_negative_entry(option_table,
+					"number_of_bytes_per_component",	&number_of_bytes_per_component);
 			/* maximum */
-			Option_table_add_entry(option_table,"maximum",&maximum,
-				NULL,set_float);
+			Option_table_add_positive_double_entry(option_table,"maximum",&maximum);
 			/* minimum */
-			Option_table_add_entry(option_table,"minimum",&minimum,
-				NULL,set_float);
+			Option_table_add_positive_double_entry(option_table,"minimum",&minimum);
+			/* sizes */
+			Option_table_add_double_vector_entry(option_table,
+				"texture_coordinates_sizes", &original_sizes[0], &dimension);
 			return_code=Option_table_multi_parse(option_table,state);
 			DESTROY(Option_table)(&option_table);
 			/* no errors,not asking for help */
@@ -177,6 +182,9 @@ Maintains legacy version that is set with a texture.
 					cmzn_field_image_set_output_range(field_image, minimum, maximum);
 					cmzn_field_image_set_native_texture_flag(field_image, native_texture);
 					cmzn_field_image_set_number_of_bytes_per_component(field_image, number_of_bytes_per_component);
+					cmzn_field_image_set_texture_coordinate_width(field_image, original_sizes[0]);
+					cmzn_field_image_set_texture_coordinate_height(field_image, original_sizes[1]);
+					cmzn_field_image_set_texture_coordinate_depth(field_image, original_sizes[2]);
 					cmzn_field_image_destroy(&field_image);
 				}
 				return_code = field_modify->update_field_and_deaccess(field);
