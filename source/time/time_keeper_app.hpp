@@ -113,6 +113,10 @@ public:
 
 	void setPlaySwing();
 
+	int setMaximum(double maximum_in);
+
+	int setMinimum(double minimum_in);
+
 	int getPlayEveryFrame();
 
 	void setPlayEveryFrame();

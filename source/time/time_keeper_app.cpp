@@ -313,6 +313,44 @@ int Time_keeper_app::removeCallback(Time_keeper_app_callback callback,
 	return (return_code);
 }
 
+int Time_keeper_app::setMaximum(double maximum)
+{
+	int playing = 0;
+
+	if(timeout_callback_id)
+	{
+		playing = 1;
+		stopPrivate();
+	}
+	time_keeper->setMaximum(maximum);
+	notifyClients(TIME_KEEPER_APP_NEW_MAXIMUM);
+	if(playing)
+	{
+		playPrivate();
+	}
+
+	return 1;
+}
+
+int Time_keeper_app::setMinimum(double minimum)
+{
+	int playing = 0;
+
+	if(timeout_callback_id)
+	{
+		playing = 1;
+		stopPrivate();
+	}
+	time_keeper->setMinimum(minimum);
+	notifyClients(TIME_KEEPER_APP_NEW_MINIMUM);
+	if(playing)
+	{
+		playPrivate();
+	}
+
+	return 1;
+}
+
 int Time_keeper_app::requestNewTime(double new_time)
 {
 	int playing = 0;

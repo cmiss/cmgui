@@ -12693,13 +12693,13 @@ If the <use_data> flag is set, then read data, otherwise nodes.
 						minimum = command_data->default_time_keeper_app->getTimeKeeper()->getMinimum();
 						if (time < minimum)
 						{
-							command_data->default_time_keeper_app->getTimeKeeper()->setMinimum(time);
-							command_data->default_time_keeper_app->getTimeKeeper()->setMaximum(maximum);
+							command_data->default_time_keeper_app->setMinimum(time);
+							command_data->default_time_keeper_app->setMaximum(maximum);
 						}
 						if (time > maximum)
 						{
-							command_data->default_time_keeper_app->getTimeKeeper()->setMinimum(minimum);
-							command_data->default_time_keeper_app->getTimeKeeper()->setMaximum(time);
+							command_data->default_time_keeper_app->setMinimum(minimum);
+							command_data->default_time_keeper_app->setMaximum(time);
 						}
 					}
 				}
@@ -14654,11 +14654,11 @@ DESCRIPTION :
 						}
 						if ( maximum_flag )
 						{
-							time_keeper_app->getTimeKeeper()->setMaximum(maximum);
+							time_keeper_app->setMaximum(maximum);
 						}
 						if ( minimum_flag )
 						{
-							time_keeper_app->getTimeKeeper()->setMinimum(minimum);
+							time_keeper_app->setMinimum(minimum);
 						}
 						if ( loop )
 						{
