@@ -139,9 +139,9 @@ Maintains legacy version that is set with a texture.
 			Option_table_add_int_non_negative_entry(option_table,
 					"number_of_bytes_per_component",	&number_of_bytes_per_component);
 			/* maximum */
-			Option_table_add_positive_double_entry(option_table,"maximum",&maximum);
+			Option_table_add_non_negative_double_entry(option_table,"maximum",&maximum);
 			/* minimum */
-			Option_table_add_positive_double_entry(option_table,"minimum",&minimum);
+			Option_table_add_non_negative_double_entry(option_table,"minimum",&minimum);
 			/* sizes */
 			Option_table_add_double_vector_entry(option_table,
 				"texture_coordinates_sizes", &original_sizes[0], &dimension);
