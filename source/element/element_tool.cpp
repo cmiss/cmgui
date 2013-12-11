@@ -241,25 +241,25 @@ release.
 					combined_filter);
 				if (element_tool->select_lines_enabled)
 				{
-					element_filter = cmzn_scenefiltermodule_create_scenefilter_domain_type(
+					element_filter = cmzn_scenefiltermodule_create_scenefilter_field_domain_type(
 						filter_module, CMZN_FIELD_DOMAIN_TYPE_MESH1D);
 					cmzn_scenefilter_operator_append_operand(or_filter, element_filter);
 					cmzn_scenefilter_destroy(&element_filter);
 				}
 				if (element_tool->select_faces_enabled)
 				{
-					element_filter = cmzn_scenefiltermodule_create_scenefilter_domain_type(
+					element_filter = cmzn_scenefiltermodule_create_scenefilter_field_domain_type(
 						filter_module, CMZN_FIELD_DOMAIN_TYPE_MESH2D);
 					cmzn_scenefilter_operator_append_operand(or_filter, element_filter);
 					cmzn_scenefilter_destroy(&element_filter);
 				}
 				if (element_tool->select_elements_enabled)
 				{
-					element_filter = cmzn_scenefiltermodule_create_scenefilter_domain_type(
+					element_filter = cmzn_scenefiltermodule_create_scenefilter_field_domain_type(
 						filter_module, CMZN_FIELD_DOMAIN_TYPE_MESH_HIGHEST_DIMENSION);
 					cmzn_scenefilter_operator_append_operand(or_filter, element_filter);
 					cmzn_scenefilter_destroy(&element_filter);
-					element_filter = cmzn_scenefiltermodule_create_scenefilter_domain_type(
+					element_filter = cmzn_scenefiltermodule_create_scenefilter_field_domain_type(
 						filter_module, CMZN_FIELD_DOMAIN_TYPE_MESH3D);
 					cmzn_scenefilter_operator_append_operand(or_filter, element_filter);
 					cmzn_scenefilter_destroy(&element_filter);
@@ -337,7 +337,7 @@ release.
 								cmzn_field_group_id group = cmzn_scene_get_selection_group(scene);
 								if (group)
 								{
-									cmzn_region_id temp_region = cmzn_scene_get_region(scene);
+									cmzn_region_id temp_region = cmzn_scene_get_region_internal(scene);
 									cmzn_fieldmodule_id field_module = cmzn_region_get_fieldmodule(temp_region);
 									int dimension = cmzn_element_get_dimension(picked_element);
 									cmzn_mesh_id master_mesh = cmzn_fieldmodule_find_mesh_by_dimension(field_module, dimension);
@@ -390,7 +390,7 @@ release.
 								cmzn_mesh_group_id mesh_group = 0;
 								if (element_tool->scene)
 								{
-									sub_region = cmzn_scene_get_region(element_tool->scene);
+									sub_region = cmzn_scene_get_region_internal(element_tool->scene);
 									sub_group = cmzn_scene_get_or_create_selection_group(element_tool->scene);
 									if (sub_group)
 									{

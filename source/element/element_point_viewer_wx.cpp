@@ -61,7 +61,7 @@ Contains all the information carried by the element_point_viewer widget.
 	struct Computed_field_package *computed_field_package;
 	struct Element_point_viewer **element_point_viewer_address;
 	struct cmzn_region *region;
-	struct FE_region *fe_region;
+	cmzn_fieldmodulenotifier_id fieldmodulenotifier;
 	struct Element_point_ranges_selection *element_point_ranges_selection;
 	struct Time_object *time_object;
 	struct User_interface *user_interface;
@@ -458,7 +458,7 @@ Furthermore, if the <element_point_viewer>
 									grid_to_multi_range_data.multi_range;
 								/* inefficient: go through every element in manager */
 								return_code = FE_region_for_each_FE_element(
-									element_point_viewer->fe_region,
+									cmzn_region_get_FE_region(element_point_viewer->region),
 									FE_element_grid_to_Element_point_ranges_list,
 									(void *)&grid_to_list_data);
 							}
@@ -495,7 +495,7 @@ Furthermore, if the <element_point_viewer>
 							&(element_point_viewer->element_point_identifier));
 						if (return_code)
 						{
-							cmzn_fieldmodule_id field_module = cmzn_region_get_fieldmodule(FE_region_get_cmzn_region(element_point_viewer->fe_region));
+							cmzn_fieldmodule_id field_module = cmzn_region_get_fieldmodule(element_point_viewer->region);
 							cmzn_fieldmodule_begin_change(field_module);
 							cmzn_fieldcache_id field_cache = cmzn_fieldmodule_create_fieldcache(field_module);
 							source_identifier.element=element_point_viewer->element_copy;
@@ -509,8 +509,7 @@ Furthermore, if the <element_point_viewer>
 							set_grid_values_data.field_component_ranges_list=
 								element_point_viewer->modified_field_components;
 							/* ... and the manager to modify them in */
-							set_grid_values_data.fe_region =
-								element_point_viewer->fe_region;
+							set_grid_values_data.fe_region = cmzn_region_get_FE_region(element_point_viewer->region);
 							/* if following flag is cleared it means that some of the selected
 								 element points are not grid points */
 							set_grid_values_data.number_of_points = 0;
@@ -908,61 +907,60 @@ leaves the current discretization/mode intact.
 	return (return_code);
 } /* Element_point_viewer_get_grid */
 
-static void Element_point_viewer_FE_region_change(struct FE_region *fe_region,
-	struct FE_region_changes *changes, void *element_point_viewer_void)
-/*******************************************************************************
-LAST MODIFIED : 6 June 2007
-
-DESCRIPTION :
-Callback for changes from the FE_region. If the element currently being viewed
-has changed, re-send to viewer.
-Note that we do not have to handle add, delete and identifier change messages
-here as the select widget does this for us. Only changes to the content of the
-object cause updates.
-==============================================================================*/
+/**
+ * Callback for changes from the fieldmodule. If the element currently being
+ * viewed has changed, re-send to viewer.
+ * Note that we do not have to handle add, delete and identifier change messages
+ * here as the select widget does this for us. Only changes to the content of the
+ * object cause updates.
+ */
+static void cmzn_fieldmoduleevent_to_element_point_viewer(
+	cmzn_fieldmoduleevent_id event, void *element_point_viewer_void)
 {
-	int fe_element_change;
-	int fe_node_change;
-	int i, number_of_nodes, refresh;
-	struct Element_point_viewer *element_point_viewer;
-	struct FE_element *top_level_element;
-	struct FE_node *node;
-
-	ENTER(Element_point_viewer_FE_region_change);
-	if (fe_region && changes && (element_point_viewer =
-		(struct Element_point_viewer *)element_point_viewer_void))
+	struct Element_point_viewer *element_point_viewer =
+		static_cast<struct Element_point_viewer *>(element_point_viewer_void);
+	if (event && element_point_viewer)
 	{
-		if (element_point_viewer->element_point_identifier.element)
+		cmzn_fieldmodule_id fieldmodule = cmzn_region_get_fieldmodule(element_point_viewer->region);
+		FE_region_changes *feRegionChanges = event->getFeRegionChanges();
+		if (element_point_viewer->element_point_identifier.element && feRegionChanges)
 		{
+			bool refresh = false;
 			int dimension = get_FE_element_dimension(element_point_viewer->element_point_identifier.element);
-			refresh = 0;
 			/* check if contents of this element changed */
-			if (CHANGE_LOG_QUERY(FE_element)(
-				FE_region_changes_get_FE_element_changes(changes, dimension),
-				element_point_viewer->element_point_identifier.element,
-				&fe_element_change) && (fe_element_change &
-					CHANGE_LOG_OBJECT_NOT_IDENTIFIER_CHANGED(FE_element)))
+			int fe_element_change;
+			if (CHANGE_LOG_QUERY(FE_element)(feRegionChanges->getElementChanges(dimension),
+				element_point_viewer->element_point_identifier.element, &fe_element_change) &&
+				(fe_element_change & CHANGE_LOG_OBJECT_NOT_IDENTIFIER_CHANGED(FE_element)))
 			{
-				refresh = 1;
+				refresh = true;
 			}
 			else
 			{
 				/* check if nodes in this element have changed */
-				if ((top_level_element =
-					element_point_viewer->element_point_identifier.top_level_element) &&
-					get_FE_element_number_of_nodes(top_level_element, &number_of_nodes) &&
-					(0 < number_of_nodes))
+				int number_of_nodes = 0;
+				struct FE_element *top_level_element = element_point_viewer->element_point_identifier.top_level_element;
+				struct FE_node *node;
+				get_FE_element_number_of_nodes(top_level_element, &number_of_nodes);
+				if ((top_level_element) && (0 < number_of_nodes))
 				{
-					for (i = 0; (i < number_of_nodes) && (!refresh); i++)
+					cmzn_nodeset_id nodeset = cmzn_fieldmodule_find_nodeset_by_field_domain_type(
+						fieldmodule, CMZN_FIELD_DOMAIN_TYPE_NODES);
+					cmzn_nodesetchanges_id nodesetchanges = cmzn_fieldmoduleevent_get_nodesetchanges(event, nodeset);
+					for (int i = 0; i < number_of_nodes; i++)
 					{
-						if (get_FE_element_node(top_level_element, i, &node) && node &&
-							CHANGE_LOG_QUERY(FE_node)(changes->fe_node_changes, node,
-								&fe_node_change) && (fe_node_change &
-									CHANGE_LOG_OBJECT_NOT_IDENTIFIER_CHANGED(FE_node)))
+						if (get_FE_element_node(top_level_element, i, &node) && node)
 						{
-							refresh = 1;
+							int nodeChange = cmzn_nodesetchanges_get_node_change_flags(nodesetchanges, node);
+							if (nodeChange & CMZN_NODE_CHANGE_FLAG_FIELD)
+							{
+								refresh = true;
+								break;
+							}
 						}
 					}
+					cmzn_nodesetchanges_destroy(&nodesetchanges);
+					cmzn_nodeset_destroy(&nodeset);
 				}
 			}
 			if (refresh)
@@ -972,14 +970,9 @@ object cause updates.
 				Element_point_viewer_set_viewer_element_point(element_point_viewer);
 			}
 		}
+		cmzn_fieldmodule_destroy(&fieldmodule);
 	}
-	else
-	{
-		display_message(ERROR_MESSAGE,
-			"Element_point_viewer_FE_region_change.  Invalid argument(s)");
-	}
-	LEAVE;
-} /* Element_point_viewer_FE_region_change */
+}
 
 static void element_point_viewer_time_change_callback(
 	cmzn_timenotifierevent_id timenotifierevent,	void *element_point_field_viewer_void)
@@ -1093,7 +1086,7 @@ public:
 			element_text_chooser =
 				 new wxFeElementTextChooser(element_text_panel,
 						element_point_viewer->element_point_identifier.element,
-						element_point_viewer->fe_region,
+						element_point_viewer->region,
 						(LIST_CONDITIONAL_FUNCTION(FE_element) *)NULL,(void *)NULL);
 			Callback_base<FE_element *> *element_text_callback =
 				 new Callback_member_callback< FE_element*,
@@ -1106,7 +1099,7 @@ public:
 			top_level_element_text_chooser =
 				 new wxFeElementTextChooser(top_element_text_panel,
 						element_point_viewer->element_point_identifier.top_level_element,
-						element_point_viewer->fe_region,
+						element_point_viewer->region,
 						FE_element_is_top_level,(void *)NULL);
 			Callback_base<FE_element *> *top_element_text_callback =
 				 new Callback_member_callback< FE_element*,
@@ -1280,7 +1273,7 @@ Callback from wxTextChooser when text is entered.
 						else
 						{
 							 element_point_viewer->element_point_identifier.top_level_element =
-									FE_region_get_first_FE_element_that(element_point_viewer->fe_region,
+									FE_region_get_first_FE_element_that(cmzn_region_get_FE_region(element_point_viewer->region),
 										 FE_element_is_top_level_parent_of_element,
 										 (void *)element_point_viewer->element_point_identifier.element);
 							 top_level_element_text_chooser->set_object(
@@ -1650,7 +1643,7 @@ void OnGridValueEntered(wxCommandEvent &event)
 								{
 									grid_to_list_data.grid_fe_field=grid_fe_field;
 									/* inefficient: go through every element in FE_region */
-									FE_region_for_each_FE_element(element_point_viewer->fe_region,
+									FE_region_for_each_FE_element(cmzn_region_get_FE_region(element_point_viewer->region),
 										FE_element_grid_to_Element_point_ranges_list,
 										(void *)&grid_to_list_data);
 									if (0<NUMBER_IN_LIST(Element_point_ranges)(
@@ -2192,14 +2185,12 @@ fields.
 	struct Element_point_ranges *element_point_ranges;
 	struct Element_point_ranges_identifier temp_element_point_identifier;
 	struct Element_point_viewer *element_point_viewer;
-	struct FE_region *fe_region;
 	struct Multi_range *ranges;
 	struct FE_element *initial_element;
 
 	ENTER(CREATE(Element_point_viewer));
 	element_point_viewer=(struct Element_point_viewer *)NULL;
 	if (element_point_viewer_address && region &&
-		(fe_region = cmzn_region_get_FE_region(region)) &&
 		element_point_ranges_selection&&computed_field_package &&
 		(computed_field_manager = Computed_field_package_get_computed_field_manager(
 			computed_field_package)) && user_interface)
@@ -2214,7 +2205,11 @@ fields.
 				element_point_viewer->element_point_viewer_address=
 					 element_point_viewer_address;
 				element_point_viewer->region = region;
-				element_point_viewer->fe_region = fe_region;
+				cmzn_fieldmodule_id fieldmodule = cmzn_region_get_fieldmodule(region);
+				element_point_viewer->fieldmodulenotifier = cmzn_fieldmodule_create_fieldmodulenotifier(fieldmodule);
+				cmzn_fieldmodulenotifier_set_callback(element_point_viewer->fieldmodulenotifier,
+					cmzn_fieldmoduleevent_to_element_point_viewer, (void *)element_point_viewer);
+				cmzn_fieldmodule_destroy(&fieldmodule);
 				element_point_viewer->element_point_ranges_selection=
 					 element_point_ranges_selection;
 				element_point_viewer->user_interface=user_interface;
@@ -2264,7 +2259,7 @@ fields.
 				else
 				{
 					element_point_viewer->element_point_identifier.element =
-						FE_region_get_first_FE_element_that(fe_region,
+						FE_region_get_first_FE_element_that(cmzn_region_get_FE_region(region),
 							FE_element_is_top_level, (void *)NULL);
 					 if (element_point_viewer->element_point_identifier.element)
 					 {
@@ -2402,9 +2397,7 @@ Destroys the Element_point_viewer. See also Element_point_viewer_close_CB.
 	{
 		DESTROY(LIST(Field_value_index_ranges))(
 			&(element_point_viewer->modified_field_components));
-		FE_region_remove_callback(element_point_viewer->fe_region,
-			Element_point_viewer_FE_region_change,
-			(void *)element_point_viewer);
+		cmzn_fieldmodulenotifier_destroy(&element_point_viewer->fieldmodulenotifier);
 		DEACCESS(Time_object)(&(element_point_viewer->time_object));
 		/* end callbacks from global element_point selection */
 		Element_point_ranges_selection_remove_callback(

@@ -188,7 +188,6 @@ Updates the node locations for the <emoter_slider>
 	struct cmzn_region *input_sequence;
 	struct FE_field *field;
 	struct FE_node *node;
-	struct FE_region *fe_region;
 	struct EM_Object *em_object;
 	struct IO_stream *input_file;
 
@@ -199,9 +198,11 @@ Updates the node locations for the <emoter_slider>
 		em_object=shared_data->em_object;
 		if (0<em_object->n_nodes)
 		{
-			if ((fe_region=cmzn_region_get_FE_region(shared_data->region))&&
-				(node=FE_region_get_FE_node_from_identifier(fe_region,
-				(em_object->index)[0]))&&(field=get_FE_node_default_coordinate_field(node)))
+			cmzn_fieldmodule_id fieldmodule = cmzn_region_get_fieldmodule(shared_data->region);
+			cmzn_nodeset_id nodeset = cmzn_fieldmodule_find_nodeset_by_field_domain_type(fieldmodule,
+				CMZN_FIELD_DOMAIN_TYPE_NODES);
+			if ((node = cmzn_nodeset_find_node_by_identifier(nodeset, (em_object->index)[0])) &&
+				(field=get_FE_node_default_coordinate_field(node)))
 			{
 				/* Read from an input sequence which the emoter is overriding */
 				if (shared_data->input_sequence)
@@ -250,7 +251,7 @@ Updates the node locations for the <emoter_slider>
 					}
 				}
 
-				FE_region_begin_change(fe_region);
+				cmzn_fieldmodule_begin_change(fieldmodule);
 
 				/* perform EM reconstruction */
 				if ( solid_body_motion && shared_data->transform_graphics)
@@ -270,8 +271,7 @@ Updates the node locations for the <emoter_slider>
 				offset=em_object->m;
 				while (return_code&&(i<em_object->n_nodes))
 				{
-					if ((node=FE_region_get_FE_node_from_identifier(fe_region,
-						(em_object->index)[i])))
+					if ((node = cmzn_nodeset_find_node_by_identifier(nodeset, (em_object->index)[i])))
 					{
 						position[0] = 0;
 						position[1] = 0;
@@ -344,7 +344,7 @@ Updates the node locations for the <emoter_slider>
 					}
 					i++;
 				}
-				FE_region_end_change(fe_region);
+				cmzn_fieldmodule_end_change(fieldmodule);
 			}
 			else
 			{
@@ -352,6 +352,8 @@ Updates the node locations for the <emoter_slider>
 					"emoter_update_nodes.  Could not find coordinate_field");
 				return_code=0;
 			}
+			cmzn_nodeset_destroy(&nodeset);
+			cmzn_fieldmodule_destroy(&fieldmodule);
 		}
 	}
 	else
@@ -2691,16 +2693,16 @@ DESCRIPTION :
 		if (node_numbers)
 		{
 			number_of_nodes = new_value;
-			cmzn_fieldmodule_id field_module = cmzn_region_get_fieldmodule(emoter_dialog->shared->region);
-			cmzn_fieldmodule_begin_change(field_module);
-			cmzn_nodeset_id master_nodeset = cmzn_fieldmodule_find_nodeset_by_domain_type(field_module, CMZN_FIELD_DOMAIN_TYPE_NODES);
+			cmzn_fieldmodule_id fieldmodule = cmzn_region_get_fieldmodule(emoter_dialog->shared->region);
+			cmzn_fieldmodule_begin_change(fieldmodule);
+			cmzn_nodeset_id master_nodeset = cmzn_fieldmodule_find_nodeset_by_field_domain_type(fieldmodule, CMZN_FIELD_DOMAIN_TYPE_NODES);
 			if (emoter_dialog->minimum_nodeset_group)
 			{
 				cmzn_nodeset_group_remove_all_nodes(emoter_dialog->minimum_nodeset_group);
 			}
 			else
 			{
-				cmzn_field_id minimum_node_group_field = cmzn_fieldmodule_create_field_node_group(field_module, master_nodeset);
+				cmzn_field_id minimum_node_group_field = cmzn_fieldmodule_create_field_node_group(fieldmodule, master_nodeset);
 				cmzn_field_node_group_id minimum_node_group = cmzn_field_cast_node_group(minimum_node_group_field);
 				emoter_dialog->minimum_nodeset_group = cmzn_field_node_group_get_nodeset(minimum_node_group);
 				cmzn_field_node_group_destroy(&minimum_node_group);
@@ -2729,7 +2731,7 @@ DESCRIPTION :
 				}
 			}
 			cmzn_nodeset_destroy(&master_nodeset);
-			cmzn_fieldmodule_end_change(field_module);
+			cmzn_fieldmodule_end_change(fieldmodule);
 		}
 	}
 	else
@@ -3190,55 +3192,6 @@ a time.  This implementation may be changed later.
 	return (return_code);
 } /* bring_up_emoter_dialog */
 
-struct Index_list_data
-{
-	int number_of_index_nodes;
-	int maximum_index_nodes;
-	int *index_nodes;
-}; /* struct Index_list_data */
-
-static int add_FE_node_number_to_list(struct FE_node *node,
-	void *index_list_data_void)
-/*******************************************************************************
-LAST MODIFIED : 6 March 2000
-
-DESCRIPTION :
-==============================================================================*/
-{
-	int return_code;
-	struct Index_list_data *index_list_data;
-
-	ENTER(add_FE_node_number_to_list);
-	if (node && (index_list_data =
-		(struct Index_list_data *)index_list_data_void))
-	{
-		if (index_list_data->number_of_index_nodes <
-			index_list_data->maximum_index_nodes)
-		{
-			index_list_data->index_nodes[index_list_data->number_of_index_nodes] =
-				get_FE_node_identifier(node);
-			index_list_data->number_of_index_nodes++;
-			return_code = 1;
-		}
-		else
-		{
-			display_message(ERROR_MESSAGE,
-				"add_FE_node_number_to_list.  Too many nodes for memory allocated.");
-			return_code=0;
-		}
-	}
-	else
-	{
-		display_message(ERROR_MESSAGE,
-			"add_FE_node_number_to_list.  Invalid arguments");
-		return_code=0;
-	}
-
-	LEAVE;
-
-	return (return_code);
-} /* add_FE_node_number_to_list */
-
 /*
 Global functions
 ----------------
@@ -3254,8 +3207,6 @@ int gfx_create_emoter(struct Parse_state *state,void *dummy_to_be_modified,
 	int i,*index_nodes,number_of_modes,number_of_nodes,number_of_index_nodes,
 		return_code;
 	struct Create_emoter_slider_data *create_emoter_slider_data;
-	struct FE_region *fe_region;
-	struct Index_list_data index_list_data;
 	struct Option_table *option_table;
 	struct Shared_emoter_slider_data *shared_emoter_slider_data;
 	struct EM_Object *em_object;
@@ -3303,26 +3254,32 @@ int gfx_create_emoter(struct Parse_state *state,void *dummy_to_be_modified,
 					"gfx_create_emoter.  Must specify basis_file_name");
 				return_code = 0;
 			}
+			cmzn_fieldmodule_id fieldmodule = cmzn_region_get_fieldmodule(region);
+			cmzn_nodeset_id nodeset = cmzn_fieldmodule_find_nodeset_by_field_domain_type(fieldmodule,
+				CMZN_FIELD_DOMAIN_TYPE_NODES);
 			if (return_code)
 			{
 				em_object=(struct EM_Object *)NULL;
-				fe_region = cmzn_region_get_FE_region(region);
-				if (fe_region)
+				if (fieldmodule)
 				{
-					number_of_index_nodes = FE_region_get_number_of_FE_nodes(fe_region);
+					number_of_index_nodes = cmzn_nodeset_get_size(nodeset);
 					if (ALLOCATE(index_nodes, int, number_of_index_nodes))
 					{
-						index_list_data.number_of_index_nodes = 0;
-						index_list_data.maximum_index_nodes = number_of_index_nodes;
-						index_list_data.index_nodes = index_nodes;
-						FE_region_for_each_FE_node(fe_region, add_FE_node_number_to_list,
-							(void *)&index_list_data);
-						if (index_list_data.number_of_index_nodes !=
-							number_of_index_nodes)
+						cmzn_nodeiterator_id iter = cmzn_nodeset_create_nodeiterator(nodeset);
+						cmzn_node_id node = 0;
+						i = 0;
+						while (0 != (node = cmzn_nodeiterator_next(iter)))
+						{
+							index_nodes[i] = cmzn_node_get_identifier(node);
+							++i;
+							cmzn_node_destroy(&node);
+						}
+						cmzn_nodeiterator_destroy(&iter);
+						if (i != number_of_index_nodes)
 						{
 							display_message(ERROR_MESSAGE,
 								"gfx_create_emoter.  Inconsistent index node group counts");
-							number_of_index_nodes = index_list_data.number_of_index_nodes;
+							number_of_index_nodes = i;
 						}
 					}
 					else
@@ -3333,7 +3290,7 @@ int gfx_create_emoter(struct Parse_state *state,void *dummy_to_be_modified,
 				else
 				{
 					display_message(ERROR_MESSAGE,
-						"gfx_create_emoter.  Missing fe_region.");
+						"gfx_create_emoter.  Missing field module.");
 					return_code = 0;
 				}
 			}
@@ -3348,10 +3305,11 @@ int gfx_create_emoter(struct Parse_state *state,void *dummy_to_be_modified,
 					{
 						/* check that all the nodes exist */
 						i=0;
-						while ((i<number_of_nodes)&&FE_region_get_FE_node_from_identifier(
-						   fe_region,(em_object->index)[i]))
+						cmzn_node_id node;
+						while ((i<number_of_nodes) && (node = cmzn_nodeset_find_node_by_identifier(nodeset,(em_object->index)[i])))
 						{
-							i++;
+							cmzn_node_destroy(&node);
+							++i;
 						}
 						if (i==number_of_nodes)
 						{
@@ -3440,6 +3398,8 @@ int gfx_create_emoter(struct Parse_state *state,void *dummy_to_be_modified,
 					DEALLOCATE(index_nodes);
 				}
 			}
+			cmzn_nodeset_destroy(&nodeset);
+			cmzn_fieldmodule_end_change(fieldmodule);
 		}
 		if (basis_file_name)
 		{

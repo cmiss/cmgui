@@ -665,7 +665,7 @@ Modifier function to set the scene from a command.
 				display_message(INFORMATION_MESSAGE," PATH_TO_SCENE");
 				if (*scene_address)
 				{
-					struct cmzn_region *region = cmzn_scene_get_region(*scene_address);
+					struct cmzn_region *region = cmzn_scene_get_region_internal(*scene_address);
 					char *path = cmzn_region_get_path(region);
 					display_message(INFORMATION_MESSAGE, "[%s]", path);
 					DEALLOCATE(path);

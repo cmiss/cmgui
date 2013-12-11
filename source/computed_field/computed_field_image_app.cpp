@@ -45,7 +45,7 @@ Maintains legacy version that is set with a texture.
 {
 	double minimum, maximum;
 	int return_code, dimension;
-	double *sizes, original_sizes[3];
+	double original_sizes[3];
 	struct Computed_field *source_field,*texture_coordinate_field;
 	Computed_field_image_package
 		*computed_field_image_package;

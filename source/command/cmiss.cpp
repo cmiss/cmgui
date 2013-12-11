@@ -502,7 +502,7 @@ DESCRIPTION :
 		return_code;
 	struct cmzn_command_data *command_data;
 	struct Computed_field *sort_by_field;
-	struct FE_region *data_fe_region, *fe_region;
+	struct FE_region *fe_region;
 	struct Option_table *option_table;
 
 	ENTER(gfx_change_identifier);
@@ -585,15 +585,15 @@ DESCRIPTION :
 				}
 				if (return_code)
 				{
-					FE_region_begin_change(fe_region);
 					int highest_dimension = FE_region_get_highest_dimension(fe_region);
-					cmzn_fieldmodule_id field_module = cmzn_region_get_fieldmodule(region);
+					cmzn_fieldmodule_id fieldmodule = cmzn_region_get_fieldmodule(region);
+					cmzn_fieldmodule_begin_change(fieldmodule);
 					if (element_flag)
 					{
 						if (highest_dimension > 0)
 						{
 							cmzn_mesh_id mesh = cmzn_fieldmodule_find_mesh_by_dimension(
-								field_module,highest_dimension);
+								fieldmodule, highest_dimension);
 							cmzn_field_element_group_id element_group =
 								cmzn_field_group_get_element_group(group, mesh);
 							if (!FE_region_change_element_identifiers(fe_region,
@@ -614,7 +614,7 @@ DESCRIPTION :
 					if (face_flag && (highest_dimension > 2))
 					{
 						cmzn_mesh_id mesh = cmzn_fieldmodule_find_mesh_by_dimension(
-							field_module,2);
+							fieldmodule, 2);
 						cmzn_field_element_group_id element_group =
 							cmzn_field_group_get_element_group(group, mesh);
 						if (!FE_region_change_element_identifiers(fe_region,
@@ -629,7 +629,7 @@ DESCRIPTION :
 					if (line_flag && (highest_dimension > 1))
 					{
 						cmzn_mesh_id mesh = cmzn_fieldmodule_find_mesh_by_dimension(
-							field_module,1);
+							fieldmodule, 1);
 						cmzn_field_element_group_id element_group =
 							cmzn_field_group_get_element_group(group, mesh);
 						if (!FE_region_change_element_identifiers(fe_region,
@@ -643,45 +643,42 @@ DESCRIPTION :
 					}
 					if (node_flag)
 					{
-						cmzn_nodeset_id nodeset = cmzn_fieldmodule_find_nodeset_by_name(
-							field_module, "nodes");
-						cmzn_field_node_group_id node_group =
-							cmzn_field_group_get_node_group(group, nodeset);
-						if (!FE_region_change_node_identifiers(fe_region,
-							node_offset, sort_by_field, time, node_group))
-						{
-							return_code = 0;
+						cmzn_nodeset_id nodeset = cmzn_fieldmodule_find_nodeset_by_field_domain_type(
+							fieldmodule, CMZN_FIELD_DOMAIN_TYPE_NODES);
+						if (group)
+						{						
+							cmzn_field_node_group_id node_group = cmzn_field_group_get_node_group(group, nodeset);
+							cmzn_nodeset_destroy(&nodeset);
+							nodeset = cmzn_nodeset_group_base_cast(cmzn_field_node_group_get_nodeset(node_group));
+							cmzn_field_node_group_destroy(&node_group);
 						}
-						cmzn_field_node_group_destroy(&node_group);
-						cmzn_nodeset_destroy(&nodeset);
+						if (nodeset)
+						{
+							if (!cmzn_nodeset_change_node_identifiers(nodeset, node_offset, sort_by_field, time))
+								return_code = 0;
+							cmzn_nodeset_destroy(&nodeset);
+						}
 					}
 					if (data_flag)
 					{
-						if (NULL != (data_fe_region=FE_region_get_data_FE_region(fe_region)))
-						{
-							cmzn_nodeset_id nodeset = cmzn_fieldmodule_find_nodeset_by_name(
-								field_module, "datapoints");
-							cmzn_field_node_group_id node_group =
-								cmzn_field_group_get_node_group(group, nodeset);
-							FE_region_begin_change(data_fe_region);
-							if (!FE_region_change_node_identifiers(data_fe_region,
-								data_offset, sort_by_field, time, node_group))
-							{
-								return_code = 0;
-							}
-							FE_region_end_change(data_fe_region);
+						cmzn_nodeset_id nodeset = cmzn_fieldmodule_find_nodeset_by_field_domain_type(
+							fieldmodule, CMZN_FIELD_DOMAIN_TYPE_DATAPOINTS);
+						if (group)
+						{						
+							cmzn_field_node_group_id node_group = cmzn_field_group_get_node_group(group, nodeset);
+							cmzn_nodeset_destroy(&nodeset);
+							nodeset = cmzn_nodeset_group_base_cast(cmzn_field_node_group_get_nodeset(node_group));
 							cmzn_field_node_group_destroy(&node_group);
+						}
+						if (nodeset)
+						{
+							if (!cmzn_nodeset_change_node_identifiers(nodeset, node_offset, sort_by_field, time))
+								return_code = 0;
 							cmzn_nodeset_destroy(&nodeset);
 						}
-						else
-						{
-							display_message(ERROR_MESSAGE,
-								"gfx_change_identifier.  Invalid data region");
-							return_code = 0;
-						}
 					}
-					cmzn_fieldmodule_destroy(&field_module);
-					FE_region_end_change(fe_region);
+					cmzn_fieldmodule_end_change(fieldmodule);
+					cmzn_fieldmodule_destroy(&fieldmodule);
 				}
 			}
 			else
@@ -990,7 +987,7 @@ static int process_modify_element_group(cmzn_field_group_id group,
 		cmzn_nodeset_group_id remove_nodeset_group = 0;
 		if (manage_nodes)
 		{
-			cmzn_nodeset_id master_nodeset = cmzn_fieldmodule_find_nodeset_by_domain_type(field_module, CMZN_FIELD_DOMAIN_TYPE_NODES);
+			cmzn_nodeset_id master_nodeset = cmzn_fieldmodule_find_nodeset_by_field_domain_type(field_module, CMZN_FIELD_DOMAIN_TYPE_NODES);
 			cmzn_field_node_group_id modify_node_group = cmzn_field_group_get_node_group(group, master_nodeset);
 			if ((!modify_node_group) && add_flag)
 				modify_node_group = cmzn_field_group_create_node_group(group, master_nodeset);
@@ -1295,7 +1292,7 @@ static int gfx_create_group(struct Parse_state *state,
 							case 1: // nodes
 							case 2: // data
 							{
-								cmzn_nodeset_id master_nodeset = cmzn_fieldmodule_find_nodeset_by_domain_type(field_module,
+								cmzn_nodeset_id master_nodeset = cmzn_fieldmodule_find_nodeset_by_field_domain_type(field_module,
 									(object_type == 1) ? CMZN_FIELD_DOMAIN_TYPE_NODES : CMZN_FIELD_DOMAIN_TYPE_DATAPOINTS);
 								cmzn_field_node_group_id node_group = cmzn_field_group_create_node_group(group, master_nodeset);
 								cmzn_nodeset_group_id modify_nodeset_group = cmzn_field_node_group_get_nodeset(node_group);
@@ -2660,16 +2657,23 @@ Executes a GFX CREATE SNAKE command.
 			}
 			if (selection_group)
 			{
+				cmzn_fieldmodule_id source_fieldmodule = cmzn_region_get_fieldmodule(source_region);
+				cmzn_nodeset_id nodeset = cmzn_fieldmodule_find_nodeset_by_field_domain_type(source_fieldmodule,
+					CMZN_FIELD_DOMAIN_TYPE_DATAPOINTS);
+				struct LIST(FE_node) *data_list = cmzn_nodeset_create_node_list_ranges_conditional(
+					nodeset, (struct Multi_range *)0, /*conditional_field*/cmzn_field_group_base_cast(selection_group),
+					/*time*/0);
+				cmzn_nodeset_destroy(&nodeset);
+				cmzn_fieldmodule_destroy(&source_fieldmodule);
+
 				cmzn_fieldmodule_id field_module = cmzn_region_get_fieldmodule(region);
 				cmzn_fieldmodule_begin_change(field_module);
-				struct LIST(FE_node) *data_list = FE_node_list_from_region_and_selection_group(
-					source_region, NULL,	cmzn_field_group_base_cast(selection_group), NULL, 0, /*use_data*/1);
 				FE_region *fe_region = cmzn_region_get_FE_region(region);
 				cmzn_nodeset_group_id nodeset_group = 0;
 				cmzn_mesh_group_id mesh_group = 0;
 				if (group)
 				{
-					cmzn_nodeset_id master_nodeset = cmzn_fieldmodule_find_nodeset_by_domain_type(field_module, CMZN_FIELD_DOMAIN_TYPE_NODES);
+					cmzn_nodeset_id master_nodeset = cmzn_fieldmodule_find_nodeset_by_field_domain_type(field_module, CMZN_FIELD_DOMAIN_TYPE_NODES);
 					cmzn_field_node_group_id node_group = cmzn_field_group_get_node_group(group, master_nodeset);
 					if (!node_group)
 						node_group = cmzn_field_group_create_node_group(group, master_nodeset);
@@ -6373,9 +6377,10 @@ static int gfx_destroy_nodes(struct Parse_state *state,
 				return_code = 0;
 			}
 		}
+		cmzn_fieldmodule_id field_module = cmzn_region_get_fieldmodule(region);
+		cmzn_fieldmodule_begin_change(field_module);
 		if (return_code && conditional_field_name)
 		{
-			cmzn_fieldmodule_id field_module = cmzn_region_get_fieldmodule(region);
 			conditional_field = cmzn_fieldmodule_find_field_by_name(field_module, conditional_field_name);
 			if (!conditional_field)
 			{
@@ -6383,11 +6388,9 @@ static int gfx_destroy_nodes(struct Parse_state *state,
 					"gfx destroy nodes:  conditional field cannot be found");
 				return_code = 0;
 			}
-			cmzn_fieldmodule_destroy(&field_module);
 		}
 		if (return_code)
 		{
-			cmzn_fieldmodule_id field_module = cmzn_region_get_fieldmodule(region);
 			cmzn_field_group_id selection_group = NULL;
 			if (selected_flag)
 			{
@@ -6412,20 +6415,22 @@ static int gfx_destroy_nodes(struct Parse_state *state,
 				use_conditional_field = cmzn_field_access(cmzn_field_group_base_cast(group));
 			}
 			LIST(FE_node) *destroy_node_list = 0;
+			cmzn_nodeset_id nodeset = 0;
 			if ((!selected_flag) || selection_group)
 			{
-				destroy_node_list = FE_node_list_from_region_and_selection_group(
-					region, node_ranges, cmzn_field_group_base_cast(selection_group), use_conditional_field, time, (use_data != NULL));
+				nodeset = cmzn_fieldmodule_find_nodeset_by_field_domain_type(field_module,
+					use_data ? CMZN_FIELD_DOMAIN_TYPE_DATAPOINTS : CMZN_FIELD_DOMAIN_TYPE_NODES);
+				destroy_node_list = cmzn_nodeset_create_node_list_ranges_conditional(
+					nodeset, Multi_range_get_total_number_in_ranges(node_ranges) ?
+						node_ranges : static_cast<Multi_range *>(0),
+					use_conditional_field,/*time*/0);
 				if (!destroy_node_list)
 					return_code = 0;
 			}
 			if (destroy_node_list && (0 < NUMBER_IN_LIST(FE_node)(destroy_node_list)))
 			{
-				cmzn_fieldmodule_begin_change(field_module);
-				FE_region *fe_region = cmzn_region_get_FE_region(region);
-				if (use_data)
-					fe_region = FE_region_get_data_FE_region(fe_region);
-				return_code = FE_region_remove_FE_node_list(fe_region, destroy_node_list);
+				FE_nodeset *fe_nodeset = cmzn_nodeset_get_FE_nodeset_internal(nodeset);
+				return_code = fe_nodeset->remove_FE_node_list(destroy_node_list);
 				int number_not_destroyed = 0;
 				if (0 < (number_not_destroyed = NUMBER_IN_LIST(FE_node)(
 					destroy_node_list)))
@@ -6438,7 +6443,6 @@ static int gfx_destroy_nodes(struct Parse_state *state,
 				{
 					cmzn_field_group_remove_empty_subgroups(selection_group);
 				}
-				cmzn_fieldmodule_end_change(field_module);
 			}
 			else
 			{
@@ -6451,14 +6455,16 @@ static int gfx_destroy_nodes(struct Parse_state *state,
 					display_message(WARNING_MESSAGE, "gfx destroy nodes:  No nodes specified");
 				}
 			}
+			cmzn_nodeset_destroy(&nodeset);
 			if (destroy_node_list)
 				DESTROY(LIST(FE_node))(&destroy_node_list);
 			if (selection_group)
 				cmzn_field_group_destroy(&selection_group);
 			if (use_conditional_field)
 				cmzn_field_destroy(&use_conditional_field);
-			cmzn_fieldmodule_destroy(&field_module);
 		}
+		cmzn_fieldmodule_end_change(field_module);
+		cmzn_fieldmodule_destroy(&field_module);
 		if (conditional_field)
 		{
 			DEACCESS(Computed_field)(&conditional_field);
@@ -6729,7 +6735,7 @@ Executes a GFX DRAW command.
 				{
 					graphics_name = cmzn_glyph_get_name(glyph);
 				}
-				cmzn_region_id region = cmzn_scene_get_region(scene);
+				cmzn_region_id region = cmzn_scene_get_region_internal(scene);
 				cmzn_scene_id scene =
 					cmzn_region_get_scene(region);
 				return_code = cmzn_scene_add_glyph(scene, glyph, graphics_name);
@@ -6765,70 +6771,42 @@ Executes a GFX DRAW command.
 	return (return_code);
 } /* execute_command_gfx_draw */
 
-struct Apply_transformation_data
-/*******************************************************************************
-LAST MODIFIED : 3 March 2003
-
-DESCRIPTION :
-Data for applying transformation.  Required because the data list of nodes is
-not in the same region as the region returned from FE_node_get_FE_region which
-is the region where the fields are defined (the parent region in this case).
-==============================================================================*/
-{
-	gtMatrix transformation;
-	struct FE_region *fe_region;
-}; /* struct Apply_transformation_data */
-
-static int apply_transformation_to_node(struct FE_node *node,
-	void *data_void)
-/*******************************************************************************
-LAST MODIFIED : 3 March 2003
-
-DESCRIPTION :
-Iterator that modifies the position of each node according to the
-transformation in the transformation data.
-Should enclose multiple calls in FE_region_begin_change/end_change wrappers.
-==============================================================================*/
+/**
+ * Iterator that modifies the position of each node according to the
+ * transformation in the transformation data.
+ * Should enclose multiple calls in FE_region_begin_change/end_change wrappers.
+ */
+static void apply_transformation_to_node(struct FE_node *node,
+	gtMatrix& transformationMatrix)
 {
 	FE_value x, x2, y, y2, z, z2, h2;
-	int return_code;
-	struct Apply_transformation_data *data;
-
-	ENTER(apply_transformation_to_node);
-	return_code = 0;
-	if (node && (data = (struct Apply_transformation_data  *)data_void))
+	if (node)
 	{
 		FE_field *coordinate_field = get_FE_node_default_coordinate_field(node);
 		if (FE_node_get_position_cartesian(node, coordinate_field,
 			&x, &y, &z, (FE_value *)NULL))
 		{
 			/* Get the new position */
-			h2 = (data->transformation)[0][3] * x
-				+ (data->transformation)[1][3] * y
-				+ (data->transformation)[2][3] * z
-				+ (data->transformation)[3][3];
-			x2 = ((data->transformation)[0][0] * x
-				+ (data->transformation)[1][0] * y
-				+ (data->transformation)[2][0] * z
-				+ (data->transformation)[3][0]) / h2;
-			y2 = ((data->transformation)[0][1] * x
-				+ (data->transformation)[1][1] * y
-				+ (data->transformation)[2][1] * z
-				+ (data->transformation)[3][1]) / h2;
-			z2 = ((data->transformation)[0][2] * x
-				+ (data->transformation)[1][2] * y
-				+ (data->transformation)[2][2] * z
-				+ (data->transformation)[3][2]) / h2;
+			h2 = transformationMatrix[0][3] * x
+				+ transformationMatrix[1][3] * y
+				+ transformationMatrix[2][3] * z
+				+ transformationMatrix[3][3];
+			x2 = (transformationMatrix[0][0] * x
+				+ transformationMatrix[1][0] * y
+				+ transformationMatrix[2][0] * z
+				+ transformationMatrix[3][0]) / h2;
+			y2 = (transformationMatrix[0][1] * x
+				+ transformationMatrix[1][1] * y
+				+ transformationMatrix[2][1] * z
+				+ transformationMatrix[3][1]) / h2;
+			z2 = (transformationMatrix[0][2] * x
+				+ transformationMatrix[1][2] * y
+				+ transformationMatrix[2][2] * z
+				+ transformationMatrix[3][2]) / h2;
 
-			if (FE_node_set_position_cartesian(node,coordinate_field,x2,y2,z2))
-			{
-				return_code = 1;
-			}
-			else
-			{
+			if (!FE_node_set_position_cartesian(node,coordinate_field,x2,y2,z2))
 				display_message(ERROR_MESSAGE,
 					"apply_transformation_to_node.  Could not move node");
-			}
 		}
 		else
 		{
@@ -6836,15 +6814,7 @@ Should enclose multiple calls in FE_region_begin_change/end_change wrappers.
 				"apply_transformation_to_node.  Could not calculate coordinate field");
 		}
 	}
-	else
-	{
-		display_message(ERROR_MESSAGE,
-			"apply_transformation_to_node.  Invalid argument(s)");
-	}
-	LEAVE;
-
-	return (return_code);
-} /* apply_transformation_to_node */
+}
 
 static int gfx_edit_graphics_object(struct Parse_state *state,
 	void *dummy_to_be_modified,void *command_data_void)
@@ -6859,7 +6829,6 @@ Executes a GFX EDIT GRAPHICS_OBJECT command.
 	int return_code;
 	struct cmzn_command_data *command_data;
 	struct cmzn_region *region;
-	struct FE_region *fe_region;
 	struct Option_table *option_table;
 
 	ENTER(gfx_edit_graphics_object);
@@ -6889,35 +6858,31 @@ Executes a GFX EDIT GRAPHICS_OBJECT command.
 				{
 					/* SAB Temporary place for this command cause I really need to use it,
 						 not very general, doesn't work in prolate or rotate derivatives */
-					struct Apply_transformation_data data;
 					struct cmzn_scene *scene = NULL;
 					gtMatrix identity = {{1,0,0,0},{0,1,0,0},{0,0,1,0},{0,0,0,1}};
 					scene = cmzn_region_get_scene(region);
 					if (scene)
 					{
-						if (cmzn_scene_has_transformation(scene)&&
-								cmzn_scene_get_transformation(scene, &(data.transformation)))
+						gtMatrix transformationMatrix;
+						if (cmzn_scene_has_transformation(scene) &&
+							cmzn_scene_get_transformation(scene, &transformationMatrix))
 						{
-							if (NULL != (fe_region = cmzn_region_get_FE_region(region)))
+							cmzn_fieldmodule_id fieldmodule = cmzn_region_get_fieldmodule(region);
+							cmzn_fieldmodule_begin_change(fieldmodule);
+							cmzn_field_domain_type domainTypes[] = { CMZN_FIELD_DOMAIN_TYPE_NODES, CMZN_FIELD_DOMAIN_TYPE_DATAPOINTS };
+							for (int i = 0; i < 2; ++i)
 							{
-								/* nodes */
-								data.fe_region = fe_region;
-								FE_region_begin_change(fe_region);
-								FE_region_for_each_FE_node(fe_region,
-									apply_transformation_to_node, (void *)&data);
-								FE_region_end_change(fe_region);
-								/* data */
-								data.fe_region = FE_region_get_data_FE_region(fe_region);
-								FE_region_begin_change(data.fe_region);
-								FE_region_for_each_FE_node(data.fe_region,
-									apply_transformation_to_node, (void *)&data);
-								FE_region_end_change(data.fe_region);
+								cmzn_nodeset_id nodeset =
+									cmzn_fieldmodule_find_nodeset_by_field_domain_type(fieldmodule, domainTypes[i]);
+								cmzn_nodeiterator_id iter = cmzn_nodeset_create_nodeiterator(nodeset);
+								cmzn_node_id node = 0;
+								while (0 != (node = cmzn_nodeiterator_next_non_access(iter)))
+									apply_transformation_to_node(node, transformationMatrix);
+								cmzn_nodeiterator_destroy(&iter);
+								cmzn_nodeset_destroy(&nodeset);
 							}
-							else
-							{
-								display_message(WARNING_MESSAGE, "Invalid region");
-								return_code = 0;
-							}
+							cmzn_fieldmodule_end_change(fieldmodule);
+							cmzn_fieldmodule_destroy(&fieldmodule);
 							cmzn_scene_set_transformation(scene, &identity);
 						}
 						else
@@ -8274,83 +8239,87 @@ Executes a GFX EXPORT command.
 
 void create_triangle_mesh(struct cmzn_region *region, Triangle_mesh *trimesh)
 {
-	struct FE_region *fe_region = cmzn_region_get_FE_region(region);
-	// for efficiency cache changes until all finished
-	FE_region_begin_change(fe_region);
+	cmzn_fieldmodule_id fieldmodule = cmzn_region_get_fieldmodule(region);
+	cmzn_fieldmodule_begin_change(fieldmodule);
 
-	// create a 3-D coordinate field
-	FE_field *coordinate_field = FE_field_create_coordinate_3d(fe_region, "coordinates");
+	/* create a 3-D coordinate field */
+	cmzn_field_id coordinate_field = cmzn_fieldmodule_find_field_by_name(fieldmodule, "coordinates");
+	if (coordinate_field)
+	{
+		cmzn_field_finite_element_id fe_field = cmzn_field_cast_finite_element(coordinate_field);
+		if ((!fe_field) ||
+			(3 != cmzn_field_get_number_of_components(coordinate_field)) ||
+			(!cmzn_field_is_type_coordinate(coordinate_field)) ||
+			(CMZN_FIELD_COORDINATE_SYSTEM_TYPE_RECTANGULAR_CARTESIAN !=
+				cmzn_field_get_coordinate_system_type(coordinate_field)))
+		{
+			cmzn_field_destroy(&coordinate_field);
+		}
+		cmzn_field_finite_element_destroy(&fe_field);
+	}
+	if (!coordinate_field)
+	{
+		coordinate_field = cmzn_fieldmodule_create_field_finite_element(fieldmodule, 3);
+		cmzn_field_set_name(coordinate_field, "coordinates");
+		cmzn_field_set_component_name(coordinate_field, 1, "x");
+		cmzn_field_set_component_name(coordinate_field, 2, "y");
+		cmzn_field_set_component_name(coordinate_field, 3, "z");
+		cmzn_field_set_managed(coordinate_field, true);
+		cmzn_field_set_type_coordinate(coordinate_field, true);
+	}
 
-	const Mesh_triangle_list  triangle_list = trimesh->get_triangle_list();
-	Mesh_triangle_list_const_iterator triangle_iter;
+	/* create and fill nodes */
+	cmzn_nodeset_id nodeset = cmzn_fieldmodule_find_nodeset_by_field_domain_type(fieldmodule, CMZN_FIELD_DOMAIN_TYPE_NODES);
+	cmzn_nodetemplate_id nodetemplate = cmzn_nodeset_create_nodetemplate(nodeset);
+	cmzn_nodetemplate_define_field(nodetemplate, coordinate_field);
+	cmzn_fieldcache_id cache = cmzn_fieldmodule_create_fieldcache(fieldmodule);
 	const Triangle_vertex_set vertex_set = trimesh->get_vertex_set();
-	Triangle_vertex_set_const_iterator vertex_iter;
-	// create template node with 3-D coordinate field parameters
-	struct FE_node *template_node;
-	int identifier = 1;
-	struct FE_node *node;
-	int number_of_values_confirmed;
-	FE_value coordinates[3];
-	double coord1, coord2, coord3;
-	int initial_identifier = FE_region_get_last_FE_node_identifier(fe_region);
-	int i = 0;
-	for (vertex_iter = vertex_set.begin(); vertex_iter!=vertex_set.end(); ++vertex_iter)
+	int initial_identifier = cmzn_nodeset_get_FE_nodeset_internal(nodeset)->get_last_FE_node_identifier();
+	double coordinates[3];
+	for (Triangle_vertex_set_const_iterator vertex_iter = vertex_set.begin(); vertex_iter!=vertex_set.end(); ++vertex_iter)
 	{
-		identifier = initial_identifier+(*vertex_iter)->get_identifier();
-		(*vertex_iter)->get_coordinates(&coord1, &coord2, &coord3);
-		template_node = CREATE(FE_node)(/*cm_node_identifier*/identifier, fe_region, /*template_node*/NULL);
-		define_FE_field_at_node_simple(template_node, coordinate_field, /*number_of_derivatives*/0, /*derivative_value_types*/NULL);
-
-		// create a node from the template
-		coordinates[0] = coord1;
-		coordinates[1] = coord2;
-		coordinates[2] = coord3;
-		node = CREATE(FE_node)(identifier, /*fe_region*/NULL, template_node);
-		ACCESS(FE_node)(node);
-		set_FE_nodal_field_FE_value_values(coordinate_field, node, coordinates, &number_of_values_confirmed);
-		FE_region_merge_FE_node(fe_region, node);
-		DEACCESS(FE_node)(&node);
-
-		DESTROY(FE_node)(&template_node);
-		i++;
+		int identifier = initial_identifier+(*vertex_iter)->get_identifier();
+		cmzn_node_id node = cmzn_nodeset_create_node(nodeset, identifier, nodetemplate);
+		cmzn_fieldcache_set_node(cache, node);
+		(*vertex_iter)->get_coordinates(coordinates);
+		cmzn_field_assign_real(coordinate_field, cache, 3, coordinates);
+		cmzn_node_destroy(&node);
 	}
+	cmzn_fieldcache_destroy(&cache);
+	cmzn_nodetemplate_destroy(&nodetemplate);
+
 	// establish mode which automates creation of shared faces
-	FE_region_begin_define_faces(fe_region, /*all dimensions*/-1);
+	FE_region_begin_define_faces(cmzn_region_get_FE_region(region), /*all dimensions*/-1);
 
-	struct CM_element_information element_identifier;
-	FE_element *element;
-	FE_element *template_element;
-	const Triangle_vertex *vertex1, *vertex2, *vertex3;
-
-	// create a triangle template element with linear simplex field
-	for (triangle_iter = triangle_list.begin(); triangle_iter!=triangle_list.end(); ++triangle_iter)
+	cmzn_mesh_id mesh = cmzn_fieldmodule_find_mesh_by_dimension(fieldmodule, 2);
+	cmzn_elementtemplate_id elementtemplate = cmzn_mesh_create_elementtemplate(mesh);
+	cmzn_elementtemplate_set_element_shape_type(elementtemplate, CMZN_ELEMENT_SHAPE_TYPE_TRIANGLE);
+	cmzn_elementtemplate_set_number_of_nodes(elementtemplate, 3);
+	cmzn_elementbasis_id elementbasis = cmzn_fieldmodule_create_elementbasis(fieldmodule, 2,
+		CMZN_ELEMENTBASIS_FUNCTION_TYPE_LINEAR_SIMPLEX);
+	int local_node_indexes[3] = { 1, 2, 3 };
+	cmzn_elementtemplate_define_field_simple_nodal(elementtemplate, coordinate_field, /*component_number*/-1,
+		elementbasis, 3, local_node_indexes);
+	const Triangle_vertex *vertex[3];
+	const Mesh_triangle_list triangle_list = trimesh->get_triangle_list();
+	for (Mesh_triangle_list_const_iterator triangle_iter = triangle_list.begin(); triangle_iter!=triangle_list.end(); ++triangle_iter)
 	{
-		(*triangle_iter)->get_vertexes(&vertex1, &vertex2, &vertex3);
-		template_element = FE_element_create_with_simplex_shape(fe_region, /*dimension*/2);
-		set_FE_element_number_of_nodes(template_element, 3);
-		FE_element_define_field_simple(template_element, coordinate_field, LINEAR_SIMPLEX);
-
-		// make an element based on the template & fill node list
-		element_identifier.type = CM_ELEMENT;
-		element_identifier.number = FE_region_get_next_FE_element_identifier(fe_region, /*dimension*/2, 1);
-		element = CREATE(FE_element)(&element_identifier, (struct FE_element_shape *)NULL,
-			(struct FE_region *)NULL, template_element);
-		ACCESS(FE_element)(element);
-		set_FE_element_node(element, 0, FE_region_get_FE_node_from_identifier(fe_region,initial_identifier+vertex1->get_identifier()));
-		set_FE_element_node(element, 1, FE_region_get_FE_node_from_identifier(fe_region,initial_identifier+vertex2->get_identifier()));
-		set_FE_element_node(element, 2, FE_region_get_FE_node_from_identifier(fe_region,initial_identifier+vertex3->get_identifier()));
-		FE_region_merge_FE_element_and_faces_and_nodes(fe_region, element);
-
-		DEACCESS(FE_element)(&element);
-
-	DEACCESS(FE_element)(&template_element);
+		(*triangle_iter)->get_vertexes(&(vertex[0]), &(vertex[1]), &(vertex[2]));
+		for (int i = 0; i < 3; ++i)
+			cmzn_elementtemplate_set_node(elementtemplate, i + 1,
+				cmzn_nodeset_find_node_by_identifier(nodeset, initial_identifier + vertex[i]->get_identifier()));
+		cmzn_mesh_define_element(mesh, /*identifier*/-1, elementtemplate);
 	}
-	// must remember to end define faces mode
-	FE_region_end_define_faces(fe_region);
+	cmzn_elementbasis_destroy(&elementbasis);
+	cmzn_elementtemplate_destroy(&elementtemplate);
+	cmzn_mesh_destroy(&mesh);
 
-	DEACCESS(FE_field)(&coordinate_field);
+	FE_region_end_define_faces(cmzn_region_get_FE_region(region));
 
-	FE_region_end_change(fe_region);
+	cmzn_nodeset_destroy(&nodeset);
+	cmzn_field_destroy(&coordinate_field);
+	cmzn_fieldmodule_end_change(fieldmodule);
+	cmzn_fieldmodule_destroy(&fieldmodule);
 }
 
 static int gfx_mesh_graphics_tetrahedral(struct Parse_state *state,
@@ -8433,7 +8402,7 @@ static int gfx_mesh_graphics_tetrahedral(struct Parse_state *state,
 							set_netgen_parameters_trimesh(generate_netgen_para, trimesh);
 							if (meshsize_file)
 								set_netgen_parameters_meshsize_filename(generate_netgen_para, meshsize_file);
-							generate_mesh_netgen(cmzn_region_get_FE_region(region), generate_netgen_para);
+							generate_mesh_netgen(region, generate_netgen_para);
 							release_netgen_parameters(generate_netgen_para);
 
 						}
@@ -8726,7 +8695,7 @@ int gfx_evaluate(struct Parse_state *state, void *dummy_to_be_modified,
 						}
 						if (node_region_path || data_region_path)
 						{
-							cmzn_nodeset_id nodeset = cmzn_fieldmodule_find_nodeset_by_domain_type(
+							cmzn_nodeset_id nodeset = cmzn_fieldmodule_find_nodeset_by_field_domain_type(
 								field_module, node_region_path ? CMZN_FIELD_DOMAIN_TYPE_NODES : CMZN_FIELD_DOMAIN_TYPE_DATAPOINTS);
 							if (group)
 							{
@@ -9388,7 +9357,7 @@ use node_manager and node_selection.
 		if (return_code)
 		{
 			cmzn_fieldmodule_id field_module = cmzn_region_get_fieldmodule(region);
-			cmzn_nodeset_id master_nodeset = cmzn_fieldmodule_find_nodeset_by_domain_type(field_module,
+			cmzn_nodeset_id master_nodeset = cmzn_fieldmodule_find_nodeset_by_field_domain_type(field_module,
 				use_data ? CMZN_FIELD_DOMAIN_TYPE_DATAPOINTS : CMZN_FIELD_DOMAIN_TYPE_NODES);
 			cmzn_nodeset_group_id selection_nodeset_group = 0;
 			if (selected_flag)
@@ -11304,7 +11273,7 @@ static int gfx_modify_node_group(struct Parse_state *state,
 			if (return_code)
 			{
 				cmzn_fieldmodule_id field_module = cmzn_region_get_fieldmodule(region);
-				cmzn_nodeset_id master_nodeset = cmzn_fieldmodule_find_nodeset_by_domain_type(field_module,
+				cmzn_nodeset_id master_nodeset = cmzn_fieldmodule_find_nodeset_by_field_domain_type(field_module,
 					use_data ? CMZN_FIELD_DOMAIN_TYPE_DATAPOINTS : CMZN_FIELD_DOMAIN_TYPE_NODES);
 				cmzn_nodeset_group_id selection_nodeset_group = 0;
 				if (selected_flag)
@@ -11650,7 +11619,7 @@ static int gfx_modify_nodes(struct Parse_state *state,
 				display_message(ERROR_MESSAGE, "gfx modify nodes:  Cannot find field %s", field_name);
 				return_code = 0;
 			}
-			cmzn_nodeset_id nodeset = cmzn_fieldmodule_find_nodeset_by_domain_type(field_module,
+			cmzn_nodeset_id nodeset = cmzn_fieldmodule_find_nodeset_by_field_domain_type(field_module,
 				use_data ? CMZN_FIELD_DOMAIN_TYPE_DATAPOINTS : CMZN_FIELD_DOMAIN_TYPE_NODES);
 			cmzn_nodetemplate_id node_template = cmzn_nodeset_create_nodetemplate(nodeset);
 			if (define_field_name)
@@ -11807,10 +11776,12 @@ Executes a GFX MODIFY command.
 				/* egroup */
 				Option_table_add_entry(option_table,"egroup",NULL,
 					(void *)command_data, gfx_modify_element_group);
+#if defined (EMOTER_ENABLE)
 				/* emoter */
 				Option_table_add_entry(option_table,"emoter",NULL,
 					(void *)command_data->emoter_slider_dialog,
 					gfx_modify_emoter);
+#endif
 				/* environment_map */
 				modify_environment_map_data.graphical_material_manager=
 					cmzn_materialmodule_get_manager(command_data->materialmodule);
@@ -12225,7 +12196,8 @@ int offset_region_identifier(cmzn_region_id region, char element_flag, int eleme
 	/* Offset these nodes and elements before merging */
 	if (fe_region)
 	{
-		FE_region_begin_change(fe_region);
+		cmzn_fieldmodule_id fieldmodule = cmzn_region_get_fieldmodule(region);
+		cmzn_fieldmodule_begin_change(fieldmodule);
 		int highest_dimension = FE_region_get_highest_dimension(fe_region);
 		if (element_flag)
 		{
@@ -12256,29 +12228,14 @@ int offset_region_identifier(cmzn_region_id region, char element_flag, int eleme
 		}
 		if (node_flag)
 		{
-			if (!use_data)
+			cmzn_nodeset_id nodeset = cmzn_fieldmodule_find_nodeset_by_field_domain_type(fieldmodule,
+				use_data ? CMZN_FIELD_DOMAIN_TYPE_DATAPOINTS : CMZN_FIELD_DOMAIN_TYPE_NODES);
+			if (!cmzn_nodeset_change_node_identifiers(nodeset,
+				node_offset, (struct Computed_field *)NULL, /*time*/0))
 			{
-				if (!FE_region_change_node_identifiers(fe_region,
-					node_offset, (struct Computed_field *)NULL, /*time*/0,
-					/*node group*/0))
-				{
-					return_code = 0;
-				}
-			}
-			else
-			{
-				struct FE_region *data_fe_region = FE_region_get_data_FE_region(fe_region);
-				FE_region_begin_change(data_fe_region);
-				if (!FE_region_change_node_identifiers(data_fe_region,
-					node_offset, (struct Computed_field *)NULL, /*time*/0,
-					/*node group*/0))
-				{
-					return_code = 0;
-				}
-				FE_region_end_change(data_fe_region);
+				return_code = 0;
 			}
 		}
-		FE_region_end_change(fe_region);
 		struct cmzn_region *child_region = cmzn_region_get_first_child(region);
 		while ((NULL != child_region))
 		{
@@ -12286,6 +12243,7 @@ int offset_region_identifier(cmzn_region_id region, char element_flag, int eleme
 				face_offset, line_flag, line_offset, node_flag, node_offset, use_data);
 			cmzn_region_reaccess_next_sibling(&child_region);
 		}
+		cmzn_fieldmodule_end_change(fieldmodule);
 	}
 	else
 	{
@@ -13169,6 +13127,7 @@ Executes a GFX SELECT command.
 			/* default option: multi range */
 			Option_table_add_entry(option_table, (char *)NULL, (void *)multi_range,
 				NULL, set_Multi_range);
+			cmzn_fieldmodule_id fieldmodule = 0;
 			if (0 != (return_code = Option_table_multi_parse(option_table, state)))
 			{
 				if ((data_flag + elements_flag + faces_flag + grid_points_flag
@@ -13179,22 +13138,22 @@ Executes a GFX SELECT command.
 						"data/elements/faces/lines/grid_points/nodes.");
 					return_code = 0;
 				}
-				if (!(region_path &&
+				if (region_path &&
 					cmzn_region_get_region_from_path_deprecated(command_data->root_region,
 						region_path, &region) &&
-					(fe_region = cmzn_region_get_FE_region(region))))
+					(fe_region = cmzn_region_get_FE_region(region)))
+				{
+					fieldmodule = cmzn_region_get_fieldmodule(region);
+				}
+				else
 				{
 					display_message(ERROR_MESSAGE, "gfx select:  Invalid region");
 					return_code = 0;
 				}
-				else
+				if (return_code && conditional_field_name)
 				{
-				if (conditional_field_name)
-				{
-					cmzn_fieldmodule_id field_module = cmzn_region_get_fieldmodule(region);
-					conditional_field = cmzn_fieldmodule_find_field_by_name(field_module,
+					conditional_field = cmzn_fieldmodule_find_field_by_name(fieldmodule,
 						conditional_field_name);
-					cmzn_fieldmodule_destroy(&field_module);
 					if (!conditional_field)
 					{
 						display_message(ERROR_MESSAGE,
@@ -13202,23 +13161,24 @@ Executes a GFX SELECT command.
 						return_code = 0;
 					}
 				}
-				}
 			}
 			if (return_code)
 			{
 				/* data */
 				if (data_flag)
 				{
-					if (NULL != (node_list =
-						FE_node_list_from_ranges(FE_region_get_data_FE_region(fe_region), multi_range, conditional_field, time)))
+					cmzn_nodeset *nodeset = cmzn_fieldmodule_find_nodeset_by_field_domain_type(fieldmodule,
+						CMZN_FIELD_DOMAIN_TYPE_DATAPOINTS);
+					node_list = cmzn_nodeset_create_node_list_ranges_conditional(
+						nodeset, Multi_range_get_total_number_in_ranges(multi_range) ?
+							multi_range : static_cast<Multi_range *>(0), conditional_field, time);
+					cmzn_nodeset_destroy(&nodeset);
+					if (node_list)
 					{
-						if (region)
-						{
-							cmzn_scene *local_scene = cmzn_region_get_scene(region);
-							cmzn_scene_add_selection_from_node_list(local_scene,
-								node_list, /* use_data */1);
-							cmzn_scene_destroy(&local_scene);
-						}
+						cmzn_scene *local_scene = cmzn_region_get_scene(region);
+						cmzn_scene_add_selection_from_node_list(local_scene,
+							node_list, /* use_data */1);
+						cmzn_scene_destroy(&local_scene);
 						if (verbose_flag)
 						{
 							display_message(INFORMATION_MESSAGE,
@@ -13363,16 +13323,18 @@ Executes a GFX SELECT command.
 				/* nodes */
 				if (nodes_flag)
 				{
-					if (NULL != (node_list =
-							FE_node_list_from_ranges(fe_region, multi_range, conditional_field, time)))
+					cmzn_nodeset *nodeset = cmzn_fieldmodule_find_nodeset_by_field_domain_type(fieldmodule,
+						CMZN_FIELD_DOMAIN_TYPE_NODES);
+					node_list = cmzn_nodeset_create_node_list_ranges_conditional(
+						nodeset, Multi_range_get_total_number_in_ranges(multi_range) ?
+							multi_range : static_cast<Multi_range *>(0), conditional_field, time);
+					cmzn_nodeset_destroy(&nodeset);
+					if (node_list)
 					{
-						if (region)
-						{
-							cmzn_scene *local_scene = cmzn_region_get_scene(region);
-							cmzn_scene_add_selection_from_node_list(local_scene,
-								node_list, /* use_data */0);
-							cmzn_scene_destroy(&local_scene);
-						}
+						cmzn_scene *local_scene = cmzn_region_get_scene(region);
+						cmzn_scene_add_selection_from_node_list(local_scene,
+							node_list, /* use_data */0);
+						cmzn_scene_destroy(&local_scene);
 						if (verbose_flag)
 						{
 							display_message(INFORMATION_MESSAGE,
@@ -13385,6 +13347,7 @@ Executes a GFX SELECT command.
 				}
 			}
 			DESTROY(Option_table)(&option_table);
+			cmzn_fieldmodule_destroy(&fieldmodule);
 			DEALLOCATE(region_path);
 			if (conditional_field_name)
 				DEALLOCATE(conditional_field_name);
@@ -13530,6 +13493,7 @@ Executes a GFX UNSELECT command.
 			/* default option: multi range */
 			Option_table_add_entry(option_table, (char *)NULL, (void *)multi_range,
 				NULL, set_Multi_range);
+			cmzn_fieldmodule_id fieldmodule = 0;
 			if (0 != (return_code = Option_table_multi_parse(option_table, state)))
 			{
 				if ((data_flag + elements_flag + faces_flag + grid_points_flag
@@ -13540,22 +13504,22 @@ Executes a GFX UNSELECT command.
 						"data/elements/faces/lines/grid_points/nodes.");
 					return_code = 0;
 				}
-				if (!(region_path &&
+				if (region_path &&
 					cmzn_region_get_region_from_path_deprecated(command_data->root_region,
 						region_path, &region) &&
-					(fe_region = cmzn_region_get_FE_region(region))))
+					(fe_region = cmzn_region_get_FE_region(region)))
+				{
+					fieldmodule = cmzn_region_get_fieldmodule(region);
+				}
+				else
 				{
 					display_message(ERROR_MESSAGE, "gfx unselect:  Invalid region");
 					return_code = 0;
 				}
-				else
+				if (return_code && conditional_field_name)
 				{
-				if (conditional_field_name)
-				{
-					cmzn_fieldmodule_id field_module = cmzn_region_get_fieldmodule(region);
-					conditional_field = cmzn_fieldmodule_find_field_by_name(field_module,
+					conditional_field = cmzn_fieldmodule_find_field_by_name(fieldmodule,
 						conditional_field_name);
-					cmzn_fieldmodule_destroy(&field_module);
 					if (!conditional_field)
 					{
 						display_message(ERROR_MESSAGE,
@@ -13563,23 +13527,24 @@ Executes a GFX UNSELECT command.
 						return_code = 0;
 					}
 				}
-				}
 			}
 			if (return_code)
 			{
 				/* data */
 				if (data_flag)
 				{
-					if (NULL != (node_list =
-							FE_node_list_from_ranges(FE_region_get_data_FE_region(fe_region), multi_range, conditional_field, time)))
+					cmzn_nodeset *nodeset = cmzn_fieldmodule_find_nodeset_by_field_domain_type(fieldmodule,
+						CMZN_FIELD_DOMAIN_TYPE_DATAPOINTS);
+					node_list = cmzn_nodeset_create_node_list_ranges_conditional(
+						nodeset, Multi_range_get_total_number_in_ranges(multi_range) ?
+							multi_range : static_cast<Multi_range *>(0), conditional_field, time);
+					cmzn_nodeset_destroy(&nodeset);
+					if (node_list)
 					{
-						if (region)
-						{
-							cmzn_scene *local_scene = cmzn_region_get_scene(region);
-							cmzn_scene_remove_selection_from_node_list(local_scene,
-								node_list, /* use_data */1);
-							cmzn_scene_destroy(&local_scene);
-						}
+						cmzn_scene *local_scene = cmzn_region_get_scene(region);
+						cmzn_scene_remove_selection_from_node_list(local_scene,
+							node_list, /* use_data */1);
+						cmzn_scene_destroy(&local_scene);
 						if (verbose_flag)
 						{
 							display_message(INFORMATION_MESSAGE,
@@ -13724,18 +13689,20 @@ Executes a GFX UNSELECT command.
 				/* nodes */
 				if (nodes_flag)
 				{
-					if (NULL != (node_list =
-							FE_node_list_from_ranges(fe_region, multi_range, conditional_field, time)))
+					cmzn_nodeset *nodeset = cmzn_fieldmodule_find_nodeset_by_field_domain_type(fieldmodule,
+						CMZN_FIELD_DOMAIN_TYPE_NODES);
+					node_list = cmzn_nodeset_create_node_list_ranges_conditional(
+						nodeset, Multi_range_get_total_number_in_ranges(multi_range) ?
+							multi_range : static_cast<Multi_range *>(0), conditional_field, time);
+					cmzn_nodeset_destroy(&nodeset);
+					if (node_list)
 					{
-						if (region)
-						{
-							cmzn_scene *local_scene = cmzn_region_get_scene(region);
-							cmzn_scene_remove_selection_from_node_list(local_scene,
-								node_list, /* use_data */0);
-							cmzn_scene_destroy(&local_scene);
-						}
-						DESTROY(LIST(FE_node))(&node_list);
+						cmzn_scene *local_scene = cmzn_region_get_scene(region);
+						cmzn_scene_remove_selection_from_node_list(local_scene,
+							node_list, /* use_data */0);
+						cmzn_scene_destroy(&local_scene);
 					}
+					DESTROY(LIST(FE_node))(&node_list);
 				}
 			}
 			DESTROY(Option_table)(&option_table);
@@ -13812,9 +13779,10 @@ Sets nodal field values from a command.
 	if (state && (command_data = (struct cmzn_command_data *)command_data_void))
 	{
 		fe_region = cmzn_region_get_FE_region(command_data->root_region);
+		FE_nodeset *fe_nodeset = FE_region_find_FE_nodeset_by_field_domain_type(fe_region, CMZN_FIELD_DOMAIN_TYPE_NODES);
 		node = (struct FE_node *)NULL;
-		if (0 != (return_code = set_FE_node_FE_region(state,(void *)&node,
-			(void *)fe_region)))
+		if (0 != (return_code = set_FE_node_FE_nodeset(state,(void *)&node,
+			(void *)fe_nodeset)))
 		{
 			component.field = (struct FE_field *)NULL;
 			component.number = 0;

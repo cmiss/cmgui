@@ -43,17 +43,12 @@ DESCRIPTION :
 Adds an entry for selecting an FE_field.
 ==============================================================================*/
 
-
-int set_FE_node_FE_region(struct Parse_state *state, void *node_address_void,
-	void *fe_region_void);
-/*******************************************************************************
-LAST MODIFIED : 25 February 2003
-
-DESCRIPTION :
-Used in command parsing to translate a node name into an node from <fe_region>.
-==============================================================================*/
-
-
+/**
+ * Command modifier to translate a node identifier into an accessed node
+ * object from fe_nodeset.
+ */
+int set_FE_node_FE_nodeset(struct Parse_state *state, void *node_address_void,
+	void *fe_nodeset_void);
 
 int set_FE_element_top_level_FE_region(struct Parse_state *state,
 	void *element_address_void, void *fe_region_void);

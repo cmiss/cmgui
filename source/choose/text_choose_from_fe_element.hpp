@@ -18,6 +18,9 @@ Calls the client-specified callback routine if a different object is chosen.
 
 #include <stdio.h>
 #include "wx/wx.h"
+#include "zinc/element.h"
+#include "zinc/fieldmodule.h"
+#include "computed_field/field_module.hpp"
 #include "general/callback_class.hpp"
 #include "general/debug.h"
 #include "finite_element/finite_element_region.h"
@@ -30,55 +33,40 @@ class wxFeElementTextChooser : public wxTextCtrl
 {
 private:
 	struct FE_element *current_object,*last_updated_object;
-	struct FE_region *fe_region;
+	cmzn_region_id region;
+	cmzn_fieldmodulenotifier_id fieldmodulenotifier;
 	LIST_CONDITIONAL_FUNCTION(FE_element) *conditional_function;
 	void *conditional_function_user_data;
 	Callback_base<FE_element*> *callback;
 
 public:
-	 wxFeElementTextChooser(wxWindow *parent,
-		 FE_element *initial_object,	FE_region *fe_region,
-		 LIST_CONDITIONAL_FUNCTION(FE_element) *conditional_function,
-		 void *conditional_function_user_data) :
-			wxTextCtrl(parent, /*id*/-1, wxT("") ,wxPoint(0,0), wxSize(-1,-1),wxTE_PROCESS_ENTER),
-			fe_region(fe_region), conditional_function(conditional_function),
-			conditional_function_user_data(conditional_function_user_data)
-/*******************************************************************************
-LAST MODIFIED : 28 March 2007
-
-DESCRIPTION :
-=============================================================================*/
+	wxFeElementTextChooser(wxWindow *parent,
+			FE_element *initial_object, cmzn_region_id regionIn,
+			LIST_CONDITIONAL_FUNCTION(FE_element) *conditional_function,
+			void *conditional_function_user_data) :
+		wxTextCtrl(parent, /*id*/-1, wxT("") ,wxPoint(0,0), wxSize(-1,-1),wxTE_PROCESS_ENTER),
+		current_object(0),
+		last_updated_object(0),
+		region(0),
+		fieldmodulenotifier(0),
+		conditional_function(conditional_function),
+		conditional_function_user_data(conditional_function_user_data),
+		callback(0)
 	{
-		 current_object = (FE_element *)NULL;
-		 last_updated_object = (FE_element *)NULL;
-		 callback = (Callback_base<FE_element*> *)NULL;
-		 Connect(wxEVT_COMMAND_TEXT_ENTER,
-				wxCommandEventHandler(wxFeElementTextChooser::OnTextEnter));
-		 Connect(wxEVT_KILL_FOCUS,
-				wxCommandEventHandler(wxFeElementTextChooser::OnTextEnter));
-		 FE_region_add_callback(fe_region,
-				wxFeElementTextChooser::object_change,
-				(void *)this);
-		 select_object(initial_object);
-		 wxBoxSizer *sizer = new wxBoxSizer( wxHORIZONTAL );
-		 sizer->Add(this,
-				wxSizerFlags(1).Align(wxALIGN_CENTER).Expand());
-		 parent->SetSizer(sizer);
-
-	Show();
+		this->setRegion(regionIn);
+		Connect(wxEVT_COMMAND_TEXT_ENTER, wxCommandEventHandler(wxFeElementTextChooser::OnTextEnter));
+		Connect(wxEVT_KILL_FOCUS, wxCommandEventHandler(wxFeElementTextChooser::OnTextEnter));
+		select_object(initial_object);
+		wxBoxSizer *sizer = new wxBoxSizer( wxHORIZONTAL );
+		sizer->Add(this, wxSizerFlags(1).Align(wxALIGN_CENTER).Expand());
+		parent->SetSizer(sizer);
+		Show();
 	}
 
 	~wxFeElementTextChooser()
-/*******************************************************************************
-LAST MODIFIED : 9 January 2003
-
-DESCRIPTION :
-==============================================================================*/
-	 {
-		 FE_region_remove_callback(fe_region,
-				wxFeElementTextChooser::object_change,
-				(void *)this);
-	 }
+	{
+		cmzn_fieldmodulenotifier_destroy(&this->fieldmodulenotifier);
+	}
 
 	int set_callback(Callback_base<FE_element*> *callback_object)
 	{
@@ -140,6 +128,7 @@ update in case it has changed, and writes the new object string in the widget.
 	current_string = tmp.mb_str(wxConvUTF8);
 	if (current_string)
 	{
+		FE_region *fe_region = cmzn_region_get_FE_region(this->region);
 		 if (new_object && ((!(FE_region_contains_FE_element(
 			 fe_region, new_object)) ||
 				(conditional_function &&
@@ -201,44 +190,27 @@ update in case it has changed, and writes the new object string in the widget.
 	return (return_code);
 } /* TEXT_CHOOSE_FROM_FE_REGION_SELECT_OBJECT(object_type) */
 
-
-static void object_change(struct FE_region *fe_region, struct FE_region_changes *changes,
-	 void *text_choose_object_void)
-/*****************************************************************************
-LAST MODIFIED : 28 March 2003
-
-DESCRIPTION :
-Updates the chosen object and text field in response to messages.
-============================================================================*/
+/**
+ * Callback from fieldmodule.
+ * Updates the chosen object and text field in response to events.
+ */
+static void cmzn_fieldmoduleevent_to_chooser(cmzn_fieldmoduleevent_id event, void *chooser_void)
 {
-	int fe_element_change;
-	wxFeElementTextChooser *chooser;
-
-	ENTER(TEXT_CHOOSE_FROM_FE_REGION_GLOBAL_OBJECT_CHANGE(FE_element));
-
-	USE_PARAMETER(fe_region);
-	chooser = static_cast<wxFeElementTextChooser *>(text_choose_object_void);
-	if (chooser)
+	wxFeElementTextChooser *chooser = static_cast<wxFeElementTextChooser *>(chooser_void);
+	if (chooser && chooser->current_object)
 	{
-		if (chooser->current_object)
+		int dimension = get_FE_element_dimension(chooser->current_object);
+		FE_region_changes *feRegionChanges = event->getFeRegionChanges();
+		CHANGE_LOG(FE_element) *elementChanges = feRegionChanges->getElementChanges(dimension);
+		int fe_element_change;
+		if (CHANGE_LOG_QUERY(FE_element)(elementChanges,
+			chooser->current_object, &fe_element_change) &&
+			(fe_element_change & (CHANGE_LOG_OBJECT_CHANGED(FE_element) | CHANGE_LOG_OBJECT_REMOVED(FE_element))))
 		{
-			int dimension = get_FE_element_dimension(chooser->current_object);
-			if (CHANGE_LOG_QUERY(FE_element)(
-				FE_region_changes_get_FE_element_changes(changes, dimension),
-				chooser->current_object, &fe_element_change))
-				{
-						if (fe_element_change &
-							(CHANGE_LOG_OBJECT_CHANGED(FE_element) |
-							 CHANGE_LOG_OBJECT_REMOVED(FE_element)))
-					{
-						chooser->select_object((struct FE_element *)NULL);
-					}
-				}
+			chooser->select_object((struct FE_element *)NULL);
 		}
 	}
-
-	LEAVE;
-} /* TEXT_CHOOSE_FROM_FE_REGION_GLOBAL_OBJECT_CHANGE(FE_element) */
+}
 
 int GetCallback(struct FE_element *new_object)
 /*****************************************************************************
@@ -310,19 +282,24 @@ Changes the callback item of the text_choose_object_widget. \
 	return (return_code);
 } /* TEXT_CHOOSE_FROM_FE_REGION_SET_CALLBACK(object_type) */
 
-int set_fe_region(FE_region *fe_region_in)
+int setRegion(cmzn_region_id regionIn)
 {
-	int return_code = 1;
-	FE_region_remove_callback(fe_region,
-		wxFeElementTextChooser::object_change,
-		(void *)this);
-	fe_region = fe_region_in;
-	select_object((struct FE_element *)NULL);
-	FE_region_add_callback(fe_region,
-		wxFeElementTextChooser::object_change,
-		(void *)this);
-
-	return (return_code);
+	if (regionIn != this->region)
+	{
+		if (this->region)
+			cmzn_fieldmodulenotifier_destroy(&this->fieldmodulenotifier);
+		this->region = regionIn;
+		this->select_object((struct FE_element *)NULL);
+		if (this->region)
+		{
+			cmzn_fieldmodule_id fieldmodule = cmzn_region_get_fieldmodule(this->region);
+			this->fieldmodulenotifier = cmzn_fieldmodule_create_fieldmodulenotifier(fieldmodule);
+			cmzn_fieldmodulenotifier_set_callback(this->fieldmodulenotifier,
+				wxFeElementTextChooser::cmzn_fieldmoduleevent_to_chooser, (void *)this);
+			cmzn_fieldmodule_destroy(&fieldmodule);
+		}
+	}
+	return 1;
 }
 
 	struct FE_element *get_object()
@@ -333,18 +310,12 @@ DESCRIPTION : \
 Returns the currently chosen object in the text_choose_object_widget. \
 ============================================================================*/
 {
-	 struct FE_element *new_object,*return_address;
-	 wxString tmp = GetValue();
-
-	 ENTER(TEXT_CHOOSE_FROM_FE_REGION_GET_OBJECT(object_type));
-	 new_object = FE_region_element_string_to_FE_element(fe_region,
-			tmp.mb_str(wxConvUTF8));
-	 select_object(new_object);
-	 return_address = current_object;
-	LEAVE;
-
-	return (return_address);
-} /* TEXT_CHOOSE_FROM_FE_REGION_GET_OBJECT(object_type) */
+	wxString tmp = GetValue();
+	struct FE_element *new_object = FE_region_element_string_to_FE_element(
+		cmzn_region_get_FE_region(this->region), tmp.mb_str(wxConvUTF8));
+	select_object(new_object);
+	return current_object;
+}
 
 int set_object(struct FE_element *new_object)
 /*****************************************************************************

@@ -890,8 +890,8 @@ void Region_tree_viewer_wx_set_manager_in_choosers(struct Region_tree_viewer *re
 	if (texture_coord_field_chooser != NULL)
 			texture_coord_field_chooser->set_manager(region_tree_viewer->field_manager);
 	if (seed_element_chooser != NULL)
-		seed_element_chooser->set_fe_region(cmzn_region_get_FE_region(cmzn_scene_get_region(
-			region_tree_viewer->edit_scene)));
+		seed_element_chooser->setRegion(cmzn_scene_get_region_internal(
+			region_tree_viewer->edit_scene));
 }
 
 int coordinate_field_callback(Computed_field *coordinate_field)
@@ -2613,7 +2613,6 @@ void SetGraphics(cmzn_graphics *graphics)
 	char temp_string[100], *vector_temp_string;
 	enum cmzn_graphics_render_polygon_mode render_polygon_mode;
 	struct FE_element *seed_element;
-	struct FE_region *fe_region;
 
 	const cmzn_graphics_type graphics_type = cmzn_graphics_get_graphics_type(graphics);
 	const int domain_dimension = cmzn_graphics_get_domain_dimension(graphics);
@@ -3291,14 +3290,12 @@ void SetGraphics(cmzn_graphics *graphics)
 		{
 			seed_element_panel->Show();
 			seedelementcheckbox->Show();
-			fe_region = cmzn_region_get_FE_region(cmzn_scene_get_region(
-				region_tree_viewer->edit_scene));
-			seed_element =
-				cmzn_graphics_get_seed_element(graphics);
+			cmzn_region_id region = cmzn_scene_get_region_internal(region_tree_viewer->edit_scene);
+			seed_element = cmzn_graphics_get_seed_element(graphics);
 			if (seed_element_chooser == NULL)
 			{
 				seed_element_chooser = new wxFeElementTextChooser(seed_element_panel,
-						seed_element, fe_region, FE_element_is_top_level,(void *)NULL);
+						seed_element, region, FE_element_is_top_level,(void *)NULL);
 				Callback_base<FE_element *> *seed_element_callback =
 						new Callback_member_callback< FE_element*,
 						wxRegionTreeViewer, int (wxRegionTreeViewer::*)(FE_element *) >
@@ -4049,7 +4046,7 @@ void Region_tree_viewer_set_active_scene(
 				region_tree_viewer->wx_region_tree_viewer->Region_tree_viewer_wx_update_current_graphics(NULL);
 			}
 			region_tree_viewer->field_manager
-				= cmzn_region_get_Computed_field_manager(cmzn_scene_get_region(
+				= cmzn_region_get_Computed_field_manager(cmzn_scene_get_region_internal(
 					region_tree_viewer->edit_scene));
 		}
 		if (region_tree_viewer->scene)

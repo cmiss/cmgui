@@ -52,7 +52,7 @@ int Time_keeper_app_timer_event_handler(void *time_keeper_app_void)
 Time_keeper_app::Time_keeper_app(cmzn_timekeeper *time_keeper_in,
 	struct Event_dispatcher *event_dispatcher):
 	play_mode(TIME_KEEPER_APP_PLAY_LOOP),
-	play_remaining(0.0),
+	play_remaining(0),
 	speed(1.0),
 	step(0.0),
 	play_direction(TIME_KEEPER_PLAY_FORWARD),
@@ -173,7 +173,6 @@ void Time_keeper_app::setSpeed(double speed_in)
 int Time_keeper_app::playPrivate()
 {
 	int return_code = 0, looping = 0;
-	struct Time_object_info *object_info;
 	struct timeval timeofday;
 	double current_time = time_keeper->getTime();
 	double minimum = time_keeper->getMinimum(),
@@ -379,7 +378,6 @@ int Time_keeper_app::timerEvent()
 {
 	double event_time = 0.0, real_time_elapsed, closest_object_time, event_interval;
 	int first_event_time, return_code;
-	Time_keeper_app *time_keeper_app;
 	struct Time_object_info *object_info;
 	struct timeval timeofday;
 	double current_time = 0.0;

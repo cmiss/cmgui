@@ -68,8 +68,8 @@ already) and allows its contents to be modified.
 			if (lookup_node)
 			{
 				node_identifier = get_FE_node_identifier(lookup_node);
-				FE_region *fe_region = FE_node_get_FE_region(lookup_node);
-				if (!FE_region_contains_FE_node(fe_region, lookup_node))
+				FE_nodeset *fe_nodeset = FE_node_get_FE_nodeset(lookup_node);
+				if (fe_nodeset->getFieldDomainType() == CMZN_FIELD_DOMAIN_TYPE_DATAPOINTS)
 				{
 					DEALLOCATE(nodeset_name);
 					nodeset_name = duplicate_string("datapoints");
@@ -177,8 +177,8 @@ contents to be modified.
 			if (lookup_node)
 			{
 				node_identifier = get_FE_node_identifier(lookup_node);
-				FE_region *fe_region = FE_node_get_FE_region(lookup_node);
-				if (!FE_region_contains_FE_node(fe_region, lookup_node))
+				FE_nodeset *fe_nodeset = FE_node_get_FE_nodeset(lookup_node);
+				if (fe_nodeset->getFieldDomainType() == CMZN_FIELD_DOMAIN_TYPE_DATAPOINTS)
 				{
 					DEALLOCATE(nodeset_name);
 					nodeset_name = duplicate_string("datapoints");

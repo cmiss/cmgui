@@ -23,16 +23,14 @@ FE_region wrapper for set_FE_field_component.
 ==============================================================================*/
 {
 	int return_code;
-	struct FE_region *fe_region, *master_fe_region;
+	struct FE_region *fe_region;
 
 	ENTER(set_FE_field_component_FE_region);
 	if (state && fe_field_component_address_void &&
 		(fe_region = (struct FE_region *)fe_region_void))
 	{
-		/* get the ultimate master FE_region; only it has field info */
-		master_fe_region = FE_region_get_ultimate_master_FE_region(fe_region);
 		return_code = set_FE_field_component(state, fe_field_component_address_void,
-			(void *)(FE_region_get_FE_field_list(master_fe_region)));
+			(void *)(FE_region_get_FE_field_list(fe_region)));
 	}
 	else
 	{
@@ -56,7 +54,7 @@ at a struct Set_FE_field_conditional_FE_region_data.
 ==============================================================================*/
 {
 	int return_code;
-	struct FE_region *fe_region, *master_fe_region;
+	struct FE_region *fe_region;
 	struct Set_FE_field_conditional_data set_field_data;
 	struct Set_FE_field_conditional_FE_region_data *parse_field_data;
 
@@ -65,13 +63,9 @@ at a struct Set_FE_field_conditional_FE_region_data.
 		(struct Set_FE_field_conditional_FE_region_data *)parse_field_data_void)
 		&& (fe_region = parse_field_data->fe_region))
 	{
-		/* get the ultimate master FE_region; only it has field info */
-		master_fe_region = FE_region_get_ultimate_master_FE_region(fe_region);
-		set_field_data.conditional_function =
-			parse_field_data->conditional_function;
-		set_field_data.conditional_function_user_data =
-			parse_field_data->user_data;
-		set_field_data.fe_field_list = FE_region_get_FE_field_list(master_fe_region);
+		set_field_data.conditional_function = parse_field_data->conditional_function;
+		set_field_data.conditional_function_user_data = parse_field_data->user_data;
+		set_field_data.fe_field_list = FE_region_get_FE_field_list(fe_region);
 		return_code = set_FE_field_conditional(state, fe_field_address_void,
 			(void *)&set_field_data);
 	}
@@ -96,16 +90,14 @@ FE_region wrapper for set_FE_fields.
 ==============================================================================*/
 {
 	int return_code;
-	struct FE_region *fe_region, *master_fe_region;
+	struct FE_region *fe_region;
 
 	ENTER(set_FE_fields_FE_region);
 	if (state && fe_field_order_info_address_void &&
 		(fe_region = (struct FE_region *)fe_region_void))
 	{
-		/* get the ultimate master FE_region; only it has fe_field_list */
-		master_fe_region = FE_region_get_ultimate_master_FE_region(fe_region);
 		return_code = set_FE_fields(state, fe_field_order_info_address_void,
-			(void *)(FE_region_get_FE_field_list(master_fe_region)));
+			(void *)(FE_region_get_FE_field_list(fe_region)));
 	}
 	else
 	{
@@ -129,15 +121,12 @@ Adds an entry for selecting an FE_field.
 ==============================================================================*/
 {
 	int return_code = 0;
-	struct FE_region *master_fe_region;
 
 	ENTER(Option_table_add_set_FE_field_from_FE_region);
 	if (option_table && entry_string && fe_field_address && fe_region)
 	{
-		/* get the ultimate master FE_region; only it has field info */
-		master_fe_region = FE_region_get_ultimate_master_FE_region(fe_region);
 		Option_table_add_entry(option_table, entry_string,
-			(void *)fe_field_address, FE_region_get_FE_field_list(master_fe_region),
+			(void *)fe_field_address, FE_region_get_FE_field_list(fe_region),
 			set_FE_field);
 		return_code = 1;
 	}
@@ -151,25 +140,16 @@ Adds an entry for selecting an FE_field.
 	return (return_code);
 } /* Option_table_add_set_FE_field_from_FE_region */
 
-
-int set_FE_node_FE_region(struct Parse_state *state, void *node_address_void,
-	void *fe_region_void)
-/*******************************************************************************
-LAST MODIFIED : 25 February 2003
-
-DESCRIPTION :
-Used in command parsing to translate a node name into an node from <fe_region>.
-==============================================================================*/
+int set_FE_node_FE_nodeset(struct Parse_state *state, void *node_address_void,
+	void *fe_nodeset_void)
 {
 	const char *current_token;
 	int identifier, return_code;
 	struct FE_node *node;
-	struct FE_region *fe_region;
 
-	ENTER(set_FE_node_FE_region);
 	struct FE_node **node_address = reinterpret_cast<struct FE_node **>(node_address_void);
-	if ((state) && (node_address) &&
-		(fe_region = (struct FE_region *)fe_region_void))
+	FE_nodeset *fe_nodeset = reinterpret_cast<FE_nodeset*>(fe_nodeset_void);
+	if ((state) && (node_address) && (fe_nodeset))
 	{
 		current_token=state->current_token;
 		if (current_token)
@@ -178,7 +158,7 @@ Used in command parsing to translate a node name into an node from <fe_region>.
 				strcmp(PARSER_RECURSIVE_HELP_STRING,current_token))
 			{
 				if ((1 == sscanf(current_token, "%d", &identifier)) &&
-					(node = FE_region_get_FE_node_from_identifier(fe_region, identifier)))
+					(node = fe_nodeset->get_FE_node_from_identifier(identifier)))
 				{
 					REACCESS(FE_node)(node_address, node);
 					return_code = shift_Parse_state(state,1);
@@ -212,15 +192,11 @@ Used in command parsing to translate a node name into an node from <fe_region>.
 	else
 	{
 		display_message(ERROR_MESSAGE,
-			"set_FE_node_FE_region.  Invalid argument(s)");
+			"set_FE_node_FE_nodeset.  Invalid argument(s)");
 		return_code = 0;
 	}
-	LEAVE;
-
 	return (return_code);
-} /* set_FE_node_FE_region */
-
-
+}
 
 int set_FE_element_top_level_FE_region(struct Parse_state *state,
 	void *element_address_void, void *fe_region_void)

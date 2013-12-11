@@ -2053,7 +2053,7 @@ etc.) in all panes of the <window>.
 							if (scene)
 							{
 								cmzn_sceneviewer_set_scene(scene_viewer->core_scene_viewer,scene);
-								cmzn_region_id region = cmzn_scene_get_region(scene);
+								cmzn_region_id region = cmzn_scene_get_region_internal(scene);
 #if defined (WX_USER_INTERFACE)
 								window->wx_graphics_window->
 									 graphics_window_set_region_chooser_selected_item(region);
@@ -6420,7 +6420,7 @@ Writes the properties of the <window> to the command window.
 				Scene_viewer_buffering_mode_string(buffering_mode));
 		}
 		/* image */
-		cmzn_region_id region = cmzn_scene_get_region(window->scene);
+		cmzn_region_id region = cmzn_scene_get_region_internal(window->scene);
 		name = cmzn_region_get_relative_path(region, window->root_region);
 		if (name)
 		{
@@ -6730,7 +6730,7 @@ and establishing the views in it to the command window to a com file.
 		/* image */
 		process_message->process_command(INFORMATION_MESSAGE,"gfx modify window %s image",
 			window->name);
-		cmzn_region_id region = cmzn_scene_get_region(window->scene);
+		cmzn_region_id region = cmzn_scene_get_region_internal(window->scene);
 		name = cmzn_region_get_relative_path(region, window->root_region);
 		if (name)
 		{
