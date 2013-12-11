@@ -10078,28 +10078,25 @@ Executes a GFX LIST LMODEL.
 	return (return_code);
 } /* gfx_list_light_model */
 
-/***************************************************************************//**
+/**
  * Executes a GFX LIST SCENE command.
  */
 static int gfx_list_scene(struct Parse_state *state,
 	void *dummy_to_be_modified, void *root_region_void)
 {
-	int return_code;
-
+	int return_code = 1;
 	if (state && root_region_void)
 	{
-		display_message(WARNING_MESSAGE,"gfx_list_scene. Scene is now a direct graphical "
-			"representation of the a region, please use gfx_list_region.");
+		display_message(WARNING_MESSAGE, "gfx list scene:  Scene is now the direct graphical "
+			"representation of a region, please use gfx list g_element instead.");
 	}
 	else
 	{
 		display_message(ERROR_MESSAGE,"gfx_list_scene.  Invalid argument(s)");
 		return_code = 0;
 	}
-
-
 	return (return_code);
-} /* gfx_list_scene */
+}
 
 static int gfx_list_spectrum(struct Parse_state *state,
 	void *dummy_to_be_modified,void *spectrum_manager_void)
