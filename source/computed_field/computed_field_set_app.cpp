@@ -11,7 +11,7 @@
 #include "computed_field/computed_field_set.h"
 #include "computed_field/computed_field_composite.h"
 #include "computed_field/computed_field_private.hpp"
-
+#include "computed_field/field_module.hpp"
 
 int set_Computed_field_conditional(struct Parse_state *state,
 	void *field_address_void, void *set_field_data_void)

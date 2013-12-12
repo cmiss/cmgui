@@ -15,6 +15,7 @@
 #include "computed_field/computed_field_set_app.h"
 #include "computed_field/computed_field_integration.h"
 #include "computed_field/computed_field_composite.h"
+#include "computed_field/field_module.hpp"
 #include "mesh/cmiss_element_private_app.hpp"
 #include "finite_element/finite_element_region.h"
 #include "computed_field/computed_field_finite_element.h"

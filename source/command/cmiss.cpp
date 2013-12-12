@@ -13012,14 +13012,12 @@ Executes a GFX READ command.
 	return (return_code);
 } /* execute_command_gfx_read */
 
+/**
+ * Executes a GFX SELECT|UNSELECT command.
+ * @param unselect_flag_void  0 to select, non-zero to unselect.
+ */
 static int execute_command_gfx_select(struct Parse_state *state,
-	void *dummy_to_be_modified,void *command_data_void)
-/*******************************************************************************
-LAST MODIFIED : 6 March 2003
-
-DESCRIPTION :
-Executes a GFX SELECT command.
-==============================================================================*/
+	void *unselect_flag_void,void *command_data_void)
 {
 	char all_flag,data_flag,elements_flag,faces_flag,grid_points_flag, *conditional_field_name,
 		lines_flag,nodes_flag, *region_path, verbose_flag;
@@ -13038,7 +13036,7 @@ Executes a GFX SELECT command.
 	struct Option_table *option_table;
 	struct Set_FE_field_conditional_FE_region_data set_grid_field_data;
 
-	ENTER(execute_command_gfx_select);
+	bool unselect = (0 != unselect_flag_void);
 	USE_PARAMETER(dummy_to_be_modified);
 	if (state&&(command_data=(struct cmzn_command_data *)command_data_void))
 	{
@@ -13130,7 +13128,7 @@ Executes a GFX SELECT command.
 				if ((data_flag + elements_flag + faces_flag + grid_points_flag
 					+ lines_flag + nodes_flag) != 1)
 				{
-					display_message(ERROR_MESSAGE,"gfx select:  "
+					display_message(ERROR_MESSAGE, "gfx (un)select:  "
 						"You must specify one and only one of "
 						"data/elements/faces/lines/grid_points/nodes.");
 					return_code = 0;
@@ -13144,7 +13142,7 @@ Executes a GFX SELECT command.
 				}
 				else
 				{
-					display_message(ERROR_MESSAGE, "gfx select:  Invalid region");
+					display_message(ERROR_MESSAGE, "gfx (un)select:  Invalid region");
 					return_code = 0;
 				}
 				if (return_code && conditional_field_name)
@@ -13154,7 +13152,7 @@ Executes a GFX SELECT command.
 					if (!conditional_field)
 					{
 						display_message(ERROR_MESSAGE,
-							"gfx_select:  conditional field cannot be found");
+							"gfx (un)select:  conditional field cannot be found");
 						return_code = 0;
 					}
 				}
@@ -13173,13 +13171,15 @@ Executes a GFX SELECT command.
 					if (node_list)
 					{
 						cmzn_scene *local_scene = cmzn_region_get_scene(region);
-						cmzn_scene_add_selection_from_node_list(local_scene,
-							node_list, /* use_data */1);
+						if (unselect)
+							cmzn_scene_remove_selection_from_node_list(local_scene, node_list, /* use_data */1);
+						else
+							cmzn_scene_add_selection_from_node_list(local_scene, node_list, /* use_data */1);
 						cmzn_scene_destroy(&local_scene);
 						if (verbose_flag)
 						{
 							display_message(INFORMATION_MESSAGE,
-								"Selected %d data points.\n",
+								unselect ? "Unselected %d data points.\n" : "Selected %d data points.\n",
 								NUMBER_IN_LIST(FE_node)(node_list));
 						}
 						DESTROY(LIST(FE_node))(&node_list);
@@ -13188,8 +13188,12 @@ Executes a GFX SELECT command.
 				/* element_points */
 				if (element_point_ranges)
 				{
-					Element_point_ranges_selection_select_element_point_ranges(
-						command_data->element_point_ranges_selection,element_point_ranges);
+					if (unselect)
+						Element_point_ranges_selection_unselect_element_point_ranges(
+							command_data->element_point_ranges_selection,element_point_ranges);
+					else
+						Element_point_ranges_selection_select_element_point_ranges(
+							command_data->element_point_ranges_selection,element_point_ranges);
 				}
 				/* elements */
 				if (elements_flag)
@@ -13202,12 +13206,15 @@ Executes a GFX SELECT command.
 									region, dimension, multi_range, NULL, conditional_field, time)))
 						{
 							cmzn_scene *local_scene = cmzn_region_get_scene(region);
-							cmzn_scene_add_selection_from_element_list_of_dimension(local_scene,element_list, dimension);
+							if (unselect)
+								cmzn_scene_remove_selection_from_element_list_of_dimension(local_scene,element_list, dimension);
+							else
+								cmzn_scene_add_selection_from_element_list_of_dimension(local_scene,element_list, dimension);
 							cmzn_scene_destroy(&local_scene);
 							if (verbose_flag)
 							{
 								display_message(INFORMATION_MESSAGE,
-									"Selected %d elements.\n",
+									unselect ? "Unselected %d elements.\n" : "Selected %d elements.\n",
 									NUMBER_IN_LIST(FE_element)(element_list));
 							}
 							DESTROY(LIST(FE_element))(&element_list);
@@ -13215,8 +13222,7 @@ Executes a GFX SELECT command.
 					}
 					else
 					{
-						display_message(ERROR_MESSAGE,
-							"execute_command_gfx_select.  Invalid region.");
+						display_message(ERROR_MESSAGE, unselect ? "gfx unselect.  Invalid region." : "gfx select.  Invalid region.");
 					}
 				}
 				/* faces */
@@ -13229,12 +13235,15 @@ Executes a GFX SELECT command.
 									region, /*dimension*/2, multi_range, NULL, conditional_field, time)))
 						{
 							cmzn_scene *local_scene = cmzn_region_get_scene(region);
-							cmzn_scene_add_selection_from_element_list_of_dimension(local_scene,element_list, 2);
+							if (unselect)
+								cmzn_scene_remove_selection_from_element_list_of_dimension(local_scene, element_list, 2);
+							else
+								cmzn_scene_add_selection_from_element_list_of_dimension(local_scene, element_list, 2);
 							cmzn_scene_destroy(&local_scene);
 							if (verbose_flag)
 							{
 								display_message(INFORMATION_MESSAGE,
-									"Selected %d faces.\n",
+									unselect ? "Unselected %d faces.\n" : "Selected %d faces.\n",
 									NUMBER_IN_LIST(FE_element)(element_list));
 							}
 							DESTROY(LIST(FE_element))(&element_list);
@@ -13242,8 +13251,7 @@ Executes a GFX SELECT command.
 					}
 					else
 					{
-						display_message(ERROR_MESSAGE,
-							"execute_command_gfx_select.  Invalid region.");
+						display_message(ERROR_MESSAGE, unselect ? "gfx unselect.  Invalid region." : "gfx select.  Invalid region.");
 					}
 				}
 				/* grid_points */
@@ -13268,7 +13276,7 @@ Executes a GFX SELECT command.
 									Element_point_ranges_selection_begin_cache(
 										command_data->element_point_ranges_selection);
 									FOR_EACH_OBJECT_IN_LIST(Element_point_ranges)(
-										Element_point_ranges_select,
+										unselect ? Element_point_ranges_unselect : Element_point_ranges_select,
 										(void *)command_data->element_point_ranges_selection,
 										grid_to_list_data.element_point_ranges_list);
 									Element_point_ranges_selection_end_cache(
@@ -13285,7 +13293,7 @@ Executes a GFX SELECT command.
 						}
 						else
 						{
-							display_message(ERROR_MESSAGE,"To select grid_points, "
+							display_message(ERROR_MESSAGE,"To (un)select grid_points, "
 								"need integer grid_field (eg. grid_point_number)");
 						}
 					}
@@ -13300,12 +13308,15 @@ Executes a GFX SELECT command.
 									region, /*dimension*/1, multi_range, NULL, conditional_field, time)))
 						{
 							cmzn_scene *local_scene = cmzn_region_get_scene(region);
-							cmzn_scene_add_selection_from_element_list_of_dimension(local_scene,element_list, 1);
+							if (unselect)
+								cmzn_scene_remove_selection_from_element_list_of_dimension(local_scene, element_list, 1);
+							else
+								cmzn_scene_add_selection_from_element_list_of_dimension(local_scene,element_list, 1);
 							cmzn_scene_destroy(&local_scene);
 							if (verbose_flag)
 							{
 								display_message(INFORMATION_MESSAGE,
-									"Selected %d lines.\n",
+									unselect ? "Unselected %d lines.\n" : "Selected %d lines.\n",
 									NUMBER_IN_LIST(FE_element)(element_list));
 							}
 							DESTROY(LIST(FE_element))(&element_list);
@@ -13329,13 +13340,15 @@ Executes a GFX SELECT command.
 					if (node_list)
 					{
 						cmzn_scene *local_scene = cmzn_region_get_scene(region);
-						cmzn_scene_add_selection_from_node_list(local_scene,
-							node_list, /* use_data */0);
+						if (unselect)
+							cmzn_scene_remove_selection_from_node_list(local_scene, node_list, /* use_data */0);
+						else
+							cmzn_scene_add_selection_from_node_list(local_scene, node_list, /* use_data */0);
 						cmzn_scene_destroy(&local_scene);
 						if (verbose_flag)
 						{
 							display_message(INFORMATION_MESSAGE,
-								"Selected %d data points.\n",
+								unselect ? "Unselected %d data points.\n" : "Selected %d data points.\n",
 								NUMBER_IN_LIST(FE_node)(node_list));
 						}
 						DESTROY(LIST(FE_node))(&node_list);
@@ -13364,7 +13377,7 @@ Executes a GFX SELECT command.
 		}
 		else
 		{
-			set_command_prompt("gfx select",command_data);
+			set_command_prompt(unselect ? "gfx unselect" : "gfx select",command_data);
 			return_code = 1;
 		}
 	}
@@ -13374,368 +13387,8 @@ Executes a GFX SELECT command.
 			"execute_command_gfx_select.  Invalid argument(s)");
 		return_code=0;
 	}
-	LEAVE;
-
 	return (return_code);
-} /* execute_command_gfx_select */
-
-static int execute_command_gfx_unselect(struct Parse_state *state,
-	void *dummy_to_be_modified,void *command_data_void)
-/*******************************************************************************
-LAST MODIFIED : 6 March 2003
-
-DESCRIPTION :
-Executes a GFX UNSELECT command.
-==============================================================================*/
-{
-	char all_flag,data_flag,elements_flag,faces_flag,grid_points_flag, *conditional_field_name,
-		lines_flag,nodes_flag, *region_path, verbose_flag;
-	FE_value time;
-	int return_code;
-	struct Computed_field *conditional_field;
-	struct cmzn_command_data *command_data;
-	struct cmzn_region *region;
-	struct Element_point_ranges *element_point_ranges;
-	struct FE_element_grid_to_Element_point_ranges_list_data grid_to_list_data;
-	struct FE_field *grid_field;
-	struct FE_region *fe_region;
-	struct LIST(FE_element) *element_list;
-	struct LIST(FE_node) *node_list;
-	struct Multi_range *multi_range;
-	struct Option_table *option_table;
-	struct Set_FE_field_conditional_FE_region_data set_grid_field_data;
-
-	ENTER(execute_command_gfx_unselect);
-	USE_PARAMETER(dummy_to_be_modified);
-	if (state&&(command_data=(struct cmzn_command_data *)command_data_void))
-	{
-		if (state->current_token)
-		{
-			region_path = cmzn_region_get_root_region_path();
-			fe_region = cmzn_region_get_FE_region(command_data->root_region);
-			all_flag = 0;
-			conditional_field=(struct Computed_field *)NULL;
-			conditional_field_name = NULL;
-			data_flag = 0;
-			element_point_ranges=(struct Element_point_ranges *)NULL;
-			data_flag = 0;
-			elements_flag = 0;
-			faces_flag = 0;
-			grid_points_flag = 0;
-			lines_flag = 0;
-			nodes_flag = 0;
-			/* We only want to unselected from selected objects */
-			multi_range=CREATE(Multi_range)();
-			if ((grid_field = FE_region_get_FE_field_from_name(fe_region,
-				"grid_point_number")) &&
-				FE_field_is_1_component_integer(grid_field, (void *)NULL))
-			{
-				ACCESS(FE_field)(grid_field);
-			}
-			else
-			{
-				grid_field = (struct FE_field *)NULL;
-			}
-			if (command_data->default_time_keeper_app)
-			{
-				time = command_data->default_time_keeper_app->getTimeKeeper()->getTime();
-			}
-			else
-			{
-				time = 0.0;
-			}
-			verbose_flag = 0;
-
-			option_table=CREATE(Option_table)();
-			/* all */
-			Option_table_add_entry(option_table,"all", &all_flag,
-				(void *)NULL,set_char_flag);
-			/* conditional_field */
-			Option_table_add_string_entry(option_table,"conditional_field",
-				&conditional_field_name, " FIELD_NAME");
-			/* data */
-			Option_table_add_entry(option_table,"data", &data_flag,
-				(void *)NULL,set_char_flag);
-			/* elements */
-			Option_table_add_entry(option_table,"elements",&elements_flag,
-				(void *)NULL,set_char_flag);
-			/* faces */
-			Option_table_add_entry(option_table,"faces",&faces_flag,
-				(void *)NULL,set_char_flag);
-			/* grid_field */
-			set_grid_field_data.conditional_function =
-				FE_field_is_1_component_integer;
-			set_grid_field_data.user_data = (void *)NULL;
-			set_grid_field_data.fe_region = fe_region;
-			Option_table_add_entry(option_table, "grid_field", &grid_field,
-				(void *)&set_grid_field_data, set_FE_field_conditional_FE_region);
-			/* grid_points */
-			Option_table_add_entry(option_table,"grid_points",&grid_points_flag,
-				(void *)NULL,set_char_flag);
-			/* group */
-			Option_table_add_entry(option_table, "group", &region_path,
-				command_data->root_region, set_cmzn_region_path);
-			/* lines */
-			Option_table_add_entry(option_table,"lines",&lines_flag,
-				(void *)NULL,set_char_flag);
-			/* nodes */
-			Option_table_add_entry(option_table,"nodes",&nodes_flag,
-				(void *)NULL,set_char_flag);
-			/* points */
-			Option_table_add_entry(option_table,"points",&element_point_ranges,
-				(void *)fe_region, set_Element_point_ranges);
-			/* verbose */
-			Option_table_add_char_flag_entry(option_table,"verbose",
-				&verbose_flag);
-			/* default option: multi range */
-			Option_table_add_entry(option_table, (char *)NULL, (void *)multi_range,
-				NULL, set_Multi_range);
-			cmzn_fieldmodule_id fieldmodule = 0;
-			if (0 != (return_code = Option_table_multi_parse(option_table, state)))
-			{
-				if ((data_flag + elements_flag + faces_flag + grid_points_flag
-					+ lines_flag + nodes_flag) != 1)
-				{
-					display_message(ERROR_MESSAGE,"gfx unselect:  "
-						"You must specify one and only one of "
-						"data/elements/faces/lines/grid_points/nodes.");
-					return_code = 0;
-				}
-				if (region_path &&
-					cmzn_region_get_region_from_path_deprecated(command_data->root_region,
-						region_path, &region) &&
-					(fe_region = cmzn_region_get_FE_region(region)))
-				{
-					fieldmodule = cmzn_region_get_fieldmodule(region);
-				}
-				else
-				{
-					display_message(ERROR_MESSAGE, "gfx unselect:  Invalid region");
-					return_code = 0;
-				}
-				if (return_code && conditional_field_name)
-				{
-					conditional_field = cmzn_fieldmodule_find_field_by_name(fieldmodule,
-						conditional_field_name);
-					if (!conditional_field)
-					{
-						display_message(ERROR_MESSAGE,
-							"gfx_unselect:  conditional field cannot be found");
-						return_code = 0;
-					}
-				}
-			}
-			if (return_code)
-			{
-				/* data */
-				if (data_flag)
-				{
-					cmzn_nodeset *nodeset = cmzn_fieldmodule_find_nodeset_by_field_domain_type(fieldmodule,
-						CMZN_FIELD_DOMAIN_TYPE_DATAPOINTS);
-					node_list = cmzn_nodeset_create_node_list_ranges_conditional(
-						nodeset, Multi_range_get_total_number_in_ranges(multi_range) ?
-							multi_range : static_cast<Multi_range *>(0), conditional_field, time);
-					cmzn_nodeset_destroy(&nodeset);
-					if (node_list)
-					{
-						cmzn_scene *local_scene = cmzn_region_get_scene(region);
-						cmzn_scene_remove_selection_from_node_list(local_scene,
-							node_list, /* use_data */1);
-						cmzn_scene_destroy(&local_scene);
-						if (verbose_flag)
-						{
-							display_message(INFORMATION_MESSAGE,
-								"Unselected %d data points.\n",
-								NUMBER_IN_LIST(FE_node)(node_list));
-						}
-						DESTROY(LIST(FE_node))(&node_list);
-					}
-				}
-				/* element_points */
-				if (element_point_ranges)
-				{
-					Element_point_ranges_selection_unselect_element_point_ranges(
-						command_data->element_point_ranges_selection,element_point_ranges);
-				}
-				/* elements */
-				if (elements_flag)
-				{
-					if (region)
-					{
-						int dimension = FE_region_get_highest_dimension(cmzn_region_get_FE_region(region));
-						if (NULL != (element_list =
-								FE_element_list_from_region_and_selection_group(
-									region, dimension, multi_range, NULL, conditional_field, time)))
-						{
-							cmzn_scene *local_scene = cmzn_region_get_scene(region);
-							cmzn_scene_remove_selection_from_element_list_of_dimension(local_scene,element_list, dimension);
-							cmzn_scene_destroy(&local_scene);
-							if (verbose_flag)
-							{
-								display_message(INFORMATION_MESSAGE,
-									"Unselected %d elements.\n",
-									NUMBER_IN_LIST(FE_element)(element_list));
-							}
-							DESTROY(LIST(FE_element))(&element_list);
-						}
-					}
-					else
-					{
-						display_message(ERROR_MESSAGE,
-							"execute_command_gfx_select.  Invalid region.");
-					}
-				}
-				/* faces */
-				if (faces_flag)
-				{
-					if (region)
-					{
-						if (NULL != (element_list =
-								FE_element_list_from_region_and_selection_group(
-									region, /*dimension*/2, multi_range, NULL, conditional_field, time)))
-						{
-							cmzn_scene *local_scene = cmzn_region_get_scene(region);
-							cmzn_scene_remove_selection_from_element_list_of_dimension(local_scene,element_list, 2);
-							cmzn_scene_destroy(&local_scene);
-							if (verbose_flag)
-							{
-								display_message(INFORMATION_MESSAGE,
-									"Unselected %d faces.\n",
-									NUMBER_IN_LIST(FE_element)(element_list));
-							}
-							DESTROY(LIST(FE_element))(&element_list);
-						}
-					}
-					else
-					{
-						display_message(ERROR_MESSAGE,
-							"execute_command_gfx_select.  Invalid region.");
-					}
-				}
-				/* grid_points */
-				if (grid_points_flag)
-				{
-					if (0<Multi_range_get_total_number_in_ranges(multi_range))
-					{
-						if (grid_field)
-						{
-							if (NULL != (grid_to_list_data.element_point_ranges_list=
-								CREATE(LIST(Element_point_ranges))()))
-							{
-								grid_to_list_data.grid_fe_field=grid_field;
-								grid_to_list_data.grid_value_ranges=multi_range;
-								/* inefficient: go through every element in FE_region */
-								FE_region_for_each_FE_element(fe_region,
-									FE_element_grid_to_Element_point_ranges_list,
-									(void *)&grid_to_list_data);
-								if (0<NUMBER_IN_LIST(Element_point_ranges)(
-									grid_to_list_data.element_point_ranges_list))
-								{
-									Element_point_ranges_selection_begin_cache(
-										command_data->element_point_ranges_selection);
-									FOR_EACH_OBJECT_IN_LIST(Element_point_ranges)(
-										Element_point_ranges_unselect,
-										(void *)command_data->element_point_ranges_selection,
-										grid_to_list_data.element_point_ranges_list);
-									Element_point_ranges_selection_end_cache(
-										command_data->element_point_ranges_selection);
-								}
-								DESTROY(LIST(Element_point_ranges))(
-									&(grid_to_list_data.element_point_ranges_list));
-							}
-							else
-							{
-								display_message(ERROR_MESSAGE,"execute_command_gfx_unselect.  "
-									"Could not create grid_point list");
-							}
-						}
-						else
-						{
-							display_message(ERROR_MESSAGE,"To unselect grid_points, "
-								"need integer grid_field (eg. grid_point_number)");
-						}
-					}
-				}
-				/* lines */
-				if (lines_flag)
-				{
-					if (region)
-					{
-						if (NULL != (element_list =
-								FE_element_list_from_region_and_selection_group(
-									region, /*dimension*/1, multi_range, NULL, conditional_field, time)))
-						{
-							cmzn_scene *local_scene = cmzn_region_get_scene(region);
-							cmzn_scene_remove_selection_from_element_list_of_dimension(local_scene, element_list, 1);
-							cmzn_scene_destroy(&local_scene);
-							if (verbose_flag)
-							{
-								display_message(INFORMATION_MESSAGE,
-									"Unselected %d lines.\n",
-									NUMBER_IN_LIST(FE_element)(element_list));
-							}
-							DESTROY(LIST(FE_element))(&element_list);
-						}
-					}
-					else
-					{
-						display_message(ERROR_MESSAGE,
-							"execute_command_gfx_select.  Invalid region.");
-					}
-				}
-				/* nodes */
-				if (nodes_flag)
-				{
-					cmzn_nodeset *nodeset = cmzn_fieldmodule_find_nodeset_by_field_domain_type(fieldmodule,
-						CMZN_FIELD_DOMAIN_TYPE_NODES);
-					node_list = cmzn_nodeset_create_node_list_ranges_conditional(
-						nodeset, Multi_range_get_total_number_in_ranges(multi_range) ?
-							multi_range : static_cast<Multi_range *>(0), conditional_field, time);
-					cmzn_nodeset_destroy(&nodeset);
-					if (node_list)
-					{
-						cmzn_scene *local_scene = cmzn_region_get_scene(region);
-						cmzn_scene_remove_selection_from_node_list(local_scene,
-							node_list, /* use_data */0);
-						cmzn_scene_destroy(&local_scene);
-					}
-					DESTROY(LIST(FE_node))(&node_list);
-				}
-			}
-			DESTROY(Option_table)(&option_table);
-			DEALLOCATE(region_path);
-			if (conditional_field_name)
-				DEALLOCATE(conditional_field_name);
-			if (conditional_field)
-			{
-				DEACCESS(Computed_field)(&conditional_field);
-			}
-			if (grid_field)
-			{
-				DEACCESS(FE_field)(&grid_field);
-			}
-			DESTROY(Multi_range)(&multi_range);
-			if (element_point_ranges)
-			{
-				DESTROY(Element_point_ranges)(&element_point_ranges);
-			}
-		}
-		else
-		{
-			set_command_prompt("gfx unselect",command_data);
-			return_code=1;
-		}
-	}
-	else
-	{
-		display_message(ERROR_MESSAGE,
-			"execute_command_gfx_unselect.  Invalid argument(s)");
-		return_code=0;
-	}
-	LEAVE;
-
-	return (return_code);
-} /* execute_command_gfx_unselect */
+}
 
 int gfx_set_FE_nodal_value(struct Parse_state *state,void *dummy_to_be_modified,
 	void *command_data_void)
@@ -16009,7 +15662,7 @@ Executes a GFX command.
 #endif
 			Option_table_add_entry(option_table, "read", NULL,
 				command_data_void, execute_command_gfx_read);
-			Option_table_add_entry(option_table, "select", NULL,
+			Option_table_add_entry(option_table, "select", /*unselect*/0,
 				command_data_void, execute_command_gfx_select);
 			Option_table_add_entry(option_table, "set", NULL,
 				command_data_void, execute_command_gfx_set);
@@ -16021,8 +15674,8 @@ Executes a GFX command.
 				command_data_void, gfx_timekeeper);
 			Option_table_add_entry(option_table, "transform_tool", NULL,
 				command_data_void, gfx_transform_tool);
-			Option_table_add_entry(option_table, "unselect", NULL,
-				command_data_void, execute_command_gfx_unselect);
+			Option_table_add_entry(option_table, "unselect", /*unselect*/reinterpret_cast<void *>(1),
+				command_data_void, execute_command_gfx_select);
 #if defined (WX_USER_INTERFACE)
 			Option_table_add_entry(option_table, "update", NULL,
 				command_data_void, execute_command_gfx_update);

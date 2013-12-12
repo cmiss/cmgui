@@ -14,6 +14,7 @@
 #include "user_interface/process_list_or_write_command.hpp"
 #include "computed_field/computed_field_private.hpp"
 #include "computed_field/computed_field_private_app.hpp"
+#include "computed_field/field_module.hpp"
 // insert app headers here
 #include "general/geometry_app.h"
 #include "computed_field/computed_field_app.h"

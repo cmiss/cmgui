@@ -15,6 +15,7 @@
 #include "computed_field/computed_field_set.h"
 #include "computed_field/computed_field_set_app.h"
 #include "computed_field/computed_field_vector_operators.hpp"
+#include "computed_field/field_module.hpp"
 
 class Computed_field_vector_operators_package : public Computed_field_type_package
 {
