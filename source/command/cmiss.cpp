@@ -4127,7 +4127,8 @@ Modifies the properties of a texture.
 								cmgui_image = 0;
 								if (image_file_format == ANALYZE_FILE_FORMAT)
 								{
-									cmgui_image = Cmgui_image_read_analyze(cmgui_image_information);
+									cmgui_image = Cmgui_image_read_analyze(cmgui_image_information,
+										CMZN_STREAMINFORMATION_DATA_COMPRESSION_TYPE_DEFAULT);
 								}
 								else
 								{
@@ -13037,7 +13038,7 @@ static int execute_command_gfx_select(struct Parse_state *state,
 	struct Set_FE_field_conditional_FE_region_data set_grid_field_data;
 
 	bool unselect = (0 != unselect_flag_void);
-	USE_PARAMETER(dummy_to_be_modified);
+
 	if (state&&(command_data=(struct cmzn_command_data *)command_data_void))
 	{
 		if (state->current_token)
