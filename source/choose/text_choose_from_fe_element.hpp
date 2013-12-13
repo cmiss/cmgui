@@ -199,16 +199,16 @@ static void cmzn_fieldmoduleevent_to_chooser(cmzn_fieldmoduleevent_id event, voi
 	wxFeElementTextChooser *chooser = static_cast<wxFeElementTextChooser *>(chooser_void);
 	if (chooser && chooser->current_object)
 	{
-		int dimension = get_FE_element_dimension(chooser->current_object);
-		FE_region_changes *feRegionChanges = event->getFeRegionChanges();
-		CHANGE_LOG(FE_element) *elementChanges = feRegionChanges->getElementChanges(dimension);
-		int fe_element_change;
-		if (CHANGE_LOG_QUERY(FE_element)(elementChanges,
-			chooser->current_object, &fe_element_change) &&
-			(fe_element_change & (CHANGE_LOG_OBJECT_CHANGED(FE_element) | CHANGE_LOG_OBJECT_REMOVED(FE_element))))
-		{
-			chooser->select_object((struct FE_element *)NULL);
-		}
+		cmzn_fieldmodule_id fieldmodule = cmzn_region_get_fieldmodule(chooser->region);
+		int dimension = cmzn_element_get_dimension(chooser->current_object);
+		cmzn_mesh_id mesh = cmzn_fieldmodule_find_mesh_by_dimension(fieldmodule, dimension);
+		cmzn_meshchanges_id meshchanges = cmzn_fieldmoduleevent_get_meshchanges(event, mesh);
+		cmzn_element_change_flags change = cmzn_meshchanges_get_element_change_flags(meshchanges, chooser->current_object);
+		if (change & CMZN_ELEMENT_CHANGE_FLAG_REMOVE)
+			chooser->select_object(static_cast<cmzn_element_id>(0));
+		cmzn_meshchanges_destroy(&meshchanges);
+		cmzn_mesh_destroy(&mesh);
+		cmzn_fieldmodule_destroy(&fieldmodule);
 	}
 }
 

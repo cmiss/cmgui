@@ -4,6 +4,7 @@
 * License, v. 2.0. If a copy of the MPL was not distributed with this
 * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+#include "zinc/element.h"
 #include "zinc/fieldmodule.h"
 #include "zinc/region.h"
 #include "general/debug.h"
@@ -11,7 +12,6 @@
 #include "general/list.h"
 #include "general/mystring.h"
 #include "command/parser.h"
-#include "mesh/cmiss_element_private.hpp"
 
 static int set_cmzn_mesh(struct Parse_state *state, void *region_void, void *mesh_address_void)
 {
