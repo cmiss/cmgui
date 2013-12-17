@@ -1505,7 +1505,7 @@ scene_viewer.
 			ACCESS(Interactive_event)(interactive_event);
 			return_code=Interactive_tool_handle_interactive_event(
 				scene_viewer->interactive_tool,(void *)scene_viewer,interactive_event,
-				scene_viewer->core_scene_viewer->graphics_buffer);
+				scene_viewer->core_scene_viewer);
 			DEACCESS(Interactive_event)(&interactive_event);
 			DEACCESS(Interaction_volume)(&interaction_volume);
 		}

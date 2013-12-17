@@ -20,6 +20,7 @@ Scene input.
 #include "zinc/graphics.h"
 #include "zinc/material.h"
 #include "zinc/scene.h"
+#include "zinc/scenefilter.h"
 #include "zinc/scenepicker.h"
 #include "zinc/selection.h"
 #include "time/time_keeper_app.hpp"
@@ -46,6 +47,7 @@ Scene input.
 #include "graphics/graphics.h"
 #include "graphics/scene.h"
 #include "graphics/scene_picker.hpp"
+#include "graphics/scene_viewer.h"
 #include "region/cmiss_region.h"
 #include "general/message.h"
 #include "command/parser.h"
@@ -1374,7 +1376,7 @@ int Node_tool_set_picked_node(struct Node_tool *node_tool, cmzn_node_id picked_n
 
 static void Node_tool_interactive_event_handler(void *device_id,
 	struct Interactive_event *event,void *node_tool_void,
-	struct Graphics_buffer *graphics_buffer)
+	cmzn_sceneviewer *scene_viewer)
 /*******************************************************************************
 LAST MODIFIED : 13 February 2008
 
@@ -1396,16 +1398,20 @@ release.
 	struct Interaction_volume *interaction_volume,*temp_interaction_volume;
 	struct Node_tool *node_tool;
 	cmzn_scenepicker_id scenepicker = 0;
-
+	struct Graphics_buffer *graphics_buffer = 0;
 	if (device_id&&event&&(node_tool=
-		(struct Node_tool *)node_tool_void))
+		(struct Node_tool *)node_tool_void) && scene_viewer)
 	{
+		graphics_buffer = scene_viewer->graphics_buffer;
 		cmzn_region_begin_hierarchical_change(node_tool->root_region);
 		interaction_volume=Interactive_event_get_interaction_volume(event);
 		scene = Interactive_event_get_scene(event);
 		if (scene != 0)
 		{
 			scenepicker = cmzn_scene_create_scenepicker(scene);
+			cmzn_scenefilter_id scenefilter = cmzn_sceneviewer_get_scenefilter(scene_viewer);
+			cmzn_scenepicker_set_scenefilter(scenepicker, scenefilter);
+			cmzn_scenefilter_destroy(&scenefilter);
 			event_type=Interactive_event_get_type(event);
 			input_modifier=Interactive_event_get_input_modifier(event);
 			shift_pressed=(INTERACTIVE_EVENT_MODIFIER_SHIFT & input_modifier);

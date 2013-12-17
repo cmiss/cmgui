@@ -46,7 +46,7 @@ struct MANAGER(Interactive_tool);
 
 typedef void Interactive_event_handler(void *device_id,
 	struct Interactive_event *event,void *user_data,
-	struct Graphics_buffer *graphics_buffer);
+	cmzn_sceneviewer *scene_viewer);
 typedef int Interactive_tool_bring_up_dialog_function(void *user_data,
 	struct Graphics_window *graphics_window);
 typedef void Interactive_tool_reset_function(void *user_data);
@@ -125,7 +125,7 @@ not DEALLOCATE this pointer.
 int Interactive_tool_handle_interactive_event(
 	struct Interactive_tool *interactive_tool,void *device_id,
 	struct Interactive_event *interactive_event,
-	struct Graphics_buffer *graphics_buffer);
+	cmzn_sceneviewer *scene_viewer);
 /*******************************************************************************
 LAST MODIFIED : 18 November 2005
 

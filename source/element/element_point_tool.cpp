@@ -127,7 +127,7 @@ Resets current edit. Called on button release or when tool deactivated.
 
 static void Element_point_tool_interactive_event_handler(void *device_id,
 	struct Interactive_event *event,void *element_point_tool_void,
-	struct Graphics_buffer *graphics_buffer)
+	struct cmzn_sceneviewer *scene_viewer)
 /*******************************************************************************
 LAST MODIFIED : 18 November 2005
 

@@ -17,6 +17,7 @@ Interactive tool for selecting elements with mouse and other devices.
 #include "zinc/fieldcache.h"
 #include "zinc/material.h"
 #include "zinc/scene.h"
+#include "zinc/sceneviewer.h"
 #include "zinc/scenefilter.h"
 #include "command/command.h"
 #include "computed_field/computed_field.h"
@@ -33,6 +34,7 @@ Interactive tool for selecting elements with mouse and other devices.
 #include "interaction/interaction_volume.h"
 #include "interaction/interactive_event.h"
 #include "graphics/scene.h"
+#include "graphics/scene_viewer.h"
 #include "graphics/graphics.h"
 #include "graphics/graphics_module.h"
 #include "graphics/material.h"
@@ -189,7 +191,7 @@ Resets current edit. Called on button release or when tool deactivated.
 #if defined (OPENGL_API)
 static void Element_tool_interactive_event_handler(void *device_id,
 	struct Interactive_event *event,void *element_tool_void,
-	struct Graphics_buffer *graphics_buffer)
+	struct cmzn_sceneviewer *scene_viewer)
 /*******************************************************************************
 LAST MODIFIED  18 November 2005
 
@@ -210,15 +212,16 @@ release.
 	struct FE_element_shape *element_shape;
 	struct Element_tool *element_tool;
 	struct Interaction_volume *interaction_volume,*temp_interaction_volume;
-
+	struct Graphics_buffer *graphics_buffer = 0;
 	struct cmzn_scene *scene = 0;
 	FE_value_triple *xi_points;
 	cmzn_scenepicker_id scenepicker = 0;
 
 	ENTER(Element_tool_interactive_event_handler);
 	if (device_id&&event&&(element_tool=
-		(struct Element_tool *)element_tool_void))
+		(struct Element_tool *)element_tool_void) && scene_viewer)
 	{
+		graphics_buffer = scene_viewer->graphics_buffer;
 		cmzn_region_begin_hierarchical_change(element_tool->region);
 		interaction_volume=Interactive_event_get_interaction_volume(event);
 		scene=Interactive_event_get_scene(event);
@@ -231,14 +234,16 @@ release.
 			cmzn_graphics_module *graphics_module = cmzn_scene_get_graphics_module(scene);
 			cmzn_scenefiltermodule_id filter_module = cmzn_graphics_module_get_scenefiltermodule(graphics_module);
 			cmzn_scenefiltermodule_begin_change(filter_module);
-			cmzn_scenefilter_id combined_filter = cmzn_scenefiltermodule_create_scenefilter_operator_or(
+			cmzn_scenefilter_id combined_filter = cmzn_scenefiltermodule_create_scenefilter_operator_and(
+				filter_module);
+			cmzn_scenefilter_id or_filter_base = cmzn_scenefiltermodule_create_scenefilter_operator_or(
 				filter_module);
 			if ((element_tool->select_elements_enabled)||(element_tool->select_faces_enabled)||
 				(element_tool->select_lines_enabled))
 			{
 				cmzn_scenefilter_id element_filter = 0;
 				cmzn_scenefilter_operator_id or_filter = cmzn_scenefilter_cast_operator(
-					combined_filter);
+					or_filter_base);
 				if (element_tool->select_lines_enabled)
 				{
 					element_filter = cmzn_scenefiltermodule_create_scenefilter_field_domain_type(
@@ -270,9 +275,17 @@ release.
 			{
 				cmzn_scenefilter_set_inverse(combined_filter, true);
 			}
+			cmzn_scenefilter_id sceneviewerFilter = cmzn_sceneviewer_get_scenefilter(scene_viewer);
+			cmzn_scenefilter_operator_id and_filter = cmzn_scenefilter_cast_operator(
+				combined_filter);
+			cmzn_scenefilter_operator_append_operand(and_filter, sceneviewerFilter);
+			cmzn_scenefilter_operator_append_operand(and_filter, or_filter_base);
 			cmzn_graphics_module_destroy(&graphics_module);
 			// Possible optimisation: don't pick streamlines
 			cmzn_scenepicker_set_scenefilter(scenepicker, combined_filter);
+			cmzn_scenefilter_destroy(&sceneviewerFilter);
+			cmzn_scenefilter_operator_destroy(&and_filter);
+			cmzn_scenefilter_destroy(&or_filter_base);
 			switch (event_type)
 			{
 			case INTERACTIVE_EVENT_BUTTON_PRESS:
