@@ -6020,7 +6020,7 @@ static int gfx_destroy_elements(struct Parse_state *state,
 			cmzn_field_id use_conditional_field = 0;
 			if (group && conditional_field)
 			{
-				use_conditional_field = cmzn_fieldmodule_create_field_or(field_module, conditional_field, cmzn_field_group_base_cast(group));
+				use_conditional_field = cmzn_fieldmodule_create_field_and(field_module, conditional_field, cmzn_field_group_base_cast(group));
 			}
 			else if (conditional_field)
 			{
@@ -6405,7 +6405,7 @@ static int gfx_destroy_nodes(struct Parse_state *state,
 			cmzn_field_id use_conditional_field = 0;
 			if (group && conditional_field)
 			{
-				use_conditional_field = cmzn_fieldmodule_create_field_or(field_module, conditional_field, cmzn_field_group_base_cast(group));
+				use_conditional_field = cmzn_fieldmodule_create_field_and(field_module, conditional_field, cmzn_field_group_base_cast(group));
 			}
 			else if (conditional_field)
 			{
@@ -6421,12 +6421,21 @@ static int gfx_destroy_nodes(struct Parse_state *state,
 			{
 				nodeset = cmzn_fieldmodule_find_nodeset_by_field_domain_type(field_module,
 					use_data ? CMZN_FIELD_DOMAIN_TYPE_DATAPOINTS : CMZN_FIELD_DOMAIN_TYPE_NODES);
-				destroy_node_list = cmzn_nodeset_create_node_list_ranges_conditional(
-					nodeset, Multi_range_get_total_number_in_ranges(node_ranges) ?
-						node_ranges : static_cast<Multi_range *>(0),
-					use_conditional_field,/*time*/0);
-				if (!destroy_node_list)
-					return_code = 0;
+				if (selection_group)
+				{
+					cmzn_field_node_group_id node_group_field = cmzn_field_group_get_node_group(selection_group, nodeset);
+					cmzn_nodeset_destroy(&nodeset);
+					nodeset = cmzn_nodeset_group_base_cast(cmzn_field_node_group_get_nodeset(node_group_field));
+					cmzn_field_node_group_destroy(&node_group_field);
+				}
+				if (nodeset)
+				{
+					destroy_node_list = cmzn_nodeset_create_node_list_ranges_conditional(
+						nodeset, Multi_range_get_total_number_in_ranges(node_ranges) ?
+							node_ranges : static_cast<Multi_range *>(0), use_conditional_field,/*time*/0);
+					if (!destroy_node_list)
+						return_code = 0;
+				}
 			}
 			if (destroy_node_list && (0 < NUMBER_IN_LIST(FE_node)(destroy_node_list)))
 			{
