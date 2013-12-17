@@ -430,7 +430,8 @@ static int node_viewer_add_collpane(Node_viewer *node_viewer,
 	}
 	else if (0 != wind)
 	{
-		wind->SetName(wxString::wxString());
+		wxString noName;
+		wind->SetName(noName);
 		wind->DestroyChildren();
 		refit = true;
 	}
