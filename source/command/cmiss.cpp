@@ -2245,7 +2245,7 @@ Executes a GFX CREATE NODE_VIEWER command.
 						&(command_data->node_viewer),
 						"Node Viewer",
 						command_data->root_region, CMZN_FIELD_DOMAIN_TYPE_NODES,
-						command_data->default_time_keeper_app)))
+						command_data->default_time_keeper_app->getTimeKeeper())))
 					{
 						return_code=1;
 					}
@@ -2321,7 +2321,7 @@ Executes a GFX CREATE DATA_VIEWER command.
 						&(command_data->node_viewer),
 						"Data Viewer",
 						command_data->root_region, CMZN_FIELD_DOMAIN_TYPE_DATAPOINTS,
-						command_data->default_time_keeper_app)))
+						command_data->default_time_keeper_app->getTimeKeeper())))
 					{
 						return_code=1;
 					}

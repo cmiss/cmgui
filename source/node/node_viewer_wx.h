@@ -38,7 +38,7 @@ struct Node_viewer *Node_viewer_create(
 	struct Node_viewer **node_viewer_address,
 	const char *dialog_title,
 	cmzn_region_id root_region, cmzn_field_domain_type domain_type,
-	struct Time_keeper_app *time_keeper_app);
+	cmzn_timekeeper_id timekeeper);
 
 /***************************************************************************//**
  * Closes and destroys the Node_viewer.

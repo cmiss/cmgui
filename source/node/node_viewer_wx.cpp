@@ -10,9 +10,7 @@
 * This Source Code Form is subject to the terms of the Mozilla Public
 * License, v. 2.0. If a copy of the MPL was not distributed with this
 * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
-#if 1
 #include "configure/cmgui_configure.h"
-#endif /* defined (1) */
 
 #include "zinc/core.h"
 #include "zinc/field.h"
@@ -21,21 +19,17 @@
 #include "zinc/fieldgroup.h"
 #include "zinc/fieldmodule.h"
 #include "zinc/fieldsubobjectgroup.h"
+#include "zinc/node.h"
 #include "zinc/region.h"
 #include "zinc/scene.h"
 #include "zinc/status.h"
 #include "zinc/timenotifier.h"
 #include "zinc/timekeeper.h"
 #include "zinc/timesequence.h"
-// GRC want to eliminate following 2 includes
-#include "computed_field/computed_field.h"
-#include "finite_element/finite_element.h"
-#include "finite_element/finite_element_region.h"
 #include "general/debug.h"
 #include "general/mystring.h"
 #include "node/node_viewer_wx.h"
 #include "general/message.h"
-#include "time/time_keeper_app.hpp"
 #if defined (WX_USER_INTERFACE)
 #include <wx/collpane.h>
 #include "wx/wx.h"
@@ -65,15 +59,12 @@ struct Node_viewer
 	struct cmzn_region *region;
 	cmzn_field_domain_type domain_type;
 	cmzn_fieldmodulenotifier_id fieldmodulenotifier;
-	struct Time_keeper_app *time_keeper_app;
+	cmzn_timekeeper_id timekeeper;
 	cmzn_timenotifier_id timenotifier;
-	int timenotifier_callback;
 #if defined (WX_USER_INTERFACE)
 	wxNodeViewer *wx_node_viewer;
 	wxScrolledWindow *collpane;
-	wxWindow *win;
 	wxFrame *frame;
-	wxGridSizer *grid_field;
 	int init_width, init_height, frame_width, frame_height;
 #endif /* (WX_USER_INTERFACE) */
 }; /* node_viewer_struct */
@@ -94,11 +85,11 @@ Gets the current node from the select widget, makes a copy of it if not NULL,
 and passes it to the node_viewer.
 ==============================================================================*/
 
-int Node_viewer_update_collpane(struct Node_viewer *node_viewer);
+int Node_viewer_update_collpane(struct Node_viewer *node_viewer, cmzn_fieldmoduleevent_id event = 0);
 char *node_viewer_get_component_value_string(struct Node_viewer *node_viewer, cmzn_field_id field, int component_number, enum cmzn_node_value_label node_value_label, int version);
 
-static int node_viewer_setup_components(
-	struct Node_viewer *node_viewer, cmzn_node_id node, cmzn_field_id field, bool &time_varying_field);
+static int node_viewer_setup_components(struct Node_viewer *node_viewer, wxWindow *parentWin,
+	cmzn_node_id node, cmzn_field_id field, bool &time_varying_field, bool& refit);
 
 /*
 Module constants
@@ -118,7 +109,7 @@ class wxNodeViewer : public wxFrame
 	 Node_viewer *node_viewer;
 	 wxPanel *node_text_panel;
 	 wxScrolledWindow *variable_viewer_panel;
-	 FE_object_text_chooser< FE_node > *node_text_chooser;
+	 FE_object_text_chooser< cmzn_node > *node_text_chooser;
 	 wxFrame *frame;
 	 wxRegionChooser *region_chooser;
 public:
@@ -133,26 +124,23 @@ public:
 			this->SetIcon(cmiss_icon_xpm);
 			wxPanel *node_text_panel =
 				XRCCTRL(*this, "NodeTextPanel",wxPanel);
-			node_text_chooser =
-				new FE_object_text_chooser< FE_node >(node_text_panel, node_viewer->region, node_viewer->domain_type,
-					node_viewer->current_node, (LIST_CONDITIONAL_FUNCTION(FE_node) *)NULL, NULL);
-			Callback_base< FE_node* > *node_text_callback =
-				(new Callback_member_callback< FE_node*,
-				wxNodeViewer, int (wxNodeViewer::*)(FE_node *) >
+			node_text_chooser = new FE_object_text_chooser< cmzn_node >(node_text_panel,
+				node_viewer->region, node_viewer->domain_type, node_viewer->current_node,
+				static_cast<FE_object_text_chooser<cmzn_node>::conditional_function_type *>(0), /*user_data*/0);
+			Callback_base< cmzn_node* > *node_text_callback =
+				(new Callback_member_callback< cmzn_node*,
+				wxNodeViewer, int (wxNodeViewer::*)(cmzn_node *) >
 				(this, &wxNodeViewer::node_text_callback));
 			node_text_chooser->set_callback(node_text_callback);
-		wxPanel *region_chooser_panel =
-			 XRCCTRL(*this, "RegionChooserPanel", wxPanel);
-		char *initial_path;
-		initial_path = cmzn_region_get_root_region_path();
-		region_chooser = new wxRegionChooser(region_chooser_panel,
-			node_viewer->region, initial_path);
-		DEALLOCATE(initial_path);
-		Callback_base<cmzn_region* > *Node_viewer_wx_region_callback =
-			new Callback_member_callback< cmzn_region*,
-			wxNodeViewer, int (wxNodeViewer::*)(cmzn_region *) >
-			(this, &wxNodeViewer::Node_viewer_wx_region_callback);
-		region_chooser->set_callback(Node_viewer_wx_region_callback);
+			wxPanel *region_chooser_panel =
+				 XRCCTRL(*this, "RegionChooserPanel", wxPanel);
+			region_chooser = new wxRegionChooser(region_chooser_panel,
+				node_viewer->region, /*initial_path*/"/");
+			Callback_base<cmzn_region* > *Node_viewer_wx_region_callback =
+				new Callback_member_callback< cmzn_region*,
+				wxNodeViewer, int (wxNodeViewer::*)(cmzn_region *) >
+				(this, &wxNodeViewer::Node_viewer_wx_region_callback);
+			region_chooser->set_callback(Node_viewer_wx_region_callback);
 			Show();
 			frame = XRCCTRL(*this, "CmguiNodeViewer",wxFrame);
 			frame->GetSize(&(node_viewer->init_width), &(node_viewer->init_height));
@@ -176,7 +164,7 @@ public:
 LAST MODIFIED : 9 February 2007
 
 DESCRIPTION :
-Callback from wxChooser<Computed_field> when choice is made.
+Callback from region chooser when choice is made.
 ==============================================================================*/
 	{
 		USE_PARAMETER(region);
@@ -190,11 +178,10 @@ Callback from wxChooser<Computed_field> when choice is made.
 		return 1;
 	}
 
-
 	/*******************************************************************************
 	 * Callback from wxTextChooser when text is entered.
 	 */
-	int node_text_callback(FE_node *node)
+	int node_text_callback(cmzn_node *node)
 	{
 		if (node_viewer)
 		{
@@ -285,7 +272,7 @@ after a collapsible pane is opened/closed.
 			const char *value_string = wxValueString.mb_str(wxConvUTF8);
 			if (value_string != NULL)
 			{
-				int result = !CMZN_OK;
+				int result = CMZN_ERROR_GENERAL;
 				cmzn_fieldmodule_id field_module = cmzn_field_get_fieldmodule(field);
 				cmzn_fieldmodule_begin_change(field_module);
 				cmzn_fieldcache_id field_cache = cmzn_fieldmodule_create_fieldcache(field_module);
@@ -311,7 +298,7 @@ after a collapsible pane is opened/closed.
 						if (CMZN_OK == cmzn_field_evaluate_real(assignField, field_cache, numberOfComponents, values))
 						{
 							sscanf(value_string, FE_VALUE_INPUT_STRING, &values[component_number - 1]);
-							result = cmzn_field_assign_real(field, field_cache, numberOfComponents, values);
+							result = cmzn_field_assign_real(assignField, field_cache, numberOfComponents, values);
 						}
 						delete[] values;
 						cmzn_field_destroy(&assignField);
@@ -342,12 +329,12 @@ after a collapsible pane is opened/closed.
 		}
 	}
 
-	 struct FE_node  *get_selected_node()
+	 struct cmzn_node  *get_selected_node()
 	 {
 			return node_text_chooser->get_object();
 	 }
 
-	 void set_selected_node(FE_node *new_node)
+	 void set_selected_node(cmzn_node *new_node)
 	 {
 		  node_text_chooser->set_object(new_node);
 	 }
@@ -401,55 +388,62 @@ public:
 
 /** @param time_varying_field  Initialise to false before calling. Set to true if any field is time varying on node */
 static int node_viewer_add_collpane(Node_viewer *node_viewer,
-	cmzn_fieldcache_id field_cache, cmzn_field_id field, bool &time_varying_field)
+	cmzn_fieldcache_id field_cache, cmzn_field_id field, bool &time_varying_field, bool& refit)
 {
 	char *field_name = cmzn_field_get_name(field);
 	wxScrolledWindow *panel = node_viewer->collpane;
 
 	// identifier is the name of the panel in the collapsible pane
 	// field_name is the name of the CollapsiblePane
-	node_viewer->win = panel->FindWindowByName(wxString::FromAscii(field_name));
-	if (node_viewer->win != NULL)
+	wxWindow *wind = 0;
+	wxWindowList list = node_viewer->collpane->GetChildren();
+	wxWindowList::iterator iter;
+	int insertIndex = 0;
+	for (iter = list.begin(); iter != list.end(); ++iter)
 	{
-		node_viewer->win->DestroyChildren();
+		wxCollapsiblePane *current = static_cast<wxCollapsiblePane *>(*iter);
+		wxWindow *child = current->GetPane();
+		wxString tmpstr = child->GetName().GetData();
+		const char *window_name = tmpstr.mb_str(wxConvUTF8);
+		int comparison = strcmp(window_name, field_name);
+		if (0 == comparison)
+		{
+			wind = child;
+			break;
+		}
+		if (0 > comparison)
+			++insertIndex;
 	}
-	else
-	{
-		wxCollapsiblePane *collapsiblepane = new wxCollapsiblePane(panel, /*id*/-1, wxString::FromAscii(field_name));
-		wxSizer *sizer = panel->GetSizer();
-		sizer->Add(collapsiblepane, 0,wxALL, 5);
-		node_viewer->win = collapsiblepane->GetPane();
-		node_viewer->win->SetName(wxString::FromAscii(field_name));
-	}
-
 	if (node_viewer->current_node && cmzn_field_is_defined_at_location(field, field_cache))
 	{
-		node_viewer_setup_components(node_viewer, node_viewer->current_node, field, time_varying_field);
-		if (node_viewer->grid_field != NULL)
+		if (0 == wind)
 		{
-			node_viewer->win->SetSizer(node_viewer->grid_field);
-			node_viewer->grid_field->SetSizeHints(node_viewer->win);
-			node_viewer->grid_field->Layout();
-			node_viewer->win->Layout();
+			wxCollapsiblePane *collapsiblepane = new wxCollapsiblePane(panel, /*id*/-1, wxString::FromAscii(field_name));
+			wxSizer *sizer = panel->GetSizer();
+			sizer->Insert(insertIndex, collapsiblepane, 0, wxALL, 5);
+			wind = collapsiblepane->GetPane();
+			wind->SetName(wxString::FromAscii(field_name));
+			refit = true;
 		}
+		node_viewer_setup_components(node_viewer, wind, node_viewer->current_node,
+			field, time_varying_field, refit);
 	}
-
-	panel->FitInside();
-	panel->SetScrollbars(20, 20, 50, 50);
-	panel->Layout();
-	wxFrame *frame;
-	frame = XRCCTRL(*node_viewer->wx_node_viewer, "CmguiNodeViewer", wxFrame);
-	frame->Layout();
-	frame->SetMinSize(wxSize(50,100));
+	else if (0 != wind)
+	{
+		wind->SetName(wxString::wxString());
+		wind->DestroyChildren();
+		refit = true;
+	}
 	cmzn_deallocate(field_name);
 	return 1;
 }
 
-int Node_viewer_remove_unused_collpane(struct Node_viewer *node_viewer)
+int Node_viewer_remove_unused_collpane(struct Node_viewer *node_viewer, bool& refit)
 {
 	int return_code = 0;
 	if (node_viewer)
 	{
+		cmzn_fieldmodule_id fieldModule = cmzn_region_get_fieldmodule(node_viewer->region);
 		wxWindowList list = node_viewer->collpane->GetChildren();
 		wxWindowList::iterator iter;
 		for (iter = list.begin(); iter != list.end(); ++iter)
@@ -458,14 +452,16 @@ int Node_viewer_remove_unused_collpane(struct Node_viewer *node_viewer)
 			wxWindow *child = ((wxCollapsiblePane *)current)->GetPane();
 			wxString tmpstr = child->GetName().GetData();
 			const char *field_name = tmpstr.mb_str(wxConvUTF8);
-			cmzn_fieldmodule_id fieldModule = cmzn_region_get_fieldmodule(node_viewer->region);
 			cmzn_field_id field = cmzn_fieldmodule_find_field_by_name(fieldModule, field_name);
-			if (!field)
+			if (field)
+				cmzn_field_destroy(&field);
+			else
 			{
 				current->Destroy();
+				refit = true;
 			}
-			cmzn_fieldmodule_destroy(&fieldModule);
 		}
+		cmzn_fieldmodule_destroy(&fieldModule);
 	}
 	return return_code;
 }
@@ -491,7 +487,10 @@ DESCRIPTION :
 	}
 } /* node_field_viewer_widget_time_change_callback */
 
-int Node_viewer_update_collpane(struct Node_viewer *node_viewer)
+/**
+ * @event  Optional field module event; if supplied only updates panes for modified fields.
+ */
+int Node_viewer_update_collpane(struct Node_viewer *node_viewer, cmzn_fieldmoduleevent_id event)
 {
 	int return_code = 0;
 	if (node_viewer)
@@ -503,33 +502,32 @@ int Node_viewer_update_collpane(struct Node_viewer *node_viewer)
 		cmzn_fielditerator_id iter = cmzn_fieldmodule_create_fielditerator(field_module);
 		cmzn_field_id field = 0;
 		bool time_varying = false;
+		cmzn_field_change_flags field_change;
+		bool refit = false;
 		while ((0 != (field = cmzn_fielditerator_next(iter))))
 		{
-			node_viewer_add_collpane(node_viewer, field_cache, field, time_varying);
+			if ((!event) || ((field_change = cmzn_fieldmoduleevent_get_field_change_flags(event, field))
+					& (CMZN_FIELD_CHANGE_FLAG_ADD | CMZN_FIELD_CHANGE_FLAG_IDENTIFIER | CMZN_FIELD_CHANGE_FLAG_RESULT)))
+				node_viewer_add_collpane(node_viewer, field_cache, field, time_varying, refit);
 			cmzn_field_destroy(&field);
 		}
 		cmzn_fielditerator_destroy(&iter);
 		cmzn_fieldcache_destroy(&field_cache);
 		cmzn_fieldmodule_destroy(&field_module);
-		Node_viewer_remove_unused_collpane(node_viewer);
+		Node_viewer_remove_unused_collpane(node_viewer, refit);
 		if (time_varying)
-		{
-			if (!node_viewer->timenotifier_callback)
-			{
-				if (CMZN_OK == cmzn_timenotifier_set_callback(node_viewer->timenotifier,
-					node_field_time_change_callback, (void *)node_viewer))
-				{
-					node_viewer->timenotifier_callback = 1;
-				}
-			}
-		}
+			cmzn_timenotifier_set_callback(node_viewer->timenotifier,
+				node_field_time_change_callback, (void *)node_viewer);
 		else
+			cmzn_timenotifier_clear_callback(node_viewer->timenotifier);
+		if (refit)
 		{
-			if (node_viewer->timenotifier_callback)
-			{
-				cmzn_timenotifier_clear_callback(node_viewer->timenotifier);
-				node_viewer->timenotifier_callback = 0;
-			}
+			wxScrolledWindow *panel = node_viewer->collpane;
+			panel->FitInside();
+			panel->SetScrollbars(20, 20, 50, 50);
+			panel->Layout();
+			node_viewer->frame->Layout();
+			node_viewer->frame->SetMinSize(wxSize(50,100));
 		}
 	}
 	return return_code;
@@ -547,6 +545,8 @@ static void cmzn_fieldmoduleevent_to_Node_viewer(
 			field_module, node_viewer->domain_type);
 
 		// get the selected node, if selection has changed
+		cmzn_field_change_flags field_change_summary = cmzn_fieldmoduleevent_get_summary_field_change_flags(event);
+		bool updateCollPane = false;
 		cmzn_scene_id scene = cmzn_region_get_scene(node_viewer->region);
 		cmzn_field_group_id selection_group = cmzn_scene_get_selection_group(scene);
 		if (selection_group && (0 != (CMZN_FIELD_CHANGE_FLAG_RESULT &
@@ -572,7 +572,7 @@ static void cmzn_fieldmoduleevent_to_Node_viewer(
 						node_viewer->current_node = cmzn_node_access(node);
 					}
 					if (node_viewer->wx_node_viewer && node_viewer->collpane)
-						Node_viewer_update_collpane(node_viewer);
+						updateCollPane = true;
 				}
 				cmzn_node_destroy(&node);
 			}
@@ -583,10 +583,19 @@ static void cmzn_fieldmoduleevent_to_Node_viewer(
 
 		// re-show any fields that have changed at currently selected node
 		cmzn_nodesetchanges_id nodesetchanges = cmzn_fieldmoduleevent_get_nodesetchanges(event, master_nodeset);
-		int node_change = cmzn_nodesetchanges_get_node_change_flags(
+		cmzn_node_change_flags node_change = cmzn_nodesetchanges_get_node_change_flags(
 			nodesetchanges, node_viewer->wx_node_viewer->get_selected_node());
-		if (node_change | CHANGE_LOG_OBJECT_CHANGED(FE_node))
+		if (node_change & (~CMZN_NODE_CHANGE_FLAG_FIELD))
+		{
 			Node_viewer_set_viewer_node(node_viewer);
+			updateCollPane = true;
+		}
+		if (updateCollPane)
+			Node_viewer_update_collpane(node_viewer);
+		else if ((0 != (node_change & CMZN_NODE_CHANGE_FLAG_FIELD)) ||
+			(0 != (field_change_summary & (CMZN_FIELD_CHANGE_FLAG_ADD | CMZN_FIELD_CHANGE_FLAG_REMOVE |
+				CMZN_FIELD_CHANGE_FLAG_IDENTIFIER | CMZN_FIELD_CHANGE_FLAG_FULL_RESULT))))
+			Node_viewer_update_collpane(node_viewer, event);
 		cmzn_nodesetchanges_destroy(&nodesetchanges);
 
 		cmzn_nodeset_destroy(&master_nodeset);
@@ -615,7 +624,7 @@ struct Node_viewer *Node_viewer_create(
 	struct Node_viewer **node_viewer_address,
 	const char *dialog_title,
 	cmzn_region_id root_region, cmzn_field_domain_type domain_type,
-	struct Time_keeper_app *time_keeper_app)
+	cmzn_timekeeper_id timekeeper)
 {
 	struct Node_viewer *node_viewer;
 	ENTER(CREATE(Node_viewer));
@@ -634,13 +643,10 @@ struct Node_viewer *Node_viewer_create(
 			node_viewer->node_viewer_address = node_viewer_address;
 			node_viewer->domain_type = domain_type;
 			node_viewer->collpane = NULL;
-			node_viewer->time_keeper_app = time_keeper_app->access();
+			node_viewer->timekeeper = cmzn_timekeeper_access(timekeeper);
 			node_viewer->timenotifier = cmzn_timekeeper_create_timenotifier_regular(
-				time_keeper_app->getTimeKeeper(), /*update_frequency*/10.0, /*time_offset*/0.0);
-			node_viewer->timenotifier_callback = 0;
-			node_viewer->grid_field = NULL;
+				timekeeper, /*update_frequency*/10.0, /*time_offset*/0.0);
 #if defined (WX_USER_INTERFACE)
-			node_viewer->grid_field = NULL;
 			node_viewer->wx_node_viewer = (wxNodeViewer *)NULL;
 #endif /* defined (WX_USER_INTERFACE) */
 			node_viewer->current_node = Node_viewer_get_first_node(node_viewer);
@@ -654,12 +660,11 @@ struct Node_viewer *Node_viewer_create(
 			node_viewer->wx_node_viewer = new wxNodeViewer(node_viewer);
 			node_viewer->collpane =
 				XRCCTRL(*node_viewer->wx_node_viewer, "VariableViewerPanel", wxScrolledWindow);
-			node_viewer->win=NULL;
 			wxBoxSizer *Collpane_sizer = new wxBoxSizer( wxVERTICAL );
 			node_viewer->collpane->SetSizer(Collpane_sizer);
-			Node_viewer_update_collpane(node_viewer);
 			node_viewer->frame=
 				XRCCTRL(*node_viewer->wx_node_viewer, "CmguiNodeViewer", wxFrame);
+			Node_viewer_update_collpane(node_viewer);
 			node_viewer->frame->SetTitle(wxString::FromAscii(dialog_title));
 			node_viewer->frame->Layout();
 			node_viewer->frame->SetMinSize(wxSize(50,100));
@@ -707,7 +712,7 @@ int Node_viewer_destroy(struct Node_viewer **node_viewer_address)
 		if (node_viewer->wx_node_viewer)
 			 delete node_viewer->wx_node_viewer;
 		cmzn_timenotifier_destroy(&(node_viewer->timenotifier));
-		DEACCESS(Time_keeper_app)(&(node_viewer->time_keeper_app));
+		cmzn_timekeeper_destroy(&(node_viewer->timekeeper));
 		DEALLOCATE(*node_viewer_address);
 		return_code=1;
 	}
@@ -820,48 +825,92 @@ char *node_viewer_get_component_value_string(Node_viewer *node_viewer, cmzn_fiel
 	return new_value_string;
 }
 
-
-int node_viewer_add_textctrl(Node_viewer *node_viewer, cmzn_field_id field,
-	int component_number, cmzn_node_value_label node_value_label, int version)
-/*******************************************************************************
-LAST MODIFIED : 24 April 2007
-
-DESCRIPTION :
-Add textctrl box onto the viewer.
-==============================================================================*/
+/**
+ * Add textctrl box onto the viewer.
+ */
+void Node_viewer_updateTextCtrl(Node_viewer *node_viewer, wxWindow *parentWin,
+	wxGridSizer *gridSizer, int index, cmzn_field_id field, int component_number,
+	cmzn_node_value_label node_value_label, int version, bool& refit)
 {
-	char *temp_string;
-	wxNodeViewerTextCtrl *node_viewer_text =
-		new wxNodeViewerTextCtrl(node_viewer, field, component_number, node_value_label, version);
-	temp_string = node_viewer_get_component_value_string(
-		node_viewer, field, component_number, node_value_label, version);
-	if (temp_string != NULL)
+	wxSizerItem *item = gridSizer->GetItem(index);
+	wxNodeViewerTextCtrl *textCtrl = 0;
+	wxWindow *window = 0;
+	if (item)
 	{
-		node_viewer_text ->Create(node_viewer->win, -1, wxString::FromAscii(temp_string),wxDefaultPosition,
-			wxDefaultSize,wxTE_PROCESS_ENTER);
-		DEALLOCATE(temp_string);
+		window = item->GetWindow();
+		textCtrl = dynamic_cast<wxNodeViewerTextCtrl *>(window);
+	}
+	char *valueString = node_viewer_get_component_value_string(
+		node_viewer, field, component_number, node_value_label, version);
+	if (!valueString)
+		valueString = duplicate_string("ERROR");
+	if (textCtrl)
+	{
+		wxString oldLabel = textCtrl->GetLabel();
+		wxString newLabel(valueString);
+		if (newLabel != oldLabel)
+			textCtrl->SetLabel(newLabel);
 	}
 	else
 	{
-		node_viewer_text->Create (node_viewer->win, -1, wxT("ERROR"),wxDefaultPosition,
+		refit = true;
+		textCtrl = new wxNodeViewerTextCtrl(node_viewer, field, component_number, node_value_label, version);
+		textCtrl->Create(parentWin, -1, wxString::FromAscii(valueString),wxDefaultPosition,
 			wxDefaultSize,wxTE_PROCESS_ENTER);
+		textCtrl->Connect(wxEVT_COMMAND_TEXT_ENTER,
+			wxCommandEventHandler(wxNodeViewerTextCtrl::OnNodeViewerTextCtrlEntered));
+		textCtrl->Connect(wxEVT_KILL_FOCUS,
+			wxCommandEventHandler(wxNodeViewerTextCtrl::OnNodeViewerTextCtrlEntered));
+		if (window)
+		{
+			gridSizer->Replace(window, textCtrl);
+			window->Destroy();
+		}
+		else
+			gridSizer->Insert(index, textCtrl, 1, wxALIGN_CENTER_VERTICAL|wxALIGN_CENTER_HORIZONTAL|wxADJUST_MINSIZE, 0);
 	}
-	node_viewer_text->Connect(wxEVT_COMMAND_TEXT_ENTER,
-		wxCommandEventHandler(wxNodeViewerTextCtrl::OnNodeViewerTextCtrlEntered));
-	node_viewer_text->Connect(wxEVT_KILL_FOCUS,
-		wxCommandEventHandler(wxNodeViewerTextCtrl::OnNodeViewerTextCtrlEntered));
-	node_viewer->grid_field->Add(node_viewer_text, 0,
-		wxALIGN_CENTER_VERTICAL|wxALIGN_CENTER_HORIZONTAL|wxADJUST_MINSIZE, 0);
-	return (1);
+	DEALLOCATE(valueString);
 }
 
-/***************************************************************************//**
- * Creates the array of cells containing field component values and derivatives
- * and their labels.
+void gridSizer_updateStaticText(wxWindow *parentWin, wxGridSizer *gridSizer, int index, const char *text, int flag, bool& refit)
+{
+	wxSizerItem *item = gridSizer->GetItem(index);
+	wxStaticText *staticText = 0;
+	wxWindow *window = 0;
+	if (item)
+	{
+		window = item->GetWindow();
+		staticText = dynamic_cast<wxStaticText *>(window);
+	}
+	if (staticText)
+	{
+		wxString oldLabel = staticText->GetLabel();
+		wxString newLabel(text);
+		if (newLabel != oldLabel)
+			staticText->SetLabel(newLabel);
+	}
+	else
+	{
+		refit = true;
+		staticText = new wxStaticText(parentWin, -1, wxString::FromAscii(text));
+		if (window)
+		{
+			gridSizer->Replace(window, staticText);
+			window->Destroy();
+		}
+		else
+			gridSizer->Insert(index, staticText, 1, flag, 0);
+	}
+}
+
+/**
+ * Creates or redisplays the array of cells containing field component values
+ * and derivatives and their labels.
  * Assumes field is defined at node.
+ * Creates if parentWin is empty, otherwise assumes only fields need redisplaying.
  */
-static int node_viewer_setup_components(
-	struct Node_viewer *node_viewer, cmzn_node_id node, cmzn_field_id field, bool &time_varying_field)
+static int node_viewer_setup_components(struct Node_viewer *node_viewer,
+	wxWindow *parentWin, cmzn_node_id node, cmzn_field_id field, bool &time_varying_field, bool& refit)
 {
 	struct cmzn_node_value_label_label
 	{
@@ -914,29 +963,32 @@ static int node_viewer_setup_components(
 				}
 			}
 		}
-
-		// first row is blank cell followed by nodal value type labels
-		node_viewer->grid_field = new wxGridSizer(
-			number_of_components + 1, number_of_node_value_labels + 1, 1, 1);
-		node_viewer->grid_field->Add(new wxStaticText(
-			node_viewer->win, -1, wxT("")), 1, wxEXPAND|wxADJUST_MINSIZE, 0);
-		for (int nodal_value_no = 0; nodal_value_no < number_of_node_value_labels; ++nodal_value_no)
+		wxGridSizer *gridSizer = dynamic_cast<wxGridSizer *>(parentWin->GetSizer());
+		if (gridSizer)
 		{
-			tmp_string = wxString::FromAscii(nodal_value_labels[nodal_value_no]);
-			node_viewer->grid_field->Add(new wxStaticText(node_viewer->win, -1, tmp_string),1,
-				wxALIGN_CENTER_VERTICAL|
-				wxALIGN_CENTER_HORIZONTAL|wxADJUST_MINSIZE, 0);
+			if ((gridSizer->GetRows() != (number_of_components + 1)) ||
+				(gridSizer->GetCols() != number_of_node_value_labels + 1))
+			{
+				parentWin->DestroyChildren();
+				gridSizer = 0;
+				refit = true;
+			}
 		}
-
+		if (!gridSizer)
+			gridSizer = new wxGridSizer(number_of_components + 1, number_of_node_value_labels + 1, 1, 1);
+		int index = 0;
+		// first row is blank cell followed by nodal value type labels
+		gridSizer_updateStaticText(parentWin, gridSizer, index++, "", wxEXPAND|wxADJUST_MINSIZE, refit);
+		for (int nodal_value_no = 0; nodal_value_no < number_of_node_value_labels; ++nodal_value_no)
+			gridSizer_updateStaticText(parentWin, gridSizer, index++, nodal_value_labels[nodal_value_no],
+				wxALIGN_CENTER_VERTICAL|wxALIGN_CENTER_HORIZONTAL|wxADJUST_MINSIZE, refit);
 		for (int comp_no = 1; comp_no <= number_of_components; ++comp_no)
 		{
 			// first column is component label */
-			char *new_string = cmzn_field_get_component_name(field, comp_no);
-			tmp_string = wxString::FromAscii(new_string);
-			node_viewer->grid_field->Add(new wxStaticText(node_viewer->win, -1, tmp_string),1,
-				wxALIGN_CENTER_VERTICAL|
-				wxALIGN_CENTER_HORIZONTAL|wxADJUST_MINSIZE, 0);
-			cmzn_deallocate(new_string);
+			char *name = cmzn_field_get_component_name(field, comp_no);
+			gridSizer_updateStaticText(parentWin, gridSizer, index++, name,
+				wxALIGN_CENTER_VERTICAL|wxALIGN_CENTER_HORIZONTAL|wxADJUST_MINSIZE, refit);
+			cmzn_deallocate(name);
 
 			for (int nodal_value_no = 0; nodal_value_no < number_of_node_value_labels; ++nodal_value_no)
 			{
@@ -944,14 +996,11 @@ static int node_viewer_setup_components(
 				if (!feField || (0 < cmzn_nodetemplate_get_value_number_of_versions(
 					nodeTemplate, field, comp_no, node_value_label)))
 				{
-					node_viewer_add_textctrl(node_viewer, field, comp_no, node_value_label, 1);
+					Node_viewer_updateTextCtrl(node_viewer, parentWin, gridSizer, index++, field, comp_no, node_value_label, 1, refit);
 				}
 				else
-				{
-					node_viewer->grid_field->Add(new wxStaticText(node_viewer->win, -1, wxT("")),1,
-						wxEXPAND|wxALIGN_CENTER_VERTICAL|
-						wxALIGN_CENTER_HORIZONTAL|wxADJUST_MINSIZE, 0);
-				}
+					gridSizer_updateStaticText(parentWin, gridSizer, index++, "",
+						wxEXPAND|wxALIGN_CENTER_VERTICAL|	wxALIGN_CENTER_HORIZONTAL|wxADJUST_MINSIZE, refit);
 			}
 		}
 		cmzn_timesequence_id timeSequence = cmzn_nodetemplate_get_timesequence(nodeTemplate, field);
@@ -960,6 +1009,14 @@ static int node_viewer_setup_components(
 			time_varying_field = true;
 			cmzn_timesequence_destroy(&timeSequence);
 		}
+		if (refit)
+		{
+			parentWin->SetSizer(gridSizer);
+			gridSizer->SetSizeHints(parentWin);
+			gridSizer->Layout();
+			parentWin->Layout();
+		}
+
 		cmzn_nodetemplate_destroy(&nodeTemplate);
 		cmzn_field_finite_element_destroy(&feField);
 	}

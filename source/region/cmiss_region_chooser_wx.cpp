@@ -10,6 +10,7 @@ DESCRIPTION :
 * This Source Code Form is subject to the terms of the Mozilla Public
 * License, v. 2.0. If a copy of the MPL was not distributed with this
 * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+#include "zinc/region.h"
 #include "region/cmiss_region_chooser_wx.hpp"
 #include "general/debug.h"
 #include "general/mystring.h"
@@ -19,7 +20,7 @@ DESCRIPTION :
 wxRegionChooser::wxRegionChooser(wxWindow *parent,
 	cmzn_region *root_region, const char *initial_path) :
 	wxChoice(parent, /*id*/-1, wxPoint(0,0), wxSize(-1,-1)),
-	root_region(ACCESS(cmzn_region)(root_region))
+	root_region(cmzn_region_access(root_region))
 /*******************************************************************************
 LAST MODIFIED : 22 February 2007
 
@@ -53,7 +54,7 @@ DESCRIPTION :
 {
 	cmzn_region_remove_callback(root_region,
 		wxRegionChooser::RegionChange, this);
-	DEACCESS(cmzn_region)(&root_region);
+	cmzn_region_destroy(&root_region);
 	if (callback)
 		delete callback;
 }
@@ -83,10 +84,12 @@ DESCRIPTION :
 Returns to <region_address> the region chosen in the <chooser>.
 ==============================================================================*/
 {
-	cmzn_region *child_region = NULL;
 	wxString tmpstr = GetString(GetSelection());
-	cmzn_region_get_region_from_path_deprecated(root_region,
-		tmpstr.mb_str(wxConvUTF8), &child_region);
+	cmzn_region_id child_region = cmzn_region_find_subregion_at_path(
+		root_region, tmpstr.mb_str(wxConvUTF8));
+	// don't want to access object here
+	cmzn_region_id tmp = child_region;
+	cmzn_region_destroy(&tmp);
 	return (child_region);
 }
 

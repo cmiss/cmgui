@@ -16,29 +16,28 @@
 
 #include "wx/wx.h"
 #include "general/callback_class.hpp"
-// #include "choose/text_choose_class.hpp"
 
 #include "general/debug.h"
 #include "general/message.h"
 #include "user_interface/user_interface.h"
 
-struct FE_region;
-
 template < class FE_object > class FE_object_text_chooser : public wxTextCtrl
 {
+public:
+	typedef int conditional_function_type(FE_object *object, void *user_data);
 private:
 	cmzn_region_id region;
 	cmzn_field_domain_type domain_type;
 	cmzn_fieldmodulenotifier_id fieldmodulenotifier;
 	FE_object *current_object, *last_updated_object;
-	LIST_CONDITIONAL_FUNCTION(FE_node) *conditional_function;
+	conditional_function_type *conditional_function;
 	void *conditional_function_user_data;
 	Callback_base<FE_object*> *update_callback;
 
 public:
 	FE_object_text_chooser(wxWindow *parent, cmzn_region_id region,
 		cmzn_field_domain_type domain_type, FE_object *initial_object,
-		LIST_CONDITIONAL_FUNCTION(FE_node) *conditional_function,
+		conditional_function_type *conditional_function,
 		void *conditional_function_user_data) :
 			wxTextCtrl(parent, /*id*/-1, wxT("") ,wxPoint(0,0), wxSize(-1,-1),wxTE_PROCESS_ENTER),
 			region(0), domain_type(domain_type), fieldmodulenotifier(),
@@ -174,8 +173,11 @@ public:
 			else if (!current_object)
 			{
 				cmzn_nodeiterator_id iter = cmzn_nodeset_create_nodeiterator(nodeset);
-				while (0 != (current_object = cmzn_nodeiterator_next_non_access(iter)))
+				while (0 != (current_object = cmzn_nodeiterator_next(iter)))
 				{
+					// remove access on current_object
+					cmzn_node_id tmp = current_object;
+					cmzn_node_destroy(&tmp);
 					if ((!this->conditional_function) ||
 						this->conditional_function(current_object, this->conditional_function_user_data))
 						break;
