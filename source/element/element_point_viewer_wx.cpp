@@ -922,53 +922,24 @@ static void cmzn_fieldmoduleevent_to_element_point_viewer(
 	if (event && element_point_viewer)
 	{
 		cmzn_fieldmodule_id fieldmodule = cmzn_region_get_fieldmodule(element_point_viewer->region);
-		FE_region_changes *feRegionChanges = event->getFeRegionChanges();
-		if (element_point_viewer->element_point_identifier.element && feRegionChanges)
+		if (element_point_viewer->element_point_identifier.element)
 		{
-			bool refresh = false;
-			int dimension = get_FE_element_dimension(element_point_viewer->element_point_identifier.element);
-			/* check if contents of this element changed */
-			int fe_element_change;
-			if (CHANGE_LOG_QUERY(FE_element)(feRegionChanges->getElementChanges(dimension),
-				element_point_viewer->element_point_identifier.element, &fe_element_change) &&
-				(fe_element_change & CHANGE_LOG_OBJECT_NOT_IDENTIFIER_CHANGED(FE_element)))
+			const int dimension = get_FE_element_dimension(element_point_viewer->element_point_identifier.element);
+			cmzn_mesh_id mesh = cmzn_fieldmodule_find_mesh_by_dimension(fieldmodule, dimension);
+			cmzn_meshchanges_id meshchanges = cmzn_fieldmoduleevent_get_meshchanges(event, mesh);
+			if (meshchanges)
 			{
-				refresh = true;
-			}
-			else
-			{
-				/* check if nodes in this element have changed */
-				int number_of_nodes = 0;
-				struct FE_element *top_level_element = element_point_viewer->element_point_identifier.top_level_element;
-				struct FE_node *node;
-				get_FE_element_number_of_nodes(top_level_element, &number_of_nodes);
-				if ((top_level_element) && (0 < number_of_nodes))
+				int element_change = cmzn_meshchanges_get_element_change_flags(meshchanges,
+					element_point_viewer->element_point_identifier.element);
+				if (element_change & CMZN_ELEMENT_CHANGE_FLAG_FIELD)
 				{
-					cmzn_nodeset_id nodeset = cmzn_fieldmodule_find_nodeset_by_field_domain_type(
-						fieldmodule, CMZN_FIELD_DOMAIN_TYPE_NODES);
-					cmzn_nodesetchanges_id nodesetchanges = cmzn_fieldmoduleevent_get_nodesetchanges(event, nodeset);
-					for (int i = 0; i < number_of_nodes; i++)
-					{
-						if (get_FE_element_node(top_level_element, i, &node) && node)
-						{
-							int nodeChange = cmzn_nodesetchanges_get_node_change_flags(nodesetchanges, node);
-							if (nodeChange & CMZN_NODE_CHANGE_FLAG_FIELD)
-							{
-								refresh = true;
-								break;
-							}
-						}
-					}
-					cmzn_nodesetchanges_destroy(&nodesetchanges);
-					cmzn_nodeset_destroy(&nodeset);
+					/* update grid_text in case number changed */
+					 //				Element_point_viewer_refresh_grid_value_text(element_point_viewer);
+					Element_point_viewer_set_viewer_element_point(element_point_viewer);
 				}
 			}
-			if (refresh)
-			{
-				/* update grid_text in case number changed */
-				 //				Element_point_viewer_refresh_grid_value_text(element_point_viewer);
-				Element_point_viewer_set_viewer_element_point(element_point_viewer);
-			}
+			cmzn_meshchanges_destroy(&meshchanges);
+			cmzn_mesh_destroy(&mesh);
 		}
 		cmzn_fieldmodule_destroy(&fieldmodule);
 	}
