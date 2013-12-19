@@ -561,7 +561,7 @@ static int FE_node_calculate_delta_position(struct FE_node *node,
 		coordinates[1]=0.0;
 		coordinates[2]=0.0;
 		cmzn_fieldcache_set_node(edit_info->field_cache, node);
-		if (cmzn_field_evaluate_real(edit_info->rc_coordinate_field,
+		if (CMZN_OK == cmzn_field_evaluate_real(edit_info->rc_coordinate_field,
 			edit_info->field_cache, 3, coordinates))
 		{
 			initial_coordinates[0] = coordinates[0];
@@ -629,12 +629,12 @@ static int FE_node_calculate_delta_position(struct FE_node *node,
 				{
 					/* get delta of coordinate_field from change of rc_coordinate_field */
 					return_code =
-						cmzn_field_evaluate_real(edit_info->coordinate_field,
-							edit_info->field_cache, 3, initial_coordinates) &&
-						cmzn_field_assign_real(edit_info->rc_coordinate_field,
-							edit_info->field_cache, 3, coordinates) &&
-						cmzn_field_evaluate_real(edit_info->coordinate_field,
-							edit_info->field_cache, 3, final_coordinates);
+						(CMZN_OK == cmzn_field_evaluate_real(edit_info->coordinate_field,
+							edit_info->field_cache, 3, initial_coordinates)) &&
+						(CMZN_OK == cmzn_field_assign_real(edit_info->rc_coordinate_field,
+							edit_info->field_cache, 3, coordinates)) &&
+						(CMZN_OK == cmzn_field_evaluate_real(edit_info->coordinate_field,
+							edit_info->field_cache, 3, final_coordinates));
 					edit_info->delta1 = final_coordinates[0] - initial_coordinates[0];
 					edit_info->delta2 = final_coordinates[1] - initial_coordinates[1];
 					edit_info->delta3 = final_coordinates[2] - initial_coordinates[2];
@@ -644,8 +644,8 @@ static int FE_node_calculate_delta_position(struct FE_node *node,
 					edit_info->delta1 = coordinates[0] - initial_coordinates[0];
 					edit_info->delta2 = coordinates[1] - initial_coordinates[1];
 					edit_info->delta3 = coordinates[2] - initial_coordinates[2];
-					return_code = cmzn_field_assign_real(edit_info->rc_coordinate_field,
-						edit_info->field_cache, 3, coordinates);
+					return_code = (CMZN_OK == cmzn_field_assign_real(edit_info->rc_coordinate_field,
+						edit_info->field_cache, 3, coordinates));
 				}
 				/* may be some application for not editing element_xi field value */
 				if (return_code && edit_info->nearest_element &&
@@ -704,17 +704,15 @@ static int FE_node_edit_position(struct FE_node *node,
 			cmzn_fieldcache_set_node(edit_info->field_cache, node);
 			/* If the field we are changing isn't defined at this node then we
 				don't complain and just do nothing */
-			if (cmzn_field_evaluate_real(edit_info->coordinate_field, edit_info->field_cache, 3, coordinates))
+			if (CMZN_OK == cmzn_field_evaluate_real(edit_info->coordinate_field, edit_info->field_cache, 3, coordinates))
 			{
 				if (return_code)
 				{
 					coordinates[0] += edit_info->delta1;
 					coordinates[1] += edit_info->delta2;
 					coordinates[2] += edit_info->delta3;
-					if (!cmzn_field_assign_real(edit_info->coordinate_field, edit_info->field_cache, 3, coordinates))
-					{
+					if (CMZN_OK != cmzn_field_assign_real(edit_info->coordinate_field, edit_info->field_cache, 3, coordinates))
 						return_code=0;
-					}
 				}
 			}
 			if (!return_code)
@@ -775,10 +773,10 @@ NOTE: currently does not tolerate having a variable_scale_field.
 		coordinates[1]=0.0;
 		coordinates[2]=0.0;
 		cmzn_fieldcache_set_node(edit_info->field_cache, node);
-		if (cmzn_field_evaluate_real(edit_info->wrapper_orientation_scale_field, edit_info->field_cache,
-				number_of_orientation_scale_components, orientation_scale) &&
-			cmzn_field_evaluate_real(edit_info->rc_coordinate_field, edit_info->field_cache,
-				3, coordinates) &&
+		if ((CMZN_OK == cmzn_field_evaluate_real(edit_info->wrapper_orientation_scale_field, edit_info->field_cache,
+				number_of_orientation_scale_components, orientation_scale)) &&
+			(CMZN_OK == cmzn_field_evaluate_real(edit_info->rc_coordinate_field, edit_info->field_cache,
+				3, coordinates)) &&
 			make_glyph_orientation_scale_axes(number_of_orientation_scale_components,
 				orientation_scale, a, b, c, size))
 		{
@@ -860,7 +858,7 @@ NOTE: currently does not tolerate having a variable_scale_field.
 			}
 			if (return_code)
 			{
-				if (!cmzn_field_assign_real(edit_info->wrapper_orientation_scale_field, edit_info->field_cache,
+				if (CMZN_OK != cmzn_field_assign_real(edit_info->wrapper_orientation_scale_field, edit_info->field_cache,
 					number_of_orientation_scale_components, orientation_scale))
 				{
 					return_code=0;
@@ -869,7 +867,7 @@ NOTE: currently does not tolerate having a variable_scale_field.
 					edit_info->wrapper_orientation_scale_field)
 				{
 					/* get delta values from the orientation_scale_field */
-					if (cmzn_field_evaluate_real(edit_info->orientation_scale_field, edit_info->field_cache,
+					if (CMZN_OK == cmzn_field_evaluate_real(edit_info->orientation_scale_field, edit_info->field_cache,
 						number_of_orientation_scale_components, orientation_scale))
 					{
 						number_of_orientation_scale_components=
@@ -979,7 +977,7 @@ static int FE_node_edit_vector(struct FE_node *node,
 		if ((node != edit_info->last_picked_node) && edit_info->fe_nodeset->containsNode(node))
 		{
 			cmzn_fieldcache_set_node(edit_info->field_cache, node);
-			if (cmzn_field_evaluate_real(edit_info->orientation_scale_field, edit_info->field_cache,
+			if (CMZN_OK == cmzn_field_evaluate_real(edit_info->orientation_scale_field, edit_info->field_cache,
 				number_of_orientation_scale_components, orientation_scale))
 			{
 				switch (number_of_orientation_scale_components)
@@ -1014,7 +1012,7 @@ static int FE_node_edit_vector(struct FE_node *node,
 				}
 				if (return_code)
 				{
-					if (!cmzn_field_assign_real(edit_info->orientation_scale_field, edit_info->field_cache,
+					if (CMZN_OK != cmzn_field_assign_real(edit_info->orientation_scale_field, edit_info->field_cache,
 						number_of_orientation_scale_components, orientation_scale))
 					{
 						return_code=0;
@@ -1078,11 +1076,11 @@ object's coordinate field.
 
 			cmzn_fieldcache_set_node(field_cache, node);
 			cmzn_fieldcache_set_time(field_cache, time);
-			if (cmzn_field_evaluate_real(rc_picked_coordinate_field, field_cache,
+			if (CMZN_OK == cmzn_field_evaluate_real(rc_picked_coordinate_field, field_cache,
 				3, coordinates))
 			{
 				if (Node_tool_define_field_at_node(node_tool,node) &&
-					cmzn_field_assign_real(rc_coordinate_field, field_cache, 3, coordinates))
+					(CMZN_OK == cmzn_field_assign_real(rc_coordinate_field, field_cache, 3, coordinates)))
 				{
 					return_code=1;
 				}
@@ -1234,7 +1232,7 @@ try to enforce that the node is created on that element.
 					ACCESS(FE_node)(node);
 					cmzn_fieldcache_set_node(field_cache, node);
 					if (!Node_tool_define_field_at_node(node_tool,node) ||
-						!cmzn_field_assign_real(rc_coordinate_field, field_cache, 3, coordinates) ||
+						(CMZN_OK != cmzn_field_assign_real(rc_coordinate_field, field_cache, 3, coordinates)) ||
 						(nearest_element && constraint_data.found_element && node_tool->element_xi_field &&
 							!FE_node_define_and_set_element_xi(node, node_tool->element_xi_field,
 								constraint_data.found_element, constraint_data.xi)) ||

@@ -1002,7 +1002,7 @@ static char *element_point_viewer_get_field_string(struct Element_point_viewer *
 		else
 		{
 			FE_value *values = new FE_value[number_of_components];
-			if (cmzn_field_evaluate_real(field, field_cache, number_of_components, values))
+			if (CMZN_OK == cmzn_field_evaluate_real(field, field_cache, number_of_components, values))
 			{
 				char tmp[50];
 				sprintf(tmp, "%g", values[component_number]);
@@ -1834,12 +1834,12 @@ data, and then changes the correct value in the array structure.
 							{
 								cmzn_fieldmodule_id field_module = cmzn_field_get_fieldmodule(field);
 								cmzn_fieldcache_id field_cache = cmzn_fieldmodule_create_fieldcache(field_module);
-								if (cmzn_fieldcache_set_time(field_cache, time) &&
-									cmzn_fieldcache_set_mesh_location(field_cache, element, MAXIMUM_ELEMENT_XI_DIMENSIONS, xi) &&
-									cmzn_field_evaluate_real(field, field_cache, number_of_components, values))
+								if ((CMZN_OK == cmzn_fieldcache_set_time(field_cache, time)) &&
+									(CMZN_OK == cmzn_fieldcache_set_mesh_location(field_cache, element, MAXIMUM_ELEMENT_XI_DIMENSIONS, xi)) &&
+									(CMZN_OK == cmzn_field_evaluate_real(field, field_cache, number_of_components, values)))
 								{
 									values[component_number] = value;
-									return_code = cmzn_field_assign_real(field, field_cache, number_of_components, values);
+									return_code = (CMZN_OK == cmzn_field_assign_real(field, field_cache, number_of_components, values));
 								}
 								else
 								{

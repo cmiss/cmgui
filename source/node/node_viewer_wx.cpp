@@ -298,14 +298,14 @@ after a collapsible pane is opened/closed.
 						if (CMZN_OK == cmzn_field_evaluate_real(assignField, field_cache, numberOfComponents, values))
 						{
 							sscanf(value_string, FE_VALUE_INPUT_STRING, &values[component_number - 1]);
-							result = cmzn_field_assign_real(assignField, field_cache, numberOfComponents, values);
+							result = (CMZN_OK == cmzn_field_assign_real(assignField, field_cache, numberOfComponents, values));
 						}
 						delete[] values;
 						cmzn_field_destroy(&assignField);
 					} break;
 				case CMZN_FIELD_VALUE_TYPE_STRING:
 					{
-						result = cmzn_field_assign_string(field, field_cache, value_string);
+						result = (CMZN_OK == cmzn_field_assign_string(field, field_cache, value_string));
 					} break;
 				default:
 					{
