@@ -2193,6 +2193,9 @@ Creates a spectrum_editor widget.
 								Scene_viewer_set_input_mode(
 									spectrum_editor->spectrum_editor_scene_viewer->core_scene_viewer,
 									SCENE_VIEWER_NO_INPUT );
+								cmzn_sceneviewer_set_projection_mode(
+									spectrum_editor->spectrum_editor_scene_viewer->core_scene_viewer,
+									CMZN_SCENEVIEWER_PROJECTION_MODE_PARALLEL);
 								//-- Scene_viewer_app_add_input_callback(
 								//-- 		spectrum_editor->spectrum_editor_scene_viewer,
 								//-- 		spectrum_editor_viewer_input_callback,
