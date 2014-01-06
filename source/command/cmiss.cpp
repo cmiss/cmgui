@@ -831,9 +831,11 @@ static int gfx_create_colour_bar(struct Parse_state *state,
 				}
 				else
 				{
-					colour_bar = cmzn_glyphmodule_create_colour_bar(command_data->glyphmodule, spectrum);
-					cmzn_glyph_set_name(cmzn_glyph_colour_bar_base_cast(colour_bar), glyph_name);
-					cmzn_glyph_set_managed(cmzn_glyph_colour_bar_base_cast(colour_bar), true);
+					cmzn_glyph_id colour_bar_glyph = cmzn_glyphmodule_create_glyph_colour_bar(command_data->glyphmodule, spectrum);
+					cmzn_glyph_set_name(colour_bar_glyph, glyph_name);
+					cmzn_glyph_set_managed(colour_bar_glyph, true);
+					colour_bar = cmzn_glyph_cast_colour_bar(colour_bar_glyph);
+					cmzn_glyph_destroy(&colour_bar_glyph);
 				}
 				if (colour_bar)
 				{
