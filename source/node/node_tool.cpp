@@ -17,6 +17,7 @@ Scene input.
 
 #include <math.h>
 #include "zinc/fieldcache.h"
+#include "zinc/glyph.h"
 #include "zinc/graphics.h"
 #include "zinc/material.h"
 #include "zinc/scene.h"
@@ -34,7 +35,9 @@ Scene input.
 #include "general/debug.h"
 #include "general/matrix_vector.h"
 #include "general/mystring.h"
+#include "graphics/glyph.hpp"
 #include "graphics/graphics_object.h"
+#include "graphics/graphics_module.h"
 #include "interaction/interaction_graphics.h"
 #include "interaction/interaction_volume.h"
 #include "interaction/interactive_event.h"
@@ -106,6 +109,8 @@ changes in node position and derivatives etc.
 	cmzn_field_group_id group_field;
 	/* needed for destroy button */
 	struct Graphical_material *rubber_band_material;
+	cmzn_glyph *rubber_band_glyph;
+	cmzn_graphics *rubber_band_graphics;
 	struct Time_keeper_app *time_keeper_app;
 	struct User_interface *user_interface;
 	/* user-settable flags */
@@ -1841,17 +1846,35 @@ release.
 										node_tool->rubber_band=CREATE(GT_object)(
 											"node_tool_rubber_band",g_POLYLINE,
 											node_tool->rubber_band_material);
+										cmzn_glyphmodule_id glyphmodule = cmzn_graphics_module_get_glyphmodule(
+											scene->graphics_module);
+										node_tool->rubber_band_glyph = cmzn_glyphmodule_create_glyph_static(
+											glyphmodule, node_tool->rubber_band);
+										cmzn_glyph_set_name(node_tool->rubber_band_glyph, "temp_rubber_band");
+										node_tool->rubber_band_graphics = cmzn_scene_create_graphics_points(
+											scene);
+										cmzn_graphicspointattributes_id point_attributes = cmzn_graphics_get_graphicspointattributes(
+											node_tool->rubber_band_graphics);
+										cmzn_graphicspointattributes_set_glyph(point_attributes,
+											node_tool->rubber_band_glyph);
+										double base_size = 1.0;
+										cmzn_graphicspointattributes_set_base_size(
+											point_attributes, 1, &base_size);
+										cmzn_graphicspointattributes_destroy(&point_attributes);
+										cmzn_glyphmodule_destroy(&glyphmodule);
 									}
 									Interaction_volume_make_polyline_extents(
 										temp_interaction_volume,node_tool->rubber_band);
+									cmzn_graphics_flag_glyph_has_changed(node_tool->rubber_band_graphics);
 								}
 								else
 								{
-#if defined (USE_GRAPHICS_OBJECT)
-									Scene_remove_graphics_object(scene,node_tool->rubber_band);
-#endif
+									cmzn_scene_remove_graphics(scene, node_tool->rubber_band_graphics);
+									cmzn_graphics_destroy(&node_tool->rubber_band_graphics);
+									cmzn_glyph_destroy(&node_tool->rubber_band_glyph);
 									DEACCESS(GT_object)(&(node_tool->rubber_band));
 								}
+								// remove the following line for live graphics update on picking
 								if (INTERACTIVE_EVENT_BUTTON_RELEASE==event_type)
 								{
 									cmzn_scenepicker_set_interaction_volume(scenepicker,
@@ -3159,6 +3182,8 @@ struct Node_tool *CREATE(Node_tool)(
 
 			node_tool->last_interaction_volume=(struct Interaction_volume *)NULL;
 			node_tool->rubber_band=(struct GT_object *)NULL;
+			node_tool->rubber_band_glyph = 0;
+			node_tool->rubber_band_graphics = 0;
 		}
 		else
 		{
@@ -3199,6 +3224,8 @@ structure itself.
 		{
 			DEACCESS(FE_element)(&node_tool->template_element);
 		}
+		cmzn_graphics_destroy(&node_tool->rubber_band_graphics);
+		cmzn_glyph_destroy(&node_tool->rubber_band_glyph);
 		REACCESS(GT_object)(&(node_tool->rubber_band),(struct GT_object *)NULL);
 		cmzn_material_destroy(&(node_tool->rubber_band_material));
 		if (node_tool->last_picked_node)

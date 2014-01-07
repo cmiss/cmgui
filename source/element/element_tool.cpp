@@ -15,6 +15,8 @@ Interactive tool for selecting elements with mouse and other devices.
 #include "configure/cmgui_configure.h"
 #endif /* defined (1) */
 #include "zinc/fieldcache.h"
+#include "zinc/glyph.h"
+#include "zinc/graphics.h"
 #include "zinc/material.h"
 #include "zinc/scene.h"
 #include "zinc/sceneviewer.h"
@@ -29,6 +31,7 @@ Interactive tool for selecting elements with mouse and other devices.
 #include "finite_element/finite_element_discretization.h"
 #include "finite_element/finite_element_region.h"
 #include "general/debug.h"
+#include "graphics/glyph.hpp"
 #include "graphics/scene.h"
 #include "interaction/interaction_graphics.h"
 #include "interaction/interaction_volume.h"
@@ -84,6 +87,8 @@ struct Element_tool
 	struct cmzn_region *region;
 	struct Element_point_ranges_selection *element_point_ranges_selection;
 	cmzn_material *rubber_band_material;
+	cmzn_glyph *rubber_band_glyph;
+	cmzn_graphics *rubber_band_graphics;
 	struct Time_keeper_app *time_keeper_app;
 	struct User_interface *user_interface;
 	/* user-settable flags */
@@ -468,23 +473,45 @@ release.
 								element_tool->last_interaction_volume,interaction_volume);
 							if (temp_interaction_volume != 0)
 							{
-//								if (INTERACTIVE_EVENT_MOTION_NOTIFY==event_type)
-//								{
-//									if (!element_tool->rubber_band)
-//									{
-//										/* create rubber_band object and put in scene */
-//										element_tool->rubber_band=CREATE(GT_object)(
-//											"element_tool_rubber_band",g_POLYLINE,
-//											element_tool->rubber_band_material);
-//									}
-//									Interaction_volume_make_polyline_extents(
-//										temp_interaction_volume,element_tool->rubber_band);
-//								}
-//								else
-//								{
-//									DEACCESS(GT_object)(&(element_tool->rubber_band));
-//								}
-//								if (INTERACTIVE_EVENT_BUTTON_RELEASE==event_type)
+								if (INTERACTIVE_EVENT_MOTION_NOTIFY==event_type)
+								{
+									if (!element_tool->rubber_band)
+									{
+										/* create rubber_band object and put in scene */
+										element_tool->rubber_band=CREATE(GT_object)(
+											"element_tool_rubber_band",g_POLYLINE,
+											element_tool->rubber_band_material);
+										cmzn_glyphmodule_id glyphmodule = cmzn_graphics_module_get_glyphmodule(
+											scene->graphics_module);
+										element_tool->rubber_band_glyph = cmzn_glyphmodule_create_glyph_static(
+											glyphmodule, element_tool->rubber_band);
+										cmzn_glyph_set_name(element_tool->rubber_band_glyph, "temp_rubber_band");
+										element_tool->rubber_band_graphics = cmzn_scene_create_graphics_points(
+											scene);
+										cmzn_graphicspointattributes_id point_attributes = cmzn_graphics_get_graphicspointattributes(
+											element_tool->rubber_band_graphics);
+										cmzn_graphicspointattributes_set_glyph(point_attributes,
+											element_tool->rubber_band_glyph);
+										double base_size = 1.0;
+										cmzn_graphicspointattributes_set_base_size(
+											point_attributes, 1, &base_size);
+										cmzn_graphicspointattributes_destroy(&point_attributes);
+										cmzn_glyphmodule_destroy(&glyphmodule);
+									}
+									Interaction_volume_make_polyline_extents(
+										temp_interaction_volume,element_tool->rubber_band);
+									cmzn_graphics_flag_glyph_has_changed(element_tool->rubber_band_graphics);
+								}
+								else
+								{
+									cmzn_scene_remove_graphics(scene, element_tool->rubber_band_graphics);
+									cmzn_graphics_destroy(&element_tool->rubber_band_graphics);
+									cmzn_glyph_destroy(&element_tool->rubber_band_glyph);
+									DEACCESS(GT_object)(&(element_tool->rubber_band));
+								}
+
+								// remove the following line for live graphics update on picking
+								if (INTERACTIVE_EVENT_BUTTON_RELEASE==event_type)
 								{
 									cmzn_scenepicker_set_interaction_volume(scenepicker,
 										temp_interaction_volume);
@@ -915,6 +942,8 @@ Selects elements in <element_selection> in response to interactive_events.
 			element_tool->last_picked_element=(struct FE_element *)NULL;
 			element_tool->last_interaction_volume=(struct Interaction_volume *)NULL;
 			element_tool->rubber_band=(struct GT_object *)NULL;
+			element_tool->rubber_band_glyph = 0;
+			element_tool->rubber_band_graphics = 0;
 #if defined (WX_USER_INTERFACE) /* switch (USER_INTERFACE) */
 			element_tool->wx_element_tool=(wxElementTool *)NULL;
 #endif /* defined (WX_USER_INTERFACE) */
@@ -954,6 +983,8 @@ structure itself.
 			(struct FE_element *)NULL);
 		REACCESS(Interaction_volume)(&(element_tool->last_interaction_volume),
 			(struct Interaction_volume *)NULL);
+		cmzn_graphics_destroy(&element_tool->rubber_band_graphics);
+		cmzn_glyph_destroy(&element_tool->rubber_band_glyph);
 		REACCESS(GT_object)(&(element_tool->rubber_band),(struct GT_object *)NULL);
 		cmzn_material_destroy(&(element_tool->rubber_band_material));
 		if (element_tool->time_keeper_app)
