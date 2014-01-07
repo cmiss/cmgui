@@ -744,6 +744,12 @@ int Scene_viewer_app_default_input_callback(struct Scene_viewer_app *scene_viewe
 					if (SCENE_VIEWER_CUSTOM != scene_viewer->core_scene_viewer->projection_mode)
 					{
 						Scene_viewer_input_transform(scene_viewer->core_scene_viewer, input);
+						Scene_viewer_app_redraw_now(scene_viewer);
+						if (input->type == CMZN_SCENEVIEWERINPUT_EVENT_TYPE_MOTION_NOTIFY)
+						{
+							CMZN_CALLBACK_LIST_CALL(Scene_viewer_app_callback)(
+									scene_viewer->sync_callback_list,scene_viewer,NULL);
+						}
 					}
 				}
 				else
@@ -789,6 +795,12 @@ int Scene_viewer_app_default_input_callback(struct Scene_viewer_app *scene_viewe
 				{
 					Scene_viewer_app_input_transform(scene_viewer, input);
 					Scene_viewer_input_transform(scene_viewer->core_scene_viewer, input);
+					Scene_viewer_app_redraw_now(scene_viewer);
+					if (input->type == CMZN_SCENEVIEWERINPUT_EVENT_TYPE_MOTION_NOTIFY)
+					{
+						CMZN_CALLBACK_LIST_CALL(Scene_viewer_app_callback)(
+								scene_viewer->sync_callback_list,scene_viewer,NULL);
+					}
 				}
 			}
 			else
