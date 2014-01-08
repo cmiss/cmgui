@@ -2704,7 +2704,7 @@ DESCRIPTION :
 			{
 				cmzn_field_id minimum_node_group_field = cmzn_fieldmodule_create_field_node_group(fieldmodule, master_nodeset);
 				cmzn_field_node_group_id minimum_node_group = cmzn_field_cast_node_group(minimum_node_group_field);
-				emoter_dialog->minimum_nodeset_group = cmzn_field_node_group_get_nodeset(minimum_node_group);
+				emoter_dialog->minimum_nodeset_group = cmzn_field_node_group_get_nodeset_group(minimum_node_group);
 				cmzn_field_node_group_destroy(&minimum_node_group);
 				cmzn_field_destroy(&minimum_node_group_field);
 				if (!emoter_dialog->minimum_nodeset_group)

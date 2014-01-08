@@ -124,11 +124,11 @@ static int cmzn_field_group_destroy_all_elements(cmzn_field_group_id group, void
 		{
 			cmzn_mesh_id master_mesh =
 				cmzn_fieldmodule_find_mesh_by_dimension(field_module, /*dimension*/i);
-			cmzn_field_element_group_id element_group = cmzn_field_group_get_element_group(group, master_mesh);
+			cmzn_field_element_group_id element_group = cmzn_field_group_get_field_element_group(group, master_mesh);
 			cmzn_mesh_destroy(&master_mesh);
 			if (element_group)
 			{
-				cmzn_mesh_group_id mesh_group = cmzn_field_element_group_get_mesh(element_group);
+				cmzn_mesh_group_id mesh_group = cmzn_field_element_group_get_mesh_group(element_group);
 				cmzn_mesh_destroy_all_elements(cmzn_mesh_group_base_cast(mesh_group));
 				cmzn_mesh_group_destroy(&mesh_group);
 				cmzn_field_element_group_destroy(&element_group);
@@ -148,7 +148,9 @@ int Element_tool_destroy_selected_elements(struct Element_tool *element_tool)
 		return_code = 1;
 		cmzn_scene *root_scene = cmzn_region_get_scene(
 			element_tool->region);
-		cmzn_field_group_id selection_group = cmzn_scene_get_selection_group(root_scene);
+		cmzn_field_id selection_field = cmzn_scene_get_selection_field(root_scene);
+		cmzn_field_group_id selection_group = cmzn_field_cast_group(selection_field);
+		cmzn_field_destroy(&selection_field);
 		if (selection_group)
 		{
 			return_code = cmzn_field_group_for_each_group_hierarchical(selection_group,
@@ -352,24 +354,26 @@ release.
 										DEALLOCATE(xi_points);
 									}
 								}
-								cmzn_field_group_id group = cmzn_scene_get_selection_group(scene);
-								if (group)
+								cmzn_field_id selection_field = cmzn_scene_get_selection_field(scene);
+								cmzn_field_group_id selection_group = cmzn_field_cast_group(selection_field);
+								cmzn_field_destroy(&selection_field);
+								if (selection_group)
 								{
 									cmzn_region_id temp_region = cmzn_scene_get_region_internal(scene);
 									cmzn_fieldmodule_id field_module = cmzn_region_get_fieldmodule(temp_region);
 									int dimension = cmzn_element_get_dimension(picked_element);
 									cmzn_mesh_id master_mesh = cmzn_fieldmodule_find_mesh_by_dimension(field_module, dimension);
-									cmzn_field_element_group_id element_group = cmzn_field_group_get_element_group(group, master_mesh);
+									cmzn_field_element_group_id element_group = cmzn_field_group_get_field_element_group(selection_group, master_mesh);
 									cmzn_mesh_destroy(&master_mesh);
 									if (element_group)
 									{
-										cmzn_mesh_group_id mesh_group = cmzn_field_element_group_get_mesh(element_group);
+										cmzn_mesh_group_id mesh_group = cmzn_field_element_group_get_mesh_group(element_group);
 										element_tool->picked_element_was_unselected =
 											!cmzn_mesh_contains_element(cmzn_mesh_group_base_cast(mesh_group), picked_element);
 										cmzn_mesh_group_destroy(&mesh_group);
 										cmzn_field_element_group_destroy(&element_group);
 									}
-									cmzn_field_group_destroy(&group);
+									cmzn_field_group_destroy(&selection_group);
 									cmzn_fieldmodule_destroy(&field_module);
 								}
 							}
@@ -383,14 +387,14 @@ release.
 							{
 								if (element_tool->region)
 								{
-									cmzn_scene *root_scene =
-										cmzn_region_get_scene(element_tool->region);
-									cmzn_field_group_id root_group =
-										cmzn_scene_get_selection_group(root_scene);
-									if (root_group)
+									cmzn_scene *root_scene = cmzn_region_get_scene(element_tool->region);
+									cmzn_field_id selection_field = cmzn_scene_get_selection_field(root_scene);
+									cmzn_field_group_id root_selection_group = cmzn_field_cast_group(selection_field);
+									cmzn_field_destroy(&selection_field);
+									if (root_selection_group)
 									{
-										cmzn_field_group_clear_region_tree_element(root_group);
-										cmzn_field_group_destroy(&root_group);
+										cmzn_field_group_clear_region_tree_element(root_selection_group);
+										cmzn_field_group_destroy(&root_selection_group);
 									}
 									cmzn_scene_destroy(&root_scene);
 								}
@@ -416,10 +420,10 @@ release.
 										cmzn_fieldmodule_id field_module = cmzn_region_get_fieldmodule(sub_region);
 										cmzn_mesh_id temp_mesh =
 											cmzn_fieldmodule_find_mesh_by_dimension(field_module, dimension);
-										cmzn_field_element_group_id element_group = cmzn_field_group_get_element_group(sub_group, temp_mesh);
+										cmzn_field_element_group_id element_group = cmzn_field_group_get_field_element_group(sub_group, temp_mesh);
 										if (!element_group)
-											element_group = cmzn_field_group_create_element_group(sub_group, temp_mesh);
-										mesh_group = cmzn_field_element_group_get_mesh(element_group);
+											element_group = cmzn_field_group_create_field_element_group(sub_group, temp_mesh);
+										mesh_group = cmzn_field_element_group_get_mesh_group(element_group);
 										cmzn_field_element_group_destroy(&element_group);
 										cmzn_mesh_destroy(&temp_mesh);
 										cmzn_fieldmodule_destroy(&field_module);

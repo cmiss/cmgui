@@ -135,9 +135,9 @@ and allows its contents to be modified.
 			{
 				cmzn_field_id group_field = cmzn_fieldmodule_find_field_by_name(field_modify->get_field_module(), group_name);
 				cmzn_field_group_id group = cmzn_field_cast_group(group_field);
-				cmzn_field_element_group_id element_group = cmzn_field_group_get_element_group(group, mesh);
+				cmzn_field_element_group_id element_group = cmzn_field_group_get_field_element_group(group, mesh);
 				cmzn_mesh_destroy(&mesh);
-				mesh = cmzn_mesh_group_base_cast(cmzn_field_element_group_get_mesh(element_group));
+				mesh = cmzn_mesh_group_base_cast(cmzn_field_element_group_get_mesh_group(element_group));
 				cmzn_field_element_group_destroy(&element_group);
 				cmzn_field_group_destroy(&group);
 				cmzn_field_destroy(&group_field);
@@ -245,9 +245,9 @@ and allows its contents to be modified.
 			{
 				cmzn_field_id group_field = cmzn_fieldmodule_find_field_by_name(field_modify->get_field_module(), group_name);
 				cmzn_field_group_id group = cmzn_field_cast_group(group_field);
-				cmzn_field_element_group_id element_group = cmzn_field_group_get_element_group(group, mesh);
+				cmzn_field_element_group_id element_group = cmzn_field_group_get_field_element_group(group, mesh);
 				cmzn_mesh_destroy(&mesh);
-				mesh = cmzn_mesh_group_base_cast(cmzn_field_element_group_get_mesh(element_group));
+				mesh = cmzn_mesh_group_base_cast(cmzn_field_element_group_get_mesh_group(element_group));
 				cmzn_field_element_group_destroy(&element_group);
 				cmzn_field_group_destroy(&group);
 				cmzn_field_destroy(&group_field);

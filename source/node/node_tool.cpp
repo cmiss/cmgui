@@ -240,11 +240,11 @@ static int cmzn_field_group_destroy_all_nodes(cmzn_field_group_id group, void *d
 		cmzn_fieldmodule_id field_module = cmzn_field_get_fieldmodule(cmzn_field_group_base_cast(group));
 		cmzn_nodeset_id master_nodeset =
 			cmzn_fieldmodule_find_nodeset_by_field_domain_type(field_module, *domain_type_address);
-		cmzn_field_node_group_id node_group = cmzn_field_group_get_node_group(group, master_nodeset);
+		cmzn_field_node_group_id node_group = cmzn_field_group_get_field_node_group(group, master_nodeset);
 		cmzn_nodeset_destroy(&master_nodeset);
 		if (node_group)
 		{
-			cmzn_nodeset_group_id nodeset_group = cmzn_field_node_group_get_nodeset(node_group);
+			cmzn_nodeset_group_id nodeset_group = cmzn_field_node_group_get_nodeset_group(node_group);
 			cmzn_nodeset_destroy_all_nodes(cmzn_nodeset_group_base_cast(nodeset_group));
 			cmzn_nodeset_group_destroy(&nodeset_group);
 			cmzn_field_node_group_destroy(&node_group);
@@ -261,9 +261,10 @@ int Node_tool_destroy_selected_nodes(struct Node_tool *node_tool)
 	if (node_tool->region)
 	{
 		return_code = 1;
-		cmzn_scene *root_scene = cmzn_region_get_scene(
-			node_tool->root_region);
-		cmzn_field_group_id selection_group = cmzn_scene_get_selection_group(root_scene);
+		cmzn_scene *root_scene = cmzn_region_get_scene(node_tool->root_region);
+		cmzn_field_id selection_field = cmzn_scene_get_selection_field(root_scene);
+		cmzn_field_group_id selection_group = cmzn_field_cast_group(selection_field);
+		cmzn_field_destroy(&selection_field);
 		if (selection_group)
 		{
 			cmzn_field_group_for_each_group_hierarchical(selection_group,
@@ -1255,12 +1256,12 @@ try to enforce that the node is created on that element.
 								cmzn_fieldmodule_find_nodeset_by_field_domain_type(field_module, node_tool->domain_type);
 							cmzn_fieldmodule_begin_change(field_module);
 							cmzn_field_node_group_id modify_node_group =
-								cmzn_field_group_get_node_group(node_tool->group_field, master_nodeset);
+								cmzn_field_group_get_field_node_group(node_tool->group_field, master_nodeset);
 							if (!modify_node_group)
 							{
-								modify_node_group = cmzn_field_group_create_node_group(node_tool->group_field, master_nodeset);
+								modify_node_group = cmzn_field_group_create_field_node_group(node_tool->group_field, master_nodeset);
 							}
-							cmzn_nodeset_group_id modify_nodeset_group = cmzn_field_node_group_get_nodeset(modify_node_group);
+							cmzn_nodeset_group_id modify_nodeset_group = cmzn_field_node_group_get_nodeset_group(modify_node_group);
 							if (!cmzn_nodeset_contains_node(cmzn_nodeset_group_base_cast(modify_nodeset_group), merged_node))
 							{
 								if (!cmzn_nodeset_group_add_node(modify_nodeset_group, merged_node))
@@ -1347,18 +1348,18 @@ int Node_tool_set_picked_node(struct Node_tool *node_tool, cmzn_node_id picked_n
 		{
 			FE_nodeset *fe_nodeset = FE_node_get_FE_nodeset(picked_node);
 			cmzn_region_id nodeRegion = FE_region_get_cmzn_region(fe_nodeset->get_FE_region());
-			cmzn_field_group_id subGroup = cmzn_field_group_get_subregion_group(selection_group, nodeRegion);
+			cmzn_field_group_id subGroup = cmzn_field_group_get_subregion_field_group(selection_group, nodeRegion);
 			if (!subGroup)
-				subGroup = cmzn_field_group_create_subregion_group(selection_group, nodeRegion);
+				subGroup = cmzn_field_group_create_subregion_field_group(selection_group, nodeRegion);
 			cmzn_fieldmodule_id fieldmodule = cmzn_region_get_fieldmodule(nodeRegion);
 			cmzn_nodeset_id master_nodeset = cmzn_fieldmodule_find_nodeset_by_field_domain_type(
 				fieldmodule, node_tool->domain_type);
 			if (master_nodeset)
 			{
-				cmzn_field_node_group_id node_group = cmzn_field_group_get_node_group(subGroup, master_nodeset);
+				cmzn_field_node_group_id node_group = cmzn_field_group_get_field_node_group(subGroup, master_nodeset);
 				if (!node_group)
-					node_group = cmzn_field_group_create_node_group(subGroup, master_nodeset);
-				cmzn_nodeset_group_id nodeset_group = cmzn_field_node_group_get_nodeset(node_group);
+					node_group = cmzn_field_group_create_field_node_group(subGroup, master_nodeset);
+				cmzn_nodeset_group_id nodeset_group = cmzn_field_node_group_get_nodeset_group(node_group);
 				cmzn_nodeset_group_add_node(nodeset_group, picked_node);
 				cmzn_nodeset_group_destroy(&nodeset_group);
 				cmzn_field_node_group_destroy(&node_group);
@@ -1469,16 +1470,18 @@ release.
 							cmzn_fieldmodule_begin_change(field_module);
 							cmzn_fieldcache_id field_cache = cmzn_fieldmodule_create_fieldcache(field_module);
 							node_tool->picked_node_was_unselected=1;
-							cmzn_field_group_id selection_group = cmzn_scene_get_selection_group(top_scene);
+							cmzn_field_id selection_field = cmzn_scene_get_selection_field(top_scene);
+							cmzn_field_group_id selection_group = cmzn_field_cast_group(selection_field);
+							cmzn_field_destroy(&selection_field);
 							if (selection_group)
 							{
 								cmzn_nodeset_id master_nodeset = cmzn_fieldmodule_find_nodeset_by_field_domain_type(
 									field_module, node_tool->domain_type);
-								cmzn_field_node_group_id node_group = cmzn_field_group_get_node_group(selection_group, master_nodeset);
+								cmzn_field_node_group_id node_group = cmzn_field_group_get_field_node_group(selection_group, master_nodeset);
 								cmzn_nodeset_destroy(&master_nodeset);
 								if (node_group)
 								{
-									cmzn_nodeset_group_id nodeset_group = cmzn_field_node_group_get_nodeset(node_group);
+									cmzn_nodeset_group_id nodeset_group = cmzn_field_node_group_get_nodeset_group(node_group);
 									node_tool->picked_node_was_unselected =
 										!cmzn_nodeset_contains_node(cmzn_nodeset_group_base_cast(nodeset_group), picked_node);
 									cmzn_nodeset_group_destroy(&nodeset_group);
@@ -1552,14 +1555,16 @@ release.
 							{
 								cmzn_scene *root_scene = cmzn_region_get_scene(
 									node_tool->root_region);
-								cmzn_field_group_id root_group = cmzn_scene_get_selection_group(root_scene);
-								if (root_group)
+								cmzn_field_id selection_field = cmzn_scene_get_selection_field(root_scene);
+								cmzn_field_group_id root_selection_group = cmzn_field_cast_group(selection_field);
+								cmzn_field_destroy(&selection_field);
+								if (root_selection_group)
 								{
 									if (node_tool->domain_type == CMZN_FIELD_DOMAIN_TYPE_NODES)
-										cmzn_field_group_clear_region_tree_node(root_group);
+										cmzn_field_group_clear_region_tree_node(root_selection_group);
 									else
-										cmzn_field_group_clear_region_tree_data(root_group);
-									cmzn_field_group_destroy(&root_group);
+										cmzn_field_group_clear_region_tree_data(root_selection_group);
+									cmzn_field_group_destroy(&root_selection_group);
 								}
 								//cmzn_scene_flush_tree_selections(root_scene);
 								cmzn_scene_destroy(&root_scene);
@@ -1735,18 +1740,20 @@ release.
 								}*/
 								if (return_code)
 								{
-									cmzn_field_group_id selection_group = cmzn_scene_get_selection_group(node_tool->scene);
+									cmzn_field_id selection_field = cmzn_scene_get_selection_field(node_tool->scene);
+									cmzn_field_group_id selection_group = cmzn_field_cast_group(selection_field);
+									cmzn_field_destroy(&selection_field);
 									if (node_tool->scene && selection_group)
 									{
 										cmzn_nodeset_id master_nodeset = cmzn_fieldmodule_find_nodeset_by_field_domain_type(
 											field_module, node_tool->domain_type);
 										edit_info.fe_nodeset = FE_region_find_FE_nodeset_by_field_domain_type(
 											cmzn_region_get_FE_region(temp_region), node_tool->domain_type);
-										cmzn_field_node_group_id node_group = cmzn_field_group_get_node_group(selection_group, master_nodeset);
+										cmzn_field_node_group_id node_group = cmzn_field_group_get_field_node_group(selection_group, master_nodeset);
 										cmzn_nodeset_destroy(&master_nodeset);
 										if (node_group)
 										{
-											cmzn_nodeset_group_id nodeset_group = cmzn_field_node_group_get_nodeset(node_group);
+											cmzn_nodeset_group_id nodeset_group = cmzn_field_node_group_get_nodeset_group(node_group);
 											/* edit vectors if non-constant orientation_scale field */
 											if (((NODE_TOOL_EDIT_AUTOMATIC == node_tool->edit_mode)
 													|| (NODE_TOOL_EDIT_VECTOR == node_tool->edit_mode))
@@ -2382,15 +2389,15 @@ Set the selected option in the Coordinate Field chooser.
 			cmzn_scene *scene = cmzn_region_get_scene(node_tool->region);
 			if (scene)
 			{
-				cmzn_field_group_id selection_group = cmzn_scene_get_selection_group(scene);
-				if (selection_group)
+				cmzn_field_id selection_field = cmzn_scene_get_selection_field(scene);
+				if (selection_field)
 				{
 					cmzn_fieldmodule_id fieldmodule = cmzn_region_get_fieldmodule(node_tool->region);
 					cmzn_fieldmodule_begin_change(fieldmodule);
 					cmzn_nodeset_id nodeset =
 						cmzn_fieldmodule_find_nodeset_by_field_domain_type(fieldmodule, node_tool->domain_type);
 					node_list = cmzn_nodeset_create_node_list_ranges_conditional(
-						nodeset, (struct Multi_range *)0, /*conditional_field*/cmzn_field_group_base_cast(selection_group),
+						nodeset, (struct Multi_range *)0, /*conditional_field*/selection_field,
 						/*time*/0);
 					FE_nodeset *fe_nodeset = cmzn_nodeset_get_FE_nodeset_internal(nodeset);
 					fe_nodeset->undefine_FE_field_in_FE_node_list(fe_field, node_list, &number_in_elements);
@@ -2402,7 +2409,7 @@ Set the selected option in the Coordinate Field chooser.
 					cmzn_nodeset_destroy(&nodeset);
 					cmzn_fieldmodule_end_change(fieldmodule);
 					cmzn_fieldmodule_destroy(&fieldmodule);
-					cmzn_field_group_destroy(&selection_group);
+					cmzn_field_destroy(&selection_field);
 				}
 				cmzn_scene_destroy(&scene);
 			}
@@ -2778,12 +2785,12 @@ Adds the just created element to the fe_region, adding faces as necessary.
 			const int dimension = cmzn_element_get_dimension(node_tool->element);
 			cmzn_mesh_id master_mesh = cmzn_fieldmodule_find_mesh_by_dimension(field_module, dimension);
 			cmzn_field_element_group_id modify_element_group =
-				cmzn_field_group_get_element_group(node_tool->group_field, master_mesh);
+				cmzn_field_group_get_field_element_group(node_tool->group_field, master_mesh);
 			if (!modify_element_group)
 			{
-				modify_element_group = cmzn_field_group_create_element_group(node_tool->group_field, master_mesh);
+				modify_element_group = cmzn_field_group_create_field_element_group(node_tool->group_field, master_mesh);
 			}
-			cmzn_mesh_group_id modify_mesh_group = cmzn_field_element_group_get_mesh(modify_element_group);
+			cmzn_mesh_group_id modify_mesh_group = cmzn_field_element_group_get_mesh_group(modify_element_group);
 			cmzn_mesh_group_add_element(modify_mesh_group, node_tool->element);
 			cmzn_mesh_group_destroy(&modify_mesh_group);
 			cmzn_field_element_group_destroy(&modify_element_group);
@@ -2793,12 +2800,12 @@ Adds the just created element to the fe_region, adding faces as necessary.
 			{
 				// add faces to group
 				cmzn_mesh_id master_face_mesh = cmzn_fieldmodule_find_mesh_by_dimension(field_module, dimension - 1);
-				cmzn_field_element_group_id face_element_group = cmzn_field_group_get_element_group(node_tool->group_field, master_face_mesh);
+				cmzn_field_element_group_id face_element_group = cmzn_field_group_get_field_element_group(node_tool->group_field, master_face_mesh);
 				if (!face_element_group)
 				{
-					face_element_group = cmzn_field_group_create_element_group(node_tool->group_field, master_face_mesh);
+					face_element_group = cmzn_field_group_create_field_element_group(node_tool->group_field, master_face_mesh);
 				}
-				cmzn_mesh_group_id face_mesh_group = cmzn_field_element_group_get_mesh(face_element_group);
+				cmzn_mesh_group_id face_mesh_group = cmzn_field_element_group_get_mesh_group(face_element_group);
 				cmzn_mesh_group_add_element_faces(face_mesh_group, node_tool->element);
 				cmzn_mesh_group_destroy(&face_mesh_group);
 				cmzn_field_element_group_destroy(&face_element_group);
@@ -2808,12 +2815,12 @@ Adds the just created element to the fe_region, adding faces as necessary.
 				{
 					// add lines to group
 					cmzn_mesh_id master_line_mesh = cmzn_fieldmodule_find_mesh_by_dimension(field_module, dimension - 2);
-					cmzn_field_element_group_id line_element_group = cmzn_field_group_get_element_group(node_tool->group_field, master_line_mesh);
+					cmzn_field_element_group_id line_element_group = cmzn_field_group_get_field_element_group(node_tool->group_field, master_line_mesh);
 					if (!line_element_group)
 					{
-						line_element_group = cmzn_field_group_create_element_group(node_tool->group_field, master_line_mesh);
+						line_element_group = cmzn_field_group_create_field_element_group(node_tool->group_field, master_line_mesh);
 					}
-					cmzn_mesh_group_id line_mesh_group = cmzn_field_element_group_get_mesh(line_element_group);
+					cmzn_mesh_group_id line_mesh_group = cmzn_field_element_group_get_mesh_group(line_element_group);
 					int number_of_faces = 0;
 					get_FE_element_number_of_faces(node_tool->element, &number_of_faces);
 					FE_element *face_element = 0;
@@ -2854,7 +2861,9 @@ static void cmzn_selectionevent_to_Node_tool(
 	if (event && node_tool && (CMZN_FIELD_DOMAIN_TYPE_NODES == node_tool->domain_type))
 	{
 		cmzn_scene *scene = cmzn_region_get_scene(node_tool->region);
-		cmzn_field_group_id selection_group = cmzn_scene_get_selection_group(scene);
+		cmzn_field_id selection_field = cmzn_scene_get_selection_field(scene);
+		cmzn_field_group_id selection_group = cmzn_field_cast_group(selection_field);
+		cmzn_field_destroy(&selection_field);
 		cmzn_selectionevent_change_flags changeFlags = cmzn_selectionevent_get_change_flags(event);
 		if (changeFlags & CMZN_SELECTIONEVENT_CHANGE_FLAG_ADD)
 		{
@@ -2863,12 +2872,12 @@ static void cmzn_selectionevent_to_Node_tool(
 			cmzn_nodeset_id master_nodeset = cmzn_fieldmodule_find_nodeset_by_field_domain_type(
 				field_module, node_tool->domain_type);
 			cmzn_fieldmodule_destroy(&field_module);
-			node_group = cmzn_field_group_get_node_group(selection_group, master_nodeset);
+			node_group = cmzn_field_group_get_field_node_group(selection_group, master_nodeset);
 			cmzn_nodeset_destroy(&master_nodeset);
 			cmzn_node_id node = 0;
 			if (node_group)
 			{
-				cmzn_nodeset_group_id nodeset_group = cmzn_field_node_group_get_nodeset(node_group);
+				cmzn_nodeset_group_id nodeset_group = cmzn_field_node_group_get_nodeset_group(node_group);
 				/* make sure there is only one node selected in group */
 				if (1 == cmzn_nodeset_get_size(cmzn_nodeset_group_base_cast(nodeset_group)))
 				{

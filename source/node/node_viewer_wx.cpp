@@ -549,12 +549,13 @@ static void cmzn_fieldmoduleevent_to_Node_viewer(
 		cmzn_field_change_flags field_change_summary = cmzn_fieldmoduleevent_get_summary_field_change_flags(event);
 		bool updateCollPane = false;
 		cmzn_scene_id scene = cmzn_region_get_scene(node_viewer->region);
-		cmzn_field_group_id selection_group = cmzn_scene_get_selection_group(scene);
-		if (selection_group && (0 != (CMZN_FIELD_CHANGE_FLAG_RESULT &
-			cmzn_fieldmoduleevent_get_field_change_flags(event, cmzn_field_group_base_cast(selection_group)))))
+		cmzn_field_id selection_field = cmzn_scene_get_selection_field(scene);
+		if (selection_field && (0 != (CMZN_FIELD_CHANGE_FLAG_RESULT &
+			cmzn_fieldmoduleevent_get_field_change_flags(event, selection_field))))
 		{
-			cmzn_field_node_group_id node_group = cmzn_field_group_get_node_group(selection_group, master_nodeset);
-			cmzn_nodeset_group_id nodeset_group = cmzn_field_node_group_get_nodeset(node_group);
+			cmzn_field_group_id selection_group = cmzn_field_cast_group(selection_field);
+			cmzn_field_node_group_id node_group = cmzn_field_group_get_field_node_group(selection_group, master_nodeset);
+			cmzn_nodeset_group_id nodeset_group = cmzn_field_node_group_get_nodeset_group(node_group);
 			cmzn_field_node_group_destroy(&node_group);
 			/* make sure there is only one node selected in group */
 			if (1 == cmzn_nodeset_get_size(cmzn_nodeset_group_base_cast(nodeset_group)))
@@ -578,8 +579,9 @@ static void cmzn_fieldmoduleevent_to_Node_viewer(
 				cmzn_node_destroy(&node);
 			}
 			cmzn_nodeset_group_destroy(&nodeset_group);
+			cmzn_field_group_destroy(&selection_group);
 		}
-		cmzn_field_group_destroy(&selection_group);
+		cmzn_field_destroy(&selection_field);
 		cmzn_scene_destroy(&scene);
 
 		// re-show any fields that have changed at currently selected node

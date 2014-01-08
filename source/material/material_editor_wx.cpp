@@ -445,25 +445,25 @@ void material_editor_wx_update_shininess(Material_editor *material_editor, float
 }
 
 void material_editor_wx_update_image_field(Material_editor *material_editor,
-	cmzn_field_image_id field, int selection)
+	cmzn_field_id field, int selection)
 {
 	if (selection == 0)
 	{
-		cmzn_material_set_image_field(material_editor->edit_material,	1, field);
+		cmzn_material_set_texture_field(material_editor->edit_material,	1, field);
 	}
 	else if (selection == 1)
 	{
-		cmzn_material_set_image_field(material_editor->edit_material,	2, field);
+		cmzn_material_set_texture_field(material_editor->edit_material,	2, field);
 	}
 	else if (selection == 2)
 	{
-		cmzn_material_set_image_field(material_editor->edit_material,	3, field);
+		cmzn_material_set_texture_field(material_editor->edit_material,	3, field);
 	}
 	else if (selection == 3)
 	{
-		cmzn_material_set_image_field(material_editor->edit_material,	4, field);
+		cmzn_material_set_texture_field(material_editor->edit_material,	4, field);
 	}
-	 material_editor_update_picture(material_editor);
+	material_editor_update_picture(material_editor);
 }
 
 class wxMaterialEditor : public wxFrame
@@ -560,9 +560,7 @@ public:
 		{
 			wxChoice *texture_choice = XRCCTRL(*this, "MaterialEditorTextureChoice", wxChoice);
 			int selection = texture_choice->GetCurrentSelection();
-			cmzn_field_image_id image_field = cmzn_field_cast_image(field);
-			material_editor_wx_update_image_field(material_editor, image_field, selection);
-			cmzn_field_image_destroy(&image_field);
+			material_editor_wx_update_image_field(material_editor, field, selection);
 			return 1;
 		}
 
@@ -736,18 +734,17 @@ Callback for the shininess slider.
 void OnMaterialEditorTextureChoice(wxCommandEvent& event)
 {
 	int num = event.GetSelection();
-	cmzn_field_image_id field = NULL;
+	cmzn_field_id field = 0;
 	if (num == 0)
-		field = cmzn_material_get_image_field(material_editor->edit_material,	1);
+		field = cmzn_material_get_texture_field(material_editor->edit_material,	1);
 	else if (num == 1)
-		field = cmzn_material_get_image_field(material_editor->edit_material,	2);
+		field = cmzn_material_get_texture_field(material_editor->edit_material,	2);
 	else if (num == 2)
-		field = cmzn_material_get_image_field(material_editor->edit_material,	3);
+		field = cmzn_material_get_texture_field(material_editor->edit_material,	3);
 	else if (num == 3)
-		field =	cmzn_material_get_image_field(material_editor->edit_material,	4);
-	Set_region_and_image_field_chooser(cmzn_field_image_base_cast(field));
-	if (field)
-		cmzn_field_image_destroy(&field);
+		field =	cmzn_material_get_texture_field(material_editor->edit_material,	4);
+	Set_region_and_image_field_chooser(field);
+	cmzn_field_destroy(&field);
 }
 
 void OnMaterialEditorApplyButtonPressed(wxCommandEvent& event)
@@ -867,13 +864,12 @@ void OnMaterialEditorAdvancedSettingsChanged(wxCommandEvent& event)
 	bump_mapping_flag = 0;
 	if (material_editor->material_editor_per_pixel_checkbox->IsChecked())
 	{
-		cmzn_field_image_id field = cmzn_material_get_image_field(material_editor->edit_material, 2);
+		cmzn_field_id field = cmzn_material_get_texture_field(material_editor->edit_material, 2);
 		if (field)
 		{
 			material_editor->material_editor_bump_mapping_checkbox->Enable(true);
-			bump_mapping_flag
-					= material_editor->material_editor_bump_mapping_checkbox->GetValue();
-			cmzn_field_image_destroy(&field);
+			bump_mapping_flag = material_editor->material_editor_bump_mapping_checkbox->GetValue();
+			cmzn_field_destroy(&field);
 		}
 		return_code = set_material_program_type(material_editor->edit_material,
 		/*bump_mapping_flag */bump_mapping_flag, 0, 0, 0, 0, 0, 0, 0, 1);
@@ -1230,10 +1226,9 @@ DESCRIPTION :
 Sets the <material> to be edited by the <material_editor>.
 ==============================================================================*/
 {
-	 Colour temp_colour;
-	 int return_code, per_pixel_set;
-	 cmzn_field_image_id field = NULL;
-	 MATERIAL_PRECISION alpha,shininess;
+	Colour temp_colour;
+	int return_code, per_pixel_set;
+	MATERIAL_PRECISION alpha,shininess;
 
 	ENTER(material_editor_wx_set_material);
 	if (material_editor)
@@ -1299,22 +1294,21 @@ Sets the <material> to be edited by the <material_editor>.
 							shininess);
 				}
 
-				field=cmzn_material_get_image_field(material_editor->edit_material, 1);
-				material_editor->wx_material_editor->Set_region_and_image_field_chooser(cmzn_field_image_base_cast(field));
-				if (field)
-					cmzn_field_image_destroy(&field);
+				cmzn_field_id field = cmzn_material_get_texture_field(material_editor->edit_material, 1);
+				material_editor->wx_material_editor->Set_region_and_image_field_chooser(field);
+				cmzn_field_destroy(&field);
 
 				per_pixel_set = Graphical_material_get_per_pixel_lighting_flag(material_editor->edit_material);
 				if (per_pixel_set)
 				{
 					 material_editor->material_editor_per_pixel_checkbox->SetValue(true);
-					 field=cmzn_material_get_image_field(material_editor->edit_material, 2);
+					 field = cmzn_material_get_texture_field(material_editor->edit_material, 2);
 					 if (field)
 					 {
 							material_editor->material_editor_bump_mapping_checkbox->Enable(true);
 							material_editor->material_editor_bump_mapping_checkbox->SetValue(
-								 Graphical_material_get_bump_mapping_flag(material_editor->edit_material));
-							cmzn_field_image_destroy(&field);
+								0 != Graphical_material_get_bump_mapping_flag(material_editor->edit_material));
+							cmzn_field_destroy(&field);
 					 }
 					 else
 					 {
