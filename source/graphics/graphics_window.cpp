@@ -2830,9 +2830,7 @@ view angle, interest point etc.
 			if ((window=(struct Graphics_window *)window_void)&&
 				 (window->scene_viewer_array != NULL) &&
 				 (scene_viewer=window->scene_viewer_array[window->current_pane])&&
-				 cmzn_sceneviewer_get_lookat_parameters(scene_viewer->core_scene_viewer,
-					&(eye[0]),&(eye[1]),&(eye[2]),
-					&(lookat[0]),&(lookat[1]),&(lookat[2]),&(up[0]),&(up[1]),&(up[2]))&&
+				 cmzn_sceneviewer_get_lookat_parameters(scene_viewer->core_scene_viewer, eye, lookat, up) &&
 				Scene_viewer_get_viewing_volume(scene_viewer->core_scene_viewer,&left,&right,
 					&bottom,&top,&near_plane,&far_plane))
 			{
@@ -2985,8 +2983,7 @@ view angle, interest point etc.
 						else
 						{
 							cmzn_sceneviewer_set_lookat_parameters_non_skew(scene_viewer->core_scene_viewer,
-								eye[0],eye[1],eye[2],lookat[0],lookat[1],lookat[2],
-								up[0],up[1],up[2]);
+								eye, lookat, up);
 						}
 						/* must set view angle after lookat parameters */
 						if ((0.0<view_angle)&&(view_angle<180.0))
@@ -3690,14 +3687,9 @@ it.
 									cmzn_sceneviewer_set_zoom_rate(
 										 window->scene_viewer_array[pane_no]->core_scene_viewer, 2.0);
 									if (cmzn_sceneviewer_get_lookat_parameters(
-												 window->scene_viewer_array[0]->core_scene_viewer,
-												 &(eye[0]),&(eye[1]),&(eye[2]),
-												 &(lookat[0]),&(lookat[1]),&(lookat[2]),
-												 &(up[0]),&(up[1]),&(up[2]))&&
-										 axis_number_to_axis_vector(
-												window->ortho_up_axis,up)&&
-										 axis_number_to_axis_vector(
-												window->ortho_front_axis,front))
+										window->scene_viewer_array[0]->core_scene_viewer, eye, lookat, up) &&
+										axis_number_to_axis_vector(window->ortho_up_axis, up) &&
+										axis_number_to_axis_vector(window->ortho_front_axis, front))
 									{
 										 view[0]=eye[0]-lookat[0];
 										 view[1]=eye[1]-lookat[1];
@@ -4420,9 +4412,7 @@ Sets the layout mode in effect on the <window>.
 		{
 #if defined (WX_USER_INTERFACE)
 			first_scene_viewer = window->scene_viewer_array[0];
-			cmzn_sceneviewer_get_lookat_parameters(first_scene_viewer->core_scene_viewer,
-				&(eye[0]),&(eye[1]),&(eye[2]),
-				&(lookat[0]),&(lookat[1]),&(lookat[2]),&(up[0]),&(up[1]),&(up[2]));
+			cmzn_sceneviewer_get_lookat_parameters(first_scene_viewer->core_scene_viewer, eye, lookat, up) &&
 			Scene_viewer_get_viewing_volume(first_scene_viewer->core_scene_viewer,
 				&left, &right, &bottom, &top, &near_plane, &far_plane);
 			radius = 0.5*(right - left);
@@ -4634,9 +4624,7 @@ Sets the layout mode in effect on the <window>.
 						window->default_zoom_rate);
 				}
 				/* set the plan view in pane 0 */
-				if (cmzn_sceneviewer_get_lookat_parameters(window->scene_viewer_array[0]->core_scene_viewer,
-					&(eye[0]),&(eye[1]),&(eye[2]),
-					&(lookat[0]),&(lookat[1]),&(lookat[2]),&(up[0]),&(up[1]),&(up[2]))&&
+				if (cmzn_sceneviewer_get_lookat_parameters(window->scene_viewer_array[0]->core_scene_viewer, eye, lookat, up) &&
 					axis_number_to_axis_vector(window->ortho_up_axis,up)&&
 					axis_number_to_axis_vector(window->ortho_front_axis,front))
 				{
@@ -4689,9 +4677,7 @@ Sets the layout mode in effect on the <window>.
 				}
 				/* four views, 3 tied together as front, side and plan views */
 				/* set the plan view in pane 1 */
-				if (cmzn_sceneviewer_get_lookat_parameters(window->scene_viewer_array[1]->core_scene_viewer,
-						&(eye[0]),&(eye[1]),&(eye[2]),
-						&(lookat[0]),&(lookat[1]),&(lookat[2]),&(up[0]),&(up[1]),&(up[2]))&&
+				if (cmzn_sceneviewer_get_lookat_parameters(window->scene_viewer_array[1]->core_scene_viewer, eye, lookat, up) &&
 					axis_number_to_axis_vector(window->ortho_up_axis,up)&&
 					axis_number_to_axis_vector(window->ortho_front_axis,front))
 				{
@@ -4754,9 +4740,7 @@ Sets the layout mode in effect on the <window>.
 					(GRAPHICS_WINDOW_LAYOUT_FRONT_SIDE==layout_mode))
 				{
 					/* set the front view in pane 0 */
-					if (cmzn_sceneviewer_get_lookat_parameters(window->scene_viewer_array[0]->core_scene_viewer,
-						&(eye[0]),&(eye[1]),&(eye[2]),
-						&(lookat[0]),&(lookat[1]),&(lookat[2]),&(up[0]),&(up[1]),&(up[2]))&&
+					if (cmzn_sceneviewer_get_lookat_parameters(window->scene_viewer_array[0]->core_scene_viewer, eye, lookat, up) &&
 						axis_number_to_axis_vector(window->ortho_up_axis,up)&&
 						axis_number_to_axis_vector(window->ortho_front_axis,front))
 					{
@@ -6004,8 +5988,7 @@ current layout_mode, the function adjusts the view in all the panes tied to
 				&left,&right,&bottom,&top,&(near_plane[pane_no]),&(far_plane[pane_no]));
 		}
 		return_code=(cmzn_sceneviewer_get_lookat_parameters(
-			window->scene_viewer_array[changed_pane]->core_scene_viewer,&(eye[0]),&(eye[1]),&(eye[2]),
-			&(lookat[0]),&(lookat[1]),&(lookat[2]),&(up[0]),&(up[1]),&(up[2]))&&
+			window->scene_viewer_array[changed_pane]->core_scene_viewer, eye, lookat, up) &&
 			Scene_viewer_get_viewing_volume(window->scene_viewer_array[changed_pane]->core_scene_viewer,
 				&left,&right,&bottom,&top,&(near_plane[changed_pane]),&(far_plane[changed_pane])));
 		if (return_code)
@@ -6536,9 +6519,7 @@ Writes the properties of the <window> to the command window.
 			else
 			{
 				/* parallel/perspective: write eye and interest points and up-vector */
-				cmzn_sceneviewer_get_lookat_parameters(scene_viewer,
-					&(eye[0]),&(eye[1]),&(eye[2]),&(lookat[0]),&(lookat[1]),&(lookat[2]),
-					&(up[0]),&(up[1]),&(up[2]));
+				cmzn_sceneviewer_get_lookat_parameters(scene_viewer, eye, lookat, up);
 				view[0] = lookat[0] - eye[0];
 				view[1] = lookat[1] - eye[1];
 				view[2] = lookat[2] - eye[2];
@@ -6836,9 +6817,7 @@ and establishing the views in it to the command window to a com file.
 			else
 			{
 				/* parallel/perspective: write eye and interest points and up-vector */
-				cmzn_sceneviewer_get_lookat_parameters(scene_viewer,
-					&(eye[0]),&(eye[1]),&(eye[2]),&(lookat[0]),&(lookat[1]),&(lookat[2]),
-					&(up[0]),&(up[1]),&(up[2]));
+				cmzn_sceneviewer_get_lookat_parameters(scene_viewer, eye, lookat, up);
 				Scene_viewer_get_viewing_volume(scene_viewer,&left,&right,
 					&bottom,&top,&near_plane,&far_plane);
 				view_angle = cmzn_sceneviewer_get_view_angle(scene_viewer);

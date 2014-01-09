@@ -527,7 +527,7 @@ release.
 											cmzn_scene_get_or_create_selection_group(region_scene);
 										if (selection_group)
 										{
-											cmzn_scenepicker_add_picked_elements_to_group(scenepicker,
+											cmzn_scenepicker_add_picked_elements_to_field_group(scenepicker,
 												selection_group);
 											cmzn_field_group_destroy(&selection_group);
 										}

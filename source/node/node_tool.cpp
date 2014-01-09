@@ -1401,7 +1401,6 @@ release.
 	struct cmzn_graphics *graphics = 0;
 	struct Interaction_volume *interaction_volume,*temp_interaction_volume;
 	struct Node_tool *node_tool;
-	cmzn_scenepicker_id scenepicker = 0;
 	struct Graphics_buffer *graphics_buffer = 0;
 	if (device_id&&event&&(node_tool=
 		(struct Node_tool *)node_tool_void) && scene_viewer)
@@ -1412,10 +1411,27 @@ release.
 		scene = Interactive_event_get_scene(event);
 		if (scene != 0)
 		{
-			scenepicker = cmzn_scene_create_scenepicker(scene);
-			cmzn_scenefilter_id scenefilter = cmzn_sceneviewer_get_scenefilter(scene_viewer);
-			cmzn_scenepicker_set_scenefilter(scenepicker, scenefilter);
-			cmzn_scenefilter_destroy(&scenefilter);
+			// cache filter module changes to avoid updates for temporary filters
+			cmzn_scenefiltermodule_id filtermodule = cmzn_scene_get_scenefiltermodule(scene);
+			cmzn_scenefiltermodule_begin_change(filtermodule);
+			cmzn_scenefilter_id filter =
+				cmzn_scenefiltermodule_create_scenefilter_field_domain_type(filtermodule, node_tool->domain_type);
+			cmzn_scenefilter_id sceneviewerFilter = cmzn_sceneviewer_get_scenefilter(scene_viewer);
+			if (sceneviewerFilter)
+			{
+				// make a filter testing the sceneviewer filter && domain type (nodes|datapoints)
+				cmzn_scenefilter_id domainFilter = filter;
+				filter = cmzn_scenefiltermodule_create_scenefilter_operator_and(filtermodule);
+				cmzn_scenefilter_operator_id andFilter = cmzn_scenefilter_cast_operator(filter);
+				cmzn_scenefilter_operator_append_operand(andFilter, domainFilter);
+				cmzn_scenefilter_operator_append_operand(andFilter, sceneviewerFilter);
+				cmzn_scenefilter_operator_destroy(&andFilter);
+				cmzn_scenefilter_destroy(&domainFilter);
+				cmzn_scenefilter_destroy(&sceneviewerFilter);
+			}
+			cmzn_scenepicker_id scenepicker = cmzn_scene_create_scenepicker(scene);
+			cmzn_scenepicker_set_scenefilter(scenepicker, filter);
+			cmzn_scenefilter_destroy(&filter);
 			event_type=Interactive_event_get_type(event);
 			input_modifier=Interactive_event_get_input_modifier(event);
 			shift_pressed=(INTERACTIVE_EVENT_MODIFIER_SHIFT & input_modifier);
@@ -1435,16 +1451,8 @@ release.
 						nearest_element = (struct FE_element *)NULL;
 						if (node_tool->select_enabled)
 						{
-							if (node_tool->domain_type == CMZN_FIELD_DOMAIN_TYPE_DATAPOINTS)
-							{
-								picked_node = cmzn_scenepicker_get_nearest_data(scenepicker);
-								nearest_node_graphics = cmzn_scenepicker_get_nearest_data_graphics(scenepicker);
-							}
-							else
-							{
-								picked_node = cmzn_scenepicker_get_nearest_node(scenepicker);
-								nearest_node_graphics = cmzn_scenepicker_get_nearest_node_graphics(scenepicker);
-							}
+							picked_node = cmzn_scenepicker_get_nearest_node(scenepicker);
+							nearest_node_graphics = cmzn_scenepicker_get_nearest_node_graphics(scenepicker);
 						}
 
 						if (node_tool->constrain_to_surface)
@@ -1894,10 +1902,7 @@ release.
 											cmzn_scene_get_or_create_selection_group(region_scene);
 										if (selection_group)
 										{
-											if (node_tool->domain_type == CMZN_FIELD_DOMAIN_TYPE_DATAPOINTS)
-												cmzn_scenepicker_add_picked_data_to_group(scenepicker, selection_group);
-											else
-												cmzn_scenepicker_add_picked_nodes_to_group(scenepicker, selection_group);
+											cmzn_scenepicker_add_picked_nodes_to_field_group(scenepicker, selection_group);
 											cmzn_field_group_destroy(&selection_group);
 										}
 										cmzn_scene_destroy(&region_scene);
@@ -1953,6 +1958,10 @@ release.
 						"Unknown event type");
 				} break;
 			}
+			if (scenepicker)
+				cmzn_scenepicker_destroy(&scenepicker);
+			cmzn_scenefiltermodule_end_change(filtermodule);
+			cmzn_scenefiltermodule_destroy(&filtermodule);
 		}
 		if (node_tool->root_region)
 		{
@@ -1962,8 +1971,6 @@ release.
 			cmzn_scene_destroy(&root_scene);
 		}
 		cmzn_region_end_hierarchical_change(node_tool->root_region);
-		if (scenepicker)
-			cmzn_scenepicker_destroy(&scenepicker);
 	}
 	else
 	{
