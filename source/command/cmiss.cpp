@@ -35,6 +35,7 @@
 #include "zinc/scene.h"
 #include "zinc/sceneviewer.h"
 #include "zinc/stream.h"
+#include "zinc/streamregion.h"
 #include "comfile/comfile.h"
 #if defined (WX_USER_INTERFACE)
 #include "comfile/comfile_window_wx.h"
