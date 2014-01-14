@@ -1048,7 +1048,7 @@ int gfx_modify_scene_graphics(struct Parse_state *state,
 			cmzn_tessellation_id fixedTessellation =
 				cmzn_tessellationmodule_find_or_create_fixed_tessellation(tessellationmodule,
 					element_divisions_size, element_divisions, circle_discretization,
-					tessellation);
+					tessellation, /*unitRefinement*/false);
 			cmzn_graphics_set_tessellation(graphics, fixedTessellation);
 			cmzn_tessellation_destroy(&fixedTessellation);
 			cmzn_tessellationmodule_destroy(&tessellationmodule);
