@@ -1397,19 +1397,37 @@ void graphics_window_set_filter_chooser_selected_item(cmzn_scenefilter_id filter
 
 void OnPerspectivePressed(wxCommandEvent& event)
 {
-	 enum Scene_viewer_projection_mode projection_mode;
 	USE_PARAMETER(event);
-	 projection_mode = Graphics_window_get_projection_mode(graphics_window, graphics_window->current_pane);
-	 if (SCENE_VIEWER_PERSPECTIVE == projection_mode)
-	 {
-			Graphics_window_set_projection_mode(graphics_window,
-				 graphics_window->current_pane, SCENE_VIEWER_PARALLEL);
-	 }
-	 else
-	 {
-			Graphics_window_set_projection_mode(graphics_window,
-				 graphics_window->current_pane, SCENE_VIEWER_PERSPECTIVE);
-	 }
+
+	enum Scene_viewer_projection_mode projection_mode = SCENE_VIEWER_PARALLEL;
+	if (graphics_window->wx_perspective_button->GetValue())
+	{
+		projection_mode = SCENE_VIEWER_PERSPECTIVE;
+	}
+	if (Graphics_window_get_projection_mode(graphics_window, graphics_window->current_pane)
+			!= projection_mode)
+	{
+		switch (graphics_window->layout_mode)
+		{
+			case GRAPHICS_WINDOW_LAYOUT_SIMPLE:
+			case GRAPHICS_WINDOW_LAYOUT_ORTHOGRAPHIC:
+			case GRAPHICS_WINDOW_LAYOUT_FREE_ORTHO:
+			{
+				Graphics_window_set_projection_mode(graphics_window,0,projection_mode);
+			} break;
+			case GRAPHICS_WINDOW_LAYOUT_FRONT_BACK:
+			case GRAPHICS_WINDOW_LAYOUT_FRONT_SIDE:
+			case GRAPHICS_WINDOW_LAYOUT_PSEUDO_3D:
+			case GRAPHICS_WINDOW_LAYOUT_TWO_FREE:
+			{
+				Graphics_window_set_projection_mode(graphics_window,0,projection_mode);
+				Graphics_window_set_projection_mode(graphics_window,1,projection_mode);
+			} break;
+			default:
+			{
+			} break;
+		}
+	}
 }
 
 void OnTimeEditorButtonPressed(wxCommandEvent& event)
