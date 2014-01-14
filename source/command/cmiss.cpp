@@ -12813,7 +12813,7 @@ static int gfx_read_region(struct Parse_state *state,
 			}
 			if (return_code)
 			{
-				cmzn_streaminformation_id streaminformation = cmzn_region_create_streaminformation(region);
+				cmzn_streaminformation_id streaminformation = cmzn_region_create_streaminformation_region(region);
 				cmzn_streamresource_id resource = cmzn_streaminformation_create_streamresource_file(
 					streaminformation, file_name);
 				cmzn_streaminformation_region_id streaminformation_region =
