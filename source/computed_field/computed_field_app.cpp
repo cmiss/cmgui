@@ -359,8 +359,14 @@ and its parameter fields and values.
 		}
 		else
 		{
-			/* OK if no more modifications */
-			return_code=1;
+			if (0 == field_modify->get_field())
+			{
+				display_message(ERROR_MESSAGE, "gfx define field:  Missing field type and definition");
+				display_parse_state_location(state);
+				return_code = 0;
+			}
+			else
+				return_code = 1;
 		}
 	}
 	else
@@ -441,8 +447,9 @@ to modify it if it was.
 		}
 		else
 		{
-			/* OK if no more modifications */
-			return_code=1;
+			display_message(ERROR_MESSAGE, "gfx define field:  Missing field type and definition");
+			display_parse_state_location(state);
+			return_code = 0;
 		}
 	}
 	else
