@@ -1607,7 +1607,8 @@ release.
 								(((INTERACTIVE_EVENT_MOTION_NOTIFY==event_type)&&
 									node_tool->motion_update_enabled)||
 									((INTERACTIVE_EVENT_BUTTON_RELEASE==event_type)&&
-										(!node_tool->motion_update_enabled))))
+										(!node_tool->motion_update_enabled))) &&
+										((0 == node_tool->constrain_to_surface) || nearest_element))
 							{
 								cmzn_nodeset_id nodeset = cmzn_node_get_nodeset(node_tool->last_picked_node);
 								cmzn_fieldmodule_id field_module = cmzn_nodeset_get_fieldmodule(nodeset);
