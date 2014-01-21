@@ -38,6 +38,7 @@ Scene input.
 #include "graphics/glyph.hpp"
 #include "graphics/graphics_object.h"
 #include "graphics/graphics_module.h"
+#include "graphics/scene_app.h"
 #include "interaction/interaction_graphics.h"
 #include "interaction/interaction_volume.h"
 #include "interaction/interactive_event.h"
@@ -188,7 +189,7 @@ to its position between these two planes.
 		*wrapper_orientation_scale_field, *variable_scale_field;
 	Triple glyph_centre, glyph_scale_factors, glyph_size;
 	/* editing nodes in this region */
-	FE_nodeset *fe_nodeset;
+	cmzn_nodeset_id nodeset;
 	/* information for undoing scene object transformations - only needs to be
 		 done if transformation_required is set */
 	int transformation_required,LU_indx[4];
@@ -284,83 +285,6 @@ int Node_tool_destroy_selected_nodes(struct Node_tool *node_tool)
 	}
 	return return_code;
 }
-
-static int Node_tool_define_field_at_node(struct Node_tool *node_tool,
-	struct FE_node *node)
-/*******************************************************************************
-LAST MODIFIED : 16 October 2001
-
-DESCRIPTION :
-Defines the appropriate FE_field upon which the <coordinate_field> depends in
-<node>. The field is defined with no versions or derivatives.
-==============================================================================*/
-{
-	int return_code;
-	struct FE_field *fe_field;
-	struct FE_node_field_creator *node_field_creator;
-	struct LIST(FE_field) *fe_field_list;
-
-	ENTER(Node_tool_define_field_at_node);
-	if (node_tool && node)
-	{
-		if (node_tool->coordinate_field && (fe_field_list=
-			Computed_field_get_defining_FE_field_list(node_tool->coordinate_field)))
-		{
-			if ((1==NUMBER_IN_LIST(FE_field)(fe_field_list))&&
-				(fe_field=FIRST_OBJECT_IN_LIST_THAT(FE_field)(
-				(LIST_CONDITIONAL_FUNCTION(FE_field) *)NULL,(void *)NULL,
-				fe_field_list)) && (3 >= get_FE_field_number_of_components(
-				fe_field)) && (FE_VALUE_VALUE == get_FE_field_value_type(fe_field)))
-			{
-				node_field_creator = CREATE(FE_node_field_creator)(/*number_of_components*/3);
-				if (node_field_creator != 0)
-				{
-					if (define_FE_field_at_node(node,fe_field,
-						(struct FE_time_sequence *)NULL,
-						node_field_creator))
-					{
-						return_code=1;
-					}
-					else
-					{
-						display_message(ERROR_MESSAGE,
-							"Node_tool_define_field_at_node.  Failed");
-						return_code=0;
-					}
-					DESTROY(FE_node_field_creator)(&node_field_creator);
-				}
-				else
-				{
-					display_message(ERROR_MESSAGE,
-						"Node_tool_define_field_at_node.  Unable to make creator.");
-					return_code=0;
-				}
-			}
-			else
-			{
-				display_message(ERROR_MESSAGE,
-					"Node_tool_define_field_at_node.  Invalid field");
-				return_code=0;
-			}
-			DESTROY(LIST(FE_field))(&fe_field_list);
-		}
-		else
-		{
-			display_message(ERROR_MESSAGE,
-				"Node_tool_define_field_at_node.  No field to define");
-			return_code=0;
-		}
-	}
-	else
-	{
-		display_message(ERROR_MESSAGE,
-			"Node_tool_define_field_at_node.  Invalid argument(s)");
-		return_code=0;
-	}
-	LEAVE;
-
-	return (return_code);
-} /* Node_tool_define_field_at_node */
 
 static int FE_node_define_and_set_element_xi(struct FE_node *node,
 		struct Computed_field *element_xi_field,
@@ -558,7 +482,7 @@ static int FE_node_calculate_delta_position(struct FE_node *node,
 	int i, return_code;
 
 	ENTER(FE_node_calculate_delta_position);
-	if (node && edit_info && edit_info->fe_nodeset && edit_info->rc_coordinate_field &&
+	if (node && edit_info && edit_info->nodeset && edit_info->rc_coordinate_field &&
 		(3 >= Computed_field_get_number_of_components(edit_info->rc_coordinate_field)))
 	{
 		return_code=1;
@@ -695,13 +619,14 @@ static int FE_node_edit_position(struct FE_node *node,
 	int return_code;
 
 	ENTER(FE_node_edit_position);
-	if (node && edit_info && edit_info->fe_nodeset && edit_info->rc_coordinate_field &&
+	if (node && edit_info && edit_info->nodeset && edit_info->rc_coordinate_field &&
 		(3 >= Computed_field_get_number_of_components(edit_info->rc_coordinate_field)))
 	{
 		return_code=1;
 		/* the last_picked_node was edited in FE_node_calculate_delta_position.
 			 Also, don't edit unless in node_group, if supplied */
-		if ((node != edit_info->last_picked_node) && edit_info->fe_nodeset->containsNode(node))
+		if ((node != edit_info->last_picked_node) &&
+			cmzn_nodeset_contains_node(edit_info->nodeset, node))
 		{
 			/* clear coordinates in case less than 3 dimensions */
 			coordinates[0]=0.0;
@@ -760,7 +685,7 @@ NOTE: currently does not tolerate having a variable_scale_field.
 
 	ENTER(FE_node_calculate_delta_vector);
 	if (node&&(edit_info=(struct FE_node_edit_information *)edit_info_void)&&
-		edit_info->fe_nodeset && edit_info->rc_coordinate_field &&
+		edit_info->nodeset && edit_info->rc_coordinate_field &&
 		(3>=Computed_field_get_number_of_components(
 			edit_info->rc_coordinate_field))&&
 		edit_info->wrapper_orientation_scale_field&&
@@ -972,7 +897,7 @@ static int FE_node_edit_vector(struct FE_node *node,
 	int number_of_orientation_scale_components,return_code;
 
 	ENTER(FE_node_edit_vector);
-	if (node && edit_info && edit_info->fe_nodeset && edit_info->orientation_scale_field &&
+	if (node && edit_info && edit_info->nodeset && edit_info->orientation_scale_field &&
 		(0<(number_of_orientation_scale_components=
 			Computed_field_get_number_of_components(
 				edit_info->orientation_scale_field)))&&
@@ -980,7 +905,7 @@ static int FE_node_edit_vector(struct FE_node *node,
 	{
 		return_code=1;
 		/* the last_picked_node was edited in FE_node_calculate_delta_vector. */
-		if ((node != edit_info->last_picked_node) && edit_info->fe_nodeset->containsNode(node))
+		if ((node != edit_info->last_picked_node) && cmzn_nodeset_contains_node(edit_info->nodeset, node))
 		{
 			cmzn_fieldcache_set_node(edit_info->field_cache, node);
 			if (CMZN_OK == cmzn_field_evaluate_real(edit_info->orientation_scale_field, edit_info->field_cache,
@@ -1085,8 +1010,11 @@ object's coordinate field.
 			if (CMZN_OK == cmzn_field_evaluate_real(rc_picked_coordinate_field, field_cache,
 				3, coordinates))
 			{
-				if (Node_tool_define_field_at_node(node_tool,node) &&
-					(CMZN_OK == cmzn_field_assign_real(rc_coordinate_field, field_cache, 3, coordinates)))
+				cmzn_nodeset_id nodeset = cmzn_node_get_nodeset(node);
+				cmzn_nodetemplate_id nodetemplate = cmzn_nodeset_create_nodetemplate(nodeset);
+				cmzn_nodetemplate_define_field(nodetemplate, node_tool->coordinate_field);
+				cmzn_node_merge(node, nodetemplate);
+				if (CMZN_OK == cmzn_field_assign_real(rc_coordinate_field, field_cache, 3, coordinates))
 				{
 					return_code=1;
 				}
@@ -1096,6 +1024,8 @@ object's coordinate field.
 						"Node_tool_define_field_at_node_from_picked_coordinates.  Failed");
 					return_code=0;
 				}
+				cmzn_nodetemplate_destroy(&nodetemplate);
+				cmzn_nodeset_destroy(&nodeset);
 			}
 			else
 			{
@@ -1147,11 +1077,9 @@ try to enforce that the node is created on that element.
 {
 	double node_coordinates[3];
 	FE_value coordinates[3];
-	int i,node_number;
+	int i;
 	struct Computed_field *rc_coordinate_field,*node_tool_coordinate_field;
-	struct FE_node *merged_node, *node;
-
-	merged_node = (struct FE_node *)NULL;
+	cmzn_node_id node = 0;
 	cmzn_scene *scene = 0;
 	cmzn_graphics *graphics = 0;
 	if (!node_tool || !interaction_volume)
@@ -1190,12 +1118,12 @@ try to enforce that the node is created on that element.
 			}
 			rc_coordinate_field=
 				Computed_field_begin_wrap_coordinate_field(node_tool_coordinate_field);
-			FE_nodeset *fe_nodeset = FE_region_find_FE_nodeset_by_field_domain_type(
-				cmzn_region_get_FE_region(node_tool->region), node_tool->domain_type);
-			if ((rc_coordinate_field != 0) && fe_nodeset)
+			cmzn_nodeset_id nodeset = cmzn_fieldmodule_find_nodeset_by_field_domain_type(
+				field_module, node_tool->domain_type);
+
+			if ((rc_coordinate_field != 0) && nodeset)
 			{
 				struct Node_tool_element_constraint_function_data constraint_data;
-				node_number = fe_nodeset->get_next_FE_node_identifier(/*start*/1);
 
 				/* get new node coordinates from interaction_volume */
 				if (nearest_element && element_coordinate_field)
@@ -1227,7 +1155,13 @@ try to enforce that the node is created on that element.
 				{
 					coordinates[i]=(FE_value)node_coordinates[i];
 				}
-				node = CREATE(FE_node)(node_number, fe_nodeset, /*template*/(struct FE_node *)NULL);
+				cmzn_nodetemplate_id nodetemplate = cmzn_nodeset_create_nodetemplate(nodeset);
+				cmzn_nodetemplate_define_field(nodetemplate, node_tool_coordinate_field);
+				if (node_tool->element_xi_field && nearest_element && constraint_data.found_element)
+				{
+					cmzn_nodetemplate_define_field(nodetemplate, node_tool->element_xi_field);
+				}
+				node = cmzn_nodeset_create_node(nodeset, -1, nodetemplate);
 				if (!node)
 				{
 					display_message(ERROR_MESSAGE,
@@ -1235,14 +1169,11 @@ try to enforce that the node is created on that element.
 				}
 				else
 				{
-					ACCESS(FE_node)(node);
 					cmzn_fieldcache_set_node(field_cache, node);
-					if (!Node_tool_define_field_at_node(node_tool,node) ||
-						(CMZN_OK != cmzn_field_assign_real(rc_coordinate_field, field_cache, 3, coordinates)) ||
+					if ((CMZN_OK != cmzn_field_assign_real(rc_coordinate_field, field_cache, 3, coordinates)) ||
 						(nearest_element && constraint_data.found_element && node_tool->element_xi_field &&
-							!FE_node_define_and_set_element_xi(node, node_tool->element_xi_field,
-								constraint_data.found_element, constraint_data.xi)) ||
-						(NULL == (merged_node = fe_nodeset->merge_FE_node(node))))
+							(CMZN_OK != cmzn_field_assign_mesh_location(node_tool->element_xi_field, field_cache,
+								constraint_data.found_element, 3, constraint_data.xi))))
 					{
 						display_message(ERROR_MESSAGE,
 							"Node_tool_create_node_at_interaction_volume.  Could not define and set fields");
@@ -1262,9 +1193,9 @@ try to enforce that the node is created on that element.
 								modify_node_group = cmzn_field_group_create_field_node_group(node_tool->group_field, master_nodeset);
 							}
 							cmzn_nodeset_group_id modify_nodeset_group = cmzn_field_node_group_get_nodeset_group(modify_node_group);
-							if (!cmzn_nodeset_contains_node(cmzn_nodeset_group_base_cast(modify_nodeset_group), merged_node))
+							if (!cmzn_nodeset_contains_node(cmzn_nodeset_group_base_cast(modify_nodeset_group), node))
 							{
-								if (!cmzn_nodeset_group_add_node(modify_nodeset_group, merged_node))
+								if (!cmzn_nodeset_group_add_node(modify_nodeset_group, node))
 								{
 									display_message(ERROR_MESSAGE,
 										"gfx modify ngroup:  Could not add node %d", cmzn_node_get_identifier(node));
@@ -1277,10 +1208,11 @@ try to enforce that the node is created on that element.
 							cmzn_fieldmodule_destroy(&field_module);
 						}
 					}
-					DEACCESS(FE_node)(&node);
 				}
 				Computed_field_end_wrap(&rc_coordinate_field);
+				cmzn_nodetemplate_destroy(&nodetemplate);
 			}
+			cmzn_nodeset_destroy(&nodeset);
 			cmzn_fieldcache_destroy(&field_cache);
 			cmzn_fieldmodule_end_change(field_module);
 			cmzn_fieldmodule_destroy(&field_module);
@@ -1289,7 +1221,7 @@ try to enforce that the node is created on that element.
 	if (node_tool)
 	{
 		/* only need following if editing; in which case need all of them */
-		if ((!merged_node) || (!scene))
+		if ((!node) || (!scene))
 		{
 			cmzn_scene_destroy(&scene);
 			cmzn_graphics_destroy(&graphics);
@@ -1303,8 +1235,10 @@ try to enforce that the node is created on that element.
 	{
 		cmzn_scene_destroy(&scene);
 	}
+	if (graphics)
+		cmzn_graphics_destroy(&graphics);
 
-	return (merged_node);
+	return (node);
 } /* Node_tool_create_node_at_interaction_volume */
 
 static void Node_tool_reset(void *node_tool_void)
@@ -1395,7 +1329,7 @@ release.
 	enum Interactive_event_type event_type;
 	FE_value time;
 	int clear_selection,input_modifier,return_code,shift_pressed;
-	struct FE_element *nearest_element;
+	struct FE_element *nearest_element = 0;
 	struct FE_node *picked_node;
 	struct cmzn_scene *top_scene = NULL, *scene = 0;
 	struct cmzn_graphics *graphics = 0;
@@ -1416,6 +1350,19 @@ release.
 			cmzn_scenefiltermodule_begin_change(filtermodule);
 			cmzn_scenefilter_id filter =
 				cmzn_scenefiltermodule_create_scenefilter_field_domain_type(filtermodule, node_tool->domain_type);
+			if (node_tool->constrain_to_surface)
+			{
+				cmzn_scenefilter_id domainFilter = filter;
+				cmzn_scenefilter_id graphics_type_filter = cmzn_scenefiltermodule_create_scenefilter_graphics_type(
+					filtermodule, CMZN_GRAPHICS_TYPE_SURFACES);
+				filter = cmzn_scenefiltermodule_create_scenefilter_operator_or(filtermodule);
+				cmzn_scenefilter_operator_id orFilter = cmzn_scenefilter_cast_operator(filter);
+				cmzn_scenefilter_operator_append_operand(orFilter, domainFilter);
+				cmzn_scenefilter_operator_append_operand(orFilter, graphics_type_filter);
+				cmzn_scenefilter_operator_destroy(&orFilter);
+				cmzn_scenefilter_destroy(&domainFilter);
+				cmzn_scenefilter_destroy(&graphics_type_filter);
+			}
 			cmzn_scenefilter_id sceneviewerFilter = cmzn_sceneviewer_get_scenefilter(scene_viewer);
 			if (sceneviewerFilter)
 			{
@@ -1427,7 +1374,7 @@ release.
 				cmzn_scenefilter_operator_append_operand(andFilter, sceneviewerFilter);
 				cmzn_scenefilter_operator_destroy(&andFilter);
 				cmzn_scenefilter_destroy(&domainFilter);
-				cmzn_scenefilter_destroy(&sceneviewerFilter);
+
 			}
 			cmzn_scenepicker_id scenepicker = cmzn_scene_create_scenepicker(scene);
 			cmzn_scenepicker_set_scenefilter(scenepicker, filter);
@@ -1448,7 +1395,6 @@ release.
 						REACCESS(Interaction_volume)(&(node_tool->last_interaction_volume),
 							interaction_volume);
 						picked_node=(struct FE_node *)NULL;
-						nearest_element = (struct FE_element *)NULL;
 						if (node_tool->select_enabled)
 						{
 							picked_node = cmzn_scenepicker_get_nearest_node(scenepicker);
@@ -1610,19 +1556,36 @@ release.
 						{
 							if (node_tool->constrain_to_surface)
 							{
-								if ( 0 != (nearest_element=cmzn_scenepicker_get_nearest_element(scenepicker)))
+								cmzn_scenefilter_id constrainSurfaceFilter = cmzn_scenefiltermodule_create_scenefilter_graphics_type(
+									filtermodule, CMZN_GRAPHICS_TYPE_SURFACES);
+								if (sceneviewerFilter)
+								{
+									cmzn_scenefilter_id graphicsTypeFilter = constrainSurfaceFilter;
+									constrainSurfaceFilter = cmzn_scenefiltermodule_create_scenefilter_operator_and(filtermodule);
+									cmzn_scenefilter_operator_id andFilter = cmzn_scenefilter_cast_operator(constrainSurfaceFilter);
+									cmzn_scenefilter_operator_append_operand(andFilter, graphicsTypeFilter);
+									cmzn_scenefilter_operator_append_operand(andFilter, sceneviewerFilter);
+									cmzn_scenefilter_operator_destroy(&andFilter);
+									cmzn_scenefilter_destroy(&graphicsTypeFilter);
+								}
+								cmzn_scenepicker_id surfaceScenepicker = cmzn_scene_create_scenepicker(scene);
+								cmzn_scenepicker_set_scenefilter(surfaceScenepicker, constrainSurfaceFilter);
+								cmzn_scenepicker_set_interaction_volume(surfaceScenepicker,
+									interaction_volume);
+								cmzn_scenefilter_destroy(&constrainSurfaceFilter);
+
+								if (surfaceScenepicker && (0 !=
+									(nearest_element=cmzn_scenepicker_get_nearest_element(surfaceScenepicker))))
 								{
 									cmzn_graphics *nearest_element_graphics =
-										cmzn_scenepicker_get_nearest_element_graphics(scenepicker);
+										cmzn_scenepicker_get_nearest_element_graphics(surfaceScenepicker);
 									nearest_element_coordinate_field =
 										cmzn_graphics_get_coordinate_field(nearest_element_graphics);
 									cmzn_graphics_destroy(&nearest_element_graphics);
 								}
+								cmzn_scenepicker_destroy(&surfaceScenepicker);
 							}
-							cmzn_region_id temp_region = cmzn_scene_get_region_internal(node_tool->scene);
-							cmzn_fieldmodule_id field_module = cmzn_region_get_fieldmodule(temp_region);
-							cmzn_fieldmodule_begin_change(field_module);
-							cmzn_fieldcache_id field_cache = cmzn_fieldmodule_create_fieldcache(field_module);
+
 							if (node_tool->create_enabled &&
 								node_tool->streaming_create_enabled &&
 								(INTERACTIVE_EVENT_MOTION_NOTIFY == event_type))
@@ -1646,9 +1609,14 @@ release.
 									((INTERACTIVE_EVENT_BUTTON_RELEASE==event_type)&&
 										(!node_tool->motion_update_enabled))))
 							{
+								cmzn_nodeset_id nodeset = cmzn_node_get_nodeset(node_tool->last_picked_node);
+								cmzn_fieldmodule_id field_module = cmzn_nodeset_get_fieldmodule(nodeset);
+								cmzn_fieldmodule_begin_change(field_module);
+								cmzn_fieldcache_id field_cache = cmzn_fieldmodule_create_fieldcache(field_module);
 								return_code=1;
 								/* establish edit_info */
 								struct FE_node_edit_information edit_info;
+
 								edit_info.field_cache = field_cache;
 								edit_info.last_picked_node = (struct FE_node *)NULL;
 								edit_info.delta1=0.0;
@@ -1657,8 +1625,8 @@ release.
 								edit_info.initial_interaction_volume=
 									node_tool->last_interaction_volume;
 								edit_info.final_interaction_volume=interaction_volume;
-								edit_info.fe_nodeset = FE_region_find_FE_nodeset_by_field_domain_type(
-									cmzn_region_get_FE_region(node_tool->region), node_tool->domain_type);
+								//edit_info.fe_nodeset = FE_region_find_FE_nodeset_by_field_domain_type(
+								//	cmzn_region_get_FE_region(node_tool->region), node_tool->domain_type);
 								edit_info.time=node_tool->time_keeper_app->getTimeKeeper()->getTime();
 								edit_info.constrain_to_surface = node_tool->constrain_to_surface;
 								edit_info.element_xi_field = node_tool->element_xi_field;
@@ -1748,17 +1716,18 @@ release.
 								}*/
 								if (return_code)
 								{
-									cmzn_field_id selection_field = cmzn_scene_get_selection_field(node_tool->scene);
-									cmzn_field_group_id selection_group = cmzn_field_cast_group(selection_field);
+									cmzn_region_id node_region = cmzn_fieldmodule_get_region(field_module);
+										cmzn_field_id selection_field = cmzn_scene_get_selection_field(node_tool->scene);
+									cmzn_field_group_id master_selection_group = cmzn_field_cast_group(selection_field);
+									cmzn_field_group_id selection_group = cmzn_field_group_get_subregion_field_group(master_selection_group,
+										node_region);
+									cmzn_field_group_destroy(&master_selection_group);
 									cmzn_field_destroy(&selection_field);
-									if (node_tool->scene && selection_group)
+									cmzn_region_destroy(&node_region);
+									if (selection_group)
 									{
-										cmzn_nodeset_id master_nodeset = cmzn_fieldmodule_find_nodeset_by_field_domain_type(
-											field_module, node_tool->domain_type);
-										edit_info.fe_nodeset = FE_region_find_FE_nodeset_by_field_domain_type(
-											cmzn_region_get_FE_region(temp_region), node_tool->domain_type);
-										cmzn_field_node_group_id node_group = cmzn_field_group_get_field_node_group(selection_group, master_nodeset);
-										cmzn_nodeset_destroy(&master_nodeset);
+										edit_info.nodeset = nodeset;
+										cmzn_field_node_group_id node_group = cmzn_field_group_get_field_node_group(selection_group, nodeset);
 										if (node_group)
 										{
 											cmzn_nodeset_group_id nodeset_group = cmzn_field_node_group_get_nodeset_group(node_group);
@@ -1825,6 +1794,10 @@ release.
 								}
 								Computed_field_end_wrap(&(edit_info.rc_coordinate_field));
 								cmzn_field_destroy(&coordinate_field);
+								cmzn_nodeset_destroy(&nodeset);
+								cmzn_fieldcache_destroy(&field_cache);
+								cmzn_fieldmodule_end_change(field_module);
+								cmzn_fieldmodule_destroy(&field_module);
 							}
 							else
 							{
@@ -1840,9 +1813,6 @@ release.
 									DESTROY(LIST(FE_node))(&temp_node_list);
 								}
 							}
-							cmzn_fieldcache_destroy(&field_cache);
-							cmzn_fieldmodule_end_change(field_module);
-							cmzn_fieldmodule_destroy(&field_module);
 						}
 						else if (node_tool->motion_detected)
 						{
@@ -1960,6 +1930,7 @@ release.
 			}
 			if (scenepicker)
 				cmzn_scenepicker_destroy(&scenepicker);
+			cmzn_scenefilter_destroy(&sceneviewerFilter);
 			cmzn_scenefiltermodule_end_change(filtermodule);
 			cmzn_scenefiltermodule_destroy(&filtermodule);
 		}

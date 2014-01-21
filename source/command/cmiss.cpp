@@ -13517,7 +13517,7 @@ Sets nodal field values from a command.
 		}
 		if (node)
 		{
-			DEACCESS(FE_node)(&node);
+			cmzn_node_destroy(&node);
 		}
 	}
 	else

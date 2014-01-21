@@ -26,6 +26,7 @@
 #include "graphics/graphics_app.h"
 #include "general/enumerator_private.hpp"
 #include "graphics/scene_app.h"
+#include "region/cmiss_region_private.h"
 #include "region/cmiss_region_app.h"
 #include "user_interface/user_interface.h"
 
@@ -696,5 +697,199 @@ int define_Scene(struct Parse_state *state, void *dummy_to_be_modified,
 		"gfx modify window command");
 
 	return 1;
+}
+
+static cmzn_scene_id cmzn_scene_get_parent_scene_internal(cmzn_scene_id scene)
+{
+	cmzn_scene_id parent_scene = 0;
+	if (scene)
+	{
+		cmzn_region_id parent_region = cmzn_region_get_parent_internal(scene->region);
+		if (parent_region)
+		{
+			parent_scene = FIRST_OBJECT_IN_LIST_THAT(ANY_OBJECT(cmzn_scene))(
+				(ANY_OBJECT_CONDITIONAL_FUNCTION(cmzn_scene) *)NULL, (void *)NULL,
+				cmzn_region_private_get_any_object_list(parent_region));
+		}
+	}
+	return parent_scene;
+}
+
+cmzn_field_group_id cmzn_scene_get_or_create_selection_group(cmzn_scene_id scene)
+{
+	if (!scene)
+		return 0;
+	cmzn_field_group_id selection_group = scene->selection_group;
+	if (selection_group)
+		cmzn_field_access(cmzn_field_group_base_cast(selection_group));
+	else
+	{
+		cmzn_scene_id parent_scene = cmzn_scene_get_parent_scene_internal(scene);
+		if (parent_scene)
+		{
+			cmzn_field_group_id parent_selection_group = cmzn_scene_get_or_create_selection_group(parent_scene);
+			selection_group = cmzn_field_group_get_subregion_field_group(parent_selection_group, scene->region);
+			if (!selection_group)
+				selection_group = cmzn_field_group_create_subregion_field_group(parent_selection_group, scene->region);
+			cmzn_field_group_destroy(&parent_selection_group);
+		}
+		else
+		{
+			// find by name or create
+			const char *default_selection_group_name = "cmiss_selection";
+			cmzn_fieldmodule_id field_module = cmzn_region_get_fieldmodule(scene->region);
+			cmzn_field_id field = cmzn_fieldmodule_find_field_by_name(field_module, default_selection_group_name);
+			if (field)
+			{
+				selection_group = cmzn_field_cast_group(field);
+				cmzn_field_destroy(&field);
+			}
+			if (!selection_group)
+			{
+				field = cmzn_fieldmodule_create_field_group(field_module);
+				cmzn_field_set_name(field, default_selection_group_name);
+				selection_group = cmzn_field_cast_group(field);
+				cmzn_field_destroy(&field);
+			}
+			cmzn_fieldmodule_destroy(&field_module);
+		}
+		if (selection_group)
+			cmzn_scene_set_selection_field(scene, cmzn_field_group_base_cast(selection_group));
+	}
+	return selection_group;
+}
+
+int cmzn_scene_change_selection_from_node_list(cmzn_scene_id scene,
+		struct LIST(FE_node) *node_list, int add_flag, int use_data)
+{
+	int return_code = 1;
+
+	ENTER(cmzn_scene_add_selection_from_node_list);
+	if (scene && node_list && (NUMBER_IN_LIST(FE_node)(node_list) > 0))
+	{
+		cmzn_fieldmodule_id field_module = cmzn_region_get_fieldmodule(scene->region);
+		cmzn_fieldmodule_begin_change(field_module);
+		cmzn_field_group_id selection_group = cmzn_scene_get_or_create_selection_group(scene);
+		cmzn_nodeset_id temp_nodeset = cmzn_fieldmodule_find_nodeset_by_field_domain_type(
+			field_module, use_data ? CMZN_FIELD_DOMAIN_TYPE_DATAPOINTS : CMZN_FIELD_DOMAIN_TYPE_NODES);
+		cmzn_field_node_group_id node_group = cmzn_field_group_get_field_node_group(selection_group, temp_nodeset);
+		if (!node_group)
+			node_group = cmzn_field_group_create_field_node_group(selection_group, temp_nodeset);
+		cmzn_nodeset_destroy(&temp_nodeset);
+		cmzn_nodeset_group_id nodeset_group = cmzn_field_node_group_get_nodeset_group(node_group);
+		cmzn_field_node_group_destroy(&node_group);
+		cmzn_nodeiterator_id iterator = CREATE_LIST_ITERATOR(FE_node)(node_list);
+		cmzn_node_id node = 0;
+		while (0 != (node = cmzn_nodeiterator_next_non_access(iterator)))
+		{
+			if (add_flag)
+			{
+				cmzn_nodeset_group_add_node(nodeset_group, node);
+			}
+			else
+			{
+				cmzn_nodeset_group_remove_node(nodeset_group, node);
+			}
+		}
+		cmzn_nodeiterator_destroy(&iterator);
+		cmzn_nodeset_group_destroy(&nodeset_group);
+		cmzn_field_group_destroy(&selection_group);
+		cmzn_fieldmodule_end_change(field_module);
+		cmzn_fieldmodule_destroy(&field_module);
+	}
+	LEAVE;
+
+	return (return_code);
+}
+
+int cmzn_scene_add_selection_from_node_list(cmzn_scene_id scene,
+	struct LIST(FE_node) *node_list, int use_data)
+/*******************************************************************************
+LAST MODIFIED : 28 April 2000
+
+DESCRIPTION :
+Create a node list selection
+==============================================================================*/
+{
+	int return_code = 0;
+	return_code = cmzn_scene_change_selection_from_node_list(scene,
+		node_list, /*add_flag*/1, use_data);
+	return return_code;
+}
+
+int cmzn_scene_remove_selection_from_node_list(cmzn_scene_id scene,
+	struct LIST(FE_node) *node_list, int use_data)
+{
+	int return_code = 0;
+	if (cmzn_scene_change_selection_from_node_list(scene,
+		node_list, /*add_flag*/0, use_data))
+	{
+		cmzn_scene_flush_tree_selections(scene);
+		return_code = 1;
+	}
+	return return_code;
+}
+
+
+int cmzn_scene_change_selection_from_element_list_of_dimension(cmzn_scene_id scene,
+	struct LIST(FE_element) *element_list, int add_flag, int dimension)
+{
+	int return_code = 1;
+
+	ENTER(cmzn_scene_change_selection_from_element_list_of_dimension);
+	if (scene && element_list && (NUMBER_IN_LIST(FE_element)(element_list) > 0))
+	{
+		cmzn_fieldmodule_id field_module = cmzn_region_get_fieldmodule(scene->region);
+		cmzn_fieldmodule_begin_change(field_module);
+		cmzn_field_group_id selection_group = cmzn_scene_get_or_create_selection_group(scene);
+		cmzn_mesh_id temp_mesh = cmzn_fieldmodule_find_mesh_by_dimension(field_module, dimension);
+		cmzn_field_element_group_id element_group = cmzn_field_group_get_field_element_group(selection_group, temp_mesh);
+		if (!element_group)
+			element_group = cmzn_field_group_create_field_element_group(selection_group, temp_mesh);
+		cmzn_mesh_destroy(&temp_mesh);
+		cmzn_mesh_group_id mesh_group = cmzn_field_element_group_get_mesh_group(element_group);
+		cmzn_field_element_group_destroy(&element_group);
+		cmzn_elementiterator_id iterator = CREATE_LIST_ITERATOR(FE_element)(element_list);
+		cmzn_element_id element = 0;
+		while (0 != (element = cmzn_elementiterator_next_non_access(iterator)))
+		{
+			if (add_flag)
+			{
+				cmzn_mesh_group_add_element(mesh_group, element);
+			}
+			else
+			{
+				cmzn_mesh_group_remove_element(mesh_group, element);
+			}
+		}
+		cmzn_elementiterator_destroy(&iterator);
+		cmzn_mesh_group_destroy(&mesh_group);
+		cmzn_field_group_destroy(&selection_group);
+		cmzn_fieldmodule_end_change(field_module);
+		cmzn_fieldmodule_destroy(&field_module);
+	}
+	LEAVE;
+
+	return (return_code);
+}
+
+int cmzn_scene_add_selection_from_element_list_of_dimension(cmzn_scene_id scene,
+	struct LIST(FE_element) *element_list, int dimension)
+{
+	return cmzn_scene_change_selection_from_element_list_of_dimension(scene,
+		element_list, /*add_flag*/1, dimension);
+}
+
+int cmzn_scene_remove_selection_from_element_list_of_dimension(cmzn_scene_id scene,
+	struct LIST(FE_element) *element_list, int dimension)
+{
+	int return_code = 0;
+	if (cmzn_scene_change_selection_from_element_list_of_dimension(scene,
+			element_list, /*add_flag*/0, dimension))
+	{
+		cmzn_scene_flush_tree_selections(scene);
+		return_code = 1;
+	}
+	return return_code;
 }
 

@@ -96,4 +96,18 @@ struct Define_scene_data
 	struct cmzn_graphics_module *graphics_module;
 }; /* struct Define_scene_data */
 
+cmzn_field_group_id cmzn_scene_get_or_create_selection_group(cmzn_scene_id scene);
+
+int cmzn_scene_add_selection_from_element_list_of_dimension(cmzn_scene_id scene,
+	struct LIST(FE_element) *element_list, int dimension);
+
+int cmzn_scene_remove_selection_from_element_list_of_dimension(cmzn_scene_id scene,
+	struct LIST(FE_element) *element_list, int dimension);
+
+int cmzn_scene_add_selection_from_node_list(cmzn_scene_id scene,
+	struct LIST(FE_node) *node_list, int use_data);
+
+int cmzn_scene_remove_selection_from_node_list(cmzn_scene_id scene,
+	struct LIST(FE_node) *node_list, int use_data);
+
 #endif
