@@ -1645,7 +1645,7 @@ void OnTimeTextEntered(wxCommandEvent& event)
 void OnTimeForwardPressed(wxCommandEvent& event)
 {
 	USE_PARAMETER(event);
-	graphics_window->time_keeper_app->play(TIME_KEEPER_PLAY_FORWARD);
+	graphics_window->time_keeper_app->play(CMZN_TIMEKEEPER_PLAY_DIRECTION_FORWARD);
 }
 
 void OnTimeStopPressed(wxCommandEvent& event)
@@ -1657,7 +1657,7 @@ void OnTimeStopPressed(wxCommandEvent& event)
 void OnTimeBackwardPressed(wxCommandEvent& event)
 {
 	USE_PARAMETER(event);
-	graphics_window->time_keeper_app->play(TIME_KEEPER_PLAY_BACKWARD);
+	graphics_window->time_keeper_app->play(CMZN_TIMEKEEPER_PLAY_DIRECTION_REVERSE);
 }
 
 void OnTimeForwardByStepPressed(wxCommandEvent& event)

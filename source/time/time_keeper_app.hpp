@@ -49,7 +49,7 @@ private:
 	int play_remaining;
 	double speed;
 	double step;
-	enum Time_keeper_play_direction play_direction;
+	enum cmzn_timekeeper_play_direction play_direction;
 	int play_every_frame;
 	time_t play_start_seconds;
 	long play_start_microseconds;
@@ -81,7 +81,7 @@ public:
 		return DEACCESS(Time_keeper_app)(time_keeper_app_address);
 	}
 
-	int play(enum Time_keeper_play_direction play_direction_in);
+	int play(enum cmzn_timekeeper_play_direction play_direction_in);
 
 	int isPlaying();
 

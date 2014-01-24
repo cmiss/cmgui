@@ -14304,7 +14304,7 @@ DESCRIPTION :
 						}
 						if ( play )
 						{
-							time_keeper_app->play(TIME_KEEPER_PLAY_FORWARD);
+							time_keeper_app->play(CMZN_TIMEKEEPER_PLAY_DIRECTION_FORWARD);
 						}
 						if ( stop )
 						{

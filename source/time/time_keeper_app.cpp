@@ -55,7 +55,7 @@ Time_keeper_app::Time_keeper_app(cmzn_timekeeper *time_keeper_in,
 	play_remaining(0),
 	speed(1.0),
 	step(0.0),
-	play_direction(TIME_KEEPER_PLAY_FORWARD),
+	play_direction(CMZN_TIMEKEEPER_PLAY_DIRECTION_FORWARD),
 	play_every_frame(0),
 	play_start_seconds(0),
 	play_start_microseconds(0),
@@ -98,7 +98,7 @@ int Time_keeper_app::notifyClients(enum Time_keeper_app_event event_mask)
 	return return_code;
 }
 
-int Time_keeper_app::play(enum Time_keeper_play_direction play_direction_in)
+int Time_keeper_app::play(enum cmzn_timekeeper_play_direction play_direction_in)
 {
 	int return_code;
 
@@ -182,7 +182,7 @@ int Time_keeper_app::playPrivate()
 	{
 		switch(play_direction)
 		{
-		case TIME_KEEPER_PLAY_FORWARD:
+		case CMZN_TIMEKEEPER_PLAY_DIRECTION_FORWARD:
 		{
 			if(current_time < minimum)
 			{
@@ -194,7 +194,7 @@ int Time_keeper_app::playPrivate()
 				looping =1;
 			}
 		} break;
-		case TIME_KEEPER_PLAY_BACKWARD:
+		case CMZN_TIMEKEEPER_PLAY_DIRECTION_REVERSE:
 		{
 			if(current_time > maximum)
 			{
@@ -224,7 +224,7 @@ int Time_keeper_app::playPrivate()
 			{
 				Time_object_notify_clients_privileged(object_info->time_object);
 			}
-			object_info->next_callback_due = Time_object_get_next_callback_time(
+			object_info->next_callback_due = cmzn_timenotifier_get_next_callback_time_private(
 				object_info->time_object, current_time,
 				play_direction);
 			object_info = object_info->next;
@@ -405,7 +405,7 @@ int Time_keeper_app::timerEvent()
 		}
 		switch(play_direction)
 		{
-		case TIME_KEEPER_PLAY_FORWARD:
+		case CMZN_TIMEKEEPER_PLAY_DIRECTION_FORWARD:
 		{
 			if(play_every_frame)
 			{
@@ -429,9 +429,9 @@ int Time_keeper_app::timerEvent()
 						/* Then look for the event that should have occurred most
 									recently */
 						closest_object_time =
-							Time_object_get_next_callback_time(
+							cmzn_timenotifier_get_next_callback_time_private(
 								object_info->time_object, real_time + event_interval,
-								TIME_KEEPER_PLAY_BACKWARD);
+								CMZN_TIMEKEEPER_PLAY_DIRECTION_REVERSE);
 						if(closest_object_time >= object_info->next_callback_due)
 						{
 							object_info->next_callback_due = closest_object_time;
@@ -448,9 +448,9 @@ int Time_keeper_app::timerEvent()
 							object_info->next_callback_due);
 						Time_object_notify_clients_privileged(object_info->time_object);
 					}
-					object_info->next_callback_due = Time_object_get_next_callback_time(
+					object_info->next_callback_due = cmzn_timenotifier_get_next_callback_time_private(
 						object_info->time_object, real_time + event_interval,
-						TIME_KEEPER_PLAY_FORWARD);
+						CMZN_TIMEKEEPER_PLAY_DIRECTION_FORWARD);
 				}
 				else if (play_remaining && (real_time + event_interval)>time_keeper->getMaximum())
 				{
@@ -467,7 +467,7 @@ int Time_keeper_app::timerEvent()
 				play_remaining = 0;
 			}
 		} break;
-		case TIME_KEEPER_PLAY_BACKWARD:
+		case CMZN_TIMEKEEPER_PLAY_DIRECTION_REVERSE:
 		{
 			if(play_every_frame)
 			{
@@ -492,9 +492,9 @@ int Time_keeper_app::timerEvent()
 						/* Then look for the event that should have occurred most
 									recently */
 						closest_object_time =
-							Time_object_get_next_callback_time(
+							cmzn_timenotifier_get_next_callback_time_private(
 								object_info->time_object, real_time - event_interval,
-								TIME_KEEPER_PLAY_FORWARD);
+								CMZN_TIMEKEEPER_PLAY_DIRECTION_FORWARD);
 						if(closest_object_time <= object_info->next_callback_due)
 						{
 							object_info->next_callback_due = closest_object_time;
@@ -511,9 +511,9 @@ int Time_keeper_app::timerEvent()
 							object_info->next_callback_due);
 						Time_object_notify_clients_privileged(object_info->time_object);
 					}
-					object_info->next_callback_due = Time_object_get_next_callback_time(
+					object_info->next_callback_due = cmzn_timenotifier_get_next_callback_time_private(
 						object_info->time_object, real_time - event_interval,
-						TIME_KEEPER_PLAY_BACKWARD);
+						CMZN_TIMEKEEPER_PLAY_DIRECTION_REVERSE);
 				}
 				else if (play_remaining && (real_time - event_interval)<time_keeper->getMinimum())
 				{
@@ -607,7 +607,7 @@ int Time_keeper_app::setPlayTimeout()
 		{
 			switch(play_direction)
 			{
-			case TIME_KEEPER_PLAY_FORWARD:
+			case CMZN_TIMEKEEPER_PLAY_DIRECTION_FORWARD:
 			{
 				next_time = object_info->next_callback_due;
 				object_info = object_info->next;
@@ -639,7 +639,7 @@ int Time_keeper_app::setPlayTimeout()
 						case TIME_KEEPER_APP_PLAY_SWING:
 						{
 							time_keeper->setTimeQuiet(maximum);
-							play_direction = TIME_KEEPER_PLAY_BACKWARD;
+							play_direction = CMZN_TIMEKEEPER_PLAY_DIRECTION_REVERSE;
 							notifyClients(TIME_KEEPER_APP_CHANGED_DIRECTION);
 							return_code = playPrivate();
 						} break ;
@@ -700,7 +700,7 @@ int Time_keeper_app::setPlayTimeout()
 					}
 				}
 			} break;
-			case TIME_KEEPER_PLAY_BACKWARD:
+			case CMZN_TIMEKEEPER_PLAY_DIRECTION_REVERSE:
 			{
 				next_time = object_info->next_callback_due;
 				object_info = object_info->next;
@@ -730,7 +730,7 @@ int Time_keeper_app::setPlayTimeout()
 						case TIME_KEEPER_APP_PLAY_SWING:
 						{
 							time_keeper->setTimeQuiet(minimum);
-							play_direction = TIME_KEEPER_PLAY_FORWARD;
+							play_direction = CMZN_TIMEKEEPER_PLAY_DIRECTION_FORWARD;
 							notifyClients(TIME_KEEPER_APP_CHANGED_DIRECTION);
 							return_code = playPrivate();
 						} break ;
