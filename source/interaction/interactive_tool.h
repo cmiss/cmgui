@@ -175,19 +175,16 @@ Resets any current edits in the tool.
 Call on old tool when a new tool is activated, esp. on asynchronous tool change.
 ==============================================================================*/
 
-const char **interactive_tool_manager_get_tool_names(
+/**
+ * Allocates and returns an array of allocated strings containing the names of
+ * the available interactive tools, and also the <*number_of_tools>.
+ * Up to calling function to deallocate the returned strings and array.
+ * If the current_interactive_tool is supplied, current_tool_name is given the
+ * pointer to its string name from the returned names.
+ */
+char **interactive_tool_manager_get_tool_names(
 	struct MANAGER(Interactive_tool) *interactive_tool_manager,
-	int *number_of_tools,struct Interactive_tool *current_interactive_tool,
-	const char **current_tool_name);
-/*******************************************************************************
-LAST MODIFIED : 13 June 2000
-
-DESCRIPTION :
-Returns an array of strings containing the names of the tools - suitable for
-choosing in a text command. On success, also returns <*number_of_tools>,
-and in <current_tool_name> the pointer to the tool_names
-string for <current_interactive_tool>, or the first one if it is not found.
-Up to calling function to deallocate the returned array AND the strings in it.
-==============================================================================*/
+	int *number_of_tools_address, struct Interactive_tool *current_interactive_tool,
+	const char **current_tool_name_address);
 
 #endif /* !defined (INTERACTIVE_TOOL_H) */

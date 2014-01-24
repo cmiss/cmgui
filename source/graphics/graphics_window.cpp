@@ -2464,7 +2464,7 @@ Parser commands for setting simple parameters applicable to the whole <window>.
 ==============================================================================*/
 {
 	char fast_transparency_flag,slow_transparency_flag;
-	const char **tool_names,*tool_name,*blending_mode_string,**valid_strings;
+	const char *blending_mode_string,**valid_strings;
 	double depth_of_field, focal_depth, std_view_angle;
 	enum cmzn_sceneviewer_blending_mode blending_mode;
 	enum cmzn_sceneviewer_transparency_mode transparency_mode;
@@ -2551,15 +2551,13 @@ Parser commands for setting simple parameters applicable to the whole <window>.
 				Option_table_add_entry(option_table,"focal_depth",
 					&focal_depth,(void *)NULL,set_double);
 				/* transform|other tools. tool_names not deallocated until later */
-				tool_name=(char *)NULL;
-				tool_names=interactive_tool_manager_get_tool_names(
+				const char *tool_name = 0;
+				char **tool_names = interactive_tool_manager_get_tool_names(
 					modify_graphics_window_data->interactive_tool_manager,
 					&number_of_tools,interactive_tool,&tool_name);
 				if (tool_names)
-				{
 					Option_table_add_enumerator(option_table,number_of_tools,
-						tool_names,&tool_name);
-				}
+						const_cast<const char **>(tool_names), &tool_name);
 				/* perturb_lines|normal_lines */
 				Option_table_add_switch(option_table,"perturb_lines","normal_lines",
 					&perturb_lines);

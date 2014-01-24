@@ -625,80 +625,36 @@ Allocates a copy of the name of <interactive_tool>, puts a pointer to it at
 	return (return_code);
 } /* Interactive_tool_name_to_array */
 
-const char **interactive_tool_manager_get_tool_names(
+char **interactive_tool_manager_get_tool_names(
 	struct MANAGER(Interactive_tool) *interactive_tool_manager,
-	int *number_of_tools,struct Interactive_tool *current_interactive_tool,
-	const char **current_tool_name)
-/*******************************************************************************
-LAST MODIFIED : 2 October 2000
-
-DESCRIPTION :
-Returns an array of strings containing the names of the tools - suitable for
-choosing in a text command. On success, also returns <*number_of_tools>,
-and in <current_tool_name> the pointer to the tool_names
-string for <current_interactive_tool>, or the first one if it is not found.
-Up to calling function to deallocate the returned array AND the strings in it.
-==============================================================================*/
+	int *number_of_tools_address, struct Interactive_tool *current_interactive_tool,
+	const char **current_tool_name_address)
 {
-	const char **tool_names,**tool_name;
-	int i;
-
-	ENTER(interactive_tool_manager_get_tool_names);
-	tool_names=(const char **)NULL;
-	if (interactive_tool_manager&&number_of_tools&&current_tool_name)
+	char **tool_names = 0;
+	if (interactive_tool_manager && number_of_tools_address && current_tool_name_address)
 	{
-		if (0<(*number_of_tools=
+		*current_tool_name_address = 0;
+		if (0 < (*number_of_tools_address =
 			NUMBER_IN_MANAGER(Interactive_tool)(interactive_tool_manager)))
 		{
-			if (ALLOCATE(tool_names,const char *,*number_of_tools))
+			ALLOCATE(tool_names, char *, *number_of_tools_address);
+			for (int i = 0; i < *number_of_tools_address; ++i)
+				tool_names[i] = 0;
+			char **tool_name = tool_names;
+			FOR_EACH_OBJECT_IN_MANAGER(Interactive_tool)(
+				Interactive_tool_name_to_array, (void *)&tool_name,
+				interactive_tool_manager);
+			if (current_interactive_tool)
 			{
-				for (i=0;i< *number_of_tools;i++)
-				{
-					tool_names[i]=(const char *)NULL;
-				}
-				tool_name=tool_names;
-				if (FOR_EACH_OBJECT_IN_MANAGER(Interactive_tool)(
-					Interactive_tool_name_to_array,(void *)&tool_name,
-					interactive_tool_manager))
-				{
-					*current_tool_name = tool_names[0];
-					for (i=1;i<(*number_of_tools);i++)
+				*current_tool_name_address = tool_names[0];
+				for (int i = 0; i < (*number_of_tools_address); ++i)
+					if (0 == strcmp(current_interactive_tool->name, tool_names[i]))
 					{
-						if (FIND_BY_IDENTIFIER_IN_MANAGER(Interactive_tool,name)(
-							tool_names[i],interactive_tool_manager) ==
-							current_interactive_tool)
-						{
-							*current_tool_name = tool_names[i];
-						}
+						*current_tool_name_address = tool_names[i];
+						break;
 					}
-				}
-				else
-				{
-					display_message(WARNING_MESSAGE,
-						"interactive_tool_manager_get_tool_names.  Failed");
-					for (i=0;i<(*number_of_tools);i++)
-					{
-						if (tool_name[i])
-						{
-							DEALLOCATE(tool_names[i]);
-						}
-						DEALLOCATE(tool_names);
-					}
-				}
-			}
-			else
-			{
-				display_message(WARNING_MESSAGE,
-					"interactive_tool_manager_get_tool_names.  Not enough memory");
 			}
 		}
 	}
-	else
-	{
-		display_message(ERROR_MESSAGE,
-			"interactive_tool_manager_get_tool_names.  Invalid argument(s)");
-	}
-	LEAVE;
-
 	return (tool_names);
-} /* interactive_tool_manager_get_tool_names */
+}

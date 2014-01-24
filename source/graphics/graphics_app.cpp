@@ -494,6 +494,19 @@ int gfx_modify_scene_graphics(struct Parse_state *state,
 			line_base_size_count, line_base_size);
 	}
 
+	/* line_orientation_scale */
+	Set_Computed_field_conditional_data set_line_orientation_scale_field_data;
+	set_line_orientation_scale_field_data.computed_field_manager = scene_command_data->computed_field_manager;
+	set_line_orientation_scale_field_data.conditional_function = Computed_field_is_scalar;
+	set_line_orientation_scale_field_data.conditional_function_user_data = (void *)NULL;
+	if (line_attributes && (legacy_graphics_type != LEGACY_GRAPHIC_CYLINDERS))
+	{
+		line_orientation_scale_field =
+			cmzn_graphicslineattributes_get_orientation_scale_field(line_attributes);
+		Option_table_add_Computed_field_conditional_entry(option_table, "line_orientation_scale",
+			&line_orientation_scale_field, &set_line_orientation_scale_field_data);
+	}
+
 	/* line_scale_factors */
 	const int line_scale_factors_count = 2;
 	double line_scale_factors[2] = { 1.0, 1.0 };
