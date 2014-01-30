@@ -1,14 +1,68 @@
-# **************************************************************************
-# FILE : CHANGELOG
-#
-# LAST MODIFIED : 18 Oct 2011
-# ==========================================================================
+/* OpenCMISS-Cmgui Application
+*
+* This Source Code Form is subject to the terms of the Mozilla Public
+* License, v. 2.0. If a copy of the MPL was not distributed with this
+* file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-This software is the cmgui part of CMISS.
-It is released under the Mozilla Public License v1.1
+v3.0.0
 
-Further information, help pages, a tracker and a wiki is available at 
-http://www.cmiss.org/cmgui/
+Added Features:
+455 Now supported Analyzed image format.
+3424 Completely rework fonts, support 5 different font types - PIXMAP (default ), 
+	bitmap, polygon, extrude and outline
+3668 Added Fly zoom mode, it is now the default right button drag behaviour. 
+3682 Added rubber band back in cmgui.
+
+Bugs fixed:
+3260 Fixed shininess of material not being set properly from command in the cmgui application.
+3260 Fixed a bug causing free tumble while the sceneviewer is in select modes.
+3260 Fixed a bug causing image field to take only positive double for minimum and maximum options, 
+	they should take any non-negative value. 
+3260 Fixed gfx destroy nodes/elements commands to do logical AND of conditional and group fields, 
+	not OR. Fix ability to destroy nodes from a group.
+3260 Fixed perspective checkbox not changing projection mode on other panes when it should be changing.
+3389 Fixed handling of C string obtained from temporary wxString in graphics window, 
+	time editor . Fixed formatting including indents. 
+3395 Stop scene editor guessing coordinate field for existing graphics that have none. 
+	Was causing dialog to show graphics having a coordinate field when they did not.
+3651 Fixed graphics window number not being reused when a previouse used one is destroyed.
+3657 Fixed the bug which causes cmgui does not quit from comfile when started on command line.
+
+Improvements:
+2107 Glyphs have been improved and can be customised more freely.
+2107 Update migration help for gfx create axes command.
+2512 Removed group regions, replaced by group fields
+3213 Improved field evaluation/assignment caching
+3260 Added filter chooser in spectrum editor and added filter option for spectrum commands.
+3359 gfx list window now displays more GL information.
+3361 Updated cmgui to use new points graphic type with separate field domain type. 
+	Migrate gfx commands for replacement of point, node_points, data_points, 
+	element_points with points+domain_type. Fix offset of point graphic with scale. 
+3361 Added new Add... menu for creating legacy graphic types in scene editor, and 
+	migrate other parts of scene editor for new points graphic.
+3361 Updated cmgui for removal of mirror glyphs, and replacement with mirror_glyph_flag in 
+	graphic point attributes. Update gfx commands to handle new mirror_glyph option and match 
+	old mirror glyph names to the non-mirror glyph plus mirror flag.
+	Update scene editor to have mirror_glyph checkbox. 
+3609 Added point cloud density controls to gfx convert graphics in cmgui.
+3618 Update cmgui for circle discretization moving from graphic to tessellation, 
+	and removal of element discretization from graphic. Add circle_divisions 
+	to tessellation commands and dialog. Make tessellation compulsory for graphic 
+	in scene editor. Handle migration of circle_discretization and element discretization 
+	in graphic and rendition general settings; makes temporary tessellation to match.
+3619 Allowed change identifier to handle group.
+3633 Added white to green spectrum setting.
+3647 Added new yellow, magenta, cyan, orange, brown, grey25, grey50 and grey75 materials.
+3678 Added the ability to specify the input coordinates bound and texture lookup coordinates for image resample field. 
+	Added the ability to specify texture size when defining image field in cmgui.
+
+Changes:
+3564 removal of weights from sum_components field and move to vectoroperators. Sum components 
+	command uses a dot product with a constant field of weights if not all equal to 1.
+3569 Update cmgui for cross product field taking number of fields argument instead of dimension.
+
+Miscellaneous:
+3361 Update cmgui for renaming of iso_surfaces to contours.
 
 v2.9.0
 
