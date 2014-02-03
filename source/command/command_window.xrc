@@ -5,7 +5,7 @@
   <object class="wxMenuBar" name="commandmenubar">
     <size>-1,8</size>	
     <object class ="wxMenu" name="MenuFile">
-      <label>File</label>
+      <label>&amp;File</label>
       <object class = "wxMenu" name="FileOpen">
         <label>Open...</label>
         <object class = "wxMenuItem" name="FileComFile">
