@@ -61,31 +61,32 @@ so that the bits can operate as independent flags.
 class wxCommandWindow;
 class wxCommandLineTextCtrl : public wxTextCtrl
 {
-	 Command_window *command_window;
+	Command_window *command_window;
 public:
-	 wxCommandLineTextCtrl(Command_window *command_window, wxPanel *parent) :
-			wxTextCtrl(parent, -1, wxT(""),wxPoint(0,0), wxSize(-1,24), wxTE_PROCESS_ENTER),
-			command_window(command_window)
+	wxCommandLineTextCtrl(Command_window *command_window, wxPanel *parent) :
+		wxTextCtrl(parent, -1, wxT(""),wxPoint(0,0), wxSize(-1,24), wxTE_PROCESS_ENTER),
+		command_window(command_window)
 	{
-			 wxBoxSizer *sizer = new wxBoxSizer( wxHORIZONTAL );
-			 sizer->Add(this,
-					wxSizerFlags(1).Align(wxALIGN_CENTER).Expand());
-			 parent->SetSizer(sizer);
-			 Show();
-	};
+		wxBoxSizer *sizer = new wxBoxSizer( wxHORIZONTAL );
+		sizer->Add(this,
+				   wxSizerFlags(1).Align(wxALIGN_CENTER).Expand());
+		parent->SetSizer(sizer);
+		Show();
+	}
 
-	 wxCommandLineTextCtrl()
-	 {
-	 };
+	wxCommandLineTextCtrl()
+	{
+	}
 
-	 ~wxCommandLineTextCtrl()
-	 {
-	 };
-	 void Reset(const char *command_prompt);
+	~wxCommandLineTextCtrl()
+	{
+	}
+
+	void Reset(const char *command_prompt);
 
 private:
-	 void OnKeyDown(wxKeyEvent& event);
-	 void OnCommandEntered(wxCommandEvent& event);
+	void OnKeyDown(wxKeyEvent& event);
+	void OnCommandEntered(wxCommandEvent& event);
 
 	DECLARE_EVENT_TABLE()
 };
@@ -1156,10 +1157,10 @@ BEGIN_EVENT_TABLE(wxCommandWindow, wxFrame)
 	 EVT_MENU(XRCID("GraphicsSceneeditor"),wxCommandWindow::sceneeditor)
 	 EVT_MENU(XRCID("GraphicsSpectrumeditor"),wxCommandWindow::spectrumeditor)
 	 EVT_MENU(XRCID("FontCmgui"),wxCommandWindow::OnFormatFont)
-	 EVT_MENU(XRCID("AboutCmgui"),wxCommandWindow::ShowSimpleAboutDialog)
+	 EVT_MENU(XRCID("wxID_ABOUT"),wxCommandWindow::ShowSimpleAboutDialog)
 	 EVT_MENU(XRCID("BugReport"),wxCommandWindow::ShowBugReport)
 	 EVT_CLOSE(wxCommandWindow::Terminate)
-	 EVT_MENU(XRCID("MenuExit"),wxCommandWindow::Exit)
+	 EVT_MENU(XRCID("wxID_EXIT"),wxCommandWindow::Exit)
 END_EVENT_TABLE()
 
 void wxCommandLineTextCtrl::Reset(const char *command_prompt)

@@ -46,12 +46,12 @@
         </object>
       </object>
       <object class="separator"/>
-      <object class ="wxMenuItem" name="MenuExit">
+      <object class ="wxMenuItem" name="wxID_EXIT">
         <label>Exit</label>
       </object>
     </object>	
     <object class ="wxMenu" name="MenuModel">
-      <label>Model</label>
+      <label>&amp;Model</label>
       <object class = "wxMenuItem" name="ModelCurveEditor">
         <label>Curve editor</label>
 		 <enabled>0</enabled>
@@ -72,7 +72,7 @@
     </object>
 
     <object class ="wxMenu" name="MenuGraphics">
-      <label>Graphics</label>
+      <label>&amp;Graphics</label>
       <object class = "wxMenuItem" name="GraphicsthreeDWindow">
         <label>3-D Window</label>
       </object>
@@ -101,14 +101,14 @@
       </object>
 	</object>
     <object class ="wxMenu">
-      <label>Font</label>
+      <label>F&amp;ont</label>
       <object class = "wxMenuItem" name="FontCmgui">
         <label>Font Settings</label>
       </object>
 	</object>
-    <object class ="wxMenu" name="MenuHelp">
-      <label>Help</label>
-      <object class = "wxMenuItem" name="AboutCmgui">
+    <object class ="wxMenu" name="wxID_HELP">
+      <label>&amp;Help</label>
+      <object class = "wxMenuItem" name="wxID_ABOUT">
         <label>About cmgui</label>
       </object>
       <object class = "wxMenuItem" name="BugReport">
