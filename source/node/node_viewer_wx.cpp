@@ -401,18 +401,21 @@ static int node_viewer_add_collpane(Node_viewer *node_viewer,
 	int insertIndex = 0;
 	for (iter = list.begin(); iter != list.end(); ++iter)
 	{
-		wxCollapsiblePane *current = static_cast<wxCollapsiblePane *>(*iter);
-		wxWindow *child = current->GetPane();
-		wxString tmpstr = child->GetName().GetData();
-		const char *window_name = tmpstr.mb_str(wxConvUTF8);
-		int comparison = strcmp(window_name, field_name);
-		if (0 == comparison)
+		wxCollapsiblePane *current = wxDynamicCast(*iter, wxCollapsiblePane);
+		if (current)
 		{
-			wind = child;
-			break;
+			wxWindow *child = current->GetPane();
+			wxString tmpstr = child->GetName().GetData();
+			const char *window_name = tmpstr.mb_str(wxConvUTF8);
+			int comparison = strcmp(window_name, field_name);
+			if (0 == comparison)
+			{
+				wind = child;
+				break;
+			}
+			if (0 > comparison)
+				++insertIndex;
 		}
-		if (0 > comparison)
-			++insertIndex;
 	}
 	if (node_viewer->current_node && cmzn_field_is_defined_at_location(field, field_cache))
 	{
@@ -450,16 +453,20 @@ int Node_viewer_remove_unused_collpane(struct Node_viewer *node_viewer, bool& re
 		for (iter = list.begin(); iter != list.end(); ++iter)
 		{
 			wxWindow *current = *iter;
-			wxWindow *child = ((wxCollapsiblePane *)current)->GetPane();
-			wxString tmpstr = child->GetName().GetData();
-			const char *field_name = tmpstr.mb_str(wxConvUTF8);
-			cmzn_field_id field = cmzn_fieldmodule_find_field_by_name(fieldModule, field_name);
-			if (field)
-				cmzn_field_destroy(&field);
-			else
+			wxCollapsiblePane *currentPane = wxDynamicCast(current, wxCollapsiblePane);
+			if (currentPane)
 			{
-				current->Destroy();
-				refit = true;
+				wxWindow *child = currentPane->GetPane();
+				wxString tmpstr = child->GetName().GetData();
+				const char *field_name = tmpstr.mb_str(wxConvUTF8);
+				cmzn_field_id field = cmzn_fieldmodule_find_field_by_name(fieldModule, field_name);
+				if (field)
+					cmzn_field_destroy(&field);
+				else
+				{
+					current->Destroy();
+					refit = true;
+				}
 			}
 		}
 		cmzn_fieldmodule_destroy(&fieldModule);
