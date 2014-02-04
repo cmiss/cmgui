@@ -1507,7 +1507,7 @@ void OnTimeEditorButtonPressed(wxCommandEvent& event)
 	{
 		if (last_button != button)
 		{
-			wxString wx_test_string = button->GetLabel();
+			wxString wx_test_string = button->GetName();
 			const char *test_string = wx_test_string.mb_str(wxConvUTF8);
 			if (strcmp("Transform tool", test_string) == 0)
 			{
@@ -1558,7 +1558,7 @@ void GraphicsWindowSetInteractiveButtonSelected(wxBitmapButton *button, Interact
 		}
 		if (last_button)
 		{
-			wxString wx_test_string = last_button->GetLabel();
+			wxString wx_test_string = last_button->GetName();
 			const char *test_string = wx_test_string.mb_str(wxConvUTF8);
 			if (strcmp("Transform tool", test_string) == 0)
 			{
@@ -1845,7 +1845,7 @@ static int add_interactive_tool_to_wx_toolbar(struct Interactive_tool *interacti
 	{
 		wxBitmap interactive_unclicked_bmp(Transform_tool_unclicked_xpm);
 		button->Create(panel, /*id*/-1, interactive_unclicked_bmp);
-		button->SetLabel(wxT("Transform tool"));
+		button->SetName(wxT("Transform tool"));
 		window->transform_tool_button = button;
 		window->grid_field->Add(button);
 		return_int = 1;
@@ -1854,7 +1854,7 @@ static int add_interactive_tool_to_wx_toolbar(struct Interactive_tool *interacti
 	{
 		wxBitmap interactive_unclicked_bmp(Node_tool_unclicked_xpm);
 		button->Create(panel, /*id*/-1, interactive_unclicked_bmp);
-		button->SetLabel(wxT("Node tool"));
+		button->SetName(wxT("Node tool"));
 		window->node_tool_button = button;
 		window->grid_field->Add(button);
 		return_int = 1;
@@ -1863,7 +1863,7 @@ static int add_interactive_tool_to_wx_toolbar(struct Interactive_tool *interacti
 	{
 		wxBitmap interactive_unclicked_bmp(Data_tool_unclicked_xpm);
 		button->Create(panel, /*id*/-1, interactive_unclicked_bmp);
-		button->SetLabel(wxT("Data tool"));
+		button->SetName(wxT("Data tool"));
 		window->data_tool_button = button;
 		window->grid_field->Add(button);
 		return_int = 1;
@@ -1872,7 +1872,7 @@ static int add_interactive_tool_to_wx_toolbar(struct Interactive_tool *interacti
 	{
 		wxBitmap interactive_unclicked_bmp(Element_tool_unclicked_xpm);
 		button->Create(panel, /*id*/-1, interactive_unclicked_bmp);
-		button->SetLabel(wxT("Element tool"));
+		button->SetName(wxT("Element tool"));
 		window->element_tool_button = button;
 		window->grid_field->Add(button);
 		return_int = 1;
@@ -1882,7 +1882,7 @@ static int add_interactive_tool_to_wx_toolbar(struct Interactive_tool *interacti
 	{
 		wxBitmap interactive_unclicked_bmp(Cad_tool_unclicked_xpm);
 		button->Create(panel, /*id*/-1, interactive_unclicked_bmp);
-		button->SetLabel(wxT("Cad tool"));
+		button->SetName(wxT("Cad tool"));
 		window->cad_tool_button = button;
 		window->grid_field->Add(button);
 		return_int = 1;
@@ -1892,7 +1892,7 @@ static int add_interactive_tool_to_wx_toolbar(struct Interactive_tool *interacti
 	{
 		wxBitmap interactive_unclicked_bmp(Element_point_tool_unclicked_xpm);
 		button->Create(panel, /*id*/-1, interactive_unclicked_bmp);
-		button->SetLabel(wxT("Element point tool"));
+		button->SetName(wxT("Element point tool"));
 		window->element_point_tool_button = button;
 		window->grid_field->Add(button);
 		return_int = 1;
