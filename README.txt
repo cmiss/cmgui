@@ -8,7 +8,7 @@ This software was originally developed at The University of Auckland and Copyrig
 
 Cmgui is released under the Mozilla Public License v2.0.  See file LICENSE.txt in the same folder.
 
-Cmgui is available to download for Windows, Max OSX and Linux.
+Cmgui is available to download for Windows, Mac OS X and Linux.
 
 Further information, downloads, examples, help pages, a tracker and a wiki is available at:
 http://www.cmiss.org/cmgui/
