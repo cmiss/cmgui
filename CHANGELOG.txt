@@ -11,6 +11,7 @@ Added Features:
 3682 Re-added visible rubber band for box selection.
 
 Bugs fixed:
+2852 (MacOS) Fixed a bug causing segfault when node viewer is brought up from Cmgui.
 3213 Improved field evaluation/assignment caching. Fixes some cache bugs with time/nodal lookup fields.
 3260 Fixed shininess of material not being set properly from command in the cmgui application.
 3260 Fixed a bug causing free tumble while the sceneviewer is in select modes.
@@ -23,6 +24,7 @@ Bugs fixed:
 3395 Stop scene editor guessing coordinate field for existing graphics that have none. Was causing dialog to show graphics having a coordinate field when they did not.
 3651 Fixed graphics window number not being reused when a previously used one is destroyed.
 3657 Fixed the bug which caused cmgui to not quit when it receives a 'quit' command from comfile when started on command line.
+3690 (MacOS) Fixed a bug causing overlaying text on graphics interactive tool bitmap buttons
 
 Improvements:
 2107 Glyphs have been improved and can be customised more freely.
