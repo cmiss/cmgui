@@ -14039,83 +14039,71 @@ Executes a GFX SET command.
 	return (return_code);
 } /* execute_command_gfx_set */
 
-
+/**
+ * Executes a GFX SMOOTH command.
+ */
 static int execute_command_gfx_smooth(struct Parse_state *state,
-	void *dummy_to_be_modified,void *command_data_void)
-/*******************************************************************************
-LAST MODIFIED : 16 April 2003
-
-DESCRIPTION :
-Executes a GFX SMOOTH command.
-==============================================================================*/
+	void *dummy_to_be_modified, void *command_data_void)
 {
-	char *region_path;
-	FE_value time;
-	int return_code;
-	struct cmzn_command_data *command_data;
-	struct cmzn_region *region;
-	struct FE_field *fe_field;
-	struct FE_region *fe_region;
-	struct Option_table *option_table;
-
-	ENTER(execute_command_gfx_smooth);
 	USE_PARAMETER(dummy_to_be_modified);
-	if (state && (command_data = (struct cmzn_command_data *)command_data_void))
+	int return_code;
+	cmzn_command_data *command_data = reinterpret_cast<cmzn_command_data *>(command_data_void);
+	if (state && command_data)
 	{
-		region_path = cmzn_region_get_root_region_path();
-		fe_field = (struct FE_field *)NULL;
+		char *fieldName = 0;
+		cmzn_region *region = cmzn_region_access(command_data->root_region);
+		FE_value time = 0.0;
 		if (command_data->default_time_keeper_app)
-		{
 			time = command_data->default_time_keeper_app->getTimeKeeper()->getTime();
-		}
-		else
-		{
-			time = 0;
-		}
 
-		option_table = CREATE(Option_table)();
-		/* egroup */
-		Option_table_add_entry(option_table, "egroup", &region_path,
-			command_data->root_region, set_cmzn_region_path);
-		/* field */
-		Option_table_add_set_FE_field_from_FE_region(
-			option_table, "field" ,&fe_field,
-			cmzn_region_get_FE_region(command_data->root_region));
-		/* time */
+		Option_table *option_table = CREATE(Option_table)();
+		Option_table_add_string_entry(option_table, "field", &fieldName, " FINITE ELEMENT FIELD NAME");
+		Option_table_add_set_cmzn_region(option_table, "region", command_data->root_region, &region);
 		Option_table_add_entry(option_table, "time", &time, NULL, set_FE_value);
 		return_code = Option_table_multi_parse(option_table, state);
 		if (return_code)
 		{
-			if (cmzn_region_get_region_from_path_deprecated(command_data->root_region,
-				region_path, &region) &&
-				(fe_region = cmzn_region_get_FE_region(region)))
+			if (0 == fieldName)
 			{
-				if (fe_field)
-				{
-										////////////////////////////////////
-					return_code = FE_region_smooth_FE_field(fe_region, fe_field, time);
-				}
-				else
-				{
-					display_message(ERROR_MESSAGE,
-						"gfx smooth:  Must specify field to smooth");
-					display_parse_state_location(state);
-					return_code = 0;
-				}
+				display_message(ERROR_MESSAGE, "gfx smooth:  Must specify field to smooth");
+				display_parse_state_location(state);
+				return_code = 0;
 			}
 			else
 			{
-				display_message(ERROR_MESSAGE,
-					"execute_command_gfx_smooth.  Invalid region");
-				return_code = 0;
+				cmzn_fieldmodule_id fieldModule = cmzn_region_get_fieldmodule(region);
+				cmzn_field_id field = cmzn_fieldmodule_find_field_by_name(fieldModule, fieldName);
+				if (!field)
+				{
+					display_message(ERROR_MESSAGE, "gfx smooth:  Could not find field '%s' in region", fieldName);
+					display_parse_state_location(state);
+					return_code = 0;
+				}
+				else
+				{
+					cmzn_field_finite_element_id finite_element_field = cmzn_field_cast_finite_element(field);
+					if (!finite_element_field)
+					{
+						display_message(ERROR_MESSAGE, "gfx smooth:  Field '%s' is not finite element type", fieldName);
+						display_parse_state_location(state);
+						return_code = 0;
+					}
+					else
+					{
+						FE_field *fe_field = 0;
+						Computed_field_get_type_finite_element(field, &fe_field);
+						return_code = FE_region_smooth_FE_field(cmzn_region_get_FE_region(region), fe_field, time);
+					}
+					cmzn_field_finite_element_destroy(&finite_element_field);
+				}
+				cmzn_field_destroy(&field);
+				cmzn_fieldmodule_destroy(&fieldModule);
 			}
 		}
 		DESTROY(Option_table)(&option_table);
-		DEALLOCATE(region_path);
-		if (fe_field)
-		{
-			DEACCESS(FE_field)(&fe_field);
-		}
+		if (fieldName)
+			DEALLOCATE(fieldName);
+		cmzn_region_destroy(&region);
 	}
 	else
 	{
@@ -14123,10 +14111,8 @@ Executes a GFX SMOOTH command.
 			"execute_command_gfx_smooth.  Invalid argument(s)");
 		return_code = 0;
 	}
-	LEAVE;
-
 	return (return_code);
-} /* execute_command_gfx_smooth */
+}
 
 int gfx_timekeeper(struct Parse_state *state,void *dummy_to_be_modified,
 	void *command_data_void)
