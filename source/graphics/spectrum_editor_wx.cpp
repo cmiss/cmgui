@@ -7,7 +7,6 @@
 FILE : spectrum_editor_wx.cpp
 
 LAST MODIFIED : 22 Aug 2007
-
 DESCRIPTION:
 Provides the wxWidgets interface to manipulate spectrum settings.
 ==============================================================================*/
@@ -1926,7 +1925,7 @@ a complete copy of <Spectrum>.
 } /* make_current_spectrum */
 
 int spectrum_editor_viewer_input_callback(
-	struct Scene_viewer *scene_viewer, struct Graphics_buffer_input *input,
+	struct Scene_viewer_app *scene_viewer_app, struct Graphics_buffer_input *input,
 	void *spectrum_editor_void)
 /*******************************************************************************
 LAST MODIFIED : 2 July 2002
@@ -1938,15 +1937,16 @@ Callback for when input is received by the scene_viewer.
 	int return_code;
 	struct Spectrum_editor *spectrum_editor;
 
-	ENTER(spectrum_editor_viewer_input_CB);
-	USE_PARAMETER(scene_viewer);
 	spectrum_editor=(struct Spectrum_editor *)spectrum_editor_void;
 	if (spectrum_editor != 0)
 	{
 		if (CMZN_SCENEVIEWERINPUT_EVENT_TYPE_BUTTON_PRESS==input->type)
 		{
 			/* Increment the type - cycles through label divisions and colours */
-			spectrum_editor->viewer_type++;
+			if (spectrum_editor->viewer_type == 5)
+				spectrum_editor->viewer_type = 0;
+			else
+				spectrum_editor->viewer_type++;
 			make_colour_bar(spectrum_editor);
 		}
 		return_code = 1;
@@ -1957,7 +1957,6 @@ Callback for when input is received by the scene_viewer.
 			"spectrum_editor_viewer_input_CB.  Invalid argument(s)");
 		return_code = 0;
 	}
-	LEAVE;
 	return(return_code);
 } /* spectrum_editor_viewer_input_CB */
 
@@ -2190,31 +2189,37 @@ Creates a spectrum_editor widget.
 										viewer_light_model,
 										NULL,
 										spectrum_editor->spectrum_editor_scene, spectrum_editor->user_interface);
+								cmzn_sceneviewer_begin_change(spectrum_editor->spectrum_editor_scene_viewer->core_scene_viewer);
 								Scene_viewer_set_input_mode(
 									spectrum_editor->spectrum_editor_scene_viewer->core_scene_viewer,
 									SCENE_VIEWER_NO_INPUT );
 								cmzn_sceneviewer_set_projection_mode(
 									spectrum_editor->spectrum_editor_scene_viewer->core_scene_viewer,
 									CMZN_SCENEVIEWER_PROJECTION_MODE_PARALLEL);
-								//-- Scene_viewer_app_add_input_callback(
-								//-- 		spectrum_editor->spectrum_editor_scene_viewer,
-								//-- 		spectrum_editor_viewer_input_callback,
-								//-- 		(void *)spectrum_editor, /*add_first*/0);
+								Scene_viewer_app_add_input_callback(
+									spectrum_editor->spectrum_editor_scene_viewer,
+									spectrum_editor_viewer_input_callback,(void *)spectrum_editor, 0);
+								spectrum_editor->spectrum_panel->Fit();
 								wxSize viewerSize = spectrum_editor->spectrum_panel->GetSize();
-								 cmzn_sceneviewer_set_viewport_size(
-										spectrum_editor->spectrum_editor_scene_viewer->core_scene_viewer,
-										viewerSize.GetWidth(), viewerSize.GetHeight());
-								 Scene_viewer_set_lookat_parameters(
-										spectrum_editor->spectrum_editor_scene_viewer->core_scene_viewer,0,0,1,0,0,0,
-										0,1,0);
-								 Scene_viewer_set_view_simple(
-										spectrum_editor->spectrum_editor_scene_viewer->core_scene_viewer,0,0,0,0.22,
-										46,10);
+								cmzn_sceneviewer_set_viewport_size(
+									spectrum_editor->spectrum_editor_scene_viewer->core_scene_viewer,
+									viewerSize.GetWidth(), viewerSize.GetHeight());
+								Scene_viewer_set_lookat_parameters(
+									spectrum_editor->spectrum_editor_scene_viewer->core_scene_viewer,0,0,1,0,0,0,
+									0,1,0);
+								Scene_viewer_set_view_simple(
+									spectrum_editor->spectrum_editor_scene_viewer->core_scene_viewer,0,0,0,0.22,
+									46,10);
 								if (spectrum_editor->edit_spectrum)
 								{
 									make_colour_bar(spectrum_editor);
 								}
-								 DEACCESS(Graphics_buffer_app)(&graphics_buffer);
+								spectrum_editor->spectrum_panel->SetSize(viewerSize.GetWidth()-1, viewerSize.GetHeight()-1);
+								spectrum_editor->spectrum_panel->SetSize(viewerSize.GetWidth(), viewerSize.GetHeight());
+								spectrum_editor->wx_spectrum_editor->Show();
+								spectrum_editor->spectrum_panel->Show();
+								cmzn_sceneviewer_end_change(spectrum_editor->spectrum_editor_scene_viewer->core_scene_viewer);
+								DEACCESS(Graphics_buffer_app)(&graphics_buffer);
 							}
 							DEACCESS(Light)(&viewer_light);
 							DEACCESS(Light_model)(&viewer_light_model);
@@ -2348,6 +2353,8 @@ Destroys the <*spectrum_editor_address> and sets
 		{
 			cmzn_scene_destroy(&spectrum_editor->spectrum_editor_scene);
 		}
+		Scene_viewer_app_remove_input_callback(spectrum_editor->spectrum_editor_scene_viewer,
+			spectrum_editor_viewer_input_callback,(void *)spectrum_editor);
 		DESTROY(Scene_viewer_app)(&spectrum_editor->spectrum_editor_scene_viewer);
 		/* destroy edit_spectrum */
 		if (spectrum_editor->current_spectrum)

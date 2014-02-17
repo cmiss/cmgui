@@ -155,5 +155,13 @@ struct Scene_viewer_app *Scene_viewer_app_for_spectrum_create(struct Graphics_bu
 
 int DESTROY(Scene_viewer_app)(struct Scene_viewer_app **scene_viewer_app_address);
 
+int Scene_viewer_app_add_input_callback(struct Scene_viewer_app *scene_viewer,
+	CMZN_CALLBACK_FUNCTION(Scene_viewer_app_input_callback) *function,
+	void *user_data, int add_first);
+
+int Scene_viewer_app_remove_input_callback(struct Scene_viewer_app *scene_viewer,
+	CMZN_CALLBACK_FUNCTION(Scene_viewer_app_input_callback) *function,
+	void *user_data);
+
 #endif
 

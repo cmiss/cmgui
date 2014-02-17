@@ -224,10 +224,6 @@ struct Scene_viewer_app *Scene_viewer_app_for_spectrum_create(struct Graphics_bu
 			scene_viewer->interactive_tool_manager = 0;
 			scene_viewer->input_callback_list=
 				CREATE(LIST(CMZN_CALLBACK_ITEM(Scene_viewer_app_input_callback)))();
-			/* Add the default callback */
-			CMZN_CALLBACK_LIST_ADD_CALLBACK(Scene_viewer_app_input_callback)(
-				scene_viewer->input_callback_list,
-				Scene_viewer_app_default_input_callback,NULL);
 			scene_viewer->sync_callback_list=
 				CREATE(LIST(CMZN_CALLBACK_ITEM(Scene_viewer_app_callback)))();
 			scene_viewer->notifier = cmzn_sceneviewer_create_sceneviewernotifier(
