@@ -736,7 +736,7 @@ cmzn_field_group_id cmzn_scene_get_or_create_selection_group(cmzn_scene_id scene
 		else
 		{
 			// find by name or create
-			const char *default_selection_group_name = "cmiss_selection";
+			const char *default_selection_group_name = "cmzn_selection";
 			cmzn_fieldmodule_id field_module = cmzn_region_get_fieldmodule(scene->region);
 			cmzn_field_id field = cmzn_fieldmodule_find_field_by_name(field_module, default_selection_group_name);
 			if (field)
