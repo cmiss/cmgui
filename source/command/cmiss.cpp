@@ -10736,7 +10736,7 @@ static int gfx_modify_element_group(struct Parse_state *state,
 			/* initialise defaults */
 			char add_flag = 0;
 			char remove_flag = 0;
-			cmzn_field_id conditional_field = 0;
+			char *conditional_field_name = 0;
 			const char *element_type_string = elements_type_string;
 			char all_flag = 0;
 			char selected_flag = 0;
@@ -10755,13 +10755,8 @@ static int gfx_modify_element_group(struct Parse_state *state,
 			/* all */
 			Option_table_add_char_flag_entry(option_table, "all", &all_flag);
 			/* conditional_field */
-			struct Set_Computed_field_conditional_data set_conditional_field_data;
-			set_conditional_field_data.computed_field_manager =
-				Computed_field_package_get_computed_field_manager(command_data->computed_field_package);
-			set_conditional_field_data.conditional_function = 0;
-			set_conditional_field_data.conditional_function_user_data = 0;
-			Option_table_add_Computed_field_conditional_entry(option_table, "conditional_field",
-				&conditional_field, &set_conditional_field_data);
+			Option_table_add_string_entry(option_table, "conditional_field", &conditional_field_name,
+				" FIELD_NAME");
 			/* elements|faces|lines */
 			Option_table_add_enumerator(option_table, 3, element_type_strings, &element_type_string);
 			/* group */
@@ -10778,6 +10773,19 @@ static int gfx_modify_element_group(struct Parse_state *state,
 			return_code = Option_table_multi_parse(option_table, state);
 			DESTROY(Option_table)(&option_table);
 
+			cmzn_field_id conditional_field = 0;
+			if (return_code && conditional_field_name)
+			{
+				cmzn_fieldmodule_id field_module = cmzn_region_get_fieldmodule(region);
+				conditional_field = cmzn_fieldmodule_find_field_by_name(field_module, conditional_field_name);
+				if (!conditional_field)
+				{
+					display_message(ERROR_MESSAGE,
+						"gfx modify egroup:  conditional field cannot be found");
+					return_code = 0;
+				}
+				cmzn_fieldmodule_destroy(&field_module);
+			}
 			cmzn_field_group_id from_group = 0;
 			if (return_code)
 			{
@@ -10831,6 +10839,8 @@ static int gfx_modify_element_group(struct Parse_state *state,
 			cmzn_field_group_destroy(&from_group);
 			DESTROY(Multi_range)(&element_ranges);
 			cmzn_field_destroy(&conditional_field);
+			if (conditional_field_name)
+				DEALLOCATE(conditional_field_name);
 		}
 		cmzn_field_group_destroy(&group);
 		cmzn_region_destroy(&region);
@@ -11212,7 +11222,7 @@ static int gfx_modify_node_group(struct Parse_state *state,
 			/* initialise defaults */
 			char add_flag = 0;
 			char remove_flag = 0;
-			cmzn_field_id conditional_field = 0;
+			char *conditional_field_name = 0;
 			char all_flag = 0;
 			char selected_flag = 0;
 			Multi_range *node_ranges = CREATE(Multi_range)();
@@ -11229,13 +11239,8 @@ static int gfx_modify_node_group(struct Parse_state *state,
 			/* all */
 			Option_table_add_char_flag_entry(option_table, "all", &all_flag);
 			/* conditional_field */
-			struct Set_Computed_field_conditional_data set_conditional_field_data;
-			set_conditional_field_data.computed_field_manager =
-				Computed_field_package_get_computed_field_manager(command_data->computed_field_package);
-			set_conditional_field_data.conditional_function = 0;
-			set_conditional_field_data.conditional_function_user_data = 0;
-			Option_table_add_Computed_field_conditional_entry(option_table, "conditional_field",
-				&conditional_field, &set_conditional_field_data);
+			Option_table_add_string_entry(option_table, "conditional_field", &conditional_field_name,
+				" FIELD_NAME");
 			/* group */
 			Option_table_add_string_entry(option_table, "group", &from_group_name, " GROUP_NAME");
 			/* remove */
@@ -11248,6 +11253,19 @@ static int gfx_modify_node_group(struct Parse_state *state,
 			return_code = Option_table_multi_parse(option_table, state);
 			DESTROY(Option_table)(&option_table);
 
+			cmzn_field_id conditional_field = 0;
+			if (return_code && conditional_field_name)
+			{
+				cmzn_fieldmodule_id field_module = cmzn_region_get_fieldmodule(region);
+				conditional_field = cmzn_fieldmodule_find_field_by_name(field_module, conditional_field_name);
+				if (!conditional_field)
+				{
+					display_message(ERROR_MESSAGE,
+						"gfx modify ngroup:  conditional field cannot be found");
+					return_code = 0;
+				}
+				cmzn_fieldmodule_destroy(&field_module);
+			}
 			cmzn_field_group_id from_group = 0;
 			if (return_code)
 			{
@@ -11408,6 +11426,8 @@ static int gfx_modify_node_group(struct Parse_state *state,
 			cmzn_field_group_destroy(&from_group);
 			DESTROY(Multi_range)(&node_ranges);
 			cmzn_field_destroy(&conditional_field);
+			if (conditional_field_name)
+				DEALLOCATE(conditional_field_name);
 		}
 		cmzn_field_group_destroy(&group);
 		cmzn_region_destroy(&region);
