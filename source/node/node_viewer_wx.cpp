@@ -558,7 +558,7 @@ static void cmzn_fieldmoduleevent_to_Node_viewer(
 		cmzn_scene_id scene = cmzn_region_get_scene(node_viewer->region);
 		cmzn_field_id selection_field = cmzn_scene_get_selection_field(scene);
 		if (!selection_field)
-			selection_field = cmzn_fieldmodule_find_field_by_name(field_module, "cmzn_selection");
+			selection_field = cmzn_fieldmodule_find_field_by_name(field_module, "cmiss_selection");
 		if (selection_field && (0 != (CMZN_FIELD_CHANGE_FLAG_RESULT &
 			cmzn_fieldmoduleevent_get_field_change_flags(event, selection_field))))
 		{
