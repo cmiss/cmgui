@@ -3642,8 +3642,7 @@ Modifies the properties of a texture.
 	enum Texture_wrap_mode wrap_mode;
 	double alpha, distortion_centre_x, distortion_centre_y,
 		distortion_factor_k1, mipmap_level_of_detail_bias;
-	ZnReal depth_ZnReal = 0.0, height_ZnReal = 0.0, width_ZnReal = 0.0;
-	float depth = 0.0, height = 0.0, width = 0.0;
+	double depth = 0.0, height = 0.0, width = 0.0;
 	float mipmap_level_of_detail_bias_flt;
 	int file_number, i, number_of_file_names, number_of_valid_strings, process,
 		return_code, specify_depth, specify_height,
@@ -3787,11 +3786,7 @@ Modifies the properties of a texture.
 #endif /* defined (SGI_MOVIE_FILE) */
 					Texture_get_combine_alpha(texture, &alpha);
 					Texture_get_combine_colour(texture, &colour);
-					Texture_get_physical_size(texture,
-						&width_ZnReal, &height_ZnReal, &depth_ZnReal);
-					width = (float)width_ZnReal;
-					height = (float)height_ZnReal;
-					depth = (float)depth_ZnReal;
+					Texture_get_physical_size(texture, &width, &height, &depth);
 					Texture_get_distortion_info(texture,
 						&distortion_centre_x,&distortion_centre_y,&distortion_factor_k1);
 					Texture_get_mipmap_level_of_detail_bias(texture, &mipmap_level_of_detail_bias);
@@ -3877,15 +3872,13 @@ Modifies the properties of a texture.
 						valid_strings, &compression_mode_string);
 					DEALLOCATE(valid_strings);
 					/* depth */
-					Option_table_add_entry(option_table, "depth", &depth,
-					  NULL, set_float_non_negative);
+					Option_table_add_positive_double_entry(option_table, "depth", &depth);
 					/* distortion */
 					Option_table_add_entry(option_table, "distortion",
 						&texture_distortion,
 					  &texture_distortion_data,set_double_vector_with_help);
 					/* height */
-					Option_table_add_entry(option_table, "height", &height,
-					  NULL,set_float_non_negative);
+					Option_table_add_positive_double_entry(option_table, "height", &height);
 					/* image */
 					Option_table_add_entry(option_table, "image",
 						&image_data, command_data, gfx_modify_Texture_image);
@@ -3959,8 +3952,7 @@ Modifies the properties of a texture.
 					Option_table_add_unset_char_flag_entry(option_table,
 						"no_texture_tiling", &texture_tiling_enabled);
 					/* width */
-					Option_table_add_entry(option_table, "width", &width,
-					  NULL,set_float_non_negative);
+					Option_table_add_positive_double_entry(option_table, "width", &width);
 					/* evaluate_image */
 					Option_table_add_entry(option_table, "evaluate_image",
 					  &evaluate_data, command_data, gfx_modify_Texture_evaluate_image);
@@ -4010,8 +4002,7 @@ Modifies the properties of a texture.
 							 some of them will apply immediately to the new images */
 						Texture_set_combine_alpha(texture, alpha);
 						Texture_set_combine_colour(texture, &colour);
-						Texture_set_physical_size(texture, (ZnReal)width,
-							(ZnReal)height, (ZnReal)depth);
+						Texture_set_physical_size(texture, width, height, depth);
 						Texture_set_texture_tiling_enabled(texture, texture_tiling_enabled);
 						Texture_set_mipmap_level_of_detail_bias(texture, mipmap_level_of_detail_bias);
 
