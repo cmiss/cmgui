@@ -139,30 +139,31 @@
       				</object>
       				<object class="sizeritem">
         				<object class="wxPanel" name="CommandLinePanel">
-									<size>-1,25</size>
+									<size>-1,40</size>
         				</object>
-								<flag>wxEXPAND|wxALL</flag>
+						<flag>wxEXPAND|wxALL</flag>
         				<border>6</border>
       				</object>
 
       			</object>
       		</object>
 
-					<object class ="wxPanel" name = "LowerPanel">
+				<object class ="wxPanel" name = "LowerPanel">
 			 	    <object class = "wxBoxSizer">
 
-      			  <orient>wxVERTICAL</orient>
      				  <object class="sizeritem"> 
-								<flag>wxEXPAND</flag>
-								<option>1</option>
-			  				<object class="wxTextCtrl" name="OutputWindow">
-          				<style>wxTE_MULTILINE|wxTE_READONLY|wxTE_RICH2|wxHSCROLL</style>
+						<flag>wxEXPAND</flag>
+						<option>1</option>
+			  			<object class="wxTextCtrl" name="OutputWindow">
+          					<style>wxTE_MULTILINE|wxTE_READONLY|wxTE_RICH2|wxHSCROLL</style>
+          					<flag>wxEXPAND|wxALL</flag>
+          					<option>1</option>
+       						<border>10</border>
        					</object>
-        				<flag>wxEXPAND|wxALL</flag>
-		  					<option>1</option>
-       					<border>10</border>
-							</object>	
-	  				</object>
+
+
+					</object>	
+	  			</object>
 	        </object>
        </object>
      </object>

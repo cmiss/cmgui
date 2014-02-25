@@ -64,7 +64,8 @@ class wxCommandLineTextCtrl : public wxTextCtrl
 	Command_window *command_window;
 public:
 	wxCommandLineTextCtrl(Command_window *command_window, wxPanel *parent) :
-		wxTextCtrl(parent, -1, wxT(""),wxPoint(0,0), wxSize(-1,24), wxTE_PROCESS_ENTER),
+		wxTextCtrl(parent, -1, wxT(""),wxPoint(0,0), wxSize(-1,40),
+			wxTE_PROCESS_ENTER|wxTE_MULTILINE|wxTE_BESTWRAP),
 		command_window(command_window)
 	{
 		wxBoxSizer *sizer = new wxBoxSizer( wxHORIZONTAL );
@@ -1176,9 +1177,11 @@ void wxCommandLineTextCtrl::OnKeyDown(wxKeyEvent& event)
 		"CommandHistory", wxListBox);
 	int selection = history_list->GetSelection();
 	int number_of_items = history_list->GetCount();
-	int key_code = event.GetKeyCode();
-	switch (key_code)
+	if (event.ShiftDown())
 	{
+		int key_code = event.GetKeyCode();
+		switch (key_code)
+		{
 		case WXK_DOWN:
 		{
 			if (selection == wxNOT_FOUND)
@@ -1241,8 +1244,9 @@ void wxCommandLineTextCtrl::OnKeyDown(wxKeyEvent& event)
 		} break;
 		default:
 			event.Skip();
+		}
 	}
-
+	event.Skip();
 }
 
 void wxCommandLineTextCtrl::OnCommandEntered(wxCommandEvent& event)
@@ -1537,13 +1541,12 @@ Create the structures and retrieve the command window from the uil file.
 			command_window->wx_command_window->Show();
 			command_window->output_window =
 				XRCCTRL(*command_window->wx_command_window, "OutputWindow", wxTextCtrl);
-			command_window->output_window->SetSize(wxSize(400,-1));
 			command_window->output_window->SetDefaultStyle(wxTextAttr(wxNullColour, wxNullColour,
 				wxFont(10, wxDEFAULT, wxNORMAL, wxNORMAL, false)));
 			command_window->history_window =
 				XRCCTRL(*command_window->wx_command_window, "CommandHistory", wxListBox);
-			command_window->output_window->SetSize(wxSize(400,-1));
 			command_window->output_window->Layout();
+			command_window->output_window->SetSize(wxSize(400,-1));
 			command_window->lower_panel =
 				XRCCTRL(*command_window->wx_command_window, "LowerPanel", wxPanel);
 			command_window->lower_panel->Layout();
