@@ -357,11 +357,12 @@ name the <file_operation> is performed on the file with the <arguments>.
 				{
 					 strncpy(drive_name,file_name,length);
 					 drive_name[length-1]='\0';
-					 if (ALLOCATE(temp_string,char,length+8))
+					 if (ALLOCATE(temp_string,char,length+13))
 					 {
-							strcpy(temp_string, "set dir ");
+							strcpy(temp_string, "set dir \/d ");
 							strcat(temp_string, drive_name);
-							temp_string[length+7]='\0';
+							strcat(temp_string, "\\");
+							temp_string[length+12]='\0';
 							Execute_command_execute_string(file_open_data->execute_command,temp_string);
 							DEALLOCATE(temp_string);
 					 }
@@ -400,6 +401,12 @@ name the <file_operation> is performed on the file with the <arguments>.
 							DEALLOCATE(temp_directory_name);
 					 }
 				}
+				else if (lastlength==length)
+				{
+					temp_name = const_cast<char *>(&filename[lastlength]);
+				}
+				if (file_open_data->operation)
+					(file_open_data->operation)((temp_name), file_open_data->arguments);
 		 }
 #else /*defined (WIN32_SYSTEM)*/
 		 if (file_open_data->operation)
@@ -632,11 +639,12 @@ specified file.
 				{
 					 strncpy(drive_name,file_name,length);
 					 drive_name[length-1]='\0';
-					 if (ALLOCATE(temp_string,char,length+8))
+					 if (ALLOCATE(temp_string,char,length+13))
 					 {
-							strcpy(temp_string, "set dir ");
+							strcpy(temp_string, "set dir \/d ");
 							strcat(temp_string, drive_name);
-							temp_string[length+7]='\0';
+							strcat(temp_string, "\\");
+							temp_string[length+12]='\0';
 							Execute_command_execute_string(file_open_data->execute_command,temp_string);
 							DEALLOCATE(temp_string);
 					 }
@@ -669,6 +677,12 @@ specified file.
 							DEALLOCATE(temp_directory_name);
 					 }
 				}
+				else if (lastlength==length)
+				{
+					temp_name = const_cast<char *>(&filename[lastlength]);
+				}
+				if (file_open_data->operation)
+					(file_open_data->operation)((temp_name), file_open_data->arguments);
 		 }
 #else /*defined (WIN32_SYSTEM)*/
 		 if (file_open_data->operation)
