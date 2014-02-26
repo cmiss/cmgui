@@ -1538,7 +1538,6 @@ Create the structures and retrieve the command window from the uil file.
 				display_message(ERROR_MESSAGE,
 					"CREATE(Command_window).  Insufficient memory for command_window prompt");
 			}
-			command_window->wx_command_window->Show();
 			command_window->output_window =
 				XRCCTRL(*command_window->wx_command_window, "OutputWindow", wxTextCtrl);
 			command_window->output_window->SetDefaultStyle(wxTextAttr(wxNullColour, wxNullColour,
@@ -1560,7 +1559,13 @@ Create the structures and retrieve the command window from the uil file.
 			wxPanel *new_panel = XRCCTRL(*command_window->wx_command_window, "CommandLinePanel", wxPanel);
 			command_window->wx_command_line_text_ctrl = new wxCommandLineTextCtrl(command_window, new_panel);
 			command_window->wx_command_line_text_ctrl->SetFocus();
-			new_panel->SetSize(600,25);
+			new_panel->SetSize(600,40);
+			command_window->wx_command_window->Show();
+			int temp_width = 0, temp_height = 0;
+			command_window->wx_command_window->GetSize(&temp_width, &temp_height);
+			command_window->wx_command_window->SetSize(temp_width - 1, temp_height - 1);
+			command_window->wx_command_window->SetSize(temp_width, temp_height);
+			command_window->wx_command_window->FitInside();
 #endif /* switch (USER_INTERFACE) */
 		}
 		else
@@ -1898,7 +1903,7 @@ Writes the <message> to the <command_window>.
 		if (command_window->output_window)
 		{
 			command_window->output_window->AppendText(wxString::FromAscii(message));
-			command_window->output_window->SetInsertionPointEnd();
+			command_window->output_window->ScrollLines(- 1);
 			return_code = 1;
 		}
 #endif /* switch (USER_INTERFACE) */
