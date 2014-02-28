@@ -65,7 +65,7 @@ class wxCommandLineTextCtrl : public wxTextCtrl
 public:
 	wxCommandLineTextCtrl(Command_window *command_window, wxPanel *parent) :
 		wxTextCtrl(parent, -1, wxT(""),wxPoint(0,0), wxSize(-1,40),
-			wxTE_PROCESS_ENTER|wxTE_MULTILINE|wxTE_BESTWRAP),
+			wxTE_MULTILINE|wxTE_BESTWRAP),
 		command_window(command_window)
 	{
 		wxBoxSizer *sizer = new wxBoxSizer( wxHORIZONTAL );
@@ -1177,9 +1177,20 @@ void wxCommandLineTextCtrl::OnKeyDown(wxKeyEvent& event)
 		"CommandHistory", wxListBox);
 	int selection = history_list->GetSelection();
 	int number_of_items = history_list->GetCount();
+	int key_code = event.GetKeyCode();
+	switch (key_code)
+	{
+		case WXK_RETURN:
+		case WXK_NUMPAD_ENTER:
+		{
+			wxString command_string = this->GetValue();
+			Execute_command_execute_string(command_window->execute_command, command_string.mb_str(wxConvUTF8));
+		} break;
+		default:
+		{}
+	}
 	if (event.ShiftDown())
 	{
-		int key_code = event.GetKeyCode();
 		switch (key_code)
 		{
 		case WXK_DOWN:
@@ -1217,48 +1228,29 @@ void wxCommandLineTextCtrl::OnKeyDown(wxKeyEvent& event)
 		} break;
 		case WXK_HOME:
 		{
-			if (event.ControlDown())
-			{
-				history_list->SetFocus();
-				history_list->SetSelection(0);
-				SelectedCommand = history_list->GetStringSelection();
-				this->ChangeValue(SelectedCommand);
-				this->SetFocus();
-				this->SetInsertionPointEnd();
-			}
-			else
-				event.Skip();
+			history_list->SetFocus();
+			history_list->SetSelection(0);
+			SelectedCommand = history_list->GetStringSelection();
+			this->ChangeValue(SelectedCommand);
+			this->SetFocus();
+			this->SetInsertionPointEnd();
 		} break;
 		case WXK_END:
 		{
-			if (event.ControlDown())
-			{
-				history_list->SetFocus();
-				history_list->SetSelection(number_of_items-1);
-				this->Clear();
-				this->SetFocus();
-				this->SetInsertionPointEnd();
-			}
-			else
-				event.Skip();
+			history_list->SetFocus();
+			history_list->SetSelection(number_of_items-1);
+			this->Clear();
+			this->SetFocus();
+			this->SetInsertionPointEnd();
 		} break;
 		default:
 			event.Skip();
 		}
 	}
-	event.Skip();
-}
-
-void wxCommandLineTextCtrl::OnCommandEntered(wxCommandEvent& event)
-{
-	USE_PARAMETER(event);
-	wxString command_string = this->GetValue();
-	Execute_command_execute_string(command_window->execute_command, command_string.mb_str(wxConvUTF8));
 }
 
 BEGIN_EVENT_TABLE(wxCommandLineTextCtrl, wxTextCtrl)
 	EVT_KEY_DOWN(wxCommandLineTextCtrl::OnKeyDown)
-	EVT_TEXT_ENTER(wxID_ANY, wxCommandLineTextCtrl::OnCommandEntered)
 END_EVENT_TABLE()
 #endif /* defined (WX_USER_INTERFACE) */
 
