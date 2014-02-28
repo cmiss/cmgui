@@ -1187,7 +1187,9 @@ void wxCommandLineTextCtrl::OnKeyDown(wxKeyEvent& event)
 			Execute_command_execute_string(command_window->execute_command, command_string.mb_str(wxConvUTF8));
 		} break;
 		default:
-		{}
+		{
+			event.Skip();
+		}
 	}
 	if (event.ShiftDown())
 	{
