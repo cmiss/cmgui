@@ -41,6 +41,7 @@ SET(APP_HDRS
     source/computed_field/computed_field_finite_element_app.h
     source/computed_field/computed_field_vector_operators_app.hpp
     source/computed_field/computed_field_matrix_operators_app.hpp
+    source/computed_field/computed_field_mesh_operators_app.hpp
     source/computed_field/computed_field_nodeset_operators_app.hpp
     source/computed_field/computed_field_lookup_app.h
     source/computed_field/computed_field_logical_operators_app.h

@@ -28,6 +28,7 @@ SET(APP_SRCS
     source/computed_field/computed_field_integration_app.cpp
     source/computed_field/computed_field_image_app.cpp
     source/computed_field/computed_field_vector_operators_app.cpp
+    source/computed_field/computed_field_mesh_operators_app.cpp
     source/computed_field/computed_field_nodeset_operators_app.cpp
     source/computed_field/computed_field_matrix_operators_app.cpp
     source/computed_field/computed_field_lookup_app.cpp

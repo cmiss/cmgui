@@ -64,6 +64,7 @@
 #include "computed_field/computed_field_logical_operators.h"
 #include "computed_field/computed_field_lookup.h"
 #include "computed_field/computed_field_matrix_operators.hpp"
+#include "computed_field/computed_field_mesh_operators.hpp"
 #include "computed_field/computed_field_nodeset_operators.hpp"
 #include "computed_field/computed_field_subobject_group_internal.hpp"
 #include "computed_field/computed_field_vector_operators.hpp"
@@ -230,6 +231,7 @@
 #include "computed_field/computed_field_format_output_app.h"
 #include "computed_field/computed_field_vector_operators_app.hpp"
 #include "computed_field/computed_field_matrix_operators_app.hpp"
+#include "computed_field/computed_field_mesh_operators_app.hpp"
 #include "computed_field/computed_field_nodeset_operators_app.hpp"
 #include "computed_field/computed_field_lookup_app.h"
 #include "computed_field/computed_field_logical_operators_app.h"
@@ -1846,7 +1848,7 @@ static int gfx_create_gauss_points(struct Parse_state *state,
 				if (!gauss_points_nodeset)
 				{
 					gauss_points_nodeset = cmzn_nodeset_group_base_cast(
-						cmzn_fieldmodule_create_field_nodeset_group_from_name_internal(
+						cmzn_fieldmodule_create_nodeset_group_from_name_internal(
 							field_module, gauss_point_nodeset_name));
 				}
 				if (!gauss_points_nodeset)
@@ -17568,6 +17570,8 @@ Initialise all the subcomponents of cmgui and create the cmzn_command_data
 					command_data->root_region);
 			}
 			Computed_field_register_types_matrix_operators(
+				command_data->computed_field_package);
+			Computed_field_register_types_mesh_operators(
 				command_data->computed_field_package);
 			Computed_field_register_types_nodeset_operators(
 				command_data->computed_field_package);
