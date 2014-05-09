@@ -24,11 +24,11 @@ const char computed_field_nodeset_mean_squares_type_string[] = "nodeset_mean_squ
 const char computed_field_nodeset_sum_squares_type_string[] = "nodeset_sum_squares";
 const char computed_field_nodeset_mean_type_string[] = "nodeset_mean";
 const char computed_field_nodeset_sum_type_string[] = "nodeset_sum";
+const char computed_field_nodeset_maximum_type_string[] = "nodeset_maximum";
+const char computed_field_nodeset_minimum_type_string[] = "nodeset_minimum";
 const char computed_field_nodeset_operator_type_string[] = "nodeset_operator";
 
-
-
-/***************************************************************************//**
+/**
  * Command modifier function for getting the arguments common to all
  * nodeset_operator-derived field types.
  * @return  1 on success with nodeset and source_field accessing respective
@@ -44,14 +44,6 @@ int define_Computed_field_type_nodeset_operator(struct Parse_state *state,
 	source_field = 0;
 	nodeset = 0;
 	char *nodeset_name = 0;
-	if (NULL != field_modify->get_field()  &&
-			(computed_field_nodeset_operator_type_string ==
-			Computed_field_get_type_string(field_modify->get_field())))
-	{
-		source_field = cmzn_field_get_source_field(field_modify->get_field(), 1);
-		nodeset_name = cmzn_field_get_name(source_field);
-		//-- nodeset_name = cmzn_nodeset_get_name(nodeset_operator_core->get_nodeset());
-	}
 	Option_table *option_table = CREATE(Option_table)();
 	Option_table_add_help(option_table, help_string);
 	struct Set_Computed_field_conditional_data set_source_field_data =
@@ -75,7 +67,7 @@ int define_Computed_field_type_nodeset_operator(struct Parse_state *state,
 			if (!nodeset)
 			{
 				nodeset = cmzn_nodeset_group_base_cast(
-					cmzn_fieldmodule_create_field_nodeset_group_from_name_internal(
+					cmzn_fieldmodule_create_nodeset_group_from_name_internal(
 						field_modify->get_field_module(), nodeset_name));
 			}
 			if (!nodeset)
@@ -116,8 +108,7 @@ int define_Computed_field_type_nodeset_operator(struct Parse_state *state,
 	return (return_code);
 }
 
-
-/***************************************************************************//**
+/**
  * Converts <field> into type nodeset_sum (if it is not already) and allows its
  * contents to be modified.
  */
@@ -144,8 +135,7 @@ int define_Computed_field_type_nodeset_sum(struct Parse_state *state,
 	return return_code;
 }
 
-
-/***************************************************************************//**
+/**
  * Converts <field> into type nodeset_mean (if it is not already) and allows its
  * contents to be modified.
  */
@@ -172,8 +162,7 @@ int define_Computed_field_type_nodeset_mean(struct Parse_state *state,
 	return return_code;
 }
 
-
-/***************************************************************************//**
+/**
  * Converts <field> into type nodeset_sum_squares (if it is not already) and
  * allows its contents to be modified.
  */
@@ -201,8 +190,7 @@ int define_Computed_field_type_nodeset_sum_squares(struct Parse_state *state,
 	return return_code;
 }
 
-
-/***************************************************************************//**
+/**
  * Converts <field> into type nodeset_mean_squares (if it is not already) and
  * allows its contents to be modified.
  */
@@ -223,6 +211,58 @@ int define_Computed_field_type_nodeset_mean_squares(struct Parse_state *state,
 	{
 		return_code = field_modify->update_field_and_deaccess(
 			cmzn_fieldmodule_create_field_nodeset_mean_squares(field_modify->get_field_module(),
+				source_field, nodeset));
+		cmzn_field_destroy(&source_field);
+		cmzn_nodeset_destroy(&nodeset);
+	}
+	return return_code;
+}
+
+/**
+ * Converts <field> into type nodeset_maximum (if it is not already) and
+ * allows its contents to be modified.
+ */
+int define_Computed_field_type_nodeset_maximum(struct Parse_state *state,
+	void *field_modify_void, void *computed_field_nodeset_operators_package_void)
+{
+	int return_code = 0;
+	USE_PARAMETER(computed_field_nodeset_operators_package_void);
+	Computed_field_modify_data * field_modify =
+		reinterpret_cast<Computed_field_modify_data *>(field_modify_void);
+	cmzn_field_id source_field = 0;
+	cmzn_nodeset_id nodeset = 0;
+	if (define_Computed_field_type_nodeset_operator(state, field_modify, "nodeset_maximum",
+		"A nodeset_maximum field returns the maximum value of each component of "
+		"the source field over the nodeset.", source_field, nodeset))
+	{
+		return_code = field_modify->update_field_and_deaccess(
+			cmzn_fieldmodule_create_field_nodeset_maximum(field_modify->get_field_module(),
+				source_field, nodeset));
+		cmzn_field_destroy(&source_field);
+		cmzn_nodeset_destroy(&nodeset);
+	}
+	return return_code;
+}
+
+/**
+ * Converts <field> into type nodeset_minimum (if it is not already) and
+ * allows its contents to be modified.
+ */
+int define_Computed_field_type_nodeset_minimum(struct Parse_state *state,
+	void *field_modify_void, void *computed_field_nodeset_operators_package_void)
+{
+	int return_code = 0;
+	USE_PARAMETER(computed_field_nodeset_operators_package_void);
+	Computed_field_modify_data * field_modify =
+		reinterpret_cast<Computed_field_modify_data *>(field_modify_void);
+	cmzn_field_id source_field = 0;
+	cmzn_nodeset_id nodeset = 0;
+	if (define_Computed_field_type_nodeset_operator(state, field_modify, "nodeset_minimum",
+		"A nodeset_minimum field returns the minimum value of each component of "
+		"the source field over the nodeset.", source_field, nodeset))
+	{
+		return_code = field_modify->update_field_and_deaccess(
+			cmzn_fieldmodule_create_field_nodeset_minimum(field_modify->get_field_module(),
 				source_field, nodeset));
 		cmzn_field_destroy(&source_field);
 		cmzn_nodeset_destroy(&nodeset);
@@ -262,6 +302,14 @@ Registering the region operations.
 		return_code = Computed_field_package_add_type(computed_field_package,
 			computed_field_nodeset_mean_squares_type_string,
 			define_Computed_field_type_nodeset_mean_squares,
+			computed_field_nodeset_operators_package);
+		return_code = Computed_field_package_add_type(computed_field_package,
+			computed_field_nodeset_maximum_type_string,
+			define_Computed_field_type_nodeset_maximum,
+			computed_field_nodeset_operators_package);
+		return_code = Computed_field_package_add_type(computed_field_package,
+			computed_field_nodeset_minimum_type_string,
+			define_Computed_field_type_nodeset_minimum,
 			computed_field_nodeset_operators_package);
 	}
 	else
