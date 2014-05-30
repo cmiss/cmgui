@@ -6065,6 +6065,16 @@ int Option_table_add_default_string_entry(struct Option_table *option_table,
 	return (return_code);
 } /* Option_table_add_default_string_entry */
 
+Multiple_strings::~Multiple_strings()
+{
+	if (strings)
+	{
+		for (int i = 0; i < number_of_strings; i++)
+			DEALLOCATE(strings[i]);
+		DEALLOCATE(strings);
+	}
+}
+
 /***************************************************************************//**
  * Modifier function for extracting one or more strings, separated by and
  * ampersand &.

@@ -962,14 +962,29 @@ int Option_table_add_string_entry(struct Option_table *option_table,
 int Option_table_add_default_string_entry(struct Option_table *option_table,
 	char **string_address, const char *string_description);
 
-/***************************************************************************//**
+/*
  * Structure to pass to Option_table_add_multiple_strings_entry.
- * Caller must initialise to zero number_of_strings and NULL strings pointer.
+ * Starts off with no strings.
  */
 struct Multiple_strings
 {
 	int number_of_strings;
 	char **strings;
+
+	Multiple_strings() :
+		number_of_strings(0),
+		strings(0)
+	{
+	}
+
+	~Multiple_strings();
+
+	const char *operator[](int index) const
+	{
+		if (this->strings && (0 <= index) && index < this->number_of_strings)
+			return this->strings[index];
+		return 0;
+	}
 };
 
 /***************************************************************************//**

@@ -14469,7 +14469,6 @@ Can also write individual groups with the <group> option.
 	 enum FE_write_recursion write_recursion;
 	 int exfile_return_code, return_code, exfile_fd, com_return_code;
 	 struct cmzn_command_data *command_data;
-	 struct Multiple_strings field_names;
 	 struct Option_table *option_table;
 	 struct MANAGER(Graphical_material) *graphical_material_manager;
 	 struct MANAGER(Computed_field) *computed_field_manager;
@@ -14501,8 +14500,7 @@ Can also write individual groups with the <group> option.
 			exfile_name = (char *)NULL;
 			com_file_name = (char *)NULL;
 			time = 0.0;
-			field_names.number_of_strings = 0;
-			field_names.strings = (char **)NULL;
+			Multiple_strings field_names;
 			write_criterion = FE_WRITE_COMPLETE_GROUP;
 			write_recursion = FE_WRITE_RECURSIVE;
 
@@ -14773,14 +14771,6 @@ Can also write individual groups with the <group> option.
 			{
 				 DEALLOCATE(region_or_group_path);
 			}
-			if (field_names.strings)
-			{
-				for (int i = 0; i < field_names.number_of_strings; i++)
-				{
-					DEALLOCATE(field_names.strings[i]);
-				}
-				DEALLOCATE(field_names.strings);
-			}
 			if (file_name)
 			{
 				 DEALLOCATE(file_name);
@@ -14946,7 +14936,6 @@ Can also write individual element groups with the <group> option.
 	enum FE_write_recursion write_recursion;
 	int return_code;
 	struct cmzn_command_data *command_data;
-	struct Multiple_strings field_names;
 	struct Option_table *option_table;
 	FE_value time;
 
@@ -14957,8 +14946,7 @@ Can also write individual element groups with the <group> option.
 		return_code = 1;
 		cmzn_region_id root_region = cmzn_region_access(command_data->root_region);
 		char *region_or_group_path = 0;
-		field_names.number_of_strings = 0;
-		field_names.strings = (char **)NULL;
+		Multiple_strings field_names;
 		char *file_name = 0;
 		char nodes_flag = 0, data_flag;
 		write_criterion = FE_WRITE_COMPLETE_GROUP;
@@ -15083,14 +15071,6 @@ Can also write individual element groups with the <group> option.
 		{
 			DEALLOCATE(region_or_group_path);
 		}
-		if (field_names.strings)
-		{
-			for (int i = 0; i < field_names.number_of_strings; i++)
-			{
-				DEALLOCATE(field_names.strings[i]);
-			}
-			DEALLOCATE(field_names.strings);
-		}
 		if (file_name)
 		{
 			DEALLOCATE(file_name);
@@ -15126,7 +15106,6 @@ If <use_data> is set, writing data, otherwise writing nodes.
 	enum FE_write_recursion write_recursion;
 	int return_code;
 	struct cmzn_command_data *command_data;
-	struct Multiple_strings field_names;
 	struct Option_table *option_table;
 	FE_value time;
 
@@ -15145,8 +15124,7 @@ If <use_data> is set, writing data, otherwise writing nodes.
 		{
 			file_ext = node_file_ext;
 		}
-		field_names.number_of_strings = 0;
-		field_names.strings = (char **)NULL;
+		Multiple_strings field_names;
 		char *file_name = 0;
 		write_criterion = FE_WRITE_COMPLETE_GROUP;
 		write_recursion = FE_WRITE_RECURSIVE;
@@ -15269,14 +15247,6 @@ If <use_data> is set, writing data, otherwise writing nodes.
 		if (region_or_group_path)
 		{
 			DEALLOCATE(region_or_group_path);
-		}
-		if (field_names.strings)
-		{
-			for (int i = 0; i < field_names.number_of_strings; i++)
-			{
-				DEALLOCATE(field_names.strings[i]);
-			}
-			DEALLOCATE(field_names.strings);
 		}
 		if (file_name)
 		{

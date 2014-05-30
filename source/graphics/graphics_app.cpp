@@ -443,7 +443,7 @@ int gfx_modify_scene_graphics(struct Parse_state *state,
 	}
 
 	/* label_text */
-	struct Multiple_strings label_strings = { /*number_of_strings*/0, (char **)0 };
+	Multiple_strings label_strings;
 	if (point_attributes)
 	{
 		Option_table_add_multiple_strings_entry(option_table, "label_text",
@@ -1201,14 +1201,6 @@ int gfx_modify_scene_graphics(struct Parse_state *state,
 	cmzn_field_destroy(&isoscalar_field);
 	cmzn_field_destroy(&line_orientation_scale_field);
 	cmzn_field_destroy(&label_field);
-	if (label_strings.strings)
-	{
-		for (int i = 0; i < label_strings.number_of_strings; ++i)
-		{
-			DEALLOCATE(label_strings.strings[i]);
-		}
-		DEALLOCATE(label_strings.strings);
-	}
 	cmzn_field_destroy(&orientation_scale_field);
 	cmzn_field_destroy(&stream_vector_field);
 	cmzn_field_destroy(&subgroup_field);
