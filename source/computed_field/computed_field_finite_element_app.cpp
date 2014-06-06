@@ -1051,7 +1051,7 @@ int define_Computed_field_type_is_on_face(struct Parse_state *state,
 			"to lie on the specified face of their top-level element, and 0 elsewhere.");
 		/* face {xi1_0|xi1_1|xi2_0|...} */
 		cmzn_element_face_type face = CMZN_ELEMENT_FACE_TYPE_INVALID;
-		Option_table_add_entry(option_table, "face", &face, /*type name*/"element face",
+		Option_table_add_entry(option_table, "face", &face, /*type name*/const_cast<char *>("element face"),
 			setEnum<cmzn_element_face_type, /*firstEnum*/CMZN_ELEMENT_FACE_TYPE_ALL, cmzn_element_face_type_to_string>);
 		return_code = Option_table_multi_parse(option_table, state);
 		DESTROY(Option_table)(&option_table);

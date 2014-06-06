@@ -357,8 +357,8 @@ int gfx_modify_scene_graphics(struct Parse_state *state,
 		(legacy_graphics_type != LEGACY_GRAPHIC_DATA_POINTS))
 	{
 		face_type = cmzn_graphics_get_element_face_type(graphics);
-		Option_table_add_entry(option_table,"face", &face_type,
-			"element face", setEnum<cmzn_element_face_type, /*firstEnum*/CMZN_ELEMENT_FACE_TYPE_ALL, cmzn_element_face_type_to_string>);
+		Option_table_add_entry(option_table,"face", &face_type, const_cast<char *>("element face"),
+			setEnum<cmzn_element_face_type, /*firstEnum*/CMZN_ELEMENT_FACE_TYPE_ALL, cmzn_element_face_type_to_string>);
 	}
 
 	/* first_iso_value */
