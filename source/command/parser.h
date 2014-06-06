@@ -24,6 +24,7 @@ it is nothing but a strings container, and some comparison functions)
 #endif /* defined (UNIX) */
 #include "general/object.h"
 #include "general/value.h"
+#include "general/message.h"
 
 /*
 Global types
