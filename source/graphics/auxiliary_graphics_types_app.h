@@ -14,12 +14,6 @@
 struct User_interface;
 struct Parse_state;
 
-/**
- * A modifier function for setting graphics face type XI1_0, XI1_1 etc.
- */
-int set_graphics_face_type(struct Parse_state *state, void *face_type_address_void,
-	void *dummy_user_data);
-
 /** A modifier function for setting number of segments used to draw circles */
 int set_circle_divisions(struct Parse_state *state,
 	void *circle_divisions_void, void *dummy_void);

@@ -224,7 +224,7 @@
 												</object>
 
 											<object class="sizeritem">
-				   								<object class = "wxBoxSizer">	
+												<object class = "wxBoxSizer">	
 													<orient>wxHORIZONTAL</orient>
 													<object class="sizeritem">
 														<flag>wxALIGN_CENTRE_VERTICAL</flag>
@@ -242,21 +242,22 @@
 														<flag>wxALIGN_CENTRE_VERTICAL</flag>
 														<object class	="wxChoice" name="FaceChoice"> 
 															<selection>0</selection>
-                 											<content>
-                   											<item>xi1=0</item>
-              					     						<item>xi1=1</item>
-                   											<item>xi2=0</item>
- 					            	  	    					<item>xi2=1</item>
-          						  	       					<item>xi3=0</item>
-                   											<item>xi3=1</item>
-                    											</content>
-	 													</object>
+															<content>
+																<item>all</item>
+																<item>xi1=0</item>
+																<item>xi1=1</item>
+																<item>xi2=0</item>
+																<item>xi2=1</item>
+																<item>xi3=0</item>
+																<item>xi3=1</item>
+															</content>
+														</object>
 													</object>
 												</object>
 											</object>
 
 											<object class="sizeritem">
-				   								<object class = "wxBoxSizer">	
+												<object class = "wxBoxSizer">	
 													<orient>wxHORIZONTAL</orient>
 													<object class="sizeritem">
 														<flag>wxALIGN_CENTRE_VERTICAL</flag>

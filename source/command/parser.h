@@ -1002,4 +1002,73 @@ int Option_table_add_multiple_strings_entry(struct Option_table *option_table,
 	const char *token, struct Multiple_strings *multiple_strings_address,
 	const char *strings_description);
 
+// enumToString must implement method:
+// const char *toString(enumType enumValue)
+template <typename enumType, int firstEnum, typename enumToString>
+int setEnum(struct Parse_state *state, void *enumValueAddressVoid,
+	void *displayTypenameVoid)
+{
+	int return_code = 1;
+	enumType *enumValueAddress = static_cast<enumType*>(enumValueAddressVoid);
+	const char *displayTypename = static_cast<const char *>(const_cast<const void *>(displayTypenameVoid));
+	if (state && enumValueAddress && displayTypename)
+	{
+		const char *currentToken = state->current_token;
+		if (currentToken)
+		{
+			int value = firstEnum;
+			const char *enumValueString;
+			if (!Parse_state_help_mode(state))
+			{
+				do
+				{
+					enumValueString = enumToString::toString(static_cast<enumType>(value));
+					if (0 == enumValueString)
+					{
+						display_message(ERROR_MESSAGE, "Invalid %s %s", displayTypename, currentToken);
+						display_parse_state_location(state);
+						return_code = 0;
+						break;
+					}
+					if (fuzzy_string_compare_same_length(currentToken, enumValueString))
+					{
+						*enumValueAddress = static_cast<enumType>(value);
+						shift_Parse_state(state,1);
+						break;
+					}
+				} while (++value);
+			}
+			else
+			{
+				display_message(INFORMATION_MESSAGE, " <");
+				bool first = true;
+				while (enumValueString = enumToString::toString(static_cast<enumType>(value)))
+				{
+					if (first)
+					{
+						display_message(INFORMATION_MESSAGE, "%s", enumValueString);
+						first = false;
+					}
+					else
+						display_message(INFORMATION_MESSAGE, "|%s", enumValueString);
+					++value;
+				}
+				display_message(INFORMATION_MESSAGE, ">");
+			}
+		}
+		else
+		{
+			display_message(ERROR_MESSAGE, "Missing %s", displayTypename);
+			display_parse_state_location(state);
+			return_code = 0;
+		}
+	}
+	else
+	{
+		display_message(ERROR_MESSAGE, "set %s.  Invalid argument(s)", displayTypename);
+		return_code = 0;
+	}
+	return (return_code);
+}
+
 #endif /* !defined (PARSER_H) */

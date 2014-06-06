@@ -15,6 +15,7 @@
 #include "zinc/region.h"
 #include "zinc/spectrum.h"
 #include "zinc/tessellation.h"
+#include "finite_element/finite_element_app.h"
 #include "general/debug.h"
 #include "general/enumerator.h"
 #include "general/enumerator_private.hpp"
@@ -349,15 +350,15 @@ int gfx_modify_scene_graphics(struct Parse_state *state,
 			NULL, set_char_flag);
 	}
 
-	/* face */
-	enum cmzn_element_face_type face_type = CMZN_ELEMENT_FACE_TYPE_ALL;
+	/* face {xi1_0|xi1_1|xi2_0|...} */
+	cmzn_element_face_type face_type = CMZN_ELEMENT_FACE_TYPE_INVALID;
 	if ((legacy_graphics_type != LEGACY_GRAPHIC_POINT) &&
 		(legacy_graphics_type != LEGACY_GRAPHIC_NODE_POINTS) &&
 		(legacy_graphics_type != LEGACY_GRAPHIC_DATA_POINTS))
 	{
 		face_type = cmzn_graphics_get_element_face_type(graphics);
 		Option_table_add_entry(option_table,"face", &face_type,
-			NULL, set_graphics_face_type);
+			"element face", setEnum<cmzn_element_face_type, /*firstEnum*/CMZN_ELEMENT_FACE_TYPE_ALL, cmzn_element_face_type_to_string>);
 	}
 
 	/* first_iso_value */

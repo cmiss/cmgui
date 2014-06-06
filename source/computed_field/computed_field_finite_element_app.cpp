@@ -19,6 +19,7 @@
 #include "computed_field/field_module.hpp"
 #include "finite_element/finite_element_region.h"
 #include "mesh/cmiss_element_private_app.hpp"
+#include "finite_element/finite_element_app.h"
 
 #if defined (DEBUG_CODE)
 /* SAB This field is useful for debugging when things don't clean up properly
@@ -37,6 +38,8 @@ const char computed_field_node_value_type_string[] = "node_value";
 const char computed_field_access_count_type_string[] = "access_count";
 const char computed_field_cmiss_number_type_string[] = "cmiss_number";
 const char computed_field_finite_element_type_string[] = "finite_element";
+const char computed_field_is_exterior_type_string[] = "is_exterior";
+const char computed_field_is_on_face_type_string[] = "is_on_face";
 
 int Computed_field_get_type_finite_element(struct Computed_field *field,
 	struct FE_field **fe_field);
@@ -820,7 +823,6 @@ int define_Computed_field_type_find_mesh_location(struct Parse_state *state,
 	return (return_code);
 }
 
-
 int define_Computed_field_type_xi_coordinates(struct Parse_state *state,
 	void *field_modify_void,void *dummy_void)
 /*******************************************************************************
@@ -864,7 +866,6 @@ Converts <field> into type COMPUTED_FIELD_XI_COORDINATES.
 
 	return (return_code);
 } /* define_Computed_field_type_xi_coordinates */
-
 
 int define_Computed_field_type_basis_derivative(struct Parse_state *state,
 	void *field_modify_void,void *computed_field_finite_element_package_void)
@@ -1006,7 +1007,76 @@ FE_field being made and/or modified.
 	return (return_code);
 } /* define_Computed_field_type_basis_derivative */
 
+int define_Computed_field_type_is_exterior(struct Parse_state *state,
+	void *field_modify_void, void *dummy_void)
+{
+	USE_PARAMETER(dummy_void);
+	int return_code = 0;
+	Computed_field_modify_data *field_modify =
+		static_cast<Computed_field_modify_data *>(field_modify_void);
+	if (state && field_modify)
+	{
+		Option_table *option_table = CREATE(Option_table)();
+		Option_table_add_help(option_table,
+			"An is_exterior field returns 1 on 2-D faces and 1-D lines considered as "
+			"exterior to their top-level element, and 0 elsewhere.");
+		return_code = Option_table_multi_parse(option_table, state);
+		DESTROY(Option_table)(&option_table);
+		if (return_code)
+		{
+			return_code = field_modify->update_field_and_deaccess(
+				cmzn_fieldmodule_create_field_is_exterior(field_modify->get_field_module()));
+		}
+	}
+	else
+	{
+		display_message(ERROR_MESSAGE,
+			"define_Computed_field_type_is_exterior.  Invalid argument(s)");
+	}
+	return (return_code);
+}
 
+int define_Computed_field_type_is_on_face(struct Parse_state *state,
+	void *field_modify_void, void *dummy_void)
+{
+	USE_PARAMETER(dummy_void);
+	int return_code = 0;
+	Computed_field_modify_data *field_modify =
+		static_cast<Computed_field_modify_data *>(field_modify_void);
+	if (state && field_modify)
+	{
+		Option_table *option_table = CREATE(Option_table)();
+		Option_table_add_help(option_table,
+			"An is_on_face field returns 1 on 2-D faces and 1-D lines considered "
+			"to lie on the specified face of their top-level element, and 0 elsewhere.");
+		/* face {xi1_0|xi1_1|xi2_0|...} */
+		cmzn_element_face_type face = CMZN_ELEMENT_FACE_TYPE_INVALID;
+		Option_table_add_entry(option_table, "face", &face, /*type name*/"element face",
+			setEnum<cmzn_element_face_type, /*firstEnum*/CMZN_ELEMENT_FACE_TYPE_ALL, cmzn_element_face_type_to_string>);
+		return_code = Option_table_multi_parse(option_table, state);
+		DESTROY(Option_table)(&option_table);
+		if (return_code)
+		{
+			if (CMZN_ELEMENT_FACE_TYPE_INVALID == face)
+			{
+				display_message(ERROR_MESSAGE, "Must specify a face.");
+				display_parse_state_location(state);
+				return_code = 0;
+			}
+			if (return_code)
+			{
+				return_code = field_modify->update_field_and_deaccess(
+					cmzn_fieldmodule_create_field_is_on_face(field_modify->get_field_module(), face));
+			}
+		}
+	}
+	else
+	{
+		display_message(ERROR_MESSAGE,
+			"define_Computed_field_type_is_on_face.  Invalid argument(s)");
+	}
+	return (return_code);
+}
 
 int Computed_field_register_types_finite_element(
 	struct Computed_field_package *computed_field_package)
@@ -1058,6 +1128,14 @@ This function registers the finite_element related types of Computed_fields.
 		return_code = Computed_field_package_add_type(computed_field_package,
 			computed_field_basis_derivative_type_string,
 			define_Computed_field_type_basis_derivative,
+			computed_field_finite_element_package);
+		return_code = Computed_field_package_add_type(computed_field_package,
+			computed_field_is_exterior_type_string,
+			define_Computed_field_type_is_exterior,
+			computed_field_finite_element_package);
+		return_code = Computed_field_package_add_type(computed_field_package,
+			computed_field_is_on_face_type_string,
+			define_Computed_field_type_is_on_face,
 			computed_field_finite_element_package);
 	}
 	else

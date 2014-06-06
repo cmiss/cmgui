@@ -8,6 +8,7 @@
 #define FINITE_ELEMENT_APP_H_
 
 #include "command/parser.h"
+#include "finite_element/finite_element.h"
 
 int set_FE_field(struct Parse_state *state,void *field_address_void,
 	void *fe_field_list_void);
@@ -47,8 +48,6 @@ returned by this function, however, any such structure passed to this function
 may be destroyed here - ie. in the 'all' case.
 ==============================================================================*/
 
-
-
 int set_FE_field_component(struct Parse_state *state,void *component_void,
 	void *fe_field_list_void);
 /*******************************************************************************
@@ -60,5 +59,15 @@ component.
 ???DB.  Should it be here ?
 ???RC.  Does not ACCESS the field (unlike set_FE_field, above).
 ==============================================================================*/
+
+// for passing to setEnum modifier function template
+struct cmzn_element_face_type_to_string
+{
+	static inline const char *toString(cmzn_element_face_type faceType)
+	{
+		return ENUMERATOR_STRING(cmzn_element_face_type)(faceType);
+	}
+};
+
 #endif
 
