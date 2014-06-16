@@ -113,6 +113,8 @@ public:
 
 	void setPlaySwing();
 
+	void setTimeStep(double time_step);
+
 	int setMaximum(double maximum_in);
 
 	int setMinimum(double minimum_in);

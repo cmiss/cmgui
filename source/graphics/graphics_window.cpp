@@ -1753,6 +1753,7 @@ void OnTimeStepSizeTextEntered(wxCommandEvent& event)
 		double timestep;
 		sscanf(text_entry, "%lg", &timestep);
 		graphics_window->time_step = timestep;
+		graphics_window->time_keeper_app->setTimeStep(graphics_window->time_step);
 	}
 	Graphics_window_update_time_settings_wx(graphics_window, (void *)NULL);
 }

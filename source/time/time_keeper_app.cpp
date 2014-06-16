@@ -54,7 +54,7 @@ Time_keeper_app::Time_keeper_app(cmzn_timekeeper *time_keeper_in,
 	play_mode(TIME_KEEPER_APP_PLAY_LOOP),
 	play_remaining(0),
 	speed(1.0),
-	step(0.0),
+	step(0.1),
 	play_direction(CMZN_TIMEKEEPER_PLAY_DIRECTION_FORWARD),
 	play_every_frame(0),
 	play_start_seconds(0),
@@ -374,6 +374,11 @@ cmzn_timekeeper *Time_keeper_app::getTimeKeeper()
 	return time_keeper;
 }
 
+void Time_keeper_app::setTimeStep(double time_step)
+{
+	step = time_step;
+}
+
 int Time_keeper_app::timerEvent()
 {
 	double event_time = 0.0, real_time_elapsed, closest_object_time, event_interval;
@@ -422,6 +427,8 @@ int Time_keeper_app::timerEvent()
 			while(object_info)
 			{
 				/* Do all the events in the next event interval */
+				display_message(INFORMATION_MESSAGE, "next_callback_due %g real %g\n",
+					object_info->next_callback_due, real_time + event_interval);
 				if(object_info->next_callback_due < real_time + event_interval)
 				{
 					if(!play_every_frame)
@@ -665,13 +672,13 @@ int Time_keeper_app::setPlayTimeout()
 				{
 					if(next_time >= real_time)
 					{
-						step = next_time - real_time;
+						double time_difference = next_time - real_time;
 
 						gettimeofday(&timeofday, (struct timezone *)NULL);
 						real_time_elapsed = (double)(timeofday.tv_sec -
 							play_start_seconds) + ((double)(timeofday.tv_usec
 								- play_start_microseconds) / 1000000.0);
-						sleep = step / speed - real_time_elapsed;
+						sleep = time_difference / speed - real_time_elapsed;
 						if (sleep > 0)
 						{
 							sleep_s = (unsigned long)floor(sleep);
@@ -757,13 +764,13 @@ int Time_keeper_app::setPlayTimeout()
 					/*???DB.  Changed from < to <= */
 					if(next_time <= real_time)
 					{
-						step = real_time - next_time;
+						double time_difference = real_time - next_time;
 
 						gettimeofday(&timeofday, (struct timezone *)NULL);
 						real_time_elapsed = (double)(timeofday.tv_sec -
 							play_start_seconds) + ((double)(timeofday.tv_usec
 								- play_start_microseconds) / 1000000.0);
-						sleep = step / speed - real_time_elapsed;
+						sleep = time_difference / speed - real_time_elapsed;
 						if (sleep > 0)
 						{
 							sleep_s = (unsigned long)floor(sleep);
