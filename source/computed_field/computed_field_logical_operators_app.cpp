@@ -547,7 +547,7 @@ already) and allows its contents to be modified.
 				if (return_code)
 				{
 					return_code = field_modify->update_field_and_deaccess(
-						Computed_field_create_less_than(field_modify->get_field_module(),
+						cmzn_fieldmodule_create_field_less_than(field_modify->get_field_module(),
 							source_fields[0], source_fields[1]));
 				}
 				if (!return_code)
@@ -653,7 +653,7 @@ already) and allows its contents to be modified.
 				if (return_code)
 				{
 					return_code = field_modify->update_field_and_deaccess(
-						Computed_field_create_greater_than(field_modify->get_field_module(),
+						cmzn_fieldmodule_create_field_greater_than(field_modify->get_field_module(),
 							source_fields[0], source_fields[1]));
 				}
 				if (!return_code)
@@ -747,7 +747,7 @@ already) and allows its contents to be modified.
 			if (return_code)
 			{
 				return_code = field_modify->update_field_and_deaccess(
-					Computed_field_create_is_defined(field_modify->get_field_module(),
+					cmzn_fieldmodule_create_field_is_defined(field_modify->get_field_module(),
 						source_field));
 			}
 			if (!return_code)
