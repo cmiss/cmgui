@@ -156,7 +156,6 @@ int Element_tool_destroy_selected_elements(struct Element_tool *element_tool)
 		{
 			return_code = cmzn_field_group_for_each_group_hierarchical(selection_group,
 				cmzn_field_group_destroy_all_elements, /*user_data*/(void *)0);
-			cmzn_field_group_clear_region_tree_element(selection_group);
 			cmzn_scene_flush_tree_selections(root_scene);
 			cmzn_field_group_destroy(&selection_group);
 		}
@@ -394,7 +393,7 @@ release.
 									cmzn_field_destroy(&selection_field);
 									if (root_selection_group)
 									{
-										cmzn_field_group_clear_region_tree_element(root_selection_group);
+										cmzn_field_group_clear(root_selection_group);
 										cmzn_field_group_destroy(&root_selection_group);
 									}
 									cmzn_scene_destroy(&root_scene);
@@ -432,7 +431,8 @@ release.
 								}
 								if (mesh_group)
 								{
-									cmzn_mesh_group_add_element(mesh_group, picked_element);
+									if (element_tool->picked_element_was_unselected)
+										cmzn_mesh_group_add_element(mesh_group, picked_element);
 									cmzn_mesh_group_destroy(&mesh_group);
 								}
 								if (sub_group)

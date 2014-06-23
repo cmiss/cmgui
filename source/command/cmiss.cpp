@@ -924,25 +924,20 @@ struct Interpreter_command_element_selection_callback_data
 	struct Interpreter *interpreter;
 }; /* struct Interpreter_command_element_selection_callback_data */
 
-/***************************************************************************//**
+/**
  * Adds or removes elements to/from group.
- * @param manage_nodes  Set if nodes are added/removed with elements. Nodes are
- * only removed if not in use by any other elements in group.
- * @param manage_faces  Set if faces are added/removed with parent elements.
- * Faces are only removed if not in use by any other elements in group.
  */
 static int process_modify_element_group(cmzn_field_group_id group,
 	cmzn_region_id region, int dimension, char add_flag,
 	cmzn_field_id conditional_field, cmzn_field_group_id from_group,
 	Multi_range *element_ranges, char selected_flag, FE_value time,
-	int manage_nodes, int manage_faces)
+	cmzn_field_group_subelement_handling_mode subelementHandlingMode)
 {
 	if (!group || !region)
 		return 0;
 	int return_code = 1;
 	cmzn_fieldmodule_id field_module = cmzn_region_get_fieldmodule(region);
 	cmzn_mesh_id master_mesh = cmzn_fieldmodule_find_mesh_by_dimension(field_module, dimension);
-	char remove_flag = !add_flag;
 	cmzn_mesh_group_id selection_mesh_group = 0;
 	if (selected_flag)
 	{
@@ -973,250 +968,82 @@ static int process_modify_element_group(cmzn_field_group_id group,
 			from_mesh_group = cmzn_field_element_group_get_mesh_group(from_element_group);
 			cmzn_field_element_group_destroy(&from_element_group);
 		}
-
 	}
-	int objects_processed = 0;
-	int elements_not_processed = 0;
 	if (((!selected_flag) || selection_mesh_group) && ((!from_group) || from_mesh_group))
 	{
 		cmzn_fieldmodule_begin_change(field_module);
 		cmzn_field_element_group_id modify_element_group = cmzn_field_group_get_field_element_group(group, master_mesh);
-		if (!modify_element_group)
+		if ((!modify_element_group) && add_flag)
 			modify_element_group = cmzn_field_group_create_field_element_group(group, master_mesh);
 		cmzn_mesh_group_id modify_mesh_group = cmzn_field_element_group_get_mesh_group(modify_element_group);
-		objects_processed += cmzn_mesh_get_size(cmzn_mesh_group_base_cast(modify_mesh_group));
 		cmzn_field_element_group_destroy(&modify_element_group);
-		cmzn_fieldcache_id cache = cmzn_fieldmodule_create_fieldcache(field_module);
-		cmzn_fieldcache_set_time(cache, time);
+		if (modify_mesh_group)
+		{
+			cmzn_field_group_subelement_handling_mode oldSubelementHandlingMode = cmzn_field_group_get_subelement_handling_mode(group);
+			cmzn_field_group_set_subelement_handling_mode(group, subelementHandlingMode);
+			cmzn_fieldcache_id cache = cmzn_fieldmodule_create_fieldcache(field_module);
+			cmzn_fieldcache_set_time(cache, time);
 
-		cmzn_nodeset_group_id modify_nodeset_group = 0;
-		cmzn_field_node_group_id remove_node_group = 0;
-		cmzn_nodeset_group_id remove_nodeset_group = 0;
-		if (manage_nodes)
-		{
-			cmzn_nodeset_id master_nodeset = cmzn_fieldmodule_find_nodeset_by_field_domain_type(field_module, CMZN_FIELD_DOMAIN_TYPE_NODES);
-			cmzn_field_node_group_id modify_node_group = cmzn_field_group_get_field_node_group(group, master_nodeset);
-			if ((!modify_node_group) && add_flag)
-				modify_node_group = cmzn_field_group_create_field_node_group(group, master_nodeset);
-			if (modify_node_group)
+			cmzn_mesh_id iteration_mesh = master_mesh;
+			cmzn_mesh_id selection_mesh = cmzn_mesh_group_base_cast(selection_mesh_group);
+			cmzn_mesh_id from_mesh = cmzn_mesh_group_base_cast(from_mesh_group);
+			if (selected_flag && selection_mesh && !cmzn_mesh_match(selection_mesh, cmzn_mesh_group_base_cast(modify_mesh_group)))
 			{
-				modify_nodeset_group = cmzn_field_node_group_get_nodeset_group(modify_node_group);
-				objects_processed += cmzn_nodeset_get_size(cmzn_nodeset_group_base_cast(modify_nodeset_group));
-				if (remove_flag)
-				{
-					cmzn_field_id remove_node_group_field = cmzn_fieldmodule_create_field_node_group(field_module, master_nodeset);
-					remove_node_group = cmzn_field_cast_node_group(remove_node_group_field);
-					remove_nodeset_group = cmzn_field_node_group_get_nodeset_group(remove_node_group);
-					cmzn_field_destroy(&remove_node_group_field);
-				}
-				cmzn_field_node_group_destroy(&modify_node_group);
+				iteration_mesh = selection_mesh;
 			}
-			cmzn_nodeset_destroy(&master_nodeset);
-		}
-		cmzn_nodeset_group_id working_nodeset_group = add_flag ? modify_nodeset_group : remove_nodeset_group;
-
-		cmzn_mesh_id master_face_mesh = 0;
-		cmzn_mesh_group_id modify_face_mesh_group = 0;
-		cmzn_field_element_group_id working_face_element_group = 0;
-		cmzn_mesh_group_id working_face_mesh_group = 0;
-		if (manage_faces && (1 < dimension))
-		{
-			master_face_mesh = cmzn_fieldmodule_find_mesh_by_dimension(field_module, dimension - 1);
-			cmzn_field_element_group_id modify_face_element_group = cmzn_field_group_get_field_element_group(group, master_face_mesh);
-			if ((!modify_face_element_group) && add_flag)
-				modify_face_element_group = cmzn_field_group_create_field_element_group(group, master_face_mesh);
-			if (modify_face_element_group)
+			if (from_mesh && (!cmzn_mesh_match(from_mesh, cmzn_mesh_group_base_cast(modify_mesh_group))) &&
+				(cmzn_mesh_get_size(from_mesh) < cmzn_mesh_get_size(iteration_mesh)))
 			{
-				modify_face_mesh_group = cmzn_field_element_group_get_mesh_group(modify_face_element_group);
-				objects_processed += cmzn_mesh_get_size(cmzn_mesh_group_base_cast(modify_face_mesh_group));
-				cmzn_field_id working_face_element_group_field = cmzn_fieldmodule_create_field_element_group(field_module, master_face_mesh);
-				working_face_element_group = cmzn_field_cast_element_group(working_face_element_group_field);
-				working_face_mesh_group = cmzn_field_element_group_get_mesh_group(working_face_element_group);
-				cmzn_field_destroy(&working_face_element_group_field);
-				cmzn_field_element_group_destroy(&modify_face_element_group);
+				iteration_mesh = from_mesh;
 			}
-		}
-
-		cmzn_mesh_id iteration_mesh = master_mesh;
-		cmzn_mesh_id selection_mesh = cmzn_mesh_group_base_cast(selection_mesh_group);
-		cmzn_mesh_id from_mesh = cmzn_mesh_group_base_cast(from_mesh_group);
-		if (selected_flag && selection_mesh && !cmzn_mesh_match(selection_mesh, cmzn_mesh_group_base_cast(modify_mesh_group)))
-		{
-			iteration_mesh = selection_mesh;
-		}
-		if (from_mesh && (!cmzn_mesh_match(from_mesh, cmzn_mesh_group_base_cast(modify_mesh_group))) &&
-			(cmzn_mesh_get_size(from_mesh) < cmzn_mesh_get_size(iteration_mesh)))
-		{
-			iteration_mesh = from_mesh;
-		}
-		cmzn_elementiterator_id iter = cmzn_mesh_create_elementiterator(iteration_mesh);
-		cmzn_element_id element = 0;
-		while (NULL != (element = cmzn_elementiterator_next_non_access(iter)))
-		{
-			if (element_ranges && !Multi_range_is_value_in_range(element_ranges, cmzn_element_get_identifier(element)))
-				continue;
-			if (selection_mesh && (selection_mesh != iteration_mesh) && !cmzn_mesh_contains_element(selection_mesh, element))
-				continue;
-			if (from_mesh && (from_mesh != iteration_mesh) && !cmzn_mesh_contains_element(from_mesh, element))
-				continue;
-			if (conditional_field)
-			{
-				cmzn_fieldcache_set_element(cache, element);
-				if (!cmzn_field_evaluate_boolean(conditional_field, cache))
-					continue;
-			}
-			if (add_flag)
-			{
-				if (!cmzn_mesh_contains_element(cmzn_mesh_group_base_cast(modify_mesh_group), element))
-				{
-					if (!cmzn_mesh_group_add_element(modify_mesh_group, element))
-					{
-						display_message(ERROR_MESSAGE,
-							"gfx modify egroup:  Could not add element %d", cmzn_element_get_identifier(element));
-						return_code = 0;
-						break;
-					}
-				}
-			}
-			else
-			{
-				if (cmzn_mesh_contains_element(cmzn_mesh_group_base_cast(modify_mesh_group), element))
-				{
-					if (!cmzn_mesh_group_remove_element(modify_mesh_group, element))
-					{
-						display_message(ERROR_MESSAGE,
-							"gfx modify egroup:  Could not remove element %d", cmzn_element_get_identifier(element));
-						return_code = 0;
-						break;
-					}
-				}
-			}
-			if (working_nodeset_group)
-			{
-				cmzn_nodeset_group_add_element_nodes(working_nodeset_group, element);
-			}
-			if (working_face_mesh_group)
-			{
-				cmzn_mesh_group_add_element_faces(working_face_mesh_group, element);
-			}
-		}
-		cmzn_elementiterator_destroy(&iter);
-
-		if (remove_flag && (remove_nodeset_group || working_face_mesh_group))
-		{
-			// don't include faces and nodes still used by elements remaining in modify_mesh_group
-			// Note: ignores nodes for other dimensions
-			iter = cmzn_mesh_create_elementiterator(cmzn_mesh_group_base_cast(modify_mesh_group));
-				while (NULL != (element = cmzn_elementiterator_next_non_access(iter)))
-				{
-				if (remove_nodeset_group)
-				{
-					cmzn_nodeset_group_remove_element_nodes(remove_nodeset_group, element);
-				}
-				if (working_face_mesh_group)
-				{
-					cmzn_mesh_group_remove_element_faces(working_face_mesh_group, element);
-				}
-				}
-				cmzn_elementiterator_destroy(&iter);
-				if (remove_nodeset_group)
-				{
-				cmzn_nodeset_group_remove_nodes_conditional(modify_nodeset_group,
-					cmzn_field_node_group_base_cast(remove_node_group));
-				}
-		}
-		if (working_face_mesh_group)
-		{
-			cmzn_mesh_group_id modify_line_mesh_group = 0;
-			cmzn_field_element_group_id remove_line_element_group = 0;
-			cmzn_mesh_group_id remove_line_mesh_group = 0;
-			if (2 < dimension)
-			{
-				cmzn_mesh_id master_line_mesh = cmzn_fieldmodule_find_mesh_by_dimension(field_module, dimension - 2);
-				cmzn_field_element_group_id modify_line_element_group = cmzn_field_group_get_field_element_group(group, master_line_mesh);
-				if (add_flag && !modify_line_element_group)
-					modify_line_element_group = cmzn_field_group_create_field_element_group(group, master_line_mesh);
-				if (modify_line_element_group)
-				{
-					modify_line_mesh_group = cmzn_field_element_group_get_mesh_group(modify_line_element_group);
-					objects_processed += cmzn_mesh_get_size(cmzn_mesh_group_base_cast(modify_line_mesh_group));
-					if (remove_flag)
-					{
-						cmzn_field_id remove_line_element_group_field = cmzn_fieldmodule_create_field_element_group(field_module, master_line_mesh);
-						remove_line_element_group = cmzn_field_cast_element_group(remove_line_element_group_field);
-						remove_line_mesh_group = cmzn_field_element_group_get_mesh_group(remove_line_element_group);
-						cmzn_field_destroy(&remove_line_element_group_field);
-					}
-					cmzn_field_element_group_destroy(&modify_line_element_group);
-				}
-				cmzn_mesh_destroy(&master_line_mesh);
-			}
-			cmzn_mesh_group_id working_line_mesh_group = add_flag ? modify_line_mesh_group : remove_line_mesh_group;
-			iter = cmzn_mesh_create_elementiterator(cmzn_mesh_group_base_cast(working_face_mesh_group));
+			cmzn_elementiterator_id iter = cmzn_mesh_create_elementiterator(iteration_mesh);
+			cmzn_element_id element = 0;
 			while (NULL != (element = cmzn_elementiterator_next_non_access(iter)))
 			{
+				if (element_ranges && !Multi_range_is_value_in_range(element_ranges, cmzn_element_get_identifier(element)))
+					continue;
+				if (selection_mesh && (selection_mesh != iteration_mesh) && !cmzn_mesh_contains_element(selection_mesh, element))
+					continue;
+				if (from_mesh && (from_mesh != iteration_mesh) && !cmzn_mesh_contains_element(from_mesh, element))
+					continue;
+				if (conditional_field)
+				{
+					cmzn_fieldcache_set_element(cache, element);
+					if (!cmzn_field_evaluate_boolean(conditional_field, cache))
+						continue;
+				}
 				if (add_flag)
 				{
-					cmzn_mesh_group_add_element(modify_face_mesh_group, element);
+					int result = cmzn_mesh_group_add_element(modify_mesh_group, element);
+					if ((CMZN_OK != result) && (CMZN_ERROR_ALREADY_EXISTS != result))
+					{
+						display_message(ERROR_MESSAGE, "gfx modify egroup:  Adding elements failed");
+						return_code = 0;
+						break;
+					}
 				}
 				else
 				{
-					cmzn_mesh_group_remove_element(modify_face_mesh_group, element);
-				}
-				if (working_line_mesh_group)
-				{
-					cmzn_mesh_group_add_element_faces(working_line_mesh_group, element);
+					int result = cmzn_mesh_group_remove_element(modify_mesh_group, element);
+					if ((CMZN_OK != result) && (CMZN_ERROR_NOT_FOUND != result))
+					{
+						display_message(ERROR_MESSAGE, "gfx modify egroup:  Removing elements failed");
+						return_code = 0;
+						break;
+					}
 				}
 			}
 			cmzn_elementiterator_destroy(&iter);
-			if (remove_line_element_group)
-			{
-				cmzn_mesh_group_remove_elements_conditional(modify_line_mesh_group,
-					cmzn_field_element_group_base_cast(remove_line_element_group));
-			}
-			cmzn_mesh_group_destroy(&remove_line_mesh_group);
-			cmzn_field_element_group_destroy(&remove_line_element_group);
-			if (modify_line_mesh_group)
-			{
-				objects_processed -= cmzn_mesh_get_size(cmzn_mesh_group_base_cast(modify_line_mesh_group));
-				cmzn_mesh_group_destroy(&modify_line_mesh_group);
-			}
+			cmzn_fieldcache_destroy(&cache);
+			cmzn_field_group_set_subelement_handling_mode(group, oldSubelementHandlingMode);
+			cmzn_mesh_group_destroy(&modify_mesh_group);
 		}
-
-		cmzn_mesh_group_destroy(&working_face_mesh_group);
-		cmzn_field_element_group_destroy(&working_face_element_group);
-		if (modify_face_mesh_group)
-		{
-			objects_processed -= cmzn_mesh_get_size(cmzn_mesh_group_base_cast(modify_face_mesh_group));
-			cmzn_mesh_group_destroy(&modify_face_mesh_group);
-		}
-		cmzn_mesh_destroy(&master_face_mesh);
-		cmzn_nodeset_group_destroy(&remove_nodeset_group);
-		cmzn_field_node_group_destroy(&remove_node_group);
-		if (modify_nodeset_group)
-		{
-			objects_processed -= cmzn_nodeset_get_size(cmzn_nodeset_group_base_cast(modify_nodeset_group));
-			cmzn_nodeset_group_destroy(&modify_nodeset_group);
-		}
-		cmzn_fieldcache_destroy(&cache);
-		objects_processed -= cmzn_mesh_get_size(cmzn_mesh_group_base_cast(modify_mesh_group));
-		cmzn_mesh_group_destroy(&modify_mesh_group);
 		cmzn_fieldmodule_end_change(field_module);
-	}
-	if (0 < elements_not_processed)
-	{
-		display_message(WARNING_MESSAGE,
-			"gfx modify egroup:  %d elements could not be removed", elements_not_processed);
-	}
-	else if (0 == objects_processed)
-	{
-		display_message(WARNING_MESSAGE, "gfx modify egroup:  group unchanged");
 	}
 	cmzn_mesh_group_destroy(&from_mesh_group);
 	cmzn_mesh_group_destroy(&selection_mesh_group);
 	cmzn_mesh_destroy(&master_mesh);
 	cmzn_fieldmodule_destroy(&field_module);
-
 	return return_code;
 }
 
@@ -1294,7 +1121,8 @@ static int gfx_create_group(struct Parse_state *state,
 								double time = 0;
 								return_code = process_modify_element_group(group, region, max_dimension,
 									/*add_flag*/1, /*conditional_field*/0, from_group, add_ranges,
-									/*selected_flag*/0, time, /*manage_nodes*/manage_subobjects, /*manage_faces*/manage_subobjects);
+									/*selected_flag*/0, time,
+									manage_subobjects ? CMZN_FIELD_GROUP_SUBELEMENT_HANDLING_MODE_FULL : CMZN_FIELD_GROUP_SUBELEMENT_HANDLING_MODE_NONE);
 							} break;
 							case 1: // nodes
 							case 2: // data
@@ -10828,7 +10656,8 @@ static int gfx_modify_element_group(struct Parse_state *state,
 				return_code = process_modify_element_group(group, region, dimension,
 					add_flag, conditional_field, from_group,
 					Multi_range_get_number_of_ranges(element_ranges) > 0 ? element_ranges : 0,
-					selected_flag, time, /*manage_nodes*/manage_subobjects, /*manage_faces*/manage_subobjects);
+					selected_flag, time, manage_subobjects ?
+						CMZN_FIELD_GROUP_SUBELEMENT_HANDLING_MODE_FULL : CMZN_FIELD_GROUP_SUBELEMENT_HANDLING_MODE_NONE);
 			}
 			if (from_group_name)
 			{
@@ -11325,7 +11154,6 @@ static int gfx_modify_node_group(struct Parse_state *state,
 					}
 				}
 				int nodes_processed = 0;
-				int nodes_not_processed = 0;
 				if (((!selected_flag) || selection_nodeset_group) && ((!from_group) || from_nodeset_group))
 				{
 					cmzn_fieldmodule_begin_change(field_module);
@@ -11372,28 +11200,22 @@ static int gfx_modify_node_group(struct Parse_state *state,
 						++nodes_processed;
 						if (add_flag)
 						{
-							if (!cmzn_nodeset_contains_node(cmzn_nodeset_group_base_cast(modify_nodeset_group), node))
+							int result = cmzn_nodeset_group_add_node(modify_nodeset_group, node);
+							if ((CMZN_OK != result) && (CMZN_ERROR_ALREADY_EXISTS != result))
 							{
-								if (!cmzn_nodeset_group_add_node(modify_nodeset_group, node))
-								{
-									display_message(ERROR_MESSAGE,
-										"gfx modify ngroup:  Could not add node %d", cmzn_node_get_identifier(node));
-									return_code = 0;
-									break;
-								}
+								display_message(ERROR_MESSAGE, "gfx modify ngroup:  Adding nodes failed");
+								return_code = 0;
+								break;
 							}
 						}
 						else
 						{
-							if (cmzn_nodeset_contains_node(cmzn_nodeset_group_base_cast(modify_nodeset_group), node))
+							int result = cmzn_nodeset_group_remove_node(modify_nodeset_group, node);
+							if ((CMZN_OK != result) && (CMZN_ERROR_NOT_FOUND != result))
 							{
-								if (!cmzn_nodeset_group_remove_node(modify_nodeset_group, node))
-								{
-									display_message(ERROR_MESSAGE,
-										"gfx modify ngroup:  Could not remove node %d", cmzn_node_get_identifier(node));
-									return_code = 0;
-									break;
-								}
+								display_message(ERROR_MESSAGE, "gfx modify ngroup:  Removing nodes failed");
+								return_code = 0;
+								break;
 							}
 						}
 					}
@@ -11403,15 +11225,8 @@ static int gfx_modify_node_group(struct Parse_state *state,
 					cmzn_field_node_group_destroy(&modify_node_group);
 					cmzn_fieldmodule_end_change(field_module);
 				}
-				if (0 < nodes_not_processed)
-				{
-					display_message(WARNING_MESSAGE,
-						"gfx modify ngroup:  %d nodes could not be removed", nodes_not_processed);
-				}
-				else if (0 == nodes_processed)
-				{
-					display_message(WARNING_MESSAGE, "gfx modify ngroup:  group unchanged");
-				}
+				if (0 == nodes_processed)
+					display_message(WARNING_MESSAGE, "gfx modify ngroup:  No nodes processed.");
 				cmzn_nodeset_group_destroy(&from_nodeset_group);
 				cmzn_nodeset_group_destroy(&selection_nodeset_group);
 				cmzn_nodeset_destroy(&master_nodeset);

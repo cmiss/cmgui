@@ -749,6 +749,7 @@ cmzn_field_group_id cmzn_scene_get_or_create_selection_group(cmzn_scene_id scene
 				field = cmzn_fieldmodule_create_field_group(field_module);
 				cmzn_field_set_name(field, default_selection_group_name);
 				selection_group = cmzn_field_cast_group(field);
+				cmzn_field_group_set_subelement_handling_mode(selection_group, CMZN_FIELD_GROUP_SUBELEMENT_HANDLING_MODE_FULL);
 				cmzn_field_destroy(&field);
 			}
 			cmzn_fieldmodule_destroy(&field_module);

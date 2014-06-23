@@ -270,14 +270,6 @@ int Node_tool_destroy_selected_nodes(struct Node_tool *node_tool)
 		{
 			cmzn_field_group_for_each_group_hierarchical(selection_group,
 				cmzn_field_group_destroy_all_nodes, (void *)&(node_tool->domain_type));
-			if (node_tool->domain_type == CMZN_FIELD_DOMAIN_TYPE_DATAPOINTS)
-			{
-				cmzn_field_group_clear_region_tree_data(selection_group);
-			}
-			else
-			{
-				cmzn_field_group_clear_region_tree_node(selection_group);
-			}
 			cmzn_field_group_destroy(&selection_group);
 		}
 		cmzn_scene_flush_tree_selections(root_scene);
@@ -1513,14 +1505,7 @@ release.
 								cmzn_field_group_id root_selection_group = cmzn_field_cast_group(selection_field);
 								cmzn_field_destroy(&selection_field);
 								if (root_selection_group)
-								{
-									if (node_tool->domain_type == CMZN_FIELD_DOMAIN_TYPE_NODES)
-										cmzn_field_group_clear_region_tree_node(root_selection_group);
-									else
-										cmzn_field_group_clear_region_tree_data(root_selection_group);
-									cmzn_field_group_destroy(&root_selection_group);
-								}
-								//cmzn_scene_flush_tree_selections(root_scene);
+									cmzn_field_group_clear(root_selection_group);
 								cmzn_scene_destroy(&root_scene);
 							}
 						}
