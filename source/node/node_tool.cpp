@@ -28,7 +28,7 @@ Scene input.
 #include "computed_field/computed_field.h"
 #include "computed_field/computed_field_composite.h"
 #include "computed_field/computed_field_finite_element.h"
-#include "computed_field/computed_field_group.h"
+#include "computed_field/computed_field_group.hpp"
 #include "computed_field/computed_field_set.h"
 #include "computed_field/computed_field_wrappers.h"
 #include "zinc/fieldsubobjectgroup.h"

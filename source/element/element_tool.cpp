@@ -24,7 +24,7 @@ Interactive tool for selecting elements with mouse and other devices.
 #include "command/command.h"
 #include "computed_field/computed_field.h"
 #include "computed_field/computed_field_finite_element.h"
-#include "computed_field/computed_field_group.h"
+#include "computed_field/computed_field_group.hpp"
 #include "zinc/fieldsubobjectgroup.h"
 #include "element/element_operations.h"
 #include "element/element_tool.h"
