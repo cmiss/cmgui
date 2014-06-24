@@ -114,26 +114,34 @@ Module functions
 ----------------
 */
 
-static int cmzn_field_group_destroy_all_elements(cmzn_field_group_id group, void *dummy_void)
+struct DestroySelectedElementsData
 {
-	USE_PARAMETER(dummy_void);
+	int dimension; // dimension of elements to destroy;
+	int numberDestroyed;
+	DestroySelectedElementsData(int dimensionIn) :
+		dimension(dimensionIn),
+		numberDestroyed(0)
+	{
+	}
+};
+
+static int cmzn_field_group_destroy_all_elements(cmzn_field_group_id group, void *dataVoid)
+{
 	int return_code = 0;
-	if (group)
+	DestroySelectedElementsData *data = static_cast<DestroySelectedElementsData*>(dataVoid);
+	if (group && data)
 	{
 		cmzn_fieldmodule_id field_module = cmzn_field_get_fieldmodule(cmzn_field_group_base_cast(group));
-		for (int i = 1; i <= 3; i++)
+		cmzn_mesh_id master_mesh = cmzn_fieldmodule_find_mesh_by_dimension(field_module, data->dimension);
+		cmzn_field_element_group_id element_group = cmzn_field_group_get_field_element_group(group, master_mesh);
+		cmzn_mesh_destroy(&master_mesh);
+		if (element_group)
 		{
-			cmzn_mesh_id master_mesh =
-				cmzn_fieldmodule_find_mesh_by_dimension(field_module, /*dimension*/i);
-			cmzn_field_element_group_id element_group = cmzn_field_group_get_field_element_group(group, master_mesh);
-			cmzn_mesh_destroy(&master_mesh);
-			if (element_group)
-			{
-				cmzn_mesh_group_id mesh_group = cmzn_field_element_group_get_mesh_group(element_group);
-				cmzn_mesh_destroy_all_elements(cmzn_mesh_group_base_cast(mesh_group));
-				cmzn_mesh_group_destroy(&mesh_group);
-				cmzn_field_element_group_destroy(&element_group);
-			}
+			cmzn_mesh_group_id mesh_group = cmzn_field_element_group_get_mesh_group(element_group);
+			data->numberDestroyed += cmzn_mesh_get_size(cmzn_mesh_group_base_cast(mesh_group));
+			cmzn_mesh_destroy_all_elements(cmzn_mesh_group_base_cast(mesh_group));
+			cmzn_mesh_group_destroy(&mesh_group);
+			cmzn_field_element_group_destroy(&element_group);
 		}
 		cmzn_fieldmodule_destroy(&field_module);
 		return_code = 1;
@@ -147,15 +155,20 @@ int Element_tool_destroy_selected_elements(struct Element_tool *element_tool)
 	if (element_tool->region)
 	{
 		return_code = 1;
-		cmzn_scene *root_scene = cmzn_region_get_scene(
-			element_tool->region);
+		cmzn_scene *root_scene = cmzn_region_get_scene(element_tool->region);
 		cmzn_field_id selection_field = cmzn_scene_get_selection_field(root_scene);
 		cmzn_field_group_id selection_group = cmzn_field_cast_group(selection_field);
 		cmzn_field_destroy(&selection_field);
 		if (selection_group)
 		{
-			return_code = cmzn_field_group_for_each_group_hierarchical(selection_group,
-				cmzn_field_group_destroy_all_elements, /*user_data*/(void *)0);
+			for (int dimension = MAXIMUM_ELEMENT_XI_DIMENSIONS; 0 < dimension; --dimension)
+			{
+				DestroySelectedElementsData data(dimension);
+				return_code = cmzn_field_group_for_each_group_hierarchical(selection_group,
+					cmzn_field_group_destroy_all_elements, &data);
+				if (data.numberDestroyed > 0)
+					break;
+			}
 			cmzn_scene_flush_tree_selections(root_scene);
 			cmzn_field_group_destroy(&selection_group);
 		}
