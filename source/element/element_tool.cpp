@@ -40,7 +40,6 @@ Interactive tool for selecting elements with mouse and other devices.
 #include "graphics/scene_app.h"
 #include "graphics/scene_viewer.h"
 #include "graphics/graphics.h"
-#include "graphics/graphics_module.h"
 #include "graphics/material.h"
 #include "graphics/scene_picker.hpp"
 #include "region/cmiss_region.h"
@@ -93,20 +92,25 @@ struct Element_tool
 	struct Time_keeper_app *time_keeper_app;
 	struct User_interface *user_interface;
 	/* user-settable flags */
-	int select_elements_enabled,select_faces_enabled,select_lines_enabled;
+	bool select_elements_enabled, select_faces_enabled, select_lines_enabled;
 	struct Computed_field *command_field;
 	/* information about picked element */
-	int picked_element_was_unselected;
+	bool pickedElementWasSelected;
 	int motion_detected;
-	struct FE_element *last_picked_element;
+	cmzn_element *lastPickedElement;
 	struct Interaction_volume *last_interaction_volume;
 	struct GT_object *rubber_band;
-	struct cmzn_scene *scene;
 
 #if defined (WX_USER_INTERFACE)
 	wxElementTool *wx_element_tool;
 	wxPoint tool_position;
 #endif /* defined (WX_USER_INTERFACE) */
+
+	void actionCommandAtElement(cmzn_element *pickedElement);
+
+	cmzn_scenepicker_id createScenepicker(cmzn_scene_id scene,
+		cmzn_sceneviewer_id sceneviewer, cmzn_scenefiltermodule_id scenefiltermodule) const;
+
 }; /* struct Element_tool */
 
 /*
@@ -192,13 +196,9 @@ Resets current edit. Called on button release or when tool deactivated.
 	element_tool = (struct Element_tool *)element_tool_void;
 	if (element_tool != 0)
 	{
-		REACCESS(FE_element)(&(element_tool->last_picked_element),
-			(struct FE_element *)NULL);
-		REACCESS(cmzn_scene)(&(element_tool->scene),
-			(struct cmzn_scene *)NULL);
-		REACCESS(Interaction_volume)(
-			&(element_tool->last_interaction_volume),
-			(struct Interaction_volume *)NULL);
+		cmzn_element_destroy(&(element_tool->lastPickedElement));
+		if (element_tool->last_interaction_volume)
+			DEACCESS(Interaction_volume)(&(element_tool->last_interaction_volume));
 	}
 	else
 	{
@@ -208,259 +208,173 @@ Resets current edit. Called on button release or when tool deactivated.
 } /* Element_tool_reset */
 #endif /* defined (OPENGL_API) */
 
+void Element_tool::actionCommandAtElement(cmzn_element *pickedElement)
+{
+	if (this->command_field && pickedElement)
+	{
+		FE_value time = 0;
+		if (this->time_keeper_app)
+			time = this->time_keeper_app->getTimeKeeper()->getTime();
+		FE_value xi[MAXIMUM_ELEMENT_XI_DIMENSIONS];
+		/* since we don't really have fields constant over an element, evaluate at its centre */
+		int element_dimension = cmzn_element_get_dimension(pickedElement);
+		int number_in_xi[MAXIMUM_ELEMENT_XI_DIMENSIONS] = { 1, 1, 1 };
+		struct FE_element_shape *element_shape;
+		get_FE_element_shape(pickedElement, &element_shape);
+		FE_value_triple *xi_points;
+		int number_of_xi_points;
+		if (FE_element_shape_get_xi_points_cell_centres(
+			element_shape, number_in_xi, &number_of_xi_points, &xi_points))
+		{
+			for (int i = 0; i < element_dimension; i++)
+				xi[i] = xi_points[0][i];
+			cmzn_fieldmodule_id field_module = cmzn_field_get_fieldmodule(this->command_field);
+			cmzn_fieldcache_id field_cache = cmzn_fieldmodule_create_fieldcache(field_module);
+			cmzn_fieldcache_set_time(field_cache, time);
+			cmzn_fieldcache_set_mesh_location(field_cache, pickedElement, element_dimension, xi);
+			char *command_string = cmzn_field_evaluate_string(this->command_field, field_cache);
+			if (command_string)
+			{
+				Execute_command_execute_string(this->execute_command, command_string);
+				DEALLOCATE(command_string);
+			}
+			cmzn_fieldcache_destroy(&field_cache);
+			cmzn_fieldmodule_destroy(&field_module);
+			DEALLOCATE(xi_points);
+		}
+	}
+}
+
+cmzn_scenepicker_id Element_tool::createScenepicker(cmzn_scene_id scene,
+	cmzn_sceneviewer_id sceneviewer, cmzn_scenefiltermodule_id scenefiltermodule) const
+{
+	if (!(scene && sceneviewer && scenefiltermodule))
+		return 0;
+	cmzn_scenepicker_id scenepicker = cmzn_scene_create_scenepicker(scene);
+	cmzn_scenefilter_id combined_filter =
+		cmzn_scenefiltermodule_create_scenefilter_operator_and(scenefiltermodule);
+	cmzn_scenefilter_id or_filter_base =
+		cmzn_scenefiltermodule_create_scenefilter_operator_or(scenefiltermodule);
+	if (this->select_elements_enabled || this->select_faces_enabled || this->select_lines_enabled)
+	{
+		cmzn_scenefilter_id element_filter = 0;
+		cmzn_scenefilter_operator_id or_filter = cmzn_scenefilter_cast_operator(
+			or_filter_base);
+		if (this->select_lines_enabled)
+		{
+			element_filter = cmzn_scenefiltermodule_create_scenefilter_field_domain_type(
+				scenefiltermodule, CMZN_FIELD_DOMAIN_TYPE_MESH1D);
+			cmzn_scenefilter_operator_append_operand(or_filter, element_filter);
+			cmzn_scenefilter_destroy(&element_filter);
+		}
+		if (this->select_faces_enabled)
+		{
+			element_filter = cmzn_scenefiltermodule_create_scenefilter_field_domain_type(
+				scenefiltermodule, CMZN_FIELD_DOMAIN_TYPE_MESH2D);
+			cmzn_scenefilter_operator_append_operand(or_filter, element_filter);
+			cmzn_scenefilter_destroy(&element_filter);
+		}
+		if (this->select_elements_enabled)
+		{
+			element_filter = cmzn_scenefiltermodule_create_scenefilter_field_domain_type(
+				scenefiltermodule, CMZN_FIELD_DOMAIN_TYPE_MESH_HIGHEST_DIMENSION);
+			cmzn_scenefilter_operator_append_operand(or_filter, element_filter);
+			cmzn_scenefilter_destroy(&element_filter);
+			element_filter = cmzn_scenefiltermodule_create_scenefilter_field_domain_type(
+				scenefiltermodule, CMZN_FIELD_DOMAIN_TYPE_MESH3D);
+			cmzn_scenefilter_operator_append_operand(or_filter, element_filter);
+			cmzn_scenefilter_destroy(&element_filter);
+		}
+		cmzn_scenefilter_operator_destroy(&or_filter);
+	}
+	else
+		cmzn_scenefilter_set_inverse(combined_filter, true);
+	cmzn_scenefilter_operator_id and_filter = cmzn_scenefilter_cast_operator(combined_filter);
+	cmzn_scenefilter_id sceneviewerFilter = cmzn_sceneviewer_get_scenefilter(sceneviewer);
+	cmzn_scenefilter_operator_append_operand(and_filter, sceneviewerFilter);
+	cmzn_scenefilter_operator_append_operand(and_filter, or_filter_base);
+	// Possible optimisation: don't pick streamlines
+	cmzn_scenepicker_set_scenefilter(scenepicker, combined_filter);
+	cmzn_scenefilter_destroy(&sceneviewerFilter);
+	cmzn_scenefilter_operator_destroy(&and_filter);
+	cmzn_scenefilter_destroy(&or_filter_base);
+	cmzn_scenefilter_destroy(&combined_filter);
+	return scenepicker;
+}
+
 #if defined (OPENGL_API)
+/**
+ * Input handler for input from devices. <device_id> is a unique address enabling
+ * the editor to handle input from more than one device at a time. The <event>
+ * describes the type of event, button numbers and key modifiers, and the volume
+ * of space affected by the interaction. Main events are button press, movement and
+ * release.
+ */
 static void Element_tool_interactive_event_handler(void *device_id,
 	struct Interactive_event *event,void *element_tool_void,
 	struct cmzn_sceneviewer *scene_viewer)
-/*******************************************************************************
-LAST MODIFIED  18 November 2005
-
-DESCRIPTION :
-Input handler for input from devices. <device_id> is a unique address enabling
-the editor to handle input from more than one device at a time. The <event>
-describes the type of event, button numbers and key modifiers, and the volume
-of space affected by the interaction. Main events are button press, movement and
-release.
-==============================================================================*/
 {
-	enum Interactive_event_type event_type;
-	FE_value time, xi[MAXIMUM_ELEMENT_XI_DIMENSIONS];
-	int clear_selection, element_dimension, i, input_modifier,
-		number_of_xi_points, shift_pressed;
-	int number_in_xi[MAXIMUM_ELEMENT_XI_DIMENSIONS];
-	struct FE_element *picked_element;
-	struct FE_element_shape *element_shape;
-	struct Element_tool *element_tool;
-	struct Interaction_volume *interaction_volume,*temp_interaction_volume;
-	struct Graphics_buffer *graphics_buffer = 0;
-	struct cmzn_scene *scene = 0;
-	FE_value_triple *xi_points;
-	cmzn_scenepicker_id scenepicker = 0;
-
-	ENTER(Element_tool_interactive_event_handler);
-	if (device_id&&event&&(element_tool=
-		(struct Element_tool *)element_tool_void) && scene_viewer)
+	Element_tool *element_tool = static_cast<Element_tool *>(element_tool_void);
+	if (device_id && event && element_tool && scene_viewer)
 	{
-		graphics_buffer = scene_viewer->graphics_buffer;
 		cmzn_region_begin_hierarchical_change(element_tool->region);
-		interaction_volume=Interactive_event_get_interaction_volume(event);
-		scene=Interactive_event_get_scene(event);
-		if (scene != 0)
+		cmzn_scene_id rootScene = cmzn_region_get_scene(element_tool->region);
+		cmzn_field_id selectionField = cmzn_scene_get_selection_field(rootScene);
+		cmzn_field_group_id rootSelectionGroup = cmzn_field_cast_group(selectionField);
+		cmzn_field_destroy(&selectionField);
+		// cache scenefilter changes to avoid notifying about temporary filters
+		cmzn_scenefiltermodule_id scenefiltermodule = cmzn_scene_get_scenefiltermodule(rootScene);
+		cmzn_scenefiltermodule_begin_change(scenefiltermodule);
+
+		Interaction_volume *interaction_volume = Interactive_event_get_interaction_volume(event);
+		cmzn_scene_id eventScene = Interactive_event_get_scene(event);
+		if (eventScene != 0)
 		{
-			scenepicker = cmzn_scene_create_scenepicker(scene);
-			event_type=Interactive_event_get_type(event);
-			input_modifier=Interactive_event_get_input_modifier(event);
-			shift_pressed=(INTERACTIVE_EVENT_MODIFIER_SHIFT & input_modifier);
-			cmzn_graphics_module *graphics_module = cmzn_scene_get_graphics_module(scene);
-			cmzn_scenefiltermodule_id filter_module = cmzn_graphics_module_get_scenefiltermodule(graphics_module);
-			cmzn_scenefiltermodule_begin_change(filter_module);
-			cmzn_scenefilter_id combined_filter = cmzn_scenefiltermodule_create_scenefilter_operator_and(
-				filter_module);
-			cmzn_scenefilter_id or_filter_base = cmzn_scenefiltermodule_create_scenefilter_operator_or(
-				filter_module);
-			if ((element_tool->select_elements_enabled)||(element_tool->select_faces_enabled)||
-				(element_tool->select_lines_enabled))
-			{
-				cmzn_scenefilter_id element_filter = 0;
-				cmzn_scenefilter_operator_id or_filter = cmzn_scenefilter_cast_operator(
-					or_filter_base);
-				if (element_tool->select_lines_enabled)
-				{
-					element_filter = cmzn_scenefiltermodule_create_scenefilter_field_domain_type(
-						filter_module, CMZN_FIELD_DOMAIN_TYPE_MESH1D);
-					cmzn_scenefilter_operator_append_operand(or_filter, element_filter);
-					cmzn_scenefilter_destroy(&element_filter);
-				}
-				if (element_tool->select_faces_enabled)
-				{
-					element_filter = cmzn_scenefiltermodule_create_scenefilter_field_domain_type(
-						filter_module, CMZN_FIELD_DOMAIN_TYPE_MESH2D);
-					cmzn_scenefilter_operator_append_operand(or_filter, element_filter);
-					cmzn_scenefilter_destroy(&element_filter);
-				}
-				if (element_tool->select_elements_enabled)
-				{
-					element_filter = cmzn_scenefiltermodule_create_scenefilter_field_domain_type(
-						filter_module, CMZN_FIELD_DOMAIN_TYPE_MESH_HIGHEST_DIMENSION);
-					cmzn_scenefilter_operator_append_operand(or_filter, element_filter);
-					cmzn_scenefilter_destroy(&element_filter);
-					element_filter = cmzn_scenefiltermodule_create_scenefilter_field_domain_type(
-						filter_module, CMZN_FIELD_DOMAIN_TYPE_MESH3D);
-					cmzn_scenefilter_operator_append_operand(or_filter, element_filter);
-					cmzn_scenefilter_destroy(&element_filter);
-				}
-				cmzn_scenefilter_operator_destroy(&or_filter);
-			}
-			else
-			{
-				cmzn_scenefilter_set_inverse(combined_filter, true);
-			}
-			cmzn_scenefilter_id sceneviewerFilter = cmzn_sceneviewer_get_scenefilter(scene_viewer);
-			cmzn_scenefilter_operator_id and_filter = cmzn_scenefilter_cast_operator(
-				combined_filter);
-			cmzn_scenefilter_operator_append_operand(and_filter, sceneviewerFilter);
-			cmzn_scenefilter_operator_append_operand(and_filter, or_filter_base);
-			cmzn_graphics_module_destroy(&graphics_module);
-			// Possible optimisation: don't pick streamlines
-			cmzn_scenepicker_set_scenefilter(scenepicker, combined_filter);
-			cmzn_scenefilter_destroy(&sceneviewerFilter);
-			cmzn_scenefilter_operator_destroy(&and_filter);
-			cmzn_scenefilter_destroy(&or_filter_base);
+			Interactive_event_type event_type = Interactive_event_get_type(event);
+			int input_modifier = Interactive_event_get_input_modifier(event);
+			bool incrementalEdit = (0 != (INTERACTIVE_EVENT_MODIFIER_SHIFT & input_modifier));
+			cmzn_scenepicker_id scenepicker = 0;
 			switch (event_type)
 			{
-			case INTERACTIVE_EVENT_BUTTON_PRESS:
+				case INTERACTIVE_EVENT_BUTTON_PRESS:
 				{
-					/* interaction only works with first mouse button */
-					if (1==Interactive_event_get_button_number(event))
+					if (Interactive_event_get_button_number(event) == 1)
 					{
-						cmzn_scenepicker_set_interaction_volume(scenepicker,
-							interaction_volume);
-						if (scenepicker != 0)
+						REACCESS(Interaction_volume)(&(element_tool->last_interaction_volume), interaction_volume);
+						element_tool->pickedElementWasSelected = false;
+						cmzn_element_destroy(&(element_tool->lastPickedElement));
+						scenepicker = element_tool->createScenepicker(eventScene, scene_viewer, scenefiltermodule);
+						cmzn_scenepicker_set_interaction_volume(scenepicker, interaction_volume);
+						element_tool->lastPickedElement = cmzn_scenepicker_get_nearest_element(scenepicker);
+						if (element_tool->lastPickedElement)
 						{
-							element_tool->picked_element_was_unselected=1;
-							picked_element = cmzn_scenepicker_get_nearest_element(scenepicker);
-							if (0 != picked_element)
-							{
-								/* Open command_field of picked_element in browser */
-								if (element_tool->command_field)
-								{
-									if (element_tool->time_keeper_app)
-									{
-										time = element_tool->time_keeper_app->getTimeKeeper()->getTime();
-									}
-									else
-									{
-										time = 0;
-									}
-									/* since we don't really have fields constant over an
-									element, evaluate at its centre */
-									element_dimension =
-										get_FE_element_dimension(picked_element);
-									for (i = 0; i < element_dimension; i++)
-									{
-										number_in_xi[i] = 1;
-									}
-									get_FE_element_shape(picked_element, &element_shape);
-									if (FE_element_shape_get_xi_points_cell_centres(
-										element_shape, number_in_xi,
-										&number_of_xi_points, &xi_points))
-									{
-										/*???debug*/printf("element_tool: xi =");
-										for (i = 0; i < element_dimension; i++)
-										{
-											xi[i] = xi_points[0][i];
-											/*???debug*/printf(" %g",xi[i]);
-										}
-										/*???debug*/printf("\n");
-										cmzn_fieldmodule_id field_module = cmzn_field_get_fieldmodule(element_tool->command_field);
-										cmzn_fieldcache_id field_cache = cmzn_fieldmodule_create_fieldcache(field_module);
-										cmzn_fieldcache_set_time(field_cache, time);
-										cmzn_fieldcache_set_mesh_location(field_cache, picked_element, element_dimension, xi);
-										char *command_string = cmzn_field_evaluate_string(element_tool->command_field, field_cache);
-										if (command_string)
-										{
-											Execute_command_execute_string(element_tool->execute_command, command_string);
-											DEALLOCATE(command_string);
-										}
-										cmzn_fieldcache_destroy(&field_cache);
-										cmzn_fieldmodule_destroy(&field_module);
-										DEALLOCATE(xi_points);
-									}
-								}
-								cmzn_field_id selection_field = cmzn_scene_get_selection_field(scene);
-								cmzn_field_group_id selection_group = cmzn_field_cast_group(selection_field);
-								cmzn_field_destroy(&selection_field);
-								if (selection_group)
-								{
-									cmzn_region_id temp_region = cmzn_scene_get_region_internal(scene);
-									cmzn_fieldmodule_id field_module = cmzn_region_get_fieldmodule(temp_region);
-									int dimension = cmzn_element_get_dimension(picked_element);
-									cmzn_mesh_id master_mesh = cmzn_fieldmodule_find_mesh_by_dimension(field_module, dimension);
-									cmzn_field_element_group_id element_group = cmzn_field_group_get_field_element_group(selection_group, master_mesh);
-									cmzn_mesh_destroy(&master_mesh);
-									if (element_group)
-									{
-										cmzn_mesh_group_id mesh_group = cmzn_field_element_group_get_mesh_group(element_group);
-										element_tool->picked_element_was_unselected =
-											!cmzn_mesh_contains_element(cmzn_mesh_group_base_cast(mesh_group), picked_element);
-										cmzn_mesh_group_destroy(&mesh_group);
-										cmzn_field_element_group_destroy(&element_group);
-									}
-									cmzn_field_group_destroy(&selection_group);
-									cmzn_fieldmodule_destroy(&field_module);
-								}
-							}
-							REACCESS(FE_element)(&(element_tool->last_picked_element),
-								picked_element);
-							/*(if ((clear_selection = !shift_pressed)
-								&&((!picked_element)||
-								(element_tool->picked_element_was_unselected)))*/
-							clear_selection = !shift_pressed;
-							if (clear_selection)
-							{
-								if (element_tool->region)
-								{
-									cmzn_scene *root_scene = cmzn_region_get_scene(element_tool->region);
-									cmzn_field_id selection_field = cmzn_scene_get_selection_field(root_scene);
-									cmzn_field_group_id root_selection_group = cmzn_field_cast_group(selection_field);
-									cmzn_field_destroy(&selection_field);
-									if (root_selection_group)
-									{
-										cmzn_field_group_clear(root_selection_group);
-										cmzn_field_group_destroy(&root_selection_group);
-									}
-									cmzn_scene_destroy(&root_scene);
-								}
-							}
-							if (picked_element)
-							{
-								cmzn_region_id temp_region = FE_region_get_cmzn_region(
-									FE_element_get_FE_region(picked_element));
-								cmzn_scene_id tempScene = cmzn_region_get_scene(temp_region);
-								REACCESS(cmzn_scene)(&(element_tool->scene),
-									tempScene);
-								cmzn_scene_destroy(&tempScene);
-								cmzn_region *sub_region = NULL;
-								cmzn_field_group_id sub_group = NULL;
-								cmzn_mesh_group_id mesh_group = 0;
-								if (element_tool->scene)
-								{
-									sub_region = cmzn_scene_get_region_internal(element_tool->scene);
-									sub_group = cmzn_scene_get_or_create_selection_group(element_tool->scene);
-									if (sub_group)
-									{
-										int dimension = cmzn_element_get_dimension(picked_element);
-										cmzn_fieldmodule_id field_module = cmzn_region_get_fieldmodule(sub_region);
-										cmzn_mesh_id temp_mesh =
-											cmzn_fieldmodule_find_mesh_by_dimension(field_module, dimension);
-										cmzn_field_element_group_id element_group = cmzn_field_group_get_field_element_group(sub_group, temp_mesh);
-										if (!element_group)
-											element_group = cmzn_field_group_create_field_element_group(sub_group, temp_mesh);
-										mesh_group = cmzn_field_element_group_get_mesh_group(element_group);
-										cmzn_field_element_group_destroy(&element_group);
-										cmzn_mesh_destroy(&temp_mesh);
-										cmzn_fieldmodule_destroy(&field_module);
-									}
-								}
-								if (mesh_group)
-								{
-									if (element_tool->picked_element_was_unselected)
-										cmzn_mesh_group_add_element(mesh_group, picked_element);
-									cmzn_mesh_group_destroy(&mesh_group);
-								}
-								if (sub_group)
-								{
-									cmzn_field_group_destroy(&sub_group);
-								}
-							}
+							if (!rootSelectionGroup)
+								rootSelectionGroup = cmzn_scene_get_or_create_selection_group(rootScene);
+							if (!incrementalEdit)
+								cmzn_field_group_clear(rootSelectionGroup);
+							cmzn_mesh_id masterMesh = cmzn_element_get_mesh(element_tool->lastPickedElement);
+							cmzn_field_element_group_id elementGroup =
+								cmzn_field_group_get_field_element_group(rootSelectionGroup, masterMesh);
+							if (!elementGroup)
+								elementGroup = cmzn_field_group_create_field_element_group(rootSelectionGroup, masterMesh);
+							cmzn_mesh_group_id meshGroup = cmzn_field_element_group_get_mesh_group(elementGroup);
+							int status = cmzn_mesh_group_add_element(meshGroup, element_tool->lastPickedElement);
+							if (CMZN_ERROR_ALREADY_EXISTS == status)
+								element_tool->pickedElementWasSelected = true;
+							cmzn_mesh_group_destroy(&meshGroup);
+							cmzn_field_element_group_destroy(&elementGroup);
+							cmzn_mesh_destroy(&masterMesh);
+
+							if (element_tool->command_field)
+								element_tool->actionCommandAtElement(element_tool->lastPickedElement);
 						}
-						element_tool->motion_detected=0;
-						REACCESS(Interaction_volume)(
-							&(element_tool->last_interaction_volume),interaction_volume);
+						else if (rootSelectionGroup && (!incrementalEdit))
+							cmzn_field_group_clear(rootSelectionGroup);
 					}
+					element_tool->motion_detected = 0;
 				} break;
-			case INTERACTIVE_EVENT_MOTION_NOTIFY:
-			case INTERACTIVE_EVENT_BUTTON_RELEASE:
+				case INTERACTIVE_EVENT_MOTION_NOTIFY:
+				case INTERACTIVE_EVENT_BUTTON_RELEASE:
 				{
 					if (element_tool->last_interaction_volume&&
 						((INTERACTIVE_EVENT_MOTION_NOTIFY==event_type) ||
@@ -470,25 +384,28 @@ release.
 						{
 							element_tool->motion_detected=1;
 						}
-						if (element_tool->last_picked_element)
+						if (element_tool->lastPickedElement)
 						{
-							/* unselect last_picked_element if not just added */
-							if ((INTERACTIVE_EVENT_BUTTON_RELEASE==event_type)&&
-								shift_pressed&&(!(element_tool->picked_element_was_unselected)))
+							/* unselect lastPickedElement if not just added */
+							if ((INTERACTIVE_EVENT_BUTTON_RELEASE == event_type) &&
+								incrementalEdit && element_tool->pickedElementWasSelected)
 							{
-								struct LIST(FE_element) *temp_element_list = CREATE(LIST(FE_element))();
-								ADD_OBJECT_TO_LIST(FE_element)(element_tool->last_picked_element, temp_element_list);
-								cmzn_scene_remove_selection_from_element_list_of_dimension(element_tool->scene,
-									temp_element_list, cmzn_element_get_dimension(element_tool->last_picked_element));
-								DESTROY(LIST(FE_element))(&temp_element_list);
+								cmzn_mesh_id masterMesh = cmzn_element_get_mesh(element_tool->lastPickedElement);
+								cmzn_field_element_group_id elementGroup =
+									cmzn_field_group_get_field_element_group(rootSelectionGroup, masterMesh);
+								cmzn_mesh_group_id meshGroup = cmzn_field_element_group_get_mesh_group(elementGroup);
+								cmzn_mesh_group_remove_element(meshGroup, element_tool->lastPickedElement);
+								cmzn_mesh_group_destroy(&meshGroup);
+								cmzn_field_element_group_destroy(&elementGroup);
+								cmzn_mesh_destroy(&masterMesh);
 							}
 						}
 						else if (element_tool->motion_detected)
 						{
 							/* rubber band select */
-							temp_interaction_volume=
+							Interaction_volume *temp_interaction_volume =
 								create_Interaction_volume_bounding_box(
-								element_tool->last_interaction_volume,interaction_volume);
+									element_tool->last_interaction_volume, interaction_volume);
 							if (temp_interaction_volume != 0)
 							{
 								if (INTERACTIVE_EVENT_MOTION_NOTIFY==event_type)
@@ -499,13 +416,12 @@ release.
 										element_tool->rubber_band=CREATE(GT_object)(
 											"element_tool_rubber_band",g_POLYLINE,
 											element_tool->rubber_band_material);
-										cmzn_glyphmodule_id glyphmodule = cmzn_graphics_module_get_glyphmodule(
-											scene->graphics_module);
+										cmzn_glyphmodule_id glyphmodule = cmzn_scene_get_glyphmodule(eventScene);
 										element_tool->rubber_band_glyph = cmzn_glyphmodule_create_glyph_static(
 											glyphmodule, element_tool->rubber_band);
 										cmzn_glyph_set_name(element_tool->rubber_band_glyph, "temp_rubber_band");
 										element_tool->rubber_band_graphics = cmzn_scene_create_graphics_points(
-											scene);
+											eventScene);
 										cmzn_graphicspointattributes_id point_attributes = cmzn_graphics_get_graphicspointattributes(
 											element_tool->rubber_band_graphics);
 										cmzn_graphicspointattributes_set_glyph(point_attributes,
@@ -522,7 +438,7 @@ release.
 								}
 								else
 								{
-									cmzn_scene_remove_graphics(scene, element_tool->rubber_band_graphics);
+									cmzn_scene_remove_graphics(eventScene, element_tool->rubber_band_graphics);
 									cmzn_graphics_destroy(&element_tool->rubber_band_graphics);
 									cmzn_glyph_destroy(&element_tool->rubber_band_glyph);
 									DEACCESS(GT_object)(&(element_tool->rubber_band));
@@ -531,51 +447,37 @@ release.
 								// remove the following line for live graphics update on picking
 								if (INTERACTIVE_EVENT_BUTTON_RELEASE==event_type)
 								{
-									cmzn_scenepicker_set_interaction_volume(scenepicker,
-										temp_interaction_volume);
-									if (element_tool->region)
-									{
-										cmzn_scene_id region_scene = cmzn_region_get_scene(
-											element_tool->region);
-										cmzn_field_group_id selection_group =
-											cmzn_scene_get_or_create_selection_group(region_scene);
-										if (selection_group)
-										{
-											cmzn_scenepicker_add_picked_elements_to_field_group(scenepicker,
-												selection_group);
-											cmzn_field_group_destroy(&selection_group);
-										}
-										cmzn_scene_destroy(&region_scene);
-									}
+									scenepicker = element_tool->createScenepicker(eventScene, scene_viewer, scenefiltermodule);
+									cmzn_scenepicker_set_interaction_volume(scenepicker, temp_interaction_volume);
+									if (!rootSelectionGroup)
+										rootSelectionGroup = cmzn_scene_get_or_create_selection_group(rootScene);
+									cmzn_scenepicker_add_picked_elements_to_field_group(scenepicker, rootSelectionGroup);
 								}
 								DEACCESS(Interaction_volume)(&temp_interaction_volume);
 							}
 						}
 						if (INTERACTIVE_EVENT_BUTTON_RELEASE==event_type)
-						{
 							Element_tool_reset((void *)element_tool);
-						}
 					}
 				} break;
-			default:
+				default:
 				{
 					display_message(ERROR_MESSAGE,
 						"Element_tool_interactive_event_handler.  Unknown event type");
 				} break;
 			}
-			cmzn_scenepicker_set_scenefilter(scenepicker, static_cast<cmzn_scenefilter_id>(0));
-			cmzn_scenefilter_destroy(&combined_filter);
-			cmzn_scenefiltermodule_end_change(filter_module);
-			cmzn_scenefiltermodule_destroy(&filter_module);
-			cmzn_scenepicker_destroy(&scenepicker);
+			if (scenepicker)
+			{
+				cmzn_scenepicker_set_scenefilter(scenepicker, static_cast<cmzn_scenefilter_id>(0));
+				cmzn_scenepicker_destroy(&scenepicker);
+			}
 		}
-		if (element_tool->region)
-		{
-			cmzn_scene *root_scene = cmzn_region_get_scene(
-				element_tool->region);
-			cmzn_scene_flush_tree_selections(root_scene);
-			cmzn_scene_destroy(&root_scene);
-		}
+		cmzn_scenefiltermodule_end_change(scenefiltermodule);
+		cmzn_scenefiltermodule_destroy(&scenefiltermodule);
+		if (rootScene)
+			cmzn_scene_flush_tree_selections(rootScene);
+		cmzn_field_group_destroy(&rootSelectionGroup);
+		cmzn_scene_destroy(&rootScene);
 		cmzn_region_end_hierarchical_change(element_tool->region);
 	}
 	else
@@ -583,8 +485,7 @@ release.
 		display_message(ERROR_MESSAGE,
 			"Element_tool_interactive_event_handler.  Invalid argument(s)");
 	}
-	LEAVE;
-} /* Element_tool_interactive_event_handler */
+}
 #endif /* defined (OPENGL_API) */
 
 #if defined (OPENGL_API)
@@ -752,7 +653,7 @@ public:
 		button_element = XRCCTRL(*this, "ButtonElement", wxCheckBox);
 		button_face = XRCCTRL(*this, "ButtonFace", wxCheckBox);
 		button_line = XRCCTRL(*this, "ButtonLine", wxCheckBox);
-		button_element->SetValue(destination_element_tool-> select_elements_enabled);
+		button_element->SetValue(destination_element_tool->select_elements_enabled);
 		button_face->SetValue(destination_element_tool->select_faces_enabled);
 		button_line->SetValue(destination_element_tool->select_lines_enabled);
 	}
@@ -922,15 +823,14 @@ Selects elements in <element_selection> in response to interactive_events.
 				cmzn_material_access(rubber_band_material);
 			element_tool->user_interface=user_interface;
 			element_tool->time_keeper_app = (struct Time_keeper_app *)NULL;
-			element_tool->scene=(struct cmzn_scene *)NULL;
 			if (time_keeper_app)
 			{
 				element_tool->time_keeper_app = ACCESS(Time_keeper_app)(time_keeper_app);
 			}
 			/* user-settable flags */
-			element_tool->select_elements_enabled=1;
-			element_tool->select_faces_enabled=1;
-			element_tool->select_lines_enabled=1;
+			element_tool->select_elements_enabled = true;
+			element_tool->select_faces_enabled = true;
+			element_tool->select_lines_enabled = true;
 			element_tool->command_field = (struct Computed_field *)NULL;
 			/* interactive_tool */
 #if defined (OPENGL_API)
@@ -957,7 +857,7 @@ Selects elements in <element_selection> in response to interactive_events.
 			ADD_OBJECT_TO_MANAGER(Interactive_tool)(
 				element_tool->interactive_tool,
 				element_tool->interactive_tool_manager);
-			element_tool->last_picked_element=(struct FE_element *)NULL;
+			element_tool->lastPickedElement=(struct FE_element *)NULL;
 			element_tool->last_interaction_volume=(struct Interaction_volume *)NULL;
 			element_tool->rubber_band=(struct GT_object *)NULL;
 			element_tool->rubber_band_glyph = 0;
@@ -997,8 +897,7 @@ structure itself.
 	ENTER(DESTROY(Element_tool));
 	if (element_tool_address&&(element_tool= *element_tool_address))
 	{
-		REACCESS(FE_element)(&(element_tool->last_picked_element),
-			(struct FE_element *)NULL);
+		cmzn_element_destroy(&(element_tool->lastPickedElement));
 		REACCESS(Interaction_volume)(&(element_tool->last_interaction_volume),
 			(struct Interaction_volume *)NULL);
 		cmzn_graphics_destroy(&element_tool->rubber_band_graphics);
@@ -1073,191 +972,71 @@ Pops up a dialog for editing settings of the Element_tool.
 	return (return_code);
 } /* Element_tool_pop_up_dialog */
 
-int Element_tool_get_select_elements_enabled(struct Element_tool *element_tool)
-/*******************************************************************************
-LAST MODIFIED : 20 July 2000
-
-DESCRIPTION :
-Returns flag controlling whether top-level & 3-D elements can be selected.
-==============================================================================*/
+bool Element_tool_get_select_elements_enabled(struct Element_tool *element_tool)
 {
-	int select_elements_enabled;
-
-	ENTER(Element_tool_get_select_elements_enabled);
 	if (element_tool)
-	{
-		select_elements_enabled=element_tool->select_elements_enabled;
-	}
-	else
-	{
-		display_message(ERROR_MESSAGE,
-			"Element_tool_get_select_elements_enabled.  Invalid argument(s)");
-		select_elements_enabled=0;
-	}
-	LEAVE;
-
-	return (select_elements_enabled);
-} /* Element_tool_get_select_elements_enabled */
+		return element_tool->select_elements_enabled;
+	display_message(ERROR_MESSAGE,
+		"Element_tool_get_select_elements_enabled.  Invalid argument(s)");
+	return false;
+}
 
 int Element_tool_set_select_elements_enabled(struct Element_tool *element_tool,
-	int select_elements_enabled)
-/*******************************************************************************
-LAST MODIFIED : 20 July 2000
-
-DESCRIPTION :
-Sets flag controlling whether top-level & 3-D elements can be selected.
-==============================================================================*/
+	bool select_elements_enabled)
 {
-	int return_code;
-
-	ENTER(Element_tool_set_select_elements_enabled);
 	if (element_tool)
 	{
-		return_code=1;
-		if (select_elements_enabled)
-		{
-			/* make sure value of flag is exactly 1 */
-			select_elements_enabled=1;
-		}
-		if (select_elements_enabled != element_tool->select_elements_enabled)
-		{
-			element_tool->select_elements_enabled=select_elements_enabled;
-		}
+		element_tool->select_elements_enabled = select_elements_enabled;
+		return 1;
 	}
-	else
-	{
-		display_message(ERROR_MESSAGE,
-			"Element_tool_set_select_elements_enabled.  Invalid argument(s)");
-		return_code=0;
-	}
-	LEAVE;
+	display_message(ERROR_MESSAGE,
+		"Element_tool_set_select_elements_enabled.  Invalid argument(s)");
+	return 0;
+}
 
-	return (return_code);
-} /* Element_tool_set_select_elements_enabled */
-
-int Element_tool_get_select_faces_enabled(struct Element_tool *element_tool)
-/*******************************************************************************
-LAST MODIFIED : 20 July 2000
-
-DESCRIPTION :
-Returns flag controlling whether face & 2-D top-level elements can be selected.
-==============================================================================*/
+bool Element_tool_get_select_faces_enabled(struct Element_tool *element_tool)
 {
-	int select_faces_enabled;
-
-	ENTER(Element_tool_get_select_faces_enabled);
 	if (element_tool)
-	{
-		select_faces_enabled=element_tool->select_faces_enabled;
-	}
-	else
-	{
-		display_message(ERROR_MESSAGE,
-			"Element_tool_get_select_faces_enabled.  Invalid argument(s)");
-		select_faces_enabled=0;
-	}
-	LEAVE;
-
-	return (select_faces_enabled);
-} /* Element_tool_get_select_faces_enabled */
+		return element_tool->select_faces_enabled;
+	display_message(ERROR_MESSAGE,
+		"Element_tool_get_select_faces_enabled.  Invalid argument(s)");
+	return false;
+}
 
 int Element_tool_set_select_faces_enabled(struct Element_tool *element_tool,
-	int select_faces_enabled)
-/*******************************************************************************
-LAST MODIFIED : 20 July 2000
-
-DESCRIPTION :
-Returns flag controlling whether face & 2-D top-level elements can be selected.
-==============================================================================*/
+	bool select_faces_enabled)
 {
-	int return_code;
-
-	ENTER(Element_tool_set_select_faces_enabled);
 	if (element_tool)
 	{
-		return_code=1;
-		if (select_faces_enabled)
-		{
-			/* make sure value of flag is exactly 1 */
-			select_faces_enabled=1;
-		}
-		if (select_faces_enabled != element_tool->select_faces_enabled)
-		{
-			element_tool->select_faces_enabled=select_faces_enabled;
-		}
+		element_tool->select_faces_enabled = select_faces_enabled;
+		return 1;
 	}
-	else
-	{
-		display_message(ERROR_MESSAGE,
-			"Element_tool_set_select_faces_enabled.  Invalid argument(s)");
-		return_code=0;
-	}
-	LEAVE;
+	display_message(ERROR_MESSAGE,
+		"Element_tool_set_select_faces_enabled.  Invalid argument(s)");
+	return 0;
+}
 
-	return (return_code);
-} /* Element_tool_set_select_faces_enabled */
-
-int Element_tool_get_select_lines_enabled(struct Element_tool *element_tool)
-/*******************************************************************************
-LAST MODIFIED : 20 July 2000
-
-DESCRIPTION :
-Returns flag controlling whether line & 1-D top-level elements can be selected.
-==============================================================================*/
+bool Element_tool_get_select_lines_enabled(struct Element_tool *element_tool)
 {
-	int select_lines_enabled;
-
-	ENTER(Element_tool_get_select_lines_enabled);
 	if (element_tool)
-	{
-		select_lines_enabled=element_tool->select_lines_enabled;
-	}
-	else
-	{
-		display_message(ERROR_MESSAGE,
-			"Element_tool_get_select_lines_enabled.  Invalid argument(s)");
-		select_lines_enabled=0;
-	}
-	LEAVE;
-
-	return (select_lines_enabled);
-} /* Element_tool_get_select_lines_enabled */
+		return element_tool->select_lines_enabled;
+	display_message(ERROR_MESSAGE,
+		"Element_tool_get_select_lines_enabled.  Invalid argument(s)");
+	return false;
+}
 
 int Element_tool_set_select_lines_enabled(struct Element_tool *element_tool,
-	int select_lines_enabled)
-/*******************************************************************************
-LAST MODIFIED : 20 July 2000
-
-DESCRIPTION :
-Returns flag controlling whether line & 1-D top-level elements can be selected.
-==============================================================================*/
+	bool select_lines_enabled)
 {
-	int return_code;
-
-	ENTER(Element_tool_set_select_lines_enabled);
 	if (element_tool)
 	{
-		return_code=1;
-		if (select_lines_enabled)
-		{
-			/* make sure value of flag is exactly 1 */
-			select_lines_enabled=1;
-		}
-		if (select_lines_enabled != element_tool->select_lines_enabled)
-		{
-			element_tool->select_lines_enabled=select_lines_enabled;
-		}
+		element_tool->select_lines_enabled=select_lines_enabled;
+		return 1;
 	}
-	else
-	{
-		display_message(ERROR_MESSAGE,
-			"Element_tool_set_select_lines_enabled.  Invalid argument(s)");
-		return_code=0;
-	}
-	LEAVE;
-
-	return (return_code);
-} /* Element_tool_set_select_lines_enabled */
+	display_message(ERROR_MESSAGE,
+		"Element_tool_set_select_lines_enabled.  Invalid argument(s)");
+	return 0;
+}
 
 struct Computed_field *Element_tool_get_command_field(
 struct Element_tool *element_tool)

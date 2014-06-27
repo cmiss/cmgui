@@ -7091,10 +7091,9 @@ Executes a GFX ELEMENT_TOOL command.
 		/* initialize defaults */
 		if (NULL != (element_tool = command_data->element_tool))
 		{
-			select_elements_enabled=
-				Element_tool_get_select_elements_enabled(element_tool);
-			select_faces_enabled=Element_tool_get_select_faces_enabled(element_tool);
-			select_lines_enabled=Element_tool_get_select_lines_enabled(element_tool);
+			select_elements_enabled = Element_tool_get_select_elements_enabled(element_tool);
+			select_faces_enabled = Element_tool_get_select_faces_enabled(element_tool);
+			select_lines_enabled = Element_tool_get_select_lines_enabled(element_tool);
 			command_field=Element_tool_get_command_field(element_tool);
 		}
 		else
@@ -7135,12 +7134,9 @@ Executes a GFX ELEMENT_TOOL command.
 		{
 			if (element_tool)
 			{
-				Element_tool_set_select_elements_enabled(element_tool,
-					select_elements_enabled);
-				Element_tool_set_select_faces_enabled(element_tool,
-					select_faces_enabled);
-				Element_tool_set_select_lines_enabled(element_tool,
-					select_lines_enabled);
+				Element_tool_set_select_elements_enabled(element_tool, 0 != select_elements_enabled);
+				Element_tool_set_select_faces_enabled(element_tool, 0 != select_faces_enabled);
+				Element_tool_set_select_lines_enabled(element_tool, 0 != select_lines_enabled);
 				Element_tool_set_command_field(element_tool,command_field);
 				if (dialog_string == dialog_strings[0])
 				{

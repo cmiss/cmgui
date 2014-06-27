@@ -67,56 +67,38 @@ DESCRIPTION :
 Pops up a dialog for editing settings of the Element_tool.
 ==============================================================================*/
 
-int Element_tool_get_select_elements_enabled(struct Element_tool *element_tool);
-/*******************************************************************************
-LAST MODIFIED : 20 July 2000
+/**
+ * Returns flag controlling whether top-level & 3-D elements can be selected.
+ */
+bool Element_tool_get_select_elements_enabled(struct Element_tool *element_tool);
 
-DESCRIPTION :
-Returns flag controlling whether top-level & 3-D elements can be selected.
-==============================================================================*/
-
+/**
+ * Sets flag controlling whether top-level & 3-D elements can be selected.
+ */
 int Element_tool_set_select_elements_enabled(struct Element_tool *element_tool,
-	int select_elements_enabled);
-/*******************************************************************************
-LAST MODIFIED : 20 July 2000
+	bool select_elements_enabled);
 
-DESCRIPTION :
-Sets flag controlling whether top-level & 3-D elements can be selected.
-==============================================================================*/
+/**
+ * Returns flag controlling whether face & 2-D top-level elements can be selected.
+ */
+bool Element_tool_get_select_faces_enabled(struct Element_tool *element_tool);
 
-int Element_tool_get_select_faces_enabled(struct Element_tool *element_tool);
-/*******************************************************************************
-LAST MODIFIED : 20 July 2000
-
-DESCRIPTION :
-Returns flag controlling whether face & 2-D top-level elements can be selected.
-==============================================================================*/
-
+/**
+ * Sets flag controlling whether face & 2-D top-level elements can be selected.
+ */
 int Element_tool_set_select_faces_enabled(struct Element_tool *element_tool,
-	int select_faces_enabled);
-/*******************************************************************************
-LAST MODIFIED : 20 July 2000
+	bool select_faces_enabled);
 
-DESCRIPTION :
-Returns flag controlling whether face & 2-D top-level elements can be selected.
-==============================================================================*/
+/**
+ * Returns flag controlling whether line & 1-D top-level elements can be selected.
+ */
+bool Element_tool_get_select_lines_enabled(struct Element_tool *element_tool);
 
-int Element_tool_get_select_lines_enabled(struct Element_tool *element_tool);
-/*******************************************************************************
-LAST MODIFIED : 20 July 2000
-
-DESCRIPTION :
-Returns flag controlling whether line & 1-D top-level elements can be selected.
-==============================================================================*/
-
+/**
+ * Sets flag controlling whether line & 1-D top-level elements can be selected.
+ */
 int Element_tool_set_select_lines_enabled(struct Element_tool *element_tool,
-	int select_lines_enabled);
-/*******************************************************************************
-LAST MODIFIED : 20 July 2000
-
-DESCRIPTION :
-Returns flag controlling whether line & 1-D top-level elements can be selected.
-==============================================================================*/
+	bool select_lines_enabled);
 
 struct Computed_field *Element_tool_get_command_field(
 	struct Element_tool *element_tool);
