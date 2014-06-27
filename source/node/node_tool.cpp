@@ -1506,6 +1506,7 @@ release.
 								cmzn_field_destroy(&selection_field);
 								if (root_selection_group)
 									cmzn_field_group_clear(root_selection_group);
+								cmzn_field_group_destroy(&root_selection_group);
 								cmzn_scene_destroy(&root_scene);
 							}
 						}
