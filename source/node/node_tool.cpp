@@ -1812,6 +1812,7 @@ release.
 							{
 								if (INTERACTIVE_EVENT_MOTION_NOTIFY==event_type)
 								{
+									cmzn_scene_begin_change(scene);
 									if (!node_tool->rubber_band)
 									{
 										/* create rubber_band object and put in scene */
@@ -1825,6 +1826,8 @@ release.
 										cmzn_glyph_set_name(node_tool->rubber_band_glyph, "temp_rubber_band");
 										node_tool->rubber_band_graphics = cmzn_scene_create_graphics_points(
 											scene);
+										cmzn_graphics_set_scenecoordinatesystem(node_tool->rubber_band_graphics,
+											CMZN_SCENECOORDINATESYSTEM_WORLD);
 										cmzn_graphicspointattributes_id point_attributes = cmzn_graphics_get_graphicspointattributes(
 											node_tool->rubber_band_graphics);
 										cmzn_graphicspointattributes_set_glyph(point_attributes,
@@ -1838,6 +1841,7 @@ release.
 									Interaction_volume_make_polyline_extents(
 										temp_interaction_volume,node_tool->rubber_band);
 									cmzn_graphics_flag_glyph_has_changed(node_tool->rubber_band_graphics);
+									cmzn_scene_end_change(scene);
 								}
 								else
 								{

@@ -410,6 +410,7 @@ static void Element_tool_interactive_event_handler(void *device_id,
 							{
 								if (INTERACTIVE_EVENT_MOTION_NOTIFY==event_type)
 								{
+									cmzn_scene_begin_change(eventScene);
 									if (!element_tool->rubber_band)
 									{
 										/* create rubber_band object and put in scene */
@@ -422,6 +423,8 @@ static void Element_tool_interactive_event_handler(void *device_id,
 										cmzn_glyph_set_name(element_tool->rubber_band_glyph, "temp_rubber_band");
 										element_tool->rubber_band_graphics = cmzn_scene_create_graphics_points(
 											eventScene);
+										cmzn_graphics_set_scenecoordinatesystem(element_tool->rubber_band_graphics,
+											CMZN_SCENECOORDINATESYSTEM_WORLD);
 										cmzn_graphicspointattributes_id point_attributes = cmzn_graphics_get_graphicspointattributes(
 											element_tool->rubber_band_graphics);
 										cmzn_graphicspointattributes_set_glyph(point_attributes,
@@ -435,6 +438,7 @@ static void Element_tool_interactive_event_handler(void *device_id,
 									Interaction_volume_make_polyline_extents(
 										temp_interaction_volume,element_tool->rubber_band);
 									cmzn_graphics_flag_glyph_has_changed(element_tool->rubber_band_graphics);
+									cmzn_scene_end_change(eventScene);
 								}
 								else
 								{
