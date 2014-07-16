@@ -712,7 +712,6 @@ already) and allows its contents to be modified.
 	struct Computed_field *source_field;
 	Computed_field_modify_data *field_modify;
 	struct Option_table *option_table;
-	struct Set_Computed_field_conditional_data set_source_field_data;
 
 	ENTER(define_Computed_field_type_is_defined);
 	USE_PARAMETER(computed_field_logical_operators_package_void);
@@ -736,14 +735,12 @@ already) and allows its contents to be modified.
 			}
 			option_table = CREATE(Option_table)();
 			/* field */
-			set_source_field_data.computed_field_manager=
-				field_modify->get_field_manager();
-			set_source_field_data.conditional_function=Computed_field_has_numerical_components;
-			set_source_field_data.conditional_function_user_data=(void *)NULL;
+			Set_Computed_field_conditional_data set_source_field_data = {
+				(MANAGER_CONDITIONAL_FUNCTION(Computed_field) *)0, (void *)0, field_modify->get_field_manager() };
 			Option_table_add_entry(option_table,"field",&source_field,
 				&set_source_field_data,set_Computed_field_conditional);
 			return_code=Option_table_multi_parse(option_table,state);
-			/* no erris_defineds,not asking for help */
+			/* no errors, not asking for help */
 			if (return_code)
 			{
 				return_code = field_modify->update_field_and_deaccess(
