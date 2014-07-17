@@ -312,7 +312,7 @@ int set_cmzn_region_or_group(struct Parse_state *state,
 {
 	cmzn_region_id *region_address = reinterpret_cast<cmzn_region_id*>(region_address_void);
 	cmzn_field_group_id *group_address = reinterpret_cast<cmzn_field_group_id*>(group_address_void);
-	if (!(state && region_address && *region_address && group_address && !*group_address))
+	if (!(state && region_address && *region_address && group_address))
 		return 0;
 	const char *current_token = state->current_token;
 	int return_code = 1;
@@ -328,15 +328,19 @@ int set_cmzn_region_or_group(struct Parse_state *state,
 	}
 	else
 	{
+		cmzn_region_id root_region = cmzn_region_get_root(*region_address);
 		char *region_path = 0;
 		char *field_name = 0;
 		cmzn_region_id output_region = 0;
-		if (cmzn_region_get_partial_region_path(*region_address, current_token,
+		if (cmzn_region_get_partial_region_path(root_region, current_token,
 			&output_region, &region_path, &field_name) && output_region)
 		{
 			cmzn_region_access(output_region);
 			cmzn_region_destroy(region_address);
 			*region_address = output_region;
+			// release handle to old group later in case reusing
+			cmzn_field_group_id old_group = *group_address;
+			*group_address = 0;
 			if (field_name)
 			{
 				cmzn_field *field = FIND_BY_IDENTIFIER_IN_MANAGER(Computed_field,name)(
@@ -347,6 +351,7 @@ int set_cmzn_region_or_group(struct Parse_state *state,
 					return_code = 0;
 				}
 			}
+			cmzn_field_group_destroy(&old_group);
 			if (return_code)
 			{
 				shift_Parse_state(state, 1);
@@ -363,6 +368,7 @@ int set_cmzn_region_or_group(struct Parse_state *state,
 		}
 		DEALLOCATE(region_path);
 		DEALLOCATE(field_name);
+		cmzn_region_destroy(&root_region);
 	}
 	return return_code;
 }

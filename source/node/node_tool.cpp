@@ -16,10 +16,14 @@ Scene input.
 #endif /* defined (1) */
 
 #include <math.h>
+#include "zinc/element.h"
 #include "zinc/fieldcache.h"
+#include "zinc/fieldfiniteelement.h"
+#include "zinc/fieldgroup.h"
 #include "zinc/glyph.h"
 #include "zinc/graphics.h"
 #include "zinc/material.h"
+#include "zinc/node.h"
 #include "zinc/scene.h"
 #include "zinc/scenefilter.h"
 #include "zinc/scenepicker.h"
@@ -106,7 +110,6 @@ changes in node position and derivatives etc.
 	struct cmzn_region *root_region;
 	/* The region we are working in */
 	struct cmzn_region *region;
-	cmzn_selectionnotifier_id selectionnotifier;
 	cmzn_field_group_id group_field;
 	/* needed for destroy button */
 	struct Graphical_material *rubber_band_material;
@@ -141,22 +144,33 @@ changes in node position and derivatives etc.
 	struct cmzn_graphics *graphics;
 	struct Interaction_volume *last_interaction_volume;
 	struct GT_object *rubber_band;
-	struct FE_field *FE_coordinate_field;
-	/* maintain a template node for creating new nodes */
-	/* the dimension of the elements being created - user settable */
-	int element_dimension;
-	/* maintain template element for creating new elements */
-	struct FE_element *template_element;
-	/* indicates whether elements are created in response to node selections */
-	bool element_create_enabled;
-	/* the element being created */
-	struct FE_element *element;
-	/* number of nodes that have been set in the element being created */
-	int number_of_clicked_nodes;
+
+	bool createElementEnabled;
+	int createElementDimension;
+	cmzn_elementtemplate_id elementtemplate;
+	int createElementNodesCount; // number of nodes that have been set in element template
 #if defined (WX_USER_INTERFACE)
 	wxNodeTool *wx_node_tool;
 	 wxPoint tool_position;
 #endif /* defined (WX_USER_INTERFACE) */
+
+	bool isCreateElementEnabled() const
+	{
+		return this->createElementEnabled;
+	}
+	void setCreateElementEnabled(bool createElementEnabledIn);
+
+	int getCreateElementDimension() const
+	{
+		return this->createElementDimension;
+	}
+	int setCreateElementDimension(int createElementDimensionIn);
+
+	bool beginCreateElement();
+
+	void endCreateElement();
+
+	void addCreateElementNode(cmzn_node_id node);
 }; /* struct Node_tool */
 
 struct FE_node_edit_information
@@ -219,14 +233,6 @@ Module functions
 ----------------
 */
 
-/* Prototype */
-static int Node_tool_end_element_creation(
-	 struct Node_tool *node_tool);
-
-#if defined (WX_USER_INTERFACE)
-int Node_tool_set_element_dimension(
-	 struct Node_tool *node_tool,int element_dimension);
-#endif /*defined (WX_USER_INTERFACE)*/
 #if defined (WX_USER_INTERFACE)
 static int Node_tool_refresh_element_dimension_text(
 	 struct Node_tool *node_tool);
@@ -1513,9 +1519,10 @@ release.
 						if (picked_node)
 						{
 							Node_tool_set_picked_node(node_tool, picked_node);
-						}
-						if (picked_node)
+							if (node_tool->createElementEnabled)
+								node_tool->addCreateElementNode(picked_node);
 							cmzn_node_destroy(&picked_node);
+						}
 						if (nearest_graphics)
 							cmzn_graphics_destroy(&nearest_graphics);
 						if (nearest_node_graphics)
@@ -1983,6 +1990,64 @@ for passing to an Interactive_toolbar.
 	return (return_code);
 } /* Node_tool_bring_up_interactive_tool_dialog */
 
+namespace {
+
+/** @return  Handle to field_finite_element if it is the sole finite element field
+ * on which supplied field is based, otherwise 0.
+ * @param multiple  Set to true and abandon if depends on multiple finite element fields. Returned field is 0 once multiple is set */
+cmzn_field_finite_element_id cmzn_field_get_source_field_finite_element(cmzn_field_id field, bool &multiple)
+{
+	int numSourceFields = cmzn_field_get_number_of_source_fields(field);
+	if (0 == numSourceFields)
+		return cmzn_field_cast_finite_element(field);
+	cmzn_field_finite_element_id field_finite_element = 0;
+	for (int i = 1; (!multiple) && (i <= numSourceFields); ++i)
+	{
+		cmzn_field_id sourceField = cmzn_field_get_source_field(field, i);
+		cmzn_field_finite_element_id tmp = cmzn_field_get_source_field_finite_element(sourceField, multiple);
+		if (tmp)
+		{
+			if (field_finite_element)
+			{
+				if (tmp != field_finite_element)
+				{
+					multiple = true;
+					cmzn_field_finite_element_destroy(&field_finite_element);
+				}
+				cmzn_field_finite_element_destroy(&tmp);
+			}
+			else
+				field_finite_element = tmp;
+		}
+		cmzn_field_destroy(&sourceField);
+	}
+	return field_finite_element;
+}
+
+int cmzn_field_is_coordinate_ready(cmzn_field_id field, void *dummy_void)
+{
+	if (cmzn_field_get_value_type(field) != CMZN_FIELD_VALUE_TYPE_REAL)
+		return 0;
+	const int numComponents = cmzn_field_get_number_of_components(field);
+	if (numComponents > 3)
+		return 0;
+	bool multiple = false;
+	cmzn_field_finite_element_id field_finite_element = cmzn_field_get_source_field_finite_element(field, multiple);
+	if (field_finite_element)
+	{
+		int result = 1;
+		const int numComponentsSource = cmzn_field_get_number_of_components(cmzn_field_finite_element_base_cast(field_finite_element));
+		if ((cmzn_field_get_value_type(cmzn_field_finite_element_base_cast(field_finite_element)) != CMZN_FIELD_VALUE_TYPE_REAL) ||
+			(numComponents < numComponentsSource))
+			result = 0;
+		cmzn_field_finite_element_destroy(&field_finite_element);
+		return result;
+	}
+	return 0;
+}
+
+} // anonymous namespace
+
 #if defined (WX_USER_INTERFACE)
 class wxNodeTool : public wxPanel
 {
@@ -2079,8 +2144,8 @@ public:
 			 new_element_nodes_listbox->Show();
 			 new_element_statictext->Show();
 			 dimension_statictext->Show();
-			 create_elements_checkbox->SetValue(node_tool->element_create_enabled);
-			 sprintf(temp_string,"%d",node_tool->element_dimension);
+			 create_elements_checkbox->SetValue(node_tool->isCreateElementEnabled());
+			 sprintf(temp_string,"%d",node_tool->createElementDimension);
 			 dimension_textctrl->ChangeValue(wxString::FromAscii(temp_string));
 			 first_element_staticbox->Show();
 			 second_element_staticbox->Show();
@@ -2112,7 +2177,7 @@ public:
 		  new Managed_object_chooser<Computed_field, MANAGER_CLASS(Computed_field)>
 		  (coordinate_field_chooser_panel, node_tool->coordinate_field,
 			  cmzn_region_get_Computed_field_manager(node_tool->region),
-			  Computed_field_has_up_to_3_numerical_components,
+			  cmzn_field_is_coordinate_ready,
 			  (void *)NULL, node_tool->user_interface);
 	  Callback_base<Computed_field* > *coordinate_field_callback =
 		  new Callback_member_callback< Computed_field*,
@@ -2395,59 +2460,41 @@ Set the selected option in the Coordinate Field chooser.
 void OnClearButtonpressed(wxCommandEvent &event)
 {
 	USE_PARAMETER(event);
-	 if (node_tool)
-	 {
-			Node_tool_end_element_creation(node_tool);
-	 }
+	if (this->node_tool)
+		node_tool->endCreateElement();
 	else
-	{
-		display_message(ERROR_MESSAGE,
-			"Element_creator_abort_creation_CB.  Invalid argument(s)");
-	}
+		display_message(ERROR_MESSAGE, "Element_creator_abort_creation_CB.  Invalid argument(s)");
 }
 
 void OnCreateElementsPressed(wxCommandEvent &event)
- {
+{
 	USE_PARAMETER(event);
-		create_elements_checkbox = XRCCTRL(*this, "CreateElementsCheckBox", wxCheckBox );
-		if (node_tool)
-		{
-			Node_tool_set_element_create_enabled(node_tool,
-				create_elements_checkbox->IsChecked());
-		}
-		else
-		{
-		display_message(ERROR_MESSAGE,
-			 "Element_creator_create_button_CB.  Invalid argument(s)");
-		}
- }
+	create_elements_checkbox = XRCCTRL(*this, "CreateElementsCheckBox", wxCheckBox);
+	if (this->node_tool && create_elements_checkbox)
+		this->node_tool->setCreateElementEnabled(create_elements_checkbox->IsChecked());
+	else
+		display_message(ERROR_MESSAGE, "wxNodeTool::OnCreateElementsPressed.  Invalid argument(s)");
+}
 
 void OnDimensionEntered(wxCommandEvent &event)
 {
-	int element_dimension;
-
 	USE_PARAMETER(event);
 	dimension_textctrl = XRCCTRL(*this, "DimensionTextCtrl", wxTextCtrl);
-	if (node_tool)
+	if (node_tool && dimension_textctrl)
 	{
 		wxString wxTextEntry = dimension_textctrl->GetValue();
 		const char *value_string = wxTextEntry.mb_str(wxConvUTF8);
 		if (value_string != 0)
 		{
-			if (1==sscanf(value_string,"%d",&element_dimension))
-			{
-				Node_tool_set_element_dimension(node_tool,
-					element_dimension);
-			}
+			int createElementDimension;
+			if (1 == sscanf(value_string, "%d", &createElementDimension))
+				node_tool->setCreateElementDimension(createElementDimension);
 		}
 		/* always restore element_dimension_text to actual value stored */
 		Node_tool_refresh_element_dimension_text(node_tool);
 	}
 	else
-	{
-		display_message(ERROR_MESSAGE,
-			"wxNodeTool::OnDimensionEntered.  Invalid argument(s)");
-	}
+		display_message(ERROR_MESSAGE, "wxNodeTool::OnDimensionEntered.  Invalid argument(s)");
 }
 
 void NodeToolInterfaceRenew_element_xi_field(Node_tool *node_tool)
@@ -2486,11 +2533,9 @@ void NodeToolInterfaceRenew(Node_tool *destination_node_tool)
 	NodeToolInterfaceRenew_element_xi_field(destination_node_tool);
 	computed_field_chooser->set_object(destination_node_tool->coordinate_field);
 	if (destination_node_tool->region != NULL)
-	{
 		wx_Node_tool_set_region(destination_node_tool->region);
-	}
-	Node_tool_set_element_dimension(destination_node_tool,destination_node_tool->element_dimension);
-	create_elements_checkbox->SetValue(destination_node_tool->element_create_enabled);
+	Node_tool_refresh_element_dimension_text(destination_node_tool);
+	create_elements_checkbox->SetValue(destination_node_tool->isCreateElementEnabled());
 }
 
 void NodeCommandFieldChecked(wxCommandEvent &event)
@@ -2699,8 +2744,8 @@ Copies the state of one node tool to another.
 			destination_node_tool->constrain_to_surface= source_node_tool->constrain_to_surface;
 			destination_node_tool->command_field = source_node_tool->command_field;
 			destination_node_tool->element_xi_field = source_node_tool->element_xi_field;
-			destination_node_tool->element_create_enabled = source_node_tool->element_create_enabled;
-			destination_node_tool->element_dimension = source_node_tool->element_dimension;
+			destination_node_tool->createElementEnabled = source_node_tool->createElementEnabled;
+			destination_node_tool->createElementDimension = source_node_tool->createElementDimension;
 			Node_tool_set_region(destination_node_tool, source_node_tool->region, source_node_tool->group_field);
 #if defined (WX_USER_INTERFACE)
 			if (destination_node_tool->wx_node_tool != (wxNodeTool *) NULL)
@@ -2727,273 +2772,79 @@ Copies the state of one node tool to another.
 	return (return_code);
 } /* Node_tool_copy_function */
 
-static int Node_tool_add_element(struct Node_tool *node_tool)
-/*******************************************************************************
-LAST MODIFIED : 11 April 2007
-
-DESCRIPTION :
-Adds the just created element to the fe_region, adding faces as necessary.
-==============================================================================*/
+/** add a picked node to the end of the list of nodes in the element
+ * and create the element if complete */
+void Node_tool::addCreateElementNode(cmzn_node_id node)
 {
-	int return_code;
-
-	ENTER(node_tool_add_element);
-	if (node_tool && node_tool->region && node_tool->element)
+	if (!this->elementtemplate)
 	{
-		FE_region *fe_region = cmzn_region_get_FE_region(node_tool->region);
-		cmzn_fieldmodule_id field_module = cmzn_region_get_fieldmodule(node_tool->region);
-		cmzn_fieldmodule_begin_change(field_module);
-
-		FE_region_begin_define_faces(fe_region, /*all dimensions*/-1);
-		return_code = FE_region_merge_FE_element_and_faces_and_nodes(
-			fe_region, node_tool->element);
-		FE_region_end_define_faces(fe_region);
-		if (return_code && node_tool->group_field)
-		{
-			// add element to group
-			const int dimension = cmzn_element_get_dimension(node_tool->element);
-			cmzn_mesh_id master_mesh = cmzn_fieldmodule_find_mesh_by_dimension(field_module, dimension);
-			cmzn_field_element_group_id modify_element_group =
-				cmzn_field_group_get_field_element_group(node_tool->group_field, master_mesh);
-			if (!modify_element_group)
-			{
-				modify_element_group = cmzn_field_group_create_field_element_group(node_tool->group_field, master_mesh);
-			}
-			cmzn_mesh_group_id modify_mesh_group = cmzn_field_element_group_get_mesh_group(modify_element_group);
-			cmzn_mesh_group_add_element(modify_mesh_group, node_tool->element);
-			cmzn_mesh_group_destroy(&modify_mesh_group);
-			cmzn_field_element_group_destroy(&modify_element_group);
-			cmzn_mesh_destroy(&master_mesh);
-
-			if (1 < dimension)
-			{
-				// add faces to group
-				cmzn_mesh_id master_face_mesh = cmzn_fieldmodule_find_mesh_by_dimension(field_module, dimension - 1);
-				cmzn_field_element_group_id face_element_group = cmzn_field_group_get_field_element_group(node_tool->group_field, master_face_mesh);
-				if (!face_element_group)
-				{
-					face_element_group = cmzn_field_group_create_field_element_group(node_tool->group_field, master_face_mesh);
-				}
-				cmzn_mesh_group_id face_mesh_group = cmzn_field_element_group_get_mesh_group(face_element_group);
-				cmzn_mesh_group_add_element_faces(face_mesh_group, node_tool->element);
-				cmzn_mesh_group_destroy(&face_mesh_group);
-				cmzn_field_element_group_destroy(&face_element_group);
-				cmzn_mesh_destroy(&master_face_mesh);
-
-				if (2 < dimension)
-				{
-					// add lines to group
-					cmzn_mesh_id master_line_mesh = cmzn_fieldmodule_find_mesh_by_dimension(field_module, dimension - 2);
-					cmzn_field_element_group_id line_element_group = cmzn_field_group_get_field_element_group(node_tool->group_field, master_line_mesh);
-					if (!line_element_group)
-					{
-						line_element_group = cmzn_field_group_create_field_element_group(node_tool->group_field, master_line_mesh);
-					}
-					cmzn_mesh_group_id line_mesh_group = cmzn_field_element_group_get_mesh_group(line_element_group);
-					int number_of_faces = 0;
-					get_FE_element_number_of_faces(node_tool->element, &number_of_faces);
-					FE_element *face_element = 0;
-					for (int i = 0; i < number_of_faces; ++i)
-					{
-						get_FE_element_face(node_tool->element, i, &face_element);
-						cmzn_mesh_group_add_element_faces(line_mesh_group, face_element);
-					}
-					cmzn_mesh_group_destroy(&line_mesh_group);
-					cmzn_field_element_group_destroy(&line_element_group);
-					cmzn_mesh_destroy(&master_line_mesh);
-				}
-			}
-		}
-		cmzn_fieldmodule_end_change(field_module);
-		cmzn_fieldmodule_destroy(&field_module);
-		Node_tool_end_element_creation(node_tool);
+		if (!this->beginCreateElement())
+			return;
 	}
-	else
-	{
-		display_message(ERROR_MESSAGE,
-			"node_tool_add_element.  Invalid argument(s)");
-		return_code = 0;
-	}
-	LEAVE;
-
-	return (return_code);
-}
-
-/**
- * Active while creating elements. Add selected node to list of nodes in element
- * and create element when list is complete.
- */
-static void cmzn_selectionevent_to_Node_tool(
-	cmzn_selectionevent_id event, void *node_tool_void)
-{
-	struct Node_tool *node_tool = static_cast<struct Node_tool *>(node_tool_void);
-	if (event && node_tool && (CMZN_FIELD_DOMAIN_TYPE_NODES == node_tool->domain_type))
-	{
-		cmzn_scene *scene = cmzn_region_get_scene(node_tool->region);
-		cmzn_field_id selection_field = cmzn_scene_get_selection_field(scene);
-		cmzn_field_group_id selection_group = cmzn_field_cast_group(selection_field);
-		cmzn_field_destroy(&selection_field);
-		cmzn_selectionevent_change_flags changeFlags = cmzn_selectionevent_get_change_flags(event);
-		if (changeFlags & CMZN_SELECTIONEVENT_CHANGE_FLAG_ADD)
-		{
-			cmzn_fieldmodule_id field_module = cmzn_region_get_fieldmodule(node_tool->region);
-			cmzn_field_node_group_id node_group = 0;
-			cmzn_nodeset_id master_nodeset = cmzn_fieldmodule_find_nodeset_by_field_domain_type(
-				field_module, node_tool->domain_type);
-			cmzn_fieldmodule_destroy(&field_module);
-			node_group = cmzn_field_group_get_field_node_group(selection_group, master_nodeset);
-			cmzn_nodeset_destroy(&master_nodeset);
-			cmzn_node_id node = 0;
-			if (node_group)
-			{
-				cmzn_nodeset_group_id nodeset_group = cmzn_field_node_group_get_nodeset_group(node_group);
-				/* make sure there is only one node selected in group */
-				if (1 == cmzn_nodeset_get_size(cmzn_nodeset_group_base_cast(nodeset_group)))
-				{
-					cmzn_nodeiterator_id iterator = cmzn_nodeset_create_nodeiterator(
-						cmzn_nodeset_group_base_cast(nodeset_group));
-					node = cmzn_nodeiterator_next(iterator);
-					cmzn_nodeiterator_destroy(&iterator);
-				}
-				cmzn_nodeset_group_destroy(&nodeset_group);
-				cmzn_field_node_group_destroy(&node_group);
-			}
-			if (node)
-			{
-				if (!node_tool->element)
-				{
-					/* get next unused element identifier from fe_region */
-					struct CM_element_information element_identifier;
-					element_identifier.type = CM_ELEMENT;
-					element_identifier.number = FE_region_get_next_FE_element_identifier(
-						cmzn_region_get_FE_region(node_tool->region), node_tool->element_dimension, 1);
-					struct LIST(FE_field) *fe_field_list;
-					if (node_tool->coordinate_field && (fe_field_list	=
-						Computed_field_get_defining_FE_field_list(node_tool->coordinate_field)))
-					{
-						struct FE_field *fe_field = 0;
-						if ((1 == NUMBER_IN_LIST(FE_field)(fe_field_list)) && (fe_field
-								= FIRST_OBJECT_IN_LIST_THAT(FE_field)(
-										(LIST_CONDITIONAL_FUNCTION(FE_field) *) NULL,
-										(void *) NULL, fe_field_list)) && (3
-												>= get_FE_field_number_of_components(fe_field))
-												&& (FE_VALUE_VALUE == get_FE_field_value_type(fe_field)))
-						{
-							if (node_tool->template_element
-									|| (((node_tool->template_element
-											= create_FE_element_with_line_shape(
-													/*identifier*/1, cmzn_region_get_FE_region(node_tool->region),
-													node_tool->element_dimension))
-													&& FE_element_define_tensor_product_basis(
-															node_tool->template_element,
-															node_tool->element_dimension,/*basis_type*/
-															LINEAR_LAGRANGE, fe_field))
-															&& ACCESS(FE_element)(node_tool->template_element)))
-							{
-								node_tool->element = CREATE(FE_element)(
-										&element_identifier, (struct FE_element_shape *) NULL,
-										(struct FE_region *) NULL, node_tool->template_element);
-								if (node_tool->element != 0)
-								{
-									ACCESS(FE_element)(node_tool->element);
-									node_tool->number_of_clicked_nodes = 0;
-								}
-								else
-								{
-									display_message(ERROR_MESSAGE,
-											"Node_tool_Computed_field_change.  Could not create element");
-								}
-							}
-						}
-					}
-					else
-					{
-						display_message(ERROR_MESSAGE,
-								"Node_tool_Computed_field_change.  Could not create template element");
-					}
-				}
-				if (node_tool->element)
-				{
-					/* When we make more than linear elements we will need
-						to check that the derivatives exist and are the correct ones */
-					if (set_FE_element_node(node_tool->element,
-							node_tool->number_of_clicked_nodes, node))
-					{
+	if (CMZN_OK != cmzn_elementtemplate_set_node(this->elementtemplate,
+			this->createElementNodesCount + 1, node))
+		return;
+	++this->createElementNodesCount;
 #if defined (WX_USER_INTERFACE)
-						if (node_tool->wx_node_tool != NULL)
-						{
-							char temp_string[50];
-							sprintf(temp_string, "%d. Node %d",
-									node_tool->number_of_clicked_nodes + 1,
-									get_FE_node_identifier(node));
-							wxString string(temp_string, wxConvUTF8);
-							wxListBox *new_element_nodes_list_box =
-								XRCCTRL(*node_tool->wx_node_tool, "NewElementNodesListBox", wxListBox);
-							int number = new_element_nodes_list_box->GetCount();
-							if (number == 0)
-							{
-								wxString blank;
-								new_element_nodes_list_box->InsertItems(1, &blank, number);
-							}
-							number = new_element_nodes_list_box->GetCount();
-							new_element_nodes_list_box->InsertItems(1, &string, number - 1);
-						}
-#endif
-						node_tool->number_of_clicked_nodes++;
-						int number_of_nodes;
-						if (get_FE_element_number_of_nodes(node_tool->element, &number_of_nodes) &&
-							(node_tool->number_of_clicked_nodes == number_of_nodes))
-						{
-							Node_tool_add_element(node_tool);
-						}
-					}
-					else
-					{
-						display_message(ERROR_MESSAGE,
-								"Node_tool_Computed_field_change.  Could not set node");
-					}
-				}
-				else
-				{
-					display_message(ERROR_MESSAGE,
-							"Node_tool_Computed_field_change.  Could not create element");
-				}
-				cmzn_node_destroy(&node);
-			}
-		}
-		cmzn_scene_destroy(&scene);
-		cmzn_field_group_destroy(&selection_group);
-	}
-}
-
-bool Node_tool_get_element_create_enabled(struct Node_tool *node_tool)
-{
-	if (node_tool)
-		return node_tool->element_create_enabled;
-	return false;
-}
-
-void Node_tool_set_element_create_enabled(struct Node_tool *node_tool,
-	bool element_create_enabled)
-{
-	if (node_tool)
+	if (this->wx_node_tool != NULL)
 	{
-		if (element_create_enabled != node_tool->element_create_enabled)
+		char temp_string[50];
+		sprintf(temp_string, "%d. Node %d", this->createElementNodesCount, cmzn_node_get_identifier(node));
+		wxString string(temp_string, wxConvUTF8);
+		wxListBox *new_element_nodes_list_box =
+			XRCCTRL(*this->wx_node_tool, "NewElementNodesListBox", wxListBox);
+		int number = new_element_nodes_list_box->GetCount();
+		if (number == 0)
 		{
-			node_tool->element_create_enabled = element_create_enabled;
-			cmzn_selectionnotifier_destroy(&node_tool->selectionnotifier);
-			if (node_tool->region && node_tool->element_create_enabled)
-			{
-				cmzn_scene_id scene = cmzn_region_get_scene(node_tool->region);
-				node_tool->selectionnotifier = cmzn_scene_create_selectionnotifier(scene);
-				cmzn_selectionnotifier_set_callback(node_tool->selectionnotifier,
-					cmzn_selectionevent_to_Node_tool, static_cast<void*>(node_tool));
-				cmzn_scene_destroy(&scene);
-			}
-			else
-				Node_tool_end_element_creation(node_tool);
+			wxString blank;
+			new_element_nodes_list_box->InsertItems(1, &blank, number);
 		}
+		number = new_element_nodes_list_box->GetCount();
+		new_element_nodes_list_box->InsertItems(1, &string, number - 1);
 	}
+#endif
+	const int numberOfNodes = cmzn_elementtemplate_get_number_of_nodes(this->elementtemplate);
+	if (this->createElementNodesCount == numberOfNodes)
+	{
+		cmzn_fieldmodule_id fieldmodule = cmzn_region_get_fieldmodule(this->region);
+		cmzn_fieldmodule_begin_change(fieldmodule);
+		cmzn_mesh_id mesh = cmzn_fieldmodule_find_mesh_by_dimension(fieldmodule, this->createElementDimension);
+		// GRC temp
+		FE_region_begin_define_faces(cmzn_region_get_FE_region(this->region), /*dimension=all*/-1);
+		cmzn_element_id element = cmzn_mesh_create_element(mesh, -1, this->elementtemplate);
+		// future:
+		//cmzn_element_define_faces(element);
+		FE_region_end_define_faces(cmzn_region_get_FE_region(this->region));
+		if (element)
+		{
+			if (this->group_field)
+			{
+				cmzn_field_group_subelement_handling_mode oldSubelementMode =
+					cmzn_field_group_get_subelement_handling_mode(this->group_field);
+				cmzn_field_group_set_subelement_handling_mode(this->group_field, CMZN_FIELD_GROUP_SUBELEMENT_HANDLING_MODE_FULL);
+				cmzn_field_element_group_id elementGroup = cmzn_field_group_get_field_element_group(this->group_field, mesh);
+				if (!elementGroup)
+					elementGroup = cmzn_field_group_create_field_element_group(this->group_field, mesh);
+				cmzn_mesh_group_id meshGroup = cmzn_field_element_group_get_mesh_group(elementGroup);
+				cmzn_mesh_group_add_element(meshGroup, element);
+				cmzn_mesh_group_destroy(&meshGroup);
+				cmzn_field_element_group_destroy(&elementGroup);
+				cmzn_field_group_set_subelement_handling_mode(this->group_field, oldSubelementMode);
+			}
+		}
+		else
+			display_message(ERROR_MESSAGE, "Node Tool: Failed to create element");
+		cmzn_mesh_destroy(&mesh);
+		cmzn_fieldmodule_end_change(fieldmodule);
+		cmzn_fieldmodule_destroy(&fieldmodule);
+		this->endCreateElement();
+	}
+}
+
+void Node_tool::setCreateElementEnabled(bool createElementEnabledIn)
+{
+	this->endCreateElement();
+	this->createElementEnabled = createElementEnabledIn;
 }
 
 static int Node_tool_set_region(struct Node_tool *node_tool,
@@ -3014,26 +2865,15 @@ in this region only.
 		return_code=1;
 		if (region != node_tool->region)
 		{
+			node_tool->endCreateElement();
 #if defined (WX_USER_INTERFACE)
 			if (node_tool->wx_node_tool)
 				node_tool->wx_node_tool->wx_Node_tool_set_region(region);
 #endif
-			Node_tool_end_element_creation(node_tool);
 			node_tool->region = region;
-			cmzn_selectionnotifier_destroy(&node_tool->selectionnotifier);
-			if (region && node_tool->element_create_enabled)
-			{
-				cmzn_scene_id scene = cmzn_region_get_scene(region);
-				node_tool->selectionnotifier = cmzn_scene_create_selectionnotifier(scene);
-				cmzn_selectionnotifier_set_callback(node_tool->selectionnotifier,
-					cmzn_selectionevent_to_Node_tool, static_cast<void*>(node_tool));
-				cmzn_scene_destroy(&scene);
-			}
 #if defined (WX_USER_INTERFACE)
 			if (node_tool->wx_node_tool)
-			{
 				node_tool->wx_node_tool->wx_Node_tool_set_field_chooser_manager();
-			}
 #endif
 		}
 		if (node_tool->group_field != group)
@@ -3090,7 +2930,6 @@ struct Node_tool *CREATE(Node_tool)(
 			node_tool->interactive_tool_manager=interactive_tool_manager;
 			node_tool->root_region=root_region;
 			node_tool->region=(struct cmzn_region *)NULL;
-			node_tool->selectionnotifier = 0;
 			node_tool->group_field = (cmzn_field_group_id)NULL;
 			node_tool->domain_type = domain_type;
 			node_tool->rubber_band_material=
@@ -3110,17 +2949,15 @@ struct Node_tool *CREATE(Node_tool)(
 			node_tool->streaming_create_enabled=0;
 			node_tool->constrain_to_surface=0;
 			/* settings of the element creator */
-			node_tool->FE_coordinate_field = (struct FE_field *)NULL;
-			node_tool->element_dimension = 2;
-			node_tool->template_element = (struct FE_element *)NULL;
-			node_tool->element_create_enabled = false;
-			node_tool->element = (struct FE_element *)NULL;
-			node_tool->number_of_clicked_nodes = 0;
+			node_tool->createElementDimension = 2;
+			node_tool->createElementEnabled = false;
+			node_tool->elementtemplate = 0;
+			node_tool->createElementNodesCount = 0;
 
 			node_tool->edit_mode=NODE_TOOL_EDIT_AUTOMATIC;
 			node_tool->coordinate_field =
 				FIRST_OBJECT_IN_MANAGER_THAT(Computed_field)(
-					Computed_field_has_up_to_3_numerical_components, (void *)NULL,
+					cmzn_field_is_coordinate_ready, (void *)NULL,
 					computed_field_manager);
 			node_tool->command_field = (struct Computed_field *)NULL;
 			node_tool->element_xi_field = (struct Computed_field *)NULL;
@@ -3197,11 +3034,7 @@ structure itself.
 		(node_tool= *node_tool_address))
 	{
 		Node_tool_reset((void *)node_tool);
-		cmzn_selectionnotifier_destroy(&node_tool->selectionnotifier);
-		if (node_tool->template_element)
-		{
-			DEACCESS(FE_element)(&node_tool->template_element);
-		}
+		cmzn_elementtemplate_destroy(&node_tool->elementtemplate);
 		cmzn_graphics_destroy(&node_tool->rubber_band_graphics);
 		cmzn_glyph_destroy(&node_tool->rubber_band_glyph);
 		REACCESS(GT_object)(&(node_tool->rubber_band),(struct GT_object *)NULL);
@@ -3216,14 +3049,8 @@ structure itself.
 		{
 			DEACCESS(Interaction_volume)(&(node_tool->last_interaction_volume));
 		}
-		if (node_tool->graphics)
-		{
-			cmzn_graphics_destroy(&(node_tool->graphics));
-		}
-		if (node_tool->scene)
-		{
-			cmzn_scene_destroy(&(node_tool->scene));
-		}
+		cmzn_graphics_destroy(&(node_tool->graphics));
+		cmzn_scene_destroy(&(node_tool->scene));
 #if defined (WX_USER_INTERFACE)
 		if (node_tool->wx_node_tool)
 			 node_tool->wx_node_tool->Destroy();
@@ -3336,7 +3163,7 @@ are on.
 		return_code=1;
 		if (coordinate_field != node_tool->coordinate_field)
 		{
-			node_tool->coordinate_field=coordinate_field;
+			node_tool->coordinate_field = coordinate_field;
 #if defined (WX_USER_INTERFACE)
 			if (node_tool->wx_node_tool)
 			{
@@ -3412,7 +3239,7 @@ on a mouse button press. Also ensures define is enabled if create is.
 			else
 			{
 				display_message(WARNING_MESSAGE,
-					"Node_tool must have a group and coordinate_field to create nodes");
+					"Node_tool must have a region and a coordinate_field to create nodes");
 				create_enabled=0;
 				return_code=0;
 			}
@@ -4034,105 +3861,132 @@ Returns the generic interactive_tool the represents the <node_tool>.
 	return (interactive_tool);
 } /* Node_tool_get_interactive_tool */
 
-static int Node_tool_end_element_creation(
-	struct Node_tool *node_tool)
-/*******************************************************************************
-LAST MODIFIED : 11 April 2007
-
-DESCRIPTION :
-DEACCESSes the element being created, if any, and if it is unmanaged, warns that
-the creation was aborted. Also clears the node list.
-Call this function whether element is successfully created or not.
-==============================================================================*/
+/** create element template for current region, dimension and coordinate field
+ * @return true on success, false on failure. */
+bool Node_tool::beginCreateElement()
 {
-	int return_code;
-
-	ENTER(node_tool_end_element_creation);
-	if (node_tool)
+	if (this->elementtemplate)
+		this->endCreateElement();
+	bool multiple = false;
+	cmzn_field_finite_element_id field_finite_element = cmzn_field_get_source_field_finite_element(this->coordinate_field, multiple);
+	if (!field_finite_element)
 	{
-		if (node_tool->element)
-		{
-			if (!FE_region_contains_FE_element(cmzn_region_get_FE_region(node_tool->region),
-				node_tool->element))
-			{
-				display_message(WARNING_MESSAGE,
-					"node_tool: destroying incomplete element");
-			}
+		display_message(ERROR_MESSAGE, "Node Tool: cannot create elements without a valid coordinate field");
+		return false;
+	}
 
-			DEACCESS(FE_element)(&(node_tool->element));
-#if defined (WX_USER_INTERFACE)
-			wxListBox *new_element_nodes_list_box;
-			if (node_tool->wx_node_tool != NULL)
-			{
-				 new_element_nodes_list_box = XRCCTRL(*node_tool->wx_node_tool, "NewElementNodesListBox", wxListBox);
-				 new_element_nodes_list_box->Clear();
-			}
-#endif /* defined (WX_USER_INTERFACE)*/
+	bool success = true;
+	cmzn_fieldmodule_id fieldmodule = cmzn_region_get_fieldmodule(this->region);
+	cmzn_mesh_id mesh = cmzn_fieldmodule_find_mesh_by_dimension(fieldmodule, this->createElementDimension);
+	this->elementtemplate = cmzn_mesh_create_elementtemplate(mesh);
+	this->createElementNodesCount = 0;
+	if (this->elementtemplate)
+	{
+		cmzn_element_shape_type shapeType = CMZN_ELEMENT_SHAPE_TYPE_INVALID;
+		switch (this->createElementDimension)
+		{
+			case 1:
+				shapeType = CMZN_ELEMENT_SHAPE_TYPE_LINE;
+				break;
+			case 2:
+				shapeType = CMZN_ELEMENT_SHAPE_TYPE_SQUARE;
+				break;
+			case 3:
+				shapeType = CMZN_ELEMENT_SHAPE_TYPE_CUBE;
+				break;
+			default:
+				display_message(ERROR_MESSAGE, "Node Tool: cannot determine element shape for dimension %d", this->createElementDimension);
+				success = false;
+				break;
 		}
-		return_code=1;
-	}
-	else
-	{
-		display_message(ERROR_MESSAGE,
-			"node_tool_end_element_creation.  Invalid argument(s)");
-		return_code=0;
-	}
-	LEAVE;
+		cmzn_elementtemplate_set_element_shape_type(this->elementtemplate, shapeType);
 
-	return (return_code);
-} /* Element_creator_end_element_creation */
-
-
-#if defined (WX_USER_INTERFACE)
-int Node_tool_set_element_dimension(
-	struct Node_tool *node_tool,int element_dimension)
-/*******************************************************************************
-LAST MODIFIED : 11 April 2007
-
-DESCRIPTION :
-Sets the <element_dimension> of elements to be created by <node_tool>.
-==============================================================================*/
-{
-	int return_code;
-
-	ENTER(Node_tool_set_element_dimension);
-	if (node_tool)
-	{
-		if ((0<element_dimension)&&(element_dimension<=3))
+		cmzn_elementbasis_id elementBasis = cmzn_fieldmodule_create_elementbasis(fieldmodule,
+			this->createElementDimension, CMZN_ELEMENTBASIS_FUNCTION_TYPE_LINEAR_LAGRANGE);
+		const int numberOfNodes = cmzn_elementbasis_get_number_of_nodes(elementBasis);
+		if ((numberOfNodes <= 0) || (CMZN_OK != cmzn_elementtemplate_set_number_of_nodes(this->elementtemplate, numberOfNodes)))
+			success = false;
+		int *localNodeIndices = new int[numberOfNodes];
+		if (localNodeIndices)
 		{
-			return_code=1;
-			if (node_tool->element_dimension != element_dimension)
+			for (int i = 0; i < numberOfNodes; ++i)
+				localNodeIndices[i] = i + 1;
+			if (CMZN_OK != cmzn_elementtemplate_define_field_simple_nodal(this->elementtemplate,
+				cmzn_field_finite_element_base_cast(field_finite_element), /*component*/-1,
+				elementBasis, numberOfNodes, localNodeIndices))
 			{
-				node_tool->element_dimension=element_dimension;
-				Node_tool_end_element_creation(node_tool);
-				/* lose the current template element and node, if any */
-				REACCESS(FE_element)(&(node_tool->template_element),
-					(struct FE_element *)NULL);
-			}
-			if (node_tool->wx_node_tool != NULL)
-			{
-				 Node_tool_refresh_element_dimension_text(node_tool);
+				success = false;
 			}
 		}
 		else
+			success = false;
+		delete[] localNodeIndices;
+		if (!success)
 		{
-			display_message(ERROR_MESSAGE,"Dimension must be from 1 to 3");
-			return_code=0;
+			display_message(ERROR_MESSAGE, "Node Tool: failed to create element template");
+			cmzn_elementtemplate_destroy(&this->elementtemplate);
 		}
+		cmzn_elementbasis_destroy(&elementBasis);
 	}
 	else
 	{
-		display_message(ERROR_MESSAGE,
-			"Node_tool_set_element_dimension.  Invalid argument(s)");
-		return_code=0;
+		display_message(ERROR_MESSAGE, "Node Tool: failed to create element template");
+		success = false;
 	}
-	LEAVE;
+	cmzn_mesh_destroy(&mesh);
+	cmzn_fieldmodule_destroy(&fieldmodule);
+	cmzn_field_finite_element_destroy(&field_finite_element);
 
-	return (return_code);
-} /* node_tool_set_element_dimension */
+#if defined (WX_USER_INTERFACE)
+	if (this->wx_node_tool != NULL)
+	{
+		wxListBox *new_element_nodes_list_box = XRCCTRL(*this->wx_node_tool, "NewElementNodesListBox", wxListBox);
+		new_element_nodes_list_box->Clear();
+	}
 #endif /* defined (WX_USER_INTERFACE)*/
+	return success;
+}
 
-# if defined (WX_USER_INTERFACE)
+/** destroys element template and clears node list box */
+void Node_tool::endCreateElement()
+{
+	if (this->elementtemplate)
+	{
+		if (0 > this->createElementNodesCount)
+			display_message(WARNING_MESSAGE, "Node Tool: aborting element creation");
+		cmzn_elementtemplate_destroy(&(this->elementtemplate));
+		this->createElementNodesCount = 0;
+	}
+#if defined (WX_USER_INTERFACE)
+	if (this->wx_node_tool != NULL)
+	{
+		wxListBox *new_element_nodes_list_box = XRCCTRL(*this->wx_node_tool, "NewElementNodesListBox", wxListBox);
+		new_element_nodes_list_box->Clear();
+	}
+#endif /* defined (WX_USER_INTERFACE)*/
+}
+
+int Node_tool::setCreateElementDimension(int createElementDimensionIn)
+{
+	if ((0 < createElementDimensionIn) &&
+		(createElementDimensionIn <= MAXIMUM_ELEMENT_XI_DIMENSIONS))
+	{
+		if (this->createElementDimension != createElementDimensionIn)
+		{
+			this->endCreateElement();
+			this->createElementDimension = createElementDimensionIn;
+#if defined (WX_USER_INTERFACE)
+			if (this->wx_node_tool != NULL)
+				Node_tool_refresh_element_dimension_text(this);
+#endif /* defined (WX_USER_INTERFACE)*/
+		}
+		return 1;
+	}
+	display_message(ERROR_MESSAGE, "Dimension must be from 1 to %d", MAXIMUM_ELEMENT_XI_DIMENSIONS);
+	return 0;
+}
+
+#if defined (WX_USER_INTERFACE)
 static int Node_tool_refresh_element_dimension_text(
 	struct Node_tool *node_tool)
 /*******************************************************************************
@@ -4155,7 +4009,7 @@ Updates what is shown on the dimension text field.
 		if (value_string != 0)
 		{
 			char temp_string[20];
-			sprintf(temp_string,"%d",node_tool->element_dimension);
+			sprintf(temp_string,"%d",node_tool->createElementDimension);
 			/* only set string if different from that shown */
 			if (strcmp(temp_string,value_string))
 			{
@@ -4174,35 +4028,6 @@ Updates what is shown on the dimension text field.
 
 	return (return_code);
 } /* node_tool_refresh_element_dimension_text */
-#endif /* defined (WX_USER_INTERFACE)*/
-
-#if defined (WX_USER_INTERFACE)
-int Node_tool_get_element_dimension(
-	struct Node_tool *node_tool)
-/*******************************************************************************
-LAST MODIFIED : 12 April 2007
-
-DESCRIPTION :
-Returns the dimension of elements to be created by the <node_tool>.
-==============================================================================*/
-{
-	int element_dimension;
-
-	ENTER(Node_tool_get_element_dimension);
-	if (node_tool)
-	{
-		element_dimension=node_tool->element_dimension;
-	}
-	else
-	{
-		display_message(ERROR_MESSAGE,
-			"Node_tool_get_element_dimension.  Invalid argument(s)");
-		element_dimension=0;
-	}
-	LEAVE;
-
-	return (element_dimension);
-} /* node_tool_get_element_dimension */
 #endif /* defined (WX_USER_INTERFACE)*/
 
 int Node_tool_set_execute_command(struct Node_tool *node_tool,
@@ -4250,7 +4075,7 @@ Which tool that is being modified is passed in <node_tool_void>.
 	int create_enabled,define_enabled,edit_enabled,motion_update_enabled,
 		return_code,select_enabled, streaming_create_enabled, constrain_to_surface;
 #if defined (WX_USER_INTERFACE)
-	int element_dimension;
+	int createElementDimension;
 #endif /*(WX_USER_INTERFACE)*/
 	struct Option_table *option_table;
 	cmzn_field_group_id group;
@@ -4273,9 +4098,9 @@ Which tool that is being modified is passed in <node_tool_void>.
 		region = NULL;
 		group = NULL;
 #if defined (WX_USER_INTERFACE)
-		int element_create_enabled = 0;
+		int createElementEnabled = 0;
 		if (node_tool && (node_tool->domain_type == CMZN_FIELD_DOMAIN_TYPE_NODES))
-			element_dimension = 2;
+			createElementDimension = 2;
 #endif /*(WX_USER_INTERFACE)*/
 		if (node_tool)
 		{
@@ -4300,14 +4125,12 @@ Which tool that is being modified is passed in <node_tool_void>.
 #if defined (WX_USER_INTERFACE)
 			if (node_tool && (node_tool->domain_type == CMZN_FIELD_DOMAIN_TYPE_NODES))
 			{
-				 element_create_enabled = Node_tool_get_element_create_enabled(node_tool) ? 1 : 0;
-				 element_dimension = Node_tool_get_element_dimension(node_tool);
+				 createElementEnabled = node_tool->isCreateElementEnabled() ? 1 : 0;
+				 createElementDimension = node_tool->getCreateElementDimension();
 			}
 #endif /*(WX_USER_INTERFACE)*/
-		}
-		if (node_tool)
-		{
-			region = cmzn_region_access(node_tool->root_region);
+			region = cmzn_region_access(node_tool->region);
+			group = cmzn_field_cast_group(cmzn_field_group_base_cast(node_tool->group_field));
 		}
 		option_table=CREATE(Option_table)();
 		/* coordinate_field */
@@ -4324,10 +4147,10 @@ Which tool that is being modified is passed in <node_tool_void>.
 		if (node_tool && (node_tool->domain_type == CMZN_FIELD_DOMAIN_TYPE_NODES))
 		{
 			 /* create/no_create */
-			 Option_table_add_switch(option_table,"element_create","no_element_create",&element_create_enabled);
+			 Option_table_add_switch(option_table,"element_create","no_element_create",&createElementEnabled);
 			 /* element_dimension*/
 			 Option_table_add_entry(option_table,"element_dimension",
-					&element_dimension,NULL,set_int_non_negative);
+					&createElementDimension,NULL,set_int_non_negative);
 		}
 #endif /*(WX_USER_INTERFACE)*/
 		/* edit/no_edit */
@@ -4368,7 +4191,7 @@ Which tool that is being modified is passed in <node_tool_void>.
 					cmzn_field_id coordinate_field =
 						cmzn_fieldmodule_find_field_by_name(fieldmodule, coordinate_field_name);
 					if (coordinate_field &&
-						Computed_field_has_up_to_3_numerical_components(coordinate_field, NULL))
+						cmzn_field_is_coordinate_ready(coordinate_field, NULL))
 					{
 						Node_tool_set_coordinate_field(node_tool,coordinate_field);
 					}
@@ -4425,8 +4248,8 @@ Which tool that is being modified is passed in <node_tool_void>.
 #if defined (WX_USER_INTERFACE)
 				if (node_tool->domain_type == CMZN_FIELD_DOMAIN_TYPE_NODES)
 				{
-					Node_tool_set_element_dimension(node_tool,element_dimension);
-					Node_tool_set_element_create_enabled(node_tool, 0 != element_create_enabled);
+					node_tool->setCreateElementDimension(createElementDimension);
+					node_tool->setCreateElementEnabled(0 != createElementEnabled);
 				}
 #endif /*(WX_USER_INTERFACE)*/
 			}

@@ -912,7 +912,8 @@ Executes a GFX CREATE ELEMENT_CREATOR command.
 	display_message(INFORMATION_MESSAGE,"\ncommand has been removed from the cmgui-wx.\n"
 		"please use gfx modify window (NAME) node ? for further instruction for creating elements\n"
 		"or directly create new elements using the node tool");
-		return_code=0;
+	display_parse_state_location(state);
+	return_code = 0;
 	LEAVE;
 	return (return_code);
 } /* gfx_create_element_creator */

@@ -72,7 +72,7 @@ int Option_table_add_region_path_and_or_field_name_entry(
 	struct cmzn_region_path_and_name *region_path_and_name,
 	struct cmzn_region *root_region);
 
-/***************************************************************************//**
+/**
  * Modifier function to set the region and optional group field.
  * Fields must not be the same name as a child region.
  *
@@ -83,17 +83,17 @@ int Option_table_add_region_path_and_or_field_name_entry(
 int set_cmzn_region_or_group(struct Parse_state *state,
 	void *region_address_void, void *group_address_void);
 
-/***************************************************************************//**
+/**
  * Adds token to the option table for setting a region and an optional group
  * field. Note fields must not be the same name as a child region: region names
  * are matched first.
  *
  * @param option_table  Table to add token to
  * @param token  Token to be matched. Can be NULL for final, default entry
- * @param region_address  Pointer to region which must be initialised to
- * accessed root_region, and may be updated to subregion at relative path to
- * this. Caller is responsible for deaccessing.
- * @param group_address  Pointer to group field. Must be initialised to NULL.
+ * @param region_address  Accessed pointer to current region, which is updated
+ * to subregion at relative path. The root region is found from this if not
+ * already the root. Caller is responsible for deaccessing.
+ * @param group_address  Accessed pointer to current group field or NULL if none.
  * Caller is responsible for deaccessing if set.
  */
 int Option_table_add_region_or_group_entry(struct Option_table *option_table,
