@@ -4161,13 +4161,9 @@ Which tool that is being modified is passed in <node_tool_void>.
 		/* group */
 		char *dummy_region_string = 0;
 		if (region)
-		{
 			Option_table_add_region_or_group_entry(option_table, "group", &region, &group);
-		}
 		else
-		{
 			Option_table_add_string_entry(option_table, "group", &dummy_region_string, " REGION_PATH/GROUP");
-		}
 		/* motion_update/no_motion_update */
 		Option_table_add_switch(option_table,"motion_update","no_motion_update",
 			&motion_update_enabled);
@@ -4256,7 +4252,8 @@ Which tool that is being modified is passed in <node_tool_void>.
 		} /* parse error,help */
 		DESTROY(Option_table)(&option_table);
 		cmzn_region_destroy(&region);
-		DEALLOCATE(dummy_region_string);
+		if (dummy_region_string)
+			DEALLOCATE(dummy_region_string);
 		cmzn_field_group_destroy(&group);
 		if (coordinate_field_name)
 			DEALLOCATE(coordinate_field_name);

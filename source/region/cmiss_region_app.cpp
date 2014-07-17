@@ -307,32 +307,17 @@ int Option_table_add_region_path_and_or_field_name_entry(
 	return (return_code);
 } /* Option_table_add_region_path_and_or_field_name_entry */
 
-int set_cmzn_region_or_group(struct Parse_state *state,
-	void *region_address_void, void *group_address_void)
+int cmzn_region_path_to_subregion_and_group(cmzn_region_id root_region,
+	const char *path, cmzn_region_id *region_address,
+	cmzn_field_group_id *group_address)
 {
-	cmzn_region_id *region_address = reinterpret_cast<cmzn_region_id*>(region_address_void);
-	cmzn_field_group_id *group_address = reinterpret_cast<cmzn_field_group_id*>(group_address_void);
-	if (!(state && region_address && *region_address && group_address))
-		return 0;
-	const char *current_token = state->current_token;
-	int return_code = 1;
-	if (!current_token)
+	int return_code = CMZN_OK;
+	if (root_region && path && path[0] && region_address && group_address)
 	{
-		display_message(WARNING_MESSAGE, "Missing region/group path");
-		display_parse_state_location(state);
-		return_code =  0;
-	}
-	else if (Parse_state_help_mode(state))
-	{
-		display_message(INFORMATION_MESSAGE, " REGION_PATH/GROUP");
-	}
-	else
-	{
-		cmzn_region_id root_region = cmzn_region_get_root(*region_address);
 		char *region_path = 0;
 		char *field_name = 0;
 		cmzn_region_id output_region = 0;
-		if (cmzn_region_get_partial_region_path(root_region, current_token,
+		if (cmzn_region_get_partial_region_path(root_region, path,
 			&output_region, &region_path, &field_name) && output_region)
 		{
 			cmzn_region_access(output_region);
@@ -347,28 +332,57 @@ int set_cmzn_region_or_group(struct Parse_state *state,
 					field_name, cmzn_region_get_Computed_field_manager(output_region));
 				*group_address = cmzn_field_cast_group(field);
 				if (0 == *group_address)
-				{
-					return_code = 0;
-				}
+					return_code = CMZN_ERROR_NOT_FOUND;
 			}
 			cmzn_field_group_destroy(&old_group);
-			if (return_code)
-			{
-				shift_Parse_state(state, 1);
-			}
 		}
+		else
+			return_code = CMZN_ERROR_NOT_FOUND;
+		DEALLOCATE(region_path);
+		DEALLOCATE(field_name);
+	}
+	else
+		return_code = CMZN_ERROR_ARGUMENT;
+	return return_code;
+}
+
+int set_cmzn_region_or_group(struct Parse_state *state,
+	void *region_address_void, void *group_address_void)
+{
+	cmzn_region_id *region_address = reinterpret_cast<cmzn_region_id *>(region_address_void);
+	cmzn_field_group_id *group_address = reinterpret_cast<cmzn_field_group_id *>(group_address_void);
+	if (!(state && region_address && *region_address && group_address))
+	{
+		display_message(ERROR_MESSAGE, "set_cmzn_region_or_group.  Invalid argument(s)");
+		return 0;
+	}
+	const char *current_token = state->current_token;
+	int return_code = 1;
+	if (!current_token)
+	{
+		display_message(WARNING_MESSAGE, "Missing region/group path");
+		display_parse_state_location(state);
+		return_code =  0;
+	}
+	else if (Parse_state_help_mode(state))
+		display_message(INFORMATION_MESSAGE, " REGION_PATH/GROUP");
+	else
+	{
+		cmzn_region_id root_region = cmzn_region_get_root(*region_address);
+		int result = cmzn_region_path_to_subregion_and_group(root_region,
+			current_token, region_address, group_address);
+		cmzn_region_destroy(&root_region);
+		if (CMZN_OK == result)
+			shift_Parse_state(state, 1);
 		else
 		{
 			return_code = 0;
+			if (CMZN_ERROR_NOT_FOUND == result)
+			{
+				display_message(ERROR_MESSAGE, "Invalid region/group path: %s", current_token);
+				display_parse_state_location(state);
+			}
 		}
-		if (!return_code)
-		{
-			display_message(ERROR_MESSAGE, "Invalid region or group path: %s", current_token);
-			display_parse_state_location(state);
-		}
-		DEALLOCATE(region_path);
-		DEALLOCATE(field_name);
-		cmzn_region_destroy(&root_region);
 	}
 	return return_code;
 }

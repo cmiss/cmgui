@@ -3,7 +3,9 @@
 * This Source Code Form is subject to the terms of the Mozilla Public
 * License, v. 2.0. If a copy of the MPL was not distributed with this
 * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+#include "zinc/region.h"
 #include "command/parser.h"
+
 /***************************************************************************//**
  * Option_table modifier function for selecting a region by relative path.
  * @see Option_table_add_set_cmzn_region
@@ -73,13 +75,23 @@ int Option_table_add_region_path_and_or_field_name_entry(
 	struct cmzn_region *root_region);
 
 /**
- * Modifier function to set the region and optional group field.
- * Fields must not be the same name as a child region.
- *
+ * Helper function to set the region and optional group field from a path.
  * Examples:
  *   /heart/ventricles = region and group
  *   /heart            = region only
+ * Note subregions take priority over fields of the same name.
+ * @param root_region  The initial root region.
+ * @param path  The path relative to the supplied root.
+ * @param region_address  Address to set region in. Must be NULL or an
+ * accessed region. Up to caller to destroy handle.
+ * @param group_address  Address to set optional group in. Must be NULL or an
+ * accessed field_group. Up to caller to destroy handle.
+ * @return  CMZN_OK on success, otherwise any other error code.
  */
+int cmzn_region_path_to_subregion_and_group(cmzn_region_id root_region,
+	const char *path, cmzn_region_id *region_address,
+	cmzn_field_group_id *group_address);
+
 int set_cmzn_region_or_group(struct Parse_state *state,
 	void *region_address_void, void *group_address_void);
 

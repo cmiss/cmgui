@@ -912,7 +912,6 @@ Executes a GFX CREATE ELEMENT_CREATOR command.
 	display_message(INFORMATION_MESSAGE,"\ncommand has been removed from the cmgui-wx.\n"
 		"please use gfx modify window (NAME) node ? for further instruction for creating elements\n"
 		"or directly create new elements using the node tool");
-	display_parse_state_location(state);
 	return_code = 0;
 	LEAVE;
 	return (return_code);
@@ -8499,13 +8498,14 @@ int gfx_evaluate(struct Parse_state *state, void *dummy_to_be_modified,
 				}
 				if (region_or_group_path)
 				{
-					cmzn_region_id region = cmzn_region_access(command_data->root_region);
+					cmzn_region_id region = 0;
 					cmzn_field_group_id group = 0;
-					if (region_or_group_path)
+					int result = cmzn_region_path_to_subregion_and_group(command_data->root_region, region_or_group_path, &region, &group);
+					if (CMZN_OK != result)
 					{
-						Parse_state *temp_parse_state = create_Parse_state(region_or_group_path);
-						return_code = set_cmzn_region_or_group(temp_parse_state, (void *)&region, (void *)&group);
-						destroy_Parse_state(&temp_parse_state);
+						display_message(ERROR_MESSAGE, "Invalid region/group path '%s'", region_or_group_path);
+						display_parse_state_location(state);
+						return_code = 0;
 					}
 					if (return_code)
 					{
@@ -14387,9 +14387,13 @@ Can also write individual groups with the <group> option.
 				cmzn_field_group_id group = 0;
 				if (region_or_group_path)
 				{
-					Parse_state *temp_parse_state = create_Parse_state(region_or_group_path);
-					return_code = set_cmzn_region_or_group(temp_parse_state, (void *)&region, (void *)&group);
-					destroy_Parse_state(&temp_parse_state);
+					int result = cmzn_region_path_to_subregion_and_group(region, region_or_group_path, &region, &group);
+					if (CMZN_OK != result)
+					{
+						display_message(ERROR_MESSAGE, "Invalid region/group path '%s'", region_or_group_path);
+						display_parse_state_location(state);
+						return_code = 0;
+					}
 				}
 				if (return_code)
 				{
@@ -14837,9 +14841,13 @@ Can also write individual element groups with the <group> option.
 			cmzn_field_group_id group = 0;
 			if (region_or_group_path)
 			{
-				Parse_state *temp_parse_state = create_Parse_state(region_or_group_path);
-				return_code = set_cmzn_region_or_group(temp_parse_state, (void *)&region, (void *)&group);
-				destroy_Parse_state(&temp_parse_state);
+				int result = cmzn_region_path_to_subregion_and_group(region, region_or_group_path, &region, &group);
+				if (CMZN_OK != result)
+				{
+					display_message(ERROR_MESSAGE, "Invalid region/group path '%s'", region_or_group_path);
+					display_parse_state_location(state);
+					return_code = 0;
+				}
 			}
 			if (return_code)
 			{
@@ -15016,9 +15024,13 @@ If <use_data> is set, writing data, otherwise writing nodes.
 			cmzn_field_group_id group = 0;
 			if (region_or_group_path)
 			{
-				Parse_state *temp_parse_state = create_Parse_state(region_or_group_path);
-				return_code = set_cmzn_region_or_group(temp_parse_state, (void *)&region, (void *)&group);
-				destroy_Parse_state(&temp_parse_state);
+				int result = cmzn_region_path_to_subregion_and_group(region, region_or_group_path, &region, &group);
+				if (CMZN_OK != result)
+				{
+					display_message(ERROR_MESSAGE, "Invalid region/group path '%s'", region_or_group_path);
+					display_parse_state_location(state);
+					return_code = 0;
+				}
 			}
 			if (return_code)
 			{
