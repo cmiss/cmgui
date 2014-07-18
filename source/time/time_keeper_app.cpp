@@ -427,8 +427,6 @@ int Time_keeper_app::timerEvent()
 			while(object_info)
 			{
 				/* Do all the events in the next event interval */
-				display_message(INFORMATION_MESSAGE, "next_callback_due %g real %g\n",
-					object_info->next_callback_due, real_time + event_interval);
 				if(object_info->next_callback_due < real_time + event_interval)
 				{
 					if(!play_every_frame)
