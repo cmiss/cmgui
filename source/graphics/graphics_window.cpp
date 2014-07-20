@@ -5445,6 +5445,7 @@ graphics window on screen.
 	ENTER(Graphics_window_get_frame_pixels);
 	if (window && width && height)
 	{
+		double frame_split_ration = 1.0;
 		Graphics_window_get_viewing_area_size(window, &panel_width,
 			&panel_height);
 		antialias = preferred_antialias;
@@ -5502,6 +5503,7 @@ graphics window on screen.
 					/* Reduce the pane_width by one pixel to leave a border */
 					pane_width = (frame_width - PANE_BORDER) / 2;
 					pane_height = frame_height;
+					frame_split_ration = 2.0;
 				} break;
 				default:
 				{
@@ -5510,61 +5512,35 @@ graphics window on screen.
 					return_code=0;
 				} break;
 			}
-#if !defined (WX_USER_INTERFACE)
-			if (pane_width <= PBUFFER_MAX)
-			{
-				tile_width = pane_width;
-				fraction_across = 1.0;
-				tiles_across = 1;
-			}
-			else
-			{
-				tile_width = PBUFFER_MAX;
-				fraction_across = (double)pane_width / (double)tile_width;
-				tiles_across = (int)ceil(fraction_across);
-			}
-			if (pane_height <= PBUFFER_MAX)
-			{
-				tile_height = pane_height;
-				fraction_down = 1.0;
-				tiles_down = 1;
-			}
-			else
-			{
-				tile_height = PBUFFER_MAX;
-				fraction_down = (double)pane_height / (double)tile_height;
-				tiles_down = (int)ceil(fraction_down);
-			}
-#else
+
 			if (pane_width <= panel_width)
 			{
-				tile_width = pane_width;
+				tile_width = pane_width/panes_across;
 				fraction_across = 1.0;
 				tiles_across = 1;
 			}
 			else
 			{
-				tile_width = panel_width;
+				tile_width = panel_width/panes_across;
 				fraction_across = (double)pane_width / (double)tile_width;
 				tiles_across = (int)ceil(fraction_across);
 			}
 			if (pane_height <= panel_height)
 			{
-				tile_height = pane_height;
+				tile_height = pane_height/panes_down;
 				fraction_down = 1.0;
 				tiles_down = 1;
 			}
 			else
 			{
-				tile_height = panel_height;
+				tile_height = panel_height/panes_down;
 				fraction_down = (double)pane_height / (double)tile_height;
 				tiles_down = (int)ceil(fraction_down);
 			}
-#endif /* (WX_USER_INTERFACE) */
-			/*offscreen_buffer currently does not work well with Windows */
+
 			if (!(offscreen_buffer = create_Graphics_buffer_offscreen_from_buffer(
 				  tile_width, tile_height, /*buffer_to_match*/Scene_viewer_app_get_graphics_buffer(
-				  Graphics_window_get_Scene_viewer(window, pane)))))
+				  Graphics_window_get_Scene_viewer(window, 0)))))
 			{
 				force_onscreen = 1;
 			}
@@ -5586,175 +5562,188 @@ graphics window on screen.
 				number_of_components * (frame_width) * (frame_height)))
 			{
 				return_code = 1;
-				Graphics_buffer_app_make_current(offscreen_buffer);
-				if (Graphics_buffer_get_type(Graphics_buffer_app_get_core_buffer(offscreen_buffer)) ==
-					GRAPHICS_BUFFER_GL_EXT_FRAMEBUFFER_TYPE)
-				{
-					if (antialias > 1)
-					{
-#if !defined (USE_MSAA)
-						display_message(WARNING_MESSAGE,
-							"Graphics_window_get_frame_pixels. Cmgui-wx does not write"
-							"image with anti-aliasing under offscreen mode at the moment.");
-#else
-#if defined (OPENGL_API)  && defined (WX_USER_INTERFACE)
-						multisample_framebuffer_flag =
-							Graphics_buffer_set_multisample_framebuffer(offscreen_buffer, antialias);
-#endif
-#endif
-					}
-				}
-
-#if defined (OPENGL_API)
-				if (number_of_panes > 1)
-				{
-					/* Clear the buffer as we are going to leave a border between panes */
-					glClearColor(0.0,0.0,0.0,0.);
-					glClear(GL_COLOR_BUFFER_BIT);
-				}
-#endif /* defined (OPENGL_API) */
-				if ((tiles_across > 1) || (panes_across > 1))
-				{
-					glPixelStorei(GL_PACK_ROW_LENGTH, frame_width);
-				}
 				for (pane = 0 ; pane < number_of_panes ; pane++)
 				{
-					pane_i = pane % panes_across;
-					pane_j = pane / panes_across;
-					scene_viewer = Graphics_window_get_Scene_viewer(window,pane);
-					if ((tiles_across > 1) || (tiles_down > 1))
+					struct Graphics_buffer_app *current_buffer;
+					if (pane == 0)
 					{
-						Scene_viewer_get_viewing_volume(scene_viewer->core_scene_viewer,
-							&original_left, &original_right, &original_bottom, &original_top,
-							&original_near_plane, &original_far_plane);
-						Scene_viewer_get_NDC_info(scene_viewer->core_scene_viewer,
-							&original_NDC_left, &original_NDC_top, &original_NDC_width, &original_NDC_height);
-						Scene_viewer_get_viewport_info(scene_viewer->core_scene_viewer,
-							&original_viewport_left, &original_viewport_top,
-							&original_viewport_pixels_per_x, &original_viewport_pixels_per_y);
-						Scene_viewer_get_viewing_volume_and_NDC_info_for_specified_size(scene_viewer->core_scene_viewer,
-							frame_width, frame_height, panel_width, panel_height, &real_left,
-							&real_right, &real_bottom, &real_top, &scaled_NDC_width, &scaled_NDC_height);
-
-						NDC_width = scaled_NDC_width / fraction_across;
-						NDC_height = scaled_NDC_height / fraction_down;
-						viewport_pixels_per_x = original_viewport_pixels_per_x;
-						viewport_pixels_per_y = original_viewport_pixels_per_y;
-
+						current_buffer = offscreen_buffer;
 					}
-					for (j = 0 ; return_code && (j < tiles_down) ; j++)
+					else
 					{
+						current_buffer = create_Graphics_buffer_offscreen_from_buffer(
+							tile_width, tile_height, /*buffer_to_match*/Scene_viewer_app_get_graphics_buffer(
+							 Graphics_window_get_Scene_viewer(window, pane)));
+					}
+					if (current_buffer)
+					{
+						Graphics_buffer_app_make_current(current_buffer);
+						if (Graphics_buffer_get_type(Graphics_buffer_app_get_core_buffer(current_buffer)) ==
+							GRAPHICS_BUFFER_GL_EXT_FRAMEBUFFER_TYPE)
+						{
+							if (antialias > 1)
+							{
+		#if !defined (USE_MSAA)
+								display_message(WARNING_MESSAGE,
+									"Graphics_window_get_frame_pixels. Cmgui-wx does not write"
+									"image with anti-aliasing under offscreen mode at the moment.");
+		#else
+		#if defined (OPENGL_API)
+								multisample_framebuffer_flag =
+									Graphics_buffer_set_multisample_framebuffer(current_buffer, antialias);
+		#endif
+		#endif
+							}
+						}
+
+		#if defined (OPENGL_API)
+						if (number_of_panes > 1)
+						{
+							/* Clear the buffer as we are going to leave a border between panes */
+							glClearColor(0.0,0.0,0.0,0.);
+							glClear(GL_COLOR_BUFFER_BIT);
+						}
+		#endif /* defined (OPENGL_API) */
+						if ((tiles_across > 1) || (panes_across > 1))
+						{
+							glPixelStorei(GL_PACK_ROW_LENGTH, frame_width);
+						}
+						pane_i = pane % panes_across;
+						pane_j = pane / panes_across;
+						scene_viewer = Graphics_window_get_Scene_viewer(window,pane);
 						if ((tiles_across > 1) || (tiles_down > 1))
 						{
-							bottom = real_bottom + (double)j * (real_top - real_bottom) / fraction_down;
-							top = real_bottom
-								+ (double)(j + 1) * (real_top - real_bottom) / fraction_down;
-							NDC_top = original_NDC_top + (double)j * original_NDC_height / fraction_down;
-							viewport_top = ((j + 1) * tile_height - pane_height) / viewport_pixels_per_y;
+							Scene_viewer_get_viewing_volume(scene_viewer->core_scene_viewer,
+								&original_left, &original_right, &original_bottom, &original_top,
+								&original_near_plane, &original_far_plane);
+							Scene_viewer_get_NDC_info(scene_viewer->core_scene_viewer,
+								&original_NDC_left, &original_NDC_top, &original_NDC_width, &original_NDC_height);
+							Scene_viewer_get_viewport_info(scene_viewer->core_scene_viewer,
+								&original_viewport_left, &original_viewport_top,
+								&original_viewport_pixels_per_x, &original_viewport_pixels_per_y);
+							Scene_viewer_get_viewing_volume_and_NDC_info_for_specified_size(scene_viewer->core_scene_viewer,
+									frame_width/frame_split_ration, frame_height, panel_width, panel_height, &real_left,
+								&real_right, &real_bottom, &real_top, &scaled_NDC_width, &scaled_NDC_height);
+							NDC_width = scaled_NDC_width / fraction_across;
+							NDC_height = scaled_NDC_height / fraction_down ;
+							viewport_pixels_per_x = original_viewport_pixels_per_x;
+							viewport_pixels_per_y = original_viewport_pixels_per_y;
 						}
-						for (i = 0 ; return_code && (i < tiles_across) ; i++)
+						for (j = 0 ; return_code && (j < tiles_down) ; j++)
 						{
 							if ((tiles_across > 1) || (tiles_down > 1))
 							{
-								left = real_left + (double)i * (real_right - real_left) / fraction_across;
-								right = real_left +
-									(double)(i + 1) * (real_right - real_left) / fraction_across;
-								NDC_left = original_NDC_left + (double)i *
-									 original_NDC_width / fraction_across;
-								viewport_left = i * tile_width / viewport_pixels_per_x;
-
-								Scene_viewer_set_viewing_volume(scene_viewer->core_scene_viewer,
-									left, right, bottom, top,
-									original_near_plane, original_far_plane);
-								Scene_viewer_set_NDC_info(scene_viewer->core_scene_viewer,
-										NDC_left, NDC_top, NDC_width, NDC_height);
-								Scene_viewer_set_viewport_info(scene_viewer->core_scene_viewer,
-									viewport_left, viewport_top,
-									viewport_pixels_per_x, viewport_pixels_per_y);
+								bottom = real_bottom + (double)j * (real_top - real_bottom) / fraction_down;
+								top = real_bottom
+									+ (double)(j + 1) * (real_top - real_bottom) / fraction_down;
+								NDC_top = original_NDC_top + (double)j * original_NDC_height / fraction_down;
+								viewport_top = ((j + 1) * tile_height - pane_height) / viewport_pixels_per_y;
 							}
-							if (Graphics_buffer_get_type(Graphics_buffer_app_get_core_buffer(offscreen_buffer)) ==
-								GRAPHICS_BUFFER_GL_EXT_FRAMEBUFFER_TYPE )
+							for (i = 0 ; return_code && (i < tiles_across) ; i++)
 							{
-#if !defined (USE_MSAA)
-								Scene_viewer_render_scene_in_viewport_with_overrides(scene_viewer->core_scene_viewer,
-									/*left*/0, /*bottom*/0, /*right*/tile_width, /*top*/tile_height,
-									/*preferred_antialias*/0, preferred_transparency_layers,
-									/*drawing_offscreen*/1);
-#else
-								Scene_viewer_render_scene_in_viewport_with_overrides(scene_viewer->core_scene_viewer,
-									/*left*/0, /*bottom*/0, /*right*/tile_width, /*top*/tile_height,
-									antialias, preferred_transparency_layers,
-									/*drawing_offscreen*/1);
-#endif
-							}
-							else
-							{
-								Scene_viewer_render_scene_in_viewport_with_overrides(scene_viewer->core_scene_viewer,
-									/*left*/0, /*bottom*/0, /*right*/tile_width, /*top*/tile_height,
-									antialias, preferred_transparency_layers,
-									/*drawing_offscreen*/1);
-							}
-							if (return_code)
-							{
-								if (i < tiles_across - 1)
+								if ((tiles_across > 1) || (tiles_down > 1))
 								{
-									patch_width = tile_width;
+									left = real_left + (double)i * (real_right - real_left) / fraction_across;
+									right = real_left +
+										(double)(i + 1) * (real_right - real_left) / fraction_across;
+									NDC_left = original_NDC_left + (double)i *
+										 original_NDC_width / fraction_across;
+									viewport_left = i * tile_width / viewport_pixels_per_x;
+
+									Scene_viewer_set_viewing_volume(scene_viewer->core_scene_viewer,
+										left, right, bottom, top,
+										original_near_plane, original_far_plane);
+									Scene_viewer_set_NDC_info(scene_viewer->core_scene_viewer,
+											NDC_left, NDC_top, NDC_width, NDC_height);
+									Scene_viewer_set_viewport_info(scene_viewer->core_scene_viewer,
+										viewport_left, viewport_top,
+										viewport_pixels_per_x, viewport_pixels_per_y);
+								}
+								if (Graphics_buffer_get_type(Graphics_buffer_app_get_core_buffer(current_buffer)) ==
+									GRAPHICS_BUFFER_GL_EXT_FRAMEBUFFER_TYPE )
+								{
+	#if !defined (USE_MSAA)
+									Scene_viewer_render_scene_in_viewport_with_overrides(scene_viewer->core_scene_viewer,
+										/*left*/0, /*bottom*/0, /*right*/tile_width, /*top*/tile_height,
+										/*preferred_antialias*/0, preferred_transparency_layers,
+										/*drawing_offscreen*/1);
+	#else
+									Scene_viewer_render_scene_in_viewport_with_overrides(scene_viewer->core_scene_viewer,
+										/*left*/0, /*bottom*/0, /*right*/tile_width, /*top*/tile_height,
+										antialias, preferred_transparency_layers,
+										/*drawing_offscreen*/1);
+	#endif
 								}
 								else
 								{
-									patch_width = pane_width - tile_width * (tiles_across - 1);
+									Scene_viewer_render_scene_in_viewport_with_overrides(scene_viewer->core_scene_viewer,
+										/*left*/0, /*bottom*/0, /*right*/tile_width, /*top*/tile_height,
+										antialias, preferred_transparency_layers,
+										/*drawing_offscreen*/1);
 								}
-								if (j < tiles_down - 1)
+								if (return_code)
 								{
-									patch_height = tile_height;
-								}
-								else
-								{
-									patch_height = pane_height - tile_height * (tiles_down - 1);
-								}
+									if (i < tiles_across - 1)
+									{
+										patch_width = tile_width;
+									}
+									else
+									{
+										patch_width = pane_width - tile_width * (tiles_across - 1);
+									}
+									if (j < tiles_down - 1)
+									{
+										patch_height = tile_height;
+									}
+									else
+									{
+										patch_height = pane_height - tile_height * (tiles_down - 1);
+									}
 
-								if (Graphics_buffer_get_type(Graphics_buffer_app_get_core_buffer(offscreen_buffer)) ==
-									GRAPHICS_BUFFER_GL_EXT_FRAMEBUFFER_TYPE)
-								{
-#if defined (OPENGL_API) && defined (USE_MSAA) && defined (WX_USER_INTERFACE)
-									if (multisample_framebuffer_flag)
+									if (Graphics_buffer_get_type(Graphics_buffer_app_get_core_buffer(current_buffer)) ==
+										GRAPHICS_BUFFER_GL_EXT_FRAMEBUFFER_TYPE)
 									{
-										Graphics_buffer_blit_framebuffer(offscreen_buffer);
+	#if defined (OPENGL_API) && defined (USE_MSAA) && defined (WX_USER_INTERFACE)
+										if (multisample_framebuffer_flag)
+										{
+											Graphics_buffer_blit_framebuffer(current_buffer);
+										}
+	#endif
 									}
-#endif
-								}
-								return_code=Graphics_library_read_pixels(*frame_data +
-									(i * tile_width + pane_i * (pane_width + PANE_BORDER) +
-										(j * tile_height + (panes_down - 1 - pane_j) * (pane_height + PANE_BORDER))
-										* frame_width) * number_of_components,
-									patch_width, patch_height, storage, /*front_buffer*/0);
-								if (Graphics_buffer_get_type(Graphics_buffer_app_get_core_buffer(offscreen_buffer)) ==
-									GRAPHICS_BUFFER_GL_EXT_FRAMEBUFFER_TYPE)
-								{
-#if defined (OPENGL_API) && defined (USE_MSAA) && defined (WX_USER_INTERFACE)
-									if (multisample_framebuffer_flag)
+									return_code=Graphics_library_read_pixels(*frame_data +
+										(i * tile_width + pane_i * (pane_width + PANE_BORDER) +
+											(j * tile_height + (panes_down - 1 - pane_j) * (pane_height + PANE_BORDER))
+											* frame_width) * number_of_components,
+										patch_width, patch_height, storage, /*front_buffer*/0);
+									if (Graphics_buffer_get_type(Graphics_buffer_app_get_core_buffer(current_buffer)) ==
+										GRAPHICS_BUFFER_GL_EXT_FRAMEBUFFER_TYPE)
 									{
-										Graphics_buffer_reset_multisample_framebuffer(offscreen_buffer);
+	#if defined (OPENGL_API) && defined (USE_MSAA) && defined (WX_USER_INTERFACE)
+										if (multisample_framebuffer_flag)
+										{
+											Graphics_buffer_reset_multisample_framebuffer(current_buffer);
+										}
+	#endif
 									}
-#endif
 								}
 							}
 						}
-					}
-					if (tiles_across > 1)
-					{
-						glPixelStorei(GL_PACK_ROW_LENGTH, 0);
-					}
-					if ((tiles_across > 1) || (tiles_down > 1))
-					{
-						Scene_viewer_set_viewing_volume(scene_viewer->core_scene_viewer,
-							original_left, original_right, original_bottom, original_top,
-							original_near_plane, original_far_plane);
-						Scene_viewer_set_NDC_info(scene_viewer->core_scene_viewer,
-							original_NDC_left, original_NDC_top, original_NDC_width, original_NDC_height);
-						Scene_viewer_set_viewport_info(scene_viewer->core_scene_viewer,
-							original_viewport_left, original_viewport_top,
-							original_viewport_pixels_per_x, original_viewport_pixels_per_y);
+						if (tiles_across > 1)
+						{
+							glPixelStorei(GL_PACK_ROW_LENGTH, 0);
+						}
+						if ((tiles_across > 1) || (tiles_down > 1))
+						{
+							Scene_viewer_set_viewing_volume(scene_viewer->core_scene_viewer,
+								original_left, original_right, original_bottom, original_top,
+								original_near_plane, original_far_plane);
+							Scene_viewer_set_NDC_info(scene_viewer->core_scene_viewer,
+								original_NDC_left, original_NDC_top, original_NDC_width, original_NDC_height);
+							Scene_viewer_set_viewport_info(scene_viewer->core_scene_viewer,
+								original_viewport_left, original_viewport_top,
+								original_viewport_pixels_per_x, original_viewport_pixels_per_y);
+						}
+						DESTROY(Graphics_buffer_app)(&current_buffer);
 					}
 				}
 			}
@@ -5764,8 +5753,6 @@ graphics window on screen.
 					"Graphics_window_get_frame_pixels.  Unable to allocate pixels");
 				return_code=0;
 			}
-
-			DESTROY(Graphics_buffer_app)(&offscreen_buffer);
 		}
 		else
 		{
