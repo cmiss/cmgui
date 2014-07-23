@@ -498,13 +498,13 @@ so should not be modified or deallocated.
 	else
 	{
 		display_message(ERROR_MESSAGE,
-			"Scene_viewer_get_viewport_info.  Invalid argument(s)");
+			"Scene_viewer_get_opengl_information.  Invalid argument(s)");
 		return_code=0;
 	}
 	LEAVE;
 
 	return (return_code);
-} /* Scene_viewer_get_viewport_info */
+} /* Scene_viewer_get_opengl_information */
 
 int Scene_viewer_app_update_Interactive_tool(
 	struct Scene_viewer_app *scene_viewer, void *interactive_tool_void)
