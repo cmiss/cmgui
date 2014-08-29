@@ -1824,7 +1824,7 @@ release.
 									{
 										/* create rubber_band object and put in scene */
 										node_tool->rubber_band=CREATE(GT_object)(
-											"node_tool_rubber_band",g_POLYLINE,
+											"node_tool_rubber_band",g_POLYLINE_VERTEX_BUFFERS,
 											node_tool->rubber_band_material);
 										cmzn_glyphmodule_id glyphmodule = cmzn_graphics_module_get_glyphmodule(
 											scene->graphics_module);

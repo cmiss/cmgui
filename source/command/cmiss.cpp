@@ -137,7 +137,6 @@
 #include "graphics/spectrum_component.h"
 #include "graphics/texture.h"
 #include "graphics/transform_tool.h"
-#include "graphics/userdef_objects.h"
 #include "graphics/volume_texture.h"
 #if defined (GTK_USER_INTERFACE)
 #include "gtk/gtk_cmiss_scene_viewer.h"
@@ -1192,319 +1191,12 @@ DESCRIPTION :
 Executes a GFX CREATE FLOW_PARTICLES command.
 ==============================================================================*/
 {
-	float time;
-	FE_value xi[3];
-	struct GT_pointset *pointset;
-	int current_number_of_particles, element_number, number_of_particles,
-		return_code, vector_components;
-	struct cmzn_command_data *command_data;
-	struct cmzn_region *region;
-	struct Element_to_particle_data element_to_particle_data;
-	struct Computed_field *coordinate_field, *stream_vector_field;
-	struct FE_region *fe_region;
-	struct Graphical_material *material;
-	struct Spectrum *spectrum;
-	Triple *new_particle_positions, *old_particle_positions,
-		*final_particle_positions;
-	struct Option_table *option_table;
-
-	ENTER(gfx_create_flow_particles);
+	struct cmzn_command_data *command_data = 0;
+	int return_code = 1;
 	if (state && (command_data = (struct cmzn_command_data *)command_data_void))
 	{
-		/* initialise defaults */
-		char *graphics_object_name = duplicate_string("particles");
-		char *region_path = cmzn_region_get_root_region_path();
-		char *coordinate_field_name = NULL;
-		char *stream_vector_field_name = NULL;
-		element_number=0;  /* Zero gives all elements in group */
-		coordinate_field=(struct Computed_field *)NULL;
-		stream_vector_field=(struct Computed_field *)NULL;
-		vector_components=3;
-		xi[0]=0.5;
-		xi[1]=0.5;
-		xi[2]=0.5;
-		time=0;
-		/* must access it now,because we deaccess it later */
-		material= cmzn_materialmodule_get_default_material(command_data->materialmodule);
-		spectrum=
-			ACCESS(Spectrum)(command_data->default_spectrum);
-
-		option_table=CREATE(Option_table)();
-		/* as */
-		Option_table_add_entry(option_table, "as", &graphics_object_name,
-			(void *)1, set_name);
-		/* coordinate */
-		Option_table_add_string_entry(option_table,"coordinate",&coordinate_field_name,
-			" FIELD_NAME");
-		/* element */
-		Option_table_add_entry(option_table, "element", &element_number,
-			NULL, set_int_non_negative);
-		/* from */
-		Option_table_add_entry(option_table, "from", &region_path,
-			command_data->root_region, set_cmzn_region_path);
-		/* initial_xi */
-		Option_table_add_entry(option_table, "initial_xi", xi,
-			&(vector_components), set_FE_value_array);
-		/* material */
-		Option_table_add_set_Material_entry(option_table, "material", &material,
-			command_data->materialmodule);
-		/* spectrum */
-		Option_table_add_entry(option_table,"spectrum",&spectrum,
-			command_data->spectrum_manager,set_Spectrum);
-		/* time */
-		Option_table_add_entry(option_table,"time",&time,NULL,set_float);
-		/* vector */
-		Option_table_add_string_entry(option_table,"vector",&stream_vector_field_name,
-			" FIELD_NAME");
-		return_code=Option_table_multi_parse(option_table,state);
-		/* no errors, not asking for help */
-		if (return_code)
-		{
-			if (!(cmzn_region_get_region_from_path_deprecated(command_data->root_region,
-				region_path, &region) &&
-				(fe_region = cmzn_region_get_FE_region(region))))
-			{
-				display_message(ERROR_MESSAGE,
-					"gfx_create_flow_particles.  Invalid region");
-				return_code = 0;
-			}
-			else
-			{
-				if (coordinate_field_name)
-				{
-				cmzn_fieldmodule_id field_module = cmzn_region_get_fieldmodule(region);
-				coordinate_field = cmzn_fieldmodule_find_field_by_name(field_module, coordinate_field_name);
-				if (stream_vector_field_name)
-				{
-					stream_vector_field = cmzn_fieldmodule_find_field_by_name(field_module, stream_vector_field_name);
-					if (!stream_vector_field)
-					{
-						display_message(ERROR_MESSAGE,
-							"gfx_create_flow_particles:  stream vector field cannot be found");
-						return_code = 0;
-					}
-					else
-					{
-						if (!Computed_field_is_stream_vector_capable(stream_vector_field, NULL))
-						{
-							display_message(ERROR_MESSAGE,
-								"gfx_create_flow_particles: field specifiedis not a valid vector field");
-							return_code = 0;
-						}
-					}
-				}
-				if (!coordinate_field)
-				{
-					display_message(ERROR_MESSAGE,
-						"gfx_create_flow_particles:  coordinates field cannot be found");
-					return_code = 0;
-				}
-				else
-				{
-					if (!Computed_field_has_up_to_3_numerical_components(coordinate_field, NULL))
-					{
-						display_message(ERROR_MESSAGE,
-							"gfx_create_flow_particles: field specifiedis not a valid coordinates field");
-						return_code = 0;
-					}
-				}
-				cmzn_fieldmodule_destroy(&field_module);
-				}
-				else
-				{
-					display_message(WARNING_MESSAGE, "Must specify a coordinate field");
-					return_code = 0;
-				}
-			}
-		}
-		if (return_code)
-		{
-			cmzn_glyphmodule_begin_change(command_data->glyphmodule);
-			cmzn_glyph_id glyph = cmzn_glyphmodule_find_glyph_by_name(command_data->glyphmodule, graphics_object_name);
-			cmzn_glyph_static *glyphStatic = dynamic_cast<cmzn_glyph_static*>(glyph);
-			GT_object *graphics_object = 0;
-			if (glyphStatic)
-			{
-			graphics_object = glyphStatic->getGraphicsObject();
-			if (0 != graphics_object)
-			{
-				if (create_more)
-				{
-					if (NULL != (pointset = GT_OBJECT_GET(GT_pointset)(graphics_object, time)))
-					{
-						GT_pointset_get_point_list(pointset,
-							&current_number_of_particles, &old_particle_positions);
-						glyph->changed();
-					}
-					else
-					{
-						display_message(ERROR_MESSAGE,
-							"gfx_create_flow_particles.  Missing pointlist for adding more");
-						return_code = 0;
-					}
-				}
-				else
-				{
-					display_message(ERROR_MESSAGE,
-						"gfx_create_flow_particles.  Object already exists");
-					return_code = 0;
-				}
-			}
-			else if (glyph)
-			{
-				display_message(ERROR_MESSAGE, "gfx_create_flow_particles.  Invalid glyph");
-				return_code = 0;
-			}
-			else
-			{
-				if (create_more)
-				{
-					display_message(ERROR_MESSAGE, "gfx_create_flow_particles.  "
-						"Graphics object does not exist for adding more to");
-					return_code=0;
-				}
-				else
-				{
-					graphics_object = CREATE(GT_object)(graphics_object_name, g_POINTSET, material);
-					glyph = cmzn_glyphmodule_create_glyph_static(command_data->glyphmodule, graphics_object);
-					cmzn_glyph_set_managed(glyph, true);
-					cmzn_glyph_set_name(glyph, graphics_object_name);
-				}
-			}
-			}
-			if (return_code)
-			{
-				number_of_particles = FE_region_get_number_of_FE_elements_all_dimensions(fe_region);
-				if (create_more)
-				{
-					number_of_particles += current_number_of_particles;
-					if (REALLOCATE(new_particle_positions,old_particle_positions,Triple,
-						number_of_particles))
-					{
-						GT_pointset_set_point_list(pointset, number_of_particles,
-							new_particle_positions);
-						element_to_particle_data.pointlist = &new_particle_positions;
-						element_to_particle_data.index = current_number_of_particles;
-					}
-					else
-					{
-						display_message(ERROR_MESSAGE,
-							"gfx_create_flow_particles.  Unable to reallocate pointset");
-						return_code = 0;
-					}
-				}
-				else
-				{
-					if (ALLOCATE(new_particle_positions,Triple,number_of_particles) &&
-						(pointset=CREATE(GT_pointset)(number_of_particles,
-							new_particle_positions,(char **)NULL,	g_POINT_MARKER,
-							1,g_NO_DATA,(GLfloat *) NULL,(int *)NULL,command_data->default_font)))
-					{
-						element_to_particle_data.pointlist= &new_particle_positions;
-						element_to_particle_data.index=0;
-					}
-					else
-					{
-						DEALLOCATE(new_particle_positions);
-						display_message(ERROR_MESSAGE,
-							"gfx_create_flow_particles.  Unable to create pointset");
-						return_code = 0;
-					}
-				}
-				if (return_code)
-				{
-					cmzn_fieldmodule_id field_module = cmzn_field_get_fieldmodule(coordinate_field);
-					element_to_particle_data.field_cache = cmzn_fieldmodule_create_fieldcache(field_module);
-					element_to_particle_data.coordinate_field=coordinate_field;
-					element_to_particle_data.element_number=element_number;
-					element_to_particle_data.stream_vector_field=stream_vector_field;
-					element_to_particle_data.graphics_object=graphics_object;
-					element_to_particle_data.xi[0]=xi[0];
-					element_to_particle_data.xi[1]=xi[1];
-					element_to_particle_data.xi[2]=xi[2];
-					element_to_particle_data.number_of_particles=0;
-					element_to_particle_data.list= &(command_data->streampoint_list);
-					return_code = FE_region_for_each_FE_element(fe_region,
-						element_to_particle, (void *)&element_to_particle_data);
-					number_of_particles = element_to_particle_data.number_of_particles;
-					if (create_more)
-					{
-						number_of_particles += current_number_of_particles;
-					}
-					if (return_code && number_of_particles &&
-						REALLOCATE(final_particle_positions, new_particle_positions,
-							Triple, number_of_particles))
-					{
-						GT_pointset_set_point_list(pointset, number_of_particles,
-							final_particle_positions);
-						if (create_more)
-						{
-							GT_object_changed(graphics_object);
-							glyph->changed();
-						}
-						else
-						{
-							if (GT_OBJECT_ADD(GT_pointset)(graphics_object,time,pointset))
-							{
-								return_code = set_GT_object_Spectrum(graphics_object,spectrum);
-							}
-							else
-							{
-								DESTROY(GT_pointset)(&pointset);
-								display_message(ERROR_MESSAGE, "gfx_create_flow_particles.  "
-									"Could not add pointset to graphics object");
-								return_code = 0;
-							}
-						}
-					}
-					else
-					{
-						if (create_more)
-						{
-							DEALLOCATE(old_particle_positions);
-						}
-						else
-						{
-							DESTROY(GT_pointset)(&pointset);
-						}
-						if (return_code)
-						{
-							display_message(WARNING_MESSAGE,"No particles created");
-						}
-						else
-						{
-							display_message(ERROR_MESSAGE,
-								"gfx_create_flow_particles.  Error creating particles");
-						}
-					}
-					cmzn_fieldcache_destroy(&element_to_particle_data.field_cache);
-					cmzn_fieldmodule_destroy(&field_module);
-				}
-			}
-			if (graphics_object)
-			{
-				DEACCESS(GT_object)(&graphics_object);
-			}
-			cmzn_glyph_destroy(&glyph);
-			cmzn_glyphmodule_end_change(command_data->glyphmodule);
-		} /* parse error,help */
-		DESTROY(Option_table)(&option_table);
-		if (coordinate_field)
-		{
-			DEACCESS(Computed_field)(&coordinate_field);
-		}
-		if (stream_vector_field)
-		{
-			DEACCESS(Computed_field)(&stream_vector_field);
-		}
-		if (coordinate_field_name)
-			DEALLOCATE(coordinate_field_name);
-		if (stream_vector_field_name)
-			DEALLOCATE(stream_vector_field);
-		DEALLOCATE(region_path);
-		DEACCESS(Spectrum)(&spectrum);
-		cmzn_material_destroy(&material);
-		DEALLOCATE(graphics_object_name);
+		display_message(INFORMATION_MESSAGE,
+			"gfx_create_flow_particles has been disabled.");
 	}
 	else
 	{
@@ -1512,8 +1204,6 @@ Executes a GFX CREATE FLOW_PARTICLES command.
 			"gfx_create_flow_particles.  Invalid argument(s)");
 		return_code = 0;
 	}
-
-	LEAVE;
 
 	return (return_code);
 } /* gfx_create_flow_particles */
@@ -1528,71 +1218,15 @@ Executes a GFX MODIFY FLOW_PARTICLES command.
 ==============================================================================*/
 {
 	int return_code;
-	FE_value stepsize,time;
 	struct cmzn_command_data *command_data;
-	struct Computed_field *coordinate_field,*stream_vector_field;
-	struct Option_table *option_table;
-	struct Set_Computed_field_conditional_data set_coordinate_field_data,
-		set_stream_vector_field_data;
 
-	ENTER(gfx_modify_flow_particles);
 	USE_PARAMETER(dummy_to_be_modified);
 	if (state)
 	{
 		if (NULL != (command_data = (struct cmzn_command_data *)command_data_void))
 		{
-			coordinate_field=(struct Computed_field *)NULL;
-			stream_vector_field=(struct Computed_field *)NULL;
-			stepsize=1;
-			/* If time of 0 is sent the previous points are updated at the previous
-				time value */
-			time=0;
-
-			option_table=CREATE(Option_table)();
-			/* coordinate */
-			set_coordinate_field_data.computed_field_manager=
-				Computed_field_package_get_computed_field_manager(
-					command_data->computed_field_package);
-			set_coordinate_field_data.conditional_function=
-				Computed_field_has_up_to_3_numerical_components;
-			set_coordinate_field_data.conditional_function_user_data=(void *)NULL;
-			Option_table_add_entry(option_table,"coordinate",&coordinate_field,
-				&set_coordinate_field_data,set_Computed_field_conditional);
-			/* stepsize */
-			Option_table_add_entry(option_table,"stepsize",&stepsize,
-				NULL,set_FE_value);
-			/* time */
-			Option_table_add_entry(option_table,"time",&time,NULL,set_float);
-			/* vector */
-			set_stream_vector_field_data.computed_field_manager=
-				Computed_field_package_get_computed_field_manager(
-					command_data->computed_field_package);
-			set_stream_vector_field_data.conditional_function=
-				Computed_field_is_stream_vector_capable;
-			set_stream_vector_field_data.conditional_function_user_data=(void *)NULL;
-			Option_table_add_entry(option_table,"vector",&stream_vector_field,
-				&set_stream_vector_field_data,set_Computed_field_conditional);
-			return_code=Option_table_multi_parse(option_table,state);
-			/* no errors,not asking for help */
-			if (return_code)
-			{
-				cmzn_fieldmodule_id field_module = cmzn_field_get_fieldmodule(coordinate_field);
-				cmzn_fieldcache_id field_cache = cmzn_fieldmodule_create_fieldcache(field_module);
-				return_code=update_flow_particle_list(
-					command_data->streampoint_list,field_cache,coordinate_field,stream_vector_field,
-					stepsize,time);
-				cmzn_fieldcache_destroy(&field_cache);
-				cmzn_fieldmodule_destroy(&field_module);
-			}
-			DESTROY(Option_table)(&option_table);
-			if (coordinate_field)
-			{
-				DEACCESS(Computed_field)(&coordinate_field);
-			}
-			if (stream_vector_field)
-			{
-				DEACCESS(Computed_field)(&stream_vector_field);
-			}
+			display_message(INFORMATION_MESSAGE,
+				"gfx_modify_flow_particles has been disabled.");
 		}
 		else
 		{
@@ -1606,7 +1240,6 @@ Executes a GFX MODIFY FLOW_PARTICLES command.
 		display_message(ERROR_MESSAGE,"gfx_modify_flow_particles.  Missing state");
 		return_code=0;
 	}
-	LEAVE;
 
 	return (return_code);
 } /* gfx_modify_flow_particles */
@@ -5166,13 +4799,15 @@ static int gfx_convert_graphics(struct Parse_state *state,
 
 		Option_table *option_table=CREATE(Option_table)();
 		Option_table_add_help(option_table,
-			"Create finite elements or a point cloud of nodes from line and surface graphics. "
+			"Create finite elements or a point cloud of nodes from line and surface graphics, or create nodes "
+			"from points (i.e element points)"
 			"With mode 'render_linear_product_elements' linear finite elements are made from lines and surfaces. "
 			"With mode 'render_surface_node_cloud', nodes are created at points in the lines and "
 			"surfaces sampled according to a Poisson distribution with the supplied densities. "
 			"The surface_density gives the base expected number of points per unit area, and if the "
 			"graphics has a data field, the value of its first component scaled by surface_density_scale_factor "
-			"is added to the expected number. Separate values for lines control the expected number per unit length.");
+			"is added to the expected number. Separate values for lines control the expected number per unit length."
+			"With mode 'render_point', nodes are created at points.");
 		/* coordinate */
 		Option_table_add_string_entry(option_table,"coordinate",&coordinate_field_name,
 			" FIELD_NAME");
@@ -7656,6 +7291,162 @@ Executes a GFX EXPORT STL command.
 	return (return_code);
 } /* gfx_export_stl */
 
+static int gfx_export_threejs(struct Parse_state *state,
+	void *dummy_to_be_modified,void *command_data_void)
+{
+	char *file_name;
+	int return_code;
+	struct cmzn_command_data *command_data;
+	struct Option_table *option_table;
+	struct Scene *scene;
+
+	if (state)
+	{
+		if (NULL != (command_data = (struct cmzn_command_data *)command_data_void))
+		{
+			file_name = (char *)NULL;
+			scene = cmzn_scene_access(command_data->default_scene);
+			double begin_time = 0.0, end_time = 0.0;
+			char face_colour = 0, export_data_value = 0;
+			int number_of_time_steps = 0;
+			cmzn_scenefilter_id filter =
+				cmzn_scenefiltermodule_get_default_scenefilter(command_data->filter_module);
+			option_table = CREATE(Option_table)();
+			/* file */
+			Option_table_add_entry(option_table, "file", &file_name,
+				(void *)1, set_name);
+			Option_table_add_entry(option_table,"start_time",&begin_time,
+				NULL,set_double);
+			Option_table_add_entry(option_table,"end_time",&end_time,
+				NULL,set_double);
+			Option_table_add_entry(option_table, "number_of_time_steps", &number_of_time_steps,
+				&number_of_time_steps, set_int_non_negative);
+			Option_table_add_entry(option_table, "face_colour", &face_colour,
+				0, set_char_flag);
+			Option_table_add_entry(option_table, "export_data_value", &export_data_value,
+				0, set_char_flag);
+			/* scene */
+			Option_table_add_entry(option_table,"scene",&scene,
+				command_data->root_region, set_Scene);
+			Option_table_add_entry(option_table, "filter", &filter,
+				command_data->filter_module, set_cmzn_scenefilter);
+			if (0 != (return_code = Option_table_multi_parse(option_table, state)))
+			{
+				if (scene)
+				{
+					if (file_name)
+					{
+						return_code = Scene_render_threejs(scene, filter, file_name,
+							(int)number_of_time_steps, begin_time, end_time, face_colour, export_data_value);
+					}
+					else
+					{
+						display_message(ERROR_MESSAGE,
+							"gfx export threejs.  Must specify file name");
+						return_code = 0;
+					}
+				}
+			}
+			DESTROY(Option_table)(&option_table);
+			if (scene)
+				cmzn_scene_destroy(&scene);
+			if (filter)
+				cmzn_scenefilter_destroy(&filter);
+			if (file_name)
+			{
+				DEALLOCATE(file_name);
+			}
+		}
+		else
+		{
+			display_message(ERROR_MESSAGE,
+				"gfx_export_stl.  Invalid argument(s)");
+			return_code=0;
+		}
+	}
+	else
+	{
+		display_message(ERROR_MESSAGE,"gfx_export_stl.  Missing state");
+		return_code=0;
+	}
+
+	return (return_code);
+}
+
+static int gfx_export_webgl(struct Parse_state *state,
+	void *dummy_to_be_modified,void *command_data_void)
+/*******************************************************************************
+LAST MODIFIED : 4 July 2008
+
+DESCRIPTION :
+Executes a GFX EXPORT STL command.
+==============================================================================*/
+{
+	char *file_name;
+	int return_code;
+	struct cmzn_command_data *command_data;
+	struct Option_table *option_table;
+	struct Scene *scene;
+
+	if (state)
+	{
+		if (NULL != (command_data = (struct cmzn_command_data *)command_data_void))
+		{
+			file_name = (char *)NULL;
+			scene = cmzn_scene_access(command_data->default_scene);
+			cmzn_scenefilter_id filter =
+				cmzn_scenefiltermodule_get_default_scenefilter(command_data->filter_module);
+			option_table = CREATE(Option_table)();
+			/* file */
+			Option_table_add_entry(option_table, "file", &file_name,
+				(void *)1, set_name);
+			/* scene */
+			Option_table_add_entry(option_table,"scene",&scene,
+				command_data->root_region, set_Scene);
+			Option_table_add_entry(option_table, "filter", &filter,
+				command_data->filter_module, set_cmzn_scenefilter);
+			if (0 != (return_code = Option_table_multi_parse(option_table, state)))
+			{
+				if (scene)
+				{
+					if (file_name)
+					{
+						return_code = Scene_render_webgl(scene, filter, file_name);
+					}
+					else
+					{
+						display_message(ERROR_MESSAGE,
+							"gfx export webgl.  Must specify file name");
+						return_code = 0;
+					}
+				}
+			}
+			DESTROY(Option_table)(&option_table);
+			if (scene)
+				cmzn_scene_destroy(&scene);
+			if (filter)
+				cmzn_scenefilter_destroy(&filter);
+			if (file_name)
+			{
+				DEALLOCATE(file_name);
+			}
+		}
+		else
+		{
+			display_message(ERROR_MESSAGE,
+				"gfx_export_stl.  Invalid argument(s)");
+			return_code=0;
+		}
+	}
+	else
+	{
+		display_message(ERROR_MESSAGE,"gfx_export_stl.  Missing state");
+		return_code=0;
+	}
+
+	return (return_code);
+}
+
 static int gfx_export_vrml(struct Parse_state *state,void *dummy_to_be_modified,
 	void *command_data_void)
 /*******************************************************************************
@@ -8050,10 +7841,14 @@ Executes a GFX EXPORT command.
 			command_data_void, gfx_export_iges);
 		Option_table_add_entry(option_table,"stl",NULL,
 			command_data_void, gfx_export_stl);
+		Option_table_add_entry(option_table,"threejs",NULL,
+			command_data_void, gfx_export_threejs);
 		Option_table_add_entry(option_table,"vrml",NULL,
 			command_data_void, gfx_export_vrml);
 		Option_table_add_entry(option_table,"wavefront",NULL,
 			command_data_void, gfx_export_wavefront);
+		Option_table_add_entry(option_table,"webgl",NULL,
+			command_data_void, gfx_export_webgl);
 		return_code = Option_table_parse(option_table,state);
 		DESTROY(Option_table)(&option_table);
 	}
@@ -12751,7 +12546,8 @@ static int gfx_read_wavefront_obj(struct Parse_state *state,
 					/* open the file */
 					if (0 != (return_code = check_suffix(&file_name, ".obj")))
 					{
-						return_code=file_read_voltex_graphics_object_from_obj(file_name,
+
+						return_code=file_read_surface_graphics_object_from_obj(file_name,
 							command_data->io_stream_package,
 							graphics_object_name, render_polygon_mode, time,
 							command_data->materialmodule,

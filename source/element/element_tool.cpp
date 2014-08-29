@@ -415,7 +415,7 @@ static void Element_tool_interactive_event_handler(void *device_id,
 									{
 										/* create rubber_band object and put in scene */
 										element_tool->rubber_band=CREATE(GT_object)(
-											"element_tool_rubber_band",g_POLYLINE,
+											"element_tool_rubber_band",g_POLYLINE_VERTEX_BUFFERS,
 											element_tool->rubber_band_material);
 										cmzn_glyphmodule_id glyphmodule = cmzn_scene_get_glyphmodule(eventScene);
 										element_tool->rubber_band_glyph = cmzn_glyphmodule_create_glyph_static(
