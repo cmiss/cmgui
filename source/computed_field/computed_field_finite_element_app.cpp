@@ -6,6 +6,7 @@
 
 #include <stdio.h>
 
+#include "zinc/fieldfiniteelement.h"
 #include "general/mystring.h"
 #include "general/debug.h"
 #include "general/message.h"
@@ -33,6 +34,7 @@
 const char computed_field_basis_derivative_type_string[] = "basis_derivative";
 const char computed_field_xi_coordinates_type_string[] = "xi_coordinates";
 const char computed_field_find_mesh_location_type_string[] = "find_mesh_location";
+const char computed_field_edge_discontinuity_type_string[] = "edge_discontinuity";
 const char computed_field_embedded_type_string[] = "embedded";
 const char computed_field_node_value_type_string[] = "node_value";
 const char computed_field_access_count_type_string[] = "access_count";
@@ -610,6 +612,119 @@ and allows its contents to be modified.
 	return (return_code);
 } /* define_Computed_field_type_node_value */
 
+/**
+ * Converts field to type EDGE_DISCONTINUITY (if it is not already)
+ * and allows its contents to be modified.
+ */
+int define_Computed_field_type_edge_discontinuity(struct Parse_state *state,
+	void *field_modify_void, void *computed_field_finite_element_package_void)
+{
+	int return_code = 1;
+	Computed_field_modify_data *field_modify = (Computed_field_modify_data *)field_modify_void;
+	USE_PARAMETER(computed_field_finite_element_package_void);
+	if (state && field_modify)
+	{
+		return_code = 1;
+		cmzn_field_id source_field = 0;
+		cmzn_field_id conditional_field = 0;
+		cmzn_field *existingField = field_modify->get_field(); // not accessed
+		cmzn_field_edge_discontinuity_measure measure = CMZN_FIELD_EDGE_DISCONTINUITY_MEASURE_C1;
+		if (existingField)
+		{
+			cmzn_field_edge_discontinuity_id field_edge_discontinuity = cmzn_field_cast_edge_discontinuity(existingField);
+			if (field_edge_discontinuity)
+			{
+				source_field = cmzn_field_get_source_field(existingField, 1);
+				conditional_field = cmzn_field_edge_discontinuity_get_conditional_field(field_edge_discontinuity);
+				measure = cmzn_field_edge_discontinuity_get_measure(field_edge_discontinuity);
+				cmzn_field_edge_discontinuity_destroy(&field_edge_discontinuity);
+			}
+		}
+		Option_table *option_table = CREATE(Option_table)();
+		Option_table_add_help(option_table,
+			"An edge_discontinuity field produces a value on 1-D line elements with as many "
+			"components as the source field, which gives the discontinuity of that field "
+			"between two adjacent surfaces by a chosen measure. An optional conditional "
+			"field restricts which adjacent surfaces qualify to those where the conditional "
+			"field is true (non-zero). The first two qualifying surfaces are always used. "
+			"The field values are zero when the surfaces are continuous by the chosen "
+			"measure, and when there are fewer than two qualifying adjacent surfaces. "
+			"Supported measures of discontinuity are C1 (the default, giving the difference "
+			"in transverse xi derivatives), G1 (difference in transverse xi derivatives, "
+			"normalised so only direction matters) and SURFACE_NORMAL (difference in unit "
+			"surface normals, for 3-component coordinate source field only). In optimisation "
+			"problems, adding an objective field consisting of the integral of [squares of] "
+			"this field over a 1-D mesh will favour high-continuity solutions.");
+		/* conditional_field */
+		struct Set_Computed_field_conditional_data set_conditional_field_data;
+		set_conditional_field_data.conditional_function = Computed_field_is_scalar;
+		set_conditional_field_data.conditional_function_user_data = (void *)NULL;
+		set_conditional_field_data.computed_field_manager = field_modify->get_field_manager();
+		Option_table_add_entry(option_table, "conditional_field", &conditional_field,
+			&set_conditional_field_data, set_Computed_field_conditional);
+		/* measure */
+		int number_of_valid_strings = 0;
+		const char **valid_strings = ENUMERATOR_GET_VALID_STRINGS(cmzn_field_edge_discontinuity_measure)(
+			&number_of_valid_strings, (ENUMERATOR_CONDITIONAL_FUNCTION(cmzn_field_edge_discontinuity_measure) *)NULL, (void *)NULL);
+		const char *measure_string = ENUMERATOR_STRING(cmzn_field_edge_discontinuity_measure)(measure);
+		Option_table_add_enumerator(option_table,number_of_valid_strings,
+			valid_strings, &measure_string);
+		DEALLOCATE(valid_strings);
+		/* source_field */
+		struct Set_Computed_field_conditional_data set_source_field_data;
+		set_source_field_data.conditional_function = Computed_field_has_numerical_components;
+		set_source_field_data.conditional_function_user_data = (void *)NULL;
+		set_source_field_data.computed_field_manager = field_modify->get_field_manager();
+		Option_table_add_entry(option_table, "source_field", &source_field,
+			&set_source_field_data, set_Computed_field_conditional);
+		return_code = Option_table_multi_parse(option_table, state);
+		DESTROY(Option_table)(&option_table);
+		if (return_code)
+		{
+			cmzn_field_id field = cmzn_fieldmodule_create_field_edge_discontinuity(field_modify->get_field_module(), source_field);
+			if (field)
+			{
+				cmzn_field_edge_discontinuity_id edge_discontinuity_field = cmzn_field_cast_edge_discontinuity(field);
+				if (!STRING_TO_ENUMERATOR(cmzn_field_edge_discontinuity_measure)(measure_string, &measure) ||
+					(CMZN_OK != cmzn_field_edge_discontinuity_set_measure(edge_discontinuity_field, measure)))
+				{
+					display_message(ERROR_MESSAGE, "gfx define field edge_discontinuity.  Invalid measure for source_field");
+					return_code = 0;
+				}
+				if (CMZN_OK != cmzn_field_edge_discontinuity_set_conditional_field(edge_discontinuity_field, conditional_field))
+				{
+					display_message(ERROR_MESSAGE, "gfx define field edge_discontinuity.  Could not set conditional_field");
+					return_code = 0;
+				}
+				cmzn_field_edge_discontinuity_destroy(&edge_discontinuity_field);
+			}
+			else
+			{
+				return_code = 0;
+				if (!source_field)
+					display_message(ERROR_MESSAGE, "gfx define field edge_discontinuity.  Must set source_field");
+				else
+					display_message(ERROR_MESSAGE, "gfx define field edge_discontinuity.  Failed");
+			}
+			if (return_code)
+			{
+				return_code = field_modify->update_field_and_deaccess(field);
+				field = 0;
+			}
+			else
+				cmzn_field_destroy(&field);
+		}
+		cmzn_field_destroy(&source_field);
+		cmzn_field_destroy(&conditional_field);
+	}
+	else
+	{
+		display_message(ERROR_MESSAGE,
+			"define_Computed_field_type_edge_discontinuity.  Invalid argument(s)");
+		return_code = 0;
+	}
+	return (return_code);
+}
 
 int define_Computed_field_type_embedded(struct Parse_state *state,
 	void *field_modify_void, void *computed_field_finite_element_package_void)
@@ -1120,6 +1235,10 @@ This function registers the finite_element related types of Computed_fields.
 		return_code = Computed_field_package_add_type(computed_field_package,
 			computed_field_find_mesh_location_type_string,
 			define_Computed_field_type_find_mesh_location,
+			computed_field_finite_element_package);
+		return_code = Computed_field_package_add_type(computed_field_package,
+			computed_field_edge_discontinuity_type_string,
+			define_Computed_field_type_edge_discontinuity,
 			computed_field_finite_element_package);
 		return_code = Computed_field_package_add_type(computed_field_package,
 			computed_field_embedded_type_string,
