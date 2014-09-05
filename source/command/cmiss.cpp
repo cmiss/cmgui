@@ -1196,7 +1196,7 @@ Executes a GFX CREATE FLOW_PARTICLES command.
 	if (state && (command_data = (struct cmzn_command_data *)command_data_void))
 	{
 		display_message(INFORMATION_MESSAGE,
-			"gfx_create_flow_particles has been disabled.");
+			" The flow particles feature has been removed.");
 	}
 	else
 	{
@@ -1226,7 +1226,7 @@ Executes a GFX MODIFY FLOW_PARTICLES command.
 		if (NULL != (command_data = (struct cmzn_command_data *)command_data_void))
 		{
 			display_message(INFORMATION_MESSAGE,
-				"gfx_modify_flow_particles has been disabled.");
+				" The flow particles feature has been removed.");
 		}
 		else
 		{
@@ -4799,15 +4799,15 @@ static int gfx_convert_graphics(struct Parse_state *state,
 
 		Option_table *option_table=CREATE(Option_table)();
 		Option_table_add_help(option_table,
-			"Create finite elements or a point cloud of nodes from line and surface graphics, or create nodes "
-			"from points (i.e element points)"
-			"With mode 'render_linear_product_elements' linear finite elements are made from lines and surfaces. "
+			"Create finite elements or a point cloud of nodes from lines and surfaces graphics, "
+			"or create nodes from points graphics. With mode 'render_linear_product_elements' "
+			"linear finite elements are made from lines and surfaces. "
 			"With mode 'render_surface_node_cloud', nodes are created at points in the lines and "
 			"surfaces sampled according to a Poisson distribution with the supplied densities. "
 			"The surface_density gives the base expected number of points per unit area, and if the "
 			"graphics has a data field, the value of its first component scaled by surface_density_scale_factor "
-			"is added to the expected number. Separate values for lines control the expected number per unit length."
-			"With mode 'render_point', nodes are created at points.");
+			"is added to the expected number. Separate values for lines control the expected number per unit length. "
+			"With mode 'render_nodes', nodes are created at points.");
 		/* coordinate */
 		Option_table_add_string_entry(option_table,"coordinate",&coordinate_field_name,
 			" FIELD_NAME");
