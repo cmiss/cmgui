@@ -674,7 +674,7 @@ DESCRIPTION :
 						}
 						if (nodeset)
 						{
-							if (!cmzn_nodeset_change_node_identifiers(nodeset, node_offset, sort_by_field, time))
+							if (!cmzn_nodeset_change_node_identifiers(nodeset, data_offset, sort_by_field, time))
 								return_code = 0;
 							cmzn_nodeset_destroy(&nodeset);
 						}
