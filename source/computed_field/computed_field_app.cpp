@@ -534,7 +534,7 @@ options for the various types.
 							return_code = define_Computed_field_coordinate_system(state,
 								(void *)&field_modify,computed_field_package_void);
 							// set coordinate system if only it has changed
-							if (existing_field)
+							if (existing_field && (cmzn_fieldmodule_coordinate_system_is_set(field_module)))
 							{
 								struct Coordinate_system new_coordinate_system = cmzn_fieldmodule_get_coordinate_system(field_module);
 								if (!Coordinate_systems_match(&(existing_field->coordinate_system), &new_coordinate_system))
