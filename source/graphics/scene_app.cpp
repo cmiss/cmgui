@@ -9,6 +9,7 @@
 #include "zinc/status.h"
 #include "zinc/tessellation.h"
 #include "general/debug.h"
+#include "general/enumerator_private_app.h"
 #include "general/message.h"
 #include "command/parser.h"
 #include "graphics/glyph.hpp"
@@ -894,3 +895,4 @@ int cmzn_scene_remove_selection_from_element_list_of_dimension(cmzn_scene_id sce
 	return return_code;
 }
 
+DEFINE_DEFAULT_OPTION_TABLE_ADD_ENUMERATOR_FUNCTION(cmzn_scene_render_threejs_data_export_mode)

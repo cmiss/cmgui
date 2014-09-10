@@ -8,6 +8,7 @@
 #if !defined (SCENE_APP_H_)
 #define SCENE_APP_H_
 
+#include "general/enumerator_app.h"
 /**
  * Subset of command data passed to scene modify routines.
  */
@@ -109,5 +110,7 @@ int cmzn_scene_add_selection_from_node_list(cmzn_scene_id scene,
 
 int cmzn_scene_remove_selection_from_node_list(cmzn_scene_id scene,
 	struct LIST(FE_node) *node_list, int use_data);
+
+PROTOTYPE_OPTION_TABLE_ADD_ENUMERATOR_FUNCTION( cmzn_scene_render_threejs_data_export_mode );
 
 #endif

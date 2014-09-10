@@ -7294,7 +7294,7 @@ Executes a GFX EXPORT STL command.
 static int gfx_export_threejs(struct Parse_state *state,
 	void *dummy_to_be_modified,void *command_data_void)
 {
-	char *file_name;
+	char *file_prefix;
 	int return_code;
 	struct cmzn_command_data *command_data;
 	struct Option_table *option_table;
@@ -7304,16 +7304,32 @@ static int gfx_export_threejs(struct Parse_state *state,
 	{
 		if (NULL != (command_data = (struct cmzn_command_data *)command_data_void))
 		{
-			file_name = (char *)NULL;
+			file_prefix = (char *)NULL;
 			scene = cmzn_scene_access(command_data->default_scene);
 			double begin_time = 0.0, end_time = 0.0;
-			char face_colour = 0, export_data_value = 0;
 			int number_of_time_steps = 0;
+			const char *export_mode_string, **valid_strings;
+			enum cmzn_scene_render_threejs_data_export_mode export_mode =
+				CMZN_SCENE_RENDER_THREEJS_DATA_EXPORT_MODE_COLOUR;
+
 			cmzn_scenefilter_id filter =
 				cmzn_scenefiltermodule_get_default_scenefilter(command_data->filter_module);
 			option_table = CREATE(Option_table)();
+			Option_table_add_help(option_table,
+				"Creates a json file containing data of primitives readable using ThreeJS for "
+				"web browser rendering of 3D surfaces. [file_prefix] dictates the export file's name, "
+				"name of the export will be in the following format - [file_prefix]_[region]_[graphicsname].json. "
+				"[start_time], [end_time] and [number_of_time_steps] must be used together; when specified "
+				"animated mesh will be generated. "
+				"[data_export_colour] will export the data on per vertices basis as spectrum colours when data and spectrum are specified for surface graphics. "
+				"[data_export_per_vertex_value] will export the data for each vertex as hex when data is specified on graphics. "
+				"[data_export_per_face_value] will export the data for each face as hex when data is specified on graphics, this should be used with per element constant field (e.g ID). "
+				"must be used together; when specified "
+				"animated mesh will be generated. "
+				"[scene] generates the exports for this scene and its children. "
+				"[filter] applies the filter the provided scene.");
 			/* file */
-			Option_table_add_entry(option_table, "file", &file_name,
+			Option_table_add_entry(option_table, "file_prefix", &file_prefix,
 				(void *)1, set_name);
 			Option_table_add_entry(option_table,"start_time",&begin_time,
 				NULL,set_double);
@@ -7321,10 +7337,8 @@ static int gfx_export_threejs(struct Parse_state *state,
 				NULL,set_double);
 			Option_table_add_entry(option_table, "number_of_time_steps", &number_of_time_steps,
 				&number_of_time_steps, set_int_non_negative);
-			Option_table_add_entry(option_table, "face_colour", &face_colour,
-				0, set_char_flag);
-			Option_table_add_entry(option_table, "export_data_value", &export_data_value,
-				0, set_char_flag);
+			OPTION_TABLE_ADD_ENUMERATOR(cmzn_scene_render_threejs_data_export_mode)(option_table,
+				&export_mode);
 			/* scene */
 			Option_table_add_entry(option_table,"scene",&scene,
 				command_data->root_region, set_Scene);
@@ -7334,10 +7348,10 @@ static int gfx_export_threejs(struct Parse_state *state,
 			{
 				if (scene)
 				{
-					if (file_name)
+					if (file_prefix)
 					{
-						return_code = Scene_render_threejs(scene, filter, file_name,
-							(int)number_of_time_steps, begin_time, end_time, face_colour, export_data_value);
+						return_code = Scene_render_threejs(scene, filter, file_prefix,
+							(int)number_of_time_steps, begin_time, end_time, export_mode);
 					}
 					else
 					{
@@ -7352,9 +7366,9 @@ static int gfx_export_threejs(struct Parse_state *state,
 				cmzn_scene_destroy(&scene);
 			if (filter)
 				cmzn_scenefilter_destroy(&filter);
-			if (file_name)
+			if (file_prefix)
 			{
-				DEALLOCATE(file_name);
+				DEALLOCATE(file_prefix);
 			}
 		}
 		else
