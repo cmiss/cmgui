@@ -902,8 +902,12 @@ DESCRIPTION :
 Callback from wxChooser<Coordinate Field> when choice is made.
 ==============================================================================*/
 	{
-		cmzn_graphics_set_coordinate_field(
-			region_tree_viewer->current_graphics, coordinate_field);
+		if (CMZN_OK != cmzn_graphics_set_coordinate_field(
+			region_tree_viewer->current_graphics, coordinate_field))
+		{
+			display_message(ERROR_MESSAGE,
+				"Unable to set specified coordinate field");
+		}
 		Region_tree_viewer_autoapply(region_tree_viewer->scene,
 			region_tree_viewer->edit_scene);
 		//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphics);
@@ -2638,7 +2642,7 @@ void SetGraphics(cmzn_graphics *graphics)
 		coordinate_field_chooser =
 			new Managed_object_chooser<Computed_field,MANAGER_CLASS(Computed_field)>
 			(coordinate_field_chooser_panel, temp_coordinate_field, region_tree_viewer->field_manager,
-				(MANAGER_CONDITIONAL_FUNCTION(Computed_field) *)NULL, (void *)NULL, region_tree_viewer->user_interface);
+				Computed_field_has_up_to_3_numerical_components, (void *)NULL, region_tree_viewer->user_interface);
 		Callback_base< Computed_field* > *coordinate_field_callback =
 			new Callback_member_callback< Computed_field*,
 			wxRegionTreeViewer, int (wxRegionTreeViewer::*)(Computed_field *) >
