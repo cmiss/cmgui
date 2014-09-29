@@ -723,13 +723,15 @@ static int gfx_create_axes(struct Parse_state *state,
 	USE_PARAMETER(state);
 	USE_PARAMETER(dummy_to_be_modified);
 	USE_PARAMETER(dummy_user_data_void);
-	display_message(WARNING_MESSAGE,
+	struct Option_table *option_table = CREATE(Option_table)();
+	Option_table_add_help(option_table,
 		"The 'gfx create axes' command has been removed. These are now drawn as\n"
 		"point graphics using built-in axes glyphs. Create these in the scene editor\n"
 		"and list commands to reproduce the view with:\n"
 		"  gfx list g_element REGION_PATH commands\n"
 		"Alternatively directly add with commands (e.g. for root region):\n"
 		"  gfx modify g_element \"/\" point glyph axes_xyz size 1.0;\n");
+	DESTROY(Option_table)(&option_table);
 	return 1;
 }
 
