@@ -97,7 +97,7 @@ SET(APP_SRCS
     source/interaction/interactive_tool.cpp
     source/io_devices/matrix.cpp
     source/node/node_tool.cpp
-    source/three_d_drawing/window_system_extensions.c
+    source/three_d_drawing/window_system_extensions.cpp
     source/user_interface/confirmation.cpp
     source/user_interface/event_dispatcher.cpp
     source/user_interface/filedir.cpp
