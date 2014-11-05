@@ -7,6 +7,8 @@
 #include "zinc/glyph.h"
 #include "zinc/material.h"
 #include "zinc/status.h"
+#include "zinc/stream.h"
+#include "zinc/streamscene.h"
 #include "zinc/tessellation.h"
 #include "general/debug.h"
 #include "general/enumerator_private_app.h"
@@ -895,4 +897,51 @@ int cmzn_scene_remove_selection_from_element_list_of_dimension(cmzn_scene_id sce
 	return return_code;
 }
 
-DEFINE_DEFAULT_OPTION_TABLE_ADD_ENUMERATOR_FUNCTION(cmzn_scene_render_threejs_data_export_mode)
+int scene_app_export_threejs(cmzn_scene_id scene, cmzn_scenefilter_id scenefilter,
+	char *file_prefix, int number_of_time_steps, double begin_time, double end_time,
+	cmzn_streaminformation_scene_export_data_type data_type)
+{
+	if (scene)
+	{
+		int return_code = 0;
+		cmzn_streaminformation_id streaminformation = cmzn_scene_create_streaminformation_scene(scene);
+		cmzn_streaminformation_scene_id streaminformation_scene = cmzn_streaminformation_cast_scene(
+			streaminformation);
+		cmzn_streaminformation_scene_set_export_format(
+			streaminformation_scene, CMZN_STREAMINFORMATION_SCENE_EXPORT_FORMAT_THREEJS);
+		cmzn_streaminformation_scene_set_number_of_time_steps(
+			streaminformation_scene, number_of_time_steps);
+		cmzn_streaminformation_scene_set_initial_time(
+			streaminformation_scene,  begin_time);
+		cmzn_streaminformation_scene_set_finish_time(
+			streaminformation_scene, end_time);
+		cmzn_streaminformation_scene_set_export_data_type(
+			streaminformation_scene, data_type);
+		int number_of_resources_required =
+			cmzn_streaminformation_scene_get_number_of_resources_required(streaminformation_scene);
+		cmzn_streamresource_id *streamresources = new cmzn_streamresource_id[number_of_resources_required];
+		if (number_of_resources_required > 0)
+		{
+			char temp[200];
+			for (int i = 0; i < number_of_resources_required; i++)
+			{
+				sprintf(temp, "%s_%d.json", file_prefix, i+1);
+				streamresources[i] =
+					cmzn_streaminformation_create_streamresource_file(streaminformation,temp);
+			}
+			return_code = cmzn_scene_export_scene(scene, streaminformation_scene);
+		}
+		for (int i = 0; i < number_of_resources_required; i++)
+		{
+			cmzn_streamresource_destroy(&(streamresources[i]));
+		}
+		delete[] streamresources;
+		cmzn_streaminformation_scene_destroy(&streaminformation_scene);
+		cmzn_streaminformation_destroy(&streaminformation);
+		return 1;
+	}
+
+	return 0;
+}
+
+DEFINE_DEFAULT_OPTION_TABLE_ADD_ENUMERATOR_FUNCTION(cmzn_streaminformation_scene_export_data_type)

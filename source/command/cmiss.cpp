@@ -7311,8 +7311,8 @@ static int gfx_export_threejs(struct Parse_state *state,
 			double begin_time = 0.0, end_time = 0.0;
 			int number_of_time_steps = 0;
 			const char *export_mode_string, **valid_strings;
-			enum cmzn_scene_render_threejs_data_export_mode export_mode =
-				CMZN_SCENE_RENDER_THREEJS_DATA_EXPORT_MODE_COLOUR;
+			enum cmzn_streaminformation_scene_export_data_type export_mode =
+				CMZN_STREAMINFORMATION_SCENE_EXPORT_DATA_TYPE_COLOUR;
 
 			cmzn_scenefilter_id filter =
 				cmzn_scenefiltermodule_get_default_scenefilter(command_data->filter_module);
@@ -7339,7 +7339,7 @@ static int gfx_export_threejs(struct Parse_state *state,
 				NULL,set_double);
 			Option_table_add_entry(option_table, "number_of_time_steps", &number_of_time_steps,
 				&number_of_time_steps, set_int_non_negative);
-			OPTION_TABLE_ADD_ENUMERATOR(cmzn_scene_render_threejs_data_export_mode)(option_table,
+			OPTION_TABLE_ADD_ENUMERATOR(cmzn_streaminformation_scene_export_data_type)(option_table,
 				&export_mode);
 			/* scene */
 			Option_table_add_entry(option_table,"scene",&scene,
@@ -7352,7 +7352,7 @@ static int gfx_export_threejs(struct Parse_state *state,
 				{
 					if (file_prefix)
 					{
-						return_code = Scene_render_threejs(scene, filter, file_prefix,
+						return_code = scene_app_export_threejs(scene, filter, file_prefix,
 							(int)number_of_time_steps, begin_time, end_time, export_mode);
 					}
 					else

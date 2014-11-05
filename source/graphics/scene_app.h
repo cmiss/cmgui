@@ -91,6 +91,10 @@ Modifier function to set the scene from a command.
 int define_Scene(struct Parse_state *state, void *scene_void,
 	void *define_scene_data_void);
 
+int scene_app_export_threejs(cmzn_scene_id scene, cmzn_scenefilter_id scenefilter,
+	char *file_prefix, int number_of_time_steps, double begin_time, double end_time,
+	cmzn_streaminformation_scene_export_data_type data_type);
+
 struct Define_scene_data
 {
 	struct cmzn_region *root_region;
@@ -111,6 +115,6 @@ int cmzn_scene_add_selection_from_node_list(cmzn_scene_id scene,
 int cmzn_scene_remove_selection_from_node_list(cmzn_scene_id scene,
 	struct LIST(FE_node) *node_list, int use_data);
 
-PROTOTYPE_OPTION_TABLE_ADD_ENUMERATOR_FUNCTION( cmzn_scene_render_threejs_data_export_mode );
+PROTOTYPE_OPTION_TABLE_ADD_ENUMERATOR_FUNCTION( cmzn_streaminformation_scene_export_data_type );
 
 #endif
