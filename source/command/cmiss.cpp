@@ -12445,9 +12445,9 @@ static int gfx_read_region(struct Parse_state *state,
 				if (!(file_name = confirmation_get_read_filename(file_ext,
 					command_data->user_interface
 #if defined(WX_USER_INTERFACE)
-								 , command_data->execute_command
+					, command_data->execute_command
 #endif /*defined (WX_USER_INTERFACE) */
-																												 )))
+					)))
 				{
 					return_code = 0;
 				}
@@ -12463,7 +12463,7 @@ static int gfx_read_region(struct Parse_state *state,
 				cmzn_streamresource_destroy(&resource);
 				cmzn_streaminformation_region_destroy(&streaminformation_region);
 				cmzn_streaminformation_destroy(&streaminformation);
-				if (!return_code)
+				if (return_code != CMZN_OK)
 				{
 					display_message(ERROR_MESSAGE,
 						"Error reading region file: %s", file_name);
@@ -14076,7 +14076,7 @@ Executes a GFX UPDATE command.
 } /* execute_command_gfx_update */
 #endif /* defined (WX_USER_INTERFACE) */
 
-static int gfx_write_All(struct Parse_state *state,
+static int gfx_write_all(struct Parse_state *state,
 	 void *dummy_to_be_modified,void *command_data_void)
 /*******************************************************************************
 LAST MODIFIED : 3 August 2007
@@ -14285,7 +14285,7 @@ Can also write individual groups with the <group> option.
 				 if (exfile_fd == -1)
 				 {
 						display_message(ERROR_MESSAGE,
-							 "gfx_write_All.  Could not open temporary exregion file");
+							 "gfx_write_all.  Could not open temporary exregion file");
 				 }
 				 else
 				 {
@@ -14298,7 +14298,7 @@ Can also write individual groups with the <group> option.
 							time, write_criterion, write_recursion)))
 						{
 							 display_message(ERROR_MESSAGE,
-									"gfx_write_All.  Could not create temporary data file");
+									"gfx_write_all.  Could not create temporary data file");
 						}
 				 }
 				 if (com_return_code)
@@ -14338,7 +14338,7 @@ Can also write individual groups with the <group> option.
 									if (!return_code)
 									{
 										 display_message(ERROR_MESSAGE,
-												"gfx_write_All.  Could not list field commands");
+												"gfx_write_all.  Could not list field commands");
 									}
 							 }
 
@@ -14374,7 +14374,7 @@ Can also write individual groups with the <group> option.
 				 if (unlink(temp_exfile) == -1)
 				 {
 						display_message(ERROR_MESSAGE,
-							 "gfx_write_All.  Could not unlink temporary exregion file");
+							 "gfx_write_all.  Could not unlink temporary exregion file");
 				 }
 				 if (unlink(com_file_name) == -1)
 				 {
@@ -14407,13 +14407,13 @@ Can also write individual groups with the <group> option.
 	 }
 	 else
 	 {
-			display_message(ERROR_MESSAGE, "gfx_write_All.  Invalid argument(s)");
+			display_message(ERROR_MESSAGE, "gfx_write_all.  Invalid argument(s)");
 			return_code = 0;
 	 }
 	 LEAVE;
 
 	 return (return_code);
-} /* gfx_write_elements */
+} /* gfx_write_all */
 
 #if defined (NEW_CODE)
 static int gfx_write_Com(struct Parse_state *state,
@@ -15166,7 +15166,7 @@ Executes a GFX WRITE command.
 			 //#if defined (NEW_CODE)
 			option_table = CREATE(Option_table)();
 			Option_table_add_entry(option_table, "all", NULL,
-				command_data_void, gfx_write_All);
+				command_data_void, gfx_write_all);
 			//#endif /* defined NEW_CODE) */
 			Option_table_add_entry(option_table, "curve", NULL,
 				command_data_void, gfx_write_Curve);
