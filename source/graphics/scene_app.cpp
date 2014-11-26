@@ -907,6 +907,7 @@ int scene_app_export_threejs(cmzn_scene_id scene, cmzn_scenefilter_id scenefilte
 		cmzn_streaminformation_id streaminformation = cmzn_scene_create_streaminformation_scene(scene);
 		cmzn_streaminformation_scene_id streaminformation_scene = cmzn_streaminformation_cast_scene(
 			streaminformation);
+		cmzn_streaminformation_scene_set_scenefilter(streaminformation_scene, scenefilter);
 		cmzn_streaminformation_scene_set_export_format(
 			streaminformation_scene, CMZN_STREAMINFORMATION_SCENE_EXPORT_FORMAT_THREEJS);
 		cmzn_streaminformation_scene_set_number_of_time_steps(
