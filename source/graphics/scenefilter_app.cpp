@@ -347,8 +347,6 @@ int gfx_define_graphics_filter_contents(struct Parse_state *state, void *graphic
 			DEALLOCATE(match_graphics_name);
 		if (match_region_path)
 			DEALLOCATE(match_region_path);
-		if (graphics_type_string)
-			DEALLOCATE(graphics_type_string);
 	}
 	else
 	{
