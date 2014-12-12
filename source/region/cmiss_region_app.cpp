@@ -5,6 +5,7 @@
 * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "zinc/region.h"
+#include "zinc/streamregion.h"
 #include "general/message.h"
 #include "general/mystring.h"
 #include "general/debug.h"
@@ -12,6 +13,7 @@
 #include "command/parser.h"
 #include "region/cmiss_region.h"
 #include "region/cmiss_region_app.h"
+#include "stream/region_stream.hpp"
 
 int set_cmzn_region(struct Parse_state *state, void *region_address_void,
 	void *root_region_void)
@@ -398,4 +400,67 @@ int Option_table_add_region_or_group_entry(struct Option_table *option_table,
 	}
 	return Option_table_add_entry(option_table, token,
 		(void *)region_address, (void *)group_address, set_cmzn_region_or_group);
+}
+
+int export_region_file_of_name(const char *file_name,
+	struct cmzn_region *region, const char *group_name,
+	struct cmzn_region *root_region,
+	int write_elements, int write_nodes, int write_data,
+	int number_of_field_names, char **field_names, FE_value time,
+	enum cmzn_streaminformation_region_recursion_mode recursion_mode,
+	int isFieldML)
+{
+	int return_code = 0;
+	if (file_name && region && root_region)
+	{
+		cmzn_streaminformation_id si = cmzn_region_create_streaminformation_region(
+			region);
+		cmzn_streaminformation_region_id si_region = cmzn_streaminformation_cast_region(
+			si);
+		cmzn_streamresource_id sr = cmzn_streaminformation_create_streamresource_file(si, file_name);
+		si_region->setRootRegion(root_region);
+		cmzn_streaminformation_region_set_resource_recursion_mode(si_region, sr,
+			recursion_mode);
+		cmzn_field_domain_types domain_types = write_elements;
+		if (write_nodes)
+			domain_types = domain_types | CMZN_FIELD_DOMAIN_TYPE_NODES;
+		if (write_data)
+			domain_types = domain_types | CMZN_FIELD_DOMAIN_TYPE_DATAPOINTS;
+		cmzn_streaminformation_region_set_resource_domain_types(si_region, sr,
+			domain_types);
+		if (isFieldML)
+			cmzn_streaminformation_region_set_file_format(si_region, CMZN_STREAMINFORMATION_REGION_FILE_FORMAT_FIELDML);
+		else
+			cmzn_streaminformation_region_set_file_format(si_region, CMZN_STREAMINFORMATION_REGION_FILE_FORMAT_EX);
+		if (number_of_field_names && field_names)
+		{
+			if (number_of_field_names == 1 && (0 == (strcmp(field_names[0], "none"))))
+			{
+				si_region->setWriteNoField(1);
+			}
+			else
+			{
+				const char **temp_names = new const char *[number_of_field_names];
+
+				for (int i = 0; i < number_of_field_names; i++)
+				{
+					temp_names[i] = field_names[i];
+				}
+				cmzn_streaminformation_region_set_resource_field_names(si_region,
+					sr, number_of_field_names, temp_names);
+				delete[] temp_names;
+			}
+		}
+		cmzn_streaminformation_region_set_resource_group_name(si_region,
+			sr, group_name);
+		cmzn_streaminformation_region_set_resource_attribute_real(
+			si_region, sr, CMZN_STREAMINFORMATION_REGION_ATTRIBUTE_TIME,
+			(double)time);
+		return_code = cmzn_region_write(region, si_region);
+		cmzn_streamresource_destroy(&sr);
+		cmzn_streaminformation_region_destroy(&si_region);
+		cmzn_streaminformation_destroy(&si);
+	}
+
+	return return_code;
 }

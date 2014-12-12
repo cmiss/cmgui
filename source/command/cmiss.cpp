@@ -14195,18 +14195,24 @@ Can also write individual groups with the <group> option.
 					return_code = 0;
 					exfile_return_code = 0;
 				}
-				cmzn_region_id region = cmzn_region_access(root_region);
-				cmzn_field_group_id group = 0;
+				cmzn_region_id region = 0;
+				char *group_name = 0;
 				if (region_or_group_path)
 				{
-					int result = cmzn_region_path_to_subregion_and_group(region, region_or_group_path, &region, &group);
+					char *region_path = 0;
+					int result = cmzn_region_get_partial_region_path(root_region, region_or_group_path,
+						&region, &region_path, &group_name);
 					if (CMZN_OK != result)
 					{
 						display_message(ERROR_MESSAGE, "Invalid region/group path '%s'", region_or_group_path);
 						display_parse_state_location(state);
 						return_code = 0;
 					}
+					if (region_path)
+						DEALLOCATE(region_path);
 				}
+				if (region == 0)
+					region = root_region;
 				if (return_code)
 				{
 					if (!file_name)
@@ -14289,17 +14295,20 @@ Can also write individual groups with the <group> option.
 				 }
 				 else
 				 {
-						if (!(exfile_return_code = write_exregion_file_of_name(temp_exfile,
-							region, group, root_region,
-							/*write_elements*/CMZN_FIELD_DOMAIN_TYPE_MESH1D|CMZN_FIELD_DOMAIN_TYPE_MESH2D|
-							CMZN_FIELD_DOMAIN_TYPE_MESH3D|CMZN_FIELD_DOMAIN_TYPE_MESH_HIGHEST_DIMENSION,
-							/*write_nodes*/1, /*write_data*/1,
-							write_fields_mode, field_names.number_of_strings, field_names.strings,
-							time, write_criterion, write_recursion)))
-						{
-							 display_message(ERROR_MESSAGE,
-									"gfx_write_all.  Could not create temporary data file");
-						}
+					 cmzn_streaminformation_region_recursion_mode recursion_mode = CMZN_STREAMINFORMATION_REGION_RECURSION_MODE_ON;
+					 if (write_recursion == FE_WRITE_NON_RECURSIVE)
+						 recursion_mode = CMZN_STREAMINFORMATION_REGION_RECURSION_MODE_OFF;
+					 if (!(exfile_return_code = export_region_file_of_name(temp_exfile,
+						 region, group_name, root_region,
+						 /*write_elements*/CMZN_FIELD_DOMAIN_TYPE_MESH1D|CMZN_FIELD_DOMAIN_TYPE_MESH2D|
+						 CMZN_FIELD_DOMAIN_TYPE_MESH3D|CMZN_FIELD_DOMAIN_TYPE_MESH_HIGHEST_DIMENSION,
+						 /*write_nodes*/1, /*write_data*/1,
+						 field_names.number_of_strings, field_names.strings,
+						 time, recursion_mode,/*isFieldML*/0)))
+					 {
+						 display_message(ERROR_MESSAGE,
+							 "gfx_write_all.  Could not create temporary data file");
+					 }
 				 }
 				 if (com_return_code)
 				 {
@@ -14391,8 +14400,8 @@ Can also write individual groups with the <group> option.
 				 {
 						DEALLOCATE(exfile_name);
 				 }
-				cmzn_field_group_destroy(&group);
-				cmzn_region_destroy(&region);
+				if (group_name)
+					DEALLOCATE(group_name);
 			}
 			DESTROY(Option_table)(&option_table);
 			if (region_or_group_path)
@@ -14649,18 +14658,25 @@ Can also write individual element groups with the <group> option.
 				return_code = 0;
 
 			}
-			cmzn_region_id region = cmzn_region_access(root_region);
-			cmzn_field_group_id group = 0;
+			cmzn_region_id region = 0;
+			char *group_name = 0;
 			if (region_or_group_path)
 			{
-				int result = cmzn_region_path_to_subregion_and_group(region, region_or_group_path, &region, &group);
+				char *region_path = 0;
+				int result = cmzn_region_get_partial_region_path(root_region, region_or_group_path,
+					&region, &region_path, &group_name);
 				if (CMZN_OK != result)
 				{
 					display_message(ERROR_MESSAGE, "Invalid region/group path '%s'", region_or_group_path);
 					display_parse_state_location(state);
 					return_code = 0;
 				}
+				if (region_path)
+					DEALLOCATE(region_path);
 			}
+			if (region == 0)
+				region = root_region;
+
 			if (return_code)
 			{
 				if (!file_name)
@@ -14687,16 +14703,19 @@ Can also write individual element groups with the <group> option.
 				/* open the file */
 				if (0 != (return_code = check_suffix(&file_name, ".exelem")))
 				{
-					return_code = write_exregion_file_of_name(file_name, region, group, root_region,
+					cmzn_streaminformation_region_recursion_mode recursion_mode = CMZN_STREAMINFORMATION_REGION_RECURSION_MODE_ON;
+					if (write_recursion == FE_WRITE_NON_RECURSIVE)
+						recursion_mode = CMZN_STREAMINFORMATION_REGION_RECURSION_MODE_OFF;
+					return_code = export_region_file_of_name(file_name, region, group_name, root_region,
 						/*write_elements*/CMZN_FIELD_DOMAIN_TYPE_MESH1D|CMZN_FIELD_DOMAIN_TYPE_MESH2D|
 						CMZN_FIELD_DOMAIN_TYPE_MESH3D|CMZN_FIELD_DOMAIN_TYPE_MESH_HIGHEST_DIMENSION,
 						(int)nodes_flag, /*write_data*/(int)data_flag,
-						write_fields_mode, field_names.number_of_strings, field_names.strings,
-						time, write_criterion, write_recursion);
+						field_names.number_of_strings, field_names.strings,
+						time, recursion_mode, /*isFieldML*/0);
 				}
 			}
-			cmzn_field_group_destroy(&group);
-			cmzn_region_destroy(&region);
+			if (group_name)
+				DEALLOCATE(group_name);
 		}
 		DESTROY(Option_table)(&option_table);
 		if (region_or_group_path)
@@ -14718,6 +14737,69 @@ Can also write individual element groups with the <group> option.
 
 	return (return_code);
 } /* gfx_write_elements */
+
+static int gfx_write_region(struct Parse_state *state,
+	void *use_data, void *command_data_void)
+{
+	int return_code;
+	struct cmzn_command_data *command_data;
+	struct Option_table *option_table;
+
+	ENTER(gfx_write_nodes);
+	if (state && (command_data = (struct cmzn_command_data *)command_data_void))
+	{
+		return_code = 1;
+		cmzn_region_id root_region = cmzn_region_access(command_data->root_region);
+		char *region_or_group_path = 0;
+		Multiple_strings field_names;
+		char *filename = 0;
+		cmzn_region_id region = cmzn_region_access(root_region);
+		option_table = CREATE(Option_table)();
+		Option_table_add_help(option_table,
+			" Export fields of the specified region into FieldML format."
+			" Only the specified region will be exported, child regions will not.");
+		Option_table_add_entry(option_table, "file_name", &filename,	NULL, set_name);
+		Option_table_add_set_cmzn_region(option_table, "region", root_region, &region);
+
+		if (0 != (return_code = Option_table_multi_parse(option_table, state)))
+		{
+			if (filename == 0)
+			{
+				display_message(WARNING_MESSAGE,
+					"gfx write region:  Must provide a file name.");
+				return_code = 0;
+			}
+			if (region == 0)
+			{
+				display_message(WARNING_MESSAGE,
+					"gfx write region:  Must provide a valid region name.");
+				return_code = 0;
+			}
+
+			if (return_code)
+			{
+				/* open the file */
+				return_code = export_region_file_of_name(filename, region, 0, root_region,
+					/*write_elements*/CMZN_FIELD_DOMAIN_TYPE_MESH1D|CMZN_FIELD_DOMAIN_TYPE_MESH2D|
+					CMZN_FIELD_DOMAIN_TYPE_MESH3D|CMZN_FIELD_DOMAIN_TYPE_MESH_HIGHEST_DIMENSION,
+					/*write_nodes*/1, /*write_data*/1, 0, 0, 0,
+					CMZN_STREAMINFORMATION_REGION_RECURSION_MODE_OFF, /*isFieldML*/1);
+			}
+		}
+		DESTROY(Option_table)(&option_table);
+		if (filename)
+			DEALLOCATE(filename);
+		cmzn_region_destroy(&root_region);
+		cmzn_region_destroy(&region);
+	}
+	else
+	{
+		display_message(ERROR_MESSAGE, "gfx_write_region.  Invalid argument(s)");
+		return_code = 0;
+	}
+
+	return (return_code);
+} /* gfx_write_nodes */
 
 static int gfx_write_nodes(struct Parse_state *state,
 	void *use_data, void *command_data_void)
@@ -14833,17 +14915,23 @@ If <use_data> is set, writing data, otherwise writing nodes.
 				return_code = 0;
 			}
 			cmzn_region_id region = cmzn_region_access(root_region);
-			cmzn_field_group_id group = 0;
+			char *group_name = 0;
 			if (region_or_group_path)
 			{
-				int result = cmzn_region_path_to_subregion_and_group(region, region_or_group_path, &region, &group);
+				char *region_path = 0;
+				int result = cmzn_region_get_partial_region_path(root_region, region_or_group_path,
+					&region, &region_path, &group_name);
 				if (CMZN_OK != result)
 				{
 					display_message(ERROR_MESSAGE, "Invalid region/group path '%s'", region_or_group_path);
 					display_parse_state_location(state);
 					return_code = 0;
 				}
+				if (region_path)
+					DEALLOCATE(region_path);
 			}
+			if (region == 0)
+				region = root_region;
 			if (return_code)
 			{
 				if (!file_name)
@@ -14867,17 +14955,20 @@ If <use_data> is set, writing data, otherwise writing nodes.
 			}
 			if (return_code)
 			{
+				cmzn_streaminformation_region_recursion_mode recursion_mode = CMZN_STREAMINFORMATION_REGION_RECURSION_MODE_ON;
+				if (write_recursion == FE_WRITE_NON_RECURSIVE)
+					recursion_mode = CMZN_STREAMINFORMATION_REGION_RECURSION_MODE_OFF;
 				/* open the file */
 				if (0 != (return_code = check_suffix(&file_name, file_ext)))
 				{
-					return_code = write_exregion_file_of_name(file_name, region, group, root_region,
+					return_code = export_region_file_of_name(file_name, region, group_name, root_region,
 						/*write_elements*/0, /*write_nodes*/!use_data, /*write_data*/(0 != use_data),
-						write_fields_mode, field_names.number_of_strings, field_names.strings, time,
-						write_criterion, write_recursion);
+						field_names.number_of_strings, field_names.strings, time,
+						recursion_mode, /*isFieldML*/0);
 				}
 			}
-			cmzn_field_group_destroy(&group);
-			cmzn_region_destroy(&region);
+			if (group_name)
+				DEALLOCATE(group_name);
 		}
 		DESTROY(Option_table)(&option_table);
 		if (region_or_group_path)
@@ -15176,6 +15267,8 @@ Executes a GFX WRITE command.
 				command_data_void, gfx_write_elements);
 			Option_table_add_entry(option_table, "nodes", /*use_data*/(void *)0,
 				command_data_void, gfx_write_nodes);
+			Option_table_add_entry(option_table, "region", 0,
+				command_data_void, gfx_write_region);
 			Option_table_add_entry(option_table, "texture", NULL,
 				command_data_void, gfx_write_texture);
 			return_code = Option_table_parse(option_table, state);

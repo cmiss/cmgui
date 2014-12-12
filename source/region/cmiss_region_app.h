@@ -5,6 +5,7 @@
 * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 #include "zinc/region.h"
 #include "command/parser.h"
+#include "finite_element/export_finite_element.h"
 
 /***************************************************************************//**
  * Option_table modifier function for selecting a region by relative path.
@@ -111,3 +112,11 @@ int set_cmzn_region_or_group(struct Parse_state *state,
 int Option_table_add_region_or_group_entry(struct Option_table *option_table,
 	const char *token, cmzn_region_id *region_address,
 	cmzn_field_group_id *group_address);
+
+int export_region_file_of_name(const char *file_name,
+	struct cmzn_region *region, const char *group_name,
+	struct cmzn_region *root_region,
+	int write_elements, int write_nodes, int write_data,
+	int number_of_field_names, char **field_names, FE_value time,
+	enum cmzn_streaminformation_region_recursion_mode recursion_mode,
+	int isFieldML);
