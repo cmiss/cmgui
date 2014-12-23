@@ -32,8 +32,8 @@ Global Functions
 
 int bring_up_spectrum_editor_dialog(
 	struct Spectrum_editor_dialog **spectrum_editor_dialog_address,
-	struct MANAGER(Spectrum) *spectrum_manager,
-	struct Spectrum *spectrum,
+	struct MANAGER(cmzn_spectrum) *spectrum_manager,
+	struct cmzn_spectrum *spectrum,
 	struct cmzn_font *font,
 	struct Graphics_buffer_app_package *graphics_buffer_package,
 	struct User_interface *user_interface,
@@ -58,7 +58,7 @@ Destroy the <*spectrum_editor_dialog_address> and sets
 <*spectrum_editor_dialog_address> to NULL.
 ==============================================================================*/
 
-struct Spectrum *spectrum_editor_dialog_get_spectrum(
+struct cmzn_spectrum *spectrum_editor_dialog_get_spectrum(
 	struct Spectrum_editor_dialog *spectrum_editor_dialog);
 /*******************************************************************************
 LAST MODIFIED : 12 August 2002
@@ -69,7 +69,7 @@ Returns the spectrum edited by the <spectrum_editor_dialog>.
 
 int spectrum_editor_dialog_set_spectrum(
 	struct Spectrum_editor_dialog *spectrum_editor_dialog,
-	struct Spectrum *spectrum);
+	struct cmzn_spectrum *spectrum);
 /*******************************************************************************
 LAST MODIFIED : 12 August 2002
 

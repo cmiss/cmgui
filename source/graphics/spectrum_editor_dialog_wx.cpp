@@ -36,8 +36,8 @@ and deaccess it.
 ==============================================================================*/
 {
 // 	struct Callback_data update_callback;
-	struct Spectrum *current_value;
-	struct MANAGER(Spectrum) *spectrum_manager;
+	struct cmzn_spectrum *current_value;
+	struct MANAGER(cmzn_spectrum) *spectrum_manager;
 	struct Scene *autorange_scene;
 	struct Spectrum_editor *spectrum_editor;
 	struct Spectrum_editor_dialog **spectrum_editor_dialog_address;
@@ -46,8 +46,8 @@ and deaccess it.
 
 static struct Spectrum_editor_dialog *CREATE(Spectrum_editor_dialog)(
 	 struct Spectrum_editor_dialog **spectrum_editor_dialog_address,
-	 struct MANAGER(Spectrum) *spectrum_manager,
-	 struct Spectrum *init_data,
+	 struct MANAGER(cmzn_spectrum) *spectrum_manager,
+	 struct cmzn_spectrum *init_data,
 	 struct cmzn_font *font,
 	 struct Graphics_buffer_app_package *graphics_buffer_package,
 	 struct User_interface *user_interface,
@@ -81,7 +81,7 @@ the spectrums contained in the global list.
 					spectrum_manager;
 				/* current_value set in spectrum_editor_dialog_set_spectrum */
 				spectrum_editor_dialog->current_value=
-					(struct Spectrum *)NULL;
+					(struct cmzn_spectrum *)NULL;
 				spectrum_editor_dialog->spectrum_editor =
 					(struct Spectrum_editor *)NULL;
 				spectrum_editor_dialog->autorange_scene = (struct Scene *)NULL;
@@ -122,7 +122,7 @@ the spectrums contained in the global list.
 	return (spectrum_editor_dialog);
 } /* CREATE(Spectrum_editor_dialog) */
 
-struct Spectrum *spectrum_editor_dialog_get_spectrum(
+struct cmzn_spectrum *spectrum_editor_dialog_get_spectrum(
 	struct Spectrum_editor_dialog *spectrum_editor_dialog)
 /*******************************************************************************
 LAST MODIFIED : 23 August 2007
@@ -131,7 +131,7 @@ DESCRIPTION :
 Returns the spectrum edited by the <spectrum_editor_dialog>.
 ==============================================================================*/
 {
-	struct Spectrum *spectrum;
+	struct cmzn_spectrum *spectrum;
 
 	ENTER(spectrum_editor_dialog_get_spectrum);
 	if (spectrum_editor_dialog)
@@ -142,7 +142,7 @@ Returns the spectrum edited by the <spectrum_editor_dialog>.
 	{
 		display_message(ERROR_MESSAGE,
 			"spectrum_editor_dialog_get_spectrum.  Invalid argument(s)");
-		spectrum = (struct Spectrum *)NULL;
+		spectrum = (struct cmzn_spectrum *)NULL;
 	}
 	LEAVE;
 
@@ -151,8 +151,8 @@ Returns the spectrum edited by the <spectrum_editor_dialog>.
 
 int bring_up_spectrum_editor_dialog(
 	struct Spectrum_editor_dialog **spectrum_editor_dialog_address,
-	struct MANAGER(Spectrum) *spectrum_manager,
-	struct Spectrum *spectrum,
+	struct MANAGER(cmzn_spectrum) *spectrum_manager,
+	struct cmzn_spectrum *spectrum,
 	struct cmzn_font *font,
 	struct Graphics_buffer_app_package *graphics_buffer_package,
 	struct User_interface *user_interface,

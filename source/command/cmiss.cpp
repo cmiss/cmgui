@@ -343,12 +343,12 @@ DESCRIPTION :
 	struct MANAGER(Curve) *curve_manager;
 	struct MANAGER(Scene) *scene_manager;
 	struct Scene *default_scene;
-	struct MANAGER(Spectrum) *spectrum_manager;
+	struct MANAGER(cmzn_spectrum) *spectrum_manager;
 	struct MANAGER(VT_volume_texture) *volume_texture_manager;
 	/* global list of selected objects */
 	struct Any_object_selection *any_object_selection;
 	struct Element_point_ranges_selection *element_point_ranges_selection;
-	struct Spectrum *default_spectrum;
+	struct cmzn_spectrum *default_spectrum;
 	struct Streampoint *streampoint_list;
 	struct Time_keeper_app *default_time_keeper_app;
 	struct User_interface *user_interface;
@@ -758,7 +758,7 @@ static int gfx_create_colour_bar(struct Parse_state *state,
 			/* must access it now, because we deaccess it later */
 			cmzn_material_id label_material = cmzn_materialmodule_get_default_material(command_data->materialmodule);
 			cmzn_material_id material = 0;
-			cmzn_spectrum_id spectrum = ACCESS(Spectrum)(command_data->default_spectrum);
+			cmzn_spectrum_id spectrum = ACCESS(cmzn_spectrum)(command_data->default_spectrum);
 			int number_of_components=3;
 			double bar_centre[3] = { -0.9, 0.0, 0.5 };
 			double bar_axis[3] = { 0.0, 1.0, 0.0 };
@@ -874,7 +874,7 @@ static int gfx_create_colour_bar(struct Parse_state *state,
 			DESTROY(Option_table)(&option_table);
 			cmzn_material_destroy(&label_material);
 			cmzn_material_destroy(&material);
-			DEACCESS(Spectrum)(&spectrum);
+			DEACCESS(cmzn_spectrum)(&spectrum);
 			DEALLOCATE(glyph_name);
 			DEALLOCATE(number_format);
 		}
@@ -2234,7 +2234,7 @@ static and referred to by gfx_create_Spectrum
 	struct Modify_spectrum_app_data modify_spectrum_data;
 	struct Option_table *option_table;
 	struct Scene *autorange_scene;
-	struct Spectrum *spectrum_to_be_modified,*spectrum_to_be_modified_copy;
+	struct cmzn_spectrum *spectrum_to_be_modified,*spectrum_to_be_modified_copy;
 
 
 	ENTER(gfx_modify_Spectrum);
@@ -2245,16 +2245,16 @@ static and referred to by gfx_create_Spectrum
 			if (NULL != (current_token = state->current_token))
 			{
 				process=0;
-				if (NULL != (spectrum_to_be_modified=(struct Spectrum *)spectrum_void))
+				if (NULL != (spectrum_to_be_modified=(struct cmzn_spectrum *)spectrum_void))
 				{
-					if (IS_MANAGED(Spectrum)(spectrum_to_be_modified,
+					if (IS_MANAGED(cmzn_spectrum)(spectrum_to_be_modified,
 						command_data->spectrum_manager))
 					{
 						spectrum_to_be_modified_copy=cmzn_spectrum_create_private();
 						cmzn_spectrum_set_name(spectrum_to_be_modified_copy, "spectrum_modify_temp");
 						if (spectrum_to_be_modified_copy)
 						{
-							MANAGER_COPY_WITHOUT_IDENTIFIER(Spectrum,name)(
+							MANAGER_COPY_WITHOUT_IDENTIFIER(cmzn_spectrum,name)(
 								spectrum_to_be_modified_copy,spectrum_to_be_modified);
 							process=1;
 						}
@@ -2268,7 +2268,7 @@ static and referred to by gfx_create_Spectrum
 					else
 					{
 						spectrum_to_be_modified_copy=spectrum_to_be_modified;
-						spectrum_to_be_modified=(struct Spectrum *)NULL;
+						spectrum_to_be_modified=(struct cmzn_spectrum *)NULL;
 						process=1;
 					}
 				}
@@ -2278,7 +2278,7 @@ static and referred to by gfx_create_Spectrum
 						strcmp(PARSER_RECURSIVE_HELP_STRING,current_token))
 					{
 						if (NULL != (spectrum_to_be_modified=FIND_BY_IDENTIFIER_IN_MANAGER(
-							Spectrum,name)(current_token,
+							cmzn_spectrum,name)(current_token,
 							command_data->spectrum_manager)))
 						{
 							return_code = shift_Parse_state(state, 1);
@@ -2288,7 +2288,7 @@ static and referred to by gfx_create_Spectrum
 								cmzn_spectrum_set_name(spectrum_to_be_modified_copy, "spectrum_modify_temp");
 								if (spectrum_to_be_modified_copy)
 								{
-									MANAGER_COPY_WITH_IDENTIFIER(Spectrum,name)(
+									MANAGER_COPY_WITH_IDENTIFIER(cmzn_spectrum,name)(
 										spectrum_to_be_modified_copy,spectrum_to_be_modified);
 									process=1;
 								}
@@ -2320,7 +2320,7 @@ static and referred to by gfx_create_Spectrum
 								gfx_modify_Spectrum);
 							return_code=Option_table_parse(option_table,state);
 							DESTROY(Option_table)(&option_table);
-							DEACCESS(Spectrum)(&spectrum_to_be_modified_copy);
+							DEACCESS(cmzn_spectrum)(&spectrum_to_be_modified_copy);
 						}
 						else
 						{
@@ -2466,10 +2466,10 @@ static and referred to by gfx_create_Spectrum
 							}
 							if (spectrum_to_be_modified)
 							{
-								MANAGER_MODIFY_NOT_IDENTIFIER(Spectrum,name)(
+								MANAGER_MODIFY_NOT_IDENTIFIER(cmzn_spectrum,name)(
 									spectrum_to_be_modified,spectrum_to_be_modified_copy,
 									command_data->spectrum_manager);
-								DEACCESS(Spectrum)(&spectrum_to_be_modified_copy);
+								DEACCESS(cmzn_spectrum)(&spectrum_to_be_modified_copy);
 							}
 							else
 							{
@@ -2478,7 +2478,7 @@ static and referred to by gfx_create_Spectrum
 						}
 						else
 						{
-							DEACCESS(Spectrum)(&spectrum_to_be_modified_copy);
+							DEACCESS(cmzn_spectrum)(&spectrum_to_be_modified_copy);
 						}
 					}
 					if(option_table)
@@ -2537,7 +2537,7 @@ Executes a GFX CREATE SPECTRUM command.
 	const char *current_token;
 	int return_code;
 	struct cmzn_command_data *command_data;
-	struct Spectrum *spectrum;
+	struct cmzn_spectrum *spectrum;
 
 	ENTER(gfx_create_spectrum);
 	USE_PARAMETER(dummy_to_be_modified);
@@ -2550,7 +2550,7 @@ Executes a GFX CREATE SPECTRUM command.
 				if (strcmp(PARSER_HELP_STRING,current_token)&&
 					strcmp(PARSER_RECURSIVE_HELP_STRING,current_token))
 				{
-					if (!FIND_BY_IDENTIFIER_IN_MANAGER(Spectrum,name)(
+					if (!FIND_BY_IDENTIFIER_IN_MANAGER(cmzn_spectrum,name)(
 						current_token,command_data->spectrum_manager))
 					{
 						spectrum=cmzn_spectrum_create_private();
@@ -2558,7 +2558,7 @@ Executes a GFX CREATE SPECTRUM command.
 						if (spectrum)
 						{
 							/*???DB.  Temporary */
-							MANAGER_COPY_WITHOUT_IDENTIFIER(Spectrum,name)(spectrum,
+							MANAGER_COPY_WITHOUT_IDENTIFIER(cmzn_spectrum,name)(spectrum,
 								command_data->default_spectrum);
 							shift_Parse_state(state,1);
 							if (state->current_token)
@@ -2572,10 +2572,10 @@ Executes a GFX CREATE SPECTRUM command.
 							}
 							if (return_code)
 							{
-								ADD_OBJECT_TO_MANAGER(Spectrum)(spectrum,
+								ADD_OBJECT_TO_MANAGER(cmzn_spectrum)(spectrum,
 									command_data->spectrum_manager);
 							}
-							DEACCESS(Spectrum)(&spectrum);
+							DEACCESS(cmzn_spectrum)(&spectrum);
 						}
 						else
 						{
@@ -2626,7 +2626,7 @@ static int set_Texture_image_from_field(struct Texture *texture,
 	struct Computed_field *field,
 	struct Computed_field *texture_coordinate_field,
 	int propagate_field,
-	struct Spectrum *spectrum,
+	struct cmzn_spectrum *spectrum,
 	cmzn_mesh_id search_mesh,
 	enum Texture_storage_type storage,
 	int image_width, int image_height, int image_depth,
@@ -2844,7 +2844,7 @@ struct Texture_evaluate_image_data
 	int propagate_field;
 	struct Computed_field *field, *texture_coordinates_field;
 	struct Graphical_material *fail_material;
-	struct Spectrum *spectrum;
+	struct cmzn_spectrum *spectrum;
 };
 
 static int gfx_modify_Texture_evaluate_image(struct Parse_state *state,
@@ -3291,7 +3291,7 @@ Modifies the properties of a texture.
 						evaluate_data.fail_material = cmzn_materialmodule_get_default_material(
 							command_data->materialmodule);
 					}
-					evaluate_data.spectrum = (struct Spectrum *)NULL;
+					evaluate_data.spectrum = (struct cmzn_spectrum *)NULL;
 
 					file_number_pattern = (char *)NULL;
 					/* increment must be non-zero for following to be "set" */
@@ -3769,7 +3769,7 @@ Modifies the properties of a texture.
 					}
 					if (evaluate_data.spectrum)
 					{
-						DEACCESS(Spectrum)(&evaluate_data.spectrum);
+						DEACCESS(cmzn_spectrum)(&evaluate_data.spectrum);
 					}
 					if (evaluate_data.field)
 					{
@@ -6488,7 +6488,7 @@ Invokes the graphical spectrum group editor.
 {
 	int return_code;
 	struct cmzn_command_data *command_data;
-	struct Spectrum *spectrum;
+	struct cmzn_spectrum *spectrum;
 	struct Option_table *option_table;
 
 	ENTER(gfx_edit_spectrum);
@@ -6496,7 +6496,7 @@ Invokes the graphical spectrum group editor.
 	if (state && (command_data = (struct cmzn_command_data *)command_data_void))
 	{
 		/* initialize defaults */
-		spectrum = (struct Spectrum *)NULL;
+		spectrum = (struct cmzn_spectrum *)NULL;
 		option_table = CREATE(Option_table)();
 		Option_table_add_entry(option_table, (char *)NULL, &spectrum,
 			command_data->spectrum_manager, set_Spectrum);
@@ -6516,7 +6516,7 @@ Invokes the graphical spectrum group editor.
 		DESTROY(Option_table)(&option_table);
 		if (spectrum)
 		{
-			DEACCESS(Spectrum)(&spectrum);
+			DEACCESS(cmzn_spectrum)(&spectrum);
 		}
 	}
 	else
@@ -7667,7 +7667,7 @@ static struct cmzn_spectrumcomponent *create_spectrum_component( cmzn_spectrumco
 	return settings;
 }
 
-static int create_RGB_spectrum( struct Spectrum **spectrum, void *command_data_void )
+static int create_RGB_spectrum( struct cmzn_spectrum **spectrum, void *command_data_void )
 {
 	int return_code = 0, number_in_list = 0;
 	struct LIST(cmzn_spectrumcomponent) *spectrum_settings_list;
@@ -7701,7 +7701,7 @@ static int create_RGB_spectrum( struct Spectrum **spectrum, void *command_data_v
 		Spectrum_calculate_range( (*spectrum) );
 		Spectrum_set_minimum_and_maximum( (*spectrum), 0, 1);
 		cmzn_spectrum_set_material_overwrite( (*spectrum), 0 );
-		if (!ADD_OBJECT_TO_MANAGER(Spectrum)( (*spectrum),
+		if (!ADD_OBJECT_TO_MANAGER(cmzn_spectrum)( (*spectrum),
 				command_data->spectrum_manager))
 		{
 			cmzn_spectrum_destroy(&command_data->spectrum_manager);
@@ -7725,7 +7725,7 @@ static int execute_command_gfx_import(struct Parse_state *state,
 	USE_PARAMETER(dummy_to_be_modified);
 	if (state && (command_data = (struct cmzn_command_data *)command_data_void))
 	{
-		struct Spectrum *rgb_spectrum = (struct Spectrum *)NULL;
+		struct cmzn_spectrum *rgb_spectrum = (struct cmzn_spectrum *)NULL;
 		struct Graphical_material *material =
 			cmzn_materialmodule_get_default_material(command_data->materialmodule);
 
@@ -7736,7 +7736,7 @@ static int execute_command_gfx_import(struct Parse_state *state,
 		float deflection = 0.1;
 		struct Option_table *option_table = CREATE(Option_table)();
 
-		rgb_spectrum = FIND_BY_IDENTIFIER_IN_MANAGER(Spectrum,name)( "RGB", command_data->spectrum_manager );
+		rgb_spectrum = FIND_BY_IDENTIFIER_IN_MANAGER(cmzn_spectrum,name)( "RGB", command_data->spectrum_manager );
 		if ( !rgb_spectrum )
 		{
 			if ( !create_RGB_spectrum( &rgb_spectrum, command_data_void ) )
@@ -7746,7 +7746,7 @@ static int execute_command_gfx_import(struct Parse_state *state,
 		}
 		else
 		{
-			ACCESS(Spectrum)(rgb_spectrum);
+			ACCESS(cmzn_spectrum)(rgb_spectrum);
 		}
 		// as
 		Option_table_add_entry(option_table, "as", &graphics_object_name,
@@ -7814,7 +7814,7 @@ static int execute_command_gfx_import(struct Parse_state *state,
 		}
 		if (rgb_spectrum)
 		{
-			DEACCESS(Spectrum)(&rgb_spectrum);
+			DEACCESS(cmzn_spectrum)(&rgb_spectrum);
 		}
 		DEALLOCATE(graphics_object_name);
 		cmzn_material_destroy(&material);
@@ -8456,7 +8456,7 @@ Executes a GFX LIST ALL_COMMANDS.
 				/* Commands of spectrum */
 				if (command_data->spectrum_manager)
 				{
-					FOR_EACH_OBJECT_IN_MANAGER(Spectrum)(
+					FOR_EACH_OBJECT_IN_MANAGER(cmzn_spectrum)(
 						for_each_spectrum_list_or_write_commands, (void *)"false", command_data->spectrum_manager);
 				}
 				/* Command of graphical_material */
@@ -9750,17 +9750,17 @@ Executes a GFX LIST SPECTRUM.
 	static const char	*command_prefix="gfx modify spectrum";
 	char *commands_flag;
 	int return_code;
-	struct MANAGER(Spectrum) *spectrum_manager;
-	struct Spectrum *spectrum;
+	struct MANAGER(cmzn_spectrum) *spectrum_manager;
+	struct cmzn_spectrum *spectrum;
 	struct Option_table *option_table;
 
 	ENTER(gfx_list_spectrum);
 	USE_PARAMETER(dummy_to_be_modified);
 	if (state && (spectrum_manager =
-		(struct MANAGER(Spectrum) *)spectrum_manager_void))
+		(struct MANAGER(cmzn_spectrum) *)spectrum_manager_void))
 	{
 		commands_flag = 0;
-		spectrum = (struct Spectrum *)NULL;
+		spectrum = (struct cmzn_spectrum *)NULL;
 
 		option_table=CREATE(Option_table)();
 		/* commands */
@@ -9794,7 +9794,7 @@ Executes a GFX LIST SPECTRUM.
 				}
 				else
 				{
-					return_code = FOR_EACH_OBJECT_IN_MANAGER(Spectrum)(
+					return_code = FOR_EACH_OBJECT_IN_MANAGER(cmzn_spectrum)(
 						Spectrum_list_app_contents, (void *)NULL, spectrum_manager);
 				}
 			}
@@ -9802,7 +9802,7 @@ Executes a GFX LIST SPECTRUM.
 		DESTROY(Option_table)(&option_table);
 		if (spectrum)
 		{
-			DEACCESS(Spectrum)(&spectrum);
+			DEACCESS(cmzn_spectrum)(&spectrum);
 		}
 	}
 	else
@@ -10705,7 +10705,7 @@ Executes a GFX MODIFY GRAPHICS_OBJECT command.
 	struct cmzn_command_data *command_data;
 	struct Graphical_material *material;
 	struct Option_table *option_table;
-	struct Spectrum *spectrum;
+	struct cmzn_spectrum *spectrum;
 
 	ENTER(gfx_modify_glyph);
 	USE_PARAMETER(dummy_to_be_modified);
@@ -10726,7 +10726,7 @@ Executes a GFX MODIFY GRAPHICS_OBJECT command.
 				}
 				if (NULL != (spectrum = get_GT_object_spectrum(graphics_object)))
 				{
-					ACCESS(Spectrum)(spectrum);
+					ACCESS(cmzn_spectrum)(spectrum);
 				}
 				option_table = CREATE(Option_table)();
 				Option_table_add_set_Material_entry(option_table, "material",&material,
@@ -10747,7 +10747,7 @@ Executes a GFX MODIFY GRAPHICS_OBJECT command.
 				}
 				if (spectrum)
 				{
-					DEACCESS(Spectrum)(&spectrum);
+					DEACCESS(cmzn_spectrum)(&spectrum);
 				}
 				DEACCESS(GT_object)(&graphics_object);
 			}
@@ -10781,7 +10781,7 @@ Executes a GFX MODIFY GRAPHICS_OBJECT command.
 			display_message(INFORMATION_MESSAGE,
 				"\n      GRAPHICS_OBJECT_NAME");
 
-			spectrum = (struct Spectrum *)NULL;
+			spectrum = (struct cmzn_spectrum *)NULL;
 			material = (struct Graphical_material *)NULL;
 			option_table=CREATE(Option_table)();
 			Option_table_add_set_Material_entry(option_table, "material",&material,
@@ -14353,7 +14353,7 @@ Can also write individual groups with the <group> option.
 
 							 if (command_data->spectrum_manager)
 							 {
-									FOR_EACH_OBJECT_IN_MANAGER(Spectrum)(
+									FOR_EACH_OBJECT_IN_MANAGER(cmzn_spectrum)(
 										 for_each_spectrum_list_or_write_commands, (void *)"true", command_data->spectrum_manager);
 							 }
 							 if (NULL != (graphical_material_manager =
@@ -16844,8 +16844,8 @@ Initialise all the subcomponents of cmgui and create the cmzn_command_data
 		command_data->light_model_module=NULL;
 		command_data->environment_map_manager=(struct MANAGER(Environment_map) *)NULL;
 		command_data->volume_texture_manager=(struct MANAGER(VT_volume_texture) *)NULL;
-		command_data->default_spectrum=(struct Spectrum *)NULL;
-		command_data->spectrum_manager=(struct MANAGER(Spectrum) *)NULL;
+		command_data->default_spectrum=(struct cmzn_spectrum *)NULL;
+		command_data->spectrum_manager=(struct MANAGER(cmzn_spectrum) *)NULL;
 		command_data->graphics_buffer_package=(struct Graphics_buffer_app_package *)NULL;
 		command_data->sceneviewermodule=(struct cmzn_sceneviewermodule_app *)NULL;
 		command_data->graphics_module = (struct cmzn_graphics_module *)NULL;
@@ -17623,7 +17623,7 @@ NOTE: Do not call this directly: call cmzn_command_data_destroy() to deaccess.
 		/* some fields register for changes with the following managers,
 			 hence must destroy after regions and their fields */
 		command_data->curve_manager = NULL;
-		DEACCESS(Spectrum)(&(command_data->default_spectrum));
+		DEACCESS(cmzn_spectrum)(&(command_data->default_spectrum));
 		command_data->spectrum_manager=NULL;
 		cmzn_scenefiltermodule_destroy(&command_data->filter_module);
 		cmzn_materialmodule_destroy(&command_data->materialmodule);

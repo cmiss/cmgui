@@ -700,14 +700,14 @@ DESCRIPTION :
 								display_message(ERROR_MESSAGE,
 									"A colour lookup spectrum requires OpenGL version 1.3 or better which is "
 									"not available on this display.");
-								DEACCESS(Spectrum)(&material_to_be_modified_copy->spectrum);
+								DEACCESS(cmzn_spectrum)(&material_to_be_modified_copy->spectrum);
 								return_code = 0;
 							}
 #else /* defined (GL_VERSION_1_3) */
 							display_message(ERROR_MESSAGE,
 								"A colour lookup spectrum requires OpenGL version 1.3 or better which was "
 								"not compiled into this executable.");
-							DEACCESS(Spectrum)(&material_to_be_modified_copy->spectrum);
+							DEACCESS(cmzn_spectrum)(&material_to_be_modified_copy->spectrum);
 							return_code = 0;
 #endif /* defined (GL_VERSION_1_3) */
 						}

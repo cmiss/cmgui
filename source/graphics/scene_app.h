@@ -25,8 +25,8 @@ struct Scene_command_data
 	struct cmzn_region *root_region;
 	cmzn_materialmodule_id materialmodule;
 	cmzn_tessellationmodule_id tessellationmodule;
-	struct Spectrum *default_spectrum;
-	struct MANAGER(Spectrum) *spectrum_manager;
+	struct cmzn_spectrum *default_spectrum;
+	struct MANAGER(cmzn_spectrum) *spectrum_manager;
 };
 
 /**

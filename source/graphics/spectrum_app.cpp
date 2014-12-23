@@ -30,8 +30,8 @@ the name given in the next token of the parser
 {
 	const char *current_token;
 	int return_code;
-	struct Spectrum *temp_spectrum,**spectrum_address;
-	struct MANAGER(Spectrum) *spectrum_manager;
+	struct cmzn_spectrum *temp_spectrum,**spectrum_address;
+	struct MANAGER(cmzn_spectrum) *spectrum_manager;
 
 	ENTER(set_Spectrum);
 	if (state)
@@ -42,28 +42,28 @@ the name given in the next token of the parser
 			if (strcmp(PARSER_HELP_STRING,current_token)&&
 				strcmp(PARSER_RECURSIVE_HELP_STRING,current_token))
 			{
-				spectrum_address=(struct Spectrum **)spectrum_address_void;
-				spectrum_manager=(struct MANAGER(Spectrum) *)spectrum_manager_void;
+				spectrum_address=(struct cmzn_spectrum **)spectrum_address_void;
+				spectrum_manager=(struct MANAGER(cmzn_spectrum) *)spectrum_manager_void;
 				if (spectrum_address && spectrum_manager)
 				{
 					if (fuzzy_string_compare(current_token,"NONE"))
 					{
 						if (*spectrum_address)
 						{
-							DEACCESS(Spectrum)(spectrum_address);
-							*spectrum_address=(struct Spectrum *)NULL;
+							DEACCESS(cmzn_spectrum)(spectrum_address);
+							*spectrum_address=(struct cmzn_spectrum *)NULL;
 						}
 						return_code=1;
 					}
 					else
 					{
-						temp_spectrum=FIND_BY_IDENTIFIER_IN_MANAGER(Spectrum,	name)(current_token,spectrum_manager);
+						temp_spectrum=FIND_BY_IDENTIFIER_IN_MANAGER(cmzn_spectrum,	name)(current_token,spectrum_manager);
 						if (temp_spectrum)
 						{
 							if (*spectrum_address!=temp_spectrum)
 							{
-								DEACCESS(Spectrum)(spectrum_address);
-								*spectrum_address=ACCESS(Spectrum)(temp_spectrum);
+								DEACCESS(cmzn_spectrum)(spectrum_address);
+								*spectrum_address=ACCESS(cmzn_spectrum)(temp_spectrum);
 							}
 							return_code=1;
 						}
@@ -88,7 +88,7 @@ the name given in the next token of the parser
 			{
 				display_message(INFORMATION_MESSAGE," SPECTRUM_NAME|none");
 				/* if possible, then write the name */
-				spectrum_address = (struct Spectrum **)spectrum_address_void;
+				spectrum_address = (struct cmzn_spectrum **)spectrum_address_void;
 				if (spectrum_address)
 				{
 					temp_spectrum = *spectrum_address;
@@ -133,7 +133,7 @@ A modifier function to set the spectrum minimum.
 	const char *current_token;
 	float value;
 	int return_code;
-	struct Spectrum *spectrum;
+	struct cmzn_spectrum *spectrum;
 
 	ENTER(set_Spectrum_minimum);
 	if (state && (!dummy_user_data))
@@ -144,7 +144,7 @@ A modifier function to set the spectrum minimum.
 			if (strcmp(PARSER_HELP_STRING,current_token)&&
 				strcmp(PARSER_RECURSIVE_HELP_STRING,current_token))
 			{
-				spectrum = *((struct Spectrum **)spectrum_ptr_void);
+				spectrum = *((struct cmzn_spectrum **)spectrum_ptr_void);
 				if (spectrum)
 				{
 					if (1==sscanf(current_token," %f ",&value))
@@ -171,7 +171,7 @@ A modifier function to set the spectrum minimum.
 			else
 			{
 				display_message(INFORMATION_MESSAGE," MINIMUM_VALUE#");
-				spectrum = *((struct Spectrum **)spectrum_ptr_void);
+				spectrum = *((struct cmzn_spectrum **)spectrum_ptr_void);
 				if (spectrum)
 				{
 					display_message(INFORMATION_MESSAGE,"[%g]",spectrum->minimum);
@@ -212,7 +212,7 @@ A modifier function to set the spectrum maximum.
 	const char *current_token;
 	float value;
 	int return_code;
-	struct Spectrum *spectrum;
+	struct cmzn_spectrum *spectrum;
 
 	ENTER(set_Spectrum_maximum);
 	if (state && (!dummy_user_data))
@@ -223,7 +223,7 @@ A modifier function to set the spectrum maximum.
 			if (strcmp(PARSER_HELP_STRING,current_token)&&
 				strcmp(PARSER_RECURSIVE_HELP_STRING,current_token))
 			{
-				spectrum = *((struct Spectrum **)spectrum_ptr_void);
+				spectrum = *((struct cmzn_spectrum **)spectrum_ptr_void);
 				if (spectrum)
 				{
 					if (1==sscanf(current_token," %f ",&value))
@@ -249,7 +249,7 @@ A modifier function to set the spectrum maximum.
 			else
 			{
 				display_message(INFORMATION_MESSAGE," MAXIMUM_VALUE#");
-				spectrum = *((struct Spectrum **)spectrum_ptr_void);
+				spectrum = *((struct cmzn_spectrum **)spectrum_ptr_void);
 				if (spectrum)
 				{
 					display_message(INFORMATION_MESSAGE,"[%g]",spectrum->maximum);
@@ -289,13 +289,13 @@ Executes a GFX DESTROY SPECTRUM command.
 {
 	const char *current_token;
 	int return_code;
-	struct MANAGER(Spectrum) *spectrum_manager;
-	struct Spectrum *spectrum;
+	struct MANAGER(cmzn_spectrum) *spectrum_manager;
+	struct cmzn_spectrum *spectrum;
 
 	ENTER(gfx_destroy_spectrum);
 	if (state && (!dummy_to_be_modified))
 	{
-		spectrum_manager = (struct MANAGER(Spectrum) *)spectrum_manager_void;
+		spectrum_manager = (struct MANAGER(cmzn_spectrum) *)spectrum_manager_void;
 		if (spectrum_manager)
 		{
 			current_token=state->current_token;
@@ -304,10 +304,10 @@ Executes a GFX DESTROY SPECTRUM command.
 				if (strcmp(PARSER_HELP_STRING,current_token)&&
 					strcmp(PARSER_RECURSIVE_HELP_STRING,current_token))
 				{
-					spectrum=FIND_BY_IDENTIFIER_IN_MANAGER(Spectrum,name)(current_token,spectrum_manager);
+					spectrum=FIND_BY_IDENTIFIER_IN_MANAGER(cmzn_spectrum,name)(current_token,spectrum_manager);
 					if (spectrum)
 					{
-						return_code=REMOVE_OBJECT_FROM_MANAGER(Spectrum)(spectrum,
+						return_code=REMOVE_OBJECT_FROM_MANAGER(cmzn_spectrum)(spectrum,
 							spectrum_manager);
 					}
 					else
@@ -347,7 +347,7 @@ Executes a GFX DESTROY SPECTRUM command.
 	return (return_code);
 } /* gfx_destroy_spectrum */
 
-int process_list_or_write_Spectrum_commands(struct Spectrum *spectrum,
+int process_list_or_write_Spectrum_commands(struct cmzn_spectrum *spectrum,
 	 const char *command_prefix,char *command_suffix,
 	 class Process_list_or_write_command_class *process_message)
 /*******************************************************************************
@@ -438,7 +438,7 @@ to the comfile.
 	return (return_code);
 } /* Spectrum_list_commands */
 
-int for_each_spectrum_list_or_write_commands(struct Spectrum *spectrum,void *write_enabled_void)
+int for_each_spectrum_list_or_write_commands(struct cmzn_spectrum *spectrum,void *write_enabled_void)
 /*******************************************************************************
 LAST MODIFIED : 18 August 2007
 
@@ -494,7 +494,7 @@ For each spectrum in manager, list the spectrum commands to the command windows 
 	 return (return_code);
 }
 
-int Spectrum_list_commands(struct Spectrum *spectrum,
+int Spectrum_list_commands(struct cmzn_spectrum *spectrum,
 	const char *command_prefix,char *command_suffix)
 /*******************************************************************************
 LAST MODIFIED : 24 Aug 2007
@@ -528,7 +528,7 @@ Writes the properties of the <spectrum> to the command window.
 	 return (return_code);
 }
 
-int Spectrum_list_app_contents(struct Spectrum *spectrum,void *dummy)
+int Spectrum_list_app_contents(struct cmzn_spectrum *spectrum,void *dummy)
 /*******************************************************************************
 LAST MODIFIED : 18 May 2000
 

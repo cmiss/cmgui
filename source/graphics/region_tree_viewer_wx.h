@@ -40,7 +40,7 @@ struct Region_tree_viewer *CREATE(Region_tree_viewer)(
 	struct Graphical_material *default_material,
 	struct cmzn_font *default_font,
 	cmzn_glyphmodule *glyphmodule,
-	struct MANAGER(Spectrum) *spectrum_manager,
+	struct MANAGER(cmzn_spectrum) *spectrum_manager,
 	struct MANAGER(VT_volume_texture) *volume_texture_manager,
 	struct User_interface *user_interface);
 /*******************************************************************************

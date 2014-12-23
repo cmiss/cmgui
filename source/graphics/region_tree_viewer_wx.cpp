@@ -323,7 +323,7 @@ DESCRIPTION :
 	struct MANAGER(Computed_field) *field_manager;
 	struct MANAGER(cmzn_font) *font_manager;
 	struct cmzn_region *root_region, *current_region;
-	struct MANAGER(Spectrum) *spectrum_manager;
+	struct MANAGER(cmzn_spectrum) *spectrum_manager;
 #if defined (WX_USER_INTERFACE)
 	Transformation_editor *transformation_editor;
 	wxRegionTreeViewer *wx_region_tree_viewer;
@@ -562,8 +562,8 @@ class wxRegionTreeViewer : public wxFrame
 	*select_mode_chooser;
 	Managed_object_chooser<Computed_field,MANAGER_CLASS(Computed_field)>
 	*data_field_chooser;
-	DEFINE_MANAGER_CLASS(Spectrum);
-	Managed_object_chooser<Spectrum,MANAGER_CLASS(Spectrum)>
+	DEFINE_MANAGER_CLASS(cmzn_spectrum);
+	Managed_object_chooser<cmzn_spectrum,MANAGER_CLASS(cmzn_spectrum)>
 	*spectrum_chooser;
 	Managed_object_chooser<Computed_field,MANAGER_CLASS(Computed_field)>
 		*line_orientation_scale_field_chooser;
@@ -690,12 +690,12 @@ public:
 	wxPanel *spectrum_chooser_panel =
 		XRCCTRL(*this,"SpectrumChooserPanel", wxPanel);
 	spectrum_chooser =
-		new Managed_object_chooser<Spectrum,MANAGER_CLASS(Spectrum)>
+		new Managed_object_chooser<cmzn_spectrum,MANAGER_CLASS(cmzn_spectrum)>
 		(spectrum_chooser_panel, /*initial*/static_cast<cmzn_spectrum*>(0), region_tree_viewer->spectrum_manager,
-				(MANAGER_CONDITIONAL_FUNCTION(Spectrum) *)NULL, (void *)NULL, region_tree_viewer->user_interface);
-	Callback_base< Spectrum* > *spectrum_callback =
-		new Callback_member_callback< Spectrum*,
-				wxRegionTreeViewer, int (wxRegionTreeViewer::*)(Spectrum *) >
+				(MANAGER_CONDITIONAL_FUNCTION(cmzn_spectrum) *)NULL, (void *)NULL, region_tree_viewer->user_interface);
+	Callback_base< cmzn_spectrum* > *spectrum_callback =
+		new Callback_member_callback< cmzn_spectrum*,
+				wxRegionTreeViewer, int (wxRegionTreeViewer::*)(cmzn_spectrum *) >
 		(this, &wxRegionTreeViewer::spectrum_callback);
 	spectrum_chooser->set_callback(spectrum_callback);
 	spectrum_chooser_panel->Fit();
@@ -1483,7 +1483,7 @@ int data_field_callback(Computed_field *data_field)
 /**
  * Callback from wxChooser<Spectrum> when choice is made.
  */
-int spectrum_callback(Spectrum *spectrum)
+int spectrum_callback(cmzn_spectrum *spectrum)
 {
 	cmzn_graphics_set_spectrum(region_tree_viewer->current_graphics, spectrum);
 	Region_tree_viewer_autoapply(region_tree_viewer->scene,
@@ -4206,7 +4206,7 @@ struct Region_tree_viewer *CREATE(Region_tree_viewer)(
 	struct Graphical_material *default_material,
 	struct cmzn_font *default_font,
 	cmzn_glyphmodule *glyphmodule,
-	struct MANAGER(Spectrum) *spectrum_manager,
+	struct MANAGER(cmzn_spectrum) *spectrum_manager,
 	struct MANAGER(VT_volume_texture) *volume_texture_manager,
 	struct User_interface *user_interface)
 /*******************************************************************************

@@ -30,7 +30,7 @@ Global Functions
 
 struct Spectrum_editor *CREATE(Spectrum_editor)(
 	 struct Spectrum_editor_dialog **spectrum_editor_dialog_address,
-	 struct Spectrum *spectrum,
+	 struct cmzn_spectrum *spectrum,
 	 struct cmzn_font *font,
 	 struct Graphics_buffer_app_package *graphics_buffer_package,
 	 struct User_interface *user_interface,
@@ -46,7 +46,7 @@ Creates a spectrum_editor widget.
 
 int spectrum_editor_wx_set_spectrum(
 	struct Spectrum_editor *spectrum_editor,
-	struct Spectrum *spectrum);
+	struct cmzn_spectrum *spectrum);
 /*******************************************************************************
 LAST MODIFIED : 23 August 2007
 
@@ -54,7 +54,7 @@ DESCRIPTION :
 Set the <spectrum> for the <spectrum_editor_dialog>.
 ==============================================================================*/
 
-int spectrum_editor_wx_add_item_to_spectrum_editor_check_list(struct Spectrum *spectrum, void *spectrum_editor_void);
+int spectrum_editor_wx_add_item_to_spectrum_editor_check_list(struct cmzn_spectrum *spectrum, void *spectrum_editor_void);
 /*******************************************************************************
 LAST MODIFIED : 28 August 2007
 
