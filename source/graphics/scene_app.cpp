@@ -899,7 +899,7 @@ int cmzn_scene_remove_selection_from_element_list_of_dimension(cmzn_scene_id sce
 
 int scene_app_export_threejs(cmzn_scene_id scene, cmzn_scenefilter_id scenefilter,
 	char *file_prefix, int number_of_time_steps, double begin_time, double end_time,
-	cmzn_streaminformation_scene_export_data_type data_type)
+	cmzn_streaminformation_scene_io_data_type data_type)
 {
 	if (scene)
 	{
@@ -908,15 +908,15 @@ int scene_app_export_threejs(cmzn_scene_id scene, cmzn_scenefilter_id scenefilte
 		cmzn_streaminformation_scene_id streaminformation_scene = cmzn_streaminformation_cast_scene(
 			streaminformation);
 		cmzn_streaminformation_scene_set_scenefilter(streaminformation_scene, scenefilter);
-		cmzn_streaminformation_scene_set_export_format(
-			streaminformation_scene, CMZN_STREAMINFORMATION_SCENE_EXPORT_FORMAT_THREEJS);
+		cmzn_streaminformation_scene_set_io_format(
+			streaminformation_scene, CMZN_STREAMINFORMATION_SCENE_IO_FORMAT_THREEJS);
 		cmzn_streaminformation_scene_set_number_of_time_steps(
 			streaminformation_scene, number_of_time_steps);
 		cmzn_streaminformation_scene_set_initial_time(
 			streaminformation_scene,  begin_time);
 		cmzn_streaminformation_scene_set_finish_time(
 			streaminformation_scene, end_time);
-		cmzn_streaminformation_scene_set_export_data_type(
+		cmzn_streaminformation_scene_set_io_data_type(
 			streaminformation_scene, data_type);
 		int number_of_resources_required =
 			cmzn_streaminformation_scene_get_number_of_resources_required(streaminformation_scene);
@@ -945,4 +945,4 @@ int scene_app_export_threejs(cmzn_scene_id scene, cmzn_scenefilter_id scenefilte
 	return 0;
 }
 
-DEFINE_DEFAULT_OPTION_TABLE_ADD_ENUMERATOR_FUNCTION(cmzn_streaminformation_scene_export_data_type)
+DEFINE_DEFAULT_OPTION_TABLE_ADD_ENUMERATOR_FUNCTION(cmzn_streaminformation_scene_io_data_type)
