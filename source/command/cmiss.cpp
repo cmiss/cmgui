@@ -13068,7 +13068,6 @@ Sets nodal field values from a command.
 	struct FE_field_component component;
 	struct FE_node *node;
 	struct FE_region *fe_region;
-	struct LIST(FE_field) *fe_field_list;
 
 	ENTER(gfx_set_FE_nodal_value);
 	USE_PARAMETER(dummy_to_be_modified);
@@ -13128,7 +13127,6 @@ Sets nodal field values from a command.
 									"gfx_set_FE_nodal_value.  Failed");
 								return_code = 0;
 							}
-							DESTROY(LIST(FE_field))(&fe_field_list);
 						}
 						else
 						{
