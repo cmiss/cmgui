@@ -117,4 +117,13 @@ int cmzn_scene_remove_selection_from_node_list(cmzn_scene_id scene,
 
 PROTOTYPE_OPTION_TABLE_ADD_ENUMERATOR_FUNCTION( cmzn_streaminformation_scene_io_data_type );
 
+/**
+ * Set additional default attributes for backward compatibility with gfx modify
+ * g_element commands: default coordinate, element, circle and native
+ * discretization etc.
+ * Assumes cmzn_scene_set_minimum_graphics_defaults has been called first.
+ */
+int cmzn_scene_set_graphics_defaults_gfx_modify(struct cmzn_scene *scene,
+	struct cmzn_graphics *graphics);
+
 #endif

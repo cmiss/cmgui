@@ -21,6 +21,7 @@
 #include "graphics/auxiliary_graphics_types_app.h"
 #include "computed_field/computed_field_set.h"
 #include "computed_field/computed_field_set_app.h"
+#include "graphics/tessellation.hpp"
 #include "graphics/tessellation_app.hpp"
 #include "user_interface/process_list_or_write_command.hpp"
 #include "finite_element/finite_element_region_app.h"
@@ -946,3 +947,58 @@ int scene_app_export_threejs(cmzn_scene_id scene, cmzn_scenefilter_id scenefilte
 }
 
 DEFINE_DEFAULT_OPTION_TABLE_ADD_ENUMERATOR_FUNCTION(cmzn_streaminformation_scene_io_data_type)
+
+int cmzn_scene_set_graphics_defaults_gfx_modify(struct cmzn_scene *scene,
+	struct cmzn_graphics *graphics)
+{
+	int return_code = 1;
+	if (scene && graphics)
+	{
+		cmzn_graphics_type graphics_type = cmzn_graphics_get_graphics_type(graphics);
+		cmzn_field_domain_type domain_type = cmzn_graphics_get_field_domain_type(graphics);
+
+		if ((graphics_type != CMZN_GRAPHICS_TYPE_POINTS) || (domain_type != CMZN_FIELD_DOMAIN_TYPE_POINT))
+		{
+			cmzn_field_id coordinate_field = cmzn_scene_get_default_coordinate_field(scene);
+			if (!coordinate_field)
+				coordinate_field = cmzn_scene_guess_coordinate_field(scene, domain_type);
+			if (coordinate_field)
+				cmzn_graphics_set_coordinate_field(graphics, coordinate_field);
+		}
+
+		bool use_element_discretization = (0 != scene->element_divisions) &&
+			(graphics_type != CMZN_GRAPHICS_TYPE_POINTS) && (graphics_type != CMZN_GRAPHICS_TYPE_STREAMLINES);
+		bool use_circle_discretization = (scene->circle_discretization >= 3) &&
+			(graphics_type == CMZN_GRAPHICS_TYPE_LINES);
+		if (use_circle_discretization)
+		{
+			cmzn_graphicslineattributes_id lineAttr = cmzn_graphics_get_graphicslineattributes(graphics);
+			use_circle_discretization = (cmzn_graphicslineattributes_get_shape_type(lineAttr) ==
+				CMZN_GRAPHICSLINEATTRIBUTES_SHAPE_TYPE_CIRCLE_EXTRUSION);
+			cmzn_graphicslineattributes_destroy(&lineAttr);
+		}
+		if (use_element_discretization || use_circle_discretization)
+		{
+			cmzn_tessellationmodule_id tessellationModule =
+				cmzn_graphics_module_get_tessellationmodule(scene->graphics_module);
+			cmzn_tessellation_id currentTessellation = cmzn_graphics_get_tessellation(graphics);
+			cmzn_tessellation_id tessellation =
+				cmzn_tessellationmodule_find_or_create_fixed_tessellation(tessellationModule,
+					use_element_discretization ? scene->element_divisions_size : 0,
+					use_element_discretization ? scene->element_divisions : 0,
+					use_circle_discretization ? scene->circle_discretization : 0,
+					currentTessellation);
+			cmzn_graphics_set_tessellation(graphics, tessellation);
+			cmzn_tessellation_destroy(&tessellation);
+			cmzn_tessellation_destroy(&currentTessellation);
+			cmzn_tessellationmodule_destroy(&tessellationModule);
+		}
+	}
+	else
+	{
+		display_message(ERROR_MESSAGE,
+			"cmzn_scene_set_graphics_defaults_gfx_modify.  Invalid argument(s)");
+		return_code = 0;
+	}
+	return return_code;
+}
