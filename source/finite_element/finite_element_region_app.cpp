@@ -158,7 +158,7 @@ int set_FE_node_FE_nodeset(struct Parse_state *state, void *node_address_void,
 				strcmp(PARSER_RECURSIVE_HELP_STRING,current_token))
 			{
 				if ((1 == sscanf(current_token, "%d", &identifier)) &&
-					(node = fe_nodeset->get_FE_node_from_identifier(identifier)))
+					(node = fe_nodeset->findNodeByIdentifier(identifier)))
 				{
 					REACCESS(FE_node)(node_address, node);
 					return_code = shift_Parse_state(state,1);
