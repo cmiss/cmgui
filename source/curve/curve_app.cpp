@@ -12,6 +12,7 @@
 #include "general/mystring.h"
 #include "command/parser.h"
 #include "curve/curve.h"
+#include "curve/curve_app.h"
 
 //DEFINE_DEFAULT_ENUMERATOR_PREFIX_INCREMENT_OPERATOR(Curve_extend_mode)
 //DEFINE_DEFAULT_ENUMERATOR_POSTFIX_INCREMENT_OPERATOR(Curve_extend_mode)
@@ -118,8 +119,7 @@ DESCRIPTION :
 					if (file_name)
 					{
 						temp_curve = create_Curve_from_file(
-							curve_definition->curve->name, file_name,
-							curve_definition->io_stream_package);
+							curve_definition->curve->name, file_name);
 						if (NULL != temp_curve)
 						{
 							if (curve_definition->fe_basis_type_set)
@@ -438,7 +438,6 @@ DESCRIPTION :
 				curve_definition.number_of_components_set=0;
 				curve_definition.curve=(struct Curve *)NULL;
 				curve_definition.curve_to_be_modified=(struct Curve *)NULL;
-				curve_definition.io_stream_package=command_data->io_stream_package;
 				if (strcmp(PARSER_HELP_STRING,current_token)&&
 					strcmp(PARSER_RECURSIVE_HELP_STRING,current_token))
 				{

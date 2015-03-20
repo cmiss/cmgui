@@ -5231,10 +5231,7 @@ Executes a GFX DEFINE command.
 					command_data->graphics_module);
 				option_table = CREATE(Option_table)();
 				/* curve */
-				curve_command_data.curve_manager =
-					command_data->curve_manager;
-				curve_command_data.io_stream_package =
-					command_data->io_stream_package;
+				curve_command_data.curve_manager = command_data->curve_manager;
 				Option_table_add_entry(option_table, "curve", NULL,
 					&curve_command_data, gfx_define_Curve);
 				/* faces */
