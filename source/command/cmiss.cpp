@@ -12413,7 +12413,7 @@ otherwise the file of graphics objects is read.
 static int gfx_read_region(struct Parse_state *state,
 	void *dummy, void *command_data_void)
 {
-	const char file_ext[] = ".fml";
+	const char file_ext[] = ".fieldml";
 	int return_code = 0;
 	USE_PARAMETER(dummy);
 	cmzn_command_data *command_data = reinterpret_cast<cmzn_command_data*>(command_data_void);
@@ -14736,54 +14736,65 @@ Can also write individual element groups with the <group> option.
 static int gfx_write_region(struct Parse_state *state,
 	void *use_data, void *command_data_void)
 {
+	const char *file_ext = ".fieldml";
 	int return_code;
 	struct cmzn_command_data *command_data;
 	struct Option_table *option_table;
 
-	ENTER(gfx_write_nodes);
 	if (state && (command_data = (struct cmzn_command_data *)command_data_void))
 	{
 		return_code = 1;
 		cmzn_region_id root_region = cmzn_region_access(command_data->root_region);
 		char *region_or_group_path = 0;
 		Multiple_strings field_names;
-		char *filename = 0;
+		char *file_name = 0;
 		cmzn_region_id region = cmzn_region_access(root_region);
 		option_table = CREATE(Option_table)();
 		Option_table_add_help(option_table,
-			" Export fields of the specified region into FieldML format."
-			" Only the specified region will be exported, child regions will not.");
-		Option_table_add_entry(option_table, "file_name", &filename,	NULL, set_name);
+			"Export fields of the specified region into FieldML format. "
+			"Only the specified region will be exported, child regions will not.");
 		Option_table_add_set_cmzn_region(option_table, "region", root_region, &region);
+		/* default option: file name */
+		Option_table_add_default_string_entry(option_table, &file_name, "FILE_NAME");
 
 		if (0 != (return_code = Option_table_multi_parse(option_table, state)))
 		{
-			if (filename == 0)
+			if (!file_name)
 			{
-				display_message(WARNING_MESSAGE,
-					"gfx write region:  Must provide a file name.");
-				return_code = 0;
+				if (!(file_name = confirmation_get_write_filename(file_ext,
+					command_data->user_interface
+#if defined(WX_USER_INTERFACE)
+					, command_data->execute_command
+#endif /*defined (WX_USER_INTERFACE) */
+					)))
+				{
+					return_code = 0;
+				}
 			}
-			if (region == 0)
+#if defined (WX_USER_INTERFACE) && defined (WIN32_SYSTEM)
+			if (file_name)
 			{
-				display_message(WARNING_MESSAGE,
-					"gfx write region:  Must provide a valid region name.");
-				return_code = 0;
+				CMZN_set_directory_and_filename_WIN32(&file_name, command_data);
 			}
-
+#endif /* defined (WX_USER_INTERFACE) && (WIN32_SYSTEM) */
 			if (return_code)
 			{
-				/* open the file */
-				return_code = export_region_file_of_name(filename, region, 0, root_region,
-					/*write_elements*/CMZN_FIELD_DOMAIN_TYPE_MESH1D|CMZN_FIELD_DOMAIN_TYPE_MESH2D|
-					CMZN_FIELD_DOMAIN_TYPE_MESH3D|CMZN_FIELD_DOMAIN_TYPE_MESH_HIGHEST_DIMENSION,
-					/*write_nodes*/1, /*write_data*/1, 0, 0, 0,
-					CMZN_STREAMINFORMATION_REGION_RECURSION_MODE_OFF, /*isFieldML*/1);
+				cmzn_streaminformation_id streaminformation = cmzn_region_create_streaminformation_region(region);
+				cmzn_streamresource_id resource =
+					cmzn_streaminformation_create_streamresource_file(streaminformation, file_name);
+				if (!resource)
+					return_code = 0;
+				cmzn_streaminformation_region_id streaminformation_region = cmzn_streaminformation_cast_region(streaminformation);
+				cmzn_streaminformation_region_set_file_format(streaminformation_region, CMZN_STREAMINFORMATION_REGION_FILE_FORMAT_FIELDML);
+				return_code = cmzn_region_write(region, streaminformation_region);
+				cmzn_streamresource_destroy(&resource);
+				cmzn_streaminformation_region_destroy(&streaminformation_region);
+				cmzn_streaminformation_destroy(&streaminformation);
 			}
 		}
 		DESTROY(Option_table)(&option_table);
-		if (filename)
-			DEALLOCATE(filename);
+		if (file_name)
+			DEALLOCATE(file_name);
 		cmzn_region_destroy(&root_region);
 		cmzn_region_destroy(&region);
 	}

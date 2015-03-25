@@ -1,5 +1,8 @@
 CHANGE LOG: OpenCMISS-Cmgui Application
 
+v3.0.1
+(Break) 3490 New format for element fields written to EX file, mapping by derivatives and versions instead of node indices. Old files can still be read; new files can't be read by older versions.
+
 v3.0.0
 
 Major change:
