@@ -2632,7 +2632,7 @@ static int set_Texture_image_from_field(struct Texture *texture,
 	int image_width, int image_height, int image_depth,
 	int number_of_bytes_per_component,
 	struct Graphics_buffer_app_package *graphics_buffer_package,
-	struct Graphical_material *fail_material)
+	cmzn_material *fail_material)
 /*******************************************************************************
 LAST MODIFIED : 30 June 2006
 
@@ -2843,7 +2843,7 @@ struct Texture_evaluate_image_data
 	int element_dimension; /* where 0 is any dimension */
 	int propagate_field;
 	struct Computed_field *field, *texture_coordinates_field;
-	struct Graphical_material *fail_material;
+	cmzn_material *fail_material;
 	struct cmzn_spectrum *spectrum;
 };
 
@@ -5727,14 +5727,14 @@ Executes a GFX DESTROY MATERIAL command.
 ==============================================================================*/
 {
 	const char *current_token;
-	struct Graphical_material *graphical_material;
+	cmzn_material *graphical_material;
 	int return_code;
-	struct MANAGER(Graphical_material) *graphical_material_manager;
+	struct MANAGER(cmzn_material) *graphical_material_manager;
 
 	ENTER(gfx_destroy_material);
 	USE_PARAMETER(dummy_to_be_modified);
 	if (state && (graphical_material_manager =
-		(struct MANAGER(Graphical_material) *)graphical_material_manager_void))
+		(struct MANAGER(cmzn_material) *)graphical_material_manager_void))
 	{
 		if (NULL != (current_token = state->current_token))
 		{
@@ -5742,10 +5742,10 @@ Executes a GFX DESTROY MATERIAL command.
 				strcmp(PARSER_RECURSIVE_HELP_STRING, current_token))
 			{
 				if (NULL != (graphical_material =
-					FIND_BY_IDENTIFIER_IN_MANAGER(Graphical_material, name)(
+					FIND_BY_IDENTIFIER_IN_MANAGER(cmzn_material, name)(
 						current_token, graphical_material_manager)))
 				{
-					if (REMOVE_OBJECT_FROM_MANAGER(Graphical_material)(graphical_material,
+					if (REMOVE_OBJECT_FROM_MANAGER(cmzn_material)(graphical_material,
 						graphical_material_manager))
 					{
 						return_code = 1;
@@ -7723,7 +7723,7 @@ static int execute_command_gfx_import(struct Parse_state *state,
 	if (state && (command_data = (struct cmzn_command_data *)command_data_void))
 	{
 		struct cmzn_spectrum *rgb_spectrum = (struct cmzn_spectrum *)NULL;
-		struct Graphical_material *material =
+		cmzn_material *material =
 			cmzn_materialmodule_get_default_material(command_data->materialmodule);
 
 		char *graphics_object_name = NULL, *region_path = NULL;
@@ -8427,7 +8427,7 @@ Executes a GFX LIST ALL_COMMANDS.
 	int return_code = 1;
 	static const char	*command_prefix, *current_token;
 	struct cmzn_command_data *command_data;
-	struct MANAGER(Graphical_material) *graphical_material_manager;
+	struct MANAGER(cmzn_material) *graphical_material_manager;
 
 	ENTER(gfx_list_all_commands);
 	USE_PARAMETER(dummy_to_be_modified);
@@ -8461,7 +8461,7 @@ Executes a GFX LIST ALL_COMMANDS.
 					cmzn_materialmodule_get_manager(command_data->materialmodule)))
 				{
 					command_prefix="gfx create material ";
-					return_code=FOR_EACH_OBJECT_IN_MANAGER(Graphical_material)(
+					return_code=FOR_EACH_OBJECT_IN_MANAGER(cmzn_material)(
 						list_Graphical_material_commands,(void *)command_prefix,
 						graphical_material_manager);
 				}
@@ -9102,19 +9102,19 @@ Executes a GFX LIST MATERIAL.
 		{"name",NULL,NULL,set_Graphical_material},
 		{NULL,NULL,NULL,set_Graphical_material}
 	};
-	struct Graphical_material *material;
-	struct MANAGER(Graphical_material) *graphical_material_manager;
+	cmzn_material *material;
+	struct MANAGER(cmzn_material) *graphical_material_manager;
 
 	ENTER(gfx_list_graphical_material);
 	USE_PARAMETER(dummy_to_be_modified);
 	if (state)
 	{
 		if (NULL != (graphical_material_manager=
-			(struct MANAGER(Graphical_material) *)graphical_material_manager_void))
+			(struct MANAGER(cmzn_material) *)graphical_material_manager_void))
 		{
 			commands_flag=0;
 			/* if no material specified, list all materials */
-			material=(struct Graphical_material *)NULL;
+			material=(cmzn_material *)NULL;
 			(option_table[0]).to_be_modified= &commands_flag;
 			(option_table[1]).to_be_modified= &material;
 			(option_table[1]).user_data= graphical_material_manager_void;
@@ -9131,7 +9131,7 @@ Executes a GFX LIST MATERIAL.
 					}
 					else
 					{
-						return_code=FOR_EACH_OBJECT_IN_MANAGER(Graphical_material)(
+						return_code=FOR_EACH_OBJECT_IN_MANAGER(cmzn_material)(
 							list_Graphical_material_commands,(void *)command_prefix,
 							graphical_material_manager);
 					}
@@ -9144,7 +9144,7 @@ Executes a GFX LIST MATERIAL.
 					}
 					else
 					{
-						return_code=FOR_EACH_OBJECT_IN_MANAGER(Graphical_material)(
+						return_code=FOR_EACH_OBJECT_IN_MANAGER(cmzn_material)(
 							list_Graphical_material,(void *)NULL,
 							graphical_material_manager);
 					}
@@ -10700,7 +10700,7 @@ Executes a GFX MODIFY GRAPHICS_OBJECT command.
 {
 	int return_code;
 	struct cmzn_command_data *command_data;
-	struct Graphical_material *material;
+	cmzn_material *material;
 	struct Option_table *option_table;
 	struct cmzn_spectrum *spectrum;
 
@@ -10779,7 +10779,7 @@ Executes a GFX MODIFY GRAPHICS_OBJECT command.
 				"\n      GRAPHICS_OBJECT_NAME");
 
 			spectrum = (struct cmzn_spectrum *)NULL;
-			material = (struct Graphical_material *)NULL;
+			material = (cmzn_material *)NULL;
 			option_table=CREATE(Option_table)();
 			Option_table_add_set_Material_entry(option_table, "material",&material,
 				command_data->materialmodule);
@@ -14089,7 +14089,7 @@ Can also write individual groups with the <group> option.
 	 int exfile_return_code, return_code, exfile_fd, com_return_code;
 	 struct cmzn_command_data *command_data;
 	 struct Option_table *option_table;
-	 struct MANAGER(Graphical_material) *graphical_material_manager;
+	 struct MANAGER(cmzn_material) *graphical_material_manager;
 	 struct MANAGER(Computed_field) *computed_field_manager;
 	 struct LIST(Computed_field) *list_of_fields;
 	 struct List_Computed_field_commands_data list_commands_data;
@@ -14355,7 +14355,7 @@ Can also write individual groups with the <group> option.
 									cmzn_materialmodule_get_manager(command_data->materialmodule)))
 							 {
 									command_prefix="gfx create material ";
-									return_code=FOR_EACH_OBJECT_IN_MANAGER(Graphical_material)(
+									return_code=FOR_EACH_OBJECT_IN_MANAGER(cmzn_material)(
 										 write_Graphical_material_commands_to_comfile,(void *)command_prefix,
 										 graphical_material_manager);
 							 }

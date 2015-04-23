@@ -63,9 +63,9 @@ deaccess it.
 {
 	int background;
 	/* edit_material is always a local copy of what is passed to the editor */
-	struct Graphical_material *edit_material, *current_material;
+	cmzn_material *edit_material, *current_material;
 	struct Graphics_buffer_app *graphics_buffer;
-	struct MANAGER(Graphical_material) *graphical_material_manager;
+	struct MANAGER(cmzn_material) *graphical_material_manager;
 	struct User_interface *user_interface;
 	wxMaterialEditor *wx_material_editor;
 	//wxListBox *material_editor_list_box;
@@ -92,7 +92,7 @@ Global functions
  prototype
 ==============================================================================*/
 static int make_current_material(struct Material_editor *material_editor,
-	 struct Graphical_material *material);
+	 cmzn_material *material);
 
 int Material_editor_remove_widgets(struct Material_editor *material_editor);
 
@@ -192,7 +192,7 @@ Uses gl to draw a sphere with a lighting source.
 		if (material_editor->background==0)
 		{
 			/* no material on the RGB background */
-			renderer->Material_execute((struct Graphical_material *)NULL);
+			renderer->Material_execute((cmzn_material *)NULL);
 			glDisable(GL_LIGHTING);
 			glBegin(GL_TRIANGLES);
 			/* red */
@@ -270,7 +270,7 @@ Uses gl to draw a sphere with a lighting source.
 		}
 
 		/* Reset the material */
-		renderer->Material_execute((struct Graphical_material *)NULL);
+		renderer->Material_execute((cmzn_material *)NULL);
 		delete renderer;
 #endif /* defined (OPENGL_API) */
 	}
@@ -469,8 +469,8 @@ void material_editor_wx_update_image_field(Material_editor *material_editor,
 class wxMaterialEditor : public wxFrame
 {
 	 Material_editor *material_editor;
-	 DEFINE_MANAGER_CLASS(Graphical_material);
-	 Managed_object_listbox<Graphical_material, MANAGER_CLASS(Graphical_material)>
+	 DEFINE_MANAGER_CLASS(cmzn_material);
+	 Managed_object_listbox<cmzn_material, MANAGER_CLASS(cmzn_material)>
 	 *graphical_material_object_listbox;
 	 wxRegionChooser *region_chooser;
 	 DEFINE_MANAGER_CLASS(Computed_field);
@@ -493,12 +493,12 @@ public:
 			material_editor->material_list_panel->SetMinSize(wxSize(-1,100));
 
 			graphical_material_object_listbox =
-				 new Managed_object_listbox<Graphical_material, MANAGER_CLASS(Graphical_material)>
-				 (material_editor->material_list_panel, (struct Graphical_material*)NULL, material_editor->graphical_material_manager,
-						(MANAGER_CONDITIONAL_FUNCTION(Graphical_material) *)NULL, (void *)NULL, material_editor->user_interface);
-			Callback_base<Graphical_material* > *material_editor_graphical_material_list_callback =
-				 new Callback_member_callback< Graphical_material*,
-				 wxMaterialEditor, int (wxMaterialEditor::*)(Graphical_material *) >
+				 new Managed_object_listbox<cmzn_material, MANAGER_CLASS(cmzn_material)>
+				 (material_editor->material_list_panel, (cmzn_material*)NULL, material_editor->graphical_material_manager,
+						(MANAGER_CONDITIONAL_FUNCTION(cmzn_material) *)NULL, (void *)NULL, material_editor->user_interface);
+			Callback_base<cmzn_material* > *material_editor_graphical_material_list_callback =
+				 new Callback_member_callback< cmzn_material*,
+				 wxMaterialEditor, int (wxMaterialEditor::*)(cmzn_material *) >
 				 (this, &wxMaterialEditor::material_editor_graphical_material_list_callback);
 			graphical_material_object_listbox->set_callback(material_editor_graphical_material_list_callback);
 
@@ -586,7 +586,7 @@ public:
 			DEALLOCATE(path);
 		}
 
-int material_editor_graphical_material_list_callback(Graphical_material *material)
+int material_editor_graphical_material_list_callback(cmzn_material *material)
 {
 	 ENTER(material_editor_graphical_material_callback);
 	 if (!((graphical_material_object_listbox->get_number_of_object() > 0) && (material == NULL)))
@@ -599,7 +599,7 @@ int material_editor_graphical_material_list_callback(Graphical_material *materia
 	 return 1;
 }
 
-void material_editor_graphical_material_list_set_selected(Graphical_material *material)
+void material_editor_graphical_material_list_set_selected(cmzn_material *material)
 {
 	 ENTER(material_editor_graphical_material_list_set_selected);
 	 if (graphical_material_object_listbox)
@@ -609,7 +609,7 @@ void material_editor_graphical_material_list_set_selected(Graphical_material *ma
 	 LEAVE;
 }
 
-struct Graphical_material *material_editor_graphical_material_list_get_selected()
+cmzn_material *material_editor_graphical_material_list_get_selected()
 {
 	 if (graphical_material_object_listbox)
 	 {
@@ -617,7 +617,7 @@ struct Graphical_material *material_editor_graphical_material_list_get_selected(
 	 }
 	 else
 	 {
-			return ((Graphical_material *)NULL);
+			return ((cmzn_material *)NULL);
 	 }
 }
 
@@ -753,7 +753,7 @@ void OnMaterialEditorApplyButtonPressed(wxCommandEvent& event)
 	USE_PARAMETER(event);
 	 if (material_editor->current_material && material_editor->edit_material)
 	 {
-			MANAGER_MODIFY_NOT_IDENTIFIER(Graphical_material,name)(
+			MANAGER_MODIFY_NOT_IDENTIFIER(cmzn_material,name)(
 				 material_editor->current_material,material_editor->edit_material,
 				 material_editor->graphical_material_manager);
 			material_copy_bump_mapping_and_per_pixel_lighting_flag(material_editor->edit_material,
@@ -767,7 +767,7 @@ void OnMaterialEditorOKButtonPressed(wxCommandEvent& event)
 	USE_PARAMETER(event);
 	 if (material_editor->current_material && material_editor->edit_material)
 	 {
-			MANAGER_MODIFY_NOT_IDENTIFIER(Graphical_material,name)(
+			MANAGER_MODIFY_NOT_IDENTIFIER(cmzn_material,name)(
 				 material_editor->current_material,material_editor->edit_material,
 				 material_editor->graphical_material_manager);
 			material_copy_bump_mapping_and_per_pixel_lighting_flag(material_editor->edit_material,
@@ -795,7 +795,7 @@ void OnMaterialEditorCancelButtonPressed(wxCommandEvent& event)
 void OnMaterialEditorCreateNewMaterial(wxCommandEvent& event)
 {
 	ENTER(OnMaterialEditorCreateNewMaterial);
-	Graphical_material *material;
+	cmzn_material *material;
 	USE_PARAMETER(event);
 	wxTextEntryDialog *NewMaterialDialog = new wxTextEntryDialog(this, wxT("Enter name"),
 		wxT("Please Enter Name"), wxT("TEMP"), wxOK|wxCANCEL|wxCENTRE, wxDefaultPosition);
@@ -806,13 +806,13 @@ void OnMaterialEditorCreateNewMaterial(wxCommandEvent& event)
 		cmzn_material_set_name(material, material_string.mb_str(wxConvUTF8));
 		if (material != NULL)
 		{
-			if(MANAGER_COPY_WITHOUT_IDENTIFIER(Graphical_material,name)
+			if(MANAGER_COPY_WITHOUT_IDENTIFIER(cmzn_material,name)
 				(material,material_editor->edit_material))
 			{
 				material_copy_bump_mapping_and_per_pixel_lighting_flag(material_editor->edit_material,
 					material);
 				cmzn_material_set_managed(material, true);
-				ADD_OBJECT_TO_MANAGER(Graphical_material)(
+				ADD_OBJECT_TO_MANAGER(cmzn_material)(
 					material, material_editor->graphical_material_manager);
 				make_current_material(material_editor, material);
 				material_editor_wx_set_material(material_editor,material);
@@ -829,7 +829,7 @@ void OnMaterialEditorDeleteMaterial(wxCommandEvent& event)
 	ENTER(OnMaterialEditorDeleteMaterial);
 
 	USE_PARAMETER(event);
-	REMOVE_OBJECT_FROM_MANAGER(Graphical_material)(
+	REMOVE_OBJECT_FROM_MANAGER(cmzn_material)(
 		material_editor->current_material,material_editor->graphical_material_manager);
 	material_editor->current_material = NULL;
 	make_current_material(material_editor, NULL);
@@ -847,9 +847,7 @@ void OnMaterialEditorRenameMaterial(wxCommandEvent& event)
 	if (NewMaterialDialog->ShowModal() == wxID_OK)
 	{
 		wxString material_string = NewMaterialDialog->GetValue();
-		MANAGER_MODIFY_IDENTIFIER(Graphical_material, name)
-			(material_editor->current_material, material_string.mb_str(wxConvUTF8),
-			material_editor->graphical_material_manager);
+		cmzn_material_set_name(material_editor->current_material, material_string.mb_str(wxConvUTF8));
 	}
 	delete NewMaterialDialog;
 
@@ -919,7 +917,7 @@ END_EVENT_TABLE()
 
 static int make_current_material(
 	struct Material_editor *material_editor,
-	struct Graphical_material *material)
+	cmzn_material *material)
 /*******************************************************************************
 LAST MODIFIED : 10 March 1998
 
@@ -935,21 +933,21 @@ a complete copy of <Material>.
 		return_code=1;
 		if (material)
 		{
-			if (!IS_MANAGED(Graphical_material)(material,
+			if (!IS_MANAGED(cmzn_material)(material,
 				material_editor->graphical_material_manager))
 			{
 #if defined (TEST_CODE)
 				display_message(ERROR_MESSAGE,
 					"make_current_material.  Material not managed");
 #endif /* defined (TEST_CODE) */
-				material=(struct Graphical_material *)NULL;
+				material=(cmzn_material *)NULL;
 				return_code=0;
 			}
 		}
 		if (!material)
 		{
-			material=FIRST_OBJECT_IN_MANAGER_THAT(Graphical_material)(
-				(MANAGER_CONDITIONAL_FUNCTION(Graphical_material) *)NULL,
+			material=FIRST_OBJECT_IN_MANAGER_THAT(cmzn_material)(
+				(MANAGER_CONDITIONAL_FUNCTION(cmzn_material) *)NULL,
 				(void *)NULL,
 				material_editor->graphical_material_manager);
 		}
@@ -968,7 +966,7 @@ a complete copy of <Material>.
 }
 
 void Material_editor_material_change(
-	 struct MANAGER_MESSAGE(Graphical_material) *message, void *material_editor_void)
+	 struct MANAGER_MESSAGE(cmzn_material) *message, void *material_editor_void)
 /*******************************************************************************
 LAST MODIFIED : 7 January 2008
 
@@ -983,12 +981,12 @@ current material.
 	if (message && (material_editor = (struct Material_editor *)material_editor_void))
 	{
 		if ((NULL == material_editor->current_material) ||
-			(MANAGER_MESSAGE_GET_OBJECT_CHANGE(Graphical_material)(message,
+			(MANAGER_MESSAGE_GET_OBJECT_CHANGE(cmzn_material)(message,
 				material_editor->current_material) &
-			MANAGER_CHANGE_REMOVE(Graphical_material)))
+			MANAGER_CHANGE_REMOVE(cmzn_material)))
 		{
 			material_editor->current_material =
-				FIRST_OBJECT_IN_MANAGER_THAT(Graphical_material)(
+				FIRST_OBJECT_IN_MANAGER_THAT(cmzn_material)(
 					NULL,(void *)NULL,	material_editor->graphical_material_manager);
 			material_editor_wx_set_material(material_editor,material_editor->current_material);
 		}
@@ -1004,7 +1002,7 @@ current material.
 int Material_editor_build_widgets(struct Material_editor *material_editor,
 								  struct Graphics_buffer_app_package *graphics_buffer_package)
 {
-	struct Graphical_material *temp_material;
+	cmzn_material *temp_material;
 	int init_widgets, return_code = 1;
 
 	if (material_editor)
@@ -1047,12 +1045,12 @@ int Material_editor_build_widgets(struct Material_editor *material_editor,
 				, "MaterialEditorPerPixelLightingCheckBox", wxCheckBox);
 			material_editor->material_editor_bump_mapping_checkbox = XRCCTRL(*material_editor->wx_material_editor
 				, "MaterialEditorBumpMappingCheckBox", wxCheckBox);
-			temp_material=FIRST_OBJECT_IN_MANAGER_THAT(Graphical_material)(
-				(MANAGER_CONDITIONAL_FUNCTION(Graphical_material) *)NULL,(void *)NULL,
+			temp_material=FIRST_OBJECT_IN_MANAGER_THAT(cmzn_material)(
+				(MANAGER_CONDITIONAL_FUNCTION(cmzn_material) *)NULL,(void *)NULL,
 				material_editor->graphical_material_manager);
 			make_current_material(material_editor, temp_material);
 			material_editor->material_manager_callback_id =
-				MANAGER_REGISTER(Graphical_material)(
+				MANAGER_REGISTER(cmzn_material)(
 					Material_editor_material_change, (void *)material_editor,
 					material_editor->graphical_material_manager);
 			/* now bring up a 3d drawing widget */
@@ -1139,7 +1137,7 @@ int Material_editor_remove_widgets(struct Material_editor *material_editor)
 		}
 		if (material_editor->material_manager_callback_id)
 		{
-			MANAGER_DEREGISTER(Graphical_material)(
+			MANAGER_DEREGISTER(cmzn_material)(
 				material_editor->material_manager_callback_id,
 				material_editor->graphical_material_manager);
 			material_editor->material_manager_callback_id = (void *)NULL;
@@ -1180,8 +1178,8 @@ Creates a Material_editor.
 				material_editor->graphics_module = cmzn_graphics_module_access(graphics_module);
 				material_editor->root_region = cmzn_region_access(root_region);
 				material_editor->graphics_buffer = (struct Graphics_buffer_app *)NULL;
-				material_editor->current_material=(struct Graphical_material *)NULL;
-				material_editor->edit_material=(struct Graphical_material *)NULL;
+				material_editor->current_material=(cmzn_material *)NULL;
+				material_editor->edit_material=(cmzn_material *)NULL;
 				material_editor->user_interface = user_interface;
 				material_editor->wx_material_editor = (wxMaterialEditor *)NULL;
 				material_editor->wx_material_editor = NULL;
@@ -1218,7 +1216,7 @@ Creates a Material_editor.
 } /* CREATE(Material_editor) */
 
 int material_editor_wx_set_material(
-	struct Material_editor *material_editor, struct Graphical_material *material)
+	struct Material_editor *material_editor, cmzn_material *material)
 /*******************************************************************************
 LAST MODIFIED : 6 November 2007
 
@@ -1245,7 +1243,7 @@ Sets the <material> to be edited by the <material_editor>.
 
 			/* create a copy for editing */
 			if ((0 != material_editor->edit_material)&&
-				MANAGER_COPY_WITHOUT_IDENTIFIER(Graphical_material,name)
+				MANAGER_COPY_WITHOUT_IDENTIFIER(cmzn_material,name)
 				(material_editor->edit_material,material))
 			{
 				 material_copy_bump_mapping_and_per_pixel_lighting_flag(material,
@@ -1337,7 +1335,7 @@ Sets the <material> to be edited by the <material_editor>.
 				}
 				display_message(ERROR_MESSAGE,
 					"material_editor_wx_set_material.  Could not make copy of material");
-				material=(struct Graphical_material *)NULL;
+				material=(cmzn_material *)NULL;
 				return_code=0;
 			}
 		}

@@ -40,7 +40,7 @@ struct Element_point_tool *CREATE(Element_point_tool)(
 	struct MANAGER(Interactive_tool) *interactive_tool_manager,
 	struct cmzn_region *region,
 	struct Element_point_ranges_selection *element_point_ranges_selection,
-	struct Graphical_material *rubber_band_material,
+	cmzn_material *rubber_band_material,
 	struct User_interface *user_interface,
 	struct Time_keeper_app *time_keeper_app);
 /*******************************************************************************

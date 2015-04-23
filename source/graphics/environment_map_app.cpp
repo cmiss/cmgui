@@ -23,7 +23,7 @@ Set the <environment_map> to face materials.
 	const char *current_token;
 	int face_no,return_code;
 	struct Environment_map *environment_map;
-	struct MANAGER(Graphical_material) *graphical_material_manager;
+	struct MANAGER(cmzn_material) *graphical_material_manager;
 
 	ENTER(set_Environment_map_face_materials);
 	if (state)
@@ -35,14 +35,14 @@ Set the <environment_map> to face materials.
 				strcmp(PARSER_RECURSIVE_HELP_STRING,current_token))
 			{
 				if ((environment_map=(struct Environment_map *)environment_map_void)&&
-					(graphical_material_manager=(struct MANAGER(Graphical_material) *)
+					(graphical_material_manager=(struct MANAGER(cmzn_material) *)
 					graphical_material_manager_void))
 				{
 					return_code=1;
 					face_no=0;
 					while (return_code&&(face_no<6)&&
 						((environment_map->face_material)[face_no]=
-						cmzn_material_access(FIND_BY_IDENTIFIER_IN_MANAGER(Graphical_material,name)(
+						cmzn_material_access(FIND_BY_IDENTIFIER_IN_MANAGER(cmzn_material,name)(
 						state->current_token,graphical_material_manager)))&&
 						shift_Parse_state(state,1))
 					{

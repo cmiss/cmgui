@@ -16,7 +16,7 @@ struct Scene_command_data
 {
 	struct cmzn_graphics_module *graphics_module;
 	struct cmzn_scene *scene;
-	struct Graphical_material *default_material;
+	cmzn_material *default_material;
 	struct cmzn_font *default_font;
 	cmzn_glyphmodule_id glyphmodule;
 	struct MANAGER(Computed_field) *computed_field_manager;

@@ -68,7 +68,7 @@ Contains all the information carried by the graphical element editor widget.
 {
 	/* This editorMaterial is used when displaying the spectrum in the
 		3d widget */
-	 struct Graphical_material *editorMaterial, *labelMaterial;
+	 cmzn_material *editorMaterial, *labelMaterial;
 	 struct cmzn_spectrumcomponent *current_settings;
 	 struct cmzn_spectrum *edit_spectrum, *current_spectrum;
 	 struct MANAGER(cmzn_spectrum) *spectrum_manager;
@@ -2040,8 +2040,8 @@ Creates a spectrum_editor widget.
 					graphics_module);
 				spectrum_editor->filter_module = cmzn_graphics_module_get_scenefiltermodule(graphics_module);
 				spectrum_editor->root_region = cmzn_region_access(root_region);
-				spectrum_editor->editorMaterial = (struct Graphical_material *)NULL;
-				spectrum_editor->labelMaterial = (struct Graphical_material *)NULL;
+				spectrum_editor->editorMaterial = (cmzn_material *)NULL;
+				spectrum_editor->labelMaterial = (cmzn_material *)NULL;
 				spectrum_editor->colourBar = 0;
 				spectrum_editor->autorange_scene = (cmzn_scene_id)NULL;
 				spectrum_editor->spectrum_editor_scene = (cmzn_scene_id)NULL;

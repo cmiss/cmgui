@@ -36,7 +36,7 @@ bring the material editor to the front.
 ==============================================================================*/
 
 int material_editor_wx_set_material(
-	 struct Material_editor *material_editor, struct Graphical_material *material);
+	 struct Material_editor *material_editor, cmzn_material *material);
 /*******************************************************************************
 LAST MODIFIED : 6 November 2007
 

@@ -56,7 +56,7 @@ Global functions
 struct Node_tool *CREATE(Node_tool)(
 	struct MANAGER(Interactive_tool) *interactive_tool_manager,
 	struct cmzn_region *root_region, cmzn_field_domain_type domain_type,
-	struct Graphical_material *rubber_band_material,
+	cmzn_material *rubber_band_material,
 	struct User_interface *user_interface,
 	struct Time_keeper_app *time_keeper_app);
 

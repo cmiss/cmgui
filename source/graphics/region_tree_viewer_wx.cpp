@@ -312,8 +312,8 @@ DESCRIPTION :
 	struct cmzn_scene *scene, *edit_scene;
 	/* keep address of pointer to editor so can self-destroy */
 	struct Region_tree_viewer **region_tree_viewer_address;
-	struct MANAGER(Graphical_material) *graphical_material_manager;
-	struct Graphical_material *default_material, *selected_material;
+	struct MANAGER(cmzn_material) *graphical_material_manager;
+	cmzn_material *default_material, *selected_material;
 	struct cmzn_font *default_font;
 	struct MANAGER(Scene) *scene_manager;
 	struct User_interface *user_interface;
@@ -547,10 +547,10 @@ class wxRegionTreeViewer : public wxFrame
 	DEFINE_MANAGER_CLASS(Computed_field);
 	Managed_object_chooser<Computed_field,MANAGER_CLASS(Computed_field)>
 	*coordinate_field_chooser;
-	DEFINE_MANAGER_CLASS(Graphical_material);
-	Managed_object_chooser<Graphical_material,MANAGER_CLASS(Graphical_material)>
+	DEFINE_MANAGER_CLASS(cmzn_material);
+	Managed_object_chooser<cmzn_material,MANAGER_CLASS(cmzn_material)>
 	*graphical_material_chooser;
-	Managed_object_chooser<Graphical_material,MANAGER_CLASS(Graphical_material)>
+	Managed_object_chooser<cmzn_material,MANAGER_CLASS(cmzn_material)>
 	*selected_material_chooser;
 	/*
 	DEFINE_ENUMERATOR_TYPE_CLASS(cmzn_graphics_type);
@@ -645,12 +645,12 @@ public:
 	wxPanel *graphical_material_chooser_panel =
 		XRCCTRL(*this, "GraphicalMaterialChooserPanel",wxPanel);
 	graphical_material_chooser =
-		new Managed_object_chooser<Graphical_material,MANAGER_CLASS(Graphical_material)>
+		new Managed_object_chooser<cmzn_material,MANAGER_CLASS(cmzn_material)>
 		(graphical_material_chooser_panel, region_tree_viewer->default_material, region_tree_viewer->graphical_material_manager,
-				(MANAGER_CONDITIONAL_FUNCTION(Graphical_material) *)NULL, (void *)NULL, region_tree_viewer->user_interface);
-	Callback_base< Graphical_material* > *graphical_material_callback =
-		new Callback_member_callback< Graphical_material*,
-				wxRegionTreeViewer, int (wxRegionTreeViewer::*)(Graphical_material *) >
+				(MANAGER_CONDITIONAL_FUNCTION(cmzn_material) *)NULL, (void *)NULL, region_tree_viewer->user_interface);
+	Callback_base< cmzn_material* > *graphical_material_callback =
+		new Callback_member_callback< cmzn_material*,
+				wxRegionTreeViewer, int (wxRegionTreeViewer::*)(cmzn_material *) >
 		(this, &wxRegionTreeViewer::graphical_material_callback);
 	graphical_material_chooser->set_callback(graphical_material_callback);
 	graphical_material_chooser_panel->Fit();
@@ -658,12 +658,12 @@ public:
 	wxPanel *selected_material_chooser_panel =
 		XRCCTRL(*this, "SelectedMaterialChooserPanel",wxPanel);
 	selected_material_chooser =
-		new Managed_object_chooser<Graphical_material,MANAGER_CLASS(Graphical_material)>
+		new Managed_object_chooser<cmzn_material,MANAGER_CLASS(cmzn_material)>
 		(selected_material_chooser_panel, region_tree_viewer->selected_material, region_tree_viewer->graphical_material_manager,
-				(MANAGER_CONDITIONAL_FUNCTION(Graphical_material) *)NULL, (void *)NULL, region_tree_viewer->user_interface);
-	Callback_base< Graphical_material* > *selected_material_callback =
-		new Callback_member_callback< Graphical_material*,
-				wxRegionTreeViewer, int (wxRegionTreeViewer::*)(Graphical_material *) >
+				(MANAGER_CONDITIONAL_FUNCTION(cmzn_material) *)NULL, (void *)NULL, region_tree_viewer->user_interface);
+	Callback_base< cmzn_material* > *selected_material_callback =
+		new Callback_member_callback< cmzn_material*,
+				wxRegionTreeViewer, int (wxRegionTreeViewer::*)(cmzn_material *) >
 		(this, &wxRegionTreeViewer::selected_material_callback);
 	selected_material_chooser->set_callback(selected_material_callback);
 	selected_material_chooser_panel->Fit();
@@ -931,7 +931,7 @@ Callback from wxChooser<Coordinate Field> when choice is made.
 		return(1);
 	}
 
-int graphical_material_callback(Graphical_material *material)
+int graphical_material_callback(cmzn_material *material)
 /*******************************************************************************
 LAST MODIFIED : 19 March 2007
 
@@ -947,7 +947,7 @@ Callback from wxChooser<Graphical Material> when choice is made.
 		return(1);
 	}
 
-int selected_material_callback(Graphical_material *selected_material)
+int selected_material_callback(cmzn_material *selected_material)
 /*******************************************************************************
 LAST MODIFIED : 20 March 2007
 
@@ -4202,8 +4202,8 @@ struct Region_tree_viewer *CREATE(Region_tree_viewer)(
 	struct Region_tree_viewer **region_tree_viewer_address,
 	struct cmzn_graphics_module *graphics_module,
 	struct cmzn_region *root_region,
-	struct MANAGER(Graphical_material) *graphical_material_manager,
-	struct Graphical_material *default_material,
+	struct MANAGER(cmzn_material) *graphical_material_manager,
+	cmzn_material *default_material,
 	struct cmzn_font *default_font,
 	cmzn_glyphmodule *glyphmodule,
 	struct MANAGER(cmzn_spectrum) *spectrum_manager,
