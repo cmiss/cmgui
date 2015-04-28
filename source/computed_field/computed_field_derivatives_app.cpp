@@ -116,7 +116,7 @@ already) and allows its contents to be modified.
 			if (return_code)
 			{
 				return_code = field_modify->update_field_and_deaccess(
-					Computed_field_create_derivative(field_modify->get_field_module(),
+					cmzn_fieldmodule_create_field_derivative(field_modify->get_field_module(),
 						source_field, xi_index));
 			}
 			if (!return_code)
@@ -215,7 +215,7 @@ already) and allows its contents to be modified.
 			if (return_code)
 			{
 				return_code = field_modify->update_field_and_deaccess(
-					Computed_field_create_curl(field_modify->get_field_module(),
+					cmzn_fieldmodule_create_field_curl(field_modify->get_field_module(),
 						vector_field, coordinate_field));
 			}
 			if (!return_code)
@@ -318,7 +318,7 @@ already) and allows its contents to be modified.
 			if (return_code)
 			{
 				return_code = field_modify->update_field_and_deaccess(
-					Computed_field_create_divergence(field_modify->get_field_module(),
+					cmzn_fieldmodule_create_field_divergence(field_modify->get_field_module(),
 						vector_field, coordinate_field));
 			}
 			if (!return_code)
@@ -435,7 +435,7 @@ to be modified.
 			if (return_code)
 			{
 				return_code = field_modify->update_field_and_deaccess(
-					Computed_field_create_gradient(field_modify->get_field_module(),
+					cmzn_fieldmodule_create_field_gradient(field_modify->get_field_module(),
 						source_field, coordinate_field));
 			}
 			if (!return_code)
