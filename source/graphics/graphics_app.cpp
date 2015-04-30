@@ -66,7 +66,7 @@ int gfx_modify_scene_graphics(struct Parse_state *state,
 	if (modify_scene_data->modify_this_graphics)
 	{
 		graphics = cmzn_graphics_access(modify_scene_data->graphics);
-		graphics_type = cmzn_graphics_get_graphics_type(graphics);
+		graphics_type = cmzn_graphics_get_type(graphics);
 	}
 	else
 	{

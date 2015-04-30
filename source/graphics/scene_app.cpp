@@ -590,7 +590,7 @@ cmzn_graphics* cmzn_scene_create_graphics_app(cmzn_scene *scene,
 {
 	cmzn_graphics *graphics = CREATE(cmzn_graphics)(graphics_type);
 	if (graphics_to_copy &&
-		(graphics_type == cmzn_graphics_get_graphics_type(graphics_to_copy)))
+		(graphics_type == cmzn_graphics_get_type(graphics_to_copy)))
 	{
 		cmzn_graphics_copy_without_graphics_object(graphics, graphics_to_copy);
 	}
@@ -954,7 +954,7 @@ int cmzn_scene_set_graphics_defaults_gfx_modify(struct cmzn_scene *scene,
 	int return_code = 1;
 	if (scene && graphics)
 	{
-		cmzn_graphics_type graphics_type = cmzn_graphics_get_graphics_type(graphics);
+		cmzn_graphics_type graphics_type = cmzn_graphics_get_type(graphics);
 		cmzn_field_domain_type domain_type = cmzn_graphics_get_field_domain_type(graphics);
 
 		if ((graphics_type != CMZN_GRAPHICS_TYPE_POINTS) || (domain_type != CMZN_FIELD_DOMAIN_TYPE_POINT))

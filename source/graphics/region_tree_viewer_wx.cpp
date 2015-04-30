@@ -1879,7 +1879,7 @@ void CopyGraphics(wxCommandEvent &event)
 	USE_PARAMETER(event);
 	if (region_tree_viewer->current_graphics)
 	{
-		AddGraphics(cmzn_graphics_get_graphics_type(region_tree_viewer->current_graphics),
+		AddGraphics(cmzn_graphics_get_type(region_tree_viewer->current_graphics),
 		 CMZN_FIELD_DOMAIN_TYPE_INVALID, region_tree_viewer->current_graphics);
 	}
 }
@@ -2618,7 +2618,7 @@ void SetGraphics(cmzn_graphics *graphics)
 	enum cmzn_graphics_render_polygon_mode render_polygon_mode;
 	struct FE_element *seed_element;
 
-	const cmzn_graphics_type graphics_type = cmzn_graphics_get_graphics_type(graphics);
+	const cmzn_graphics_type graphics_type = cmzn_graphics_get_type(graphics);
 	const int domain_dimension = cmzn_graphics_get_domain_dimension(graphics);
 	cmzn_graphicslineattributes_id line_attributes =
 		cmzn_graphics_get_graphicslineattributes(graphics);
