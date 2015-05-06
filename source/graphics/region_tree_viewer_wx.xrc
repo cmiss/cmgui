@@ -234,22 +234,24 @@
 													</object>
 													<object class="sizeritem">
 														<flag>wxALIGN_CENTRE_VERTICAL</flag>
-														<object class	="wxCheckBox" name="FaceCheckBox"> 
-															<label>Face:</label>	
+														<object class	="wxStaticText" name="FaceText"> 
+															<label>       Face:</label>	
 	 													</object>
 													</object>
 													<object class="sizeritem">
 														<flag>wxALIGN_CENTRE_VERTICAL</flag>
-														<object class	="wxChoice" name="FaceChoice"> 
+														<object class	="wxChoice" name="FaceChoice">
+															<size>100,30</size>
 															<selection>0</selection>
 															<content>
+																<item>-</item>
 																<item>all</item>
-																<item>xi1=0</item>
-																<item>xi1=1</item>
-																<item>xi2=0</item>
-																<item>xi2=1</item>
-																<item>xi3=0</item>
-																<item>xi3=1</item>
+																<item>xi1 = 0</item>
+																<item>xi1 = 1</item>
+																<item>xi2 = 0</item>
+																<item>xi2 = 1</item>
+																<item>xi3 = 0</item>
+																<item>xi3 = 1</item>
 															</content>
 														</object>
 													</object>

@@ -520,7 +520,7 @@ class wxRegionTreeViewer : public wxFrame
 		*point_size_text, *render_polygon_mode_text,
 		*staticlabeltext, *fonttext;
 	wxButton *sceneupbutton, scenedownbutton, *applybutton, *revertbutton, *tessellationbutton;
-	wxCheckBox *autocheckbox, *exteriorcheckbox,*facecheckbox, *seedelementcheckbox;
+	wxCheckBox *autocheckbox, *exteriorcheckbox, *seedelementcheckbox;
 	wxRadioButton *isovaluelistradiobutton, *isovaluesequenceradiobutton;
 	wxPanel *isovalueoptionspane;
 	wxTextCtrl *nametextfield, *linescalefactorstextctrl, *isoscalartextctrl, *offsettextctrl,
@@ -1208,32 +1208,21 @@ int domain_type_callback(enum cmzn_field_domain_type domain_type)
 	}
 
 	exteriorcheckbox=XRCCTRL(*this,"ExteriorCheckBox",wxCheckBox);
-	facecheckbox=XRCCTRL(*this, "FaceCheckBox",wxCheckBox);
 	facechoice=XRCCTRL(*this, "FaceChoice",wxChoice);
 	if ((CMZN_FIELD_DOMAIN_TYPE_MESH1D == domain_type) ||
 		(CMZN_FIELD_DOMAIN_TYPE_MESH2D == domain_type))
 	{
 		exteriorcheckbox->Enable();
-		facecheckbox->Enable();
 		cmzn_graphics_set_exterior(region_tree_viewer->current_graphics,
 			exteriorcheckbox->IsChecked());
 		cmzn_element_face_type face;
-		if (facecheckbox->IsChecked())
-		{
-			facechoice->Enable();
-			face = static_cast<cmzn_element_face_type>(facechoice->GetSelection() + CMZN_ELEMENT_FACE_TYPE_ALL);
-		}
-		else
-		{
-			facechoice->Disable();
-			face = CMZN_ELEMENT_FACE_TYPE_INVALID;
-		}
-		cmzn_graphics_set_element_face_type(region_tree_viewer->current_graphics,face);
+		facechoice->Enable();
+		face = static_cast<cmzn_element_face_type>(facechoice->GetSelection() + CMZN_ELEMENT_FACE_TYPE_INVALID);
+		cmzn_graphics_set_element_face_type(region_tree_viewer->current_graphics, face);
 	}
 	else
 	{
 		exteriorcheckbox->Disable();
-		facecheckbox->Disable();
 		facechoice->Disable();
 	}
 	show_sampling_widgets();
@@ -2566,35 +2555,12 @@ void ExteriorChecked(wxCommandEvent &event)
 	//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphics);
 }
 
-void FaceChecked(wxCommandEvent &event)
-{
-	cmzn_element_face_type face;
-	USE_PARAMETER(event);
-	facecheckbox=XRCCTRL(*this, "FaceCheckBox",wxCheckBox);
-	facechoice=XRCCTRL(*this, "FaceChoice",wxChoice);
-	if (facecheckbox->IsChecked())
-	{
-		facechoice->Enable();
-		face = static_cast<cmzn_element_face_type>(facechoice->GetSelection() + CMZN_ELEMENT_FACE_TYPE_ALL);
-	}
-	else
-	{
-		facechoice->Disable();
-		face = CMZN_ELEMENT_FACE_TYPE_INVALID;
-	}
-	cmzn_graphics_set_element_face_type(region_tree_viewer->current_graphics,face);
-	Region_tree_viewer_autoapply(region_tree_viewer->scene,
-		region_tree_viewer->edit_scene);
-	//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphics);
- }
-
 void FaceChosen(wxCommandEvent &event)
 {
-	cmzn_element_face_type face;
 	USE_PARAMETER(event);
 	facechoice=XRCCTRL(*this, "FaceChoice",wxChoice);
-	face = static_cast<cmzn_element_face_type>(facechoice->GetSelection() + CMZN_ELEMENT_FACE_TYPE_ALL);
-	cmzn_graphics_set_element_face_type(region_tree_viewer->current_graphics, face);
+	cmzn_element_face_type faceType = static_cast<cmzn_element_face_type>(facechoice->GetSelection() + CMZN_ELEMENT_FACE_TYPE_INVALID);
+	cmzn_graphics_set_element_face_type(region_tree_viewer->current_graphics, faceType);
 	Region_tree_viewer_autoapply(region_tree_viewer->scene,
 		region_tree_viewer->edit_scene);
 	//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphics);
@@ -3534,37 +3500,24 @@ void SetGraphics(cmzn_graphics *graphics)
 		render_polygon_mode_chooser->set_value(render_polygon_mode);
 
 		exteriorcheckbox=XRCCTRL(*this,"ExteriorCheckBox",wxCheckBox);
-		facecheckbox=XRCCTRL(*this, "FaceCheckBox",wxCheckBox);
 		facechoice=XRCCTRL(*this, "FaceChoice",wxChoice);
 		cmzn_field_domain_type domain_type = cmzn_graphics_get_field_domain_type(graphics);
 		exteriorcheckbox->Show();
-		facecheckbox->Show();
 		facechoice->Show();
 		if ((CMZN_FIELD_DOMAIN_TYPE_MESH1D == domain_type) ||
 			(CMZN_FIELD_DOMAIN_TYPE_MESH2D == domain_type))
 		{
 			exteriorcheckbox->Enable();
-			facecheckbox->Enable();
+			facechoice->Enable();
 		}
 		else
 		{
 			exteriorcheckbox->Disable();
-			facecheckbox->Disable();
 			facechoice->Disable();
 		}
 		exteriorcheckbox->SetValue(cmzn_graphics_is_exterior(graphics));
 		face = cmzn_graphics_get_element_face_type(graphics);
-		if (face >= CMZN_ELEMENT_FACE_TYPE_ALL)
-		{
-			facecheckbox->SetValue(1);
-			facechoice->Enable();
-			facechoice->SetSelection(static_cast<int>(face) - CMZN_ELEMENT_FACE_TYPE_ALL);
-		}
-		else
-		{
-			facecheckbox->SetValue(0);
-			facechoice->Disable();
-		}
+		facechoice->SetSelection(static_cast<int>(face) - CMZN_ELEMENT_FACE_TYPE_INVALID);
 		cmzn_graphics_contours_destroy(&contours);
 		cmzn_graphicslineattributes_destroy(&line_attributes);
 		cmzn_graphicspointattributes_destroy(&point_attributes);
@@ -3850,7 +3803,6 @@ BEGIN_EVENT_TABLE(wxRegionTreeViewer, wxFrame)
 	EVT_TEXT_ENTER(XRCID("LineWidthTextCtrl"),wxRegionTreeViewer::EnterLineWidth)
 	EVT_TEXT_ENTER(XRCID("PointSizeTextCtrl"),wxRegionTreeViewer::EnterPointSize)
 	EVT_CHECKBOX(XRCID("ExteriorCheckBox"),wxRegionTreeViewer::ExteriorChecked)
-	EVT_CHECKBOX(XRCID("FaceCheckBox"),wxRegionTreeViewer::FaceChecked)
 	EVT_CHOICE(XRCID("FaceChoice"),wxRegionTreeViewer::FaceChosen)
 	EVT_TREE_SEL_CHANGED(wxID_ANY, wxRegionTreeViewer::TreeControlSelectionChanged)
 	EVT_CUSTOM(wxEVT_TREE_IMAGE_CLICK_EVENT, wxID_ANY, wxRegionTreeViewer::TreeControlImageClicked)
