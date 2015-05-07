@@ -2469,7 +2469,7 @@ Parser commands for setting simple parameters applicable to the whole <window>.
 	double depth_of_field, focal_depth, std_view_angle;
 	enum cmzn_sceneviewer_blending_mode blending_mode;
 	enum cmzn_sceneviewer_transparency_mode transparency_mode;
-	int antialias_mode,current_pane,i,layered_transparency,number_of_tools,
+	int antialias_mode,current_pane,i,number_of_tools,
 		number_of_valid_strings,order_independent_transparency,pane_no,
 		perturb_lines,redraw,return_code,transparency_layers = 0;
 	struct Graphics_window *graphics_window;
@@ -2517,9 +2517,9 @@ Parser commands for setting simple parameters applicable to the whole <window>.
 					perturb_lines=0;
 					blending_mode = CMZN_SCENEVIEWER_BLENDING_MODE_NORMAL;
 				}
-				fast_transparency_flag=0;
-				slow_transparency_flag=0;
-				layered_transparency  =0;				order_independent_transparency = 0;
+				fast_transparency_flag = 0;
+				slow_transparency_flag = 0;
+				order_independent_transparency = 0;
 #if defined (WX_USER_INTERFACE)
 				hide_time_editor_flag=0;
 				show_time_editor_flag=0;
@@ -2578,9 +2578,6 @@ Parser commands for setting simple parameters applicable to the whole <window>.
 				Option_table_add_entry(transparency_option_table,"fast_transparency",
 					&fast_transparency_flag,(void *)NULL,set_char_flag);
 				Option_table_add_entry(transparency_option_table,
-					"layered_transparency",&layered_transparency,(void *)NULL,
-					set_int_positive);
-				Option_table_add_entry(transparency_option_table,
 					"order_independent_transparency",&order_independent_transparency,(void *)NULL,
 					set_int_positive);
 				Option_table_add_entry(transparency_option_table,"slow_transparency",
@@ -2605,10 +2602,10 @@ Parser commands for setting simple parameters applicable to the whole <window>.
 					}
 #endif /* defined (WX_USER_INTERFACE) */
 					if ((fast_transparency_flag+slow_transparency_flag+
-						 (0 < layered_transparency)+(0 < order_independent_transparency)) > 1)
+						 (0 < order_independent_transparency)) > 1)
 					{
 						display_message(ERROR_MESSAGE,"Only one of "
-							"fast_transparency/slow_transparency/layered_transparency/order_independent_transparency");
+							"fast_transparency/slow_transparency/order_independent_transparency");
 						return_code = 0;
 					}
 					if (blending_mode_string)
@@ -2707,27 +2704,20 @@ Parser commands for setting simple parameters applicable to the whole <window>.
 							 }
 						}
 #endif /* defined (WX_USER_INTERFACE) */
-						if (fast_transparency_flag||slow_transparency_flag||
-							layered_transparency||order_independent_transparency)
+						if (fast_transparency_flag || slow_transparency_flag || order_independent_transparency)
 						{
 							if (fast_transparency_flag)
 							{
-								transparency_mode=CMZN_SCENEVIEWER_TRANSPARENCY_MODE_FAST;
-							}
-							else if (layered_transparency)
-							{
-								display_message(ERROR_MESSAGE,"layered_transparency has been removed, please use "
-									"other type of transparency mode");
-								return_code = 0;
+								transparency_mode = CMZN_SCENEVIEWER_TRANSPARENCY_MODE_FAST;
 							}
 							else if (order_independent_transparency)
 							{
-								transparency_mode=CMZN_SCENEVIEWER_TRANSPARENCY_MODE_ORDER_INDEPENDENT;
+								transparency_mode = CMZN_SCENEVIEWER_TRANSPARENCY_MODE_ORDER_INDEPENDENT;
 								transparency_layers = order_independent_transparency;
 							}
 							else
 							{
-								transparency_mode=CMZN_SCENEVIEWER_TRANSPARENCY_MODE_SLOW;
+								transparency_mode = CMZN_SCENEVIEWER_TRANSPARENCY_MODE_SLOW;
 							}
 							for (pane_no=0;pane_no<graphics_window->number_of_scene_viewers;
 								pane_no++)
