@@ -4496,7 +4496,7 @@ Sets the layout mode in effect on the <window>.
 							cmzn_sceneviewer_set_zoom_rate(
 								window->scene_viewer_array[pane_no]->core_scene_viewer,
 								window->default_zoom_rate);
-							clip_factor = 10.0;
+							clip_factor = 4.0;
 							Scene_viewer_set_view_simple(
 								window->scene_viewer_array[pane_no]->core_scene_viewer,
 								lookat[0], lookat[1], lookat[2],
@@ -5925,7 +5925,7 @@ with commands for setting these.
 		}
 
 		/*???RC clip_factor should be read in from defaults file: */
-		clip_factor = 10.0;
+		clip_factor = 4.0;
 		for (pane_no = 0; (pane_no < window->number_of_scene_viewers) &&
 			return_code; pane_no++)
 		{
