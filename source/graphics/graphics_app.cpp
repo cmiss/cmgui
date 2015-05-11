@@ -558,18 +558,21 @@ int gfx_modify_scene_graphics(struct Parse_state *state,
 	}
 
 	/* no_data/field_scalar/magnitude_scalar/travel_scalar */
-	Streamline_data_type streamline_data_type = STREAM_NO_DATA;
-	const char *streamline_data_type_string =
-		ENUMERATOR_STRING(Streamline_data_type)(streamline_data_type);
+	cmzn_graphics_streamlines_colour_data_type streamlines_colour_data_type = CMZN_GRAPHICS_STREAMLINES_COLOUR_DATA_TYPE_FIELD;
+	const char *streamlines_colour_data_type_string =
+		ENUMERATOR_STRING(cmzn_graphics_streamlines_colour_data_type)(streamlines_colour_data_type);
+	const char *no_streamlines_colour_data_type_string = "no_data";
 	if (graphics_type == CMZN_GRAPHICS_TYPE_STREAMLINES)
 	{
-		valid_strings = ENUMERATOR_GET_VALID_STRINGS(Streamline_data_type)(
-			&number_of_valid_strings,
-			(ENUMERATOR_CONDITIONAL_FUNCTION(Streamline_data_type) *)NULL,
-			(void *)NULL);
-		Option_table_add_enumerator(option_table, number_of_valid_strings,
-			valid_strings, &streamline_data_type_string);
-		DEALLOCATE(valid_strings);
+		const char *colour_data_strings[4] =
+		{
+			no_streamlines_colour_data_type_string, // option removed; interpreted as COLOUR_DATA_TYPE_FIELD
+			ENUMERATOR_STRING(cmzn_graphics_streamlines_colour_data_type)(CMZN_GRAPHICS_STREAMLINES_COLOUR_DATA_TYPE_FIELD),
+			ENUMERATOR_STRING(cmzn_graphics_streamlines_colour_data_type)(CMZN_GRAPHICS_STREAMLINES_COLOUR_DATA_TYPE_MAGNITUDE),
+			ENUMERATOR_STRING(cmzn_graphics_streamlines_colour_data_type)(CMZN_GRAPHICS_STREAMLINES_COLOUR_DATA_TYPE_TRAVEL_TIME)
+		};
+		Option_table_add_enumerator(option_table, 4,
+			colour_data_strings, &streamlines_colour_data_type_string);
 	}
 
 	/* glyph offset */
@@ -1137,27 +1140,17 @@ int gfx_modify_scene_graphics(struct Parse_state *state,
 					// handle width of legacy ribbon shape
 					line_base_size[1] = line_base_size[0] = streamline_width;
 				}
-				STRING_TO_ENUMERATOR(Streamline_data_type)(streamline_data_type_string, &streamline_data_type);
-				if (data_field)
+				if (streamlines_colour_data_type_string == no_streamlines_colour_data_type_string)
 				{
-					if (STREAM_FIELD_SCALAR != streamline_data_type)
-					{
-						display_message(WARNING_MESSAGE,
-							"Must use field_scalar option with data; ensuring this");
-						streamline_data_type=STREAM_FIELD_SCALAR;
-					}
+					// now same as COLOUR_DATA_TYPE_FIELD: just has no field
+					streamlines_colour_data_type = CMZN_GRAPHICS_STREAMLINES_COLOUR_DATA_TYPE_FIELD;
 				}
 				else
 				{
-					if (STREAM_FIELD_SCALAR == streamline_data_type)
-					{
-						display_message(WARNING_MESSAGE,
-							"Must specify data field with field_scalar option");
-						streamline_data_type=STREAM_NO_DATA;
-					}
+					STRING_TO_ENUMERATOR(cmzn_graphics_streamlines_colour_data_type)(streamlines_colour_data_type_string, &streamlines_colour_data_type);
 				}
-				use_spectrum = (STREAM_NO_DATA != streamline_data_type);
-				cmzn_graphics_set_streamline_data_type(graphics, streamline_data_type);
+				use_spectrum = (CMZN_GRAPHICS_STREAMLINES_COLOUR_DATA_TYPE_FIELD != streamlines_colour_data_type) || (data_field);
+				cmzn_graphics_streamlines_set_colour_data_type(streamlines, streamlines_colour_data_type);
 			}
 		}
 		if (use_spectrum)

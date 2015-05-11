@@ -516,7 +516,7 @@ class wxRegionTreeViewer : public wxFrame
 		*tessellationtext, *glyph_repeat_mode_text, *labeloffsettext,
 		*sample_density_field_text, *xitext,
 		*lineshapetext, *streamlineslengthtext, *streamvectortext,
-		*line_width_text, *streamlinedatatypetext, *spectrumtext,
+		*line_width_text, *streamlines_colour_data_type_text, *spectrumtext,
 		*point_size_text, *render_polygon_mode_text,
 		*staticlabeltext, *fonttext;
 	wxButton *sceneupbutton, scenedownbutton, *applybutton, *revertbutton, *tessellationbutton;
@@ -537,7 +537,7 @@ class wxRegionTreeViewer : public wxFrame
 		*domain_type_chooser_panel, *sampling_mode_chooser_panel,
 		*tessellation_field_chooser_panel, *sample_density_field_chooser_panel,
 		*line_shape_chooser_panel, *stream_vector_chooser_panel,
-		*streamline_data_type_chooser_panel,
+		*streamlines_colour_data_type_chooser_panel,
 		*streamlines_track_direction_chooser_panel, *spectrum_chooser_panel,
 		*texture_coordinates_chooser_panel, *render_polygon_mode_chooser_panel,
 		*seed_element_panel, *subgroup_field_chooser_panel, *tessellation_chooser_panel;
@@ -608,9 +608,9 @@ class wxRegionTreeViewer : public wxFrame
 	*coordinate_system_chooser;
 	Managed_object_chooser<Computed_field,MANAGER_CLASS(Computed_field)>
 	*stream_vector_chooser;
-	DEFINE_ENUMERATOR_TYPE_CLASS(Streamline_data_type);
-	Enumerator_chooser<ENUMERATOR_TYPE_CLASS(Streamline_data_type)>
-	*streamline_data_type_chooser;
+	DEFINE_ENUMERATOR_TYPE_CLASS(cmzn_graphics_streamlines_colour_data_type);
+	Enumerator_chooser<ENUMERATOR_TYPE_CLASS(cmzn_graphics_streamlines_colour_data_type)>
+	*streamlines_colour_data_type_chooser;
 	Managed_object_chooser<Computed_field,MANAGER_CLASS(Computed_field)>
 	*texture_coord_field_chooser;
 	DEFINE_ENUMERATOR_TYPE_CLASS(cmzn_graphics_render_polygon_mode);
@@ -748,7 +748,7 @@ public:
 	sample_density_field_chooser =NULL;
 	line_shape_chooser = NULL;
 	stream_vector_chooser = NULL;
-	streamline_data_type_chooser = NULL;
+	streamlines_colour_data_type_chooser = NULL;
 	texture_coord_field_chooser = NULL;
 	render_polygon_mode_chooser = NULL;
 	seed_element_chooser = NULL;
@@ -850,7 +850,7 @@ public:
 		delete sample_density_field_chooser;
 		delete line_shape_chooser;
 		delete stream_vector_chooser;
-		delete streamline_data_type_chooser;
+		delete streamlines_colour_data_type_chooser;
 		delete texture_coord_field_chooser;
 		delete render_polygon_mode_chooser;
 		delete seed_element_chooser;
@@ -1396,45 +1396,24 @@ int stream_vector_callback(Computed_field *stream_vector_field)
 /**
  * Callback from wxChooser<Stream Data Type> when choice is made.
  */
-int streamline_data_type_callback(enum Streamline_data_type streamline_data_type)
+int streamlines_colour_data_type_callback(enum cmzn_graphics_streamlines_colour_data_type streamlines_colour_data_type)
 {
-	enum Streamline_data_type old_streamline_data_type =
-		cmzn_graphics_get_streamline_data_type(region_tree_viewer->current_graphics);
-	if (streamline_data_type != old_streamline_data_type)
+	cmzn_graphics_streamlines_id streamlines = cmzn_graphics_cast_streamlines(region_tree_viewer->current_graphics);
+	enum cmzn_graphics_streamlines_colour_data_type old_streamlines_colour_data_type =
+		cmzn_graphics_streamlines_get_colour_data_type(streamlines);
+	if (streamlines_colour_data_type != old_streamlines_colour_data_type)
 	{
-		cmzn_graphics_set_streamline_data_type(region_tree_viewer->current_graphics, streamline_data_type);
+		cmzn_graphics_streamlines_set_colour_data_type(streamlines, streamlines_colour_data_type);
 		cmzn_spectrum_id spectrum = 0;
-		if (STREAM_NO_DATA != streamline_data_type)
+		if (CMZN_GRAPHICS_STREAMLINES_COLOUR_DATA_TYPE_FIELD != streamlines_colour_data_type)
 		{
 			spectrum = spectrum_chooser->get_object();
+			cmzn_graphics_set_spectrum(region_tree_viewer->current_graphics, spectrum);
 		}
-		cmzn_graphics_set_spectrum(region_tree_viewer->current_graphics, spectrum);
-		data_chooser_panel=XRCCTRL(*this,"DataChooserPanel",wxPanel);
-		spectrumtext=XRCCTRL(*this, "SpectrumText", wxStaticText);
-		spectrum_chooser_panel=XRCCTRL(*this,"SpectrumChooserPanel", wxPanel);
-		if (STREAM_NO_DATA != streamline_data_type)
-		{
-			spectrumtext->Enable();
-			spectrum_chooser_panel->Enable();
-		}
-		else
-		{
-			spectrumtext->Disable();
-			spectrum_chooser_panel->Disable();
-		}
-		if (STREAM_FIELD_SCALAR == streamline_data_type)
-		{
-			data_chooser_panel->Enable();
-		}
-		else
-		{
-			data_chooser_panel->Disable();
-		}
-		/* inform the client of the change */
 		Region_tree_viewer_autoapply(region_tree_viewer->scene,
 			region_tree_viewer->edit_scene);
-		//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphics);
 	}
+	cmzn_graphics_streamlines_destroy(&streamlines);
 	return 1;
 }
 
@@ -1450,18 +1429,6 @@ int data_field_callback(Computed_field *data_field)
 		spectrum = spectrum_chooser->get_object();
 	}
 	cmzn_graphics_set_spectrum(region_tree_viewer->current_graphics, spectrum);
-	spectrumtext=XRCCTRL(*this, "SpectrumText", wxStaticText);
-	spectrum_chooser_panel=XRCCTRL(*this,"SpectrumChooserPanel", wxPanel);
-	if (data_field)
-	{
-		spectrumtext->Enable();
-		spectrum_chooser_panel->Enable();
-	}
-	else
-	{
-		spectrumtext->Disable();
-		spectrum_chooser_panel->Disable();
-	}
 
 	Region_tree_viewer_autoapply(region_tree_viewer->scene,
 		region_tree_viewer->edit_scene);
@@ -3353,7 +3320,6 @@ void SetGraphics(cmzn_graphics *graphics)
 			streamlineslengthtext->Hide();
 			streamlineslengthtextctrl->Hide();
 		}
-		cmzn_graphics_streamlines_destroy(&streamlines);
 
 		line_width_text=XRCCTRL(*this, "LineWidthText", wxStaticText);
 		line_width_text_ctrl=XRCCTRL(*this, "LineWidthTextCtrl", wxTextCtrl);
@@ -3373,8 +3339,8 @@ void SetGraphics(cmzn_graphics *graphics)
 		point_size_text_ctrl->SetValue(wxString::FromAscii(temp_string));
 		point_size_text_ctrl->Enable();
 
-		streamlinedatatypetext=XRCCTRL(*this, "StreamlineDataTypeText", wxStaticText);
-		streamline_data_type_chooser_panel = XRCCTRL(*this,"StreamlineDataTypeChooserPanel",wxPanel);
+		streamlines_colour_data_type_text = XRCCTRL(*this, "StreamlineDataTypeText", wxStaticText);
+		streamlines_colour_data_type_chooser_panel = XRCCTRL(*this,"StreamlineDataTypeChooserPanel",wxPanel);
 		spectrumtext=XRCCTRL(*this, "SpectrumText", wxStaticText);
 		spectrum_chooser_panel=XRCCTRL(*this,"SpectrumChooserPanel", wxPanel);
 		wxStaticText *datatext=XRCCTRL(*this, "DataText", wxStaticText);
@@ -3410,39 +3376,38 @@ void SetGraphics(cmzn_graphics *graphics)
 			cmzn_spectrum_id spectrum = cmzn_graphics_get_spectrum(graphics);
 			spectrum_chooser->set_object(spectrum);
 			data_chooser_panel->Enable();
-			spectrumtext->Enable();
-			spectrum_chooser_panel->Enable();
 			cmzn_spectrum_destroy(&spectrum);
 		}
 
-		if (CMZN_GRAPHICS_TYPE_STREAMLINES==graphics_type)
+		if (streamlines)
 		{
-			streamlinedatatypetext->Show();
-			streamline_data_type_chooser_panel->Show();
-			enum Streamline_data_type streamline_data_type =
-				cmzn_graphics_get_streamline_data_type(graphics);
-			if (streamline_data_type_chooser == NULL)
+			streamlines_colour_data_type_text->Show();
+			streamlines_colour_data_type_chooser_panel->Show();
+			enum cmzn_graphics_streamlines_colour_data_type streamlines_colour_data_type =
+				cmzn_graphics_streamlines_get_colour_data_type(streamlines);
+			if (streamlines_colour_data_type_chooser == NULL)
 			{
-				streamline_data_type_chooser=
-					new Enumerator_chooser<ENUMERATOR_TYPE_CLASS(Streamline_data_type)>
-					(streamline_data_type_chooser_panel, streamline_data_type,
-						(ENUMERATOR_CONDITIONAL_FUNCTION(Streamline_data_type) *)NULL,
+				streamlines_colour_data_type_chooser=
+					new Enumerator_chooser<ENUMERATOR_TYPE_CLASS(cmzn_graphics_streamlines_colour_data_type)>
+					(streamlines_colour_data_type_chooser_panel, streamlines_colour_data_type,
+						(ENUMERATOR_CONDITIONAL_FUNCTION(cmzn_graphics_streamlines_colour_data_type) *)NULL,
 						(void *)NULL, region_tree_viewer->user_interface);
-				Callback_base< enum Streamline_data_type > *streamline_data_type_callback =
-					new Callback_member_callback< enum Streamline_data_type,
-					wxRegionTreeViewer, int (wxRegionTreeViewer::*)(enum Streamline_data_type) >
-					(this, &wxRegionTreeViewer::streamline_data_type_callback);
-				streamline_data_type_chooser->set_callback(streamline_data_type_callback);
-				streamline_data_type_chooser_panel->Fit();
+				Callback_base< enum cmzn_graphics_streamlines_colour_data_type > *streamlines_colour_data_type_callback =
+					new Callback_member_callback< enum cmzn_graphics_streamlines_colour_data_type,
+					wxRegionTreeViewer, int (wxRegionTreeViewer::*)(enum cmzn_graphics_streamlines_colour_data_type) >
+					(this, &wxRegionTreeViewer::streamlines_colour_data_type_callback);
+				streamlines_colour_data_type_chooser->set_callback(streamlines_colour_data_type_callback);
+				streamlines_colour_data_type_chooser_panel->Fit();
 			}
-			streamline_data_type_chooser->set_value(streamline_data_type);
+			streamlines_colour_data_type_chooser->set_value(streamlines_colour_data_type);
 		}
 		else
 		{
 			/* set scalar data field & spectrum */
-			streamlinedatatypetext->Hide();
-			streamline_data_type_chooser_panel->Hide();
+			streamlines_colour_data_type_text->Hide();
+			streamlines_colour_data_type_chooser_panel->Hide();
 		}
+		cmzn_graphics_streamlines_destroy(&streamlines);
 
 		wxStaticText *texturecoordinatestext = XRCCTRL(*this, "TextureCoordinatesText", wxStaticText);
 		texture_coordinates_chooser_panel = XRCCTRL(*this, "TextureCoordinatesChooserPanel", wxPanel);
