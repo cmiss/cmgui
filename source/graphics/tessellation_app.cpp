@@ -372,7 +372,7 @@ int gfx_list_tessellation(struct Parse_state *state,
 	int return_code;
 	USE_PARAMETER(dummy_to_be_modified);
 	cmzn_tessellationmodule *tessellationmodule =
-		reinterpret_cast<cmzn_tessellationmodule *>(tessellationmodule_void);
+		static_cast<cmzn_tessellationmodule *>(tessellationmodule_void);
 	if (state && tessellationmodule)
 	{
 		cmzn_tessellation *tessellation = NULL;
@@ -384,24 +384,25 @@ int gfx_list_tessellation(struct Parse_state *state,
 		{
 			if (tessellation)
 			{
-				return_code = list_cmzn_tessellation_iterator(tessellation, (void *)NULL);
+				return_code = list_cmzn_tessellation(tessellation);
 			}
 			else
 			{
-				return_code = FOR_EACH_OBJECT_IN_MANAGER(cmzn_tessellation)(list_cmzn_tessellation_iterator,
-					(void *)NULL, cmzn_tessellationmodule_get_manager(tessellationmodule));
+				cmzn_tessellationiterator_id iter = cmzn_tessellationmodule_create_tessellationiterator(tessellationmodule);
+				while (0 != (tessellation = cmzn_tessellationiterator_next(iter)))
+				{
+					list_cmzn_tessellation(tessellation);
+					cmzn_tessellation_destroy(&tessellation);
+				}
+				cmzn_tessellationiterator_destroy(&iter);
 			}
 		}
-		if (tessellation)
-		{
-			cmzn_tessellation_destroy(&tessellation);
-		}
+		cmzn_tessellation_destroy(&tessellation);
 		DESTROY(Option_table)(&option_table);
 	}
 	else
 	{
-		display_message(ERROR_MESSAGE,
-			"gfx_list_tessellation.  Invalid argument(s)");
+		display_message(ERROR_MESSAGE, "gfx_list_tessellation.  Invalid argument(s)");
 		return_code = 0;
 	}
 	return (return_code);
