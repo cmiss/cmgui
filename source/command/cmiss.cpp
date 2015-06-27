@@ -6925,85 +6925,62 @@ Executes a GFX EXPORT ALIAS command.
 	return (return_code);
 } /* gfx_export_alias */
 
+/**
+ * Executes a GFX EXPORT CM command.
+ */
 static int gfx_export_cm(struct Parse_state *state,
 	void *dummy_to_be_modified,void *command_data_void)
-/*******************************************************************************
-LAST MODIFIED : 22 March 2006
-
-DESCRIPTION :
-Executes a GFX EXPORT CM command.
-==============================================================================*/
 {
-	char *ipbase_filename, *ipcoor_filename, *ipelem_filename, *ipnode_filename,
-		*ipmap_filename, *region_path;
-	FILE *ipbase_file, *ipcoor_file, *ipelem_file, *ipmap_file, *ipnode_file;
 	int return_code;
-	struct cmzn_command_data *command_data;
-	struct FE_field *coordinate_field;
-	struct Option_table *option_table;
-	struct Set_FE_field_conditional_FE_region_data coordinate_field_data;
-
-	ENTER(gfx_export_cm);
 	USE_PARAMETER(dummy_to_be_modified);
-	if (state && (command_data = (struct cmzn_command_data *)command_data_void))
+	cmzn_command_data *command_data = static_cast<cmzn_command_data *>(command_data_void);
+	if (state && command_data)
 	{
-		coordinate_field = (struct FE_field *)NULL;
-		ipbase_filename = (char *)NULL;
-		ipcoor_filename = (char *)NULL;
-		ipelem_filename = (char *)NULL;
-		ipmap_filename = (char *)NULL;
-		ipnode_filename = (char *)NULL;
-		region_path = (char *)NULL;
+		char *coordinate_field_name = 0;
+		char *ipbase_filename = 0;
+		char *ipcoor_filename = 0;
+		char *ipelem_filename = 0;
+		char *ipmap_filename = 0;
+		char *ipnode_filename = 0;
+		cmzn_region *region = cmzn_region_access(command_data->root_region);
+		cmzn_field_group *group = 0;
 
-		option_table = CREATE(Option_table)();
-		/* field */
-		coordinate_field_data.conditional_function =
-			(LIST_CONDITIONAL_FUNCTION(FE_field) *)NULL;
-		coordinate_field_data.user_data = (void *)NULL;
-		coordinate_field_data.fe_region =
-			cmzn_region_get_FE_region(command_data->root_region);
-		Option_table_add_entry(option_table, "field",
-			&coordinate_field,
-			(void *)&coordinate_field_data,
-			set_FE_field_conditional_FE_region);
-		/* ipcoor_filename */
-		Option_table_add_entry(option_table, "ipcoor_filename", &ipcoor_filename,
-			NULL, set_name);
-		/* ipbase_filename */
-		Option_table_add_entry(option_table, "ipbase_filename", &ipbase_filename,
-			NULL, set_name);
-		/* ipmap_filename */
-		Option_table_add_entry(option_table, "ipmap_filename", &ipmap_filename,
-			NULL, set_name);
-		/* ipnode_filename */
-		Option_table_add_entry(option_table, "ipnode_filename", &ipnode_filename,
-			NULL, set_name);
-		/* ipelem_filename */
-		Option_table_add_entry(option_table, "ipelem_filename", &ipelem_filename,
-			NULL, set_name);
-		/* region */
-		Option_table_add_entry(option_table, "region", &region_path,
-			command_data->root_region, set_cmzn_region_path);
+		Option_table *option_table = CREATE(Option_table)();
+		Option_table_add_help(option_table,
+			"Export the definition of a coordinate field from the specified region "
+			"(and optional group within the region) to CMISS IP format files. "
+			"The ipmap filename is optional, all other filenames are required. "
+			"Note this function cannot export all field representations.");
+		Option_table_add_string_entry(option_table, "field", &coordinate_field_name, " FIELD_NAME");
+		Option_table_add_name_entry(option_table, "ipcoor_filename", &ipcoor_filename);
+		Option_table_add_name_entry(option_table, "ipbase_filename", &ipbase_filename);
+		Option_table_add_name_entry(option_table, "ipelem_filename", &ipelem_filename);
+		Option_table_add_name_entry(option_table, "ipmap_filename", &ipmap_filename);
+		Option_table_add_name_entry(option_table, "ipnode_filename", &ipnode_filename);
+		Option_table_add_region_or_group_entry(option_table, "region", &region, &group);
 
 		if (0 != (return_code = Option_table_multi_parse(option_table, state)))
 		{
-			if (!region_path)
-			{
-				display_message(ERROR_MESSAGE, "You must specify a region to export.");
-				return_code = 0;
-			}
 			if (!(ipcoor_filename && ipbase_filename && ipnode_filename && ipelem_filename))
 			{
 				display_message(ERROR_MESSAGE,
 					"You must specify all of ipcoor_filename, ipbase_filename, ipnode_filename and ipelem_filename.");
 				return_code = 0;
 			}
-			if (!coordinate_field)
+			cmzn_fieldmodule *fieldmodule = cmzn_region_get_fieldmodule(region);
+			cmzn_field *field = cmzn_fieldmodule_find_field_by_name(fieldmodule, coordinate_field_name);
+			cmzn_field_finite_element *fe_field = cmzn_field_cast_finite_element(field);
+			if (fe_field)
+				cmzn_field_finite_element_destroy(&fe_field);
+			else
 			{
 				display_message(ERROR_MESSAGE,
-					"You must specify an FE_field as the coordinate field to export.");
+					"You must specify a finite element field as the coordinate field to export.");
 				return_code = 0;
 			}
+			cmzn_fieldmodule_destroy(&fieldmodule);
+
+			FILE *ipbase_file, *ipcoor_file, *ipelem_file, *ipmap_file, *ipnode_file;
 			if (return_code)
 			{
 				if (!(ipcoor_file = fopen(ipcoor_filename, "w")))
@@ -7046,10 +7023,10 @@ Executes a GFX EXPORT CM command.
 			}
 			if (return_code)
 			{
-				write_cm_files(ipcoor_file, ipbase_file,
-					ipnode_file, ipelem_file, ipmap_file,
-					command_data->root_region, region_path,
-					coordinate_field);
+				int result = write_cm_files(ipcoor_file, ipbase_file, ipnode_file, ipelem_file,
+					ipmap_file, region, group, field);
+				if (result != CMZN_OK)
+					return_code = 0;
 				fclose(ipcoor_file);
 				fclose(ipbase_file);
 				fclose(ipnode_file);
@@ -7059,12 +7036,9 @@ Executes a GFX EXPORT CM command.
 					fclose(ipmap_file);
 				}
 			}
+			cmzn_field_destroy(&field);
 		}
 		DESTROY(Option_table)(&option_table);
-		if (region_path)
-		{
-			DEALLOCATE(region_path);
-		}
 		if (ipbase_filename)
 		{
 			DEALLOCATE(ipbase_filename);
@@ -7085,6 +7059,10 @@ Executes a GFX EXPORT CM command.
 		{
 			DEALLOCATE(ipnode_filename);
 		}
+		if (coordinate_field_name)
+			DEALLOCATE(coordinate_field_name);
+		cmzn_field_group_destroy(&group);
+		cmzn_region_destroy(&region);
 	}
 	else
 	{
