@@ -900,7 +900,8 @@ int cmzn_scene_remove_selection_from_element_list_of_dimension(cmzn_scene_id sce
 
 int scene_app_export_threejs(cmzn_scene_id scene, cmzn_scenefilter_id scenefilter,
 	char *file_prefix, int number_of_time_steps, double begin_time, double end_time,
-	cmzn_streaminformation_scene_io_data_type data_type)
+	cmzn_streaminformation_scene_io_data_type data_type,
+	int morphVertices, int morphColours, int morphNormals)
 {
 	if (scene)
 	{
@@ -919,6 +920,13 @@ int scene_app_export_threejs(cmzn_scene_id scene, cmzn_scenefilter_id scenefilte
 			streaminformation_scene, end_time);
 		cmzn_streaminformation_scene_set_io_data_type(
 			streaminformation_scene, data_type);
+		cmzn_streaminformation_scene_set_output_time_dependent_vertices(
+			streaminformation_scene, morphVertices);
+		cmzn_streaminformation_scene_set_output_time_dependent_colours(
+			streaminformation_scene, morphColours);
+		cmzn_streaminformation_scene_set_output_time_dependent_normals(
+			streaminformation_scene, morphNormals);
+
 		int number_of_resources_required =
 			cmzn_streaminformation_scene_get_number_of_resources_required(streaminformation_scene);
 		cmzn_streamresource_id *streamresources = new cmzn_streamresource_id[number_of_resources_required];

@@ -7288,7 +7288,7 @@ static int gfx_export_threejs(struct Parse_state *state,
 			const char *export_mode_string, **valid_strings;
 			enum cmzn_streaminformation_scene_io_data_type export_mode =
 				CMZN_STREAMINFORMATION_SCENE_IO_DATA_TYPE_COLOUR;
-
+			char morphVertices = 0,  morphColours = 0, morphNormals = 0;
 			cmzn_scenefilter_id filter =
 				cmzn_scenefiltermodule_get_default_scenefilter(command_data->filter_module);
 			option_table = CREATE(Option_table)();
@@ -7304,7 +7304,10 @@ static int gfx_export_threejs(struct Parse_state *state,
 				"must be used together; when specified "
 				"animated mesh will be generated. "
 				"[scene] generates the exports for this scene and its children. "
-				"[filter] applies the filter the provided scene.");
+				"[filter] applies the filter the provided scene."
+				"[morph_vertices] determines rather vertices will be output for each time step;"
+				"[morph_colours] determines rather colours will be output for each time step; "
+				"[morph_normals] determines rather normals will be output for each time step; ");
 			/* file */
 			Option_table_add_entry(option_table, "file_prefix", &file_prefix,
 				(void *)1, set_name);
@@ -7316,6 +7319,12 @@ static int gfx_export_threejs(struct Parse_state *state,
 				&number_of_time_steps, set_int_non_negative);
 			OPTION_TABLE_ADD_ENUMERATOR(cmzn_streaminformation_scene_io_data_type)(option_table,
 				&export_mode);
+			Option_table_add_char_flag_entry(option_table,
+				"morph_vertices", &morphVertices);
+			Option_table_add_char_flag_entry(option_table,
+				"morph_colours", &morphColours);
+			Option_table_add_char_flag_entry(option_table,
+				"morph_normals", &morphNormals);
 			/* scene */
 			Option_table_add_entry(option_table,"scene",&scene,
 				command_data->root_region, set_Scene);
@@ -7328,7 +7337,8 @@ static int gfx_export_threejs(struct Parse_state *state,
 					if (file_prefix)
 					{
 						return_code = scene_app_export_threejs(scene, filter, file_prefix,
-							(int)number_of_time_steps, begin_time, end_time, export_mode);
+							(int)number_of_time_steps, begin_time, end_time, export_mode,
+							morphVertices ? 1 : 0, morphColours ? 1 :0, morphNormals ? 1 : 0);
 					}
 					else
 					{

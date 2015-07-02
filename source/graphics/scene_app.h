@@ -93,7 +93,8 @@ int define_Scene(struct Parse_state *state, void *scene_void,
 
 int scene_app_export_threejs(cmzn_scene_id scene, cmzn_scenefilter_id scenefilter,
 	char *file_prefix, int number_of_time_steps, double begin_time, double end_time,
-	cmzn_streaminformation_scene_io_data_type data_type);
+	cmzn_streaminformation_scene_io_data_type data_type,
+	int morphVertices, int morphColours, int morphNormals);
 
 struct Define_scene_data
 {
