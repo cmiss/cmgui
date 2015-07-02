@@ -28,6 +28,7 @@
 #include "zinc/element.h"
 #include "zinc/field.h"
 #include "zinc/fieldmodule.h"
+#include "zinc/fieldsmoothing.h"
 #include "zinc/fieldsubobjectgroup.h"
 #include "zinc/glyph.h"
 #include "zinc/material.h"
@@ -13715,9 +13716,12 @@ static int execute_command_gfx_smooth(struct Parse_state *state,
 					}
 					else
 					{
-						FE_field *fe_field = 0;
-						Computed_field_get_type_finite_element(field, &fe_field);
-						return_code = FE_region_smooth_FE_field(cmzn_region_get_FE_region(region), fe_field, time);
+						cmzn_fieldsmoothing_id fieldsmoothing = cmzn_fieldmodule_create_fieldsmoothing(fieldModule);
+						cmzn_fieldsmoothing_set_time(fieldsmoothing, time);
+						int result = cmzn_field_smooth(field, fieldsmoothing);
+						if (result != CMZN_OK)
+							return_code = 0;
+						cmzn_fieldsmoothing_destroy(&fieldsmoothing);
 					}
 					cmzn_field_finite_element_destroy(&finite_element_field);
 				}
