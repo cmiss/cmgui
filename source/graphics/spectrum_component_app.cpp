@@ -27,77 +27,75 @@
 
 DEFINE_DEFAULT_OPTION_TABLE_ADD_ENUMERATOR_FUNCTION(cmzn_spectrumcomponent_colour_mapping_type);
 
-int gfx_modify_spectrum_settings_linear(struct Parse_state *state,
-	void *modify_spectrum_data_void,void *dummy)
-/*******************************************************************************
-LAST MODIFIED : 17 January 2001
-
-DESCRIPTION :
-Executes a GFX MODIFY SPECTRUM LINEAR command.
-If return_code is 1, returns the completed Modify_spectrum_app_data with the
-parsed settings. Note that the settings are ACCESSed once on valid return.
-==============================================================================*/
+/**
+ * Executes a GFX MODIFY SPECTRUM LINEAR|LOG command.
+ * @param isLog  True if log scale, otherwise linear scale.
+ * If return_code is 1, returns the completed Modify_spectrum_app_data with the
+ * parsed settings. Note that the settings are ACCESSed once on valid return.
+ */
+static int gfx_modify_spectrum_linear_log(struct Parse_state *state,
+  Modify_spectrum_app_data *modify_spectrum_data, bool isLogScale)
 {
-	char ambient,amb_diff,diffuse,emission,extend_above,
-		extend_below,fix_maximum,fix_minimum,reverse,specular,
-		transparent_above,transparent_below;
-	enum cmzn_spectrumcomponent_colour_mapping_type colour_mapping_type;
-	int black_band_int,component,number_of_bands,range_components,return_code;
-	float band_ratio,step_value;
-	FE_value colour_range[2],range[2];
-	struct Modify_spectrum_app_data *modify_spectrum_data;
-	struct Option_table *option_table, *render_option_table;
-	struct cmzn_spectrumcomponent *settings;
-
-	ENTER(gfx_modify_spectrum_settings_linear);
-	USE_PARAMETER(dummy);
+	int return_code;
 	if (state)
 	{
-		modify_spectrum_data=
-			(struct Modify_spectrum_app_data *)modify_spectrum_data_void;
 		if (modify_spectrum_data)
 		{
 			/* create the spectrum_settings: */
-			settings=modify_spectrum_data->component=CREATE(cmzn_spectrumcomponent)();
+			cmzn_spectrumcomponent *settings = modify_spectrum_data->component = CREATE(cmzn_spectrumcomponent)();
 			if (settings)
 			{
-				/* access since deaccessed in gfx_modify_spectrum */
+				// Zinc API spectrum components extend below and above by default, but for
+				// backward compatibility with old commands this must be reversed
+				cmzn_spectrumcomponent_set_extend_below(settings, false);
+				cmzn_spectrumcomponent_set_extend_above(settings, false);
 
-				cmzn_spectrumcomponent_set_scale_type(settings,CMZN_SPECTRUMCOMPONENT_SCALE_TYPE_LINEAR);
+				cmzn_spectrumcomponent_set_scale_type(settings,
+					isLogScale ? CMZN_SPECTRUMCOMPONENT_SCALE_TYPE_LOG : CMZN_SPECTRUMCOMPONENT_SCALE_TYPE_LINEAR);
 				settings->is_field_lookup = false;
-				colour_mapping_type = cmzn_spectrumcomponent_get_colour_mapping_type(settings);
-				ambient = 0;
-				amb_diff = 0;
-				band_ratio = 0.01;
-				diffuse = 0;
-				emission = 0;
-				extend_above = 0;
-				extend_below = 0;
-				fix_maximum=0;
-				fix_minimum=0;
-				number_of_bands = 10;
-				reverse = 0;
-				specular = 0;
-				step_value = 0.5;
-				transparent_above = 0;
-				transparent_below = 0;
-				range_components = 2;
-				colour_range[0] = 0.0;
-				colour_range[1] = 1.0;
-				range[0] = (FE_value)(modify_spectrum_data->spectrum_minimum);
-				range[1] = (FE_value)(modify_spectrum_data->spectrum_maximum);
-				component = cmzn_spectrumcomponent_get_field_component(settings);
+				cmzn_spectrumcomponent_colour_mapping_type colour_mapping_type =
+					cmzn_spectrumcomponent_get_colour_mapping_type(settings);
+				char ambient = 0;
+				char amb_diff = 0;
+				double band_ratio = 0.01;
+				char diffuse = 0;
+				char emission = 0;
+				char extend_above = 0;
+				char extend_below = 0;
+				char fix_maximum = 0;
+				char fix_minimum = 0;
+				char left = 0;
+				int number_of_bands = 10;
+				char reverse = 0;
+				char right = 0;
+				char specular = 0;
+				double step_value = 0.5;
+				char transparent_above = 0;
+				char transparent_below = 0;
+				int range_components = 2;
+				FE_value colour_range[2] = { 0.0, 1.0 };
+				FE_value range[2] = {
+					(FE_value)(modify_spectrum_data->spectrum_minimum),
+					(FE_value)(modify_spectrum_data->spectrum_maximum)
+				};
+				int field_component = cmzn_spectrumcomponent_get_field_component(settings);
+				double exaggeration = (isLogScale) ? cmzn_spectrumcomponent_get_exaggeration(settings) : 0.0;
 
-				option_table = CREATE(Option_table)();
+				Option_table *option_table = CREATE(Option_table)();
 				/* band_ratio */
-				Option_table_add_float_entry(option_table, "band_ratio",
+				Option_table_add_double_entry(option_table, "band_ratio",
 					&band_ratio);
 				/* colour_range */
 				Option_table_add_FE_value_vector_entry(option_table, "colour_range",
 					colour_range, &range_components);
 				/* component */
 				Option_table_add_int_positive_entry(option_table, "component",
-					&component);
+					&field_component);
+				if (isLogScale)
+				{
+					/* exaggeration */
+					Option_table_add_double_entry(option_table, "exaggeration", &exaggeration);
+				}
 				/* extend_above */
 				Option_table_add_char_flag_entry(option_table, "extend_above",
 					&extend_above);
@@ -110,6 +108,11 @@ parsed settings. Note that the settings are ACCESSed once on valid return.
 				/* fix_minimum */
 				Option_table_add_char_flag_entry(option_table, "fix_minimum",
 					&fix_minimum);
+				if (isLogScale)
+				{
+					/* left */
+					Option_table_add_char_flag_entry(option_table, "left", &left);
+				}
 				/* number_of_bands */
 				Option_table_add_int_positive_entry(option_table, "number_of_bands",
 					&number_of_bands);
@@ -122,8 +125,13 @@ parsed settings. Note that the settings are ACCESSed once on valid return.
 				/* reverse */
 				Option_table_add_char_flag_entry(option_table, "reverse",
 					&reverse);
+				if (isLogScale)
+				{
+					/* right */
+					Option_table_add_char_flag_entry(option_table, "right", &right);
+				}
 				/* step_value */
-				Option_table_add_float_entry(option_table, "step_value",
+				Option_table_add_double_entry(option_table, "step_value",
 					&step_value);
 				/* transparent_above */
 				Option_table_add_char_flag_entry(option_table, "transparent_above",
@@ -135,7 +143,7 @@ parsed settings. Note that the settings are ACCESSed once on valid return.
 				OPTION_TABLE_ADD_ENUMERATOR(cmzn_spectrumcomponent_colour_mapping_type)(
 					option_table, &colour_mapping_type);
 				/* render_option */
-				render_option_table = CREATE(Option_table)();
+				Option_table *render_option_table = CREATE(Option_table)();
 				Option_table_add_char_flag_entry(render_option_table, "ambient",
 					&ambient);
 				Option_table_add_char_flag_entry(render_option_table, "amb_diff",
@@ -147,7 +155,6 @@ parsed settings. Note that the settings are ACCESSed once on valid return.
 				Option_table_add_char_flag_entry(render_option_table, "specular",
 					&specular);
 				Option_table_add_suboption_table(option_table, render_option_table);
-
 
 				if (!(return_code=Option_table_multi_parse(option_table,state)))
 				{
@@ -163,7 +170,7 @@ parsed settings. Note that the settings are ACCESSed once on valid return.
 				{
 					if (specular + emission > 1)
 					{
-						display_message(ERROR_MESSAGE,"gfx_modify_spectrum_settings_linear.  "
+						display_message(ERROR_MESSAGE,"gfx modify spectrum linear|log.  "
 							"All spectrums are ambient diffuse.  The specular and emission flags are ignored.");
 						return_code=0;
 					}
@@ -172,7 +179,7 @@ parsed settings. Note that the settings are ACCESSed once on valid return.
 				{
 					if ( extend_above && transparent_above)
 					{
-						display_message(ERROR_MESSAGE,"gfx_modify_spectrum_settings_linear.  "
+						display_message(ERROR_MESSAGE,"gfx modify spectrum linear|log.  "
 							"Specify only one of extend_above and transparent_above");
 						return_code=0;
 					}
@@ -189,13 +196,12 @@ parsed settings. Note that the settings are ACCESSed once on valid return.
 				{
 					if ( extend_below && transparent_below)
 					{
-						display_message(ERROR_MESSAGE,"gfx_modify_spectrum_settings_linear.  "
+						display_message(ERROR_MESSAGE,"gfx modify spectrum linear|log.  "
 							"Specify only one of extend_below and transparent_below");
 						return_code=0;
 					}
 					else if (extend_below)
 					{
-
 						cmzn_spectrumcomponent_set_extend_below(settings, true);
 					}
 					else if (transparent_below)
@@ -203,9 +209,27 @@ parsed settings. Note that the settings are ACCESSed once on valid return.
 						cmzn_spectrumcomponent_set_extend_below(settings, false);
 					}
 				}
+				if ( return_code && isLogScale )
+				{
+					if (left && right)
+					{
+						display_message(ERROR_MESSAGE,"gfx_modify_spectrum_settings_log.  "
+							"Specify only one of left or right");
+						return_code=0;
+					}
+					else if (left)
+					{
+						exaggeration = fabs(exaggeration);
+					}
+					else if (right)
+					{
+						exaggeration = -fabs(exaggeration);
+					}
+					cmzn_spectrumcomponent_set_exaggeration(settings, exaggeration);
+				}
 				if ( return_code )
 				{
-					cmzn_spectrumcomponent_set_field_component(settings, component);
+					cmzn_spectrumcomponent_set_field_component(settings, field_component);
 					cmzn_spectrumcomponent_set_colour_minimum(settings,	colour_range[0]);
 					cmzn_spectrumcomponent_set_colour_maximum(settings,	colour_range[1]);
 					cmzn_spectrumcomponent_set_range_minimum(settings,	range[0]);
@@ -213,7 +237,7 @@ parsed settings. Note that the settings are ACCESSed once on valid return.
 					cmzn_spectrumcomponent_set_colour_reverse(settings, 0 != reverse);
 					cmzn_spectrumcomponent_set_number_of_bands(settings,
 						number_of_bands);
-					black_band_int = (band_ratio * 1000.0 + 0.5);
+					int black_band_int = static_cast<int>(band_ratio * 1000.0 + 0.5);
 					cmzn_spectrumcomponent_set_black_band_proportion(settings,
 						black_band_int);
 					/* Must set step value after setting minimum and maximum range */
@@ -237,300 +261,44 @@ parsed settings. Note that the settings are ACCESSed once on valid return.
 			}
 			else
 			{
-				display_message(ERROR_MESSAGE,"gfx_modify_spectrum_settings_linear.  "
-					"Could not create settings");
+				display_message(ERROR_MESSAGE,
+					"gfx_modify_spectrum_linear_log.  Could not create settings");
 				return_code=0;
 			}
 		}
 		else
 		{
-			display_message(ERROR_MESSAGE,"gfx_modify_spectrum_settings_linear.  "
-				"No modify data");
+			display_message(ERROR_MESSAGE,
+				"gfx_modify_spectrum_linear_log.  No modify data");
 			return_code=0;
 		}
 	}
 	else
 	{
-		display_message(ERROR_MESSAGE,"gfx_modify_spectrum_settings_linear.  Missing state");
+		display_message(ERROR_MESSAGE, "gfx_modify_spectrum_linear_log.  Missing state");
 		return_code=0;
 	}
-	LEAVE;
-
 	return (return_code);
-} /* gfx_modify_spectrum_settings_linear */
+}
+
+int gfx_modify_spectrum_settings_linear(struct Parse_state *state,
+	void *modify_spectrum_data_void, void *dummy)
+{
+	USE_PARAMETER(dummy);
+	return gfx_modify_spectrum_linear_log(state,
+		static_cast<Modify_spectrum_app_data *>(modify_spectrum_data_void), /*isLogScale*/false);
+}
 
 int gfx_modify_spectrum_settings_log(struct Parse_state *state,
-	void *modify_spectrum_data_void,void *dummy)
-/*******************************************************************************
-LAST MODIFIED : 17 January 2001
-
-DESCRIPTION :
-Executes a GFX MODIFY SPECTRUM LOG command.
-If return_code is 1, returns the completed Modify_spectrum_app_data with the
-parsed settings. Note that the settings are ACCESSed once on valid return.
-==============================================================================*/
+	void *modify_spectrum_data_void, void *dummy)
 {
-	char ambient,amb_diff,diffuse,emission,extend_above,
-		extend_below,fix_maximum,fix_minimum,left,reverse,right,
-		specular,transparent_above,transparent_below;
-	enum cmzn_spectrumcomponent_colour_mapping_type colour_mapping_type;
-	int black_band_int,component,number_of_bands,range_components,return_code;
-	float band_ratio,exaggeration,step_value;
-	FE_value colour_range[2],range[2];
-	struct Modify_spectrum_app_data *modify_spectrum_data;
-	struct Option_table *option_table, *render_option_table;
-	struct cmzn_spectrumcomponent *settings;
-
-	ENTER(gfx_modify_spectrum_settings_log);
 	USE_PARAMETER(dummy);
-	if (state)
-	{
-		modify_spectrum_data=(struct Modify_spectrum_app_data *)modify_spectrum_data_void;
-		if (modify_spectrum_data)
-		{
-			/* create the spectrum_settings: */
-			settings=modify_spectrum_data->component=CREATE(cmzn_spectrumcomponent)();
-			if (settings)
-			{
-				cmzn_spectrumcomponent_set_scale_type(settings,CMZN_SPECTRUMCOMPONENT_SCALE_TYPE_LOG);
-				settings->is_field_lookup = false;
-				colour_mapping_type = cmzn_spectrumcomponent_get_colour_mapping_type(settings);
-				ambient = 0;
-				amb_diff = 0;
-				band_ratio = 0.01;
-				diffuse = 0;
-				emission = 0;
-				extend_above = 0;
-				extend_below = 0;
-				fix_maximum=0;
-				fix_minimum=0;
-				left = 0;
-				number_of_bands = 10;
-				reverse = 0;
-				right = 0;
-				specular = 0;
-				step_value = 0.5;
-				transparent_above = 0;
-				transparent_below = 0;
-				range_components = 2;
-				colour_range[0] = 0.0;
-				colour_range[1] = 1.0;
-				range[0] = (FE_value)(modify_spectrum_data->spectrum_minimum);
-				range[1] = (FE_value)(modify_spectrum_data->spectrum_maximum);
-				component = cmzn_spectrumcomponent_get_field_component(settings);
-				exaggeration =  cmzn_spectrumcomponent_get_exaggeration(settings);
-
-				option_table = CREATE(Option_table)();
-				/* band_ratio */
-				Option_table_add_float_entry(option_table, "band_ratio",
-					&band_ratio);
-				/* colour_range */
-				Option_table_add_FE_value_vector_entry(option_table, "colour_range",
-					colour_range, &range_components);
-				/* component */
-				Option_table_add_int_positive_entry(option_table, "component",
-					&component);
-				/* exaggeration */
-				Option_table_add_float_entry(option_table, "exaggeration",
-					&exaggeration);
-				/* extend_above */
-				Option_table_add_char_flag_entry(option_table, "extend_above",
-					&extend_above);
-				/* extend_below */
-				Option_table_add_char_flag_entry(option_table, "extend_below",
-					&extend_below);
-				/* fix_maximum */
-				Option_table_add_char_flag_entry(option_table, "fix_maximum",
-					&fix_maximum);
-				/* fix_minimum */
-				Option_table_add_char_flag_entry(option_table, "fix_minimum",
-					&fix_minimum);
-				/* left */
-				Option_table_add_char_flag_entry(option_table, "left",
-					&left);
-				/* number_of_bands */
-				Option_table_add_int_positive_entry(option_table, "number_of_bands",
-					&number_of_bands);
-				/* position */
-				Option_table_add_int_non_negative_entry(option_table, "position",
-					&(modify_spectrum_data->position));
-				/* range */
-				Option_table_add_FE_value_vector_entry(option_table, "range",
-					range, &range_components);
-				/* reverse */
-				Option_table_add_char_flag_entry(option_table, "reverse",
-					&reverse);
-				/* right */
-				Option_table_add_char_flag_entry(option_table, "right",
-					&right);
-				/* step_value */
-				Option_table_add_float_entry(option_table, "step_value",
-					&step_value);
-				/* transparent_above */
-				Option_table_add_char_flag_entry(option_table, "transparent_above",
-					&transparent_above);
-				/* transparent_below */
-				Option_table_add_char_flag_entry(option_table, "transparent_below",
-					&transparent_below);
-				/* conversion_mode */
-				Option_table_add_enumerator_cmzn_spectrumcomponent_colour_mapping_type(
-					option_table, &colour_mapping_type);
-				/* render_option */
-				render_option_table = CREATE(Option_table)();
-				Option_table_add_char_flag_entry(render_option_table, "ambient",
-					&ambient);
-				Option_table_add_char_flag_entry(render_option_table, "amb_diff",
-					&amb_diff);
-				Option_table_add_char_flag_entry(render_option_table, "diffuse",
-					&diffuse);
-				Option_table_add_char_flag_entry(render_option_table, "emission",
-					&emission);
-				Option_table_add_char_flag_entry(render_option_table, "specular",
-					&specular);
-				Option_table_add_suboption_table(option_table, render_option_table);
-
-
-				if (!(return_code=Option_table_multi_parse(option_table,state)))
-				{
-					DEACCESS(cmzn_spectrumcomponent)(&(modify_spectrum_data->component));
-				}
-				DESTROY(Option_table)(&option_table);
-				if (return_code)
-				{
-					cmzn_spectrumcomponent_set_colour_mapping_type(settings,
-						colour_mapping_type);
-					cmzn_spectrumcomponent_set_number_of_bands(settings,
-						number_of_bands);
-					black_band_int = (band_ratio * 1000.0 + 0.5);
-					cmzn_spectrumcomponent_set_black_band_proportion(settings,
-						black_band_int);
-					cmzn_spectrumcomponent_set_step_value(settings, step_value);
-				}
-				if ( return_code )
-				{
-					if (specular + emission > 1)
-					{
-						display_message(ERROR_MESSAGE,"gfx_modify_spectrum_settings_linear.  "
-							"All spectrums are ambient diffuse.  The specular and emission flags are ignored.");
-						return_code=0;
-					}
-				}
-				if ( return_code )
-				{
-					if ( extend_above && transparent_above)
-					{
-						display_message(ERROR_MESSAGE,"gfx_modify_spectrum_settings_log.  "
-							"Specify only one of extend_above and transparent_above");
-						return_code=0;
-					}
-					else if (extend_above)
-					{
-						cmzn_spectrumcomponent_set_extend_above(settings, true);
-					}
-					else if (transparent_above)
-					{
-						cmzn_spectrumcomponent_set_extend_above(settings, false);
-					}
-				}
-				if ( return_code )
-				{
-					if ( extend_below && transparent_below)
-					{
-						display_message(ERROR_MESSAGE,"gfx_modify_spectrum_settings_log.  "
-							"Specify only one of extend_below and transparent_below");
-						return_code=0;
-					}
-					else if (extend_below)
-					{
-						cmzn_spectrumcomponent_set_extend_below(settings, true);
-					}
-					else if (transparent_below)
-					{
-						cmzn_spectrumcomponent_set_extend_below(settings, false);
-					}
-				}
-				if ( return_code )
-				{
-					if (left && right)
-					{
-						display_message(ERROR_MESSAGE,"gfx_modify_spectrum_settings_log.  "
-							"Specify only one of left or right");
-						return_code=0;
-					}
-					else if (left)
-					{
-						exaggeration = fabs(exaggeration);
-					}
-					else if (right)
-					{
-						exaggeration = -fabs(exaggeration);
-					}
-					cmzn_spectrumcomponent_set_exaggeration(settings, exaggeration);
-				}
-				if ( return_code )
-				{
-					cmzn_spectrumcomponent_set_field_component(settings,
-						component);
-					cmzn_spectrumcomponent_set_colour_minimum(settings,
-						colour_range[0]);
-					cmzn_spectrumcomponent_set_colour_maximum(settings,
-						colour_range[1]);
-					cmzn_spectrumcomponent_set_range_minimum(settings,
-						range[0]);
-					cmzn_spectrumcomponent_set_range_maximum(settings,
-						range[1]);
-					cmzn_spectrumcomponent_set_colour_reverse(settings, reverse);
-				}
-				/* Must set fix_maximum,fix_minimum after setting minimum and maximum range */
-				if ( return_code )
-				{
-					if (fix_maximum)
-					{
-						cmzn_spectrumcomponent_set_fix_maximum_flag(settings, 1);
-					}
-				}
-				if ( return_code )
-				{
-					if (fix_minimum)
-					{
-						cmzn_spectrumcomponent_set_fix_minimum_flag(settings, 1);
-					}
-				}
-			}
-			else
-			{
-				display_message(ERROR_MESSAGE,"gfx_modify_spectrum_settings_log.  "
-					"Could not create settings");
-				return_code=0;
-			}
-		}
-		else
-		{
-			display_message(ERROR_MESSAGE,"gfx_modify_spectrum_settings_log.  "
-				"No modify data");
-			return_code=0;
-		}
-	}
-	else
-	{
-		display_message(ERROR_MESSAGE,"gfx_modify_spectrum_settings_log.  Missing state");
-		return_code=0;
-	}
-	LEAVE;
-
-	return (return_code);
-} /* gfx_modify_spectrum_log */
+	return gfx_modify_spectrum_linear_log(state,
+		static_cast<Modify_spectrum_app_data *>(modify_spectrum_data_void), /*isLogScale*/true);
+}
 
 int gfx_modify_spectrum_settings_field(struct Parse_state *state,
 	void *modify_spectrum_data_void,void *dummy)
-/*******************************************************************************
-LAST MODIFIED : 11 April 2007
-
-DESCRIPTION :
-Executes a GFX MODIFY SPECTRUM FIELD command.
-If return_code is 1, returns the completed Modify_spectrum_app_data with the
-parsed settings. Note that the settings are ACCESSed once on valid return.
-==============================================================================*/
 {
 	enum cmzn_spectrumcomponent_colour_mapping_type colour_mapping_type;
 	int component, return_code;

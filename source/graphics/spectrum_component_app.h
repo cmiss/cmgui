@@ -9,13 +9,10 @@
 
 #include "general/enumerator_app.h"
 
+/**
+ * Structure modified by spectrum command modifier functions.
+ */
 struct Modify_spectrum_app_data
-/*******************************************************************************
-LAST MODIFIED : 4 August 1998
-
-DESCRIPTION :
-Structure modified by spectrum modify routine.
-==============================================================================*/
 {
 	int position;
 	ZnReal spectrum_minimum, spectrum_maximum;
@@ -23,38 +20,29 @@ Structure modified by spectrum modify routine.
 	struct cmzn_spectrumcomponent *component;
 };
 
+/**
+ * Executes a GFX MODIFY SPECTRUM LINEAR command.
+ * If return_code is 1, returns the completed Modify_spectrum_app_data with the
+ * parsed settings. Note that the settings are ACCESSed once on valid return.
+ */
 int gfx_modify_spectrum_settings_linear(struct Parse_state *state,
-	void *modify_spectrum_data_void,void *dummy);
-/*******************************************************************************
-LAST MODIFIED : 17 January 2001
+	void *modify_spectrum_data_void, void *dummy);
 
-DESCRIPTION :
-Executes a GFX MODIFY SPECTRUM LINEAR command.
-If return_code is 1, returns the completed Modify_spectrum_app_data with the
-parsed settings. Note that the settings are ACCESSed once on valid return.
-==============================================================================*/
-
+/**
+ * Executes a GFX MODIFY SPECTRUM LOG command.
+ * If return_code is 1, returns the completed Modify_spectrum_app_data with the
+ * parsed settings. Note that the settings are ACCESSed once on valid return.
+ */
 int gfx_modify_spectrum_settings_log(struct Parse_state *state,
-	void *modify_spectrum_data_void,void *dummy);
-/*******************************************************************************
-LAST MODIFIED : 17 January 2001
+	void *modify_spectrum_data_void, void *dummy);
 
-DESCRIPTION :
-Executes a GFX MODIFY SPECTRUM LOG command.
-If return_code is 1, returns the completed Modify_spectrum_app_data with the
-parsed settings. Note that the settings are ACCESSed once on valid return.
-==============================================================================*/
-
+/**
+ * Executes a GFX MODIFY SPECTRUM FIELD command.
+ * If return_code is 1, returns the completed Modify_spectrum_app_data with the
+ * parsed settings. Note that the settings are ACCESSed once on valid return.
+ */
 int gfx_modify_spectrum_settings_field(struct Parse_state *state,
-	void *modify_spectrum_data_void,void *dummy);
-/*******************************************************************************
-LAST MODIFIED : 11 April 2007
-
-DESCRIPTION :
-Executes a GFX MODIFY SPECTRUM FIELD command.
-If return_code is 1, returns the completed Modify_spectrum_app_data with the
-parsed settings. Note that the settings are ACCESSed once on valid return.
-==============================================================================*/
+	void *modify_spectrum_data_void, void *dummy);
 
 int cmzn_spectrumcomponent_modify(struct cmzn_spectrumcomponent *component,
 	struct cmzn_spectrumcomponent *new_component,
