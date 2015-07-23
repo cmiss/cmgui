@@ -11253,7 +11253,7 @@ static int gfx_modify_nodes(struct Parse_state *state,
 			cmzn_nodetemplate_id node_template = cmzn_nodeset_create_nodetemplate(nodeset);
 			if (define_field_name)
 			{
-				if (!cmzn_nodetemplate_define_field(node_template, field))
+				if (CMZN_OK != cmzn_nodetemplate_define_field(node_template, field))
 				{
 					return_code = 0;
 				}
@@ -11261,7 +11261,7 @@ static int gfx_modify_nodes(struct Parse_state *state,
 				{
 					for (int i = 0; i < derivatives_data.number_of_derivatives; ++i)
 					{
-						if (!cmzn_nodetemplate_set_value_number_of_versions(node_template, field,
+						if (CMZN_OK != cmzn_nodetemplate_set_value_number_of_versions(node_template, field,
 							/*component_number=all*/-1, derivatives_data.derivatives[i], number_of_versions))
 						{
 							return_code = 0;
@@ -11272,7 +11272,7 @@ static int gfx_modify_nodes(struct Parse_state *state,
 			}
 			else
 			{
-				if (!cmzn_nodetemplate_undefine_field(node_template, field))
+				if (CMZN_OK != cmzn_nodetemplate_undefine_field(node_template, field))
 					return_code = 0;
 			}
 			if (group)
