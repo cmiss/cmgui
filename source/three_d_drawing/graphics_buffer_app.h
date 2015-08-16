@@ -222,12 +222,6 @@ DESCRIPTION :
 Returns the buffering mode being used by the graphics buffer.
 ==============================================================================*/
 
-int Graphics_buffer_set_multisample_framebuffer(struct Graphics_buffer_app *buffer, int preferred_antialias);
-
-void Graphics_buffer_blit_framebuffer(struct Graphics_buffer_app *buffer);
-
-void Graphics_buffer_reset_multisample_framebuffer(struct Graphics_buffer_app *buffer);
-
 int Graphics_buffer_app_awaken(struct Graphics_buffer_app *buffer);
 
 int Graphics_buffer_app_add_expose_callback(struct Graphics_buffer_app *buffer,
@@ -239,12 +233,6 @@ int Graphics_buffer_app_add_input_callback(struct Graphics_buffer_app *buffer,
 
 /*******************************************************************************
 LAST MODIFIED : 19 September 2002
-
-
-
-
-
-
 
 DESCRIPTION :
 Returns the stereo mode being used by the graphics buffer.
@@ -388,15 +376,6 @@ Sets the coordinates within the graphics port which the graphics_buffer should
 respect.
 ==============================================================================*/
 #endif /* defined (CARBON_USER_INTERFACE) */
-
-
-#if defined (OPENGL_API) && defined (USE_MSAA)
-void Graphics_buffer_app_reset_multisample_framebuffer(struct Graphics_buffer_app *buffer);
-
-void Graphics_buffer_app_blit_framebuffer(struct Graphics_buffer_app *buffer);
-
-int Graphics_buffer_app_set_multisample_framebuffer(struct Graphics_buffer_app *buffer, int preferred_antialias);
-#endif /* defined (USE_MSAA) */
 
 int Graphics_buffer_get_visual_id(Graphics_buffer_app *buffer, int *visual_id);
 

@@ -5578,9 +5578,9 @@ graphics window on screen.
 									"Graphics_window_get_frame_pixels. Cmgui-wx does not write"
 									"image with anti-aliasing under offscreen mode at the moment.");
 		#else
-		#if defined (OPENGL_API)
+		#if defined (OPENGL_API) && defined (USE_MSAA)
 								multisample_framebuffer_flag =
-									Graphics_buffer_set_multisample_framebuffer(current_buffer, antialias);
+									Graphics_buffer_set_multisample_framebuffer(Graphics_buffer_app_get_core_buffer(current_buffer), antialias);
 		#endif
 		#endif
 							}
@@ -5639,7 +5639,6 @@ graphics window on screen.
 									NDC_left = original_NDC_left + (double)i *
 										 original_NDC_width / fraction_across;
 									viewport_left = i * tile_width / viewport_pixels_per_x;
-
 									Scene_viewer_set_viewing_volume(scene_viewer->core_scene_viewer,
 										left, right, bottom, top,
 										original_near_plane, original_far_plane);
@@ -5696,7 +5695,7 @@ graphics window on screen.
 	#if defined (OPENGL_API) && defined (USE_MSAA) && defined (WX_USER_INTERFACE)
 										if (multisample_framebuffer_flag)
 										{
-											Graphics_buffer_blit_framebuffer(current_buffer);
+											Graphics_buffer_blit_framebuffer(Graphics_buffer_app_get_core_buffer(current_buffer));
 										}
 	#endif
 									}
@@ -5711,7 +5710,7 @@ graphics window on screen.
 	#if defined (OPENGL_API) && defined (USE_MSAA) && defined (WX_USER_INTERFACE)
 										if (multisample_framebuffer_flag)
 										{
-											Graphics_buffer_reset_multisample_framebuffer(current_buffer);
+											Graphics_buffer_reset_multisample_framebuffer(Graphics_buffer_app_get_core_buffer(current_buffer));
 										}
 	#endif
 									}
