@@ -14572,7 +14572,7 @@ Can also write individual element groups with the <group> option.
 		char *region_or_group_path = 0;
 		Multiple_strings field_names;
 		char *file_name = 0;
-		char nodes_flag = 0, data_flag;
+		char nodes_flag = 0, data_flag = 0;
 		write_criterion = FE_WRITE_COMPLETE_GROUP;
 		write_recursion = FE_WRITE_RECURSIVE;
 		time = 0.0;
