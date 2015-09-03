@@ -647,7 +647,7 @@ and passes it to the element_point_viewer_widget.
 					 &element_identifier);
 				element_point_viewer->element_copy = ACCESS(FE_element)(
 					CREATE(FE_element)(&element_identifier, (struct FE_element_shape *)NULL,
-						(struct FE_region *)NULL, temp_element_point_identifier.element));
+						(FE_mesh *)NULL, temp_element_point_identifier.element));
 				if (element_point_viewer->element_copy)
 				{
 					 /* clear the faces of element_copy as messes up exterior calculations
@@ -2253,7 +2253,7 @@ fields.
 									&element_identifier) &&
 							(element_point_viewer->element_copy = ACCESS(FE_element)(
 									CREATE(FE_element)(&element_identifier,
-										 (struct FE_element_shape *)NULL, (struct FE_region *)NULL,
+										 (struct FE_element_shape *)NULL, (FE_mesh *)NULL,
 										 element_point_viewer->
 										 element_point_identifier.top_level_element))))
 					 {
@@ -2300,7 +2300,7 @@ fields.
 				{
 					 element_point_viewer->template_element = ACCESS(FE_element)(
 							CREATE(FE_element)(&element_identifier,
-								 (struct FE_element_shape *)NULL, (struct FE_region *)NULL,
+								 (struct FE_element_shape *)NULL, (FE_mesh *)NULL,
 								 initial_element));
 				}
 				/* make the dialog shell */
@@ -2727,7 +2727,7 @@ unmanaged elements in the identifier to this widget.
 				 }
 				 get_FE_element_identifier(element, &element_identifier);
 				 template_element = CREATE(FE_element)(&element_identifier,
-					 (struct FE_element_shape *)NULL, (struct FE_region *)NULL, element);
+					 (struct FE_element_shape *)NULL, (FE_mesh *)NULL, element);
 			 }
 		 }
 		 else

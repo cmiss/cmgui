@@ -23,6 +23,7 @@ Calls the client-specified callback routine if a different object is chosen.
 #include "computed_field/field_module.hpp"
 #include "general/callback_class.hpp"
 #include "general/debug.h"
+#include "finite_element/finite_element_mesh.hpp"
 #include "finite_element/finite_element_region.h"
 #include "general/message.h"
 #include "user_interface/user_interface.h"
@@ -129,36 +130,32 @@ update in case it has changed, and writes the new object string in the widget.
 	if (current_string)
 	{
 		FE_region *fe_region = cmzn_region_get_FE_region(this->region);
-		 if (new_object && ((!(FE_region_contains_FE_element(
-			 fe_region, new_object)) ||
+		FE_mesh *fe_mesh;
+		if (new_object &&
+			(fe_mesh = FE_region_find_FE_mesh_by_dimension(fe_region, cmzn_element_get_dimension(new_object))) &&
+			((!(fe_mesh->containsElement(new_object)) ||
 				(conditional_function &&
-				!(conditional_function(new_object,
-							conditional_function_user_data))))))
-		 if (new_object && ((!FE_region_contains_FE_element(
-			 fe_region, new_object)) ||
-				(conditional_function &&
-				!(conditional_function(new_object,
-					conditional_function_user_data)))))
-		 {
-				display_message(ERROR_MESSAGE,
-					 "TEXT_CHOOSE_FROM_FE_REGION_SELECT_OBJECT(object_type).  Invalid object");
+				!(conditional_function(new_object, conditional_function_user_data))))))
+		{
+			display_message(ERROR_MESSAGE,
+				"TEXT_CHOOSE_FROM_FE_REGION_SELECT_OBJECT(object_type).  Invalid object");
 				new_object=(struct FE_element *)NULL;
-		 }
-		 if (new_object)
-		 {
-				current_object=new_object;
-		 }
-		 else
-		 {
-				if (!current_object)
-				{
-					 current_object=
-							FE_region_get_first_FE_element_that(
-								 fe_region,
-								 conditional_function,
-								 conditional_function_user_data);
-				}
-		 }
+		}
+		if (new_object)
+		{
+			current_object=new_object;
+		}
+		else
+		{
+			if (!current_object)
+			{
+				current_object=
+					FE_region_get_first_FE_element_that(
+						fe_region,
+						conditional_function,
+						conditional_function_user_data);
+			}
+		}
 		/* write out the current_object */
 		if (current_object)
 		{
@@ -176,13 +173,13 @@ update in case it has changed, and writes the new object string in the widget.
 				SetValue(wxString::FromAscii(null_object_name));
 			}
 		}
-		 /* inform the client of any change */
-		 update();
-		 return_code=1;
+		/* inform the client of any change */
+		update();
+		return_code=1;
 	}
 	else
 	{
-		 return_code = 0;
+		return_code = 0;
 	}
 
 	LEAVE;
@@ -311,8 +308,12 @@ Returns the currently chosen object in the text_choose_object_widget. \
 ============================================================================*/
 {
 	wxString tmp = GetValue();
-	struct FE_element *new_object = FE_region_element_string_to_FE_element(
-		cmzn_region_get_FE_region(this->region), tmp.mb_str(wxConvUTF8));
+	FE_region *fe_region = cmzn_region_get_FE_region(this->region);
+	const int highest_dimension = FE_region_get_highest_dimension(fe_region);
+	FE_mesh *fe_mesh = FE_region_find_FE_mesh_by_dimension(fe_region, highest_dimension);
+	FE_element *new_object = 0;
+	if (fe_mesh)
+		new_object = fe_mesh->findElementByIdentifier(atoi(tmp.mb_str(wxConvUTF8)));
 	select_object(new_object);
 	return current_object;
 }

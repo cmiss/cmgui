@@ -2810,7 +2810,7 @@ void Node_tool::addCreateElementNode(cmzn_node_id node)
 		cmzn_fieldmodule_begin_change(fieldmodule);
 		cmzn_mesh_id mesh = cmzn_fieldmodule_find_mesh_by_dimension(fieldmodule, this->createElementDimension);
 		// GRC temp
-		FE_region_begin_define_faces(cmzn_region_get_FE_region(this->region), /*dimension=all*/-1);
+		FE_region_begin_define_faces(cmzn_region_get_FE_region(this->region));
 		cmzn_element_id element = cmzn_mesh_create_element(mesh, -1, this->elementtemplate);
 		// future:
 		//cmzn_element_define_faces(element);

@@ -10,6 +10,7 @@
 #include "general/message.h"
 #include "command/parser.h"
 #include "graphics/element_point_ranges.h"
+#include "finite_element/finite_element_mesh.hpp"
 #include "finite_element/finite_element_region.h"
 #include "finite_element/finite_element_discretization.h"
 #include "general/multi_range_app.h"
@@ -32,7 +33,6 @@ returned in this location, for the calling function to use or destroy.
 	float xi[MAXIMUM_ELEMENT_XI_DIMENSIONS];
 	int dimension, i, number_of_xi_points, number_of_valid_strings, return_code,
 		start, stop;
-	struct CM_element_information element_identifier;
 	struct Element_point_ranges *element_point_ranges,
 		**element_point_ranges_address;
 	struct Element_point_ranges_identifier element_point_ranges_identifier;
@@ -60,18 +60,19 @@ returned in this location, for the calling function to use or destroy.
 			if (strcmp(PARSER_HELP_STRING,current_token)&&
 				strcmp(PARSER_RECURSIVE_HELP_STRING,current_token))
 			{
+				int element_dimension = 0;
 				/* element type */
 				if (fuzzy_string_compare(current_token,"element"))
 				{
-					element_identifier.type=CM_ELEMENT;
+					element_dimension = 3;
 				}
 				else if (fuzzy_string_compare(current_token,"face"))
 				{
-					element_identifier.type=CM_FACE;
+					element_dimension = 2;
 				}
 				else if (fuzzy_string_compare(current_token,"line"))
 				{
-					element_identifier.type=CM_LINE;
+					element_dimension = 1;
 				}
 				else
 				{
@@ -89,19 +90,16 @@ returned in this location, for the calling function to use or destroy.
 						if (strcmp(PARSER_HELP_STRING,current_token)&&
 							strcmp(PARSER_RECURSIVE_HELP_STRING,current_token))
 						{
-							element_identifier.number=atoi(current_token);
-							element_point_ranges_identifier.element =
-								FE_region_get_FE_element_from_identifier_deprecated(fe_region,
-									&element_identifier);
+							FE_mesh *fe_mesh = FE_region_find_FE_mesh_by_dimension(fe_region, element_dimension);
+							const int identifier = atoi(current_token);
+							element_point_ranges_identifier.element = fe_mesh->findElementByIdentifier(identifier);
 							if (element_point_ranges_identifier.element)
 							{
 								shift_Parse_state(state,1);
 							}
 							else
 							{
-								display_message(ERROR_MESSAGE,"Unknown element: %s %d",
-									CM_element_type_string(element_identifier.type),
-									element_identifier.number);
+								display_message(ERROR_MESSAGE, "Unknown %d-D element: %d", element_dimension, identifier);
 								display_parse_state_location(state);
 								return_code=0;
 							}
@@ -126,7 +124,6 @@ returned in this location, for the calling function to use or destroy.
 					if (current_token&&
 						fuzzy_string_compare(current_token,"top_level_element"))
 					{
-						element_identifier.type = CM_ELEMENT;
 						shift_Parse_state(state,1);
 						current_token=state->current_token;
 						if (current_token)
@@ -134,28 +131,23 @@ returned in this location, for the calling function to use or destroy.
 							if (strcmp(PARSER_HELP_STRING,current_token)&&
 								strcmp(PARSER_RECURSIVE_HELP_STRING,current_token))
 							{
-								element_identifier.number=atoi(current_token);
+								const int identifier = atoi(current_token);
 								shift_Parse_state(state,1);
 								element_point_ranges_identifier.top_level_element =
-									FE_region_get_top_level_FE_element_from_identifier(fe_region,
-										element_identifier.number);
+									FE_region_get_top_level_FE_element_from_identifier(fe_region, identifier);
 								if (element_point_ranges_identifier.top_level_element)
 								{
 									if (!FE_element_is_top_level_parent_of_element(
 										element_point_ranges_identifier.top_level_element,
 										(void *)element_point_ranges_identifier.element))
 									{
-										display_message(ERROR_MESSAGE,
-											"Invalid top_level_element: %d",
-											element_identifier.number);
+										display_message(ERROR_MESSAGE, "Invalid top_level_element: %d", identifier);
 										return_code=0;
 									}
 								}
 								else
 								{
-									display_message(WARNING_MESSAGE,
-										"Unknown top_level_element: %d",
-										element_identifier.number);
+									display_message(WARNING_MESSAGE, "Unknown top_level_element: %d", identifier);
 									display_parse_state_location(state);
 									return_code=0;
 								}

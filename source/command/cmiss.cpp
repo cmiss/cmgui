@@ -5133,9 +5133,16 @@ static int gfx_define_faces(struct Parse_state *state,
 			cmzn_fieldmodule_id field_module = cmzn_region_get_fieldmodule(region);
 			cmzn_fieldmodule_begin_change(field_module);
 			FE_region *fe_region = cmzn_region_get_FE_region(region);
+			FE_region_begin_define_faces(fe_region);
 			for (int dimension = MAXIMUM_ELEMENT_XI_DIMENSIONS; (1 < dimension) && return_code; --dimension)
 			{
 				cmzn_mesh_id mesh = cmzn_fieldmodule_find_mesh_by_dimension(field_module, dimension);
+				FE_mesh *fe_mesh = FE_region_find_FE_mesh_by_dimension(fe_region, dimension);
+				if (!fe_mesh)
+				{
+					return_code = 0;
+					break;
+				}
 				cmzn_mesh_group_id face_mesh_group = 0;
 				if (group)
 				{
@@ -5157,12 +5164,11 @@ static int gfx_define_faces(struct Parse_state *state,
 						cmzn_field_element_group_destroy(&face_element_group);
 
 					}
-					FE_region_begin_define_faces(fe_region, dimension - 1);
 					cmzn_elementiterator_id iter = cmzn_mesh_create_elementiterator(mesh);
 					cmzn_element_id element = 0;
 					while ((0 != (element = cmzn_elementiterator_next_non_access(iter))) && return_code)
 					{
-						if (!FE_region_merge_FE_element_and_faces_and_nodes(fe_region, element))
+						if (!fe_mesh->merge_FE_element_and_faces(element))
 						{
 							return_code = 0;
 						}
@@ -5186,11 +5192,11 @@ static int gfx_define_faces(struct Parse_state *state,
 						}
 					}
 					cmzn_elementiterator_destroy(&iter);
-					FE_region_end_define_faces(fe_region);
 				}
 				cmzn_mesh_group_destroy(&face_mesh_group);
 				cmzn_mesh_destroy(&mesh);
 			}
+			FE_region_end_define_faces(fe_region);
 			cmzn_fieldmodule_end_change(field_module);
 			cmzn_fieldmodule_destroy(&field_module);
 		}
@@ -5505,8 +5511,9 @@ static int gfx_destroy_elements(struct Parse_state *state,
 			if (destroy_element_list && (0 < NUMBER_IN_LIST(FE_element)(destroy_element_list)))
 			{
 				cmzn_fieldmodule_begin_change(field_module);
-				return_code = FE_region_remove_FE_element_list(
-					cmzn_region_get_FE_region(region), destroy_element_list);
+				FE_mesh *fe_mesh = FE_region_find_FE_mesh_by_dimension(cmzn_region_get_FE_region(region), use_dimension);
+				return_code = fe_mesh->remove_FE_element_list(destroy_element_list);
+#if 0
 				int number_not_destroyed = 0;
 				if (0 < (number_not_destroyed = NUMBER_IN_LIST(FE_element)(
 					destroy_element_list)))
@@ -5515,6 +5522,7 @@ static int gfx_destroy_elements(struct Parse_state *state,
 						"%d of the selected element(s) could not be destroyed",
 						number_not_destroyed);
 				}
+#endif
 				if (selection_field)
 				{
 					cmzn_field_group_id selection_group = cmzn_field_cast_group(selection_field);
@@ -7917,7 +7925,7 @@ void create_triangle_mesh(struct cmzn_region *region, Triangle_mesh *trimesh)
 	cmzn_nodetemplate_destroy(&nodetemplate);
 
 	// establish mode which automates creation of shared faces
-	FE_region_begin_define_faces(cmzn_region_get_FE_region(region), /*all dimensions*/-1);
+	FE_region_begin_define_faces(cmzn_region_get_FE_region(region));
 
 	cmzn_mesh_id mesh = cmzn_fieldmodule_find_mesh_by_dimension(fieldmodule, 2);
 	cmzn_elementtemplate_id elementtemplate = cmzn_mesh_create_elementtemplate(mesh);
