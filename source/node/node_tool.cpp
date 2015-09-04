@@ -50,6 +50,7 @@ Scene input.
 #include "node/node_operations.h"
 #include "node/node_tool.h"
 #include "finite_element/finite_element.h"
+#include "finite_element/finite_element_nodeset.hpp"
 #include "finite_element/finite_element_region.h"
 #include "graphics/scene.h"
 #include "graphics/graphics.h"

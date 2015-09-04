@@ -9,6 +9,7 @@
 #include "general/debug.h"
 #include "general/message.h"
 #include "command/parser.h"
+#include "finite_element/finite_element_nodeset.hpp"
 #include "finite_element/finite_element_region.h"
 // insert app headers here
 #include "finite_element/finite_element_app.h"

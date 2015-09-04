@@ -14,6 +14,7 @@
 #include "computed_field/computed_field_set.h"
 #include "computed_field/computed_field_set_app.h"
 #include "computed_field/computed_field_lookup.h"
+#include "finite_element/finite_element_nodeset.hpp"
 #include "finite_element/finite_element_region.h"
 
 class Computed_field_lookup_package : public Computed_field_type_package
