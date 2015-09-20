@@ -7098,7 +7098,6 @@ Executes a GFX EXPORT IGES command.
 	struct Computed_field *coordinate_field;
 	struct cmzn_command_data *command_data = (struct cmzn_command_data *)command_data_void;
 	struct cmzn_region *region;
-	struct FE_region *fe_region;
 	struct Option_table *option_table;
 
 	ENTER(gfx_export_iges);
@@ -7127,8 +7126,7 @@ Executes a GFX EXPORT IGES command.
 		if (0 != (return_code = Option_table_multi_parse(option_table, state)))
 		{
 			if (cmzn_region_get_region_from_path_deprecated(command_data->root_region,
-				region_path, &region) &&
-				(0 != (fe_region = cmzn_region_get_FE_region(region))))
+				region_path, &region))
 			{
 				if (region && coordinate_field_name &&
 					(0 != (coordinate_field = FIND_BY_IDENTIFIER_IN_MANAGER(Computed_field,name)(
@@ -7170,7 +7168,7 @@ Executes a GFX EXPORT IGES command.
 						return_code = check_suffix(&file_name, ".igs");
 						if (return_code)
 						{
-							return_code = export_to_iges(file_name, fe_region, region_path,
+							return_code = export_to_iges(file_name, region, region_path,
 								coordinate_field);
 						}
 					}

@@ -248,9 +248,7 @@ set the seed element for a xi_texture_coordinate computed_field.
 				element = *element_address;
 				if (element)
 				{
-					struct CM_element_information cm;
-					get_FE_element_identifier(element, &cm);
-					display_message(INFORMATION_MESSAGE, "[%d]", cm.number);
+					display_message(INFORMATION_MESSAGE, "[%d]", cmzn_element_get_identifier(element));
 				}
 				return_code = 1;
 			}

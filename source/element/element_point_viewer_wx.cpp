@@ -24,6 +24,7 @@ selected element point, or set it if entered in this dialog.
 #include "computed_field/computed_field_value_index_ranges.h"
 #include "element/element_point_viewer_wx.h"
 #include "finite_element/finite_element_discretization.h"
+#include "finite_element/finite_element_mesh.hpp"
 #include "finite_element/finite_element_to_graphics_object.h"
 #include "general/debug.h"
 #include "general/message.h"
@@ -70,7 +71,7 @@ Contains all the information carried by the element_point_viewer widget.
 	struct Element_point_ranges_identifier element_point_identifier;
 	 int element_point_number, number_of_components;
 	/* accessed local copy of the element being edited */
-	 struct FE_element *element_copy, *template_element;
+	FE_element_template *element_template;
 	struct Computed_field *current_field;
 	FE_value xi[MAXIMUM_ELEMENT_XI_DIMENSIONS];
 	/* field components whose values have been modified stored in following */
@@ -396,7 +397,7 @@ Furthermore, if the <element_point_viewer>
 	ENTER(Element_point_viewer_apply_changes);
 	if (element_point_viewer&&
 		element_point_viewer->element_point_identifier.element&&
-		element_point_viewer->element_copy)
+		element_point_viewer->element_template)
 	{
 		return_code=1;
 		/* only apply if new values have been entered for field components */
@@ -498,8 +499,8 @@ Furthermore, if the <element_point_viewer>
 							cmzn_fieldmodule_id field_module = cmzn_region_get_fieldmodule(element_point_viewer->region);
 							cmzn_fieldmodule_begin_change(field_module);
 							cmzn_fieldcache_id field_cache = cmzn_fieldmodule_create_fieldcache(field_module);
-							source_identifier.element=element_point_viewer->element_copy;
-							/* note values taken from the local element_copy... */
+							source_identifier.element=element_point_viewer->element_template->get_template_element();
+							/* note values taken from the local element template */
 							struct Element_point_ranges_set_grid_values_data set_grid_values_data;
 							set_grid_values_data.field_cache = field_cache;
 							set_grid_values_data.source_identifier=&source_identifier;
@@ -622,58 +623,42 @@ Gets the current element_point, makes a copy of its element if not NULL,
 and passes it to the element_point_viewer_widget.
 ==============================================================================*/
 {
-	int i,number_of_faces,temp_element_point_number,return_code;
-	struct CM_element_information element_identifier;
+	int temp_element_point_number,return_code;
 	struct Element_point_ranges_identifier temp_element_point_identifier;
 
 	ENTER(Element_point_viewer_set_viewer_element_point);
 	if (element_point_viewer)
 	{
-		 REACCESS(FE_element)(&(element_point_viewer->element_copy),
-				(struct FE_element *)NULL);
+		cmzn::Deaccess(element_point_viewer->element_template);
 		 temp_element_point_number=element_point_viewer->element_point_number;
 		 COPY(Element_point_ranges_identifier)(&temp_element_point_identifier,
 				&(element_point_viewer->element_point_identifier));
-		 if (temp_element_point_identifier.element)
-		 {
-				if (Element_point_ranges_identifier_is_valid(
-							 &temp_element_point_identifier))
-				{
-					 Element_point_make_top_level(&temp_element_point_identifier,
-							&temp_element_point_number);
-				}
-				/* copy the element - now guaranteed to be top-level */
-				get_FE_element_identifier(temp_element_point_identifier.element,
-					 &element_identifier);
-				element_point_viewer->element_copy = ACCESS(FE_element)(
-					CREATE(FE_element)(&element_identifier, (struct FE_element_shape *)NULL,
-						(FE_mesh *)NULL, temp_element_point_identifier.element));
-				if (element_point_viewer->element_copy)
-				{
-					 /* clear the faces of element_copy as messes up exterior calculations
-							for graphics created from them */
-					 if (get_FE_element_number_of_faces(element_point_viewer->element_copy,
-								 &number_of_faces))
-					 {
-							for (i = 0; i < number_of_faces; i++)
-							{
-								 set_FE_element_face(element_point_viewer->element_copy,i,
-										(struct FE_element *)NULL);
-							}
-					 }
-				}
-		 }
-		 /* pass identifier with copy_element to viewer widget */
-		 temp_element_point_identifier.element=element_point_viewer->element_copy;
-		 temp_element_point_identifier.top_level_element=
-				element_point_viewer->element_copy;
-		 /* clear modified_components */
-		 REMOVE_ALL_OBJECTS_FROM_LIST(Field_value_index_ranges)(
-				element_point_viewer->modified_field_components);
-		 element_point_viewer_widget_set_element_point(
-				element_point_viewer,
-				&temp_element_point_identifier,temp_element_point_number);
-		 return_code=1;
+		if (temp_element_point_identifier.element)
+		{
+			if (Element_point_ranges_identifier_is_valid(
+				&temp_element_point_identifier))
+			{
+				Element_point_make_top_level(&temp_element_point_identifier,
+					&temp_element_point_number);
+			}
+			/* copy the element - now guaranteed to be top-level */
+			FE_mesh *fe_mesh = FE_element_get_FE_mesh(temp_element_point_identifier.element);
+			if (fe_mesh)
+			{
+				element_point_viewer->element_template =
+					fe_mesh->create_FE_element_template(temp_element_point_identifier.element);
+			}
+		}
+		/* pass identifier with copy_element to viewer widget */
+		temp_element_point_identifier.top_level_element = temp_element_point_identifier.element =
+			(element_point_viewer->element_template) ? element_point_viewer->element_template->get_template_element() : 0;
+		/* clear modified_components */
+		REMOVE_ALL_OBJECTS_FROM_LIST(Field_value_index_ranges)(
+			element_point_viewer->modified_field_components);
+		element_point_viewer_widget_set_element_point(
+			element_point_viewer,
+			&temp_element_point_identifier,temp_element_point_number);
+		return_code=1;
 	}
 	else
 	{
@@ -2146,18 +2131,12 @@ Creates a dialog for choosing element points and displaying and editing their
 fields.
 ==============================================================================*/
 {
-	 int i,number_of_faces, start, stop, temp_element_point_number;
-	 /*temp_element_point_number*/
+	int i, start, stop, temp_element_point_number;
 	struct MANAGER(Computed_field) *computed_field_manager;
-// 	MANAGER_CONDITIONAL_FUNCTION(Computed_field)
-// 		 *choose_field_conditional_function;
-	struct CM_element_information element_identifier;
-	//	struct Computed_field *grid_field;
 	struct Element_point_ranges *element_point_ranges;
 	struct Element_point_ranges_identifier temp_element_point_identifier;
 	struct Element_point_viewer *element_point_viewer;
 	struct Multi_range *ranges;
-	struct FE_element *initial_element;
 
 	ENTER(CREATE(Element_point_viewer));
 	element_point_viewer=(struct Element_point_viewer *)NULL;
@@ -2190,7 +2169,7 @@ fields.
 					 (struct FE_element *)NULL;
 				element_point_viewer->element_point_identifier.top_level_element=
 					 (struct FE_element *)NULL;
-				element_point_viewer->element_copy=(struct FE_element *)NULL;
+				element_point_viewer->element_template = 0;
 				element_point_viewer->element_point_identifier.sampling_mode=
 					 CMZN_ELEMENT_POINT_SAMPLING_MODE_SET_LOCATION;
 				//				element_point_viewer->time_object_callback = 0;
@@ -2206,7 +2185,6 @@ fields.
 					 FIND_BY_IDENTIFIER_IN_MANAGER(Computed_field,name)(
 							"grid_point_number",computed_field_manager);
 				element_point_viewer->current_field=(struct Computed_field *)NULL;
-				initial_element = (struct FE_element *)NULL;
 				/* initialise widgets */
 #if defined (WX_USER_INTERFACE)
 				element_point_viewer->wx_element_point_viewer = (wxElementPointViewer *)NULL;
@@ -2248,31 +2226,16 @@ fields.
 				Element_point_viewer_calculate_xi(element_point_viewer);
 				if (element_point_viewer->element_point_identifier.top_level_element)
 				{
-					 if (get_FE_element_identifier(
-									element_point_viewer->element_point_identifier.top_level_element,
-									&element_identifier) &&
-							(element_point_viewer->element_copy = ACCESS(FE_element)(
-									CREATE(FE_element)(&element_identifier,
-										 (struct FE_element_shape *)NULL, (FE_mesh *)NULL,
-										 element_point_viewer->
-										 element_point_identifier.top_level_element))))
-					 {
-							/* clear the faces of element_copy as messes up exterior
-								 calculations for graphics created from them */
-							if (get_FE_element_number_of_faces(
-										 element_point_viewer->element_copy, &number_of_faces))
-							{
-								 for (i=0;i<number_of_faces;i++)
-								 {
-										set_FE_element_face(element_point_viewer->element_copy,i,
-											 (struct FE_element *)NULL);
-								 }
-							}
-					 }
+					FE_mesh *fe_mesh = FE_element_get_FE_mesh(element_point_viewer->element_point_identifier.top_level_element);
+					if (fe_mesh)
+					{
+						element_point_viewer->element_template =
+							fe_mesh->create_FE_element_template(element_point_viewer->element_point_identifier.top_level_element);
+					}
 				}
 				else
 				{
-					 element_point_viewer->element_copy=(struct FE_element *)NULL;
+					cmzn::Deaccess(element_point_viewer->element_template);
 				}
 				/* get callbacks from global element_point selection */
 				Element_point_ranges_selection_add_callback(
@@ -2291,18 +2254,8 @@ fields.
 							&temp_element_point_number);
 				}
 				/* pass identifier with copy_element to viewer widget */
-				temp_element_point_identifier.element=
-					 element_point_viewer->element_copy;
-				temp_element_point_identifier.top_level_element=
-					 element_point_viewer->element_copy;
-				initial_element=temp_element_point_identifier.element;
-				if (initial_element)
-				{
-					 element_point_viewer->template_element = ACCESS(FE_element)(
-							CREATE(FE_element)(&element_identifier,
-								 (struct FE_element_shape *)NULL, (FE_mesh *)NULL,
-								 initial_element));
-				}
+				temp_element_point_identifier.top_level_element = temp_element_point_identifier.element =
+					(element_point_viewer->element_template) ? element_point_viewer->element_template->get_template_element() : 0;
 				/* make the dialog shell */
 #if defined (WX_USER_INTERFACE)
 				element_point_viewer->frame_width = 0;
@@ -2375,14 +2328,10 @@ Destroys the Element_point_viewer. See also Element_point_viewer_close_CB.
 			element_point_viewer->element_point_ranges_selection,
 			Element_point_viewer_element_point_ranges_selection_change,
 			(void *)element_point_viewer);
-		/* deaccess the local element_copy */
-		REACCESS(FE_element)(&(element_point_viewer->element_copy),
-			(struct FE_element *)NULL);
+		cmzn::Deaccess(element_point_viewer->element_template);
+		delete element_point_viewer->wx_element_point_viewer;
 		DEALLOCATE(*element_point_viewer_address);
-		if (element_point_viewer->wx_element_point_viewer)
-		{
-			 delete element_point_viewer->wx_element_point_viewer;
-		}
+		element_point_viewer_address = 0;
 		return_code=1;
 	}
 	else
@@ -2679,6 +2628,7 @@ Creates the array of cells containing field component names and values.
 
 	return (return_code);
 } /* element_point_field_viewer_widget_setup_components */
+
 int element_point_viewer_widget_set_element_point(
 	Element_point_viewer *element_point_viewer,
 	struct Element_point_ranges_identifier *element_point_identifier,
@@ -2692,78 +2642,55 @@ that the viewer works on the element itself, not a local copy. Hence, only pass
 unmanaged elements in the identifier to this widget.
 ==============================================================================*/
 {
-	 int change_conditional_function,return_code;
-	 MANAGER_CONDITIONAL_FUNCTION(Computed_field)
-			*choose_field_conditional_function;
-	 struct CM_element_information element_identifier;
-	 struct Computed_field *field;
+	int return_code;
 
-	 ENTER(element_point_viewer_widget_set_element_point);
-	 if (element_point_viewer && element_point_identifier&&
-			(((struct FE_element *)NULL==element_point_identifier->element)||
-				 Element_point_ranges_identifier_element_point_number_is_valid(
-						element_point_identifier,element_point_number)))
-	 {
-		 struct FE_element *element = NULL, *template_element = NULL;
-		 change_conditional_function=0;
-		 element = element_point_identifier->element;
-		 if (element)
-		 {
-			 field=element_point_viewer->current_field;
-			 if (!(element_point_viewer->template_element) ||
-				 (!equivalent_computed_fields_at_elements(element,
-					 element_point_viewer->template_element)))
-			 {
-				 choose_field_conditional_function=
-					 Computed_field_is_defined_in_element_conditional;
-				 change_conditional_function=1;
-				 if ((!field)||
-					 (!Computed_field_is_defined_in_element(field,element)))
-				 {
-					 field=FIRST_OBJECT_IN_MANAGER_THAT(Computed_field)(
-						 choose_field_conditional_function,(void *)element,
-						 Computed_field_package_get_computed_field_manager(
-							 element_point_viewer->computed_field_package));
-				 }
-				 get_FE_element_identifier(element, &element_identifier);
-				 template_element = CREATE(FE_element)(&element_identifier,
-					 (struct FE_element_shape *)NULL, (FE_mesh *)NULL, element);
-			 }
-		 }
-		 else
-		 {
-			 field=(struct Computed_field *)NULL;
-			 choose_field_conditional_function=
-				 (MANAGER_CONDITIONAL_FUNCTION(Computed_field) *)NULL;
-			 change_conditional_function=1;
-			 template_element=(struct FE_element *)NULL;
-		 }
-		 COPY(Element_point_ranges_identifier)(
-			 &(element_point_viewer->element_point_identifier),
-			 element_point_identifier);
-		 element_point_viewer->element_point_number=element_point_number;
-		 if (change_conditional_function)
-		 {
-			 REACCESS(FE_element)(&(element_point_viewer->template_element),
-				 template_element);
-			 // 				 CHOOSE_OBJECT_CHANGE_CONDITIONAL_FUNCTION(Computed_field)(
-// 						element_point_viewer->choose_field_widget,
-// 						choose_field_conditional_function,
-// 						(void *)element_point_viewer->template_element,field);
-		 }
-		 // 			element_point_viewer_set_element_point_field(
-		 // 				 element_point_viewer,
-		 // 				 &(element_point_viewer->element_point_identifier),
-		 // 				 element_point_number,field);
-		 return_code = 1;
-	 }
-	 else
-	 {
-			display_message(ERROR_MESSAGE,
-				 "element_point_viewer_widget_set_element_point.  Invalid argument(s)");
-			return_code=0;
-	 }
-	 LEAVE;
+	ENTER(element_point_viewer_widget_set_element_point);
+	if (element_point_viewer && element_point_identifier&&
+		(((struct FE_element *)NULL==element_point_identifier->element)||
+				Element_point_ranges_identifier_element_point_number_is_valid(
+					element_point_identifier,element_point_number)))
+	{
+		struct FE_element *element = element_point_identifier->element;
+		if (element)
+		{
+			cmzn_field *field=element_point_viewer->current_field;
+			if (!(element_point_viewer->element_template) ||
+				(!equivalent_computed_fields_at_elements(element,
+					element_point_viewer->element_template->get_template_element())))
+			{
+				if ((!field)||
+					(!Computed_field_is_defined_in_element(field,element)))
+				{
+					field=FIRST_OBJECT_IN_MANAGER_THAT(Computed_field)(
+						Computed_field_is_defined_in_element_conditional, (void *)element,
+						Computed_field_package_get_computed_field_manager(
+							element_point_viewer->computed_field_package));
+				}
+				cmzn::Deaccess(element_point_viewer->element_template);
+				FE_mesh *fe_mesh = FE_element_get_FE_mesh(element);
+				if (fe_mesh)
+				{
+					element_point_viewer->element_template = fe_mesh->create_FE_element_template(element);
+				}
+			}
+		}
+		else
+		{
+			cmzn::Deaccess(element_point_viewer->element_template);
+		}
+		COPY(Element_point_ranges_identifier)(
+			&(element_point_viewer->element_point_identifier),
+			element_point_identifier);
+		element_point_viewer->element_point_number=element_point_number;
+		return_code = 1;
+	}
+	else
+	{
+		display_message(ERROR_MESSAGE,
+				"element_point_viewer_widget_set_element_point.  Invalid argument(s)");
+		return_code=0;
+	}
+	LEAVE;
 
 	return (return_code);
 } /* element_point_viewer_widget_set_element_point */
