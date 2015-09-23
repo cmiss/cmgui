@@ -90,6 +90,7 @@
 #include "finite_element/export_finite_element.h"
 #include "finite_element/finite_element.h"
 #include "finite_element/finite_element_conversion.h"
+#include "finite_element/finite_element_mesh.hpp"
 #include "finite_element/finite_element_region.h"
 #include "finite_element/finite_element_to_graphics_object.h"
 #include "finite_element/finite_element_to_iges.h"
@@ -5162,13 +5163,12 @@ static int gfx_define_faces(struct Parse_state *state,
 						cmzn_mesh_destroy(&face_master_mesh);
 						face_mesh_group = cmzn_field_element_group_get_mesh_group(face_element_group);
 						cmzn_field_element_group_destroy(&face_element_group);
-
 					}
 					cmzn_elementiterator_id iter = cmzn_mesh_create_elementiterator(mesh);
 					cmzn_element_id element = 0;
 					while ((0 != (element = cmzn_elementiterator_next_non_access(iter))) && return_code)
 					{
-						if (!fe_mesh->merge_FE_element_and_faces(element))
+						if (!fe_mesh->define_FE_element_faces(element))
 						{
 							return_code = 0;
 						}
@@ -7922,10 +7922,11 @@ void create_triangle_mesh(struct cmzn_region *region, Triangle_mesh *trimesh)
 	cmzn_fieldcache_destroy(&cache);
 	cmzn_nodetemplate_destroy(&nodetemplate);
 
-	// establish mode which automates creation of shared faces
+	// establish mode which enables creation of shared faces with define_FE_element_faces, below
 	FE_region_begin_define_faces(cmzn_region_get_FE_region(region));
 
 	cmzn_mesh_id mesh = cmzn_fieldmodule_find_mesh_by_dimension(fieldmodule, 2);
+	FE_mesh *fe_mesh = cmzn_mesh_get_FE_mesh_internal(mesh);
 	cmzn_elementtemplate_id elementtemplate = cmzn_mesh_create_elementtemplate(mesh);
 	cmzn_elementtemplate_set_element_shape_type(elementtemplate, CMZN_ELEMENT_SHAPE_TYPE_TRIANGLE);
 	cmzn_elementtemplate_set_number_of_nodes(elementtemplate, 3);
@@ -7942,7 +7943,9 @@ void create_triangle_mesh(struct cmzn_region *region, Triangle_mesh *trimesh)
 		for (int i = 0; i < 3; ++i)
 			cmzn_elementtemplate_set_node(elementtemplate, i + 1,
 				cmzn_nodeset_find_node_by_identifier(nodeset, initial_identifier + vertex[i]->get_identifier()));
-		cmzn_mesh_define_element(mesh, /*identifier*/-1, elementtemplate);
+		cmzn_element_id element = cmzn_mesh_create_element(mesh, /*identifier*/-1, elementtemplate);
+		fe_mesh->define_FE_element_faces(element);
+		cmzn_element_destroy(&element);
 	}
 	cmzn_elementbasis_destroy(&elementbasis);
 	cmzn_elementtemplate_destroy(&elementtemplate);

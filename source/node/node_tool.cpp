@@ -50,6 +50,7 @@ Scene input.
 #include "node/node_operations.h"
 #include "node/node_tool.h"
 #include "finite_element/finite_element.h"
+#include "finite_element/finite_element_mesh.hpp"
 #include "finite_element/finite_element_nodeset.hpp"
 #include "finite_element/finite_element_region.h"
 #include "graphics/scene.h"
@@ -2810,9 +2811,12 @@ void Node_tool::addCreateElementNode(cmzn_node_id node)
 		cmzn_fieldmodule_id fieldmodule = cmzn_region_get_fieldmodule(this->region);
 		cmzn_fieldmodule_begin_change(fieldmodule);
 		cmzn_mesh_id mesh = cmzn_fieldmodule_find_mesh_by_dimension(fieldmodule, this->createElementDimension);
-		// GRC temp
+		FE_mesh *fe_mesh = cmzn_mesh_get_FE_mesh_internal(mesh);
+
 		FE_region_begin_define_faces(cmzn_region_get_FE_region(this->region));
 		cmzn_element_id element = cmzn_mesh_create_element(mesh, -1, this->elementtemplate);
+		if (fe_mesh)
+			fe_mesh->define_FE_element_faces(element);
 		// future:
 		//cmzn_element_define_faces(element);
 		FE_region_end_define_faces(cmzn_region_get_FE_region(this->region));
