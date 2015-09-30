@@ -5174,8 +5174,8 @@ static int gfx_define_faces(struct Parse_state *state,
 						}
 						if (face_mesh_group)
 						{
-							int number_of_faces = 0;
-							get_FE_element_number_of_faces(element, &number_of_faces);
+							FE_element_shape *element_shape = get_FE_element_shape(element);
+							int number_of_faces = FE_element_shape_get_number_of_faces(element_shape);
 							cmzn_element_id face = 0;
 							for (int face_number = 0; face_number < number_of_faces; ++face_number)
 							{
@@ -7292,7 +7292,6 @@ static int gfx_export_threejs(struct Parse_state *state,
 			scene = cmzn_scene_access(command_data->default_scene);
 			double begin_time = 0.0, end_time = 0.0;
 			int number_of_time_steps = 0;
-			const char *export_mode_string, **valid_strings;
 			enum cmzn_streaminformation_scene_io_data_type export_mode =
 				CMZN_STREAMINFORMATION_SCENE_IO_DATA_TYPE_COLOUR;
 			char morphVertices = 0,  morphColours = 0, morphNormals = 0;

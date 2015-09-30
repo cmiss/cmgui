@@ -219,8 +219,7 @@ void Element_tool::actionCommandAtElement(cmzn_element *pickedElement)
 		/* since we don't really have fields constant over an element, evaluate at its centre */
 		int element_dimension = cmzn_element_get_dimension(pickedElement);
 		int number_in_xi[MAXIMUM_ELEMENT_XI_DIMENSIONS] = { 1, 1, 1 };
-		struct FE_element_shape *element_shape;
-		get_FE_element_shape(pickedElement, &element_shape);
+		struct FE_element_shape *element_shape = get_FE_element_shape(pickedElement);
 		FE_value_triple *xi_points;
 		int number_of_xi_points;
 		if (FE_element_shape_get_xi_points_cell_centres(
