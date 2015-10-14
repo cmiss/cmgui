@@ -719,6 +719,16 @@ static cmzn_scene_id cmzn_scene_get_parent_scene_internal(cmzn_scene_id scene)
 	return parent_scene;
 }
 
+cmzn_field_group_id cmzn_scene_get_selection_group(cmzn_scene_id scene)
+{
+	if (!scene)
+		return 0;
+	cmzn_field_group_id selection_group = scene->selection_group;
+	if (selection_group)
+		cmzn_field_access(cmzn_field_group_base_cast(selection_group));
+	return selection_group;
+}
+
 cmzn_field_group_id cmzn_scene_get_or_create_selection_group(cmzn_scene_id scene)
 {
 	if (!scene)
@@ -835,67 +845,47 @@ int cmzn_scene_remove_selection_from_node_list(cmzn_scene_id scene,
 	return return_code;
 }
 
-
-int cmzn_scene_change_selection_from_element_list_of_dimension(cmzn_scene_id scene,
-	struct LIST(FE_element) *element_list, int add_flag, int dimension)
+int cmzn_scene_change_element_selection_conditional(cmzn_scene_id scene,
+	int dimension, cmzn_field_id conditionalField, bool addFlag)
 {
-	int return_code = 1;
-
-	ENTER(cmzn_scene_change_selection_from_element_list_of_dimension);
-	if (scene && element_list && (NUMBER_IN_LIST(FE_element)(element_list) > 0))
+	int return_code = CMZN_OK;
+	if ((scene) && (0 < dimension) && (dimension <= MAXIMUM_ELEMENT_XI_DIMENSIONS) && (conditionalField))
 	{
 		cmzn_fieldmodule_id field_module = cmzn_region_get_fieldmodule(scene->region);
 		cmzn_fieldmodule_begin_change(field_module);
-		cmzn_field_group_id selection_group = cmzn_scene_get_or_create_selection_group(scene);
-		cmzn_mesh_id temp_mesh = cmzn_fieldmodule_find_mesh_by_dimension(field_module, dimension);
-		cmzn_field_element_group_id element_group = cmzn_field_group_get_field_element_group(selection_group, temp_mesh);
-		if (!element_group)
-			element_group = cmzn_field_group_create_field_element_group(selection_group, temp_mesh);
-		cmzn_mesh_destroy(&temp_mesh);
-		cmzn_mesh_group_id mesh_group = cmzn_field_element_group_get_mesh_group(element_group);
-		cmzn_field_element_group_destroy(&element_group);
-		cmzn_elementiterator_id iterator = CREATE_LIST_ITERATOR(FE_element)(element_list);
-		cmzn_element_id element = 0;
-		while (0 != (element = cmzn_elementiterator_next_non_access(iterator)))
+		cmzn_field_group_id selection_group =
+			addFlag ? cmzn_scene_get_or_create_selection_group(scene) : cmzn_scene_get_selection_group(scene);
+		if (selection_group)
 		{
-			if (add_flag)
+			cmzn_mesh_id temp_mesh = cmzn_fieldmodule_find_mesh_by_dimension(field_module, dimension);
+			cmzn_field_element_group_id element_group = cmzn_field_group_get_field_element_group(selection_group, temp_mesh);
+			if (addFlag && !element_group)
 			{
-				cmzn_mesh_group_add_element(mesh_group, element);
+				element_group = cmzn_field_group_create_field_element_group(selection_group, temp_mesh);
+				if (!element_group)
+					return_code = CMZN_ERROR_GENERAL;
 			}
-			else
+			cmzn_mesh_destroy(&temp_mesh);
+			if (element_group)
 			{
-				cmzn_mesh_group_remove_element(mesh_group, element);
+				cmzn_mesh_group_id mesh_group = cmzn_field_element_group_get_mesh_group(element_group);
+				if (addFlag)
+					return_code = cmzn_mesh_group_add_elements_conditional(mesh_group, conditionalField);
+				else
+					return_code = cmzn_mesh_group_remove_elements_conditional(mesh_group, conditionalField);
+				cmzn_mesh_group_destroy(&mesh_group);
+				cmzn_field_element_group_destroy(&element_group);
 			}
+			cmzn_field_group_destroy(&selection_group);
 		}
-		cmzn_elementiterator_destroy(&iterator);
-		cmzn_mesh_group_destroy(&mesh_group);
-		cmzn_field_group_destroy(&selection_group);
+		else if (addFlag)
+			return_code = CMZN_ERROR_GENERAL;
 		cmzn_fieldmodule_end_change(field_module);
 		cmzn_fieldmodule_destroy(&field_module);
+		if (!addFlag && (return_code == CMZN_OK))
+			cmzn_scene_flush_tree_selections(scene);
 	}
-	LEAVE;
-
 	return (return_code);
-}
-
-int cmzn_scene_add_selection_from_element_list_of_dimension(cmzn_scene_id scene,
-	struct LIST(FE_element) *element_list, int dimension)
-{
-	return cmzn_scene_change_selection_from_element_list_of_dimension(scene,
-		element_list, /*add_flag*/1, dimension);
-}
-
-int cmzn_scene_remove_selection_from_element_list_of_dimension(cmzn_scene_id scene,
-	struct LIST(FE_element) *element_list, int dimension)
-{
-	int return_code = 0;
-	if (cmzn_scene_change_selection_from_element_list_of_dimension(scene,
-			element_list, /*add_flag*/0, dimension))
-	{
-		cmzn_scene_flush_tree_selections(scene);
-		return_code = 1;
-	}
-	return return_code;
 }
 
 int scene_app_export_threejs(cmzn_scene_id scene, cmzn_scenefilter_id scenefilter,

@@ -5473,94 +5473,55 @@ static int gfx_destroy_elements(struct Parse_state *state,
 		}
 		if (return_code)
 		{
-			cmzn_fieldmodule_id field_module = cmzn_region_get_fieldmodule(region);
-			cmzn_field_id selection_field = NULL;
+			cmzn_fieldmodule_id fieldmodule = cmzn_region_get_fieldmodule(region);
+			cmzn_fieldmodule_begin_change(fieldmodule);
+			cmzn_field_id selection_field = 0;
 			if (selected_flag)
 			{
 				cmzn_scene *scene = cmzn_region_get_scene(region);
 				selection_field = cmzn_scene_get_selection_field(scene);
 				cmzn_scene_destroy(&scene);
 			}
+			FE_region *fe_region = cmzn_region_get_FE_region(region);
 			int use_dimension = dimension;
 			if (dimension == 3)
+				use_dimension = FE_region_get_highest_dimension(fe_region);
+			cmzn_mesh_id mesh = cmzn_fieldmodule_find_mesh_by_dimension(fieldmodule, use_dimension);
+			const int oldSize = cmzn_mesh_get_size(mesh);
+			if ((!selected_flag) || (selection_field)) // otherwise empty set
 			{
-				use_dimension = FE_region_get_highest_dimension(cmzn_region_get_FE_region(region));
-			}
-			cmzn_field_id use_conditional_field = 0;
-			if (group && conditional_field)
-			{
-				use_conditional_field = cmzn_fieldmodule_create_field_and(field_module, conditional_field, cmzn_field_group_base_cast(group));
-			}
-			else if (conditional_field)
-			{
-				use_conditional_field = cmzn_field_access(conditional_field);
-			}
-			else if (group)
-			{
-				use_conditional_field = cmzn_field_access(cmzn_field_group_base_cast(group));
-			}
-			LIST(FE_element) *destroy_element_list = 0;
-			if ((!selected_flag) || selection_field)
-			{
-				destroy_element_list = FE_element_list_from_region_and_selection_group(
-					region, use_dimension, element_ranges, selection_field, use_conditional_field,
-					time);
-				if (!destroy_element_list)
-					return_code = 0;
-			}
-			if (destroy_element_list && (0 < NUMBER_IN_LIST(FE_element)(destroy_element_list)))
-			{
-				cmzn_fieldmodule_begin_change(field_module);
-				FE_mesh *fe_mesh = FE_region_find_FE_mesh_by_dimension(cmzn_region_get_FE_region(region), use_dimension);
-				return_code = fe_mesh->remove_FE_element_list(destroy_element_list);
-#if 0
-				int number_not_destroyed = 0;
-				if (0 < (number_not_destroyed = NUMBER_IN_LIST(FE_element)(
-					destroy_element_list)))
+				cmzn_field_id use_conditional_field = FE_mesh_create_conditional_field_from_ranges_and_selection(
+					cmzn_mesh_get_FE_mesh_internal(mesh), element_ranges, selection_field, cmzn_field_group_base_cast(group), conditional_field, time);
+				if (use_conditional_field)
 				{
-					display_message(WARNING_MESSAGE,
-						"%d of the selected element(s) could not be destroyed",
-						number_not_destroyed);
-				}
-#endif
-				if (selection_field)
-				{
-					cmzn_field_group_id selection_group = cmzn_field_cast_group(selection_field);
-					cmzn_field_group_remove_empty_subgroups(selection_group);
-					cmzn_field_group_destroy(&selection_group);
-				}
-				cmzn_fieldmodule_end_change(field_module);
-			}
-			else
-			{
-				if (dimension == 1)
-				{
-					display_message(INFORMATION_MESSAGE, "gfx destroy lines:  No lines specified\n");
-				}
-				else if (dimension == 2)
-				{
-					display_message(INFORMATION_MESSAGE, "gfx destroy faces:  No faces specified\n");
+					int result = cmzn_mesh_destroy_elements_conditional(mesh, use_conditional_field);
+					if (result != CMZN_OK)
+					{
+						display_message(INFORMATION_MESSAGE, "gfx destroy elements|faces|lines:  Failed\n");
+						return_code = 0;
+					}
 				}
 				else
-				{
-					display_message(INFORMATION_MESSAGE, "gfx destroy elements:  No elements specified\n");
-				}
-			}
-			if (destroy_element_list)
-				DESTROY(LIST(FE_element))(&destroy_element_list);
-			cmzn_field_destroy(&selection_field);
-			if (use_conditional_field)
+					return_code = 0;
 				cmzn_field_destroy(&use_conditional_field);
-			cmzn_fieldmodule_destroy(&field_module);
+			}
+			const int newSize = cmzn_mesh_get_size(mesh);
+			if (return_code && (newSize == oldSize))
+				display_message(INFORMATION_MESSAGE, "gfx destroy elements|faces|lines:  No elements destroyed\n");
+			if (selection_field)
+			{
+				cmzn_field_group_id selection_group = cmzn_field_cast_group(selection_field);
+				cmzn_field_group_remove_empty_subgroups(selection_group);
+				cmzn_field_group_destroy(&selection_group);
+			}
+			cmzn_mesh_destroy(&mesh);
+			cmzn_field_destroy(&selection_field);
+			cmzn_fieldmodule_end_change(fieldmodule);
+			cmzn_fieldmodule_destroy(&fieldmodule);
 		}
-		if (conditional_field)
-		{
-			DEACCESS(Computed_field)(&conditional_field);
-		}
+		cmzn_field_destroy(&conditional_field);
 		if (conditional_field_name)
-		{
 			DEALLOCATE(conditional_field_name);
-		}
 		DESTROY(Multi_range)(&element_ranges);
 		cmzn_field_group_destroy(&group);
 		cmzn_region_destroy(&region);
@@ -12835,63 +12796,31 @@ static int execute_command_gfx_select(struct Parse_state *state,
 						Element_point_ranges_selection_select_element_point_ranges(
 							command_data->element_point_ranges_selection,element_point_ranges);
 				}
-				/* elements */
-				if (elements_flag)
+				const int element_dimension = elements_flag ? FE_region_get_highest_dimension(fe_region) :
+					(faces_flag ? 2 : (lines_flag ? 1 : 0));
+				if (element_dimension > 0)
 				{
 					if (region)
 					{
-						int dimension = FE_region_get_highest_dimension(cmzn_region_get_FE_region(region));
-						if (NULL != (element_list =
-								FE_element_list_from_region_and_selection_group(
-									region, dimension, multi_range, NULL, conditional_field, time)))
+						FE_region *fe_region = cmzn_region_get_FE_region(region);
+						FE_mesh *fe_mesh = FE_region_find_FE_mesh_by_dimension(fe_region, element_dimension);
+						cmzn_field_id use_conditional_field = FE_mesh_create_conditional_field_from_ranges_and_selection(
+							fe_mesh, multi_range, /*selection_field*/0, /*groupField*/0, conditional_field, time);
+						if (use_conditional_field)
 						{
 							cmzn_scene *local_scene = cmzn_region_get_scene(region);
-							if (unselect)
-								cmzn_scene_remove_selection_from_element_list_of_dimension(local_scene,element_list, dimension);
-							else
-								cmzn_scene_add_selection_from_element_list_of_dimension(local_scene,element_list, dimension);
+							const int result = cmzn_scene_change_element_selection_conditional(
+								local_scene, element_dimension, use_conditional_field, !unselect);
+							if (result != CMZN_OK)
+								return_code = 0;
 							cmzn_scene_destroy(&local_scene);
-							if (verbose_flag)
-							{
-								display_message(INFORMATION_MESSAGE,
-									unselect ? "Unselected %d elements.\n" : "Selected %d elements.\n",
-									NUMBER_IN_LIST(FE_element)(element_list));
-							}
-							DESTROY(LIST(FE_element))(&element_list);
 						}
+						cmzn_field_destroy(&use_conditional_field);
 					}
 					else
 					{
 						display_message(ERROR_MESSAGE, unselect ? "gfx unselect.  Invalid region." : "gfx select.  Invalid region.");
-					}
-				}
-				/* faces */
-				if (faces_flag)
-				{
-					if (region)
-					{
-						if (NULL != (element_list =
-								FE_element_list_from_region_and_selection_group(
-									region, /*dimension*/2, multi_range, NULL, conditional_field, time)))
-						{
-							cmzn_scene *local_scene = cmzn_region_get_scene(region);
-							if (unselect)
-								cmzn_scene_remove_selection_from_element_list_of_dimension(local_scene, element_list, 2);
-							else
-								cmzn_scene_add_selection_from_element_list_of_dimension(local_scene, element_list, 2);
-							cmzn_scene_destroy(&local_scene);
-							if (verbose_flag)
-							{
-								display_message(INFORMATION_MESSAGE,
-									unselect ? "Unselected %d faces.\n" : "Selected %d faces.\n",
-									NUMBER_IN_LIST(FE_element)(element_list));
-							}
-							DESTROY(LIST(FE_element))(&element_list);
-						}
-					}
-					else
-					{
-						display_message(ERROR_MESSAGE, unselect ? "gfx unselect.  Invalid region." : "gfx select.  Invalid region.");
+						return_code = 0;
 					}
 				}
 				/* grid_points */
@@ -12936,36 +12865,6 @@ static int execute_command_gfx_select(struct Parse_state *state,
 							display_message(ERROR_MESSAGE,"To (un)select grid_points, "
 								"need integer grid_field (eg. grid_point_number)");
 						}
-					}
-				}
-				/* lines */
-				if (lines_flag)
-				{
-					if (region)
-					{
-						if (NULL != (element_list =
-								FE_element_list_from_region_and_selection_group(
-									region, /*dimension*/1, multi_range, NULL, conditional_field, time)))
-						{
-							cmzn_scene *local_scene = cmzn_region_get_scene(region);
-							if (unselect)
-								cmzn_scene_remove_selection_from_element_list_of_dimension(local_scene, element_list, 1);
-							else
-								cmzn_scene_add_selection_from_element_list_of_dimension(local_scene,element_list, 1);
-							cmzn_scene_destroy(&local_scene);
-							if (verbose_flag)
-							{
-								display_message(INFORMATION_MESSAGE,
-									unselect ? "Unselected %d lines.\n" : "Selected %d lines.\n",
-									NUMBER_IN_LIST(FE_element)(element_list));
-							}
-							DESTROY(LIST(FE_element))(&element_list);
-						}
-					}
-					else
-					{
-						display_message(ERROR_MESSAGE,
-							"execute_command_gfx_select.  Invalid region.");
 					}
 				}
 				/* nodes */

@@ -102,10 +102,19 @@ struct Define_scene_data
 	struct cmzn_graphics_module *graphics_module;
 }; /* struct Define_scene_data */
 
+/** @return  Scene's selection group, if any. Accessed. */
+cmzn_field_group_id cmzn_scene_get_selection_group(cmzn_scene_id scene);
+
 cmzn_field_group_id cmzn_scene_get_or_create_selection_group(cmzn_scene_id scene);
 
-int cmzn_scene_add_selection_from_element_list_of_dimension(cmzn_scene_id scene,
-	struct LIST(FE_element) *element_list, int dimension);
+/**
+ * @param scene  The scene to get selection for.
+ * @param dimension  The dimension of elements to add/remove from selection.
+ * @param addFlag  True to add/select, false to remove/unselect elements.
+ * @return  Status code CMZN_OK on success, any other value on failure.
+ */
+int cmzn_scene_change_element_selection_conditional(cmzn_scene_id scene,
+	int dimension, cmzn_field_id conditionalField, bool addFlag);
 
 int cmzn_scene_remove_selection_from_element_list_of_dimension(cmzn_scene_id scene,
 	struct LIST(FE_element) *element_list, int dimension);
