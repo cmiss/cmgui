@@ -600,7 +600,7 @@ DESCRIPTION :
 								fieldmodule, highest_dimension);
 							cmzn_field_element_group_id element_group =
 								cmzn_field_group_get_field_element_group(group, mesh);
-							if (!FE_region_change_element_identifiers(fe_region,
+							if (CMZN_OK != FE_region_change_element_identifiers(fe_region,
 								highest_dimension, element_offset, sort_by_field, time,
 								element_group))
 							{
@@ -621,7 +621,7 @@ DESCRIPTION :
 							fieldmodule, 2);
 						cmzn_field_element_group_id element_group =
 							cmzn_field_group_get_field_element_group(group, mesh);
-						if (!FE_region_change_element_identifiers(fe_region,
+						if (CMZN_OK != FE_region_change_element_identifiers(fe_region,
 							/*dimension*/2,	face_offset, sort_by_field, time,
 							element_group))
 						{
@@ -636,7 +636,7 @@ DESCRIPTION :
 							fieldmodule, 1);
 						cmzn_field_element_group_id element_group =
 							cmzn_field_group_get_field_element_group(group, mesh);
-						if (!FE_region_change_element_identifiers(fe_region,
+						if (CMZN_OK != FE_region_change_element_identifiers(fe_region,
 							/*dimension*/1, line_offset, sort_by_field, time,
 							element_group))
 						{
@@ -11798,7 +11798,7 @@ int offset_region_identifier(cmzn_region_id region, char element_flag, int eleme
 		int highest_dimension = FE_region_get_highest_dimension(fe_region);
 		if (element_flag)
 		{
-			if (!FE_region_change_element_identifiers(fe_region,
+			if (CMZN_OK != FE_region_change_element_identifiers(fe_region,
 				highest_dimension, element_offset,
 				(struct Computed_field *)NULL, /*time*/0, /*element_group*/ 0))
 			{
@@ -11807,7 +11807,7 @@ int offset_region_identifier(cmzn_region_id region, char element_flag, int eleme
 		}
 		if (face_flag && (highest_dimension > 2))
 		{
-			if (!FE_region_change_element_identifiers(fe_region,
+			if (CMZN_OK != FE_region_change_element_identifiers(fe_region,
 				/*dimension*/2, face_offset,
 				(struct Computed_field *)NULL, /*time*/0, /*element_group*/ 0))
 			{
@@ -11816,7 +11816,7 @@ int offset_region_identifier(cmzn_region_id region, char element_flag, int eleme
 		}
 		if (line_flag && (highest_dimension > 1))
 		{
-			if (!FE_region_change_element_identifiers(fe_region,
+			if (CMZN_OK != FE_region_change_element_identifiers(fe_region,
 				/*dimension*/1, line_offset,
 				(struct Computed_field *)NULL, /*time*/0, /*element_group*/ 0))
 			{
