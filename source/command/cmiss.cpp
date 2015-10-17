@@ -12802,6 +12802,7 @@ static int execute_command_gfx_select(struct Parse_state *state,
 				{
 					if (region)
 					{
+						cmzn_region_begin_change(region);
 						FE_region *fe_region = cmzn_region_get_FE_region(region);
 						FE_mesh *fe_mesh = FE_region_find_FE_mesh_by_dimension(fe_region, element_dimension);
 						cmzn_field_id use_conditional_field = FE_mesh_create_conditional_field_from_ranges_and_selection(
@@ -12816,6 +12817,7 @@ static int execute_command_gfx_select(struct Parse_state *state,
 							cmzn_scene_destroy(&local_scene);
 						}
 						cmzn_field_destroy(&use_conditional_field);
+						cmzn_region_end_change(region);
 					}
 					else
 					{
