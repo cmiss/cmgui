@@ -2012,13 +2012,12 @@ Creates a spectrum_editor widget.
 {
 	int return_code;
 	struct Spectrum_editor *spectrum_editor;
-	struct Colour background_colour = {0.1, 0.1, 0.1},
-		ambient_colour = {0.1, 0.1, 0.1}, black ={0, 0, 0},
+	struct Colour background_colour = {0.1, 0.1, 0.1}, black ={0, 0, 0},
 		white = { 1.0, 1.0, 1.0 };
+	double ambient_colour[3] = {0.1, 0.1, 0.1};
 	struct Graphics_buffer_app *graphics_buffer;
-	struct Light *viewer_light;
-	struct Light_model *viewer_light_model;
-	float light_direction[3] = { 0.0f, -0.2f, -1.0f };
+	struct cmzn_light *viewer_light = 0, *ambient_light = 0;
+	double light_direction[3] = { 0.0, -0.2, -1.0 };
 
 	ENTER(CREATE(Spectrum_editor));
 	spectrum_editor = (struct Spectrum_editor *)NULL;
@@ -2170,10 +2169,18 @@ Creates a spectrum_editor widget.
 							spectrum_editor->private_region = cmzn_region_access(spectrum_region);
 							spectrum_editor->spectrum_editor_scene =CREATE(cmzn_scene)(spectrum_editor->private_region,
 								graphics_module);
-							viewer_light = CREATE(Light)("spectrum_editor_light");
-							set_Light_direction(viewer_light, light_direction);
-							viewer_light_model = CREATE(Light_model)("spectrum_editor_light_model");
-							Light_model_set_ambient(viewer_light_model, &ambient_colour);
+							cmzn_lightmodule *light_module= cmzn_graphics_module_get_lightmodule(graphics_module);
+							cmzn_lightmodule_begin_change(light_module);
+							viewer_light = cmzn_lightmodule_create_light(light_module);
+							cmzn_light_set_name(viewer_light, "spectrum_editor_light");
+							cmzn_light_set_direction(viewer_light, &light_direction[0]);
+							ambient_light =cmzn_lightmodule_create_light(light_module);
+							cmzn_light_set_name(ambient_light, "spectrum_editor_ambient_light");
+							cmzn_light_set_type(ambient_light,CMZN_LIGHT_TYPE_AMBIENT);
+							cmzn_light_set_colour(ambient_light,&ambient_colour[0]);
+							cmzn_light_set_render_side(ambient_light,CMZN_LIGHT_RENDER_SIDE_DOUBLE);
+							cmzn_lightmodule_end_change(light_module);
+							cmzn_lightmodule_destroy(&light_module);
 							graphics_buffer = create_Graphics_buffer_wx(
 								graphics_buffer_package, spectrum_editor->spectrum_panel,
 								GRAPHICS_BUFFER_ANY_BUFFERING_MODE, GRAPHICS_BUFFER_ANY_STEREO_MODE,
@@ -2186,7 +2193,7 @@ Creates a spectrum_editor widget.
 									Scene_viewer_app_for_spectrum_create(graphics_buffer,
 										&background_colour,
 										viewer_light,
-										viewer_light_model,
+										ambient_light,
 										NULL,
 										spectrum_editor->spectrum_editor_scene, spectrum_editor->user_interface);
 								cmzn_sceneviewer_begin_change(spectrum_editor->spectrum_editor_scene_viewer->core_scene_viewer);
@@ -2221,8 +2228,8 @@ Creates a spectrum_editor widget.
 								cmzn_sceneviewer_end_change(spectrum_editor->spectrum_editor_scene_viewer->core_scene_viewer);
 								DEACCESS(Graphics_buffer_app)(&graphics_buffer);
 							}
-							DEACCESS(Light)(&viewer_light);
-							DEACCESS(Light_model)(&viewer_light_model);
+							cmzn_light_destroy(&viewer_light);
+							cmzn_light_destroy(&ambient_light);
 					 }
 				}
 			}

@@ -148,8 +148,8 @@ struct Scene_viewer_app *CREATE(Scene_viewer_app)(struct Graphics_buffer_app *gr
 
 struct Scene_viewer_app *Scene_viewer_app_for_spectrum_create(struct Graphics_buffer_app *graphics_buffer,
 	struct Colour *background_colour,
-	struct Light *default_light,
-	struct Light_model *default_light_model,
+	struct cmzn_light *default_light,
+	struct cmzn_light *default_ambient_light,
 	cmzn_scenefilter_id filter, struct cmzn_scene *scene,
 	struct User_interface *user_interface);
 

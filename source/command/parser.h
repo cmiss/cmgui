@@ -530,6 +530,9 @@ DESCRIPTION :
 A modifier function for setting a float to a value in [0,1].
 ==============================================================================*/
 
+int set_double_non_negative(struct Parse_state *state,void *value_address_void,
+	void *dummy_user_data);
+
 int set_double(struct Parse_state *state,void *value_address_void,
 	void *dummy_user_data);
 /*******************************************************************************

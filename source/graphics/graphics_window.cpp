@@ -49,8 +49,7 @@ interest and set scene_viewer values directly.
 #include "choose/choose_manager_class.hpp"
 #include "graphics/graphics_window.xrch"
 #endif /* defined (WX_USER_INTERFACE)*/
-#include "graphics/light.h"
-#include "graphics/light_model.h"
+#include "graphics/light.hpp"
 #include "graphics/scene.h"
 #include "graphics/scene.hpp"
 #include "graphics/scenefilter.hpp"
@@ -104,7 +103,6 @@ interest and set scene_viewer values directly.
 #include "graphics/colour_app.h"
 #include "graphics/scene_app.h"
 #include "graphics/light_app.h"
-#include "graphics/light_model_app.h"
 #include "three_d_drawing/graphics_buffer_app.h"
 #include "graphics/scene_viewer_app.h"
 #include "region/cmiss_region_chooser_wx.hpp"
@@ -1949,8 +1947,7 @@ etc.) in all panes of the <window>.
 	double rotate_angle,rotate_axis[3],rotate_data[4];
 	int pane_no,return_code;
 	struct Graphics_window *window;
-	struct Light *light_to_add,*light_to_remove;
-	struct Light_model *light_model;
+	struct cmzn_light *light_to_add,*light_to_remove, *ambient_light;
 	struct Modify_graphics_window_data *modify_graphics_window_data;
 	struct Option_table *option_table;
 	cmzn_scene *scene;
@@ -1973,24 +1970,20 @@ etc.) in all panes of the <window>.
 				 if (window && (window->scene_viewer_array) &&
 						(scene_viewer=window->scene_viewer_array[0]))
 				 {
-					 light_model=Scene_viewer_get_light_model(scene_viewer->core_scene_viewer);
-					 if (light_model)
-					 {
-						 ACCESS(Light_model)(light_model);
-					 }
+					 ambient_light=cmzn_sceneviewer_get_ambient_light(scene_viewer->core_scene_viewer);
 					 scene=cmzn_scene_access(window->scene);
 				 }
 				 else
 				 {
 						scene=(cmzn_scene *)NULL;
 						scene_viewer = 0;
-						light_model=(struct Light_model *)NULL;
+						ambient_light=0;
 				 }
 				 cmzn_scenefilter_id filter = 0;
 				 if (scene_viewer && scene_viewer->core_scene_viewer)
 					 filter = cmzn_sceneviewer_get_scenefilter(scene_viewer->core_scene_viewer);
-				light_to_add=(struct Light *)NULL;
-				light_to_remove=(struct Light *)NULL;
+				light_to_add=(struct cmzn_light *)NULL;
+				light_to_remove=(struct cmzn_light *)NULL;
 				rotate_command_data.set=0;
 				rotate_angle=0.0;
 				update_flag=0;
@@ -1998,13 +1991,13 @@ etc.) in all panes of the <window>.
 				option_table = CREATE(Option_table)();
 				/* add_light */
 				Option_table_add_entry(option_table, "add_light", &light_to_add,
-					modify_graphics_window_data->light_manager, set_Light);
+					modify_graphics_window_data->light_manager, set_cmzn_light);
 				/* light_model */
-				Option_table_add_entry(option_table, "light_model", &light_model,
-					modify_graphics_window_data->light_model_manager, set_Light_model);
+				Option_table_add_entry(option_table, "light_model", &ambient_light,
+					modify_graphics_window_data->light_manager, set_cmzn_light);
 				/* remove_light */
 				Option_table_add_entry(option_table, "remove_light", &light_to_remove,
-					modify_graphics_window_data->light_manager, set_Light);
+					modify_graphics_window_data->light_manager, set_cmzn_light);
 				/* rotate */
 				Option_table_add_double_vector_with_help_entry(option_table, "rotate",
 					rotate_data, &rotate_command_data);
@@ -2026,19 +2019,19 @@ etc.) in all panes of the <window>.
 					if (scene_viewer)
 					{
 						return_code=1;
-						if (light_to_add&&Scene_viewer_has_light(scene_viewer->core_scene_viewer,light_to_add))
+						if (light_to_add&&cmzn_sceneviewer_has_light(scene_viewer->core_scene_viewer,light_to_add))
 						{
 							/*display_message(WARNING_MESSAGE,"Light is already in window");*/
-							DEACCESS(Light)(&light_to_add);
-							light_to_add=(struct Light *)NULL;
+							cmzn_light_destroy(&light_to_add);
+							light_to_add=(struct cmzn_light *)NULL;
 						}
 						if (light_to_remove&&
-							!Scene_viewer_has_light(scene_viewer->core_scene_viewer,light_to_remove))
+							!cmzn_sceneviewer_has_light(scene_viewer->core_scene_viewer,light_to_remove))
 						{
 							display_message(WARNING_MESSAGE,
 								"Cannot remove light that is not in scene");
-							DEACCESS(Light)(&light_to_remove);
-							light_to_remove=(struct Light *)NULL;
+							cmzn_light_destroy(&light_to_remove);
+							light_to_remove=(struct cmzn_light *)NULL;
 						}
 						if (rotate_command_data.set)
 						{
@@ -2052,17 +2045,25 @@ etc.) in all panes of the <window>.
 							pane_no++)
 						{
 							scene_viewer=window->scene_viewer_array[pane_no];
-							if (light_model)
+							if (ambient_light)
 							{
-								Scene_viewer_set_light_model(scene_viewer->core_scene_viewer,light_model);
+								if (cmzn_light_get_type(ambient_light) == CMZN_LIGHT_TYPE_AMBIENT)
+								{
+									cmzn_sceneviewer_set_ambient_light(scene_viewer->core_scene_viewer,ambient_light);
+								}
+								else
+								{
+									display_message(WARNING_MESSAGE,
+										"Light must be of ambient type to be set as light model.");
+								}
 							}
 							if (light_to_add)
 							{
-								Scene_viewer_add_light(scene_viewer->core_scene_viewer,light_to_add);
+								cmzn_sceneviewer_add_light(scene_viewer->core_scene_viewer,light_to_add);
 							}
 							if (light_to_remove)
 							{
-								Scene_viewer_remove_light(scene_viewer->core_scene_viewer,light_to_remove);
+								cmzn_sceneviewer_remove_light(scene_viewer->core_scene_viewer,light_to_remove);
 							}
 							if (rotate_command_data.set)
 							{
@@ -2115,17 +2116,17 @@ etc.) in all panes of the <window>.
 				{
 					cmzn_scene_destroy(&scene);
 				}
-				if (light_model)
+				if (ambient_light)
 				{
-					DEACCESS(Light_model)(&light_model);
+					cmzn_light_destroy(&ambient_light);
 				}
 				if (light_to_add)
 				{
-					DEACCESS(Light)(&light_to_add);
+					cmzn_light_destroy(&light_to_add);
 				}
 				if (light_to_remove)
 				{
-					DEACCESS(Light)(&light_to_remove);
+					cmzn_light_destroy(&light_to_remove);
 				}
 			}
 			else
@@ -3312,7 +3313,7 @@ it.
 					{
 						pane_no = 0;
 						window->scene_viewer_array[pane_no] =
-						 CREATE(Scene_viewer)(graphics_buffer, background_colour, light_module,
+						 CREATE(Scene_viewer)(graphics_buffer, background_colour, lightmodule,
 							default_light, light_model_module,default_light_model, filter_module,
 							window->scene, user_interface);
 						if (window->scene_viewer_array[pane_no])
@@ -3823,7 +3824,7 @@ it.
 							pane_no = 0;
 							if (window->scene_viewer_array[pane_no] =
 								 CREATE(Scene_viewer)(graphics_buffer,
-								 background_colour, light_module,default_light,
+								 background_colour, lightmodule,default_light,
 								 light_model_module,default_light_model,
 								 filter_module, window->scene,
 								 user_interface))
@@ -4504,8 +4505,10 @@ Sets the layout mode in effect on the <window>.
 							perturb_lines = cmzn_sceneviewer_get_perturb_lines_flag(first_scene_viewer->core_scene_viewer);
 							cmzn_sceneviewer_set_perturb_lines_flag(window->scene_viewer_array[pane_no]->core_scene_viewer,
 								0 != perturb_lines);
-							Scene_viewer_set_light_model(window->scene_viewer_array[pane_no]->core_scene_viewer,
-								Scene_viewer_get_light_model(first_scene_viewer->core_scene_viewer));
+							cmzn_light *ambient_light = cmzn_sceneviewer_get_ambient_light(first_scene_viewer->core_scene_viewer);
+							cmzn_sceneviewer_set_ambient_light(window->scene_viewer_array[pane_no]->core_scene_viewer,
+								ambient_light);
+							cmzn_light_destroy(&ambient_light);
 							transparency_layers = cmzn_sceneviewer_get_transparency_layers(first_scene_viewer->core_scene_viewer);
 							cmzn_sceneviewer_set_transparency_layers(window->scene_viewer_array[pane_no]->core_scene_viewer,
 								transparency_layers);
@@ -6411,14 +6414,17 @@ Writes the properties of the <window> to the command window.
 			DEALLOCATE(name);
 		}
 		cmzn_scenefilter_destroy(&filter);
-		if (GET_NAME(Light_model)(
-			Scene_viewer_get_light_model(window->scene_viewer_array[0]->core_scene_viewer),&name))
+		cmzn_light_id ambient_light = cmzn_sceneviewer_get_ambient_light(
+			window->scene_viewer_array[0]->core_scene_viewer);
+		char *light_name = cmzn_light_get_name(ambient_light);
+		if (light_name)
 		{
-			display_message(INFORMATION_MESSAGE,"  light model: %s\n",name);
-			DEALLOCATE(name);
+			display_message(INFORMATION_MESSAGE,"  light model: %s\n",light_name);
+			DEALLOCATE(light_name);
 		}
+		cmzn_light_destroy(&ambient_light);
 		display_message(INFORMATION_MESSAGE,"  lights:\n");
-		for_each_Light_in_Scene_viewer(window->scene_viewer_array[0]->core_scene_viewer,list_Light_name,
+		for_each_cmzn_light_in_Scene_viewer(window->scene_viewer_array[0]->core_scene_viewer,list_cmzn_light_name,
 			(void *)"    ");
 		/* layout */
 		display_message(INFORMATION_MESSAGE,"  layout: %s\n",
@@ -6722,18 +6728,21 @@ and establishing the views in it to the command window to a com file.
 			DEALLOCATE(name);
 		}
 		cmzn_scenefilter_destroy(&filter);
-		if (GET_NAME(Light_model)(
-			Scene_viewer_get_light_model(window->scene_viewer_array[0]->core_scene_viewer),&name))
+		cmzn_light_id ambient_light = cmzn_sceneviewer_get_ambient_light(
+			window->scene_viewer_array[0]->core_scene_viewer);
+		char *light_name = cmzn_light_get_name(ambient_light);
+		if (light_name)
 		{
 			/* put quotes around name if it contains special characters */
-			make_valid_token(&name);
-			process_message->process_command(INFORMATION_MESSAGE," light_model %s",name);
-			DEALLOCATE(name);
+			make_valid_token(&light_name);
+			process_message->process_command(INFORMATION_MESSAGE," light_model %s",light_name);
+			DEALLOCATE(light_name);
 		}
+		cmzn_light_destroy(&ambient_light);
 		process_message->process_command(INFORMATION_MESSAGE,";\n");
 		sprintf(prefix,"gfx modify window %s image add_light ",window->name);
-		for_each_Light_in_Scene_viewer(window->scene_viewer_array[0]->core_scene_viewer,
-			list_Light_name_command, (void *)prefix);
+		for_each_cmzn_light_in_Scene_viewer(window->scene_viewer_array[0]->core_scene_viewer,
+			list_cmzn_light_name_command, (void *)prefix);
 		/* layout */
 		Graphics_window_get_viewing_area_size(window,&width,&height);
 		process_message->process_command(INFORMATION_MESSAGE,

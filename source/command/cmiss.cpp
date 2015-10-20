@@ -31,6 +31,7 @@
 #include "zinc/fieldsmoothing.h"
 #include "zinc/fieldsubobjectgroup.h"
 #include "zinc/glyph.h"
+#include "zinc/light.h"
 #include "zinc/material.h"
 #include "zinc/region.h"
 #include "zinc/scene.h"
@@ -109,8 +110,7 @@
 #include "graphics/graphics_object.h"
 #include "graphics/graphics_window.h"
 #include "graphics/iso_field_calculation.h"
-#include "graphics/light.h"
-#include "graphics/light_model.h"
+#include "graphics/light.hpp"
 #include "graphics/material.h"
 #include "graphics/glyph.hpp"
 #include "graphics/glyph_colour_bar.hpp"
@@ -268,7 +268,6 @@
 #include "graphics/colour_app.h"
 #include "graphics/scene_app.h"
 #include "graphics/spectrum_component_app.h"
-#include "graphics/light_model_app.h"
 #include "graphics/light_app.h"
 #include "graphics/material_app.h"
 #include "graphics/spectrum_app.h"
@@ -334,10 +333,8 @@ DESCRIPTION :
 #endif /* defined (USE_CMGUI_GRAPHICS_WINDOW) */
 	struct MANAGER(Interactive_tool) *interactive_tool_manager;
 	struct IO_stream_package *io_stream_package;
-	Light_module *light_module;
-	struct Light *default_light;
-	Light_model_module *light_model_module;
-	struct Light_model *default_light_model;
+	cmzn_lightmodule *lightmodule;
+	struct cmzn_light *default_light;
 	struct cmzn_materialmodule *materialmodule;
 	struct cmzn_scenefiltermodule *filter_module;
 	struct cmzn_font *default_font;
@@ -1489,7 +1486,7 @@ Executes a GFX CREATE LIGHT command.
 	const char *current_token;
 	int return_code;
 	struct cmzn_command_data *command_data;
-	struct Light *light;
+	struct cmzn_light *light;
 	struct Modify_light_data modify_light_data;
 
 	ENTER(gfx_create_light);
@@ -1500,51 +1497,39 @@ Executes a GFX CREATE LIGHT command.
 		{
 			if (NULL != (command_data = (struct cmzn_command_data *)command_data_void))
 			{
-				MANAGER(Light) *light_manager = Light_module_get_manager(command_data->light_module);
 				if (strcmp(PARSER_HELP_STRING,current_token)&&
 					strcmp(PARSER_RECURSIVE_HELP_STRING,current_token))
 				{
-					MANAGER(Light) *light_manager = Light_module_get_manager(command_data->light_module);
-					if (!FIND_BY_IDENTIFIER_IN_MANAGER(Light,name)(current_token, light_manager))
+					cmzn_lightmodule_begin_change(command_data->lightmodule);
+					cmzn_light_id light =
+						cmzn_lightmodule_find_light_by_name(command_data->lightmodule, current_token);
+
+					if (!light)
 					{
-						if (NULL != (light=CREATE(Light)(current_token)))
+						light = cmzn_lightmodule_create_light(command_data->lightmodule);
+						cmzn_light_set_name(light, current_token);
+					}
+					shift_Parse_state(state,1);
+					if (light)
+					{
+						cmzn_light_set_managed(light, true);
+						modify_light_data.default_light=command_data->default_light;
+						modify_light_data.lightmodule=command_data->lightmodule;
+						return_code=modify_cmzn_light(state,(void *)light,
+							(void *)(&modify_light_data));
+						if (light)
 						{
-							MANAGER_COPY_WITHOUT_IDENTIFIER(Light,name)(light,
-								command_data->default_light);
-							shift_Parse_state(state,1);
-							if (state->current_token)
-							{
-								modify_light_data.default_light=command_data->default_light;
-								modify_light_data.light_manager=light_manager;
-								return_code=modify_Light(state,(void *)light,
-									(void *)(&modify_light_data));
-							}
-							else
-							{
-								return_code=1;
-							}
-							ADD_OBJECT_TO_MANAGER(Light)(light,light_manager);
-						}
-						else
-						{
-							display_message(ERROR_MESSAGE,
-								"gfx_create_light.  Could not create light");
-							return_code=0;
+							cmzn_light_set_managed(light, true);
 						}
 					}
-					else
-					{
-						display_message(ERROR_MESSAGE,"Light already exists: %s",
-							current_token);
-						display_parse_state_location(state);
-						return_code=0;
-					}
+					cmzn_light_destroy(&light);
+					cmzn_lightmodule_end_change(command_data->lightmodule);
 				}
 				else
 				{
 					modify_light_data.default_light=command_data->default_light;
-					modify_light_data.light_manager=light_manager;
-					return_code=modify_Light(state,(void *)NULL,
+					modify_light_data.lightmodule=command_data->lightmodule;
+					return_code=modify_cmzn_light(state,(void *)NULL,
 						(void *)(&modify_light_data));
 					return_code=1;
 				}
@@ -1585,66 +1570,16 @@ Executes a GFX CREATE LMODEL command.
 	const char *current_token;
 	int return_code;
 	struct cmzn_command_data *command_data;
-	struct Light_model *light_model;
-	struct Modify_light_model_data modify_light_model_data;
 
-	ENTER(gfx_create_light_model);
-	USE_PARAMETER(dummy_to_be_modified);
 	if (state)
 	{
 		if (NULL != (current_token = state->current_token))
 		{
 			if (NULL != (command_data = (struct cmzn_command_data *)command_data_void))
 			{
-				MANAGER(Light_model) *light_model_manager = Light_model_module_get_manager(command_data->light_model_module);
-				if (strcmp(PARSER_HELP_STRING,current_token)&&
-					strcmp(PARSER_RECURSIVE_HELP_STRING,current_token))
-				{
-					if (!FIND_BY_IDENTIFIER_IN_MANAGER(Light_model,name)(current_token, light_model_manager))
-					{
-						if (NULL != (light_model=CREATE(Light_model)(current_token)))
-						{
-							MANAGER_COPY_WITHOUT_IDENTIFIER(Light_model,name)(light_model,
-								command_data->default_light_model);
-							shift_Parse_state(state,1);
-							if (state->current_token)
-							{
-								modify_light_model_data.default_light_model=
-									command_data->default_light_model;
-								modify_light_model_data.light_model_manager=light_model_manager;
-								return_code=modify_Light_model(state,(void *)light_model,
-									(void *)(&modify_light_model_data));
-							}
-							else
-							{
-								return_code=1;
-							}
-							ADD_OBJECT_TO_MANAGER(Light_model)(light_model, light_model_manager);
-						}
-						else
-						{
-							display_message(ERROR_MESSAGE,
-								"gfx_create_light_model.  Could not create light model");
-							return_code=0;
-						}
-					}
-					else
-					{
-						display_message(ERROR_MESSAGE,"Light_model already exists: %s",
-							current_token);
-						display_parse_state_location(state);
-						return_code=0;
-					}
-				}
-				else
-				{
-					modify_light_model_data.default_light_model=
-						command_data->default_light_model;
-					modify_light_model_data.light_model_manager=light_model_manager;
-					return_code=modify_Light_model(state,(void *)NULL,
-						(void *)(&modify_light_model_data));
-					return_code=1;
-				}
+				display_message(INFORMATION_MESSAGE,
+					"gfx_create_light_model.  Light model is no longer supported, it is replaced by light with"
+					"ambient type.");
 			}
 			else
 			{
@@ -1665,7 +1600,6 @@ Executes a GFX CREATE LMODEL command.
 		display_message(ERROR_MESSAGE,"gfx_create_light_model.  Missing state");
 		return_code=0;
 	}
-	LEAVE;
 
 	return (return_code);
 } /* gfx_create_light_model */
@@ -4244,7 +4178,7 @@ Executes a GFX CREATE WINDOW command.
 							minimum_accumulation_buffer_depth,
 							command_data->graphics_buffer_package,
 							&(command_data->background_colour),
-							command_data->light_module,command_data->default_light,
+							command_data->lightmodule,command_data->default_light,
 							command_data->light_model_module,command_data->default_light_model,
 							command_data->scene_manager,command_data->default_scene,
 							command_data->interactive_tool_manager,
@@ -9549,24 +9483,24 @@ Executes a GFX LIST LIGHT.
 {
 	const char *current_token;
 	int return_code;
-	struct Light *light;
-	struct MANAGER(Light) *light_manager;
+	struct cmzn_light *light;
+	struct MANAGER(cmzn_light) *light_manager;
 
 	ENTER(gfx_list_light);
 	USE_PARAMETER(dummy_to_be_modified);
 	if (state)
 	{
-		if (NULL != (light_manager=(struct MANAGER(Light) *)light_manager_void))
+		if (NULL != (light_manager=(struct MANAGER(cmzn_light) *)light_manager_void))
 		{
 			if (NULL != (current_token = state->current_token))
 			{
 				if (strcmp(PARSER_HELP_STRING,current_token)&&
 					strcmp(PARSER_RECURSIVE_HELP_STRING,current_token))
 				{
-					if (NULL != (light=FIND_BY_IDENTIFIER_IN_MANAGER(Light,name)(current_token,
+					if (NULL != (light=FIND_BY_IDENTIFIER_IN_MANAGER(cmzn_light,name)(current_token,
 						light_manager)))
 					{
-						return_code=list_Light(light,(void *)NULL);
+						return_code=list_cmzn_light(light,(void *)NULL);
 					}
 					else
 					{
@@ -9583,7 +9517,7 @@ Executes a GFX LIST LIGHT.
 			}
 			else
 			{
-				return_code=FOR_EACH_OBJECT_IN_MANAGER(Light)(list_Light,(void *)NULL,
+				return_code=FOR_EACH_OBJECT_IN_MANAGER(cmzn_light)(list_cmzn_light,(void *)NULL,
 					light_manager);
 			}
 		}
@@ -9613,54 +9547,16 @@ DESCRIPTION :
 Executes a GFX LIST LMODEL.
 ==============================================================================*/
 {
-	const char *current_token;
-	int return_code;
-	struct Light_model *light_model;
-	struct MANAGER(Light_model) *light_model_manager;
+	int return_code = 1;
 
-	ENTER(gfx_list_light_model);
-	USE_PARAMETER(dummy_to_be_modified);
 	if (state)
 	{
-		if (NULL != (light_model_manager=
-			(struct MANAGER(Light_model) *)light_model_manager_void))
+		const char *current_token;
+		if (NULL != (current_token = state->current_token))
 		{
-			if (NULL != (current_token = state->current_token))
-			{
-				if (strcmp(PARSER_HELP_STRING,current_token)&&
-					strcmp(PARSER_RECURSIVE_HELP_STRING,current_token))
-				{
-					if (NULL != (light_model=FIND_BY_IDENTIFIER_IN_MANAGER(Light_model,name)(
-						current_token,light_model_manager)))
-					{
-						return_code=list_Light_model(light_model,(void *)NULL);
-					}
-					else
-					{
-						display_message(ERROR_MESSAGE,"Unknown light model: %s",
-							current_token);
-						display_parse_state_location(state);
-						return_code=0;
-					}
-				}
-				else
-				{
-					display_message(INFORMATION_MESSAGE," LIGHT_MODEL_NAME");
-					return_code=1;
-				}
-			}
-			else
-			{
-				FOR_EACH_OBJECT_IN_MANAGER(Light_model)(list_Light_model,(void *)NULL,
-					light_model_manager);
-				return_code=1;
-			}
-		}
-		else
-		{
-			display_message(ERROR_MESSAGE,
-				"gfx_list_light_model.  Missing light_model_manager_void");
-			return_code=0;
+			display_message(INFORMATION_MESSAGE,
+				"gfx_list_light_model.  Light model is no longer supported, it is replaced by light with"
+				"ambient type.");
 		}
 	}
 	else
@@ -9668,7 +9564,6 @@ Executes a GFX LIST LMODEL.
 		display_message(ERROR_MESSAGE,"gfx_list_light_model.  Missing state");
 		return_code=0;
 	}
-	LEAVE;
 
 	return (return_code);
 } /* gfx_list_light_model */
@@ -10232,13 +10127,13 @@ Executes a GFX LIST command.
 				command_data->root_region, gfx_list_group);
 			/* light */
 			Option_table_add_entry(option_table, "light", NULL,
-				Light_module_get_manager(command_data->light_module), gfx_list_light);
+				cmzn_lightmodule_get_manager(command_data->lightmodule), gfx_list_light);
 			/* lines */
 			Option_table_add_entry(option_table, "lines", /*dimension*/(void *)1,
 				command_data_void, gfx_list_FE_element);
 			/* lmodel */
 			Option_table_add_entry(option_table, "lmodel", NULL,
-				Light_model_module_get_manager(command_data->light_model_module), gfx_list_light_model);
+				NULL, gfx_list_light_model);
 			/* material */
 			Option_table_add_entry(option_table, "material", NULL,
 				cmzn_materialmodule_get_manager(command_data->materialmodule), gfx_list_graphical_material);
@@ -11105,6 +11000,43 @@ static int set_cmzn_nodal_derivatives(struct Parse_state *state,
 	return (return_code);
 }
 
+
+int modify_cmzn_light_model(struct Parse_state *state,void *light_model_void,
+	void *modify_light_model_data_void)
+/*******************************************************************************
+LAST MODIFIED : 13 December 1997
+
+DESCRIPTION :
+Modifies the properties of a light model.
+==============================================================================*/
+{
+	int return_code = 1;
+	/* check the arguments */
+	if (state)
+	{
+		const char *current_token=state->current_token;
+		if (current_token != 0)
+		{
+			display_message(INFORMATION_MESSAGE,
+				"modify_cmzn_light_model.  Light model is no longer supported, it is replaced by light with"
+				"ambient type.");
+		}
+		else
+		{
+			display_message(ERROR_MESSAGE,
+				"modify_cmzn_light_model.  Missing token");
+			return_code=0;
+		}
+	}
+	else
+	{
+		display_message(ERROR_MESSAGE,"modify_cmzn_light_model.  Missing state");
+		return_code=0;
+	}
+
+	return (return_code);
+} /* modify_cmzn_light_model */
+
 /***************************************************************************//**
  * Executes a GFX MODIFY NODES/DATA command.
  * If <use_data_flag> is set, use datapoints, otherwise nodes.
@@ -11350,9 +11282,8 @@ Executes a GFX MODIFY command.
 #if defined (USE_CMGUI_GRAPHICS_WINDOW)
 	struct Modify_graphics_window_data modify_graphics_window_data;
 #endif /* defined (USE_CMGUI_GRAPHICS_WINDOW) */
-	struct Modify_light_data modify_light_data;
-	struct Modify_light_model_data modify_light_model_data;
 	struct Option_table *option_table;
+	struct Modify_light_data modify_light_data;
 
 	ENTER(execute_command_gfx_modify);
 	USE_PARAMETER(dummy_to_be_modified);
@@ -11403,16 +11334,12 @@ Executes a GFX MODIFY command.
 					(void *)command_data, gfx_modify_graphics_object);
 				/* light */
 				modify_light_data.default_light=command_data->default_light;
-				modify_light_data.light_manager=Light_module_get_manager(command_data->light_module);
+				modify_light_data.lightmodule=command_data->lightmodule;
 				Option_table_add_entry(option_table,"light",NULL,
-					(void *)(&modify_light_data), modify_Light);
+					(void *)(&modify_light_data), modify_cmzn_light);
 				/* lmodel */
-				modify_light_model_data.default_light_model=
-					command_data->default_light_model;
-				modify_light_model_data.light_model_manager=
-					Light_model_module_get_manager(command_data->light_model_module);
 				Option_table_add_entry(option_table,"lmodel",NULL,
-					(void *)(&modify_light_model_data), modify_Light_model);
+					NULL, modify_cmzn_light_model);
 				/* material */
 				struct Material_module_app materialmodule;
 				materialmodule.module = (void *)command_data->materialmodule;
@@ -11446,9 +11373,7 @@ Executes a GFX MODIFY command.
 				modify_graphics_window_data.interactive_tool_manager=
 					command_data->interactive_tool_manager;
 				modify_graphics_window_data.light_manager=
-					Light_module_get_manager(command_data->light_module);
-				modify_graphics_window_data.light_model_manager=
-					Light_model_module_get_manager(command_data->light_model_module);
+					cmzn_lightmodule_get_manager(command_data->lightmodule);
 				modify_graphics_window_data.root_region=command_data->root_region;
 				modify_graphics_window_data.filter_module = command_data->filter_module;
 				Option_table_add_entry(option_table,"window",NULL,
@@ -16745,10 +16670,8 @@ Initialise all the subcomponents of cmgui and create the cmzn_command_data
 #if defined (WX_USER_INTERFACE)
 		command_data->comfile_window_manager=(struct MANAGER(Comfile_window) *)NULL;
 #endif /* defined WX_USER_INTERFACE*/
-		command_data->default_light=(struct Light *)NULL;
-		command_data->light_module=NULL;
-		command_data->default_light_model=(struct Light_model *)NULL;
-		command_data->light_model_module=NULL;
+		command_data->default_light=(struct cmzn_light *)NULL;
+		command_data->lightmodule=NULL;
 		command_data->environment_map_manager=(struct MANAGER(Environment_map) *)NULL;
 		command_data->volume_texture_manager=(struct MANAGER(VT_volume_texture) *)NULL;
 		command_data->default_spectrum=(struct cmzn_spectrum *)NULL;
@@ -17005,14 +16928,10 @@ Initialise all the subcomponents of cmgui and create the cmzn_command_data
 		command_data->graphics_module =
 			cmzn_context_get_graphics_module(cmzn_context_app_get_core_context(context));
 		/* light manager */
-		command_data->light_module=
-			cmzn_graphics_module_get_light_module(command_data->graphics_module);
+		command_data->lightmodule=
+			cmzn_graphics_module_get_lightmodule(command_data->graphics_module);
 		command_data->default_light=
-			Light_module_get_default_light(command_data->light_module);
-		command_data->light_model_module=
-			cmzn_graphics_module_get_light_model_module(command_data->graphics_module);
-		command_data->default_light_model=
-			Light_model_module_get_default_light_model(command_data->light_model_module);
+			cmzn_lightmodule_get_default_light(command_data->lightmodule);
 
 		// ensure we have default tessellations
 		command_data->tessellationmodule = cmzn_graphics_module_get_tessellationmodule(command_data->graphics_module);
@@ -17538,10 +17457,8 @@ NOTE: Do not call this directly: call cmzn_command_data_destroy() to deaccess.
 		DEACCESS(cmzn_font)(&command_data->default_font);
 		DESTROY(MANAGER(VT_volume_texture))(&command_data->volume_texture_manager);
 		DESTROY(MANAGER(Environment_map))(&command_data->environment_map_manager);
-		DEACCESS(Light_model)(&(command_data->default_light_model));
-		DEACCESS(Light)(&(command_data->default_light));
-		Light_module_destroy(&command_data->light_module);
-		Light_model_module_destroy(&command_data->light_model_module);
+		cmzn_light_destroy(&(command_data->default_light));
+		cmzn_lightmodule_destroy(&command_data->lightmodule);
 		if (command_data->example_directory)
 		{
 			DEALLOCATE(command_data->example_directory);

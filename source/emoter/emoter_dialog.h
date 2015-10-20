@@ -51,8 +51,8 @@ DESCRIPTION :
 	struct Scene *viewer_scene;
 	struct Colour viewer_background_colour;
 	struct Graphics_buffer_app_package *graphics_buffer_package;
-	struct Light *viewer_light;
-	struct Light_model *viewer_light_model;
+	struct cmzn_light *viewer_light;
+	struct cmzn_light_model *viewer_light_model;
 	struct Emoter_dialog **emoter_dialog_address;
 	struct User_interface *user_interface;
 }; /* struct Create_emoter_slider_data */

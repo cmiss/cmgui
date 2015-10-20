@@ -76,7 +76,6 @@ SET(APP_HDRS
     source/graphics/scene_app.h
     source/graphics/scenefilter_app.hpp
     source/graphics/spectrum_component_app.h
-    source/graphics/light_model_app.h
     source/graphics/light_app.h
     source/computed_field/computed_field_set_app.h
     source/general/multi_range_app.h

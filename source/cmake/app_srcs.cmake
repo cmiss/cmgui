@@ -63,7 +63,6 @@ SET(APP_SRCS
     source/three_d_drawing/graphics_buffer_app.cpp
     source/general/geometry_app.cpp
     source/computed_field/computed_field_app.cpp
-    source/graphics/light_model_app.cpp
     source/computed_field/computed_field_set_app.cpp
     source/general/multi_range_app.cpp
     source/graphics/auxiliary_graphics_types_app.cpp

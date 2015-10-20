@@ -75,8 +75,8 @@ DESCRIPTION :
 	struct Execute_command *execute_command;
 	struct Graphics_buffer_app_package *graphics_buffer_package;
 	struct IO_stream_package *io_stream_package;
-	struct Light *viewer_light;
-	struct Light_model *viewer_light_model;
+	struct cmzn_light *viewer_light;
+	struct cmzn_light_model *viewer_light_model;
 	struct MANAGER(FE_basis) *basis_manager;
 #if defined (USE_CMGUI_GRAPHICS_WINDOW)
 	struct MANAGER(Graphics_window) *graphics_window_manager;
