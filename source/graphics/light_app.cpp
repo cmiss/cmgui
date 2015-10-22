@@ -99,9 +99,9 @@ DESCRIPTION :
 			{
 				num_floats=3;
 				light_type = cmzn_light_get_type(light_to_be_modified);
-				cmzn_light_get_colour(light_to_be_modified, &light_colour[0]);
-				cmzn_light_get_direction(light_to_be_modified, &direction[0]);
-				cmzn_light_get_position(light_to_be_modified, &position[0]);
+				cmzn_light_get_colour_rgb(light_to_be_modified, &light_colour[0]);
+				cmzn_light_get_direction3(light_to_be_modified, &direction[0]);
+				cmzn_light_get_position3(light_to_be_modified, &position[0]);
 				constant_attenuation = cmzn_light_get_constant_attenuation(light_to_be_modified);
 				linear_attenuation = cmzn_light_get_linear_attenuation(light_to_be_modified);
 				quadratic_attenuation = cmzn_light_get_quadratic_attenuation(light_to_be_modified);
@@ -195,9 +195,9 @@ DESCRIPTION :
 					{
 						STRING_TO_ENUMERATOR(cmzn_light_type)(light_type_string, &light_type);
 						cmzn_light_set_type(light_to_be_modified, light_type);
-						cmzn_light_set_colour(light_to_be_modified, &light_colour[0]);
-						cmzn_light_set_direction(light_to_be_modified, &direction[0]);
-						cmzn_light_set_position(light_to_be_modified, &position[0]);
+						cmzn_light_set_colour_rgb(light_to_be_modified, &light_colour[0]);
+						cmzn_light_set_direction3(light_to_be_modified, &direction[0]);
+						cmzn_light_set_position3(light_to_be_modified, &position[0]);
 						cmzn_light_set_constant_attenuation(light_to_be_modified, constant_attenuation);
 						cmzn_light_set_linear_attenuation(light_to_be_modified, linear_attenuation);
 						cmzn_light_set_quadratic_attenuation(light_to_be_modified, quadratic_attenuation);
