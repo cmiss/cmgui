@@ -6176,3 +6176,49 @@ int Option_table_add_multiple_strings_entry(struct Option_table *option_table,
 
 	return (return_code);
 } /* Option_table_add_multiple_strings_entry */
+
+
+void export_object_name_parser(const char *path_name, const char **scene_name,
+	const char **graphics_name)
+{
+	const char *slash_pointer, *dot_pointer;
+	int total_length, length;
+	char *temp_name;
+	if (path_name)
+	{
+		total_length = strlen(path_name);
+		slash_pointer = strchr(path_name, '/');
+		dot_pointer = strrchr(path_name, '.');
+		if (dot_pointer)
+		{
+			if ((dot_pointer - path_name) < total_length)
+			{
+				*graphics_name = duplicate_string(dot_pointer + 1);
+			}
+			total_length = dot_pointer - path_name;
+		}
+		if (slash_pointer)
+		{
+			length = total_length - (slash_pointer + 1 - path_name);
+			if (length > 1)
+			{
+				ALLOCATE(temp_name, char, length+1);
+				strncpy(temp_name, slash_pointer + 1, length);
+				temp_name[length] = '\0';
+				*scene_name = temp_name;
+			}
+		}
+		else
+		{
+			if (total_length > 1)
+			{
+				ALLOCATE(temp_name, char, total_length+1);
+				strncpy(temp_name, path_name, total_length);
+				temp_name[total_length] = '\0';
+				*scene_name = temp_name;
+			}
+		}
+	}
+}
+
+

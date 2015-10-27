@@ -4457,49 +4457,6 @@ Executes a DETACH command.
 } /* execute_command_detach */
 #endif /* defined (SELECT_DESCRIPTORS) */
 
-void export_object_name_parser(const char *path_name, const char **scene_name,
-	const char **graphics_name)
-{
-	const char *slash_pointer, *dot_pointer;
-	int total_length, length;
-	char *temp_name;
-	if (path_name)
-	{
-		total_length = strlen(path_name);
-		slash_pointer = strchr(path_name, '/');
-		dot_pointer = strrchr(path_name, '.');
-		if (dot_pointer)
-		{
-			if ((dot_pointer - path_name) < total_length)
-			{
-				*graphics_name = duplicate_string(dot_pointer + 1);
-			}
-			total_length = dot_pointer - path_name;
-		}
-		if (slash_pointer)
-		{
-			length = total_length - (slash_pointer + 1 - path_name);
-			if (length > 1)
-			{
-				ALLOCATE(temp_name, char, length+1);
-				strncpy(temp_name, slash_pointer + 1, length);
-				temp_name[length] = '\0';
-				*scene_name = temp_name;
-			}
-		}
-		else
-		{
-			if (total_length > 1)
-			{
-				ALLOCATE(temp_name, char, total_length+1);
-				strncpy(temp_name, path_name, total_length);
-				temp_name[total_length] = '\0';
-				*scene_name = temp_name;
-			}
-		}
-	}
-}
-
 static int gfx_convert_elements(struct Parse_state *state,
 	void *dummy_to_be_modified, void *command_data_void)
 /*******************************************************************************
@@ -5184,6 +5141,9 @@ Executes a GFX DEFINE command.
 				/* font */
 				Option_table_add_entry(option_table, "font", NULL,
 					fontmodule, gfx_define_font);
+				/* glyph */
+				Option_table_add_entry(option_table, "glyph", command_data->root_region,
+					command_data->glyphmodule, gfx_define_glyph);
 				/* scene */
 				Define_scene_data define_scene_data;
 				define_scene_data.root_region = command_data->root_region;

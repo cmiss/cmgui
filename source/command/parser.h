@@ -1075,4 +1075,7 @@ int setEnum(struct Parse_state *state, void *enumValueAddressVoid,
 	return (return_code);
 }
 
+void export_object_name_parser(const char *path_name, const char **scene_name,
+	const char **graphics_name);
+
 #endif /* !defined (PARSER_H) */

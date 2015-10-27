@@ -20,3 +20,5 @@ struct Parse_state;
 int set_Glyph(struct Parse_state *state, void *glyphAddress_void,
 	void *glyphmodule_void);
 
+int gfx_define_glyph(struct Parse_state *state,
+	void *root_region_void, void *glyphmodule_void);
