@@ -2173,7 +2173,7 @@ Creates a spectrum_editor widget.
 							cmzn_lightmodule_begin_change(light_module);
 							viewer_light = cmzn_lightmodule_create_light(light_module);
 							cmzn_light_set_name(viewer_light, "spectrum_editor_light");
-							cmzn_light_set_direction3(viewer_light, &light_direction[0]);
+							cmzn_light_set_direction(viewer_light, &light_direction[0]);
 							ambient_light =cmzn_lightmodule_create_light(light_module);
 							cmzn_light_set_name(ambient_light, "spectrum_editor_ambient_light");
 							cmzn_light_set_type(ambient_light,CMZN_LIGHT_TYPE_AMBIENT);
