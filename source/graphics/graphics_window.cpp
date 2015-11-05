@@ -3551,7 +3551,7 @@ it.
 			window->front_view_options->Disable();
 			window->left_panel =XRCCTRL(*window->wx_graphics_window, "GraphicsLeftPanel", wxScrolledWindow);
 			window->left_panel->FitInside();
-			window->left_panel->SetMinSize(wxSize(10,10));
+			window->left_panel->SetMinSize(wxSize(0,10));
 			window->ToolPanel = XRCCTRL(*window->wx_graphics_window,
 				 "ToolPanel", wxScrolledWindow);
 			window->ToolPanel ->Layout();
@@ -3716,10 +3716,9 @@ it.
 									/* give the window its default size */
 									int temp_width, temp_height;
 									window->wx_graphics_window->GetSize(&temp_width, &temp_height);
-									XRCCTRL(*window->wx_graphics_window,"GraphicsWindowSplitter", wxSplitterWindow)
-										 ->SetSize(temp_width, temp_height);
-									XRCCTRL(*window->wx_graphics_window,"GraphicsWindowSplitter", wxSplitterWindow)
-										 ->SetSashPosition(200);
+									wxSplitterWindow *splitterWindow = XRCCTRL(*window->wx_graphics_window,"GraphicsWindowSplitter", wxSplitterWindow);
+									splitterWindow->SetSize(temp_width, temp_height);
+									splitterWindow->SetSashPosition(200);
 									Graphics_window_set_viewing_area_size(window,
 										 window->default_viewing_width,
 										 window->default_viewing_height);
