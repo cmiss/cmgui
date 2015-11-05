@@ -277,6 +277,7 @@
 #include "three_d_drawing/graphics_buffer_app.h"
 
 #include "image_io/analyze.h"
+#include "image_io/analyze_object_map.hpp"
 /*
 Module types
 ------------
@@ -3530,6 +3531,11 @@ Modifies the properties of a texture.
 								if (image_file_format == ANALYZE_FILE_FORMAT)
 								{
 									cmgui_image = Cmgui_image_read_analyze(cmgui_image_information,
+										CMZN_STREAMINFORMATION_DATA_COMPRESSION_TYPE_DEFAULT);
+								}
+								else if (image_file_format == ANALYZE_OBJECT_MAP_FORMAT)
+								{
+									cmgui_image = Cmgui_image_read_analyze_object_map(cmgui_image_information,
 										CMZN_STREAMINFORMATION_DATA_COMPRESSION_TYPE_DEFAULT);
 								}
 								else
