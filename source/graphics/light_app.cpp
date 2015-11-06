@@ -38,7 +38,7 @@ DESCRIPTION :
 	struct Modify_light_data *modify_light_data;
 	struct Option_table *option_table;
 	char infinite_viewer_flag=0,local_viewer_flag=0,single_sided_flag=0,
-		double_sided_flag=0,disable_flag=0,enable_flag=0;
+		double_sided_flag=0;
 
 	modify_light_data=(struct Modify_light_data *)modify_light_data_void;
 	if (state && modify_light_data)
@@ -108,7 +108,7 @@ DESCRIPTION :
 				spot_cutoff = cmzn_light_get_spot_cutoff(light_to_be_modified);
 				spot_exponent = cmzn_light_get_spot_exponent(light_to_be_modified);
 				infinite_viewer_flag=0,local_viewer_flag=0,single_sided_flag=0,
-						double_sided_flag=0,disable_flag=0,enable_flag=0;
+						double_sided_flag=0;
 
 				option_table = CREATE(Option_table)();
 				/* colour */
@@ -152,20 +152,10 @@ DESCRIPTION :
 					&infinite_viewer_flag,(void *)NULL,set_char_flag);
 				Option_table_add_entry(option_table,"local_viewer",
 					&local_viewer_flag,(void *)NULL,set_char_flag);
-				Option_table_add_entry(option_table,"enable",
-					&enable_flag,(void *)NULL,set_char_flag);
-				Option_table_add_entry(option_table,"disable",
-					&disable_flag,(void *)NULL,set_char_flag);
 
 				return_code = Option_table_multi_parse(option_table, state);
 				if (return_code)
 				{
-					if (disable_flag&&enable_flag)
-					{
-						display_message(ERROR_MESSAGE,"modify_cmzn_light_model.  "
-							"Only one of disable/enable");
-						return_code=0;
-					}
 					if (single_sided_flag&&double_sided_flag)
 					{
 						display_message(ERROR_MESSAGE,"modify_cmzn_light_model.  "
@@ -222,14 +212,6 @@ DESCRIPTION :
 						{
 							cmzn_light_set_render_side(light_to_be_modified,
 								CMZN_LIGHT_RENDER_SIDE_DOUBLE);
-						}
-						if (enable_flag)
-						{
-							cmzn_light_set_enabled(light_to_be_modified, 1);
-						}
-						if (disable_flag)
-						{
-							cmzn_light_set_enabled(light_to_be_modified, 0);
 						}
 					}
 				}
