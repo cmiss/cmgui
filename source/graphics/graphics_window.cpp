@@ -1943,17 +1943,9 @@ Parser commands for setting the scene and how it is displayed (time, light model
 etc.) in all panes of the <window>.
 ==============================================================================*/
 {
-	char update_flag,view_all_flag;
-	double rotate_angle,rotate_axis[3],rotate_data[4];
-	int pane_no,return_code;
-	struct Graphics_window *window;
-	struct cmzn_light *light_to_add,*light_to_remove, *ambient_light;
+	int return_code;
 	struct Modify_graphics_window_data *modify_graphics_window_data;
 	struct Option_table *option_table;
-	cmzn_scene *scene;
-	struct Scene_viewer_app *scene_viewer;
-	static struct Set_vector_with_help_data
-		rotate_command_data={4," AXIS_X AXIS_Y AXIS_Z ANGLE",0};
 
 	ENTER(modify_Graphics_window_image);
 	if (state)
@@ -1964,37 +1956,50 @@ etc.) in all panes of the <window>.
 		{
 			if (state->current_token)
 			{
-
-				 /* get defaults from scene_viewer for first pane of window */
-				window=(struct Graphics_window *)window_void;
-				 if (window && (window->scene_viewer_array) &&
-						(scene_viewer=window->scene_viewer_array[0]))
-				 {
-					 ambient_light=cmzn_sceneviewer_get_ambient_light(scene_viewer->core_scene_viewer);
-					 scene=cmzn_scene_access(window->scene);
-				 }
-				 else
-				 {
-						scene=(cmzn_scene *)NULL;
-						scene_viewer = 0;
-						ambient_light=0;
-				 }
-				 cmzn_scenefilter_id filter = 0;
-				 if (scene_viewer && scene_viewer->core_scene_viewer)
-					 filter = cmzn_sceneviewer_get_scenefilter(scene_viewer->core_scene_viewer);
-				light_to_add=(struct cmzn_light *)NULL;
-				light_to_remove=(struct cmzn_light *)NULL;
-				rotate_command_data.set=0;
-				rotate_angle=0.0;
-				update_flag=0;
-				view_all_flag=0;
+				/* get defaults from scene viewer for first pane of window */
+				Graphics_window *window = static_cast<Graphics_window *>(window_void);
+				cmzn_scene *scene = 0;
+				cmzn_sceneviewer *first_sceneviewer = 0;
+				int lightingLocalViewer = 0;
+				int lightingTwoSided = 0;
+				if (window)
+				{
+					if ((window->scene_viewer_array) && (window->scene_viewer_array[0]))
+					{
+						first_sceneviewer = window->scene_viewer_array[0]->core_scene_viewer;
+						if (first_sceneviewer)
+						{
+							lightingLocalViewer = first_sceneviewer->isLightingLocalViewer() ? 1 : 0;
+							lightingTwoSided = first_sceneviewer->isLightingTwoSided() ? 1 : 0;
+						}
+					}
+					scene=cmzn_scene_access(window->scene);
+				}
+				char *dummy_light_model_name = 0;
+				cmzn_scenefilter_id filter = 0;
+				if (first_sceneviewer)
+					filter = cmzn_sceneviewer_get_scenefilter(first_sceneviewer);
+				cmzn_light *light_to_add = 0;
+				cmzn_light *light_to_remove = 0;
+				struct Set_vector_with_help_data
+					rotate_command_data = {4, " AXIS_X AXIS_Y AXIS_Z ANGLE", 0};
+				double rotate_angle = 0.0;
+				double rotate_axis[3], rotate_data[4];
+				char update_flag = 0;
+				char view_all_flag = 0;
 				option_table = CREATE(Option_table)();
 				/* add_light */
 				Option_table_add_entry(option_table, "add_light", &light_to_add,
 					modify_graphics_window_data->light_manager, set_cmzn_light);
-				/* light_model */
-				Option_table_add_entry(option_table, "light_model", &ambient_light,
-					modify_graphics_window_data->light_manager, set_cmzn_light);
+				/* filter */
+				Option_table_add_entry(option_table, "filter", &filter,
+					modify_graphics_window_data->filter_module, set_cmzn_scenefilter);
+				/* light_model - obsolete; name is consumed */
+				Option_table_add_string_entry(option_table, "light_model",
+					&dummy_light_model_name, " NAME (OBSOLETE, IGNORED)");
+				/* local_viewer_lighting|infinite_viewer_lighting */
+				Option_table_add_switch(option_table, "local_viewer_lighting",
+					"infinite_viewer_lighting", &lightingLocalViewer);
 				/* remove_light */
 				Option_table_add_entry(option_table, "remove_light", &light_to_remove,
 					modify_graphics_window_data->light_manager, set_cmzn_light);
@@ -2004,9 +2009,9 @@ etc.) in all panes of the <window>.
 				/* scene */
 				Option_table_add_entry(option_table, "scene", &scene,
 					modify_graphics_window_data->root_region, set_Scene);
-				/* filter */
-				Option_table_add_entry(option_table, "filter", &filter,
-					modify_graphics_window_data->filter_module, set_cmzn_scenefilter);
+				/* two_sided_lighting|one_sided_lighting */
+				Option_table_add_switch(option_table, "two_sided_lighting",
+					"one_sided_lighting", &lightingTwoSided);
 				/* update */
 				Option_table_add_char_flag_entry(option_table, "update",
 					&update_flag);
@@ -2016,20 +2021,20 @@ etc.) in all panes of the <window>.
 				return_code=Option_table_multi_parse(option_table, state);
 				if (return_code)
 				{
-					if (scene_viewer)
+					if (first_sceneviewer)
 					{
 						return_code=1;
-						if (light_to_add&&cmzn_sceneviewer_has_light(scene_viewer->core_scene_viewer,light_to_add))
+						if (light_to_add && cmzn_sceneviewer_has_light(first_sceneviewer, light_to_add))
 						{
 							/*display_message(WARNING_MESSAGE,"Light is already in window");*/
 							cmzn_light_destroy(&light_to_add);
 							light_to_add=(struct cmzn_light *)NULL;
 						}
-						if (light_to_remove&&
-							!cmzn_sceneviewer_has_light(scene_viewer->core_scene_viewer,light_to_remove))
+						if (light_to_remove &&
+							!cmzn_sceneviewer_has_light(first_sceneviewer, light_to_remove))
 						{
 							display_message(WARNING_MESSAGE,
-								"Cannot remove light that is not in scene");
+								"gfx modify window.  Cannot remove light that is not in window");
 							cmzn_light_destroy(&light_to_remove);
 							light_to_remove=(struct cmzn_light *)NULL;
 						}
@@ -2041,38 +2046,23 @@ etc.) in all panes of the <window>.
 							rotate_angle=rotate_data[3]*(PI/180.0);
 						}
 						/* set values for all panes */
-						for (pane_no=0;pane_no<window->number_of_scene_viewers;
-							pane_no++)
+						for (int pane_no = 0; pane_no < window->number_of_scene_viewers; ++pane_no)
 						{
-							scene_viewer=window->scene_viewer_array[pane_no];
-							if (ambient_light)
-							{
-								if (cmzn_light_get_type(ambient_light) == CMZN_LIGHT_TYPE_AMBIENT)
-								{
-									cmzn_sceneviewer_set_ambient_light(scene_viewer->core_scene_viewer,ambient_light);
-								}
-								else
-								{
-									display_message(WARNING_MESSAGE,
-										"Light must be of ambient type to be set as light model.");
-								}
-							}
+							cmzn_sceneviewer *sceneviewer = window->scene_viewer_array[pane_no]->core_scene_viewer;
+							cmzn_sceneviewer_begin_change(sceneviewer);
+							cmzn_sceneviewer_set_lighting_local_viewer(sceneviewer, (lightingLocalViewer) ? true : false);
+							cmzn_sceneviewer_set_lighting_two_sided(sceneviewer, (lightingTwoSided) ? true : false);
 							if (light_to_add)
-							{
-								cmzn_sceneviewer_add_light(scene_viewer->core_scene_viewer,light_to_add);
-							}
+								cmzn_sceneviewer_add_light(sceneviewer, light_to_add);
 							if (light_to_remove)
-							{
-								cmzn_sceneviewer_remove_light(scene_viewer->core_scene_viewer,light_to_remove);
-							}
+								cmzn_sceneviewer_remove_light(sceneviewer, light_to_remove);
 							if (rotate_command_data.set)
 							{
-								Scene_viewer_rotate_about_lookat_point(scene_viewer->core_scene_viewer,
-									rotate_axis,rotate_angle);
+								Scene_viewer_rotate_about_lookat_point(sceneviewer, rotate_axis, rotate_angle);
 							}
 							if (scene)
 							{
-								cmzn_sceneviewer_set_scene(scene_viewer->core_scene_viewer,scene);
+								cmzn_sceneviewer_set_scene(sceneviewer, scene);
 								cmzn_region_id region = cmzn_scene_get_region_internal(scene);
 #if defined (WX_USER_INTERFACE)
 								window->wx_graphics_window->
@@ -2081,10 +2071,11 @@ etc.) in all panes of the <window>.
 							}
 							if (filter)
 							{
-								cmzn_sceneviewer_set_scenefilter(scene_viewer->core_scene_viewer,filter);
+								cmzn_sceneviewer_set_scenefilter(sceneviewer, filter);
 								window->wx_graphics_window->
 									graphics_window_set_filter_chooser_selected_item(filter);
 							}
+							cmzn_sceneviewer_end_change(sceneviewer);
 						}
 						if (scene)
 						{
@@ -2102,7 +2093,7 @@ etc.) in all panes of the <window>.
 					else
 					{
 						display_message(ERROR_MESSAGE,"modify_Graphics_window_image. "
-							"Missing or invalid scene_viewer");
+							"Missing or invalid window and/or scene viewer");
 						display_parse_state_location(state);
 						return_code=0;
 					}
@@ -2116,10 +2107,8 @@ etc.) in all panes of the <window>.
 				{
 					cmzn_scene_destroy(&scene);
 				}
-				if (ambient_light)
-				{
-					cmzn_light_destroy(&ambient_light);
-				}
+				if (dummy_light_model_name)
+					DEALLOCATE(dummy_light_model_name);
 				if (light_to_add)
 				{
 					cmzn_light_destroy(&light_to_add);
@@ -4401,13 +4390,11 @@ Sets the layout mode in effect on the <window>.
 	int perturb_lines;
 	struct Colour background_colour;
 	struct Graphics_buffer_app *graphics_buffer;
-	struct Scene_viewer_app *first_scene_viewer;
 	int transparency_layers;
 #endif /* defined (WX_USER_INTERFACE) */
 #if defined (WX_USER_INTERFACE)
 	wxPanel* current_panel = NULL;
 #endif /* defined (WX_USER_INTERFACE) */
-
 
 	ENTER(Graphics_window_set_layout_mode);
 	if (window&&window->scene_viewer_array)
@@ -4418,9 +4405,10 @@ Sets the layout mode in effect on the <window>.
 		if (new_number_of_panes > window->number_of_scene_viewers)
 		{
 #if defined (WX_USER_INTERFACE)
-			first_scene_viewer = window->scene_viewer_array[0];
-			cmzn_sceneviewer_get_lookat_parameters(first_scene_viewer->core_scene_viewer, eye, lookat, up) &&
-			Scene_viewer_get_viewing_volume(first_scene_viewer->core_scene_viewer,
+			struct Scene_viewer_app *first_scene_viewer_app = window->scene_viewer_array[0];
+			cmzn_sceneviewer *first_sceneviewer = first_scene_viewer_app->core_scene_viewer;
+			cmzn_sceneviewer_get_lookat_parameters(first_sceneviewer, eye, lookat, up) &&
+			Scene_viewer_get_viewing_volume(first_sceneviewer,
 				&left, &right, &bottom, &top, &near_plane, &far_plane);
 			radius = 0.5*(right - left);
 
@@ -4462,24 +4450,25 @@ Sets the layout mode in effect on the <window>.
 						/*minimum_accumulation_buffer_depth*/0, /*buffer_to_match*/0);
 					if (graphics_buffer)
 					{
-						Scene_viewer_get_background_colour(first_scene_viewer->core_scene_viewer,&background_colour);
-						cmzn_scenefilter_id filter = cmzn_sceneviewer_get_scenefilter(first_scene_viewer->core_scene_viewer);
+						Scene_viewer_get_background_colour(first_sceneviewer,&background_colour);
+						cmzn_scenefilter_id filter = cmzn_sceneviewer_get_scenefilter(first_sceneviewer);
 						window->scene_viewer_array[pane_no]=
 							CREATE(Scene_viewer_app)(graphics_buffer,	window->sceneviewermodule,
 								filter,window->scene, window->user_interface);
 						cmzn_scenefilter_destroy(&filter);
 						if (window->scene_viewer_array[pane_no])
 						{
+							cmzn_sceneviewer *pane_sceneviewer = window->scene_viewer_array[pane_no]->core_scene_viewer;
 							Scene_viewer_set_interactive_tool(
 								window->scene_viewer_array[pane_no],
 								window->interactive_tool);
 							if (Interactive_tool_is_Transform_tool(window->interactive_tool))
 							{
-								Scene_viewer_set_input_mode(window->scene_viewer_array[pane_no]->core_scene_viewer,SCENE_VIEWER_TRANSFORM);
+								Scene_viewer_set_input_mode(pane_sceneviewer,SCENE_VIEWER_TRANSFORM);
 							}
 							else
 							{
-								Scene_viewer_set_input_mode(window->scene_viewer_array[pane_no]->core_scene_viewer,SCENE_VIEWER_SELECT);
+								Scene_viewer_set_input_mode(pane_sceneviewer,SCENE_VIEWER_SELECT);
 							}
 							/* get scene_viewer transform callbacks to allow
 								synchronising of views in multiple panes */
@@ -4488,35 +4477,35 @@ Sets the layout mode in effect on the <window>.
 								Graphics_window_Scene_viewer_view_changed,
 								window);
 							cmzn_sceneviewer_set_translation_rate(
-								window->scene_viewer_array[pane_no]->core_scene_viewer,
+								pane_sceneviewer,
 								window->default_translate_rate);
 							cmzn_sceneviewer_set_tumble_rate(
-								window->scene_viewer_array[pane_no]->core_scene_viewer,
+								pane_sceneviewer,
 								window->default_tumble_rate);
 							cmzn_sceneviewer_set_zoom_rate(
-								window->scene_viewer_array[pane_no]->core_scene_viewer,
+								pane_sceneviewer,
 								window->default_zoom_rate);
 							clip_factor = 4.0;
 							Scene_viewer_set_view_simple(
-								window->scene_viewer_array[pane_no]->core_scene_viewer,
+								pane_sceneviewer,
 								lookat[0], lookat[1], lookat[2],
 								radius, window->std_view_angle, clip_factor*radius);
-							perturb_lines = cmzn_sceneviewer_get_perturb_lines_flag(first_scene_viewer->core_scene_viewer);
-							cmzn_sceneviewer_set_perturb_lines_flag(window->scene_viewer_array[pane_no]->core_scene_viewer,
+							perturb_lines = cmzn_sceneviewer_get_perturb_lines_flag(first_sceneviewer);
+							cmzn_sceneviewer_set_perturb_lines_flag(pane_sceneviewer,
 								0 != perturb_lines);
-							cmzn_light *ambient_light = cmzn_sceneviewer_get_ambient_light(first_scene_viewer->core_scene_viewer);
-							cmzn_sceneviewer_set_ambient_light(window->scene_viewer_array[pane_no]->core_scene_viewer,
-								ambient_light);
-							cmzn_light_destroy(&ambient_light);
-							transparency_layers = cmzn_sceneviewer_get_transparency_layers(first_scene_viewer->core_scene_viewer);
-							cmzn_sceneviewer_set_transparency_layers(window->scene_viewer_array[pane_no]->core_scene_viewer,
+							cmzn_sceneviewer_set_lighting_local_viewer(pane_sceneviewer,
+								cmzn_sceneviewer_is_lighting_local_viewer(first_sceneviewer));
+							cmzn_sceneviewer_set_lighting_two_sided(pane_sceneviewer,
+								cmzn_sceneviewer_is_lighting_two_sided(first_sceneviewer));
+							transparency_layers = cmzn_sceneviewer_get_transparency_layers(first_sceneviewer);
+							cmzn_sceneviewer_set_transparency_layers(pane_sceneviewer,
 								transparency_layers);
 							transparency_mode = cmzn_sceneviewer_get_transparency_mode(
-								first_scene_viewer->core_scene_viewer);
-							cmzn_sceneviewer_set_transparency_mode(window->scene_viewer_array[pane_no]->core_scene_viewer,
+								first_sceneviewer);
+							cmzn_sceneviewer_set_transparency_mode(pane_sceneviewer,
 								transparency_mode);
 							cmzn_sceneviewer_set_antialias_sampling(
-								window->scene_viewer_array[pane_no]->core_scene_viewer,window->antialias_mode);
+								pane_sceneviewer,window->antialias_mode);
 						}
 						else
 						{
@@ -6379,19 +6368,19 @@ Writes the properties of the <window> to the command window.
 	enum cmzn_sceneviewer_transparency_mode transparency_mode;
 	enum cmzn_sceneviewer_viewport_mode viewport_mode;
 	int accumulation_buffer_depth,colour_buffer_depth,depth_buffer_depth,
-		height,pane_no,return_code,width,
+		height, return_code,width,
 		undistort_on,visual_id;
 	unsigned transparency_layers;
 	struct Colour colour;
-	struct Scene_viewer *scene_viewer = NULL;
 	struct Texture *texture;
 
 	ENTER(list_Graphics_window);
 	USE_PARAMETER(dummy_void);
 	if (window && window->scene_viewer_array)
 	{
+		cmzn_sceneviewer *first_sceneviewer = window->scene_viewer_array[0]->core_scene_viewer;
 		display_message(INFORMATION_MESSAGE,"Graphics window : %s\n",window->name);
-		buffering_mode=Scene_viewer_get_buffering_mode(window->scene_viewer_array[0]->core_scene_viewer);
+		buffering_mode=Scene_viewer_get_buffering_mode(first_sceneviewer);
 		if (buffering_mode)
 		{
 			display_message(INFORMATION_MESSAGE,"  %s\n",
@@ -6405,7 +6394,7 @@ Writes the properties of the <window> to the command window.
 			display_message(INFORMATION_MESSAGE,"  scene: %s\n",name);
 			DEALLOCATE(name);
 		}
-		cmzn_scenefilter_id filter = cmzn_sceneviewer_get_scenefilter(window->scene_viewer_array[0]->core_scene_viewer);
+		cmzn_scenefilter_id filter = cmzn_sceneviewer_get_scenefilter(first_sceneviewer);
 		name = cmzn_scenefilter_get_name(filter);
 		if (name)
 		{
@@ -6413,17 +6402,18 @@ Writes the properties of the <window> to the command window.
 			DEALLOCATE(name);
 		}
 		cmzn_scenefilter_destroy(&filter);
-		cmzn_light_id ambient_light = cmzn_sceneviewer_get_ambient_light(
-			window->scene_viewer_array[0]->core_scene_viewer);
-		char *light_name = cmzn_light_get_name(ambient_light);
-		if (light_name)
-		{
-			display_message(INFORMATION_MESSAGE,"  light model: %s\n",light_name);
-			DEALLOCATE(light_name);
-		}
-		cmzn_light_destroy(&ambient_light);
+
+		if (first_sceneviewer->isLightingLocalViewer())
+			display_message(INFORMATION_MESSAGE, "  local viewer lighting");
+		else
+			display_message(INFORMATION_MESSAGE, "  infinite viewer lighting");
+		if (first_sceneviewer->isLightingTwoSided())
+			display_message(INFORMATION_MESSAGE, "  two-sided lighting");
+		else
+			display_message(INFORMATION_MESSAGE, "  one-sided lighting");
+
 		display_message(INFORMATION_MESSAGE,"  lights:\n");
-		for_each_cmzn_light_in_Scene_viewer(window->scene_viewer_array[0]->core_scene_viewer,list_cmzn_light_name,
+		for_each_cmzn_light_in_Scene_viewer(first_sceneviewer,list_cmzn_light_name,
 			(void *)"    ");
 		/* layout */
 		display_message(INFORMATION_MESSAGE,"  layout: %s\n",
@@ -6437,20 +6427,20 @@ Writes the properties of the <window> to the command window.
 		display_message(INFORMATION_MESSAGE,"  viewing width x height: %d x %d\n",
 			width,height);
 		/* background and view in each active pane */
-		for (pane_no=0;pane_no<window->number_of_panes;pane_no++)
+		for (int pane_no = 0; pane_no < window->number_of_panes; ++pane_no)
 		{
-			scene_viewer=window->scene_viewer_array[pane_no]->core_scene_viewer;
+			cmzn_sceneviewer *pane_sceneviewer = window->scene_viewer_array[pane_no]->core_scene_viewer;
 			display_message(INFORMATION_MESSAGE,"  pane: %d\n",pane_no+1);
 			/* background */
-			Scene_viewer_get_background_colour(scene_viewer,&colour);
+			Scene_viewer_get_background_colour(pane_sceneviewer,&colour);
 			display_message(INFORMATION_MESSAGE,
 				"    background colour R G B: %g %g %g\n",
 				colour.red,colour.green,colour.blue);
 			cmzn_field_image_id image_field=
-				Scene_viewer_get_background_image_field(scene_viewer);
+				Scene_viewer_get_background_image_field(pane_sceneviewer);
 			texture = cmzn_field_image_get_texture(image_field);
 			cmzn_field_image_destroy(&image_field);
-			if (texture && Scene_viewer_get_background_texture_info(scene_viewer,
+			if (texture && Scene_viewer_get_background_texture_info(pane_sceneviewer,
 					&left,&top,&texture_width,&texture_height,&undistort_on,
 					&max_pixels_per_polygon)&&
 				GET_NAME(Texture)(texture,&name))
@@ -6474,13 +6464,13 @@ Writes the properties of the <window> to the command window.
 				DEALLOCATE(name);
 			}
 			/* view */
-			Scene_viewer_get_projection_mode(scene_viewer, &projection_mode);
+			Scene_viewer_get_projection_mode(pane_sceneviewer, &projection_mode);
 			display_message(INFORMATION_MESSAGE,"    projection: %s\n",
 				Scene_viewer_projection_mode_string(projection_mode));
 			if (SCENE_VIEWER_CUSTOM==projection_mode)
 			{
-				Scene_viewer_get_modelview_matrix(scene_viewer,modelview_matrix);
-				Scene_viewer_get_projection_matrix(scene_viewer,projection_matrix);
+				Scene_viewer_get_modelview_matrix(pane_sceneviewer,modelview_matrix);
+				Scene_viewer_get_projection_matrix(pane_sceneviewer,projection_matrix);
 				display_message(INFORMATION_MESSAGE,
 					"    modelview matrix  = | %13.6e %13.6e %13.6e %13.6e |\n",
 					modelview_matrix[0],modelview_matrix[1],
@@ -6517,14 +6507,14 @@ Writes the properties of the <window> to the command window.
 			else
 			{
 				/* parallel/perspective: write eye and interest points and up-vector */
-				cmzn_sceneviewer_get_lookat_parameters(scene_viewer, eye, lookat, up);
+				cmzn_sceneviewer_get_lookat_parameters(pane_sceneviewer, eye, lookat, up);
 				view[0] = lookat[0] - eye[0];
 				view[1] = lookat[1] - eye[1];
 				view[2] = lookat[2] - eye[2];
-				Scene_viewer_get_viewing_volume(scene_viewer,&left,&right,
+				Scene_viewer_get_viewing_volume(pane_sceneviewer,&left,&right,
 					&bottom,&top,&near_plane,&far_plane);
-				view_angle = cmzn_sceneviewer_get_view_angle(scene_viewer);
-				Scene_viewer_get_horizontal_view_angle(scene_viewer,
+				view_angle = cmzn_sceneviewer_get_view_angle(pane_sceneviewer);
+				Scene_viewer_get_horizontal_view_angle(pane_sceneviewer,
 					&horizontal_view_angle);
 				display_message(INFORMATION_MESSAGE,
 					"    eye point: %g %g %g\n",eye[0],eye[1],eye[2]);
@@ -6560,15 +6550,15 @@ Writes the properties of the <window> to the command window.
 					}
 				}
 			}
-			viewport_mode = cmzn_sceneviewer_get_viewport_mode(scene_viewer);
+			viewport_mode = cmzn_sceneviewer_get_viewport_mode(pane_sceneviewer);
 			display_message(INFORMATION_MESSAGE,"    %s\n",
 				cmzn_sceneviewer_viewport_mode_string(viewport_mode));
-			Scene_viewer_get_NDC_info(scene_viewer,
+			Scene_viewer_get_NDC_info(pane_sceneviewer,
 				&NDC_left,&NDC_top,&NDC_width,&NDC_height);
 			display_message(INFORMATION_MESSAGE,
 				"    NDC placement: left=%g top=%g width=%g height=%g\n",
 				NDC_left,NDC_top,NDC_width,NDC_height);
-			Scene_viewer_get_viewport_info(scene_viewer,
+			Scene_viewer_get_viewport_info(pane_sceneviewer,
 				&viewport_left,&viewport_top,&viewport_pixels_per_unit_x,
 				&viewport_pixels_per_unit_y);
 			display_message(INFORMATION_MESSAGE,
@@ -6578,21 +6568,22 @@ Writes the properties of the <window> to the command window.
 			/* frame count */
 			display_message(INFORMATION_MESSAGE,
 				"    Rendered frame count: %d\n",
-				Scene_viewer_get_frame_count(scene_viewer));
+				Scene_viewer_get_frame_count(pane_sceneviewer));
 		}
+
 		/* settings */
 		if (GET_NAME(Interactive_tool)(window->interactive_tool,&name))
 		{
 			display_message(INFORMATION_MESSAGE,"  Interactive tool: %s\n",name);
 			DEALLOCATE(name);
 		}
-		transparency_mode = cmzn_sceneviewer_get_transparency_mode(scene_viewer);
+		transparency_mode = cmzn_sceneviewer_get_transparency_mode(first_sceneviewer);
 		display_message(INFORMATION_MESSAGE,
 			"  Transparency mode: %s\n",cmzn_sceneviewer_transparency_mode_string(
 				transparency_mode));
 		if (transparency_mode == CMZN_SCENEVIEWER_TRANSPARENCY_MODE_ORDER_INDEPENDENT)
 		{
-			transparency_layers = cmzn_sceneviewer_get_transparency_layers(scene_viewer);
+			transparency_layers = cmzn_sceneviewer_get_transparency_layers(first_sceneviewer);
 			display_message(INFORMATION_MESSAGE,"    transparency_layers: %d\n",
 				transparency_layers);
 		}
@@ -6600,7 +6591,7 @@ Writes the properties of the <window> to the command window.
 			"  Current pane: %d\n",window->current_pane+1);
 		display_message(INFORMATION_MESSAGE,
 			"  Standard view angle: %g degrees\n",window->std_view_angle);
-		bool perturb_lines = cmzn_sceneviewer_get_perturb_lines_flag(window->scene_viewer_array[0]->core_scene_viewer);
+		bool perturb_lines = cmzn_sceneviewer_get_perturb_lines_flag(first_sceneviewer);
 		if (perturb_lines)
 		{
 			display_message(INFORMATION_MESSAGE,"  perturbed lines: on\n");
@@ -6609,7 +6600,7 @@ Writes the properties of the <window> to the command window.
 		{
 			display_message(INFORMATION_MESSAGE,"  perturbed lines: off\n");
 		}
-		int antialias = cmzn_sceneviewer_get_antialias_sampling(window->scene_viewer_array[0]->core_scene_viewer);
+		int antialias = cmzn_sceneviewer_get_antialias_sampling(first_sceneviewer);
 		if (antialias)
 		{
 			display_message(INFORMATION_MESSAGE,"  anti-aliasing at %d\n",antialias);
@@ -6618,7 +6609,7 @@ Writes the properties of the <window> to the command window.
 		{
 			display_message(INFORMATION_MESSAGE,"  no anti-aliasing\n");
 		}
-		Scene_viewer_get_depth_of_field(window->scene_viewer_array[0]->core_scene_viewer,
+		Scene_viewer_get_depth_of_field(first_sceneviewer,
 			&depth_of_field, &focal_depth);
 		if (depth_of_field > 0.0)
 		{
@@ -6630,7 +6621,7 @@ Writes the properties of the <window> to the command window.
 			display_message(INFORMATION_MESSAGE,"  infinite depth of field\n");
 		}
 		enum cmzn_sceneviewer_blending_mode blending_mode =
-			cmzn_sceneviewer_get_blending_mode(window->scene_viewer_array[0]->core_scene_viewer);
+			cmzn_sceneviewer_get_blending_mode(first_sceneviewer);
 		display_message(INFORMATION_MESSAGE,"  blending_mode: %s\n",
 			ENUMERATOR_STRING(cmzn_sceneviewer_blending_mode)(blending_mode));
 		/* OpenGL information */
@@ -6668,7 +6659,7 @@ LAST MODIFIED : 15 August 2007
 
 DESCRIPTION :
 Writes the commands for creating the <window> and establishing the views in it
-to the command window. Or writes the commadns for creating the window
+to the command window. Or writes the commands for creating the window
 and establishing the views in it to the command window to a com file.
 ==============================================================================*/
 {
@@ -6688,9 +6679,10 @@ and establishing the views in it to the command window to a com file.
 	struct Scene_viewer *scene_viewer = NULL;
 	struct Texture *texture;
 
-	ENTER(list_Graphics_window);
+	ENTER(process_list_or_write_Graphics_window_commands);
 	if (window&&window->scene_viewer_array&& ALLOCATE(prefix,char,50+strlen(window->name)))
 	{
+		cmzn_sceneviewer *first_sceneviewer = window->scene_viewer_array[0]->core_scene_viewer;
 		name=duplicate_string(window->name);
 		if (name)
 		{
@@ -6699,7 +6691,7 @@ and establishing the views in it to the command window to a com file.
 			process_message->process_command(INFORMATION_MESSAGE,"gfx create window %s",name);
 			DEALLOCATE(name);
 		}
-		buffering_mode=Scene_viewer_get_buffering_mode(window->scene_viewer_array[0]->core_scene_viewer);
+		buffering_mode=Scene_viewer_get_buffering_mode(first_sceneviewer);
 		if (buffering_mode)
 		{
 			process_message->process_command(INFORMATION_MESSAGE," %s",
@@ -6727,21 +6719,21 @@ and establishing the views in it to the command window to a com file.
 			DEALLOCATE(name);
 		}
 		cmzn_scenefilter_destroy(&filter);
-		cmzn_light_id ambient_light = cmzn_sceneviewer_get_ambient_light(
-			window->scene_viewer_array[0]->core_scene_viewer);
-		char *light_name = cmzn_light_get_name(ambient_light);
-		if (light_name)
-		{
-			/* put quotes around name if it contains special characters */
-			make_valid_token(&light_name);
-			process_message->process_command(INFORMATION_MESSAGE," light_model %s",light_name);
-			DEALLOCATE(light_name);
-		}
-		cmzn_light_destroy(&ambient_light);
+
+		if (first_sceneviewer->isLightingLocalViewer())
+			process_message->process_command(INFORMATION_MESSAGE, " local_viewer_lighting");
+		else
+			process_message->process_command(INFORMATION_MESSAGE, " infinite_viewer_lighting");
+		if (first_sceneviewer->isLightingTwoSided())
+			process_message->process_command(INFORMATION_MESSAGE, " two_sided_lighting");
+		else
+			process_message->process_command(INFORMATION_MESSAGE, " one_sided_lighting");
+
 		process_message->process_command(INFORMATION_MESSAGE,";\n");
 		sprintf(prefix,"gfx modify window %s image add_light ",window->name);
 		for_each_cmzn_light_in_Scene_viewer(window->scene_viewer_array[0]->core_scene_viewer,
 			list_cmzn_light_name_command, (void *)prefix);
+
 		/* layout */
 		Graphics_window_get_viewing_area_size(window,&width,&height);
 		process_message->process_command(INFORMATION_MESSAGE,
@@ -6920,13 +6912,13 @@ and establishing the views in it to the command window to a com file.
 	else
 	{
 		process_message->process_command(ERROR_MESSAGE,
-			"list_Graphics_window.  Invalid argument(s)");
+			"process_list_or_write_Graphics_window_commands.  Invalid argument(s)");
 		return_code=0;
 	}
 	LEAVE;
 
 	return (return_code);
-} /* list_Graphics_window_commands */
+} /* process_list_or_write_Graphics_window_commands */
 
 int list_Graphics_window_commands(struct Graphics_window *window,
 	 void *dummy_void)

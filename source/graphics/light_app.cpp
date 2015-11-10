@@ -32,7 +32,7 @@ DESCRIPTION :
 	const char *current_token, *light_type_string, **valid_strings;
 	enum cmzn_light_type light_type;
 	double constant_attenuation, direction[3], linear_attenuation, position[3],
-		quadratic_attenuation, spot_cutoff, spot_exponent, light_colour[3];
+		quadratic_attenuation, spot_cutoff, spot_exponent;
 	int num_floats, number_of_valid_strings, process, return_code;
 	struct cmzn_light *light_to_be_modified;
 	struct Modify_light_data *modify_light_data;
@@ -99,16 +99,19 @@ DESCRIPTION :
 			{
 				num_floats=3;
 				light_type = cmzn_light_get_type(light_to_be_modified);
-				cmzn_light_get_colour_rgb(light_to_be_modified, &light_colour[0]);
-				cmzn_light_get_direction(light_to_be_modified, &direction[0]);
-				cmzn_light_get_position(light_to_be_modified, &position[0]);
+				Colour light_colour; // struct in alphabetical order BGR
+				double lightColourRGB[3];
+				cmzn_light_get_colour_rgb(light_to_be_modified, lightColourRGB);
+				light_colour.red = lightColourRGB[0];
+				light_colour.green = lightColourRGB[1];
+				light_colour.blue = lightColourRGB[2];
+				cmzn_light_get_direction(light_to_be_modified, direction);
+				cmzn_light_get_position(light_to_be_modified, position);
 				constant_attenuation = cmzn_light_get_constant_attenuation(light_to_be_modified);
 				linear_attenuation = cmzn_light_get_linear_attenuation(light_to_be_modified);
 				quadratic_attenuation = cmzn_light_get_quadratic_attenuation(light_to_be_modified);
 				spot_cutoff = cmzn_light_get_spot_cutoff(light_to_be_modified);
 				spot_exponent = cmzn_light_get_spot_exponent(light_to_be_modified);
-				infinite_viewer_flag=0,local_viewer_flag=0,single_sided_flag=0,
-						double_sided_flag=0;
 
 				option_table = CREATE(Option_table)();
 				/* colour */
@@ -144,14 +147,6 @@ DESCRIPTION :
 				/* quadratic_attenuation */
 				Option_table_add_entry(option_table, "quadratic_attenuation",
 					&quadratic_attenuation, NULL, set_double_non_negative);
-				Option_table_add_entry(option_table,"single_sided",
-					&single_sided_flag,(void *)NULL,set_char_flag);
-				Option_table_add_entry(option_table,"double_sided",
-					&double_sided_flag,(void *)NULL,set_char_flag);
-				Option_table_add_entry(option_table,"infinite_viewer",
-					&infinite_viewer_flag,(void *)NULL,set_char_flag);
-				Option_table_add_entry(option_table,"local_viewer",
-					&local_viewer_flag,(void *)NULL,set_char_flag);
 
 				return_code = Option_table_multi_parse(option_table, state);
 				if (return_code)
@@ -185,34 +180,18 @@ DESCRIPTION :
 					{
 						STRING_TO_ENUMERATOR(cmzn_light_type)(light_type_string, &light_type);
 						cmzn_light_set_type(light_to_be_modified, light_type);
-						cmzn_light_set_colour_rgb(light_to_be_modified, &light_colour[0]);
-						cmzn_light_set_direction(light_to_be_modified, &direction[0]);
-						cmzn_light_set_position(light_to_be_modified, &position[0]);
+						// convert Colour struct to RGB
+						lightColourRGB[0] = light_colour.red;
+						lightColourRGB[1] = light_colour.green;
+						lightColourRGB[2] = light_colour.blue;
+						cmzn_light_set_colour_rgb(light_to_be_modified, lightColourRGB);
+						cmzn_light_set_direction(light_to_be_modified, direction);
+						cmzn_light_set_position(light_to_be_modified, position);
 						cmzn_light_set_constant_attenuation(light_to_be_modified, constant_attenuation);
 						cmzn_light_set_linear_attenuation(light_to_be_modified, linear_attenuation);
 						cmzn_light_set_quadratic_attenuation(light_to_be_modified, quadratic_attenuation);
 						cmzn_light_set_spot_cutoff(light_to_be_modified, spot_cutoff);
 						cmzn_light_set_spot_exponent(light_to_be_modified, spot_exponent);
-						if (local_viewer_flag)
-						{
-							cmzn_light_set_render_viewer_mode(light_to_be_modified,
-								CMZN_LIGHT_RENDER_VIEWER_MODE_LOCAL);
-						}
-						if (infinite_viewer_flag)
-						{
-							cmzn_light_set_render_viewer_mode(light_to_be_modified,
-								CMZN_LIGHT_RENDER_VIEWER_MODE_INFINITE);
-						}
-						if (single_sided_flag)
-						{
-							cmzn_light_set_render_side(light_to_be_modified,
-								CMZN_LIGHT_RENDER_SIDE_SINGLE);
-						}
-						if (double_sided_flag)
-						{
-							cmzn_light_set_render_side(light_to_be_modified,
-								CMZN_LIGHT_RENDER_SIDE_DOUBLE);
-						}
 					}
 				}
 				DESTROY(Option_table)(&option_table);
@@ -323,7 +302,9 @@ Modifier function to set the light from a command.
 					temp_light= *light_address;
 					if (temp_light)
 					{
-						display_message(INFORMATION_MESSAGE,"[%s]",get_cmzn_light_name(temp_light));
+						char *name = cmzn_light_get_name(temp_light);
+						display_message(INFORMATION_MESSAGE, "[%s]", name);
+						DEALLOCATE(name);
 					}
 					else
 					{

@@ -2178,7 +2178,6 @@ Creates a spectrum_editor widget.
 							cmzn_light_set_name(ambient_light, "spectrum_editor_ambient_light");
 							cmzn_light_set_type(ambient_light,CMZN_LIGHT_TYPE_AMBIENT);
 							cmzn_light_set_colour_rgb(ambient_light,&ambient_colour[0]);
-							cmzn_light_set_render_side(ambient_light,CMZN_LIGHT_RENDER_SIDE_DOUBLE);
 							cmzn_lightmodule_end_change(light_module);
 							cmzn_lightmodule_destroy(&light_module);
 							graphics_buffer = create_Graphics_buffer_wx(

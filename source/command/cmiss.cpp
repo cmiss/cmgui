@@ -1559,51 +1559,41 @@ Executes a GFX CREATE LIGHT command.
 	return (return_code);
 } /* gfx_create_light */
 
-static int gfx_create_light_model(struct Parse_state *state,
+/**
+ * Legacy GFX CREATE|MODIFY LMODEL command. Now only gives guidance for replacement
+ * commands.
+ */
+static int gfx_create_modify_light_model(struct Parse_state *state,
 	void *dummy_to_be_modified,void *command_data_void)
-/*******************************************************************************
-LAST MODIFIED : 14 June 1999
-
-DESCRIPTION :
-Executes a GFX CREATE LMODEL command.
-==============================================================================*/
 {
-	const char *current_token;
-	int return_code;
-	struct cmzn_command_data *command_data;
-
+	USE_PARAMETER(dummy_to_be_modified);
+	USE_PARAMETER(command_data_void);
+	int return_code = 1;
 	if (state)
 	{
-		if (NULL != (current_token = state->current_token))
+		if (NULL != state->current_token)
 		{
-			if (NULL != (command_data = (struct cmzn_command_data *)command_data_void))
-			{
-				display_message(INFORMATION_MESSAGE,
-					"gfx_create_light_model.  Light model is no longer supported, it is replaced by light with"
-					"ambient type.");
-			}
-			else
-			{
-				display_message(ERROR_MESSAGE,
-					"gfx_create_light_model.  Missing command_data_void");
-				return_code=0;
-			}
+			display_message(INFORMATION_MESSAGE,
+				"Light model is no longer supported. Local/infinite viewer and one/two sided "
+				"lighting are now set with the 'gfx modify window NAME image ?' command. "
+				"Ambient lighting is handled by ambient light type; modify default ambient "
+				"light colour with command 'gfx modify light default_ambient colour R G B' "
+				"or create a new ambient light and add it to a window.\n");
 		}
 		else
 		{
-			display_message(ERROR_MESSAGE,"Missing light model name");
+			display_message(ERROR_MESSAGE, "Missing light model name (OBSOLETE)");
 			display_parse_state_location(state);
-			return_code=0;
+			return_code = 0;
 		}
 	}
 	else
 	{
-		display_message(ERROR_MESSAGE,"gfx_create_light_model.  Missing state");
-		return_code=0;
+		display_message(ERROR_MESSAGE, "gfx_create_modify_light_model.  Missing state");
+		return_code = 0;
 	}
-
 	return (return_code);
-} /* gfx_create_light_model */
+} /* gfx_create_modify_light_model */
 
 #if defined (WX_USER_INTERFACE)
 static int gfx_create_node_viewer(struct Parse_state *state,
@@ -4953,7 +4943,7 @@ Executes a GFX CREATE command.
 				Option_table_add_entry(option_table,"light",NULL,
 					command_data_void,gfx_create_light);
 				Option_table_add_entry(option_table,"lmodel",NULL,
-					command_data_void,gfx_create_light_model);
+					command_data_void, gfx_create_modify_light_model);
 				struct Material_module_app materialmodule;
 				materialmodule.module = (void *)command_data->materialmodule;
 				materialmodule.region = (void *)command_data->root_region;
@@ -10966,43 +10956,6 @@ static int set_cmzn_nodal_derivatives(struct Parse_state *state,
 	return (return_code);
 }
 
-
-int modify_cmzn_light_model(struct Parse_state *state,void *light_model_void,
-	void *modify_light_model_data_void)
-/*******************************************************************************
-LAST MODIFIED : 13 December 1997
-
-DESCRIPTION :
-Modifies the properties of a light model.
-==============================================================================*/
-{
-	int return_code = 1;
-	/* check the arguments */
-	if (state)
-	{
-		const char *current_token=state->current_token;
-		if (current_token != 0)
-		{
-			display_message(INFORMATION_MESSAGE,
-				"modify_cmzn_light_model.  Light model is no longer supported, it is replaced by light with"
-				"ambient type.");
-		}
-		else
-		{
-			display_message(ERROR_MESSAGE,
-				"modify_cmzn_light_model.  Missing token");
-			return_code=0;
-		}
-	}
-	else
-	{
-		display_message(ERROR_MESSAGE,"modify_cmzn_light_model.  Missing state");
-		return_code=0;
-	}
-
-	return (return_code);
-} /* modify_cmzn_light_model */
-
 /***************************************************************************//**
  * Executes a GFX MODIFY NODES/DATA command.
  * If <use_data_flag> is set, use datapoints, otherwise nodes.
@@ -11305,7 +11258,7 @@ Executes a GFX MODIFY command.
 					(void *)(&modify_light_data), modify_cmzn_light);
 				/* lmodel */
 				Option_table_add_entry(option_table,"lmodel",NULL,
-					NULL, modify_cmzn_light_model);
+					NULL, gfx_create_modify_light_model);
 				/* material */
 				struct Material_module_app materialmodule;
 				materialmodule.module = (void *)command_data->materialmodule;
