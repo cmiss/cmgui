@@ -20,5 +20,11 @@ struct Parse_state;
 int set_Glyph(struct Parse_state *state, void *glyphAddress_void,
 	void *glyphmodule_void);
 
+struct Define_glyph_data
+{
+	cmzn_region *root_region;
+	cmzn_glyphmodule *glyphmodule;
+};
+
 int gfx_define_glyph(struct Parse_state *state,
-	void *root_region_void, void *glyphmodule_void);
+	void *glyph_name_void, void *define_glyph_data_void);

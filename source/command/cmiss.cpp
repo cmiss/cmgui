@@ -5121,8 +5121,12 @@ Executes a GFX DEFINE command.
 				Option_table_add_entry(option_table, "font", NULL,
 					fontmodule, gfx_define_font);
 				/* glyph */
-				Option_table_add_entry(option_table, "glyph", command_data->root_region,
-					command_data->glyphmodule, gfx_define_glyph);
+				Define_glyph_data define_glyph_data =
+				{
+					command_data->root_region, command_data->glyphmodule
+				};
+				Option_table_add_entry(option_table, "glyph", NULL,
+					&define_glyph_data, gfx_define_glyph);
 				/* scene */
 				Define_scene_data define_scene_data;
 				define_scene_data.root_region = command_data->root_region;
