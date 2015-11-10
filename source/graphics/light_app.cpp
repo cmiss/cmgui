@@ -33,7 +33,7 @@ DESCRIPTION :
 	enum cmzn_light_type light_type;
 	double constant_attenuation, direction[3], linear_attenuation, position[3],
 		quadratic_attenuation, spot_cutoff, spot_exponent;
-	int num_floats, number_of_valid_strings, process, return_code;
+	int number_of_valid_strings, process, return_code;
 	struct cmzn_light *light_to_be_modified;
 	struct Modify_light_data *modify_light_data;
 	struct Option_table *option_table;
@@ -97,7 +97,7 @@ DESCRIPTION :
 			}
 			if (process)
 			{
-				num_floats=3;
+				int vector_size = 3;
 				light_type = cmzn_light_get_type(light_to_be_modified);
 				Colour light_colour; // struct in alphabetical order BGR
 				double lightColourRGB[3];
@@ -121,11 +121,11 @@ DESCRIPTION :
 				Option_table_add_entry(option_table, "constant_attenuation",
 					&constant_attenuation, NULL, set_double_non_negative);
 				/* cutoff */
-				Option_table_add_entry(option_table, "cut_off",
-					&spot_cutoff, NULL, set_float);
+				Option_table_add_double_entry(option_table, "cut_off",
+					&spot_cutoff);
 				/* direction */
-				Option_table_add_entry(option_table, "direction",
-					direction, &num_floats, set_double_vector);
+				Option_table_add_double_vector_entry(option_table, "direction",
+					direction, &vector_size);
 				/* exponent */
 				Option_table_add_entry(option_table, "exponent",
 					&spot_exponent, NULL, set_double_non_negative);
@@ -142,8 +142,8 @@ DESCRIPTION :
 				Option_table_add_entry(option_table, "linear_attenuation",
 					&linear_attenuation, NULL, set_double_non_negative);
 				/* position */
-				Option_table_add_entry(option_table, "position",
-					position, &num_floats, set_double_vector);
+				Option_table_add_double_vector_entry(option_table, "position",
+					position, &vector_size);
 				/* quadratic_attenuation */
 				Option_table_add_entry(option_table, "quadratic_attenuation",
 					&quadratic_attenuation, NULL, set_double_non_negative);

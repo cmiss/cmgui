@@ -1566,33 +1566,16 @@ Executes a GFX CREATE LIGHT command.
 static int gfx_create_modify_light_model(struct Parse_state *state,
 	void *dummy_to_be_modified,void *command_data_void)
 {
+	USE_PARAMETER(state);
 	USE_PARAMETER(dummy_to_be_modified);
 	USE_PARAMETER(command_data_void);
-	int return_code = 1;
-	if (state)
-	{
-		if (NULL != state->current_token)
-		{
-			display_message(INFORMATION_MESSAGE,
-				"Light model is no longer supported. Local/infinite viewer and one/two sided "
-				"lighting are now set with the 'gfx modify window NAME image ?' command. "
-				"Ambient lighting is handled by ambient light type; modify default ambient "
-				"light colour with command 'gfx modify light default_ambient colour R G B' "
-				"or create a new ambient light and add it to a window.\n");
-		}
-		else
-		{
-			display_message(ERROR_MESSAGE, "Missing light model name (OBSOLETE)");
-			display_parse_state_location(state);
-			return_code = 0;
-		}
-	}
-	else
-	{
-		display_message(ERROR_MESSAGE, "gfx_create_modify_light_model.  Missing state");
-		return_code = 0;
-	}
-	return (return_code);
+	display_message(INFORMATION_MESSAGE,
+		"Light model is no longer supported. Local/infinite viewer and one/two sided "
+		"lighting are now set with the 'gfx modify window NAME image ?' command. "
+		"Ambient lighting is handled by ambient light type; modify default ambient "
+		"light colour with command 'gfx modify light default_ambient colour R G B' "
+		"or create a new ambient light and add it to a window.\n");
+	return 1;
 } /* gfx_create_modify_light_model */
 
 #if defined (WX_USER_INTERFACE)

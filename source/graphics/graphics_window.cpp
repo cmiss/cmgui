@@ -1961,7 +1961,7 @@ etc.) in all panes of the <window>.
 				cmzn_scene *scene = 0;
 				cmzn_sceneviewer *first_sceneviewer = 0;
 				int lightingLocalViewer = 0;
-				int lightingTwoSided = 0;
+				int lightingTwoSided = 1;
 				if (window)
 				{
 					if ((window->scene_viewer_array) && (window->scene_viewer_array[0]))
