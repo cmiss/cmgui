@@ -1487,7 +1487,6 @@ Executes a GFX CREATE LIGHT command.
 	const char *current_token;
 	int return_code;
 	struct cmzn_command_data *command_data;
-	struct cmzn_light *light;
 	struct Modify_light_data modify_light_data;
 
 	ENTER(gfx_create_light);
@@ -5038,7 +5037,7 @@ static int gfx_define_faces(struct Parse_state *state,
 					cmzn_element_id element = 0;
 					while ((0 != (element = cmzn_elementiterator_next_non_access(iter))) && return_code)
 					{
-						if (!fe_mesh->define_FE_element_faces(element))
+						if (!fe_mesh->defineElementFaces(get_FE_element_index(element)))
 						{
 							return_code = 0;
 						}
@@ -5049,7 +5048,8 @@ static int gfx_define_faces(struct Parse_state *state,
 							cmzn_element_id face = 0;
 							for (int face_number = 0; face_number < number_of_faces; ++face_number)
 							{
-								if (get_FE_element_face(element, face_number, &face) && face)
+								face = get_FE_element_face(element, face_number);
+								if (face)
 								{
 									if (!cmzn_mesh_contains_element(cmzn_mesh_group_base_cast(face_mesh_group), face) &&
 										!cmzn_mesh_group_add_element(face_mesh_group, face))
@@ -7759,7 +7759,7 @@ void create_triangle_mesh(struct cmzn_region *region, Triangle_mesh *trimesh)
 	cmzn_fieldcache_destroy(&cache);
 	cmzn_nodetemplate_destroy(&nodetemplate);
 
-	// establish mode which enables creation of shared faces with define_FE_element_faces, below
+	// establish mode which enables creation of shared faces with defineElementFaces, below
 	FE_region_begin_define_faces(cmzn_region_get_FE_region(region));
 
 	cmzn_mesh_id mesh = cmzn_fieldmodule_find_mesh_by_dimension(fieldmodule, 2);
@@ -7781,7 +7781,7 @@ void create_triangle_mesh(struct cmzn_region *region, Triangle_mesh *trimesh)
 			cmzn_elementtemplate_set_node(elementtemplate, i + 1,
 				cmzn_nodeset_find_node_by_identifier(nodeset, initial_identifier + vertex[i]->get_identifier()));
 		cmzn_element_id element = cmzn_mesh_create_element(mesh, /*identifier*/-1, elementtemplate);
-		fe_mesh->define_FE_element_faces(element);
+		fe_mesh->defineElementFaces(get_FE_element_index(element));
 		cmzn_element_destroy(&element);
 	}
 	cmzn_elementbasis_destroy(&elementbasis);
@@ -12462,7 +12462,6 @@ static int execute_command_gfx_select(struct Parse_state *state,
 	struct FE_element_grid_to_Element_point_ranges_list_data grid_to_list_data;
 	struct FE_field *grid_field;
 	struct FE_region *fe_region;
-	struct LIST(FE_element) *element_list;
 	struct LIST(FE_node) *node_list;
 	struct Multi_range *multi_range;
 	struct Option_table *option_table;

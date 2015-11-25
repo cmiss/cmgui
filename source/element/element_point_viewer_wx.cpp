@@ -1178,8 +1178,7 @@ Callback from wxTextChooser when text is entered.
 							 FE_element_get_top_level_element_conversion(
 									element_point_viewer->element_point_identifier.element,
 									element_point_viewer->element_point_identifier.top_level_element,
-									(LIST_CONDITIONAL_FUNCTION(FE_element) *)NULL, (void *)NULL,
-									/*face_number*/CMZN_ELEMENT_FACE_TYPE_INVALID, element_to_top_level);
+									/*face*/CMZN_ELEMENT_FACE_TYPE_INVALID, element_to_top_level);
 						top_level_element_text_chooser->set_object(
 							 element_point_viewer->element_point_identifier.top_level_element);
 						//				top_element_text_callback(
