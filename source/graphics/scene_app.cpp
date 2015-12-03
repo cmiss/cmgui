@@ -929,7 +929,7 @@ int scene_app_export_threejs(cmzn_scene_id scene, cmzn_scenefilter_id scenefilte
 				streamresources[i] =
 					cmzn_streaminformation_create_streamresource_file(streaminformation,temp);
 			}
-			return_code = cmzn_scene_export_scene(scene, streaminformation_scene);
+			return_code = cmzn_scene_write(scene, streaminformation_scene);
 		}
 		for (int i = 0; i < number_of_resources_required; i++)
 		{
