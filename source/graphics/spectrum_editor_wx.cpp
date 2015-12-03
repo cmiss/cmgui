@@ -1810,9 +1810,7 @@ void OnSpectrumEditorRenameSpectrum(wxCommandEvent& event)
 	if (NewSpectrumDialog->ShowModal() == wxID_OK)
 	{
 		wxString text = NewSpectrumDialog->GetValue();
-		MANAGER_MODIFY_IDENTIFIER(cmzn_spectrum, name)
-			(spectrum_editor->current_spectrum, text.mb_str(wxConvUTF8),
-			spectrum_editor->spectrum_manager);
+		cmzn_spectrum_set_name(spectrum_editor->current_spectrum, text.mb_str(wxConvUTF8));
 	}
 	delete NewSpectrumDialog;
 
