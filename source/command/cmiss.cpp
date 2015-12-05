@@ -2481,8 +2481,10 @@ Executes a GFX CREATE SPECTRUM command.
 							}
 							if (return_code)
 							{
-								ADD_OBJECT_TO_MANAGER(cmzn_spectrum)(spectrum,
-									command_data->spectrum_manager);
+								if (ADD_OBJECT_TO_MANAGER(cmzn_spectrum)(spectrum, command_data->spectrum_manager))
+									cmzn_spectrum_set_managed(spectrum, true);
+								else
+									return_code = 0;
 							}
 							DEACCESS(cmzn_spectrum)(&spectrum);
 						}
