@@ -175,7 +175,6 @@
 #endif /* defined (WX_USER_INTERFACE) */
 #include "region/cmiss_region.h"
 #include "region/cmiss_region_app.h"
-#include "selection/any_object_selection.h"
 #include "three_d_drawing/graphics_buffer.h"
 #include "graphics/font.h"
 #include "time/time_keeper_app.hpp"
@@ -346,7 +345,6 @@ DESCRIPTION :
 	struct MANAGER(cmzn_spectrum) *spectrum_manager;
 	struct MANAGER(VT_volume_texture) *volume_texture_manager;
 	/* global list of selected objects */
-	struct Any_object_selection *any_object_selection;
 	struct Element_point_ranges_selection *element_point_ranges_selection;
 	struct cmzn_spectrum *default_spectrum;
 	struct Streampoint *streampoint_list;
@@ -16597,7 +16595,6 @@ Initialise all the subcomponents of cmgui and create the cmzn_command_data
 		command_data->device_list=(struct LIST(Io_device) *)NULL;
 #endif /* defined (SELECT_DESCRIPTORS) */
 		command_data->glyphmodule=(cmzn_glyphmodule_id)0;
-		command_data->any_object_selection=(struct Any_object_selection *)NULL;
 		command_data->element_point_ranges_selection=(struct Element_point_ranges_selection *)NULL;
 		command_data->interactive_tool_manager=(struct MANAGER(Interactive_tool) *)NULL;
 		command_data->io_stream_package = (struct IO_stream_package *)NULL;
@@ -16934,7 +16931,6 @@ Initialise all the subcomponents of cmgui and create the cmzn_command_data
 		command_data->device_list=CREATE(LIST(Io_device))();
 #endif /* defined (SELECT_DESCRIPTORS) */
 		/* global list of selected objects */
-		command_data->any_object_selection = cmzn_context_get_any_object_selection(cmzn_context_app_get_core_context(context));
 		command_data->element_point_ranges_selection =
 			cmzn_context_get_element_point_ranges_selection(cmzn_context_app_get_core_context(context));
 
