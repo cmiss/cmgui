@@ -1215,10 +1215,9 @@ int domain_type_callback(enum cmzn_field_domain_type domain_type)
 		exteriorcheckbox->Enable();
 		cmzn_graphics_set_exterior(region_tree_viewer->current_graphics,
 			exteriorcheckbox->IsChecked());
-		cmzn_element_face_type face;
 		facechoice->Enable();
-		face = static_cast<cmzn_element_face_type>(facechoice->GetSelection() + CMZN_ELEMENT_FACE_TYPE_INVALID);
-		cmzn_graphics_set_element_face_type(region_tree_viewer->current_graphics, face);
+		cmzn_element_face_type faceType = static_cast<cmzn_element_face_type>(facechoice->GetSelection() + CMZN_ELEMENT_FACE_TYPE_ALL);
+		cmzn_graphics_set_element_face_type(region_tree_viewer->current_graphics, faceType);
 	}
 	else
 	{
@@ -2526,7 +2525,7 @@ void FaceChosen(wxCommandEvent &event)
 {
 	USE_PARAMETER(event);
 	facechoice=XRCCTRL(*this, "FaceChoice",wxChoice);
-	cmzn_element_face_type faceType = static_cast<cmzn_element_face_type>(facechoice->GetSelection() + CMZN_ELEMENT_FACE_TYPE_INVALID);
+	cmzn_element_face_type faceType = static_cast<cmzn_element_face_type>(facechoice->GetSelection() + CMZN_ELEMENT_FACE_TYPE_ALL);
 	cmzn_graphics_set_element_face_type(region_tree_viewer->current_graphics, faceType);
 	Region_tree_viewer_autoapply(region_tree_viewer->scene,
 		region_tree_viewer->edit_scene);
@@ -2546,7 +2545,6 @@ void SetBothMaterialChooser(cmzn_graphics *graphics)
 void SetGraphics(cmzn_graphics *graphics)
 {
 	int error;
-	cmzn_element_face_type face = CMZN_ELEMENT_FACE_TYPE_INVALID;
 	char temp_string[100], *vector_temp_string;
 	enum cmzn_graphics_render_polygon_mode render_polygon_mode;
 	struct FE_element *seed_element;
@@ -3481,8 +3479,8 @@ void SetGraphics(cmzn_graphics *graphics)
 			facechoice->Disable();
 		}
 		exteriorcheckbox->SetValue(cmzn_graphics_is_exterior(graphics));
-		face = cmzn_graphics_get_element_face_type(graphics);
-		facechoice->SetSelection(static_cast<int>(face) - CMZN_ELEMENT_FACE_TYPE_INVALID);
+		cmzn_element_face_type faceType = cmzn_graphics_get_element_face_type(graphics);
+		facechoice->SetSelection(static_cast<int>(faceType) - CMZN_ELEMENT_FACE_TYPE_ALL);
 		cmzn_graphics_contours_destroy(&contours);
 		cmzn_graphicslineattributes_destroy(&line_attributes);
 		cmzn_graphicspointattributes_destroy(&point_attributes);

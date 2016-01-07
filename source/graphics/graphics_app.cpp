@@ -350,14 +350,14 @@ int gfx_modify_scene_graphics(struct Parse_state *state,
 			NULL, set_char_flag);
 	}
 
-	/* face {xi1_0|xi1_1|xi2_0|...} */
-	cmzn_element_face_type face_type = CMZN_ELEMENT_FACE_TYPE_INVALID;
+	/* face {all|any_face|no_face|xi1_0|xi1_1|xi2_0|...} */
+	cmzn_element_face_type face_type = CMZN_ELEMENT_FACE_TYPE_ALL;
 	if ((legacy_graphics_type != LEGACY_GRAPHIC_POINT) &&
 		(legacy_graphics_type != LEGACY_GRAPHIC_NODE_POINTS) &&
 		(legacy_graphics_type != LEGACY_GRAPHIC_DATA_POINTS))
 	{
 		face_type = cmzn_graphics_get_element_face_type(graphics);
-		Option_table_add_entry(option_table,"face", &face_type, const_cast<char *>("element face"),
+		Option_table_add_entry(option_table,"face", &face_type, const_cast<char *>("element face type"),
 			setEnum<cmzn_element_face_type, /*firstEnum*/CMZN_ELEMENT_FACE_TYPE_ALL, cmzn_element_face_type_to_string>);
 	}
 
