@@ -247,16 +247,12 @@ static int gfx_modify_spectrum_linear_log(struct Parse_state *state,
 				if ( return_code )
 				{
 					if (fix_maximum)
-					{
-						cmzn_spectrumcomponent_set_fix_maximum_flag(settings, 1);
-					}
+						cmzn_spectrumcomponent_set_fix_maximum(settings, 1);
 				}
 				if ( return_code )
 				{
 					if (fix_minimum)
-					{
-						cmzn_spectrumcomponent_set_fix_minimum_flag(settings, 1);
-					}
+						cmzn_spectrumcomponent_set_fix_minimum(settings, 1);
 				}
 			}
 			else

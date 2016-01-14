@@ -585,13 +585,13 @@ Changes the currently chosen settings.
 				}
 				if (spectrum_editor->spectrum_fix_maximum_check)
 				{
-					 fix = cmzn_spectrumcomponent_get_fix_maximum_flag(new_settings);
+					 fix = cmzn_spectrumcomponent_is_fix_maximum(new_settings);
 					 spectrum_editor->spectrum_fix_maximum_check->SetValue(fix);
 					 spectrum_editor->spectrum_range_max_text->Enable(!fix);
 				}
 				if (spectrum_editor->spectrum_fix_minimum_check)
 				{
-					 fix = cmzn_spectrumcomponent_get_fix_minimum_flag(new_settings);
+					 fix = cmzn_spectrumcomponent_is_fix_minimum(new_settings);
 					 spectrum_editor->spectrum_fix_minimum_check->SetValue(fix);
 					 spectrum_editor->spectrum_range_min_text->Enable(!fix);
 				}
@@ -1240,12 +1240,12 @@ Callback for the range text widgets.
 			}
 			if (spectrum_editor->spectrum_fix_maximum_check)
 			{
-				 cmzn_spectrumcomponent_set_fix_maximum_flag(settings,
+				 cmzn_spectrumcomponent_set_fix_maximum(settings,
 						spectrum_editor->spectrum_fix_maximum_check->IsChecked());
 			}
 			if (spectrum_editor->spectrum_fix_minimum_check)
 			{
-				 cmzn_spectrumcomponent_set_fix_minimum_flag(settings,
+				 cmzn_spectrumcomponent_set_fix_minimum(settings,
 						spectrum_editor->spectrum_fix_minimum_check->IsChecked());
 			}
 			spectrum_editor_wx_update_settings(spectrum_editor, settings);
