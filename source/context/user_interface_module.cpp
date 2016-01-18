@@ -315,17 +315,9 @@ int User_interface_module_destroy(
 				DEACCESS(Time_keeper_app)(&UI_module->default_time_keeper_app);
 			if (UI_module->user_interface)
 			{
-				/* reset up messages */
-				set_display_message_function(ERROR_MESSAGE,
-					(Display_message_function *)NULL, NULL);
-				set_display_message_function(INFORMATION_MESSAGE,
-					(Display_message_function *)NULL, NULL);
-				set_display_message_function(WARNING_MESSAGE,
-					(Display_message_function *)NULL, NULL);
 				/* close the user interface */
 				DESTROY(User_interface)(&(UI_module->user_interface));
 			}
-
 			if (UI_module->cleanup_argv != NULL)
 			{
 				for (int ai = 0; ai < UI_module->cleanup_argc; ai++)

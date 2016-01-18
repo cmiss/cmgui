@@ -361,6 +361,8 @@ DESCRIPTION :
 	struct Spectrum_editor_dialog *spectrum_editor_dialog;
 #endif /* defined (WX_USER_INTERFACE) */
 	struct cmzn_graphics_module *graphics_module;
+	cmzn_logger_id logger;
+	cmzn_loggernotifier_id loggerNotifier;
 }; /* struct cmzn_command_data */
 
 typedef struct
@@ -16107,91 +16109,65 @@ for editing and entering. If there is no command_window, does nothing.
 } /* cmiss_set_command */
 
 #if defined(USE_CMGUI_COMMAND_WINDOW)
-static int display_error_message(const char *message,void *command_window_void)
-/*******************************************************************************
-LAST MODIFIED : 25 July 1999
 
-DESCRIPTION :
-Display a cmgui error message.
-==============================================================================*/
+static void display_command_window_message(cmzn_loggerevent_id event,
+	void *command_window_void)
 {
-	int return_code = 0;
-
-	ENTER(display_error_message);
-	if (command_window_void)
+	if (event)
 	{
-		write_command_window("ERROR: ",
-			(struct Command_window *)command_window_void);
-		return_code=write_command_window(message,
-			(struct Command_window *)command_window_void);
-		write_command_window("\n",(struct Command_window *)command_window_void);
+		char *message = cmzn_loggerevent_get_message_text(event);
+		cmzn_logger_message_type message_type = cmzn_loggerevent_get_message_type(event);
+		switch (message_type)
+		{
+			case CMZN_LOGGER_MESSAGE_TYPE_ERROR:
+			{
+				if (command_window_void)
+				{
+					write_command_window("ERROR: ",
+						(struct Command_window *)command_window_void);
+					write_command_window(message,
+						(struct Command_window *)command_window_void);
+					write_command_window("\n",(struct Command_window *)command_window_void);
+				}
+				else
+				{
+					printf("ERROR: %s\n",message);
+				}
+			} break;
+			case CMZN_LOGGER_MESSAGE_TYPE_INFORMATION:
+			{
+				if (command_window_void)
+				{
+					write_command_window(message,	(struct Command_window *)command_window_void);
+				}
+				else
+				{
+					printf("%s", message);
+				}
+			} break;
+			case CMZN_LOGGER_MESSAGE_TYPE_WARNING:
+			{
+				if (command_window_void)
+				{
+					write_command_window("WARNING: ",
+						(struct Command_window *)command_window_void);
+					write_command_window(message,
+						(struct Command_window *)command_window_void);
+					write_command_window("\n",(struct Command_window *)command_window_void);
+				}
+				else
+				{
+					printf("WARNING: %s\n",message);
+				}
+			} break;
+			default:
+			{
+			} break;
+		}
+		if (message)
+			DEALLOCATE(message);
 	}
-	else
-	{
-		printf("ERROR: %s\n",message);
-	}
-	LEAVE;
-
-	return (return_code);
-} /* display_error_message */
-#endif /* defined(USE_CMGUI_COMMAND_WINDOW) */
-
-#if defined(USE_CMGUI_COMMAND_WINDOW)
-static int display_information_message(const char *message,void *command_window_void)
-/*******************************************************************************
-LAST MODIFIED : 25 July 1999
-
-DESCRIPTION :
-Display a cmgui information message.
-==============================================================================*/
-{
-	int return_code = 0;
-
-	ENTER(display_error_message);
-	if (command_window_void)
-	{
-		return_code=write_command_window(message,
-			(struct Command_window *)command_window_void);
-	}
-	else
-	{
-		printf("%s", message);
-	}
-	LEAVE;
-
-	return (return_code);
-} /* display_information_message */
-#endif /* defined(USE_CMGUI_COMMAND_WINDOW) */
-
-#if defined(USE_CMGUI_COMMAND_WINDOW)
-static int display_warning_message(const char *message,void *command_window_void)
-/*******************************************************************************
-LAST MODIFIED : 25 July 1999
-
-DESCRIPTION :
-Display a cmgui warning message.
-???DB.  write_output is for the command_window - needs a better name.
-==============================================================================*/
-{
-	int return_code = 0;
-
-	ENTER(display_warning_message);
-	if (command_window_void)
-	{
-		write_command_window("WARNING: ",
-			(struct Command_window *)command_window_void);
-		return_code=write_command_window(message,
-			(struct Command_window *)command_window_void);
-		write_command_window("\n",(struct Command_window *)command_window_void);
-	}
-	else
-	{
-		printf("WARNING: %s\n",message);
-	}
-	LEAVE;
-
-	return (return_code);
-} /* display_warning_message */
+}
 #endif /* defined(USE_CMGUI_COMMAND_WINDOW) */
 
 static int cmgui_execute_comfile(const char *comfile_name,const char *example_id,
@@ -16559,6 +16535,8 @@ Initialise all the subcomponents of cmgui and create the cmzn_command_data
 		command_data->event_dispatcher = (struct Event_dispatcher *)NULL;
 		command_data->user_interface= (struct User_interface *)NULL;
 		command_data->emoter_slider_dialog=(struct Emoter_dialog *)NULL;
+		command_data->logger = 0;
+		command_data->loggerNotifier = 0;
 #if defined (WX_USER_INTERFACE)
 		command_data->data_viewer=(struct Node_viewer *)NULL;
 		command_data->node_viewer=(struct Node_viewer *)NULL;
@@ -16836,6 +16814,9 @@ Initialise all the subcomponents of cmgui and create the cmzn_command_data
 			cmzn_graphics_module_get_lightmodule(command_data->graphics_module);
 		command_data->default_light=
 			cmzn_lightmodule_get_default_light(command_data->lightmodule);
+
+		command_data->logger = cmzn_context_get_logger(
+			cmzn_context_app_get_core_context(context));
 
 		// ensure we have default tessellations
 		command_data->tessellationmodule = cmzn_graphics_module_get_tessellationmodule(command_data->graphics_module);
@@ -17149,12 +17130,10 @@ Initialise all the subcomponents of cmgui and create the cmzn_command_data
 							if (!batch_mode)
 							{
 								/* set up messages */
-								set_display_message_function(ERROR_MESSAGE,
-									display_error_message,command_window);
-								set_display_message_function(INFORMATION_MESSAGE,
-									display_information_message,command_window);
-								set_display_message_function(WARNING_MESSAGE,
-									display_warning_message,command_window);
+								command_data->loggerNotifier = cmzn_logger_create_loggernotifier(
+									command_data->logger);
+								cmzn_loggernotifier_set_callback(command_data->loggerNotifier,
+									display_command_window_message, command_window);
 #if defined (USE_PERL_INTERPRETER)
 								redirect_interpreter_output(command_data->interpreter, &return_code);
 #endif /* defined (USE_PERL_INTERPRETER) */
@@ -17331,7 +17310,9 @@ NOTE: Do not call this directly: call cmzn_command_data_destroy() to deaccess.
 			DESTROY(Spectrum_editor_dialog)(&(command_data->spectrum_editor_dialog));
 		}
 #endif /* defined (WX_USER_INTERFACE) */
-
+		cmzn_loggernotifier_clear_callback(command_data->loggerNotifier);
+		cmzn_loggernotifier_destroy(&command_data->loggerNotifier);
+		cmzn_logger_destroy(&command_data->logger);
 		DEACCESS(Scene)(&command_data->default_scene);
 		cmzn_glyphmodule_destroy(&command_data->glyphmodule);
 		cmzn_graphics_module_destroy(&command_data->graphics_module);

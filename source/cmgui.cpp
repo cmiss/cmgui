@@ -141,6 +141,7 @@ int WINAPI WinMain(HINSTANCE current_instance,HINSTANCE previous_instance,
 	}
 #endif /* !defined (WIN32_USER_INTERFACE)  && !defined (_MSC_VER)*/
 
+	set_display_message_on_console(true);
 	/* display the version */
 	display_message(INFORMATION_MESSAGE, "%s version %s %s\n%s\n"
 		"Build information: %s %s\n", CMGUI_NAME_STRING, CMGUI_VERSION_STRING,
