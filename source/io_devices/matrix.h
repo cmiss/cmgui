@@ -19,19 +19,42 @@ Most uses of this module will be for either 3 or 4 element matrices.
 #if !defined (MATRIX_H)
 #define MATRIX_H
 
-#include "io_devices/conversion.h"
 #include "graphics/auxiliary_graphics_types.h"
 
 /*
-Module Constants
-----------------
+Constants
+---------
 */
+
+/*???DB.  What about graphics/geometry.h ? */
+#if !defined (PI)
+#define PI 3.1415926535898
+#endif
+#define PI_180 (PI/180.0)
+
+#define DOF3_PRECISION double
+#define DOF3_PRECISION_STRING "lf"
+#define DOF3_NUM_FORMAT "%14.6lf"
+
 #define GMATRIX_SIZE 3
 #define GMATRIX_PRECISION double
+
 /*
-Structure Definitions
----------------------
+Global Types
+------------
 */
+
+struct Dof3_data
+/*******************************************************************************
+LAST MODIFIED : 28 December 1995
+
+DESCRIPTION :
+Contains the three data elements.
+==============================================================================*/
+{
+	DOF3_PRECISION data[3];
+}; /* Dof3_data */
+
 struct Gmatrix_struct
 /*******************************************************************************
 LAST MODIFIED : 2 December 1994
@@ -43,16 +66,13 @@ Definition of a Gmatrix
 	GMATRIX_PRECISION data[GMATRIX_SIZE][GMATRIX_SIZE];
 };
 
-/*
-Type Definitions
-----------------
-*/
 typedef struct Gmatrix_struct Gmatrix;
 
 /*
 Global Functions
 ----------------
 */
+
 void matrix_print(Gmatrix *current);
 /*******************************************************************************
 LAST MODIFIED : 1 December 1994
