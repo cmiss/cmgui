@@ -14,7 +14,6 @@ Create a cpp class that act as a transformation editor for the wx widgets.
 
 #include "transformation_editor_wx.hpp"
 
-#include "io_devices/matrix.h"
 #include "general/debug.h"
 #include "graphics/scene.h"
 #include "general/message.h"

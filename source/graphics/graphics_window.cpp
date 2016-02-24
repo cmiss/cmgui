@@ -5426,6 +5426,11 @@ graphics window on screen.
 	ENTER(Graphics_window_get_frame_pixels);
 	if (window && width && height)
 	{
+		// force complete build of all graphics in scene for image output, otherwise may get only incremental output
+		cmzn_scenefilter_id filter = cmzn_sceneviewer_get_scenefilter((window->scene_viewer_array[0]->core_scene_viewer));
+		build_Scene(window->scene, filter);
+		cmzn_scenefilter_destroy(&filter);
+
 		double frame_split_ration = 1.0;
 		Graphics_window_get_viewing_area_size(window, &panel_width,
 			&panel_height);

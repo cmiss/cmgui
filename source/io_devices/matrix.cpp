@@ -18,7 +18,6 @@ Contains routines equivalent in function to those from GL.
 #include <math.h>
 #include "general/debug.h"
 #include "io_devices/matrix.h"
-#include "io_devices/conversion.h"
 
 void matrix_print(Gmatrix *current)
 /*******************************************************************************
@@ -464,20 +463,11 @@ DESCRIPTION :
 ***Returns the equivalent scale factor of the matrix.
 ==============================================================================*/
 {
-	 int i,j;	
-	 float sum;
-
-	ENTER(matrix_scalefactor);
-
-	for (i=0; i<3;i++)
+	for (int i = 0; i<3; i++)
 	{
-		 sum = 0.0;
-		 for (j=0; j<3;j++)
-		 {
-				sum += pow((float)matrix->data[i][j],2);
-		 }
-		 scale_factor[i] = (float)sqrt(sum);
+		double sum = 0.0;
+		for (int j = 0; j<3; j++)
+			sum += pow(matrix->data[i][j], 2.0);
+		scale_factor[i] = static_cast<float>(sqrt(sum));
 	}
-
-	LEAVE;
 }

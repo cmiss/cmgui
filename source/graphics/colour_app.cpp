@@ -40,11 +40,11 @@ A modifier function to set the colour rgb values.
 			{
 				if (NULL != (colour=(struct Colour *)colour_void))
 				{
-					if ((1==sscanf(current_token," %"COLOUR_PRECISION_STRING" ",&red))&&
+					if ((1 == sscanf(current_token, " %" COLOUR_PRECISION_STRING " ", &red)) &&
 						shift_Parse_state(state,1)&&(state->current_token)&&
-						(1==sscanf(state->current_token," %"COLOUR_PRECISION_STRING" ",
+						(1 == sscanf(state->current_token, " %" COLOUR_PRECISION_STRING " ",
 						&green))&&shift_Parse_state(state,1)&&(state->current_token)&&
-						(1==sscanf(state->current_token," %"COLOUR_PRECISION_STRING" ",
+						(1 == sscanf(state->current_token, " %" COLOUR_PRECISION_STRING " ",
 						&blue)))
 					{
 						/* make sure that the rgb values are between 0 and 1 inclusive */

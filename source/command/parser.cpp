@@ -3812,7 +3812,7 @@ A modifier function for setting a FE_value to a positive value.
 				value_address=(FE_value *)value_address_void;
 				if (value_address != NULL)
 				{
-					if (1==sscanf(state->current_token," "FE_VALUE_INPUT_STRING" ",&value))
+					if (1 == sscanf(state->current_token, " " FE_VALUE_INPUT_STRING " ", &value))
 					{
 						/* make sure that the value value is positive */
 						if (value>0)
@@ -4592,7 +4592,7 @@ Now prints current contents of the vector with help.
 						current_token = state->current_token;
 						if (current_token != NULL)
 						{
-							if (1 == sscanf(current_token, " "FE_VALUE_INPUT_STRING" ", &value))
+							if (1 == sscanf(current_token, " " FE_VALUE_INPUT_STRING " ", &value))
 							{
 								values[i] = value;
 								return_code = shift_Parse_state(state, 1);
