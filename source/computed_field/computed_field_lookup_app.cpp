@@ -4,6 +4,7 @@
 * License, v. 2.0. If a copy of the MPL was not distributed with this
 * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+#include <opencmiss/zinc/fieldfiniteelement.h>
 #include "general/mystring.h"
 #include "general/debug.h"
 #include "general/message.h"
@@ -103,7 +104,7 @@ already) and allows its contents to be modified.
 			if (node)
 			{
 				return_code = field_modify->update_field_and_deaccess(
-					Computed_field_create_nodal_lookup(field_modify->get_field_module(),
+					cmzn_fieldmodule_create_field_node_lookup(field_modify->get_field_module(),
 						source_field, node));
 			}
 			else
