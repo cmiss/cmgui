@@ -8,7 +8,7 @@
 #if !defined (COMPUTED_FIELD_THRESHOLD_IMAGE_FILTER_H_)
 #define COMPUTED_FIELD_THRESHOLD_IMAGE_FILTER_H_
 
-#include "zinc/types/fieldimageprocessingid.h"
+#include "opencmiss/zinc/types/fieldimageprocessingid.h"
 #include "general/enumerator_app.h"
 
 PROTOTYPE_OPTION_TABLE_ADD_ENUMERATOR_FUNCTION(cmzn_field_imagefilter_threshold_condition);

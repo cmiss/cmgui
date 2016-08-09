@@ -24,9 +24,9 @@ interest and set scene_viewer values directly.
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
-#include "zinc/fieldmodule.h"
-#include "zinc/scenefilter.h"
-#include "zinc/sceneviewer.h"
+#include "opencmiss/zinc/fieldmodule.h"
+#include "opencmiss/zinc/scenefilter.h"
+#include "opencmiss/zinc/sceneviewer.h"
 #include "command/parser.h"
 #include "computed_field/computed_field_image.h"
 #include "general/debug.h"

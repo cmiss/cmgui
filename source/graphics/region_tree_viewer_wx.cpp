@@ -19,11 +19,11 @@ codes used to build scene editor with wxWidgets.
 #include <string>
 #include <vector>
 
-#include "zinc/scene.h"
-#include "zinc/graphics.h"
-#include "zinc/material.h"
-#include "zinc/spectrum.h"
-#include "zinc/status.h"
+#include "opencmiss/zinc/scene.h"
+#include "opencmiss/zinc/graphics.h"
+#include "opencmiss/zinc/material.h"
+#include "opencmiss/zinc/spectrum.h"
+#include "opencmiss/zinc/status.h"
 #include "general/debug.h"
 #include "general/indexed_list_private.h"
 #include "general/mystring.h"

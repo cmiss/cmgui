@@ -4,12 +4,12 @@
 * License, v. 2.0. If a copy of the MPL was not distributed with this
 * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#include "zinc/glyph.h"
-#include "zinc/material.h"
-#include "zinc/status.h"
-#include "zinc/stream.h"
-#include "zinc/streamscene.h"
-#include "zinc/tessellation.h"
+#include "opencmiss/zinc/glyph.h"
+#include "opencmiss/zinc/material.h"
+#include "opencmiss/zinc/status.h"
+#include "opencmiss/zinc/stream.h"
+#include "opencmiss/zinc/streamscene.h"
+#include "opencmiss/zinc/tessellation.h"
 #include "general/debug.h"
 #include "general/enumerator_private_app.h"
 #include "general/message.h"

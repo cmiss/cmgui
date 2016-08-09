@@ -20,7 +20,7 @@ Widgets for editing a graphical material.
 #endif /* defined (1) */
 #include "graphics/graphics_module.h"
 #include "graphics/scene.h"
-#include "zinc/material.h"
+#include "opencmiss/zinc/material.h"
 #include "three_d_drawing/graphics_buffer.h"
 #include "command/parser.h"
 #include "computed_field/computed_field.h"

@@ -18,10 +18,10 @@ Provides the wxWidgets interface to manipulate spectrum settings.
 #include <stdio.h>
 #include <math.h>
 
-#include "zinc/glyph.h"
-#include "zinc/scene.h"
-#include "zinc/material.h"
-#include "zinc/scene.h"
+#include "opencmiss/zinc/glyph.h"
+#include "opencmiss/zinc/scene.h"
+#include "opencmiss/zinc/material.h"
+#include "opencmiss/zinc/scene.h"
 #include "command/parser.h"
 #include "general/debug.h"
 #include "graphics/glyph_colour_bar.hpp"

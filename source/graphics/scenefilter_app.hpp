@@ -12,8 +12,8 @@
 #ifndef SCENEFILTER_APP_HPP
 #define SCENEFILTER_APP_HPP
 
-#include "zinc/scene.h"
-#include "zinc/scenefilter.h"
+#include "opencmiss/zinc/scene.h"
+#include "opencmiss/zinc/scenefilter.h"
 #include "general/list.h"
 #include "general/manager.h"
 #include "general/mystring.h"

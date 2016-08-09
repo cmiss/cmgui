@@ -8,9 +8,9 @@
 * License, v. 2.0. If a copy of the MPL was not distributed with this
 * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#include "zinc/graphics.h"
-#include "zinc/material.h"
-#include "zinc/timekeeper.h"
+#include "opencmiss/zinc/graphics.h"
+#include "opencmiss/zinc/material.h"
+#include "opencmiss/zinc/timekeeper.h"
 #include "time/time_keeper_app.hpp"
 #include "comfile/comfile.h"
 #include "command/command_window.h"

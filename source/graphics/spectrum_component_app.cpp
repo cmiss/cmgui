@@ -6,7 +6,7 @@
 #include <math.h>
 #include "general/mystring.h"
 
-#include "zinc/zincconfigure.h"
+#include "opencmiss/zinc/zincconfigure.h"
 #if 1
 #include "configure/cmgui_configure.h"
 #endif /* defined (BUILD_WITH_CMAKE) */

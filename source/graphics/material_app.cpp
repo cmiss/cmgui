@@ -5,9 +5,9 @@
 * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 
-#include "zinc/zincconfigure.h"
-#include "zinc/material.h"
-#include "zinc/region.h"
+#include "opencmiss/zinc/zincconfigure.h"
+#include "opencmiss/zinc/material.h"
+#include "opencmiss/zinc/region.h"
 #if 1
 #include "configure/cmgui_configure.h"
 #endif /* defined (BUILD_WITH_CMAKE) */

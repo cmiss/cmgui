@@ -5,7 +5,7 @@
 * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 
-#include "zinc/zincconfigure.h"
+#include "opencmiss/zinc/zincconfigure.h"
 
 
 #if 1
