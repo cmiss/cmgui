@@ -996,13 +996,12 @@ object's coordinate field.
 		{
 			time = 0;
 		}
-		cmzn_field_id rc_coordinate_field =
-			Computed_field_begin_wrap_coordinate_field(node_tool->coordinate_field);
+		cmzn_field_id rc_coordinate_field = cmzn_field_get_coordinate_field_wrapper(node_tool->coordinate_field);
 		if (rc_coordinate_field != 0)
 		{
 			cmzn_field_id picked_coordinate_field =
 				cmzn_graphics_get_coordinate_field(node_tool->graphics);
-			cmzn_field_id rc_picked_coordinate_field = Computed_field_begin_wrap_coordinate_field(
+			cmzn_field_id rc_picked_coordinate_field = cmzn_field_get_coordinate_field_wrapper(
 				picked_coordinate_field);
 
 			cmzn_fieldcache_set_node(field_cache, node);
@@ -1034,9 +1033,9 @@ object's coordinate field.
 					"Unable to evaluate picked position.");
 				return_code=0;
 			}
-			Computed_field_end_wrap(&rc_picked_coordinate_field);
+			cmzn_field_destroy(&rc_picked_coordinate_field);
 			cmzn_field_destroy(&picked_coordinate_field);
-			Computed_field_end_wrap(&rc_coordinate_field);
+			cmzn_field_destroy(&rc_coordinate_field);
 		}
 		else
 		{
@@ -1117,7 +1116,7 @@ try to enforce that the node is created on that element.
 				}
 			}
 			rc_coordinate_field=
-				Computed_field_begin_wrap_coordinate_field(node_tool_coordinate_field);
+				cmzn_field_get_coordinate_field_wrapper(node_tool_coordinate_field);
 			cmzn_nodeset_id nodeset = cmzn_fieldmodule_find_nodeset_by_field_domain_type(
 				field_module, node_tool->domain_type);
 
@@ -1209,7 +1208,7 @@ try to enforce that the node is created on that element.
 						}
 					}
 				}
-				Computed_field_end_wrap(&rc_coordinate_field);
+				cmzn_field_destroy(&rc_coordinate_field);
 				cmzn_nodetemplate_destroy(&nodetemplate);
 			}
 			cmzn_nodeset_destroy(&nodeset);
@@ -1643,7 +1642,7 @@ release.
 								edit_info.coordinate_field=coordinate_field;
 								/* get coordinate_field in RC coordinates */
 								edit_info.rc_coordinate_field=
-									Computed_field_begin_wrap_coordinate_field(coordinate_field);
+									cmzn_field_get_coordinate_field_wrapper(coordinate_field);
 								edit_info.orientation_scale_field=(struct Computed_field *)NULL;
 								edit_info.wrapper_orientation_scale_field=
 									(struct Computed_field *)NULL;
@@ -1669,9 +1668,8 @@ release.
 									if (orientation_scale_field)
 									{
 										edit_info.orientation_scale_field = orientation_scale_field;
-										edit_info.wrapper_orientation_scale_field =
-											Computed_field_begin_wrap_orientation_scale_field(
-												orientation_scale_field, edit_info.rc_coordinate_field);
+										edit_info.wrapper_orientation_scale_field = cmzn_field_get_vector_field_wrapper(
+											orientation_scale_field, edit_info.rc_coordinate_field);
 									}
 									cmzn_field_id signed_scale_field =
 										cmzn_graphicspointattributes_get_signed_scale_field(point_attributes);
@@ -1785,10 +1783,10 @@ release.
 								}
 								if (edit_info.orientation_scale_field)
 								{
-									Computed_field_end_wrap(
+									cmzn_field_destroy(
 										&(edit_info.wrapper_orientation_scale_field));
 								}
-								Computed_field_end_wrap(&(edit_info.rc_coordinate_field));
+								cmzn_field_destroy(&(edit_info.rc_coordinate_field));
 								cmzn_field_destroy(&coordinate_field);
 								cmzn_nodeset_destroy(&nodeset);
 								cmzn_fieldcache_destroy(&field_cache);

@@ -2165,7 +2165,7 @@ Creates a spectrum_editor widget.
 					 {
 							/* Create new rendition */
 							spectrum_editor->private_region = cmzn_region_access(spectrum_region);
-							spectrum_editor->spectrum_editor_scene =CREATE(cmzn_scene)(spectrum_editor->private_region,
+							spectrum_editor->spectrum_editor_scene = cmzn_scene::create(spectrum_editor->private_region,
 								graphics_module);
 							cmzn_lightmodule *light_module= cmzn_graphics_module_get_lightmodule(graphics_module);
 							cmzn_lightmodule_begin_change(light_module);
