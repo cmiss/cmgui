@@ -16,7 +16,7 @@ This is intended to be multithreaded......
 #include <math.h>
 #include <stdio.h>
 
-#include "zinc/timekeeper.h"
+#include "opencmiss/zinc/timekeeper.h"
 #include "general/debug.h"
 #include "general/list_private.h"
 #include "general/mystring.h"

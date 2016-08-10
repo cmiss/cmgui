@@ -6,7 +6,7 @@
 
 
 
-#include "zinc/light.h"
+#include "opencmiss/zinc/light.h"
 
 
 PROTOTYPE_OBJECT_FUNCTIONS(cmzn_light);

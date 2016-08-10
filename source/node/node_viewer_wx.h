@@ -13,8 +13,8 @@
 #if !defined (NODE_VIEWER_WX_H)
 #define NODE_VIEWER_WX_H
  
-#include "zinc/types/regionid.h"
-#include "zinc/types/timekeeperid.h"
+#include "opencmiss/zinc/types/regionid.h"
+#include "opencmiss/zinc/types/timekeeperid.h"
 
 /*
 Global Types

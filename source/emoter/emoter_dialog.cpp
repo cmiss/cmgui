@@ -20,10 +20,10 @@ group of nodes
 #include <string.h>
 #include <sys/types.h>
 #include <time.h>
-#include "zinc/element.h"
-#include "zinc/fieldmodule.h"
-#include "zinc/fieldsubobjectgroup.h"
-#include "zinc/region.h"
+#include "opencmiss/zinc/element.h"
+#include "opencmiss/zinc/fieldmodule.h"
+#include "opencmiss/zinc/fieldsubobjectgroup.h"
+#include "opencmiss/zinc/region.h"
 #include "command/command.h"
 	/*???DB.  For Execute_command */
 #include "command/parser.h"

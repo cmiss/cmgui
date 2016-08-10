@@ -15,8 +15,8 @@ equivalent to the scene_viewer assigned to it.
 #include <cmath>
 #include <string>
 
-#include "zinc/fieldmodule.h"
-#include "zinc/fieldsceneviewerprojection.h"
+#include "opencmiss/zinc/fieldmodule.h"
+#include "opencmiss/zinc/fieldsceneviewerprojection.h"
 #include "computed_field/computed_field.h"
 #include "computed_field/computed_field_private.hpp"
 #include "computed_field/computed_field_image.h"

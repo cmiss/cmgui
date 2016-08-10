@@ -7,8 +7,8 @@
 #include "configure/cmgui_configure.h"
 #endif /* defined (BUILD_WITH_CMAKE) */
 #include <string>
-#include "zinc/font.h"
-#include "zinc/font.h"
+#include "opencmiss/zinc/font.h"
+#include "opencmiss/zinc/font.h"
 #include "general/enumerator.h"
 #include "general/enumerator_private.hpp"
 #include "general/message.h"

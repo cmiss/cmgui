@@ -10,7 +10,7 @@
 * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "time/time_keeper_app.hpp"
-#include "zinc/fieldgroup.h"
+#include "opencmiss/zinc/fieldgroup.h"
 #include "command/cmiss.h"
 #include "context/context.h"
 #include "context/context_app.h"

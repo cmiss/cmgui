@@ -4,8 +4,8 @@
 * License, v. 2.0. If a copy of the MPL was not distributed with this
 * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#include "zinc/region.h"
-#include "zinc/streamregion.h"
+#include "opencmiss/zinc/region.h"
+#include "opencmiss/zinc/streamregion.h"
 #include "general/message.h"
 #include "general/mystring.h"
 #include "general/debug.h"

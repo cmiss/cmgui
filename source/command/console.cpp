@@ -14,7 +14,7 @@ Management routines for the main command window.
 #include <stdio.h>
 #include <stdlib.h>
 #if 1
-#include "zinc/zincconfigure.h"
+#include "opencmiss/zinc/zincconfigure.h"
 #endif /* defined (1) */
 
 #if defined (WIN32_SYSTEM)

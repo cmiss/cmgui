@@ -7,9 +7,9 @@
 #if !defined (RENDER_TO_FINITE_ELEMENTS_APP_H_)
 #define RENDER_TO_FINITE_ELEMENTS_APP_H_
 
-#include "zinc/region.h"
-#include "zinc/scene.h"
-#include "zinc/fieldgroup.h"
+#include "opencmiss/zinc/region.h"
+#include "opencmiss/zinc/scene.h"
+#include "opencmiss/zinc/fieldgroup.h"
 #include "general/debug.h"
 #include "general/enumerator_app.h"
 #include "general/message.h"

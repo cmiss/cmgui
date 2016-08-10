@@ -5,7 +5,7 @@
 * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 
-#include "zinc/types/elementid.h"
+#include "opencmiss/zinc/types/elementid.h"
 
 #include "command/parser.h"
 

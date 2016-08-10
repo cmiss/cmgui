@@ -4,12 +4,12 @@
 * License, v. 2.0. If a copy of the MPL was not distributed with this
 * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#include "zinc/field.h"
-#include "zinc/fieldmodule.h"
-#include "zinc/fieldgroup.h"
-#include "zinc/optimisation.h"
-#include "zinc/region.h"
-#include "zinc/status.h"
+#include "opencmiss/zinc/field.h"
+#include "opencmiss/zinc/fieldmodule.h"
+#include "opencmiss/zinc/fieldgroup.h"
+#include "opencmiss/zinc/optimisation.h"
+#include "opencmiss/zinc/region.h"
+#include "opencmiss/zinc/status.h"
 #include "general/debug.h"
 #include "general/message.h"
 #include "command/parser.h"
