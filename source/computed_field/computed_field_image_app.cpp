@@ -24,13 +24,11 @@ int Computed_field_get_type_image(struct Computed_field *field,
 	struct Computed_field **texture_coordinate_field,
 	struct Computed_field **source_field,
 	struct Texture **texture,
-	double *minimum, double *maximum, int *native_texture);
+	double *minimum, double *maximum);
 
 int cmzn_field_image_set_number_of_bytes_per_component(cmzn_field_image_id image_field, int number_of_bytes_per_component);
 
 int cmzn_field_image_set_output_range(cmzn_field_image_id image_field, double minimum, double maximum);
-
-int cmzn_field_image_set_native_texture_flag(cmzn_field_image_id image_field, int native_texture_flag);
 
 int define_Computed_field_type_sample_texture(struct Parse_state *state,
 	void *field_modify_void,void *computed_field_image_package_void)
@@ -54,7 +52,6 @@ Maintains legacy version that is set with a texture.
 	struct Option_table *option_table;
 	struct Set_Computed_field_conditional_data set_source_field_data;
 	int number_of_bytes_per_component;
-	int native_texture = 1;
 
 	ENTER(define_Computed_field_type_image);
 	if (state && (field_modify=(Computed_field_modify_data *)field_modify_void) &&
@@ -70,18 +67,17 @@ Maintains legacy version that is set with a texture.
 		source_field = (struct Computed_field *)NULL;
 		texture = (struct Texture *)NULL;
 		dimension = 3;
-		original_sizes[0] = 1;
-		original_sizes[1] = 1;
-		original_sizes[2] = 1;
+		original_sizes[0] = 0.0; // use zero value to indicate 'not set'
+		original_sizes[1] = 0.0;
+		original_sizes[2] = 0.0;
 		number_of_bytes_per_component = 1;
 		if ((NULL != field_modify->get_field()) &&
 			(computed_field_image_type_string ==
 				Computed_field_get_type_string(field_modify->get_field())))
 		{
 			return_code = Computed_field_get_type_image(field_modify->get_field(),
-				&texture_coordinate_field, &source_field, &texture, &minimum, &maximum,
-				&native_texture);
-			if (return_code && native_texture && texture)
+				&texture_coordinate_field, &source_field, &texture, &minimum, &maximum);
+			if (return_code && texture)
 			{
 				Texture_get_physical_size(texture, &original_sizes[0], &original_sizes[1],&original_sizes[2]);
 			}
@@ -112,7 +108,7 @@ Maintains legacy version that is set with a texture.
 				"2 component field creates a LUMINANCE_ALPHA texture, "
 				"3 component field creates a RGB texture, "
 				"4 component field creates a RGBA texture. "
-				"The native_texture, maximum and minimum setting does not affect image field "
+				"The maximum and minimum settings do not affect image field "
 				"generated from another field. "
 				"The <number_of_bytes_per_pixel> values only works with image field based on a field, "
 				"it will affect the number of bytes of the generated image. "
@@ -152,7 +148,6 @@ Maintains legacy version that is set with a texture.
 			{
 				if (source_field)
 				{
-					native_texture = 1;
 					maximum = 1.0;
 					minimum = 0.0;
 				}
@@ -180,11 +175,13 @@ Maintains legacy version that is set with a texture.
 						}
 					}
 					cmzn_field_image_set_output_range(field_image, minimum, maximum);
-					cmzn_field_image_set_native_texture_flag(field_image, native_texture);
 					cmzn_field_image_set_number_of_bytes_per_component(field_image, number_of_bytes_per_component);
-					cmzn_field_image_set_texture_coordinate_width(field_image, original_sizes[0]);
-					cmzn_field_image_set_texture_coordinate_height(field_image, original_sizes[1]);
-					cmzn_field_image_set_texture_coordinate_depth(field_image, original_sizes[2]);
+					if (original_sizes[0] > 0.0)
+					{
+						cmzn_field_image_set_texture_coordinate_width(field_image, original_sizes[0]);
+						cmzn_field_image_set_texture_coordinate_height(field_image, original_sizes[1]);
+						cmzn_field_image_set_texture_coordinate_depth(field_image, original_sizes[2]);
+					}
 					cmzn_field_image_destroy(&field_image);
 				}
 				return_code = field_modify->update_field_and_deaccess(field);
