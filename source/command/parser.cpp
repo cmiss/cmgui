@@ -2293,7 +2293,7 @@ if it exists.
 				}
 				if ((*end == 0) || (!(strncmp(end, " ", 1))) || (!(strncmp(end, "//", 2))))
 				{
-					if (ALLOCATE(var_name, char, end - begin))
+					if (ALLOCATE(var_name, char, (end - begin) + 1))
 					{
 						strncpy(var_name, begin, end - begin);
 						var_name[end - begin] = 0;

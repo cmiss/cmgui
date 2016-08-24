@@ -1800,11 +1800,21 @@ release.
 									shift_pressed&&(!(node_tool->picked_node_was_unselected))&&
 									(!(node_tool->edit_enabled && node_tool->motion_detected)))
 								{
-									struct LIST(FE_node) *temp_node_list = CREATE(LIST(FE_node))();
-									ADD_OBJECT_TO_LIST(FE_node)(node_tool->last_picked_node, temp_node_list);
-									cmzn_scene_remove_selection_from_node_list(node_tool->scene,
-										temp_node_list, (node_tool->domain_type == CMZN_FIELD_DOMAIN_TYPE_DATAPOINTS));
-									DESTROY(LIST(FE_node))(&temp_node_list);
+									cmzn_field_group_id selection_group = cmzn_scene_get_selection_group(node_tool->scene);
+									if (selection_group)
+									{
+										cmzn_nodeset_id nodeset = cmzn_node_get_nodeset(node_tool->last_picked_node);
+										cmzn_field_node_group_id node_group_field = cmzn_field_group_get_field_node_group(selection_group, nodeset);
+										if (node_group_field)
+										{
+											cmzn_nodeset_group_id nodeset_group = cmzn_field_node_group_get_nodeset_group(node_group_field);
+											cmzn_nodeset_group_remove_node(nodeset_group, node_tool->last_picked_node);
+											cmzn_nodeset_group_destroy(&nodeset_group);
+											cmzn_field_node_group_destroy(&node_group_field);
+										}
+										cmzn_nodeset_destroy(&nodeset);
+										cmzn_field_group_destroy(&selection_group);
+									}
 								}
 							}
 						}
@@ -2406,55 +2416,67 @@ Set the selected option in the Coordinate Field chooser.
 
 	void OnButtonUndefinepressed(wxCommandEvent& event)
 	{
-	int number_in_elements;
-	struct LIST(FE_field) *fe_field_list;
-	struct LIST(FE_node) *node_list;
-	button_undefine = XRCCTRL(*this, "ButtonUndefine", wxButton);
+		button_undefine = XRCCTRL(*this, "ButtonUndefine", wxButton);
 
-	USE_PARAMETER(event);
-	if (node_tool->coordinate_field && (fe_field_list=
-			Computed_field_get_defining_FE_field_list(node_tool->coordinate_field)))
-	{
-		if ((1==NUMBER_IN_LIST(FE_field)(fe_field_list))&&
-				(fe_field=FIRST_OBJECT_IN_LIST_THAT(FE_field)(
-						(LIST_CONDITIONAL_FUNCTION(FE_field) *)NULL,(void *)NULL,
-						fe_field_list)))
+		USE_PARAMETER(event);
+		if (Computed_field_is_type_finite_element(node_tool->coordinate_field))
 		{
 			cmzn_scene *scene = cmzn_region_get_scene(node_tool->region);
-			if (scene)
+			cmzn_field_group_id selection_group = cmzn_scene_get_selection_group(scene);
+			if (selection_group)
 			{
-				cmzn_field_id selection_field = cmzn_scene_get_selection_field(scene);
-				if (selection_field)
+				cmzn_fieldmodule_id fieldmodule = cmzn_region_get_fieldmodule(node_tool->region);
+				cmzn_fieldmodule_begin_change(fieldmodule);
+				cmzn_nodeset_id nodeset =
+					cmzn_fieldmodule_find_nodeset_by_field_domain_type(fieldmodule, node_tool->domain_type);
+				cmzn_field_node_group_id node_group_field = cmzn_field_group_get_field_node_group(selection_group, nodeset);
+				if (node_group_field)
 				{
-					cmzn_fieldmodule_id fieldmodule = cmzn_region_get_fieldmodule(node_tool->region);
-					cmzn_fieldmodule_begin_change(fieldmodule);
-					cmzn_nodeset_id nodeset =
-						cmzn_fieldmodule_find_nodeset_by_field_domain_type(fieldmodule, node_tool->domain_type);
-					node_list = cmzn_nodeset_create_node_list_ranges_conditional(
-						nodeset, (struct Multi_range *)0, /*conditional_field*/selection_field,
-						/*time*/0);
-					FE_nodeset *fe_nodeset = cmzn_nodeset_get_FE_nodeset_internal(nodeset);
-					fe_nodeset->undefine_FE_field_in_FE_node_list(fe_field, node_list, &number_in_elements);
-					if (0 < number_in_elements)
+					cmzn_nodetemplate_id nodetemplate = cmzn_nodeset_create_nodetemplate(nodeset);
+					cmzn_nodetemplate_undefine_field(nodetemplate, node_tool->coordinate_field);
+					cmzn_nodeset_group_id nodeset_group = cmzn_field_node_group_get_nodeset_group(node_group_field);
+					cmzn_nodeiterator_id iter = cmzn_nodeset_create_nodeiterator(cmzn_nodeset_group_base_cast(nodeset_group));
+					cmzn_node_id node;
+					int nodesInElementsCount = 0;
+					while (0 != (node = cmzn_nodeiterator_next_non_access(iter)))
+					{
+						// previous code expensively checked whether field at node interpolated
+						// on elements, but not ready to reimplement that at this time
+						if (0 == FE_node_get_element_usage_count(node))
+						{
+							int result = cmzn_node_merge(node, nodetemplate);
+							if (result != CMZN_OK)
+							{
+								display_message(ERROR_MESSAGE, "Node tool failed to undefine field at node");
+								break;
+							}
+						}
+						else
+							++nodesInElementsCount;
+					}
+					cmzn_nodeiterator_destroy(&iter);
+					if (0 < nodesInElementsCount)
+					{
 						display_message(WARNING_MESSAGE,
-							"Field could not be undefined in %d node(s) "
-							"because in-use by elements", number_in_elements);
-					DESTROY(LIST(FE_node))(&node_list);
-					cmzn_nodeset_destroy(&nodeset);
-					cmzn_fieldmodule_end_change(fieldmodule);
-					cmzn_fieldmodule_destroy(&fieldmodule);
-					cmzn_field_destroy(&selection_field);
+							"Node tool: %d node(s) in elements not consided for undefining field.", nodesInElementsCount);
+					}
+					cmzn_nodeset_group_remove_node(nodeset_group, node_tool->last_picked_node);
+					cmzn_nodeset_group_destroy(&nodeset_group);
+					cmzn_nodetemplate_destroy(&nodetemplate);
+					cmzn_field_node_group_destroy(&node_group_field);
 				}
-				cmzn_scene_destroy(&scene);
+				cmzn_nodeset_destroy(&nodeset);
+				cmzn_fieldmodule_end_change(fieldmodule);
+				cmzn_fieldmodule_destroy(&fieldmodule);
 			}
+			cmzn_field_group_destroy(&selection_group);
+			cmzn_scene_destroy(&scene);
 		}
 		else
 		{
 			display_message(ERROR_MESSAGE,
-					"Node_tool_undefine_selected_CB.  Invalid field");
+				"Node_tool_undefine_selected_CB.  Invalid field");
 		}
-		DESTROY(LIST(FE_field))(&fe_field_list);
-	}
 	}
 
 void OnClearButtonpressed(wxCommandEvent &event)

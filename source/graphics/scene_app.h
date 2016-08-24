@@ -108,22 +108,22 @@ cmzn_field_group_id cmzn_scene_get_selection_group(cmzn_scene_id scene);
 cmzn_field_group_id cmzn_scene_get_or_create_selection_group(cmzn_scene_id scene);
 
 /**
- * @param scene  The scene to get selection for.
+ * @param scene  The scene to modify selection in.
+ * @param domain_type  The domain type to change: nodes or datapoints.
+ * @param addFlag  True to add/select, false to remove/unselect nodes.
+ * @return  Status code CMZN_OK on success, any other value on failure.
+ */
+int cmzn_scene_change_node_selection_conditional(cmzn_scene_id scene,
+	cmzn_field_domain_type domain_type, cmzn_field_id conditionalField, bool addFlag);
+
+/**
+ * @param scene  The scene to modify selection in.
  * @param dimension  The dimension of elements to add/remove from selection.
  * @param addFlag  True to add/select, false to remove/unselect elements.
  * @return  Status code CMZN_OK on success, any other value on failure.
  */
 int cmzn_scene_change_element_selection_conditional(cmzn_scene_id scene,
 	int dimension, cmzn_field_id conditionalField, bool addFlag);
-
-int cmzn_scene_remove_selection_from_element_list_of_dimension(cmzn_scene_id scene,
-	struct LIST(FE_element) *element_list, int dimension);
-
-int cmzn_scene_add_selection_from_node_list(cmzn_scene_id scene,
-	struct LIST(FE_node) *node_list, int use_data);
-
-int cmzn_scene_remove_selection_from_node_list(cmzn_scene_id scene,
-	struct LIST(FE_node) *node_list, int use_data);
 
 PROTOTYPE_OPTION_TABLE_ADD_ENUMERATOR_FUNCTION( cmzn_streaminformation_scene_io_data_type );
 
