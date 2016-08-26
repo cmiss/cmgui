@@ -774,75 +774,48 @@ cmzn_field_group_id cmzn_scene_get_or_create_selection_group(cmzn_scene_id scene
 	return selection_group;
 }
 
-int cmzn_scene_change_selection_from_node_list(cmzn_scene_id scene,
-		struct LIST(FE_node) *node_list, int add_flag, int use_data)
+int cmzn_scene_change_node_selection_conditional(cmzn_scene_id scene,
+	cmzn_field_domain_type domain_type, cmzn_field_id conditionalField, bool addFlag)
 {
-	int return_code = 1;
-
-	ENTER(cmzn_scene_add_selection_from_node_list);
-	if (scene && node_list && (NUMBER_IN_LIST(FE_node)(node_list) > 0))
+	int return_code = CMZN_OK;
+	if ((scene) && ((CMZN_FIELD_DOMAIN_TYPE_DATAPOINTS == domain_type) || (CMZN_FIELD_DOMAIN_TYPE_NODES == domain_type)) &&
+		(conditionalField))
 	{
 		cmzn_fieldmodule_id field_module = cmzn_region_get_fieldmodule(scene->region);
 		cmzn_fieldmodule_begin_change(field_module);
-		cmzn_field_group_id selection_group = cmzn_scene_get_or_create_selection_group(scene);
-		cmzn_nodeset_id temp_nodeset = cmzn_fieldmodule_find_nodeset_by_field_domain_type(
-			field_module, use_data ? CMZN_FIELD_DOMAIN_TYPE_DATAPOINTS : CMZN_FIELD_DOMAIN_TYPE_NODES);
-		cmzn_field_node_group_id node_group = cmzn_field_group_get_field_node_group(selection_group, temp_nodeset);
-		if (!node_group)
-			node_group = cmzn_field_group_create_field_node_group(selection_group, temp_nodeset);
-		cmzn_nodeset_destroy(&temp_nodeset);
-		cmzn_nodeset_group_id nodeset_group = cmzn_field_node_group_get_nodeset_group(node_group);
-		cmzn_field_node_group_destroy(&node_group);
-		cmzn_nodeiterator_id iterator = CREATE_LIST_ITERATOR(FE_node)(node_list);
-		cmzn_node_id node = 0;
-		while (0 != (node = cmzn_nodeiterator_next_non_access(iterator)))
+		cmzn_field_group_id selection_group =
+			addFlag ? cmzn_scene_get_or_create_selection_group(scene) : cmzn_scene_get_selection_group(scene);
+		if (selection_group)
 		{
-			if (add_flag)
+			cmzn_nodeset_id temp_nodeset = cmzn_fieldmodule_find_nodeset_by_field_domain_type(field_module, domain_type);
+			cmzn_field_node_group_id node_group = cmzn_field_group_get_field_node_group(selection_group, temp_nodeset);
+			if (addFlag && !node_group)
 			{
-				cmzn_nodeset_group_add_node(nodeset_group, node);
+				node_group = cmzn_field_group_create_field_node_group(selection_group, temp_nodeset);
+				if (!node_group)
+					return_code = CMZN_ERROR_GENERAL;
 			}
-			else
+			cmzn_nodeset_destroy(&temp_nodeset);
+			if (node_group)
 			{
-				cmzn_nodeset_group_remove_node(nodeset_group, node);
+				cmzn_nodeset_group_id nodeset_group = cmzn_field_node_group_get_nodeset_group(node_group);
+				if (addFlag)
+					return_code = cmzn_nodeset_group_add_nodes_conditional(nodeset_group, conditionalField);
+				else
+					return_code = cmzn_nodeset_group_remove_nodes_conditional(nodeset_group, conditionalField);
+				cmzn_nodeset_group_destroy(&nodeset_group);
+				cmzn_field_node_group_destroy(&node_group);
 			}
+			cmzn_field_group_destroy(&selection_group);
 		}
-		cmzn_nodeiterator_destroy(&iterator);
-		cmzn_nodeset_group_destroy(&nodeset_group);
-		cmzn_field_group_destroy(&selection_group);
+		else if (addFlag)
+			return_code = CMZN_ERROR_GENERAL;
 		cmzn_fieldmodule_end_change(field_module);
 		cmzn_fieldmodule_destroy(&field_module);
+		if (!addFlag && (return_code == CMZN_OK))
+			cmzn_scene_flush_tree_selections(scene);
 	}
-	LEAVE;
-
 	return (return_code);
-}
-
-int cmzn_scene_add_selection_from_node_list(cmzn_scene_id scene,
-	struct LIST(FE_node) *node_list, int use_data)
-/*******************************************************************************
-LAST MODIFIED : 28 April 2000
-
-DESCRIPTION :
-Create a node list selection
-==============================================================================*/
-{
-	int return_code = 0;
-	return_code = cmzn_scene_change_selection_from_node_list(scene,
-		node_list, /*add_flag*/1, use_data);
-	return return_code;
-}
-
-int cmzn_scene_remove_selection_from_node_list(cmzn_scene_id scene,
-	struct LIST(FE_node) *node_list, int use_data)
-{
-	int return_code = 0;
-	if (cmzn_scene_change_selection_from_node_list(scene,
-		node_list, /*add_flag*/0, use_data))
-	{
-		cmzn_scene_flush_tree_selections(scene);
-		return_code = 1;
-	}
-	return return_code;
 }
 
 int cmzn_scene_change_element_selection_conditional(cmzn_scene_id scene,
