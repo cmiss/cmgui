@@ -15,9 +15,7 @@ registered file descriptors to the correct callbacks.
 #if !defined (EVENT_DISPATCHER_H)
 #define EVENT_DISPATCHER_H
 
-#if defined (BUILD_WITH_CMAKE)
 #include "configure/cmgui_configure.h"
-#endif /* defined (BUILD_WITH_CMAKE) */
 
 #include "general/object.h"
 #include "general/list.h"
@@ -36,7 +34,7 @@ registered file descriptors to the correct callbacks.
 /* This is the default code, it is an event dispatcher designed to run 
 	without any particular user interface, I define a preprocess value here to
 	make it easy to switch through the code */
-#include <general/time.h>
+#include <general/cmgui_time.h>
 #define USE_GENERIC_EVENT_DISPATCHER
 #endif /* switch (USER_INTERFACE) */
 

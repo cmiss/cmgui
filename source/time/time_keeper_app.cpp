@@ -21,7 +21,7 @@ This is intended to be multithreaded......
 #include "general/list_private.h"
 #include "general/mystring.h"
 #include "general/object.h"
-#include "general/time.h"
+#include "general/cmgui_time.h"
 #include "general/message.h"
 #include "time/time.h"
 #include "time/time_keeper.hpp"
@@ -207,7 +207,7 @@ int Time_keeper_app::playPrivate()
 			}
 		} break;
 		}
-		gettimeofday(&timeofday, (struct timezone *)NULL);
+		cmgui_gettimeofday(&timeofday, (struct timezone *)NULL);
 		play_start_seconds = timeofday.tv_sec;
 		play_start_microseconds = timeofday.tv_usec;
 		real_time = current_time;
@@ -392,7 +392,7 @@ int Time_keeper_app::timerEvent()
 		timeout_callback_id = (struct Event_dispatcher_timeout_callback *)NULL;
 		first_event_time = 1;
 
-		gettimeofday(&timeofday, (struct timezone *)NULL);
+		cmgui_gettimeofday(&timeofday, (struct timezone *)NULL);
 		real_time_elapsed = (double)(timeofday.tv_sec -
 			play_start_seconds) + ((double)(timeofday.tv_usec - play_start_microseconds) / 1000000.0);
 		real_time_elapsed *= speed;
@@ -672,7 +672,7 @@ int Time_keeper_app::setPlayTimeout()
 					{
 						double time_difference = next_time - real_time;
 
-						gettimeofday(&timeofday, (struct timezone *)NULL);
+						cmgui_gettimeofday(&timeofday, (struct timezone *)NULL);
 						real_time_elapsed = (double)(timeofday.tv_sec -
 							play_start_seconds) + ((double)(timeofday.tv_usec
 								- play_start_microseconds) / 1000000.0);
@@ -764,7 +764,7 @@ int Time_keeper_app::setPlayTimeout()
 					{
 						double time_difference = real_time - next_time;
 
-						gettimeofday(&timeofday, (struct timezone *)NULL);
+						cmgui_gettimeofday(&timeofday, (struct timezone *)NULL);
 						real_time_elapsed = (double)(timeofday.tv_sec -
 							play_start_seconds) + ((double)(timeofday.tv_usec
 								- play_start_microseconds) / 1000000.0);

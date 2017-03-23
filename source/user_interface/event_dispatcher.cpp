@@ -16,7 +16,7 @@ This provides an object which interfaces between a event_dispatcher and Cmgui
 #endif /* defined (1) */
 #include <math.h>
 #include <stdio.h>
-#include <general/time.h>
+#include <general/cmgui_time.h>
 #include "general/compare.h"
 #include "general/debug.h"
 #include "general/list.h"
@@ -705,7 +705,7 @@ Create a single object that belongs to a specific file descriptor.
 #if defined (WIN32_SYSTEM)
 		GetSystemTimeAsFileTime(&(idle_callback->timestamp));
 #else /* defined (WIN32_SYSTEM) */
-		idle_callback->timestamp = (long)times(&times_buffer);
+		idle_callback->timestamp = (long)cmgui_times(&times_buffer);
 #endif /* defined (WIN32_SYSTEM) */
 		idle_callback->idle_function = idle_function;
 		idle_callback->user_data = user_data;
@@ -1067,7 +1067,7 @@ DESCRIPTION :
 #if defined (WIN32_SYSTEM)
 					GetSystemTimeAsFileTime(&(idle_callback->timestamp));
 #else /* defined (WIN32_SYSTEM) */
-					idle_callback->timestamp = (long)times(&times_buffer);
+					idle_callback->timestamp = (long)cmgui_times(&times_buffer);
 #endif /* defined (WIN32_SYSTEM) */
 					ADD_OBJECT_TO_LIST(Event_dispatcher_idle_callback)
 						(idle_callback, event_dispatcher->idle_list);
@@ -1386,7 +1386,7 @@ DESCRIPTION :
 
 	if (event_dispatcher && timeout_function)
 	{
-		gettimeofday(&timeofday, &timeofdayzone);
+		cmgui_gettimeofday(&timeofday, &timeofdayzone);
 		while (timeout_s && (timeout_ns > 1000*(unsigned long)timeofday.tv_usec))
 		{
 			timeout_s--;
@@ -1809,7 +1809,7 @@ DESCRIPTION :
 			100*(unsigned long)(system_time%10000000L),
 			timeout_function, user_data);
 #elif defined (USE_GENERIC_EVENT_DISPATCHER)
-		gettimeofday(&timeofday, NULL);
+		cmgui_gettimeofday(&timeofday, NULL);
 		timeout_callback = Event_dispatcher_add_timeout_callback_at_time(
 			event_dispatcher, timeout_s + (unsigned long)timeofday.tv_sec,
 			timeout_ns + 1000*(unsigned long)timeofday.tv_usec,
@@ -2139,7 +2139,7 @@ DESCRIPTION :
 				/* Till the first timeout */
 				if (timeout_callback)
 				{
-					gettimeofday(&timeofday, NULL);
+					cmgui_gettimeofday(&timeofday, NULL);
 					if ((timeout_callback->timeout_s < (unsigned long)timeofday.tv_sec) ||
 						((timeout_callback->timeout_s == (unsigned long)timeofday.tv_sec) &&
 							(timeout_callback->timeout_ns <= (unsigned long)1000*timeofday.tv_usec)))
@@ -2220,7 +2220,7 @@ DESCRIPTION :
 			if (select_code == 0)
 			{
 				/* Look for ready timer callbacks first */
-				gettimeofday(&timeofday, NULL);
+				cmgui_gettimeofday(&timeofday, NULL);
 				if (timeout_callback &&
 					((timeout_callback->timeout_s < (unsigned long)timeofday.tv_sec) ||
 					((timeout_callback->timeout_s == (unsigned long)timeofday.tv_sec) &&
@@ -2271,7 +2271,7 @@ DESCRIPTION :
 										a new timestamp and therefore a different idle event
 										goes next.  It can't be done while it is in the list
 									   as the timestamp is part of the list identifier */
-									idle_callback->timestamp = (long)times(&times_buffer);
+									idle_callback->timestamp = (long)cmgui_times(&times_buffer);
 									ADD_OBJECT_TO_LIST(Event_dispatcher_idle_callback)
 										(idle_callback, event_dispatcher->idle_list);
 								}

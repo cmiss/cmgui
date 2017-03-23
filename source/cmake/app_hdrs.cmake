@@ -79,6 +79,7 @@ SET(APP_HDRS
     source/graphics/light_app.h
     source/computed_field/computed_field_set_app.h
     source/general/multi_range_app.h
+    source/general/cmgui_time.h
     source/choose/choose_class.hpp
     source/choose/choose_enumerator_class.hpp
     source/choose/choose_listbox_class.hpp
