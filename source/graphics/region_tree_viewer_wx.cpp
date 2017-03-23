@@ -383,25 +383,27 @@ Module functions
 static int Region_tree_viewer_wx_scene_change(
 	struct cmzn_scene *scene, void *region_tree_viewer_void);
 
-/***************************************************************************//**
-* Callback function in region_tree_viewer_wx when object's transformation has been
-* changed
-*
-*/
+/**
+ * Callback function in region_tree_viewer_wx when object's transformation has been
+ * changed
+ */
 void Region_tree_viewer_wx_transformation_change(struct cmzn_scene *scene,
-	gtMatrix *transformation_matrix, void *region_tree_viewer_void)
+	void *dummy_void, void *region_tree_viewer_void)
 {
+	USE_PARAMETER(dummy_void);
 	struct Region_tree_viewer *region_tree_viewer =
 		(struct Region_tree_viewer *)region_tree_viewer_void;
-
 	if (region_tree_viewer)
 	{
 		if (scene == region_tree_viewer->scene)
 		{
-			/* transformation_matrix can be null here which acutally indicates that
-				the scene object has not been transformed. */
-			region_tree_viewer->transformation_editor->
-			set_transformation(transformation_matrix);
+			double mat[16];
+			cmzn_scene_get_transformation_matrix(region_tree_viewer->scene, mat);
+			gtMatrix transformationMatrix;
+			for (int col = 0; col < 4; ++col)
+				for (int row = 0; row < 4; ++row)
+					transformationMatrix[col][row] = mat[col*4 + row];
+			region_tree_viewer->transformation_editor->set_transformation(&transformationMatrix);
 		}
 	}
 	else
@@ -3818,9 +3820,13 @@ int Region_tree_viewer_revert_changes(Region_tree_viewer *region_tree_viewer)
 			cmzn_graphics_destroy(&temp_graphics);
 			if (region_tree_viewer->transformation_editor)
 			{
-				cmzn_scene_get_transformation(region_tree_viewer->scene,
-					&transformation_matrix);
-				region_tree_viewer->transformation_editor->set_transformation(&transformation_matrix);
+				double mat[16];
+				cmzn_scene_get_transformation_matrix(region_tree_viewer->scene, mat);
+				gtMatrix transformationMatrix;
+				for (int col = 0; col < 4; ++col)
+					for (int row = 0; row < 4; ++row)
+						transformation_matrix[col][row] = mat[col*4 + row];
+				region_tree_viewer->transformation_editor->set_transformation(&transformationMatrix);
 			}
 		}
 		else
@@ -3970,13 +3976,16 @@ void Region_tree_viewer_set_active_scene(
 		}
 		if (region_tree_viewer->scene)
 		{
-			gtMatrix transformation_matrix;
-			cmzn_scene_get_transformation(region_tree_viewer->scene,
-				&transformation_matrix);
+			double mat[16];
+			cmzn_scene_get_transformation_matrix(region_tree_viewer->scene, mat);
+			gtMatrix transformationMatrix;
+			for (int col = 0; col < 4; ++col)
+				for (int row = 0; row < 4; ++row)
+					transformationMatrix[col][row] = mat[col*4 + row];
 			region_tree_viewer->transformation_editor->set_scene(
 				region_tree_viewer->scene);
 			region_tree_viewer->transformation_editor->set_transformation(
-				&transformation_matrix);
+				&transformationMatrix);
 			if (cmzn_scene_add_transformation_callback(
 				region_tree_viewer->scene,
 				Region_tree_viewer_wx_transformation_change,

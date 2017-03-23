@@ -264,7 +264,12 @@ Updates the node locations for the <emoter_slider>
 					transformation[3][1] = shared_data->weights[1];
 					transformation[3][2] = shared_data->weights[2];
 					cmzn_scene *scene = cmzn_region_get_scene(shared_data->region);
-					cmzn_scene_set_transformation(scene, &transformation);
+					double mat[16];
+					for (int col = 0; col < 4; ++col)
+						for (int row = 0; row < 4; ++row)
+							mat[col*4 + row] = transformation[col][row];
+					scene->setTransformationMatrixColumnMajor(true);
+					cmzn_scene_set_transformation_matrix(scene, mat);
 					cmzn_scene_destroy(&scene);
 				}
 				i=0;
