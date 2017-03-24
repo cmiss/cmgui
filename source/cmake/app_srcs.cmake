@@ -65,6 +65,7 @@ SET(APP_SRCS
     source/computed_field/computed_field_app.cpp
     source/computed_field/computed_field_set_app.cpp
     source/general/multi_range_app.cpp
+    source/general/cmgui_time.cpp
     source/graphics/auxiliary_graphics_types_app.cpp
     source/graphics/light_app.cpp
     source/graphics/scene_app.cpp

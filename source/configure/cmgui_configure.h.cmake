@@ -7,6 +7,8 @@
 #ifndef CMGUI_CONFIGURE_H
 #define CMGUI_CONFIGURE_H
 
+#include "opencmiss/zinc/zincconfigure.h"
+
 // User interface specific defines
 #cmakedefine WIN32_USER_INTERFACE
 #cmakedefine GTK_USER_INTERFACE

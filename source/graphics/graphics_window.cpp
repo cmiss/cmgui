@@ -823,7 +823,6 @@ the changes are to be applied to all panes.
 	double max_pixels_per_polygon,texture_placement[4];
 	int first_pane, last_pane, pane_no, pixelsx, pixelsy, pixelsz, return_code,
 		undistort_on;
-	struct Colour background_colour;
 	struct Graphics_window *window;
 	struct Modify_graphics_window_data *modify_graphics_window_data;
 	struct Option_table *option_table, *undistort_option_table;
@@ -842,12 +841,18 @@ the changes are to be applied to all panes.
 		{
 			if (state->current_token)
 			{
+				struct Colour background_colour = { 0.0, 0.0, 0.0, 0.0 };
 				/* get defaults from scene_viewer for first pane of window */
 				if ((window=(struct Graphics_window *)window_void)&&
 					 (window->scene_viewer_array) &&
 					(scene_viewer=window->scene_viewer_array[window->current_pane]))
 				{
-					Scene_viewer_get_background_colour(scene_viewer->core_scene_viewer,&background_colour);
+					double rgba[4];
+					cmzn_sceneviewer_get_background_colour_rgba(scene_viewer->core_scene_viewer, rgba);
+					background_colour.red   = rgba[0];
+					background_colour.green = rgba[1];
+					background_colour.blue  = rgba[2];
+					background_colour.alpha = rgba[3];
 					image_field = cmzn_field_image_base_cast(
 						Scene_viewer_get_background_image_field(scene_viewer->core_scene_viewer));
 					Scene_viewer_get_background_texture_info(scene_viewer->core_scene_viewer,
@@ -858,9 +863,6 @@ the changes are to be applied to all panes.
 				else
 				{
 					scene_viewer = 0;
-					background_colour.red=0.0;
-					background_colour.green=0.0;
-					background_colour.blue=0.0;
 					texture_placement[0]=texture_placement[1]=
 						texture_placement[2]=texture_placement[3]=0.0;
 					undistort_on=0;
@@ -926,11 +928,13 @@ the changes are to be applied to all panes.
 						}
 						for (pane_no=first_pane;pane_no <= last_pane;pane_no++)
 						{
-							scene_viewer=window->scene_viewer_array[pane_no];
-							Scene_viewer_set_background_colour(scene_viewer->core_scene_viewer,
-								&background_colour);
+							cmzn_sceneviewer *sceneviewer = window->scene_viewer_array[pane_no]->core_scene_viewer;
+							cmzn_sceneviewer_begin_change(sceneviewer);
+							const double rgba[4] =
+								{ background_colour.red, background_colour.green, background_colour.blue, background_colour.alpha };
+							cmzn_sceneviewer_set_background_colour_rgba(sceneviewer, rgba);
 							cmzn_field_image_id image = cmzn_field_cast_image(image_field);
-							Scene_viewer_set_background_image_field(scene_viewer->core_scene_viewer, image);
+							Scene_viewer_set_background_image_field(sceneviewer, image);
 							if ((texture_placement[2] == 0.0) && (texture_placement[3] == 0.0))
 							{
 								if (image_field)
@@ -940,7 +944,7 @@ the changes are to be applied to all panes.
 										&pixelsx, &pixelsy, &pixelsz);
 									texture_placement[2] = pixelsx;
 									texture_placement[3] = pixelsy;
-									Scene_viewer_set_background_texture_info(scene_viewer->core_scene_viewer,
+									Scene_viewer_set_background_texture_info(sceneviewer,
 										texture_placement[0],texture_placement[1],
 										texture_placement[2],texture_placement[3],
 										undistort_on,max_pixels_per_polygon);
@@ -948,12 +952,13 @@ the changes are to be applied to all panes.
 							}
 							else
 							{
-								Scene_viewer_set_background_texture_info(scene_viewer->core_scene_viewer,
+								Scene_viewer_set_background_texture_info(sceneviewer,
 									texture_placement[0],texture_placement[1],
 									texture_placement[2],texture_placement[3],
 									undistort_on,max_pixels_per_polygon);
 							}
 							cmzn_field_image_destroy(&image);
+							cmzn_sceneviewer_end_change(sceneviewer);
 						}
 						Graphics_window_update_now(window);
 					}
@@ -4388,7 +4393,6 @@ Sets the layout mode in effect on the <window>.
 #if defined (WX_USER_INTERFACE)
 	enum cmzn_sceneviewer_transparency_mode transparency_mode;
 	int perturb_lines;
-	struct Colour background_colour;
 	struct Graphics_buffer_app *graphics_buffer;
 	int transparency_layers;
 #endif /* defined (WX_USER_INTERFACE) */
@@ -4450,7 +4454,6 @@ Sets the layout mode in effect on the <window>.
 						/*minimum_accumulation_buffer_depth*/0, /*buffer_to_match*/0);
 					if (graphics_buffer)
 					{
-						Scene_viewer_get_background_colour(first_sceneviewer,&background_colour);
 						cmzn_scenefilter_id filter = cmzn_sceneviewer_get_scenefilter(first_sceneviewer);
 						window->scene_viewer_array[pane_no]=
 							CREATE(Scene_viewer_app)(graphics_buffer,	window->sceneviewermodule,
@@ -5890,23 +5893,27 @@ near and far clipping planes; if specific values are required, should follow
 with commands for setting these.
 ==============================================================================*/
 {
-	double centre_x,centre_y,centre_z,clip_factor,radius,
-		size_x,size_y,size_z,width_factor;
-	int pane_no,return_code;
-	double left, right, bottom, top, near_plane, far_plane;
+	int return_code;
 
-	ENTER(Graphics_window_view_all);
 	if (window && window->scene_viewer_array)
 	{
 		return_code = 1;
 		cmzn_scenefilter_id filter = cmzn_sceneviewer_get_scenefilter((window->scene_viewer_array[0]->core_scene_viewer));
-		cmzn_scene_get_global_graphics_range(window->scene, filter,
-			&centre_x, &centre_y, &centre_z, &size_x, &size_y, &size_z);
+		double min[3] = { 0.0, 0.0, 0.0 };
+		double max[3] = { 0.0, 0.0, 0.0 };
+		cmzn_scene_get_coordinates_range(window->scene, filter, min, max);
+		const double centre_x = 0.5*(min[0] + max[0]);
+		const double centre_y = 0.5*(min[1] + max[1]);
+		const double centre_z = 0.5*(min[2] + max[2]);
+		const double size_x = max[0] - min[0];
+		const double size_y = max[1] - min[1];
+		const double size_z = max[2] - min[2];
 		cmzn_scenefilter_destroy(&filter);
-		radius = 0.5*sqrt(size_x*size_x + size_y*size_y + size_z*size_z);
+		double radius = 0.5*sqrt(size_x*size_x + size_y*size_y + size_z*size_z);
 		if (0 == radius)
 		{
 			/* get current "radius" from first scene viewer */
+			double left, right, bottom, top, near_plane, far_plane;
 			Scene_viewer_get_viewing_volume(window->scene_viewer_array[0]->core_scene_viewer,
 				&left, &right, &bottom, &top, &near_plane, &far_plane);
 			radius = 0.5*(right - left);
@@ -5914,14 +5921,14 @@ with commands for setting these.
 		else
 		{
 			/*???RC width_factor should be read in from defaults file */
-			width_factor = 1.05;
+			const int width_factor = 1.05;
 			/* enlarge radius to keep image within edge of window */
 			radius *= width_factor;
 		}
 
 		/*???RC clip_factor should be read in from defaults file: */
-		clip_factor = 4.0;
-		for (pane_no = 0; (pane_no < window->number_of_scene_viewers) &&
+		const int clip_factor = 4.0;
+		for (int pane_no = 0; (pane_no < window->number_of_scene_viewers) &&
 			return_code; pane_no++)
 		{
 			return_code = Scene_viewer_set_view_simple(
@@ -5935,10 +5942,8 @@ with commands for setting these.
 			"Graphics_window_view_all.  Invalid argument(s)");
 		return_code=0;
 	}
-	LEAVE;
-
 	return (return_code);
-} /* Graphics_window_view_all */
+}
 
 int Graphics_window_view_changed(struct Graphics_window *window,
 	int changed_pane)
@@ -6376,7 +6381,6 @@ Writes the properties of the <window> to the command window.
 		height, return_code,width,
 		undistort_on,visual_id;
 	unsigned transparency_layers;
-	struct Colour colour;
 	struct Texture *texture;
 
 	ENTER(list_Graphics_window);
@@ -6437,10 +6441,11 @@ Writes the properties of the <window> to the command window.
 			cmzn_sceneviewer *pane_sceneviewer = window->scene_viewer_array[pane_no]->core_scene_viewer;
 			display_message(INFORMATION_MESSAGE,"  pane: %d\n",pane_no+1);
 			/* background */
-			Scene_viewer_get_background_colour(pane_sceneviewer,&colour);
+			double rgb[3];
+			cmzn_sceneviewer_get_background_colour_rgb(pane_sceneviewer, rgb);
 			display_message(INFORMATION_MESSAGE,
 				"    background colour R G B: %g %g %g\n",
-				colour.red,colour.green,colour.blue);
+				rgb[0], rgb[1], rgb[2]);
 			cmzn_field_image_id image_field=
 				Scene_viewer_get_background_image_field(pane_sceneviewer);
 			texture = cmzn_field_image_get_texture(image_field);
@@ -6680,8 +6685,6 @@ and establishing the views in it to the command window to a com file.
 	enum cmzn_sceneviewer_viewport_mode viewport_mode;
 	int height,i,pane_no,return_code,width,undistort_on;
 	unsigned transparency_layers;
-	struct Colour colour;
-	struct Scene_viewer *scene_viewer = NULL;
 	struct Texture *texture;
 
 	ENTER(process_list_or_write_Graphics_window_commands);
@@ -6750,21 +6753,22 @@ and establishing the views in it to the command window to a com file.
 		/* background and view in each active pane */
 		for (pane_no=0;pane_no<window->number_of_panes;pane_no++)
 		{
-			scene_viewer=window->scene_viewer_array[pane_no]->core_scene_viewer;
+			cmzn_sceneviewer *sceneviewer = window->scene_viewer_array[pane_no]->core_scene_viewer;
 			process_message->process_command(INFORMATION_MESSAGE,
 				"gfx modify window %s set current_pane %d;\n",
 				window->name,pane_no+1);
 			/* background */
 			process_message->process_command(INFORMATION_MESSAGE,
 				"gfx modify window %s background",window->name);
-			Scene_viewer_get_background_colour(scene_viewer,&colour);
+			double rgb[3];
+			cmzn_sceneviewer_get_background_colour_rgb(sceneviewer, rgb);
 			process_message->process_command(INFORMATION_MESSAGE,
-				" colour %g %g %g",colour.red,colour.green,colour.blue);
+				" colour %g %g %g", rgb[0], rgb[1], rgb[2]);
 			cmzn_field_image_id image_field=
-				Scene_viewer_get_background_image_field(scene_viewer);
+				Scene_viewer_get_background_image_field(sceneviewer);
 			texture = cmzn_field_image_get_texture(image_field);
 			cmzn_field_image_destroy(&image_field);
-			if (texture &&	Scene_viewer_get_background_texture_info(scene_viewer,
+			if (texture &&	Scene_viewer_get_background_texture_info(sceneviewer,
 					&left,&top,&texture_width,&texture_height,&undistort_on,
 					&max_pixels_per_polygon)&&
 				GET_NAME(Texture)(texture,&name))
@@ -6794,13 +6798,13 @@ and establishing the views in it to the command window to a com file.
 			/* view */
 			process_message->process_command(INFORMATION_MESSAGE,
 				"gfx modify window %s view",window->name);
-			Scene_viewer_get_projection_mode(scene_viewer, &projection_mode);
+			Scene_viewer_get_projection_mode(sceneviewer, &projection_mode);
 			process_message->process_command(INFORMATION_MESSAGE," %s",
 				Scene_viewer_projection_mode_string(projection_mode));
 			if (SCENE_VIEWER_CUSTOM==projection_mode)
 			{
-				Scene_viewer_get_modelview_matrix(scene_viewer,modelview_matrix);
-				Scene_viewer_get_projection_matrix(scene_viewer,projection_matrix);
+				Scene_viewer_get_modelview_matrix(sceneviewer,modelview_matrix);
+				Scene_viewer_get_projection_matrix(sceneviewer,projection_matrix);
 				process_message->process_command(INFORMATION_MESSAGE," modelview_matrix");
 				for (i=0;i<16;i++)
 				{
@@ -6815,10 +6819,10 @@ and establishing the views in it to the command window to a com file.
 			else
 			{
 				/* parallel/perspective: write eye and interest points and up-vector */
-				cmzn_sceneviewer_get_lookat_parameters(scene_viewer, eye, lookat, up);
-				Scene_viewer_get_viewing_volume(scene_viewer,&left,&right,
+				cmzn_sceneviewer_get_lookat_parameters(sceneviewer, eye, lookat, up);
+				Scene_viewer_get_viewing_volume(sceneviewer,&left,&right,
 					&bottom,&top,&near_plane,&far_plane);
-				view_angle = cmzn_sceneviewer_get_view_angle(scene_viewer);
+				view_angle = cmzn_sceneviewer_get_view_angle(sceneviewer);
 				process_message->process_command(INFORMATION_MESSAGE,
 					" eye_point %g %g %g",eye[0],eye[1],eye[2]);
 				process_message->process_command(INFORMATION_MESSAGE,
@@ -6840,16 +6844,16 @@ and establishing the views in it to the command window to a com file.
 					process_message->process_command(INFORMATION_MESSAGE," allow_skew");
 				}
 			}
-			viewport_mode = cmzn_sceneviewer_get_viewport_mode(scene_viewer);
+			viewport_mode = cmzn_sceneviewer_get_viewport_mode(sceneviewer);
 			process_message->process_command(INFORMATION_MESSAGE," %s",
 				cmzn_sceneviewer_viewport_mode_string(viewport_mode));
 
 
-			Scene_viewer_get_NDC_info(scene_viewer,
+			Scene_viewer_get_NDC_info(sceneviewer,
 				&NDC_left,&NDC_top,&NDC_width,&NDC_height);
 			process_message->process_command(INFORMATION_MESSAGE," ndc_placement %g %g %g %g",
 				NDC_left,NDC_top,NDC_width,NDC_height);
-			Scene_viewer_get_viewport_info(scene_viewer,
+			Scene_viewer_get_viewport_info(sceneviewer,
 				&viewport_left,&viewport_top,&viewport_pixels_per_unit_x,
 				&viewport_pixels_per_unit_y);
 			process_message->process_command(INFORMATION_MESSAGE,
@@ -6898,12 +6902,13 @@ and establishing the views in it to the command window to a com file.
 		{
 			process_message->process_command(INFORMATION_MESSAGE," depth_of_field 0.0");
 		}
-		transparency_mode = cmzn_sceneviewer_get_transparency_mode(scene_viewer);
+		cmzn_sceneviewer *sceneviewer = window->scene_viewer_array[0]->core_scene_viewer;
+		transparency_mode = cmzn_sceneviewer_get_transparency_mode(sceneviewer);
 		process_message->process_command(INFORMATION_MESSAGE," %s",
 			cmzn_sceneviewer_transparency_mode_string(transparency_mode));
 		if (transparency_mode == CMZN_SCENEVIEWER_TRANSPARENCY_MODE_ORDER_INDEPENDENT)
 		{
-			transparency_layers = cmzn_sceneviewer_get_transparency_layers(scene_viewer);
+			transparency_layers = cmzn_sceneviewer_get_transparency_layers(sceneviewer);
 			process_message->process_command(INFORMATION_MESSAGE," %d",transparency_layers);
 		}
 		enum cmzn_sceneviewer_blending_mode blending_mode =

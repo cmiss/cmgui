@@ -36,6 +36,7 @@
 #include "opencmiss/zinc/region.h"
 #include "opencmiss/zinc/scene.h"
 #include "opencmiss/zinc/sceneviewer.h"
+#include "opencmiss/zinc/result.h"
 #include "opencmiss/zinc/stream.h"
 #include "opencmiss/zinc/streamregion.h"
 #include "comfile/comfile.h"
@@ -85,9 +86,9 @@
 #include "element/element_tool.h"
 #include "emoter/emoter_dialog.h"
 #include "finite_element/export_cm_files.h"
-#if defined (USE_NETGEN)
+#if defined (ZINC_USE_NETGEN)
 #include "finite_element/generate_mesh_netgen.h"
-#endif /* defined (USE_NETGEN) */
+#endif /* defined (ZINC_USE_NETGEN) */
 #include "finite_element/export_finite_element.h"
 #include "finite_element/finite_element.h"
 #include "finite_element/finite_element_conversion.h"
@@ -144,7 +145,7 @@
 #include "gtk/gtk_cmiss_scene_viewer.h"
 #endif /* defined (GTK_USER_INTERFACE) */
 #include "image_processing/computed_field_image_resample.h"
-#if defined (USE_ITK)
+#if defined (ZINC_USE_ITK)
 #include "image_processing/computed_field_threshold_image_filter.h"
 #include "image_processing/computed_field_binary_threshold_image_filter.h"
 #include "image_processing/computed_field_canny_edge_detection_filter.h"
@@ -160,7 +161,7 @@
 #include "image_processing/computed_field_fast_marching_image_filter.h"
 #include "image_processing/computed_field_binary_dilate_image_filter.h"
 #include "image_processing/computed_field_binary_erode_image_filter.h"
-#endif /* defined (USE_ITK) */
+#endif /* defined (ZINC_USE_ITK) */
 #if defined (SELECT_DESCRIPTORS)
 #include "io_devices/io_device.h"
 #endif /* !defined (SELECT_DESCRIPTORS) */
@@ -5740,7 +5741,7 @@ static int gfx_destroy_nodes(struct Parse_state *state,
 					if (use_conditional_field)
 					{
 						int result = cmzn_nodeset_destroy_nodes_conditional(nodeset, use_conditional_field);
-						if (result == CMZN_ERROR_IN_USE)
+						if (result == CMZN_RESULT_ERROR_IN_USE)
 							nodesInElementsNotDestroyed = true;
 						else if (result != CMZN_OK)
 							return_code = 0;
@@ -6164,10 +6165,14 @@ Executes a GFX EDIT GRAPHICS_OBJECT command.
 					scene = cmzn_region_get_scene(region);
 					if (scene)
 					{
-						gtMatrix transformationMatrix;
+						double mat[16];
 						if (cmzn_scene_has_transformation(scene) &&
-							cmzn_scene_get_transformation(scene, &transformationMatrix))
+							(CMZN_OK == cmzn_scene_get_transformation_matrix(scene, mat)))
 						{
+							gtMatrix transformationMatrix;
+							for (int col = 0; col < 4; ++col)
+								for (int row = 0; row < 4; ++row)
+									transformationMatrix[col][row] = mat[col*4 + row];
 							cmzn_fieldmodule_id fieldmodule = cmzn_region_get_fieldmodule(region);
 							cmzn_fieldmodule_begin_change(fieldmodule);
 							cmzn_field_domain_type domainTypes[] = { CMZN_FIELD_DOMAIN_TYPE_NODES, CMZN_FIELD_DOMAIN_TYPE_DATAPOINTS };
@@ -6184,7 +6189,7 @@ Executes a GFX EDIT GRAPHICS_OBJECT command.
 							}
 							cmzn_fieldmodule_end_change(fieldmodule);
 							cmzn_fieldmodule_destroy(&fieldmodule);
-							cmzn_scene_set_transformation(scene, &identity);
+							cmzn_scene_clear_transformation(scene);
 						}
 						else
 						{
@@ -7826,19 +7831,21 @@ static int gfx_mesh_graphics_tetrahedral(struct Parse_state *state,
 
 			if ((return_code = Option_table_multi_parse(option_table, state)))
 			{
-#if defined (USE_NETGEN)
+#if defined (ZINC_USE_NETGEN)
 				Triangle_mesh *trimesh = NULL;
 				if (scene)
 				{
 					float tolerance = 0.000001;
-					double centre_x, centre_y, centre_z, size_x, size_y, size_z;
 					build_Scene(scene, filter);
-					cmzn_scene_get_global_graphics_range(scene, filter,
-						&centre_x, &centre_y, &centre_z, &size_x, &size_y, &size_z);
-					if (size_x !=0 && size_y!=0 && size_z!=0)
+					double min[3] = { 0.0, 0.0, 0.0 };
+					double max[3] = { 0.0, 0.0, 0.0 };
+					cmzn_scene_get_coordinates_range(scene, filter, min, max);
+					const double size_x = max[0] - min[0];
+					const double size_y = max[1] - min[1];
+					const double size_z = max[2] - min[2];
+					if ((size_x != 0.0) || (size_y != 0.0) || (size_z != 0.0))
 					{
-						tolerance = tolerance * (float)sqrt(
-							size_x*size_x + size_y*size_y + size_z*size_z);
+						tolerance *= static_cast<float>(sqrt(size_x*size_x + size_y*size_y + size_z*size_z));
 					}
 					Render_graphics_triangularisation renderer(NULL, tolerance);
 					if (renderer.Scene_compile(scene, filter))
@@ -7880,7 +7887,7 @@ static int gfx_mesh_graphics_tetrahedral(struct Parse_state *state,
 					"gfx_mesh_graphics. Does not support tetrahedral mesh yet. To use this feature"
 					" please compile cmgui with Netgen");
 				return_code = 0;
-#endif /* defined (USE_NETGEN) */
+#endif /* defined (ZINC_USE_NETGEN) */
 			}
 			DEALLOCATE(region_path);
 			DESTROY(Option_table)(&option_table);
@@ -7942,14 +7949,16 @@ static int gfx_mesh_graphics_triangle(struct Parse_state *state,
 				if (scene)
 				{
 					float tolerance = 0.000001;
-					double centre_x, centre_y, centre_z, size_x, size_y, size_z;
 					build_Scene(scene, filter);
-					cmzn_scene_get_global_graphics_range(scene, filter,
-						&centre_x, &centre_y, &centre_z, &size_x, &size_y, &size_z);
-					if (size_x !=0 && size_y!=0 && size_z!=0)
+					double min[3] = { 0.0, 0.0, 0.0 };
+					double max[3] = { 0.0, 0.0, 0.0 };
+					cmzn_scene_get_coordinates_range(scene, filter, min, max);
+					const double size_x = max[0] - min[0];
+					const double size_y = max[1] - min[1];
+					const double size_z = max[2] - min[2];
+					if ((size_x != 0.0) || (size_y != 0.0) || (size_z != 0.0))
 					{
-						tolerance = tolerance * (float)sqrt(
-							size_x*size_x + size_y*size_y + size_z*size_z);
+						tolerance *= static_cast<float>(sqrt(size_x*size_x + size_y*size_y + size_z*size_z));
 					}
 					Render_graphics_triangularisation renderer(NULL, tolerance);
 					if (renderer.Scene_compile(scene, filter))
@@ -13099,9 +13108,10 @@ static int gfx_set_transformation(struct Parse_state *state,
 		if (command_data)
 		{
 			 /* initialise defaults */
-			struct Computed_field *computed_field=(struct Computed_field *)NULL;
+			cmzn_field_id field = 0;
 			cmzn_region *region = cmzn_region_access(command_data->root_region);
 			char *field_name = NULL;
+			char off_flag = 0;
 			gtMatrix transformation_matrix;
 			transformation_matrix[0][0]=1;
 			transformation_matrix[0][1]=0;
@@ -13123,8 +13133,10 @@ static int gfx_set_transformation(struct Parse_state *state,
 			Option_table *option_table = CREATE(Option_table)();
 			Option_table_add_set_cmzn_region(option_table,
 				"name", command_data->root_region, &region);
-			Option_table_add_string_entry(option_table, "field",
-				&field_name, " FIELD_NAME");
+			Option_table_add_string_entry(option_table,
+				"field", &field_name, " FIELD_NAME");
+			Option_table_add_char_flag_entry(option_table,
+				"off", &off_flag);
 			/* default: set transformation matrix */
 			Option_table_add_entry(option_table, (const char *)NULL,
 				&transformation_matrix, /*user_data*/(void *)NULL, set_transformation_matrix);
@@ -13135,9 +13147,9 @@ static int gfx_set_transformation(struct Parse_state *state,
 				if (field_name)
 				{
 					cmzn_fieldmodule_id field_module = cmzn_region_get_fieldmodule(region);
-					computed_field = cmzn_fieldmodule_find_field_by_name(field_module, field_name);
+					field = cmzn_fieldmodule_find_field_by_name(field_module, field_name);
 					cmzn_fieldmodule_destroy(&field_module);
-					if (!computed_field)
+					if (!field)
 					{
 						display_message(ERROR_MESSAGE,
 							"gfx_set_transformation: transformation field cannot be found");
@@ -13149,22 +13161,30 @@ static int gfx_set_transformation(struct Parse_state *state,
 					cmzn_scene *scene = cmzn_region_get_scene(region);
 					if (scene)
 					{
-						if (computed_field)
+						// Cmgui has always used OpenGL-style column major transformation matrices
+						scene->setTransformationMatrixColumnMajor(true);
+						if (off_flag)
 						{
-							cmzn_scene_set_transformation_with_time_callback(scene,
-								computed_field);
+							cmzn_scene_clear_transformation(scene);
+						}
+						else if (field)
+						{
+							cmzn_scene_set_transformation_field(scene, field);
 						}
 						else
 						{
-							cmzn_scene_remove_time_dependent_transformation(scene);
-							cmzn_scene_set_transformation(scene,&transformation_matrix);
+							double mat[16];
+							for (int col = 0; col < 4; ++col)
+								for (int row = 0; row < 4; ++row)
+									mat[col*4 + row] = transformation_matrix[col][row];
+							cmzn_scene_set_transformation_matrix(scene, mat);
 						}
 						DEACCESS(cmzn_scene)(&scene);
 					}
 					return_code = 1;
 				}
-				if (computed_field)
-					DEACCESS(Computed_field)(&computed_field);
+				if (field)
+					cmzn_field_destroy(&field);
 			}
 			cmzn_region_destroy(&region);
 			if (field_name)
@@ -16903,10 +16923,10 @@ Initialise all the subcomponents of cmgui and create the cmzn_command_data
 					command_data->computed_field_package,
 					command_data->curve_manager);
 			}
-#if defined (USE_ITK)
+#if defined (ZINC_USE_ITK)
 			Computed_field_register_types_derivatives(
 				command_data->computed_field_package);
-#endif /* defined (USE_ITK) */
+#endif /* defined (ZINC_USE_ITK) */
 			Computed_field_register_types_fibres(
 				command_data->computed_field_package);
 			Computed_field_register_types_function(
@@ -16952,7 +16972,7 @@ Initialise all the subcomponents of cmgui and create the cmzn_command_data
 
 			Computed_field_register_types_image_resample(
 				command_data->computed_field_package);
-#if defined (USE_ITK)
+#if defined (ZINC_USE_ITK)
 			Computed_field_register_types_threshold_image_filter(
 				command_data->computed_field_package);
 			Computed_field_register_types_binary_threshold_image_filter(
@@ -16983,7 +17003,7 @@ Initialise all the subcomponents of cmgui and create the cmzn_command_data
 				command_data->computed_field_package);
 			Computed_field_register_types_binary_erode_image_filter(
 				command_data->computed_field_package);
-#endif /* defined (USE_ITK) */
+#endif /* defined (ZINC_USE_ITK) */
 		}
 		/* graphics_module */
 		command_data->default_time_keeper_app=ACCESS(Time_keeper_app)(UI_module->default_time_keeper_app);

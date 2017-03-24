@@ -405,7 +405,7 @@ Sets the <transformation_editor> to update the value shown in the widgets with t
 transformation encoded in 4x4 <transformation_matrix>.
 ==============================================================================*/
 {
-	 char temp_str[50];
+	 char temp_str[100];
 	 int i, j, k, return_code;
 	 Gmatrix gmatrix;
 	 double *values;
@@ -880,22 +880,23 @@ provoked then use this colour editor to do the settings.
 */
 void Transformation_editor::ApplyTransformation(int force_apply)
 {
-	 ENTER(Transformation_editor::OnTransformationEditorSliderChanged);
-	 if (current_scene)
-	 {
-			if (*auto_apply_flag || force_apply)
-			{
-				 cmzn_scene_set_transformation(current_scene,
-					 &transformation_editor_transformation_matrix);
-			}
-			else
-			{
-				set_transformation(
-					&(transformation_editor_transformation_matrix));
-			}
-	 }
-
-	 LEAVE;
+	if (current_scene)
+	{
+		if (*auto_apply_flag || force_apply)
+		{
+			double mat[16];
+			for (int col = 0; col < 4; ++col)
+				for (int row = 0; row < 4; ++row)
+					mat[col*4 + row] = transformation_editor_transformation_matrix[col][row];
+			current_scene->setTransformationMatrixColumnMajor(true);
+			cmzn_scene_set_transformation_matrix(current_scene, mat);
+		}
+		else
+		{
+			set_transformation(
+				&(transformation_editor_transformation_matrix));
+		}
+	}
 }
 
 void Transformation_editor::transformation_editor_wx_direction_system_choice_changed()

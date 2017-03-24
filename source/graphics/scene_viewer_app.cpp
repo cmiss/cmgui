@@ -778,7 +778,7 @@ int Scene_viewer_app_default_input_callback(struct Scene_viewer_app *scene_viewe
 				{
 					if (input->modifiers & CMZN_SCENEVIEWERINPUT_MODIFIER_FLAG_CONTROL)
 					{
-						Scene_viewer_view_all(scene_viewer->core_scene_viewer);
+						cmzn_sceneviewer_view_all(scene_viewer->core_scene_viewer);
 					}
 				}
 				scene_viewer->core_scene_viewer->update_pixel_image=1;
