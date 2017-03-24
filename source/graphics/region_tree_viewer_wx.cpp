@@ -3784,7 +3784,6 @@ END_EVENT_TABLE()
 int Region_tree_viewer_revert_changes(Region_tree_viewer *region_tree_viewer)
 {
 	int return_code = 0;
-	gtMatrix transformation_matrix;
 	if (region_tree_viewer && region_tree_viewer->wx_region_tree_viewer)
 	{
 		return_code = 1;
@@ -3825,7 +3824,7 @@ int Region_tree_viewer_revert_changes(Region_tree_viewer *region_tree_viewer)
 				gtMatrix transformationMatrix;
 				for (int col = 0; col < 4; ++col)
 					for (int row = 0; row < 4; ++row)
-						transformation_matrix[col][row] = mat[col*4 + row];
+						transformationMatrix[col][row] = mat[col*4 + row];
 				region_tree_viewer->transformation_editor->set_transformation(&transformationMatrix);
 			}
 		}

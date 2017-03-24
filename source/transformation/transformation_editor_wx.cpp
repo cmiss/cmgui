@@ -405,7 +405,7 @@ Sets the <transformation_editor> to update the value shown in the widgets with t
 transformation encoded in 4x4 <transformation_matrix>.
 ==============================================================================*/
 {
-	 char temp_str[50];
+	 char temp_str[100];
 	 int i, j, k, return_code;
 	 Gmatrix gmatrix;
 	 double *values;
