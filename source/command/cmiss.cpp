@@ -7836,14 +7836,16 @@ static int gfx_mesh_graphics_tetrahedral(struct Parse_state *state,
 				if (scene)
 				{
 					float tolerance = 0.000001;
-					double centre_x, centre_y, centre_z, size_x, size_y, size_z;
 					build_Scene(scene, filter);
-					cmzn_scene_get_global_graphics_range(scene, filter,
-						&centre_x, &centre_y, &centre_z, &size_x, &size_y, &size_z);
-					if (size_x !=0 && size_y!=0 && size_z!=0)
+					double min[3] = { 0.0, 0.0, 0.0 };
+					double max[3] = { 0.0, 0.0, 0.0 };
+					cmzn_scene_get_coordinates_range(scene, filter, min, max);
+					const double size_x = max[0] - min[0];
+					const double size_y = max[1] - min[1];
+					const double size_z = max[2] - min[2];
+					if ((size_x != 0.0) || (size_y != 0.0) || (size_z != 0.0))
 					{
-						tolerance = tolerance * (float)sqrt(
-							size_x*size_x + size_y*size_y + size_z*size_z);
+						tolerance *= static_cast<float>(sqrt(size_x*size_x + size_y*size_y + size_z*size_z));
 					}
 					Render_graphics_triangularisation renderer(NULL, tolerance);
 					if (renderer.Scene_compile(scene, filter))
@@ -7948,12 +7950,13 @@ static int gfx_mesh_graphics_triangle(struct Parse_state *state,
 				{
 					float tolerance = 0.000001;
 					build_Scene(scene, filter);
-					double min[3], max[3];
+					double min[3] = { 0.0, 0.0, 0.0 };
+					double max[3] = { 0.0, 0.0, 0.0 };
 					cmzn_scene_get_coordinates_range(scene, filter, min, max);
 					const double size_x = max[0] - min[0];
 					const double size_y = max[1] - min[1];
 					const double size_z = max[2] - min[2];
-					if (size_x != 0 && size_y!=0 && size_z!=0)
+					if ((size_x != 0.0) || (size_y != 0.0) || (size_z != 0.0))
 					{
 						tolerance *= static_cast<float>(sqrt(size_x*size_x + size_y*size_y + size_z*size_z));
 					}
