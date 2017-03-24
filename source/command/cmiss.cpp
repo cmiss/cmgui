@@ -86,9 +86,9 @@
 #include "element/element_tool.h"
 #include "emoter/emoter_dialog.h"
 #include "finite_element/export_cm_files.h"
-#if defined (USE_NETGEN)
+#if defined (ZINC_USE_NETGEN)
 #include "finite_element/generate_mesh_netgen.h"
-#endif /* defined (USE_NETGEN) */
+#endif /* defined (ZINC_USE_NETGEN) */
 #include "finite_element/export_finite_element.h"
 #include "finite_element/finite_element.h"
 #include "finite_element/finite_element_conversion.h"
@@ -145,7 +145,7 @@
 #include "gtk/gtk_cmiss_scene_viewer.h"
 #endif /* defined (GTK_USER_INTERFACE) */
 #include "image_processing/computed_field_image_resample.h"
-#if defined (USE_ITK)
+#if defined (ZINC_USE_ITK)
 #include "image_processing/computed_field_threshold_image_filter.h"
 #include "image_processing/computed_field_binary_threshold_image_filter.h"
 #include "image_processing/computed_field_canny_edge_detection_filter.h"
@@ -161,7 +161,7 @@
 #include "image_processing/computed_field_fast_marching_image_filter.h"
 #include "image_processing/computed_field_binary_dilate_image_filter.h"
 #include "image_processing/computed_field_binary_erode_image_filter.h"
-#endif /* defined (USE_ITK) */
+#endif /* defined (ZINC_USE_ITK) */
 #if defined (SELECT_DESCRIPTORS)
 #include "io_devices/io_device.h"
 #endif /* !defined (SELECT_DESCRIPTORS) */
@@ -7831,7 +7831,7 @@ static int gfx_mesh_graphics_tetrahedral(struct Parse_state *state,
 
 			if ((return_code = Option_table_multi_parse(option_table, state)))
 			{
-#if defined (USE_NETGEN)
+#if defined (ZINC_USE_NETGEN)
 				Triangle_mesh *trimesh = NULL;
 				if (scene)
 				{
@@ -7887,7 +7887,7 @@ static int gfx_mesh_graphics_tetrahedral(struct Parse_state *state,
 					"gfx_mesh_graphics. Does not support tetrahedral mesh yet. To use this feature"
 					" please compile cmgui with Netgen");
 				return_code = 0;
-#endif /* defined (USE_NETGEN) */
+#endif /* defined (ZINC_USE_NETGEN) */
 			}
 			DEALLOCATE(region_path);
 			DESTROY(Option_table)(&option_table);
@@ -16923,10 +16923,10 @@ Initialise all the subcomponents of cmgui and create the cmzn_command_data
 					command_data->computed_field_package,
 					command_data->curve_manager);
 			}
-#if defined (USE_ITK)
+#if defined (ZINC_USE_ITK)
 			Computed_field_register_types_derivatives(
 				command_data->computed_field_package);
-#endif /* defined (USE_ITK) */
+#endif /* defined (ZINC_USE_ITK) */
 			Computed_field_register_types_fibres(
 				command_data->computed_field_package);
 			Computed_field_register_types_function(
@@ -16972,7 +16972,7 @@ Initialise all the subcomponents of cmgui and create the cmzn_command_data
 
 			Computed_field_register_types_image_resample(
 				command_data->computed_field_package);
-#if defined (USE_ITK)
+#if defined (ZINC_USE_ITK)
 			Computed_field_register_types_threshold_image_filter(
 				command_data->computed_field_package);
 			Computed_field_register_types_binary_threshold_image_filter(
@@ -17003,7 +17003,7 @@ Initialise all the subcomponents of cmgui and create the cmzn_command_data
 				command_data->computed_field_package);
 			Computed_field_register_types_binary_erode_image_filter(
 				command_data->computed_field_package);
-#endif /* defined (USE_ITK) */
+#endif /* defined (ZINC_USE_ITK) */
 		}
 		/* graphics_module */
 		command_data->default_time_keeper_app=ACCESS(Time_keeper_app)(UI_module->default_time_keeper_app);
