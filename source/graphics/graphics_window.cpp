@@ -5899,7 +5899,8 @@ with commands for setting these.
 	{
 		return_code = 1;
 		cmzn_scenefilter_id filter = cmzn_sceneviewer_get_scenefilter((window->scene_viewer_array[0]->core_scene_viewer));
-		double min[3], max[3];
+		double min[3] = { 0.0, 0.0, 0.0 };
+		double max[3] = { 0.0, 0.0, 0.0 };
 		cmzn_scene_get_coordinates_range(window->scene, filter, min, max);
 		const double centre_x = 0.5*(min[0] + max[0]);
 		const double centre_y = 0.5*(min[1] + max[1]);
