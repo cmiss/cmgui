@@ -70,7 +70,7 @@ ENDIF()
 IF(APPLE)
 	# Must set the osx architecture to i386 because of the
 	# version of wxWidgets that we use.
-	SET( CMAKE_OSX_ARCHITECTURES i386 )
+	SET( CMAKE_OSX_ARCHITECTURES x86_64 )
 ENDIF()
 
 IF( WX_USER_INTERFACE )
