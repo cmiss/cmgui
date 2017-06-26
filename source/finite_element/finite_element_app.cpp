@@ -12,6 +12,7 @@
 #include "general/message.h"
 #include "general/list.h"
 #include "finite_element/finite_element.h"
+#include "finite_element/finite_element_mesh.hpp"
 #include "finite_element/finite_element_private.h"
 
 int set_FE_field(struct Parse_state *state,void *field_address_void,
@@ -336,131 +337,36 @@ may be destroyed here - ie. in the 'all' case.
 	return (return_code);
 } /* set_FE_fields */
 
-
-int set_FE_field_component(struct Parse_state *state,void *component_void,
-	void *fe_field_list_void)
-/*******************************************************************************
-LAST MODIFIED : 3 December 2002
-
-DESCRIPTION :
-Used in command parsing to translate a field component name into an field
-component.
-???DB.  Should it be here ?
-???RC.  Does not ACCESS the field (unlike set_FE_field, above).
-==============================================================================*/
+cmzn_element *cmzn_element_get_first_top_level_ancestor(cmzn_element *element)
 {
-	const char *current_token;
-	char *field_component_name,*temp_name;
-	int field_component_number,i,return_code;
-	struct FE_field *field;
-	struct FE_field_component *component;
-	struct LIST(FE_field) *fe_field_list;
-
-	ENTER(set_FE_field_component);
-	if (state&&(component=(struct FE_field_component *)component_void)&&
-		(fe_field_list=(struct LIST(FE_field) *)fe_field_list_void))
+	if (!element)
 	{
-		if (NULL != (current_token = state->current_token))
-		{
-			if (strcmp(PARSER_HELP_STRING,current_token)&&
-				strcmp(PARSER_RECURSIVE_HELP_STRING,current_token))
-			{
-				field_component_name = const_cast<char *>(strrchr(current_token,'.'));
-				if (field_component_name)
-				{
-					*field_component_name='\0';
-					field_component_name++;
-				}
-				if (NULL != (field=FIND_BY_IDENTIFIER_IN_LIST(FE_field,name)(current_token,
-					fe_field_list)))
-				{
-					if (field_component_name)
-					{
-						return_code=1;
-						field_component_number=-1;
-						for (i=0;(0>field_component_number)&&
-							(i<get_FE_field_number_of_components(field))&&return_code;i++)
-						{
-							if (NULL != (temp_name=get_FE_field_component_name(field,i)))
-							{
-								if (0==strcmp(field_component_name,temp_name))
-								{
-									field_component_number=i;
-								}
-								DEALLOCATE(temp_name);
-							}
-							else
-							{
-								display_message(WARNING_MESSAGE,
-									"set_FE_field_component.  Not enough memory");
-								return_code=0;
-							}
-						}
-						if (return_code)
-						{
-							if (0 <= field_component_number)
-							{
-								component->field=field;
-								component->number=field_component_number;
-							}
-							else
-							{
-								display_message(WARNING_MESSAGE,
-									"Unknown field component %s.%s",current_token,
-									field_component_name);
-								return_code=0;
-							}
-						}
-					}
-					else
-					{
-						component->field=field;
-						component->number=0;
-						return_code=1;
-					}
-				}
-				else
-				{
-					display_message(WARNING_MESSAGE,"Unknown field %s",current_token);
-					return_code=1;
-				}
-				shift_Parse_state(state,1);
-			}
-			else
-			{
-				display_message(INFORMATION_MESSAGE," FIELD_NAME.COMPONENT_NAME");
-				if (component->field)
-				{
-					if (1<get_FE_field_number_of_components(component->field))
-					{
-						display_message(INFORMATION_MESSAGE,"[%s.%s]",
-							get_FE_field_name(component->field),
-							get_FE_field_component_name(component->field, component->number));
-					}
-					else
-					{
-						display_message(INFORMATION_MESSAGE,"[%s]",get_FE_field_name(component->field));
-					}
-				}
-				return_code=1;
-			}
-		}
-		else
-		{
-			display_message(WARNING_MESSAGE,"Missing field component name");
-			display_parse_state_location(state);
-			return_code=1;
-		}
+		display_message(ERROR_MESSAGE, "cmzn_element_get_first_top_level_ancestor.  Invalid element");
+		return 0;
 	}
-	else
+	const FE_mesh *mesh = element->getMesh();
+	if (!mesh)
 	{
-		display_message(ERROR_MESSAGE,
-			"set_FE_field_component.  Invalid argument(s)");
-		return_code=0;
+		display_message(ERROR_MESSAGE, "cmzn_element_get_first_top_level_ancestor.  Element has no mesh");
+		return 0;
 	}
-	LEAVE;
-
-	return (return_code);
-} /* set_FE_field_component */
-
-
+	while (true)
+	{
+		const FE_mesh *parentMesh = mesh->getParentMesh();
+		if (!parentMesh)
+			return element;
+		const DsLabelIndex *parentIndexes;
+		const int parentCount = mesh->getElementParents(element->getIndex(), parentIndexes);
+		if (0 == parentCount)
+			return element;
+		cmzn_element *parent = parentMesh->getElement(parentIndexes[0]);
+		if (!parent)
+		{
+			display_message(ERROR_MESSAGE, "cmzn_element_get_first_top_level_ancestor.  Element has NULL parent");
+			break;
+		}
+		element = parent;
+		mesh = parentMesh;
+	}
+	return 0;
+}

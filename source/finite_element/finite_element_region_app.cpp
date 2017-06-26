@@ -14,35 +14,6 @@
 // insert app headers here
 #include "finite_element/finite_element_app.h"
 
-int set_FE_field_component_FE_region(struct Parse_state *state,
-	void *fe_field_component_address_void, void *fe_region_void)
-/*******************************************************************************
-LAST MODIFIED : 6 March 2003
-
-DESCRIPTION :
-FE_region wrapper for set_FE_field_component.
-==============================================================================*/
-{
-	int return_code;
-	struct FE_region *fe_region;
-
-	ENTER(set_FE_field_component_FE_region);
-	if (state && fe_field_component_address_void &&
-		(fe_region = (struct FE_region *)fe_region_void))
-	{
-		return_code = set_FE_field_component(state, fe_field_component_address_void,
-			(void *)(FE_region_get_FE_field_list(fe_region)));
-	}
-	else
-	{
-		display_message(ERROR_MESSAGE,
-			"set_FE_field_component_FE_region.  Invalid argument(s)");
-		return_code = 0;
-	}
-	LEAVE;
-
-	return (return_code);
-} /* set_FE_field_component_FE_region */
 
 int set_FE_field_conditional_FE_region(struct Parse_state *state,
 	void *fe_field_address_void, void *parse_field_data_void)

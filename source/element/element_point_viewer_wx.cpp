@@ -23,8 +23,10 @@ selected element point, or set it if entered in this dialog.
 #include "computed_field/computed_field_finite_element.h"
 #include "computed_field/computed_field_value_index_ranges.h"
 #include "element/element_point_viewer_wx.h"
+#include "finite_element/finite_element_app.h"
 #include "finite_element/finite_element_discretization.h"
 #include "finite_element/finite_element_mesh.hpp"
+#include "finite_element/finite_element_region_private.h"
 #include "finite_element/finite_element_to_graphics_object.h"
 #include "general/debug.h"
 #include "general/message.h"
@@ -70,8 +72,6 @@ Contains all the information carried by the element_point_viewer widget.
 		 identifier is not accessed */
 	struct Element_point_ranges_identifier element_point_identifier;
 	 int element_point_number, number_of_components;
-	/* accessed local copy of the element being edited */
-	FE_element_template *element_template;
 	struct Computed_field *current_field;
 	FE_value xi[MAXIMUM_ELEMENT_XI_DIMENSIONS];
 	/* field components whose values have been modified stored in following */
@@ -375,194 +375,6 @@ Updates the grid_value text field. If there is a current element point, writes
 the field value, otherwise N/A.
 ==============================================================================*/
 
-static int Element_point_viewer_apply_changes(struct Element_point_viewer *element_point_viewer, int apply_all)
-/*******************************************************************************
-LAST MODIFIED : 2 May 2007
-
-DESCRIPTION :
-Makes the element point change global. If <apply_all> then apply the changes to
-all element points in the global selection. Note that values can only be
-applied to element points that are grid_points - warnings will be given if
-attempts are made to apply changes at element points in other locations.
-Furthermore, if the <element_point_viewer>
-==============================================================================*/
-{
-	char *field_name;
-	int return_code;
-	struct Element_point_ranges_grid_to_multi_range_data grid_to_multi_range_data;
-	struct Element_point_ranges_identifier source_identifier;
-	struct FE_element_grid_to_Element_point_ranges_list_data grid_to_list_data;
-	struct LIST(Element_point_ranges) *element_point_ranges_list;
-
-	ENTER(Element_point_viewer_apply_changes);
-	if (element_point_viewer&&
-		element_point_viewer->element_point_identifier.element&&
-		element_point_viewer->element_template)
-	{
-		return_code=1;
-		/* only apply if new values have been entered for field components */
-		if (0<NUMBER_IN_LIST(Field_value_index_ranges)(
-			element_point_viewer->modified_field_components))
-		{
-			element_point_ranges_list=CREATE(LIST(Element_point_ranges))();
-			if (element_point_ranges_list)
-			{
-				/* put current element point in list */
-				return_code=
-					Element_point_ranges_list_add_element_point(element_point_ranges_list,
-						&(element_point_viewer->element_point_identifier),
-						element_point_viewer->element_point_number);
-				/* if apply_all, add all other selected element points */
-				if (return_code&&apply_all)
-				{
-					FOR_EACH_OBJECT_IN_LIST(Element_point_ranges)(
-						Element_point_ranges_add_to_list,(void *)element_point_ranges_list,
-						Element_point_ranges_selection_get_element_point_ranges_list(
-							element_point_viewer->element_point_ranges_selection));
-				}
-				/* if match_grid_field, get range of its values for all points in
-					 element_point_ranges_list, then get list of all grid-points with
-					 those values. Usually this is the grid_point_number field, and this
-					 feature is used to overcome the fact that we store values for same-
-					 numbered grid-point more than once on common element boundaries */
-				if (return_code&&element_point_viewer->match_grid_field)
-				{
-					/* check field is wrapper for single component integer FE_field */
-					if (Computed_field_get_type_finite_element(
-						element_point_viewer->match_grid_field,
-						&(grid_to_multi_range_data.grid_fe_field))&&
-						(1==get_FE_field_number_of_components(
-							grid_to_multi_range_data.grid_fe_field))&&
-						(INT_VALUE==get_FE_field_value_type(
-							grid_to_multi_range_data.grid_fe_field)))
-					{
-						/* get multi-range of values of match_grid_field for points in
-							 element_point_ranges_list */
-						grid_to_multi_range_data.multi_range=CREATE(Multi_range)();
-						if (grid_to_multi_range_data.multi_range)
-						{
-							/* if following flag is cleared it means that some of the selected
-								 element points are not grid points */
-							grid_to_multi_range_data.all_points_native=1;
-							return_code=FOR_EACH_OBJECT_IN_LIST(Element_point_ranges)(
-								Element_point_ranges_grid_to_multi_range,
-								(void *)&grid_to_multi_range_data,element_point_ranges_list);
-							if (return_code)
-							{
-								/* add all points with match_grid_field value in multi-range
-									 to those already in element_point_ranges_list */
-								grid_to_list_data.element_point_ranges_list=
-									element_point_ranges_list;
-								grid_to_list_data.grid_fe_field=
-									grid_to_multi_range_data.grid_fe_field;
-								grid_to_list_data.grid_value_ranges=
-									grid_to_multi_range_data.multi_range;
-								/* inefficient: go through every element in manager */
-								return_code = FE_region_for_each_FE_element(
-									cmzn_region_get_FE_region(element_point_viewer->region),
-									FE_element_grid_to_Element_point_ranges_list,
-									(void *)&grid_to_list_data);
-							}
-							DESTROY(Multi_range)(&(grid_to_multi_range_data.multi_range));
-						}
-						else
-						{
-							return_code=0;
-						}
-						if (!return_code)
-						{
-							GET_NAME(Computed_field)(
-								element_point_viewer->match_grid_field,&field_name);
-							display_message(WARNING_MESSAGE,
-								"Element_point_viewer_apply_changes.  Could not set same values"
-								"for points with same value of field %s",field_name);
-							DEALLOCATE(field_name);
-						}
-					}
-					else
-					{
-						display_message(WARNING_MESSAGE,
-							"Element_point_viewer_apply_changes.  "
-							"Invalid match_grid_field");
-						return_code=0;
-					}
-				}
-				if (return_code)
-				{
-					if (0<NUMBER_IN_LIST(Element_point_ranges)(element_point_ranges_list))
-					{
-						/* to modify, need the element point to take values from */
-						return_code=COPY(Element_point_ranges_identifier)(&source_identifier,
-							&(element_point_viewer->element_point_identifier));
-						if (return_code)
-						{
-							cmzn_fieldmodule_id field_module = cmzn_region_get_fieldmodule(element_point_viewer->region);
-							cmzn_fieldmodule_begin_change(field_module);
-							cmzn_fieldcache_id field_cache = cmzn_fieldmodule_create_fieldcache(field_module);
-							source_identifier.element=element_point_viewer->element_template->get_template_element();
-							/* note values taken from the local element template */
-							struct Element_point_ranges_set_grid_values_data set_grid_values_data;
-							set_grid_values_data.field_cache = field_cache;
-							set_grid_values_data.source_identifier=&source_identifier;
-							set_grid_values_data.source_element_point_number=
-								element_point_viewer->element_point_number;
-							/* need the components that have been modified ... */
-							set_grid_values_data.field_component_ranges_list=
-								element_point_viewer->modified_field_components;
-							/* ... and the manager to modify them in */
-							set_grid_values_data.fe_region = cmzn_region_get_FE_region(element_point_viewer->region);
-							/* if following flag is cleared it means that some of the selected
-								 element points are not grid points */
-							set_grid_values_data.number_of_points = 0;
-							set_grid_values_data.number_of_points_set = 0;
-							return_code=FOR_EACH_OBJECT_IN_LIST(Element_point_ranges)(
-								Element_point_ranges_set_grid_values,
-								(void *)&set_grid_values_data,element_point_ranges_list);
-							if (set_grid_values_data.number_of_points != set_grid_values_data.number_of_points_set)
-							{
-								display_message(WARNING_MESSAGE,
-									"Values only set at %d element locations out of %d specified.",
-									set_grid_values_data.number_of_points_set, set_grid_values_data.number_of_points);
-							}
-							cmzn_fieldcache_destroy(&field_cache);
-							cmzn_fieldmodule_end_change(field_module);
-							cmzn_fieldmodule_destroy(&field_module);
-						}
-						if (!return_code)
-						{
-							display_message(ERROR_MESSAGE,
-								"Element_point_viewer_apply_changes.  Could not set values");
-						}
-					}
-					else
-					{
-						display_message(WARNING_MESSAGE,
-							"Element_point_viewer_apply_changes.  "
-							"No grid points to apply changes to");
-						return_code=0;
-					}
-				}
-				DESTROY(LIST(Element_point_ranges))(&(element_point_ranges_list));
-			}
-			else
-			{
-				display_message(WARNING_MESSAGE,
-					"Element_point_viewer_apply_changes.  Could not make list");
-				return_code=0;
-			}
-		}
-	}
-	else
-	{
-		display_message(WARNING_MESSAGE,
-			"Element_point_viewer_apply_changes.  Invalid argument(s)");
-		return_code=0;
-	}
-	LEAVE;
-
-	return (return_code);
-} /* element_point_viewer_apply_changes */
-
 static int element_point_field_is_editable(
 	struct Element_point_ranges_identifier *element_point_identifier,
 	struct Computed_field *field,int *number_in_xi)
@@ -629,7 +441,6 @@ and passes it to the element_point_viewer_widget.
 	ENTER(Element_point_viewer_set_viewer_element_point);
 	if (element_point_viewer)
 	{
-		cmzn::Deaccess(element_point_viewer->element_template);
 		 temp_element_point_number=element_point_viewer->element_point_number;
 		 COPY(Element_point_ranges_identifier)(&temp_element_point_identifier,
 				&(element_point_viewer->element_point_identifier));
@@ -641,17 +452,7 @@ and passes it to the element_point_viewer_widget.
 				Element_point_make_top_level(&temp_element_point_identifier,
 					&temp_element_point_number);
 			}
-			/* copy the element - now guaranteed to be top-level */
-			FE_mesh *fe_mesh = FE_element_get_FE_mesh(temp_element_point_identifier.element);
-			if (fe_mesh)
-			{
-				element_point_viewer->element_template =
-					fe_mesh->create_FE_element_template(temp_element_point_identifier.element);
-			}
 		}
-		/* pass identifier with copy_element to viewer widget */
-		temp_element_point_identifier.top_level_element = temp_element_point_identifier.element =
-			(element_point_viewer->element_template) ? element_point_viewer->element_template->get_template_element() : 0;
 		/* clear modified_components */
 		REMOVE_ALL_OBJECTS_FROM_LIST(Field_value_index_ranges)(
 			element_point_viewer->modified_field_components);
@@ -870,15 +671,23 @@ leaves the current discretization/mode intact.
 			Computed_field_is_scalar_integer_grid_in_element,(void *)element,
 			Computed_field_package_get_computed_field_manager(
 				element_point_viewer->computed_field_package)))&&
-			Computed_field_get_type_finite_element(grid_field,&grid_fe_field)&&
-			FE_element_field_is_grid_based(element,grid_fe_field))
+			Computed_field_get_type_finite_element(grid_field, &grid_fe_field))
 		{
 			/* only checks first component */
-			get_FE_element_field_component_grid_map_number_in_xi(element,grid_fe_field,
-				/*component_number*/0,
-				element_point_viewer->element_point_identifier.number_in_xi);
-			element_point_viewer->element_point_identifier.sampling_mode=
-				CMZN_ELEMENT_POINT_SAMPLING_MODE_CELL_CORNERS;
+			cmzn_elementfieldtemplate_id eft = cmzn_element_get_elementfieldtemplate(element, grid_field, 1);
+			if (eft)
+			{
+				const int *numberInXi = eft->getLegacyGridNumberInXi();
+				if (numberInXi)
+				{
+					const int dimension = element->getDimension();
+					for (int d = 0; d < dimension; ++d)
+						element_point_viewer->element_point_identifier.number_in_xi[d] = numberInXi[d];
+					element_point_viewer->element_point_identifier.sampling_mode =
+						CMZN_ELEMENT_POINT_SAMPLING_MODE_CELL_CORNERS;
+				}
+				cmzn_elementfieldtemplate_destroy(&eft);
+			}
 		}
 	}
 	else
@@ -1219,19 +1028,17 @@ Callback from wxTextChooser when text is entered.
 				 if (element_point_viewer->element_point_identifier.element)
 				 {
 						if (top_level_element&&
-							 FE_element_is_top_level_parent_of_element(top_level_element,
-									(void *)element_point_viewer->element_point_identifier.element))
+							FE_element_is_top_level_parent_of_element(top_level_element,
+								element_point_viewer->element_point_identifier.element))
 						{
-							 element_point_viewer->element_point_identifier.top_level_element=
-									top_level_element;
+							element_point_viewer->element_point_identifier.top_level_element=
+								top_level_element;
 						}
 						else
 						{
-							 element_point_viewer->element_point_identifier.top_level_element =
-									FE_region_get_first_FE_element_that(cmzn_region_get_FE_region(element_point_viewer->region),
-										 FE_element_is_top_level_parent_of_element,
-										 (void *)element_point_viewer->element_point_identifier.element);
-							 top_level_element_text_chooser->set_object(
+							element_point_viewer->element_point_identifier.top_level_element =
+								cmzn_element_get_first_top_level_ancestor(element_point_viewer->element_point_identifier.element);
+							top_level_element_text_chooser->set_object(
 									element_point_viewer->element_point_identifier.top_level_element);
 						}
 				 }
@@ -1641,13 +1448,13 @@ void OnGridValueEntered(wxCommandEvent &event)
 void OnApplypressed(wxCommandEvent &event)
 {
 	USE_PARAMETER(event);
-	Element_point_viewer_apply_changes(element_point_viewer,/*apply_all*/0);
+	//Element_point_viewer_apply_changes(element_point_viewer,/*apply_all*/0);
 }
 
 void OnApplyAllpressed(wxCommandEvent &event)
 {
 	USE_PARAMETER(event);
-	Element_point_viewer_apply_changes(element_point_viewer,/*apply_all*/1);
+	//Element_point_viewer_apply_changes(element_point_viewer,/*apply_all*/1);
 }
 
 void OnRevertpressed(wxCommandEvent &event)
@@ -1750,7 +1557,7 @@ data, and then changes the correct value in the array structure.
 	char *field_value_string;
 	const char*value_string;
 	FE_value time,value,*values,*xi;
-	int dimension,element_point_number,i,int_value,*int_values,
+	int dimension,element_point_number,i,int_value,
 		number_in_xi[MAXIMUM_ELEMENT_XI_DIMENSIONS],
 		number_of_grid_values,return_code;
 	struct FE_element *element,*top_level_element;
@@ -1799,14 +1606,24 @@ data, and then changes the correct value in the array structure.
 										 real->integer conversion */
 						if (1==sscanf(value_string,"%d",&int_value))
 						{
-							if (get_FE_element_field_component_grid_int_values(element,
-								fe_field,component_number,&int_values))
+							FE_mesh_field_data *meshFieldData;
+							FE_mesh_field_template *mft;
+							FE_element_field_template *eft;
+							if ((meshFieldData = FE_field_getMeshFieldData(fe_field, element->getMesh()))
+								&& (mft = meshFieldData->getComponentMeshfieldtemplate(component_number))
+								&& (eft = mft->getElementfieldtemplate(element->getIndex())))
 							{
-								/* change the value for this component */
-								int_values[element_point_number]=int_value;
-								return_code=set_FE_element_field_component_grid_int_values(
-									element,fe_field,component_number,int_values);
-								DEALLOCATE(int_values);
+								const int numberOfElementDOFs = eft->getNumberOfElementDOFs();
+								auto component = static_cast<FE_mesh_field_data::Component<int>*>(meshFieldData->getComponentBase(component_number));
+								if ((component) && (numberOfElementDOFs > 0) && (element_point_number < numberOfElementDOFs))
+								{
+									int *int_values = component->getElementValues(element->getIndex(), numberOfElementDOFs);
+									// change the value for this element point
+									// GRC there should be convenience methods to do this and notify; but grid fields are internal only.
+									int_values[element_point_number] = int_value;
+									element->getMesh()->get_FE_region()->FE_field_change(fe_field, CHANGE_LOG_RELATED_OBJECT_CHANGED(FE_field));
+									element->getMesh()->elementChange(element->getIndex(), DS_LABEL_CHANGE_TYPE_RELATED);
+								}
 							}
 						}
 					}
@@ -2168,7 +1985,6 @@ fields.
 					 (struct FE_element *)NULL;
 				element_point_viewer->element_point_identifier.top_level_element=
 					 (struct FE_element *)NULL;
-				element_point_viewer->element_template = 0;
 				element_point_viewer->element_point_identifier.sampling_mode=
 					 CMZN_ELEMENT_POINT_SAMPLING_MODE_SET_LOCATION;
 				//				element_point_viewer->time_object_callback = 0;
@@ -2223,19 +2039,6 @@ fields.
 					 Element_point_viewer_select_current_point(element_point_viewer);
 				}
 				Element_point_viewer_calculate_xi(element_point_viewer);
-				if (element_point_viewer->element_point_identifier.top_level_element)
-				{
-					FE_mesh *fe_mesh = FE_element_get_FE_mesh(element_point_viewer->element_point_identifier.top_level_element);
-					if (fe_mesh)
-					{
-						element_point_viewer->element_template =
-							fe_mesh->create_FE_element_template(element_point_viewer->element_point_identifier.top_level_element);
-					}
-				}
-				else
-				{
-					cmzn::Deaccess(element_point_viewer->element_template);
-				}
 				/* get callbacks from global element_point selection */
 				Element_point_ranges_selection_add_callback(
 					 element_point_ranges_selection,
@@ -2253,8 +2056,7 @@ fields.
 							&temp_element_point_number);
 				}
 				/* pass identifier with copy_element to viewer widget */
-				temp_element_point_identifier.top_level_element = temp_element_point_identifier.element =
-					(element_point_viewer->element_template) ? element_point_viewer->element_template->get_template_element() : 0;
+				temp_element_point_identifier.top_level_element = temp_element_point_identifier.element = 0;
 				/* make the dialog shell */
 #if defined (WX_USER_INTERFACE)
 				element_point_viewer->frame_width = 0;
@@ -2327,7 +2129,6 @@ Destroys the Element_point_viewer. See also Element_point_viewer_close_CB.
 			element_point_viewer->element_point_ranges_selection,
 			Element_point_viewer_element_point_ranges_selection_change,
 			(void *)element_point_viewer);
-		cmzn::Deaccess(element_point_viewer->element_template);
 		delete element_point_viewer->wx_element_point_viewer;
 		DEALLOCATE(*element_point_viewer_address);
 		element_point_viewer_address = 0;
@@ -2649,34 +2450,6 @@ unmanaged elements in the identifier to this widget.
 				Element_point_ranges_identifier_element_point_number_is_valid(
 					element_point_identifier,element_point_number)))
 	{
-		struct FE_element *element = element_point_identifier->element;
-		if (element)
-		{
-			cmzn_field *field=element_point_viewer->current_field;
-			if (!(element_point_viewer->element_template) ||
-				(!equivalent_computed_fields_at_elements(element,
-					element_point_viewer->element_template->get_template_element())))
-			{
-				if ((!field)||
-					(!Computed_field_is_defined_in_element(field,element)))
-				{
-					field=FIRST_OBJECT_IN_MANAGER_THAT(Computed_field)(
-						Computed_field_is_defined_in_element_conditional, (void *)element,
-						Computed_field_package_get_computed_field_manager(
-							element_point_viewer->computed_field_package));
-				}
-				cmzn::Deaccess(element_point_viewer->element_template);
-				FE_mesh *fe_mesh = FE_element_get_FE_mesh(element);
-				if (fe_mesh)
-				{
-					element_point_viewer->element_template = fe_mesh->create_FE_element_template(element);
-				}
-			}
-		}
-		else
-		{
-			cmzn::Deaccess(element_point_viewer->element_template);
-		}
 		COPY(Element_point_ranges_identifier)(
 			&(element_point_viewer->element_point_identifier),
 			element_point_identifier);
