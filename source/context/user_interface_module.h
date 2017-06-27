@@ -41,7 +41,6 @@ struct User_interface_module
 #endif /* defined (USE_CMGUI_GRAPHICS_WINDOW) */
 	struct Time_keeper_app *default_time_keeper_app;
 	struct User_interface *user_interface;
-	struct Emoter_dialog *emoter_slider_dialog;
 #if defined (WX_USER_INTERFACE)
 	struct MANAGER(Comfile_window) *comfile_window_manager;
 	struct Node_viewer *data_viewer,*node_viewer;

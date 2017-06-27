@@ -55,7 +55,6 @@
 #include "computed_field/computed_field_composite.h"
 #include "computed_field/computed_field_conditional.h"
 #include "computed_field/computed_field_coordinate.h"
-#include "computed_field/computed_field_curve.h"
 #include "computed_field/computed_field_deformation.h"
 #include "computed_field/computed_field_derivatives.h"
 #include "computed_field/computed_field_find_xi.h"
@@ -85,7 +84,6 @@
 #include "element/element_point_viewer_wx.h"
 #endif /* defined (WX_USER_INTERFACE) */
 #include "element/element_tool.h"
-#include "emoter/emoter_dialog.h"
 #include "finite_element/export_cm_files.h"
 #if defined (ZINC_USE_NETGEN)
 #include "finite_element/generate_mesh_netgen.h"
@@ -183,7 +181,6 @@
 #include "user_interface/confirmation.h"
 #include "general/message.h"
 #include "user_interface/user_interface.h"
-#include "curve/curve.h"
 #if defined (USE_PERL_INTERPRETER)
 #include "perl_interpreter.h"
 #endif /* defined (USE_PERL_INTERPRETER) */
@@ -239,7 +236,6 @@
 #include "computed_field/computed_field_function_app.h"
 #include "computed_field/computed_field_fibres_app.h"
 #include "computed_field/computed_field_derivatives_app.h"
-#include "computed_field/computed_field_curve_app.h"
 #include "computed_field/computed_field_conditional_app.h"
 #include "computed_field/computed_field_composite_app.h"
 #include "computed_field/computed_field_compose_app.h"
@@ -259,7 +255,6 @@
 #include "graphics/tessellation_app.hpp"
 #include "graphics/tessellation_app.hpp"
 #include "computed_field/computed_field_app.h"
-#include "curve/curve_app.h"
 #include "general/enumerator_app.h"
 #include "graphics/render_to_finite_elements_app.h"
 #include "graphics/auxiliary_graphics_types_app.h"
@@ -340,7 +335,6 @@ DESCRIPTION :
 	struct cmzn_scenefiltermodule *filter_module;
 	struct cmzn_font *default_font;
 	struct cmzn_tessellationmodule *tessellationmodule;
-	struct MANAGER(Curve) *curve_manager;
 	struct MANAGER(Scene) *scene_manager;
 	struct Scene *default_scene;
 	struct MANAGER(cmzn_spectrum) *spectrum_manager;
@@ -351,7 +345,6 @@ DESCRIPTION :
 	struct Streampoint *streampoint_list;
 	struct Time_keeper_app *default_time_keeper_app;
 	struct User_interface *user_interface;
-	struct Emoter_dialog *emoter_slider_dialog;
 #if defined (WX_USER_INTERFACE)
 	struct Node_viewer *data_viewer,*node_viewer;
 	struct Element_point_viewer *element_point_viewer;
@@ -721,19 +714,18 @@ DESCRIPTION :
 static int gfx_create_axes(struct Parse_state *state,
 	void *dummy_to_be_modified, void *dummy_user_data_void)
 {
-	USE_PARAMETER(state);
 	USE_PARAMETER(dummy_to_be_modified);
 	USE_PARAMETER(dummy_user_data_void);
-	struct Option_table *option_table = CREATE(Option_table)();
-	Option_table_add_help(option_table,
+	display_message(Parse_state_help_mode(state)? INFORMATION_MESSAGE : ERROR_MESSAGE,
 		"The 'gfx create axes' command has been removed. These are now drawn as\n"
 		"point graphics using built-in axes glyphs. Create these in the scene editor\n"
 		"and list commands to reproduce the view with:\n"
-		"  gfx list g_element REGION_PATH commands\n"
+		"  gfx list g_element REGION_PATH commands.\n"
 		"Alternatively directly add with commands (e.g. for root region):\n"
 		"  gfx modify g_element \"/\" point glyph axes_xyz size 1.0;\n");
-	DESTROY(Option_table)(&option_table);
-	return 1;
+	if (Parse_state_help_mode(state))
+		return 1;
+	return 0;
 }
 
 /**
@@ -4988,6 +4980,25 @@ Executes a GFX CREATE command.
 	return (return_code);
 } /* execute_command_gfx_create */
 
+/** Explains migration for removed command 'gfx define curve' */
+int gfx_define_Curve(struct Parse_state *state,
+	void *dummy_to_be_modified, void *command_data_void)
+{
+	USE_PARAMETER(dummy_to_be_modified);
+	USE_PARAMETER(command_data_void);
+	display_message(Parse_state_help_mode(state) ? INFORMATION_MESSAGE : ERROR_MESSAGE,
+		"The 'gfx define curve' command has been removed. You can replace a curve with a\n"
+		"1-D mesh defining a non-decreasing scalar 'parameter' field, plus a 'value' field\n"
+		"to look up for a given parameter value. If your command has 'file' option, you can\n"
+		"directly load the exnode/exelem or single exregion file(s) which are defined this way.\n"
+		"Use a 'find_mesh_location' field and an embedded field to achieve the effect of the\n"
+		"former 'curve_lookup' field type. These currently only work in the same region;\n"
+		"talk to the Cmgui developers if you have migration issues.\n");
+	if (Parse_state_help_mode(state))
+		return 1;
+	return 0;
+}
+
 /***************************************************************************//**
  * Executes a GFX DEFINE FACES command.
  */
@@ -5088,7 +5099,6 @@ static int gfx_define_faces(struct Parse_state *state,
 	return (return_code);
 }
 
-
 static int execute_command_gfx_define(struct Parse_state *state,
 	void *dummy_to_be_modified,void *command_data_void)
 /*******************************************************************************
@@ -5100,7 +5110,6 @@ Executes a GFX DEFINE command.
 {
 	int return_code;
 	struct cmzn_command_data *command_data;
-	struct Curve_command_data curve_command_data;
 	struct Option_table *option_table;
 
 	ENTER(execute_command_gfx_define);
@@ -5115,9 +5124,8 @@ Executes a GFX DEFINE command.
 					command_data->graphics_module);
 				option_table = CREATE(Option_table)();
 				/* curve */
-				curve_command_data.curve_manager = command_data->curve_manager;
 				Option_table_add_entry(option_table, "curve", NULL,
-					&curve_command_data, gfx_define_Curve);
+					command_data_void, gfx_define_Curve);
 				/* faces */
 				Option_table_add_entry(option_table, "faces", NULL,
 					command_data_void, gfx_define_faces);
@@ -5912,9 +5920,6 @@ Executes a GFX DESTROY command.
 			if (state->current_token)
 			{
 				option_table = CREATE(Option_table)();
-				/* curve */
-				Option_table_add_entry(option_table, "curve", NULL,
-					command_data->curve_manager, gfx_destroy_Curve);
 				/* data */
 				Option_table_add_entry(option_table, "data", /*use_data*/(void *)1,
 					command_data_void, gfx_destroy_nodes);
@@ -10077,9 +10082,6 @@ Executes a GFX LIST command.
 			Option_table_add_entry(option_table, "cad", NULL,
 				(void *)command_data->root_region, gfx_list_cad_entity);
 #endif /* defined (USE_OPENCASCADE) */
-			/* curve */
-			Option_table_add_entry(option_table, "curve", NULL,
-				command_data->curve_manager, gfx_list_Curve);
 			/* data */
 			Option_table_add_entry(option_table, "data", /*use_data*/(void *)1,
 				command_data_void, gfx_list_FE_node);
@@ -11573,88 +11575,27 @@ Executes a GFX PRINT command.
 } /* execute_command_gfx_print */
 #endif
 
-static int gfx_read_Curve(struct Parse_state *state,
-	void *dummy_to_be_modified,void *command_data_void)
-/*******************************************************************************
-LAST MODIFIED : 7 January 2002
-
-DESCRIPTION :
-Reads a curve from 3 files: ~.curve.com, ~.curve.exnode, ~.curve.exelem, where
-~ is the name of the curve/file specified here.
-Works by executing the .curve.com file, which should have a gfx define curve
-instruction to read in the mesh.
-==============================================================================*/
+/** Explains migration for removed command 'gfx read curve' */
+int gfx_read_Curve(struct Parse_state *state,
+	void *dummy_to_be_modified, void *command_data_void)
 {
-	char *file_name;
-	int return_code;
-	struct cmzn_command_data *command_data;
-	struct Option_table *option_table;
-
-	ENTER(gfx_read_Curve);
 	USE_PARAMETER(dummy_to_be_modified);
-	if (state)
-	{
-		if (NULL != (command_data = (struct cmzn_command_data *)command_data_void))
-		{
-			file_name = (char *)NULL;
-			option_table = CREATE(Option_table)();
-			/* example */
-			Option_table_add_entry(option_table, CMGUI_EXAMPLE_DIRECTORY_SYMBOL,
-				&file_name, &(command_data->example_directory),
-				set_file_name);
-			/* default */
-			Option_table_add_entry(option_table, NULL, &file_name,
-				NULL, set_file_name);
-			return_code = Option_table_multi_parse(option_table, state);
-			DESTROY(Option_table)(&option_table);
-			if (return_code)
-			{
-				if (!file_name)
-				{
-					if (!(file_name = confirmation_get_read_filename(".curve.com",
-									 command_data->user_interface
-#if defined (WX_USER_INTERFACE)
-									 , command_data->execute_command
-#endif /*defined (WX_USER_INTERFACE)*/
-																													 )))
-					{
-						return_code = 0;
-					}
-				}
-#if defined (WX_USER_INTERFACE) && defined (WIN32_SYSTEM)
-			if (file_name)
-			{
-				 CMZN_set_directory_and_filename_WIN32(&file_name, command_data);
-			}
-#endif /* defined (WIN32_SYSTEM)*/
-				if (return_code)
-				{
-					/* open the file */
-					if (0 != (return_code = check_suffix(&file_name, ".curve.com")))
-					{
-						return_code=execute_comfile(file_name, command_data->io_stream_package,
-							 command_data->execute_command);
-					}
-				}
-			}
-			DEALLOCATE(file_name);
-		}
-		else
-		{
-			display_message(ERROR_MESSAGE,
-				"gfx_read_Curve.  Missing command_data");
-			return_code=0;
-		}
-	}
-	else
-	{
-		display_message(ERROR_MESSAGE,"gfx_read_Curve.  Missing state");
-		return_code=0;
-	}
-	LEAVE;
-
-	return (return_code);
-} /* gfx_read_Curve */
+	USE_PARAMETER(command_data_void);
+	struct Option_table *option_table = CREATE(Option_table)();
+	display_message(Parse_state_help_mode(state) ? INFORMATION_MESSAGE : ERROR_MESSAGE,
+		"The 'gfx read curve' command has been removed. You can replace a curve with a\n"
+		"1-D mesh defining a non-decreasing scalar 'parameter' field, plus a 'value' field\n"
+		"to look up for a given parameter value. 'gfx read curve' merely executed a command file\n"
+		"with the extension .curve.com, which contained a single 'gfx define curve' command to load\n"
+		"the curve from EX files. You can now directly load the exnode/exelem or single exregion\n"
+		"file(s) which are defined in the right way. Use a 'find_mesh_location' field and an\n"
+		"embedded field to achieve the effect of the former 'curve_lookup' field type. These\n"
+		"currently only work in the same region; talk to the Cmgui developers if you have\n"
+		"migration issues.\n");
+	if (Parse_state_help_mode(state))
+		return 1;
+	return 0;
+}
 
 int offset_region_identifier(cmzn_region_id region, char element_flag, int element_offset,
 	char face_flag, int face_offset, char line_flag, int line_offset, char node_flag, int node_offset, int use_data)
@@ -14025,139 +13966,6 @@ Can also write individual groups with the <group> option.
 	 return (return_code);
 } /* gfx_write_all */
 
-#if defined (NEW_CODE)
-static int gfx_write_Com(struct Parse_state *state,
-	void *dummy_to_be_modified,void *command_data_void)
-/*******************************************************************************
-LAST MODIFIED : 25 November 1999
-
-DESCRIPTION :
-Writes a com file
-==============================================================================*/
-{
-	char write_all_curves_flag;
-	int return_code;
-	struct cmzn_command_data *command_data;
-	struct Modifier_entry option_table[]=
-	{
-		{"all",NULL,NULL,set_char_flag},
-		{NULL,NULL,NULL,set_Curve}
-	};
-	struct Curve *curve;
-
-	ENTER(gfx_write_Curve);
-	USE_PARAMETER(dummy_to_be_modified);
-	if (state&&(command_data=(struct cmzn_command_data *)command_data_void))
-	{
-		return_code=1;
-		write_all_curves_flag=0;
-		curve=(struct Curve *)NULL;
-		(option_table[0]).to_be_modified= &write_all_curves_flag;
-		(option_table[1]).to_be_modified= &curve;
-		(option_table[1]).user_data=command_data->curve_manager;
-		if (0 != (return_code = process_multiple_options(state,option_table)))
-		{
-			if (write_all_curves_flag&&!curve)
-			{
-				return_code=FOR_EACH_OBJECT_IN_MANAGER(Curve)(
-					write_Curve,(void *)NULL,
-					command_data->curve_manager);
-			}
-			else if (curve&&!write_all_curves_flag)
-			{
-				return_code=write_Curve(curve,(void *)NULL);
-			}
-			else
-			{
-				display_message(ERROR_MESSAGE,
-					"gfx_write_Curve.  Specify either a curve name or 'all'");
-				return_code=0;
-			}
-		}
-		if (curve)
-		{
-			DEACCESS(Curve)(&curve);
-		}
-	}
-	else
-	{
-		display_message(ERROR_MESSAGE,
-			"gfx_write_Curve.  Invalid argument(s)");
-		return_code=0;
-	}
-	LEAVE;
-
-	return (return_code);
-} /* gfx_write_Curve */
-
-
-#endif /* defined (NEW_CODE) */
-
-static int gfx_write_Curve(struct Parse_state *state,
-	void *dummy_to_be_modified,void *command_data_void)
-/*******************************************************************************
-LAST MODIFIED : 25 November 1999
-
-DESCRIPTION :
-Writes an individual curve or all curves to filename(s) stemming from the name
-of the curve, eg. "name" -> name.curve.com name.curve.exnode name.curve.exelem
-==============================================================================*/
-{
-	char write_all_curves_flag;
-	int return_code;
-	struct cmzn_command_data *command_data;
-	struct Modifier_entry option_table[]=
-	{
-		{"all",NULL,NULL,set_char_flag},
-		{NULL,NULL,NULL,set_Curve}
-	};
-	struct Curve *curve;
-
-	ENTER(gfx_write_Curve);
-	USE_PARAMETER(dummy_to_be_modified);
-	if (state&&(command_data=(struct cmzn_command_data *)command_data_void))
-	{
-		return_code=1;
-		write_all_curves_flag=0;
-		curve=(struct Curve *)NULL;
-		(option_table[0]).to_be_modified= &write_all_curves_flag;
-		(option_table[1]).to_be_modified= &curve;
-		(option_table[1]).user_data=command_data->curve_manager;
-		if (0 != (return_code = process_multiple_options(state,option_table)))
-		{
-			if (write_all_curves_flag&&!curve)
-			{
-				return_code=FOR_EACH_OBJECT_IN_MANAGER(Curve)(
-					write_Curve,(void *)NULL,
-					command_data->curve_manager);
-			}
-			else if (curve&&!write_all_curves_flag)
-			{
-				return_code=write_Curve(curve,(void *)NULL);
-			}
-			else
-			{
-				display_message(ERROR_MESSAGE,
-					"gfx_write_Curve.  Specify either a curve name or 'all'");
-				return_code=0;
-			}
-		}
-		if (curve)
-		{
-			DEACCESS(Curve)(&curve);
-		}
-	}
-	else
-	{
-		display_message(ERROR_MESSAGE,
-			"gfx_write_Curve.  Invalid argument(s)");
-		return_code=0;
-	}
-	LEAVE;
-
-	return (return_code);
-} /* gfx_write_Curve */
-
 static int gfx_write_elements(struct Parse_state *state,
 	void *dummy_to_be_modified,void *command_data_void)
 /*******************************************************************************
@@ -14866,13 +14674,9 @@ Executes a GFX WRITE command.
 	{
 		if (state->current_token)
 		{
-			 //#if defined (NEW_CODE)
 			option_table = CREATE(Option_table)();
 			Option_table_add_entry(option_table, "all", NULL,
 				command_data_void, gfx_write_all);
-			//#endif /* defined NEW_CODE) */
-			Option_table_add_entry(option_table, "curve", NULL,
-				command_data_void, gfx_write_Curve);
 			Option_table_add_entry(option_table, "data", /*use_data*/(void *)1,
 				command_data_void, gfx_write_nodes);
 			Option_table_add_entry(option_table, "elements", NULL,
@@ -16407,7 +16211,6 @@ Initialise all the subcomponents of cmgui and create the cmzn_command_data
 		command_data->set_command = CREATE(Execute_command)();
 		command_data->event_dispatcher = (struct Event_dispatcher *)NULL;
 		command_data->user_interface= (struct User_interface *)NULL;
-		command_data->emoter_slider_dialog=(struct Emoter_dialog *)NULL;
 		command_data->logger = 0;
 		command_data->loggerNotifier = 0;
 #if defined (WX_USER_INTERFACE)
@@ -16439,7 +16242,6 @@ Initialise all the subcomponents of cmgui and create the cmzn_command_data
 		command_data->graphics_window_manager=(struct MANAGER(Graphics_window) *)NULL;
 #endif /* defined (USE_CMGUI_GRAPHICS_WINDOW) */
 		command_data->root_region = (struct cmzn_region *)NULL;
-		command_data->curve_manager=(struct MANAGER(Curve) *)NULL;
 		command_data->basis_manager=(struct MANAGER(FE_basis) *)NULL;
 		command_data->streampoint_list=(struct Streampoint *)NULL;
 #if defined (SELECT_DESCRIPTORS)
@@ -16827,12 +16629,6 @@ Initialise all the subcomponents of cmgui and create the cmzn_command_data
 				command_data->computed_field_package);
 			Computed_field_register_types_conditional(
 				command_data->computed_field_package);
-			if (command_data->curve_manager)
-			{
-				Computed_field_register_types_curve(
-					command_data->computed_field_package,
-					command_data->curve_manager);
-			}
 #if defined (ZINC_USE_ITK)
 			Computed_field_register_types_derivatives(
 				command_data->computed_field_package);
@@ -17148,10 +16944,6 @@ NOTE: Do not call this directly: call cmzn_command_data_destroy() to deaccess.
 				"Call to DESTROY(cmzn_command_data) while still in use");
 			return 0;
 		}
-		if (command_data->emoter_slider_dialog)
-		{
-			DESTROY(Emoter_dialog)(&command_data->emoter_slider_dialog);
-		}
 #if defined (WX_USER_INTERFACE)
 		/* viewers */
 		if (command_data->data_viewer)
@@ -17203,7 +16995,6 @@ NOTE: Do not call this directly: call cmzn_command_data_destroy() to deaccess.
 
 		/* some fields register for changes with the following managers,
 			 hence must destroy after regions and their fields */
-		command_data->curve_manager = NULL;
 		DEACCESS(cmzn_spectrum)(&(command_data->default_spectrum));
 		command_data->spectrum_manager=NULL;
 		cmzn_scenefiltermodule_destroy(&command_data->filter_module);
