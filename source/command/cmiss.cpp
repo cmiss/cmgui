@@ -8612,11 +8612,44 @@ static bool list_FE_element(cmzn_region_id region, cmzn_fieldmodule_id fieldmodu
 			&& (CMZN_OK == cmzn_streamresource_memory_get_buffer(srm, (void **)&buffer, &buffer_size))
 			&& (buffer_size > 0))
 		{
-			display_message(INFORMATION_MESSAGE, "%.*s", buffer_size, buffer);
+			const char *block = buffer;
+			int charCount = 0;
+			int lineNumber = 1;
+			while (block)
+			{
+				const char *blockEnd = block;
+				const char *nextBlock = 0;
+				while (charCount < buffer_size)
+				{
+					if ((*blockEnd == '\n') || (*blockEnd == '\r'))
+					{
+						nextBlock = blockEnd + 1;
+						++charCount;
+						while ((charCount < buffer_size) && ((*nextBlock == '\n') || (*nextBlock == '\r')))
+						{
+							++nextBlock;
+							++charCount;
+						}
+						if (charCount == buffer_size)
+							nextBlock = 0;
+						break;
+					}
+					++blockEnd;
+					++charCount;
+				}
+				// skip first 3 lines which of EX header information
+				if (lineNumber > 3)
+				{
+					unsigned int blockLen = blockEnd - block;
+					display_message(INFORMATION_MESSAGE, "%.*s\n", blockLen, block);
+				}
+				++lineNumber;
+				block = nextBlock;
+			}
 		}
 		else
 		{
-			display_message(ERROR_MESSAGE, "list_FE_element.  Failed to write to memory");
+			display_message(ERROR_MESSAGE, "list_FE_element.  Failed to write element to memory stream");
 			result = false;
 		}
 	}
