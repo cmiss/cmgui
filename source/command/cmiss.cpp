@@ -6168,7 +6168,7 @@ Executes a GFX EDIT GRAPHICS_OBJECT command.
 				{
 					return_code = 1; // nothing to do
 				}
-				else if (CMZN_OK != cmzn_scene_get_transformation_matrix(scene, mat))
+				else if (CMZN_OK != scene->getTransformationMatrixRowMajor(mat))
 				{
 					display_message(ERROR_MESSAGE, "gfx edit graphics_object:  Failed to get scene transformation matrix");
 					return_code = 0;
