@@ -6,6 +6,7 @@
 
 #include "opencmiss/zinc/fieldfiniteelement.h"
 #include "opencmiss/zinc/node.h"
+#include "opencmiss/zinc/nodeset.h"
 #include "general/mystring.h"
 #include "general/debug.h"
 #include "general/message.h"

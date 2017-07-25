@@ -5,6 +5,7 @@
 * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "opencmiss/zinc/mesh.h"
+#include "opencmiss/zinc/fieldgroup.h"
 #include "opencmiss/zinc/fieldsubobjectgroup.h"
 #include "general/debug.h"
 #include "general/message.h"
