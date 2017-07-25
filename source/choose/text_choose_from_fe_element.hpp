@@ -21,6 +21,7 @@ Calls the client-specified callback routine if a different object is chosen.
 #include "opencmiss/zinc/element.h"
 #include "opencmiss/zinc/fieldmodule.h"
 #include "computed_field/field_module.hpp"
+#include "opencmiss/zinc/mesh.h"
 #include "general/callback_class.hpp"
 #include "general/debug.h"
 #include "finite_element/finite_element_mesh.hpp"

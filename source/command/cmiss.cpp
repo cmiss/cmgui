@@ -26,6 +26,8 @@
 #include <time.h>
 #include "opencmiss/zinc/context.h"
 #include "opencmiss/zinc/element.h"
+#include "opencmiss/zinc/elementbasis.h"
+#include "opencmiss/zinc/elementtemplate.h"
 #include "opencmiss/zinc/field.h"
 #include "opencmiss/zinc/fieldmatrixoperators.h"
 #include "opencmiss/zinc/fieldmodule.h"

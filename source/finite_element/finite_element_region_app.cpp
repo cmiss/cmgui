@@ -6,6 +6,7 @@
 
 #include <stdio.h>
 
+#include "opencmiss/zinc/element.h"
 #include "general/debug.h"
 #include "general/message.h"
 #include "command/parser.h"

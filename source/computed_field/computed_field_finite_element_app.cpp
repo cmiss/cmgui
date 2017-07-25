@@ -6,6 +6,7 @@
 
 #include <stdio.h>
 
+#include "opencmiss/zinc/mesh.h"
 #include "opencmiss/zinc/fieldfiniteelement.h"
 #include "general/mystring.h"
 #include "general/debug.h"
