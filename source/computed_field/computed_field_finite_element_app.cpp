@@ -20,6 +20,7 @@
 #include "computed_field/computed_field_finite_element.h"
 #include "computed_field/field_module.hpp"
 #include "finite_element/finite_element_region.h"
+#include "mesh/cmiss_element_private.hpp"
 #include "mesh/cmiss_element_private_app.hpp"
 #include "finite_element/finite_element_app.h"
 
@@ -112,6 +113,7 @@ FE_field being made and/or modified.
 		}
 		if (return_code)
 		{
+			cmzn_mesh_id host_mesh = 0;
 			if (existing_fe_field)
 			{
 				number_of_components=
@@ -155,6 +157,15 @@ FE_field being made and/or modified.
 				return_code = 0;
 			}
 			original_number_of_components = number_of_components;
+			const char *help_text =
+				"Define a finite element field with parameters storable at nodes and, "
+				"if of value type real, able to be interpolated on elements. Option "
+				"'number_of_components' must be specified first if not 1. Special type "
+				"'element_xi' is used to store embedded locations: the 'host_mesh' "
+				"should be specified in this case e.g. mesh1d|mesh2d|mesh3d, and if not "
+				"a warning is issued that it may or may not be discovered automatically "
+				"by later commands. Specify field type 'coordinate' if real-valued with "
+				"1-3 components to enable automatic use as a coordinate field.";
 			/* try to handle help first */
 			if (return_code && (current_token = state->current_token))
 			{
@@ -162,6 +173,7 @@ FE_field being made and/or modified.
 					strcmp(PARSER_RECURSIVE_HELP_STRING, current_token)))
 				{
 					option_table = CREATE(Option_table)();
+					Option_table_add_help(option_table, help_text);
 					/* cm_field_type */
 					valid_strings = ENUMERATOR_GET_VALID_STRINGS(CM_field_type)(
 						&number_of_valid_strings,
@@ -179,6 +191,8 @@ FE_field being made and/or modified.
 					Option_table_add_enumerator(option_table,number_of_valid_strings,
 						valid_strings,&value_type_string);
 					DEALLOCATE(valid_strings);
+					// host_mesh
+					Option_table_add_mesh_entry(option_table, "host_mesh", field_modify->get_region(), &host_mesh);
 					/* number_of_components */
 					Option_table_add_entry(option_table,"number_of_components",
 						&number_of_components,NULL,set_int_positive);
@@ -236,6 +250,7 @@ FE_field being made and/or modified.
 			if (return_code && state->current_token)
 			{
 				option_table = CREATE(Option_table)();
+				Option_table_add_help(option_table, help_text);
 				/* cm_field_type */
 				valid_strings = ENUMERATOR_GET_VALID_STRINGS(CM_field_type)(
 					&number_of_valid_strings,
@@ -253,6 +268,8 @@ FE_field being made and/or modified.
 				Option_table_add_enumerator(option_table, number_of_valid_strings,
 					valid_strings, &value_type_string);
 				DEALLOCATE(valid_strings);
+				// host_mesh
+				Option_table_add_mesh_entry(option_table, "host_mesh", field_modify->get_region(), &host_mesh);
 				return_code = Option_table_multi_parse(option_table,state);
 				DESTROY(Option_table)(&option_table);
 			}
@@ -267,29 +284,50 @@ FE_field being made and/or modified.
 				FE_field *fe_field = FE_region_get_FE_field_with_general_properties(
 					cmzn_region_get_FE_region(cmzn_fieldmodule_get_region_internal(field_module)),
 					field_name, value_type, number_of_components);
-				Coordinate_system coordinate_system = cmzn_fieldmodule_get_coordinate_system(field_module);
-				if (fe_field &&
-					set_FE_field_CM_field_type(fe_field, cm_field_type) &&
-					set_FE_field_coordinate_system(fe_field, &coordinate_system))
+				if ((fe_field) && (value_type == ELEMENT_XI_VALUE))
 				{
-					if (component_names)
+					if (host_mesh)
 					{
-						for (i=0;i<number_of_components;i++)
+						FE_mesh *fe_mesh = cmzn_mesh_get_FE_mesh_internal(host_mesh);
+						const int result = FE_field_set_element_xi_host_mesh(fe_field, fe_mesh);
+						if (result != CMZN_OK)
 						{
-							if (component_names[i])
-							{
-								set_FE_field_component_name(fe_field, i, component_names[i]);
-							}
+							return_code = 0;
 						}
 					}
-					return_code = field_modify->update_field_and_deaccess(
-						Computed_field_create_finite_element_internal(field_module, fe_field));
+					else
+					{
+						display_message(WARNING_MESSAGE, "gfx define field %s finite_element element_xi: "
+							"It is recommended that the host_mesh be specified for element_xi field value type "
+							"as automatic discovery is not guaranteed to work in future", field_name);
+					}
 				}
-				else
+				if (return_code)
 				{
-					display_message(ERROR_MESSAGE,
-						"gfx define field finite_element.  Cannot change value type or number of components of existing field");
-					return_code = 0;
+					Coordinate_system coordinate_system = cmzn_fieldmodule_get_coordinate_system(field_module);
+					if (fe_field &&
+						set_FE_field_CM_field_type(fe_field, cm_field_type) &&
+						set_FE_field_coordinate_system(fe_field, &coordinate_system))
+					{
+						if (component_names)
+						{
+							for (i = 0; i<number_of_components; i++)
+							{
+								if (component_names[i])
+								{
+									set_FE_field_component_name(fe_field, i, component_names[i]);
+								}
+							}
+						}
+						return_code = field_modify->update_field_and_deaccess(
+							Computed_field_create_finite_element_internal(field_module, fe_field));
+					}
+					else
+					{
+						display_message(ERROR_MESSAGE,
+							"gfx define field finite_element.  Cannot change value type or number of components of existing field");
+						return_code = 0;
+					}
 				}
 				DEALLOCATE(field_name);
 				cmzn_fieldmodule_end_change(field_module);
@@ -306,6 +344,7 @@ FE_field being made and/or modified.
 				}
 				DEALLOCATE(component_names);
 			}
+			cmzn_mesh_destroy(&host_mesh);
 		}
 	}
 	else
