@@ -336,7 +336,7 @@ name the <file_operation> is performed on the file with the <arguments>.
 	//	wxFileDialog *ReadData = new wxFileDialog ((wxWindow *)NULL,wxString::FromAscii(shell_title),wxT(""),wxT(""),
 	//											   wxT("*.com;*.exnode"),wxOPEN|wxFILE_MUST_EXIST,wxDefaultPosition);
 	wxFileDialog *ReadData = new wxFileDialog ((wxWindow *)NULL,wxString::FromAscii(shell_title),wxT(""),wxT(""),
-											   extension,wxFD_OPEN|wxFD_FILE_MUST_EXIST,wxDefaultPosition);
+											   extension,wxOPEN|wxFILE_MUST_EXIST,wxDefaultPosition);
 	if (ReadData->ShowModal() == wxID_OK)
 	{
 		 wxString file_name=ReadData->GetPath();
@@ -611,7 +611,7 @@ specified file.
 		} break;
 	}
 	wxFileDialog *SaveData = new wxFileDialog ((wxWindow *)NULL,wxString::FromAscii(shell_title),wxT(""),wxT(""),
-		wxString::FromAscii(extension),wxFD_SAVE|wxFD_OVERWRITE_PROMPT,wxDefaultPosition);
+		wxString::FromAscii(extension),wxSAVE|wxOVERWRITE_PROMPT,wxDefaultPosition);
 	if (temp_string)
 	{
 		DEALLOCATE(temp_string);

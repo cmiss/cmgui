@@ -126,7 +126,7 @@ struct Graphics_buffer_app_package
 
 #endif /* defined (WIN32_USER_INTERFACE) */
 #if defined (WX_USER_INTERFACE)
-	wxGLCanvas* wxSharedCanvas;
+	wxGLContext* wxSharedContext;
 	wxFrame* sharedFrame;
 #endif /* defined (WX_USER_INTERFACE) */
 };
@@ -398,10 +398,10 @@ class wxGraphicsBuffer : public wxGLCanvas
 	int key_code, cursor_x, cursor_y;
 public:
 
-	wxGraphicsBuffer(wxPanel *parent, wxGLCanvas* sharedCanvas,
+	wxGraphicsBuffer(wxPanel *parent, wxGLContext* sharedContext,
 		Graphics_buffer_app *graphics_buffer
 		 , int *attrib_list):
-	wxGLCanvas(parent, sharedCanvas, wxID_ANY, wxDefaultPosition, parent->GetSize(),
+	wxGLCanvas(parent, sharedContext, wxID_ANY, wxDefaultPosition, parent->GetSize(),
 		 wxFULL_REPAINT_ON_RESIZE, wxT("GLCanvas")
 		 , attrib_list),
 		graphics_buffer(graphics_buffer), parent(parent), key_code(0), cursor_x(-1),
@@ -414,9 +414,9 @@ public:
 		if (graphics_buffer)
 		{
 			graphics_buffer->canvas = (wxGraphicsBuffer *)NULL;
-			if ((this == graphics_buffer->package->wxSharedCanvas))
+			if ((GetContext() == graphics_buffer->package->wxSharedContext))
 			{
-				graphics_buffer->package->wxSharedCanvas = NULL;
+				graphics_buffer->package->wxSharedContext = (wxGLContext *)NULL;
 			}
 		}
 	}
@@ -431,9 +431,9 @@ public:
 	{
 
 		/* Unfortunately can't find a better place to copy the shareable context */
-		if (!graphics_buffer->package->wxSharedCanvas)
+		if (!graphics_buffer->package->wxSharedContext)
 		{
-			graphics_buffer->package->wxSharedCanvas = this;
+			graphics_buffer->package->wxSharedContext = GetContext();
 		}
 		/* must always be here */
 		wxPaintDC dc(this);
@@ -659,12 +659,13 @@ class wxTestingBuffer : public wxGLCanvas
 {
 	 wxPanel *parent;
 	 Graphics_buffer_app *graphics_buffer;
+	 wxGLContext *sharedContext;
 
 public:
-	wxTestingBuffer(wxPanel *parent, Graphics_buffer_app *graphics_buffer, int *attrib_array)
-		: wxGLCanvas(parent, wxID_ANY, wxDefaultPosition, parent->GetSize(),
+	wxTestingBuffer(wxPanel *parent, Graphics_buffer_app *graphics_buffer, wxGLContext* sharedContext, int *attrib_array)
+		: wxGLCanvas(parent, sharedContext, wxID_ANY, wxDefaultPosition, parent->GetSize(),
 			wxFULL_REPAINT_ON_RESIZE, wxT("GLCanvas"), attrib_array)
-		, parent(parent), graphics_buffer(graphics_buffer)
+		, parent(parent), graphics_buffer(graphics_buffer), sharedContext(sharedContext)
 	{
 	}
 
@@ -672,17 +673,12 @@ public:
 	{
 	}
 
-
-	void setSharedCanvas()
+	void Set_wx_SharedContext()
 	{
-		graphics_buffer->package->wxSharedCanvas = this;
-#if WXWIN_COMPATIBILITY_2_8
-#if defined (UNIX)
-#if !defined (DARWIN)
-		GTKInitImplicitContext();
-#endif
-#endif
-#endif
+		if (!sharedContext)
+		{
+			graphics_buffer->package->wxSharedContext = GetContext();
+		}
 	}
 };
 
@@ -718,6 +714,7 @@ void Graphics_buffer_create_buffer_wx(
 		{
 #if defined (UNIX)
 #if !defined (DARWIN)
+			wxGLCanvas *test_canvas;
 			int *attribute_ptr, number_of_visual_attributes, selection_level;
 			visual_attributes = NULL;
 			number_of_visual_attributes = 0;
@@ -737,10 +734,13 @@ void Graphics_buffer_create_buffer_wx(
 			{
 				/* if not, test, create a new visual attribute list and create a
 							new canvas, else use the current visual attribute list*/
+				test_canvas = new wxTestingBuffer(parent, 0,
+												  graphics_buffer_package->wxSharedContext,
+												  visual_attributes);
 				if (ALLOCATE(visual_attributes, int, number_of_visual_attributes))
 				{
 					selection_level = 5;
-					while ((selection_level > 0) && (buffer->core_buffer->attrib_list == NULL) || (selection_level == 5))
+					while ((selection_level > 0) && ((test_canvas->m_vi == NULL) || (selection_level == 5)))
 					{
 						attribute_ptr = visual_attributes;
 						*attribute_ptr = WX_GL_RGBA;
@@ -846,20 +846,29 @@ void Graphics_buffer_create_buffer_wx(
 						}
 						*attribute_ptr = 0;
 						attribute_ptr++;
-						bool supported = wxGLCanvas::IsDisplaySupported(visual_attributes);
+						if (test_canvas)
+						{
+							delete test_canvas;
+						}
+						test_canvas = new wxTestingBuffer(parent, 0,
+														  graphics_buffer_package->wxSharedContext,
+														  visual_attributes);
 						selection_level--;
-						if ((selection_level == 0) && (!supported))
+						if ((selection_level == 0) && (test_canvas->m_vi == NULL))
 						{
 							DEALLOCATE(visual_attributes);
 							visual_attributes = NULL;
 							buffer->core_buffer->attrib_list = visual_attributes;
 						}
-						else if (supported)
+						else if(test_canvas->m_vi != NULL)
 						{
 							buffer->core_buffer->attrib_list = visual_attributes;
 						}
-
 					}
+				}
+				if (test_canvas)
+				{
+					delete test_canvas;
 				}
 			}
 			else
@@ -940,7 +949,7 @@ void Graphics_buffer_create_buffer_wx(
 				buffer->core_buffer->attrib_list[4] = 0;
 			}
 #endif /* defined (UNIX) */
-			if (!buffer->package->wxSharedCanvas)
+			if (!buffer->package->wxSharedContext)
 			{
 				wxFrame *frame = new wxFrame(0, -1, wxT("temporary"));
 				wxPanel *temp = new wxPanel(frame);
@@ -949,18 +958,17 @@ void Graphics_buffer_create_buffer_wx(
 					GRAPHICS_BUFFER_ONSCREEN_TYPE, GRAPHICS_BUFFER_ANY_BUFFERING_MODE, GRAPHICS_BUFFER_ANY_STEREO_MODE);
 				temp_buffer->parent = temp;
 				temp_buffer->core_buffer->attrib_list = NULL;
-				//frame->Show(true);
 				wxTestingBuffer *testingbuffer = new wxTestingBuffer(temp, temp_buffer,
+													graphics_buffer_package->wxSharedContext,
 													buffer->core_buffer->attrib_list);
-				testingbuffer->setSharedCanvas();
+				testingbuffer->Set_wx_SharedContext();
 				frame->Show(false);
 				buffer->package->sharedFrame = frame;
 				DESTROY(Graphics_buffer_app)(&temp_buffer);
 			}
 			buffer->canvas = new wxGraphicsBuffer(parent,
-												  buffer->package->wxSharedCanvas,
+												  buffer->package->wxSharedContext,
 												  buffer, buffer->core_buffer->attrib_list);
-
 			wxBoxSizer *topsizer = new wxBoxSizer( wxVERTICAL );
 			topsizer->Add(buffer->canvas, wxSizerFlags(1).Align(wxALIGN_CENTER).Expand());
 			parent->SetSizer(topsizer);
@@ -1143,7 +1151,7 @@ returned to the scene.
 		input_modifier = 0;
 		if (GDK_SHIFT_MASK&(button_event->state))
 		{
-			input_modifier |= GRAPHICS_BUFFER_INPUT_MODIFIER_SHIFT;sharedContext
+			input_modifier |= GRAPHICS_BUFFER_INPUT_MODIFIER_SHIFT;
 		}
 		if (GDK_CONTROL_MASK&(button_event->state))
 		{
@@ -1195,7 +1203,7 @@ returned to the scene.
 	struct Graphics_buffer_input input;
 
 	ENTER(Graphics_buffer_win32_button_callback);
-	sharedContext
+
 	return_code = 1;
 	input.type = GRAPHICS_BUFFER_INVALID_INPUT;
 	switch(*button_event)
@@ -1466,7 +1474,7 @@ it to share graphics contexts.
 #  endif /* defined (GTK_USE_GTKGLAREA) */
 #endif /* defined (GTK_USER_INTERFACE) */
 #if defined (WX_USER_INTERFACE)
-		package->wxSharedCanvas = NULL;
+		package->wxSharedContext = (wxGLContext*)NULL;
 		package->sharedFrame = (wxFrame*)NULL;
 #endif /* defined (WX_USER_INTERFACE) */
 #if defined (WIN32_USER_INTERFACE)
@@ -1545,13 +1553,6 @@ Closes the Graphics buffer package
 			it's buffer */
 		if (package->wgl_shared_context)
 		{
-			void Set_wx_SharedContext()
-			{
-				if (!sharedCanvas)
-				{
-					graphics_buffer->package->wxSharedCanvas = this;
-				}
-			}
 			wglDeleteContext(package->wgl_shared_context);
 		}
 		if (package->hidden_graphics_package)
@@ -2033,7 +2034,6 @@ DESCRIPTION :
 					/* GRAPHICS_BUFFER_ANY_BUFFERING_MODE so don't specify it */
 					buffer->buffering_mode = GRAPHICS_BUFFER_SINGLE_BUFFERING;
 				}
-			case GDK_BUTTON_PRESS:
 				if (stereo_mode == GRAPHICS_BUFFER_STEREO)
 				{
 					*attribute_ptr = GDK_GL_STEREO;
@@ -4412,7 +4412,7 @@ Returns the visual id used by the graphics buffer.
 			case GRAPHICS_BUFFER_ONSCREEN_TYPE:
 			{
 #if defined (__WXGTK__)
-				*visual_id = (int)((XVisualInfo*)buffer->canvas->GetXVisualInfo())
+				*visual_id = (int)((XVisualInfo*)buffer->canvas->m_vi)
 					->visualid;
 				return_code = 1;
 #else /* if defined (__WXGTK__) */
