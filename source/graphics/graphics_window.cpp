@@ -1266,7 +1266,7 @@ void graphics_window_set_filter_chooser_selected_item(cmzn_scenefilter_id filter
 			wxString filepath;
 			char*  filename;
 			wxFileDialog *saveImage = new wxFileDialog (this,wxT("Save file"),wxT(""),wxT(""),
-				 wxT("PNG files (*.png)|*.png|JPEG files (*.jpg)|*.jpg|SGI files (*.sgi)|*.sgi|TIF files (*.tiff)|*.tiff|BMP files (*.bmp)|*.bmp|GIF files (*.gif)|*.gif"),wxSAVE,wxDefaultPosition);
+				 wxT("PNG files (*.png)|*.png|JPEG files (*.jpg)|*.jpg|SGI files (*.sgi)|*.sgi|TIF files (*.tiff)|*.tiff|BMP files (*.bmp)|*.bmp|GIF files (*.gif)|*.gif"),wxFD_SAVE,wxDefaultPosition);
 
 	USE_PARAMETER(event);
 			if (saveImage->ShowModal() == wxID_OK)

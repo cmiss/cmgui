@@ -54,6 +54,7 @@ SET( CMAKE_BUILD_TYPE ${CMGUI_BUILD_TYPE} CACHE INTERNAL "Internalise CMAKE_BUIL
 
 SET( WXWIDGETS_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}" CACHE PATH "Location of the Cmgui's wxWidgets libraries." )
 
+set( CMAKE_PREFIX_PATH "${CMAKE_INSTALL_PREFIX}" CACHE PATH "Location of installed libraries path" )
 
 FIND_PACKAGE( cmiss_perl_interpreter QUIET )
 
@@ -69,11 +70,11 @@ ENDIF()
 IF(APPLE)
 	# Must set the osx architecture to i386 because of the
 	# version of wxWidgets that we use.
-	SET( CMAKE_OSX_ARCHITECTURES i386 )
+	SET( CMAKE_OSX_ARCHITECTURES x86_64 )
 ENDIF()
 
 IF( WX_USER_INTERFACE )
-	SET( CMAKE_PREFIX_PATH ${WXWIDGETS_INSTALL_PREFIX} )
+	list(INSERT CMAKE_PREFIX_PATH 0 ${WXWIDGETS_INSTALL_PREFIX} )
 	FIND_PACKAGE( wxWidgets QUIET COMPONENTS xrc adv html gl xml core base )
 	SET( CAN_USE_USER_INTERFACE ${wxWidgets_FOUND} )
 ENDIF( WX_USER_INTERFACE )
@@ -196,13 +197,19 @@ SET( CMGUI_VERSION_HDR ${CMAKE_CURRENT_BINARY_DIR}/source/configure/version.h )
 
 # To get the internal headers we derive a header search path from the build header source path.
 # Obviously this will not work if you configure with Zinc's install tree.
-LIST( GET ZINC_INCLUDE_DIRS 0 ZINC_PRIVATE_INCLUDE_DIRS )
-SET( ZINC_PRIVATE_INCLUDE_DIRS "${ZINC_PRIVATE_INCLUDE_DIRS}/.." )
+#LIST( GET ZINC_INCLUDE_DIRS 0 ZINC_PRIVATE_INCLUDE_DIRS )
+#SET( ZINC_PRIVATE_INCLUDE_DIRS "${ZINC_PRIVATE_INCLUDE_DIRS}/.." )
+#SET( ZINC_PRIVATE_INCLUDE_DIRS /home/alan/cmiss_setup/opencmiss/src/zinc/core/source )
+
+#set(ZINC_PRIVATE_INCLUDE_DIRS "" CACHE STRING "Location of private Zinc include directory.")
+LIST( GET ZINC_INCLUDE_DIRS 0 ZINC_PRIVATE_INTERNAL_DIRS )
+set(ZINC_PRIVATE_INCLUDE_DIRS "${ZINC_PRIVATE_INTERNAL_DIRS}" CACHE STRING "Location of private Zinc include directory.")
 
 INCLUDE_DIRECTORIES( ${CMAKE_CURRENT_BINARY_DIR}/source ${CMAKE_CURRENT_SOURCE_DIR}/source
 	${ZINC_INCLUDE_DIRS} ${ZINC_PRIVATE_INCLUDE_DIRS}
 	${wxWidgets_INCLUDE_DIRS} ${FIELDML_INCLUDE_DIRS}
 	${ITK_INCLUDE_DIRS} ${CMISS_PERL_INTERPRETER_INCLUDE_DIRS} )
+
 
 FOREACH( DEF ${EXTRA_COMPILER_DEFINITIONS} ${DEPENDENT_DEFINITIONS} )
 	ADD_DEFINITIONS( -D${DEF} )
