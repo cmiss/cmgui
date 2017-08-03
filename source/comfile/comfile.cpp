@@ -89,7 +89,7 @@ specified on the command line, a file selection box is presented to the user.
 			Option_table_add_entry(option_table, "name",
 				&filename, (void *)1, set_name);
 			/* default */
-			Option_table_add_entry(option_table, (char *)NULL,
+			Option_table_add_entry(option_table, (const char *)NULL,
 				&filename, NULL, set_name);
 			return_code=Option_table_multi_parse(option_table,state);
 			DESTROY(Option_table)(&option_table);

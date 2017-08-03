@@ -5343,7 +5343,7 @@ static int gfx_destroy_elements(struct Parse_state *state,
 		/* selected */
 		Option_table_add_char_flag_entry(option_table, "selected", &selected_flag);
 		/* default option: element number ranges */
-		Option_table_add_entry(option_table, (char *)NULL, (void *)element_ranges,
+		Option_table_add_entry(option_table, (const char *)NULL, (void *)element_ranges,
 			NULL, set_Multi_range);
 		return_code = Option_table_multi_parse(option_table, state);
 		DESTROY(Option_table)(&option_table);
@@ -5695,7 +5695,7 @@ static int gfx_destroy_nodes(struct Parse_state *state,
 		/* selected */
 		Option_table_add_char_flag_entry(option_table, "selected", &selected_flag);
 		/* default option: node number ranges */
-		Option_table_add_entry(option_table, (char *)NULL, (void *)node_ranges,
+		Option_table_add_entry(option_table, (const char *)NULL, (void *)node_ranges,
 			NULL, set_Multi_range);
 		return_code = Option_table_multi_parse(option_table, state);
 		DESTROY(Option_table)(&option_table);
@@ -6112,7 +6112,7 @@ Executes a GFX EDIT GRAPHICS_OBJECT command.
 		/* region path */
 		Option_table_add_string_entry(option_table, "name", &region_path, " PATH_TO_REGION");
 		/* default when token omitted (region path) */
-		Option_table_add_entry(option_table, (char *)NULL, &region_path, "PATH_TO_REGION", set_string);
+		Option_table_add_entry(option_table, (const char *)NULL, &region_path, (void *)"PATH_TO_REGION", set_string);
 
 		if (0 != (return_code = Option_table_multi_parse(option_table, state)))
 		{
@@ -6336,7 +6336,7 @@ Invokes the graphical spectrum group editor.
 		/* initialize defaults */
 		spectrum = (struct cmzn_spectrum *)NULL;
 		option_table = CREATE(Option_table)();
-		Option_table_add_entry(option_table, (char *)NULL, &spectrum,
+		Option_table_add_entry(option_table, (const char *)NULL, &spectrum,
 			command_data->spectrum_manager, set_Spectrum);
 		if (0 != (return_code = Option_table_multi_parse(option_table, state)))
 		{
@@ -8619,7 +8619,7 @@ static bool list_FE_element(cmzn_region_id region, cmzn_fieldmodule_id fieldmodu
 			&& (buffer_size > 0))
 		{
 			const char *block = buffer;
-			int charCount = 0;
+			unsigned int charCount = 0;
 			int lineNumber = 1;
 			while (block)
 			{
@@ -8646,7 +8646,7 @@ static bool list_FE_element(cmzn_region_id region, cmzn_fieldmodule_id fieldmodu
 				// skip first 3 lines which of EX header information
 				if (lineNumber > 3)
 				{
-					unsigned int blockLen = blockEnd - block;
+					int blockLen = static_cast<int>(blockEnd - block);
 					display_message(INFORMATION_MESSAGE, "%.*s\n", blockLen, block);
 				}
 				++lineNumber;
@@ -8715,7 +8715,7 @@ Executes a GFX LIST ELEMENT.
 		Option_table_add_entry(option_table, "verbose", &verbose_flag,
 			NULL, set_char_flag);
 		/* default option: element number ranges */
-		Option_table_add_entry(option_table, (char *)NULL, (void *)element_ranges,
+		Option_table_add_entry(option_table, (const char *)NULL, (void *)element_ranges,
 			NULL, set_Multi_range);
 		return_code = Option_table_multi_parse(option_table, state);
 		DESTROY(Option_table)(&option_table);
@@ -8892,7 +8892,7 @@ use node_manager and node_selection.
 		Option_table_add_entry(option_table, "verbose", &verbose_flag,
 			NULL, set_char_flag);
 		/* default option: node number ranges */
-		Option_table_add_entry(option_table, (char *)NULL, (void *)node_ranges,
+		Option_table_add_entry(option_table, (const char *)NULL, (void *)node_ranges,
 			NULL, set_Multi_range);
 		return_code = Option_table_multi_parse(option_table, state);
 		DESTROY(Option_table)(&option_table);
@@ -9646,7 +9646,7 @@ Executes a GFX LIST SPECTRUM.
 		Option_table_add_entry(option_table, "commands", &commands_flag,
 			NULL, set_char_flag);
 		/* default option: spectrum name */
-		Option_table_add_entry(option_table, (char *)NULL, &spectrum,
+		Option_table_add_entry(option_table, (const char *)NULL, &spectrum,
 			spectrum_manager_void, set_Spectrum);
 		if (0 != (return_code = Option_table_multi_parse(option_table, state)))
 		{
@@ -10278,7 +10278,7 @@ static int gfx_modify_element_group(struct Parse_state *state,
 			/* selected */
 			Option_table_add_char_flag_entry(option_table, "selected", &selected_flag);
 			/* default option: element number ranges */
-			Option_table_add_entry(option_table, (char *)NULL, (void *)element_ranges,
+			Option_table_add_entry(option_table, (const char *)NULL, (void *)element_ranges,
 				NULL, set_Multi_range);
 			return_code = Option_table_multi_parse(option_table, state);
 			DESTROY(Option_table)(&option_table);
@@ -10759,7 +10759,7 @@ static int gfx_modify_node_group(struct Parse_state *state,
 			/* selected */
 			Option_table_add_char_flag_entry(option_table, "selected", &selected_flag);
 			/* default option: node number ranges */
-			Option_table_add_entry(option_table, (char *)NULL, (void *)node_ranges,
+			Option_table_add_entry(option_table, (const char *)NULL, (void *)node_ranges,
 				NULL, set_Multi_range);
 			return_code = Option_table_multi_parse(option_table, state);
 			DESTROY(Option_table)(&option_table);
@@ -11079,7 +11079,7 @@ static int gfx_modify_nodes(struct Parse_state *state,
 		/* versions */
 		Option_table_add_int_positive_entry(option_table, "versions", &number_of_versions);
 		/* default option: node number ranges */
-		Option_table_add_entry(option_table, (char *)NULL, (void *)node_ranges,
+		Option_table_add_entry(option_table, (const char *)NULL, (void *)node_ranges,
 			NULL, set_Multi_range);
 		return_code = Option_table_multi_parse(option_table, state);
 		DESTROY(Option_table)(&option_table);
@@ -12572,7 +12572,7 @@ static int execute_command_gfx_select(struct Parse_state *state,
 			Option_table_add_char_flag_entry(option_table,"verbose",
 				&verbose_flag);
 			/* default option: multi range */
-			Option_table_add_entry(option_table, (char *)NULL, (void *)multi_range,
+			Option_table_add_entry(option_table, (const char *)NULL, (void *)multi_range,
 				NULL, set_Multi_range);
 			cmzn_fieldmodule_id fieldmodule = 0;
 			if (0 != (return_code = Option_table_multi_parse(option_table, state)))
@@ -15022,7 +15022,7 @@ Opens an example.
 	{
 		if (NULL != (command_data = (struct cmzn_command_data *)command_data_void))
 		{
-		   example = (char *)NULL;
+			example = (char *)NULL;
 			execute_flag = 0;
 			option_table = CREATE(Option_table)();
 			/* example */
@@ -16142,7 +16142,7 @@ Parses command line options from <state>.
 			&(command_line_options->visual_id_number),
 			(void *)" NUMBER", set_int_with_description);
 		/* [default option == command_file_name] */
-		Option_table_add_entry(option_table, (char *)NULL,
+		Option_table_add_entry(option_table, (const char *)NULL,
 			&(command_line_options->command_file_name),
 			(void *)"COMMAND_FILE_NAME", set_string_no_command_line_option);
 		return_code = Option_table_multi_parse(option_table, state);
