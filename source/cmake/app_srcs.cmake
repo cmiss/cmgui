@@ -36,7 +36,6 @@ SET(APP_SRCS
     source/computed_field/computed_field_function_app.cpp
     source/computed_field/computed_field_fibres_app.cpp
     source/computed_field/computed_field_derivatives_app.cpp
-    source/computed_field/computed_field_curve_app.cpp
     source/computed_field/computed_field_composite_app.cpp
     source/mesh/cmiss_element_private_app.cpp
     source/computed_field/computed_field_compose_app.cpp
@@ -58,7 +57,6 @@ SET(APP_SRCS
     source/graphics/font_app.cpp
     source/computed_field/computed_field_conditional_app.cpp
     source/graphics/tessellation_app.cpp
-    source/curve/curve_app.cpp
     source/graphics/texture_app.cpp
     source/three_d_drawing/graphics_buffer_app.cpp
     source/general/geometry_app.cpp
@@ -88,7 +86,6 @@ SET(APP_SRCS
     source/element/element_point_tool.cpp
     source/element/element_tool.cpp
     source/element/element_point_viewer_wx.cpp
-    source/emoter/emoter_dialog.cpp
     source/graphics/transform_tool.cpp
     source/dialog/tessellation_dialog.cpp
     source/graphics/region_tree_viewer_wx.cpp

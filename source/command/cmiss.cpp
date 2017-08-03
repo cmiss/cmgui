@@ -26,13 +26,20 @@
 #include <time.h>
 #include "opencmiss/zinc/context.h"
 #include "opencmiss/zinc/element.h"
+#include "opencmiss/zinc/elementbasis.h"
+#include "opencmiss/zinc/elementtemplate.h"
 #include "opencmiss/zinc/field.h"
+#include "opencmiss/zinc/fieldfiniteelement.h"
+#include "opencmiss/zinc/fieldmatrixoperators.h"
 #include "opencmiss/zinc/fieldmodule.h"
 #include "opencmiss/zinc/fieldsmoothing.h"
 #include "opencmiss/zinc/fieldsubobjectgroup.h"
 #include "opencmiss/zinc/glyph.h"
 #include "opencmiss/zinc/light.h"
 #include "opencmiss/zinc/material.h"
+#include "opencmiss/zinc/node.h"
+#include "opencmiss/zinc/nodeset.h"
+#include "opencmiss/zinc/nodetemplate.h"
 #include "opencmiss/zinc/region.h"
 #include "opencmiss/zinc/scene.h"
 #include "opencmiss/zinc/sceneviewer.h"
@@ -54,7 +61,6 @@
 #include "computed_field/computed_field_composite.h"
 #include "computed_field/computed_field_conditional.h"
 #include "computed_field/computed_field_coordinate.h"
-#include "computed_field/computed_field_curve.h"
 #include "computed_field/computed_field_deformation.h"
 #include "computed_field/computed_field_derivatives.h"
 #include "computed_field/computed_field_find_xi.h"
@@ -84,7 +90,6 @@
 #include "element/element_point_viewer_wx.h"
 #endif /* defined (WX_USER_INTERFACE) */
 #include "element/element_tool.h"
-#include "emoter/emoter_dialog.h"
 #include "finite_element/export_cm_files.h"
 #if defined (ZINC_USE_NETGEN)
 #include "finite_element/generate_mesh_netgen.h"
@@ -122,7 +127,6 @@
 #include "graphics/render_vrml.h"
 #include "graphics/render_wavefront.h"
 #include "graphics/scene.h"
-#include "finite_element/finite_element_helper.h"
 #include "graphics/triangle_mesh.hpp"
 #include "graphics/render_triangularisation.hpp"
 #include "graphics/import_graphics_object.h"
@@ -183,7 +187,6 @@
 #include "user_interface/confirmation.h"
 #include "general/message.h"
 #include "user_interface/user_interface.h"
-#include "curve/curve.h"
 #if defined (USE_PERL_INTERPRETER)
 #include "perl_interpreter.h"
 #endif /* defined (USE_PERL_INTERPRETER) */
@@ -239,7 +242,6 @@
 #include "computed_field/computed_field_function_app.h"
 #include "computed_field/computed_field_fibres_app.h"
 #include "computed_field/computed_field_derivatives_app.h"
-#include "computed_field/computed_field_curve_app.h"
 #include "computed_field/computed_field_conditional_app.h"
 #include "computed_field/computed_field_composite_app.h"
 #include "computed_field/computed_field_compose_app.h"
@@ -259,7 +261,6 @@
 #include "graphics/tessellation_app.hpp"
 #include "graphics/tessellation_app.hpp"
 #include "computed_field/computed_field_app.h"
-#include "curve/curve_app.h"
 #include "general/enumerator_app.h"
 #include "graphics/render_to_finite_elements_app.h"
 #include "graphics/auxiliary_graphics_types_app.h"
@@ -340,7 +341,6 @@ DESCRIPTION :
 	struct cmzn_scenefiltermodule *filter_module;
 	struct cmzn_font *default_font;
 	struct cmzn_tessellationmodule *tessellationmodule;
-	struct MANAGER(Curve) *curve_manager;
 	struct MANAGER(Scene) *scene_manager;
 	struct Scene *default_scene;
 	struct MANAGER(cmzn_spectrum) *spectrum_manager;
@@ -351,7 +351,6 @@ DESCRIPTION :
 	struct Streampoint *streampoint_list;
 	struct Time_keeper_app *default_time_keeper_app;
 	struct User_interface *user_interface;
-	struct Emoter_dialog *emoter_slider_dialog;
 #if defined (WX_USER_INTERFACE)
 	struct Node_viewer *data_viewer,*node_viewer;
 	struct Element_point_viewer *element_point_viewer;
@@ -721,19 +720,18 @@ DESCRIPTION :
 static int gfx_create_axes(struct Parse_state *state,
 	void *dummy_to_be_modified, void *dummy_user_data_void)
 {
-	USE_PARAMETER(state);
 	USE_PARAMETER(dummy_to_be_modified);
 	USE_PARAMETER(dummy_user_data_void);
-	struct Option_table *option_table = CREATE(Option_table)();
-	Option_table_add_help(option_table,
+	display_message(Parse_state_help_mode(state)? INFORMATION_MESSAGE : ERROR_MESSAGE,
 		"The 'gfx create axes' command has been removed. These are now drawn as\n"
 		"point graphics using built-in axes glyphs. Create these in the scene editor\n"
 		"and list commands to reproduce the view with:\n"
-		"  gfx list g_element REGION_PATH commands\n"
+		"  gfx list g_element REGION_PATH commands.\n"
 		"Alternatively directly add with commands (e.g. for root region):\n"
 		"  gfx modify g_element \"/\" point glyph axes_xyz size 1.0;\n");
-	DESTROY(Option_table)(&option_table);
-	return 1;
+	if (Parse_state_help_mode(state))
+		return 1;
+	return 0;
 }
 
 /**
@@ -4988,6 +4986,25 @@ Executes a GFX CREATE command.
 	return (return_code);
 } /* execute_command_gfx_create */
 
+/** Explains migration for removed command 'gfx define curve' */
+int gfx_define_Curve(struct Parse_state *state,
+	void *dummy_to_be_modified, void *command_data_void)
+{
+	USE_PARAMETER(dummy_to_be_modified);
+	USE_PARAMETER(command_data_void);
+	display_message(Parse_state_help_mode(state) ? INFORMATION_MESSAGE : ERROR_MESSAGE,
+		"The 'gfx define curve' command has been removed. You can replace a curve with a\n"
+		"1-D mesh defining a non-decreasing scalar 'parameter' field, plus a 'value' field\n"
+		"to look up for a given parameter value. If your command has 'file' option, you can\n"
+		"directly load the exnode/exelem or single exregion file(s) which are defined this way.\n"
+		"Use a 'find_mesh_location' field and an embedded field to achieve the effect of the\n"
+		"former 'curve_lookup' field type. These currently only work in the same region;\n"
+		"talk to the Cmgui developers if you have migration issues.\n");
+	if (Parse_state_help_mode(state))
+		return 1;
+	return 0;
+}
+
 /***************************************************************************//**
  * Executes a GFX DEFINE FACES command.
  */
@@ -5088,7 +5105,6 @@ static int gfx_define_faces(struct Parse_state *state,
 	return (return_code);
 }
 
-
 static int execute_command_gfx_define(struct Parse_state *state,
 	void *dummy_to_be_modified,void *command_data_void)
 /*******************************************************************************
@@ -5100,7 +5116,6 @@ Executes a GFX DEFINE command.
 {
 	int return_code;
 	struct cmzn_command_data *command_data;
-	struct Curve_command_data curve_command_data;
 	struct Option_table *option_table;
 
 	ENTER(execute_command_gfx_define);
@@ -5115,9 +5130,8 @@ Executes a GFX DEFINE command.
 					command_data->graphics_module);
 				option_table = CREATE(Option_table)();
 				/* curve */
-				curve_command_data.curve_manager = command_data->curve_manager;
 				Option_table_add_entry(option_table, "curve", NULL,
-					&curve_command_data, gfx_define_Curve);
+					command_data_void, gfx_define_Curve);
 				/* faces */
 				Option_table_add_entry(option_table, "faces", NULL,
 					command_data_void, gfx_define_faces);
@@ -5329,7 +5343,7 @@ static int gfx_destroy_elements(struct Parse_state *state,
 		/* selected */
 		Option_table_add_char_flag_entry(option_table, "selected", &selected_flag);
 		/* default option: element number ranges */
-		Option_table_add_entry(option_table, (char *)NULL, (void *)element_ranges,
+		Option_table_add_entry(option_table, (const char *)NULL, (void *)element_ranges,
 			NULL, set_Multi_range);
 		return_code = Option_table_multi_parse(option_table, state);
 		DESTROY(Option_table)(&option_table);
@@ -5681,7 +5695,7 @@ static int gfx_destroy_nodes(struct Parse_state *state,
 		/* selected */
 		Option_table_add_char_flag_entry(option_table, "selected", &selected_flag);
 		/* default option: node number ranges */
-		Option_table_add_entry(option_table, (char *)NULL, (void *)node_ranges,
+		Option_table_add_entry(option_table, (const char *)NULL, (void *)node_ranges,
 			NULL, set_Multi_range);
 		return_code = Option_table_multi_parse(option_table, state);
 		DESTROY(Option_table)(&option_table);
@@ -5912,9 +5926,6 @@ Executes a GFX DESTROY command.
 			if (state->current_token)
 			{
 				option_table = CREATE(Option_table)();
-				/* curve */
-				Option_table_add_entry(option_table, "curve", NULL,
-					command_data->curve_manager, gfx_destroy_Curve);
 				/* data */
 				Option_table_add_entry(option_table, "data", /*use_data*/(void *)1,
 					command_data_void, gfx_destroy_nodes);
@@ -6073,51 +6084,6 @@ Executes a GFX DRAW command.
 	return (return_code);
 } /* execute_command_gfx_draw */
 
-/**
- * Iterator that modifies the position of each node according to the
- * transformation in the transformation data.
- * Should enclose multiple calls in FE_region_begin_change/end_change wrappers.
- */
-static void apply_transformation_to_node(struct FE_node *node,
-	gtMatrix& transformationMatrix)
-{
-	FE_value x, x2, y, y2, z, z2, h2;
-	if (node)
-	{
-		FE_field *coordinate_field = get_FE_node_default_coordinate_field(node);
-		if (FE_node_get_position_cartesian(node, coordinate_field,
-			&x, &y, &z, (FE_value *)NULL))
-		{
-			/* Get the new position */
-			h2 = transformationMatrix[0][3] * x
-				+ transformationMatrix[1][3] * y
-				+ transformationMatrix[2][3] * z
-				+ transformationMatrix[3][3];
-			x2 = (transformationMatrix[0][0] * x
-				+ transformationMatrix[1][0] * y
-				+ transformationMatrix[2][0] * z
-				+ transformationMatrix[3][0]) / h2;
-			y2 = (transformationMatrix[0][1] * x
-				+ transformationMatrix[1][1] * y
-				+ transformationMatrix[2][1] * z
-				+ transformationMatrix[3][1]) / h2;
-			z2 = (transformationMatrix[0][2] * x
-				+ transformationMatrix[1][2] * y
-				+ transformationMatrix[2][2] * z
-				+ transformationMatrix[3][2]) / h2;
-
-			if (!FE_node_set_position_cartesian(node,coordinate_field,x2,y2,z2))
-				display_message(ERROR_MESSAGE,
-					"apply_transformation_to_node.  Could not move node");
-		}
-		else
-		{
-			display_message(ERROR_MESSAGE,
-				"apply_transformation_to_node.  Could not calculate coordinate field");
-		}
-	}
-}
-
 static int gfx_edit_graphics_object(struct Parse_state *state,
 	void *dummy_to_be_modified,void *command_data_void)
 /*******************************************************************************
@@ -6127,103 +6093,141 @@ DESCRIPTION :
 Executes a GFX EDIT GRAPHICS_OBJECT command.
 ==============================================================================*/
 {
-	char apply_flag, *region_path;
 	int return_code;
-	struct cmzn_command_data *command_data;
-	struct cmzn_region *region;
-	struct Option_table *option_table;
 
-	ENTER(gfx_edit_graphics_object);
 	USE_PARAMETER(dummy_to_be_modified);
+	struct cmzn_command_data *command_data;
 	if (state && (command_data = (struct cmzn_command_data *)command_data_void))
 	{
 		/* initialize defaults */
-		apply_flag = 0;
-		region_path = (char *)NULL;
+		char apply_flag = 0;
+		char *region_path = duplicate_string("/");
+		char *coordinate_field_name = 0;
 
-		option_table = CREATE(Option_table)();
+		struct Option_table *option_table = CREATE(Option_table)();
 		/* apply_transformation */
-		Option_table_add_entry(option_table, "apply_transformation",  &apply_flag,
-			NULL, set_char_flag);
-		/* name */
-		Option_table_add_entry(option_table, "name", &region_path,
-			(void *)1, set_name);
-		/* default when token omitted (graphics_object_name) */
-		Option_table_add_entry(option_table, (char *)NULL, &region_path,
-			(void *)0, set_name);
+		Option_table_add_entry(option_table, "apply_transformation", &apply_flag, NULL, set_char_flag);
+		/* coordinate field name*/
+		Option_table_add_string_entry(option_table, "coordinate_field", &coordinate_field_name, " FIELD_NAME");
+		/* region path */
+		Option_table_add_string_entry(option_table, "name", &region_path, " PATH_TO_REGION");
+		/* default when token omitted (region path) */
+		Option_table_add_entry(option_table, (const char *)NULL, &region_path, (void *)"PATH_TO_REGION", set_string);
+
 		if (0 != (return_code = Option_table_multi_parse(option_table, state)))
 		{
-			if (region_path && cmzn_region_get_region_from_path_deprecated(command_data->root_region,
-					region_path, &region) && region)
+			struct cmzn_region *region = 0;
+			if (!region_path)
 			{
-				if (apply_flag)
-				{
-					/* SAB Temporary place for this command cause I really need to use it,
-						 not very general, doesn't work in prolate or rotate derivatives */
-					struct cmzn_scene *scene = NULL;
-					gtMatrix identity = {{1,0,0,0},{0,1,0,0},{0,0,1,0},{0,0,0,1}};
-					scene = cmzn_region_get_scene(region);
-					if (scene)
-					{
-						double mat[16];
-						if (cmzn_scene_has_transformation(scene) &&
-							(CMZN_OK == cmzn_scene_get_transformation_matrix(scene, mat)))
-						{
-							gtMatrix transformationMatrix;
-							for (int col = 0; col < 4; ++col)
-								for (int row = 0; row < 4; ++row)
-									transformationMatrix[col][row] = mat[col*4 + row];
-							cmzn_fieldmodule_id fieldmodule = cmzn_region_get_fieldmodule(region);
-							cmzn_fieldmodule_begin_change(fieldmodule);
-							cmzn_field_domain_type domainTypes[] = { CMZN_FIELD_DOMAIN_TYPE_NODES, CMZN_FIELD_DOMAIN_TYPE_DATAPOINTS };
-							for (int i = 0; i < 2; ++i)
-							{
-								cmzn_nodeset_id nodeset =
-									cmzn_fieldmodule_find_nodeset_by_field_domain_type(fieldmodule, domainTypes[i]);
-								cmzn_nodeiterator_id iter = cmzn_nodeset_create_nodeiterator(nodeset);
-								cmzn_node_id node = 0;
-								while (0 != (node = cmzn_nodeiterator_next_non_access(iter)))
-									apply_transformation_to_node(node, transformationMatrix);
-								cmzn_nodeiterator_destroy(&iter);
-								cmzn_nodeset_destroy(&nodeset);
-							}
-							cmzn_fieldmodule_end_change(fieldmodule);
-							cmzn_fieldmodule_destroy(&fieldmodule);
-							cmzn_scene_clear_transformation(scene);
-						}
-						else
-						{
-							return_code = 1;
-						}
-					}
-				}
-				else
-				{
-					display_message(WARNING_MESSAGE,
-						"gfx edit graphics_object:  Must specify 'apply_transformation'");
-					return_code = 0;
-				}
+				display_message(ERROR_MESSAGE, "gfx edit graphics_object.  Must specify region");
+				return_code = 0;
+			}
+			else if (!(cmzn_region_get_region_from_path_deprecated(command_data->root_region,
+				region_path, &region) && (region)))
+			{
+				display_message(ERROR_MESSAGE, "gfx edit graphics_object.  Could not find region %s", region_path);
+				return_code = 0;
+			}
+			else if (!apply_flag)
+			{
+				display_message(WARNING_MESSAGE, "gfx edit graphics_object.  Must specify 'apply_transformation' to do anything");
+				return_code = 0;
 			}
 			else
 			{
-				display_message(WARNING_MESSAGE,
-					"Must specify region");
-				return_code = 0;
-			}
-			if (region_path)
-			{
-				DEALLOCATE(region_path);
+				cmzn_fieldmodule *fieldmodule = cmzn_region_get_fieldmodule(region);
+				cmzn_fieldmodule_begin_change(fieldmodule);
+				cmzn_scene *scene = cmzn_region_get_scene(region);
+				cmzn_field *coordinate_field = 0;
+				if (coordinate_field_name)
+					coordinate_field = cmzn_fieldmodule_find_field_by_name(fieldmodule, coordinate_field_name);
+				else
+				{
+					coordinate_field = cmzn_scene_guess_coordinate_field(scene, CMZN_FIELD_DOMAIN_TYPE_NODES);
+					if (coordinate_field)
+					{
+						cmzn_field_access(coordinate_field);
+						coordinate_field_name = cmzn_field_get_name(coordinate_field);
+					}
+				}
+				cmzn_field *rc_coordinate_field = cmzn_fieldmodule_create_field_coordinate_transformation(fieldmodule, coordinate_field);
+				cmzn_field_set_coordinate_system_type(rc_coordinate_field, CMZN_FIELD_COORDINATE_SYSTEM_TYPE_RECTANGULAR_CARTESIAN);
+				cmzn_field *transformed_rc_coordinate_field = 0;
+				double mat[16];
+				if (!coordinate_field)
+				{
+					display_message(ERROR_MESSAGE, "gfx edit graphics_object:  Could not find coordinate field %s",
+						coordinate_field_name ? coordinate_field_name : "in region");
+					return_code = 0;
+				}
+				else if (!rc_coordinate_field)
+				{
+					display_message(ERROR_MESSAGE, "gfx edit graphics_object:  Invalid coordinate field %s", coordinate_field_name);
+					return_code = 0;
+				}
+				else if (!scene)
+				{
+					display_message(ERROR_MESSAGE, "gfx edit graphics_object:  Missing scene");
+					return_code = 0;
+				}
+				else if (!cmzn_scene_has_transformation(scene))
+				{
+					return_code = 1; // nothing to do
+				}
+				else if (CMZN_OK != scene->getTransformationMatrixRowMajor(mat))
+				{
+					display_message(ERROR_MESSAGE, "gfx edit graphics_object:  Failed to get scene transformation matrix");
+					return_code = 0;
+				}
+				else
+				{
+					cmzn_field *trans_field = cmzn_fieldmodule_create_field_constant(fieldmodule, 16, mat);
+					transformed_rc_coordinate_field = cmzn_fieldmodule_create_field_projection(fieldmodule, rc_coordinate_field, trans_field);
+					cmzn_field_destroy(&trans_field);
+					if (!transformed_rc_coordinate_field)
+					{
+						display_message(ERROR_MESSAGE, "gfx edit graphics_object:  Failed to create transformed RC coordinate field");
+						return_code = 0;
+					}
+					else
+					{
+						/* Not very general, doesn't rotate derivatives */
+						cmzn_field_domain_type domainTypes[] = { CMZN_FIELD_DOMAIN_TYPE_NODES, CMZN_FIELD_DOMAIN_TYPE_DATAPOINTS };
+						const FE_value time = command_data->default_time_keeper_app->getTimeKeeper()->getTime();
+						for (int i = 0; (i < 2) && return_code; ++i)
+						{
+							cmzn_nodeset_id nodeset = cmzn_fieldmodule_find_nodeset_by_field_domain_type(fieldmodule, domainTypes[i]);
+							if (!cmzn_nodeset_assign_field_from_source(nodeset, rc_coordinate_field,
+								transformed_rc_coordinate_field, /*conditional_field*/0, time))
+							{
+								display_message(ERROR_MESSAGE, "gfx edit graphics_object:  Failed to apply transformation");
+								return_code = 0;
+							}
+							cmzn_nodeset_destroy(&nodeset);
+						}
+						if (return_code)
+							cmzn_scene_clear_transformation(scene);
+					}
+				}
+				cmzn_scene_destroy(&scene);
+				cmzn_field_destroy(&transformed_rc_coordinate_field);
+				cmzn_field_destroy(&rc_coordinate_field);
+				cmzn_field_destroy(&coordinate_field);
+				cmzn_fieldmodule_end_change(fieldmodule);
+				cmzn_fieldmodule_destroy(&fieldmodule);
 			}
 		}
+		if (region_path)
+			DEALLOCATE(region_path);
+		if (coordinate_field_name)
+			DEALLOCATE(coordinate_field_name);
 		DESTROY(Option_table)(&option_table);
 	}
 	else
 	{
-		display_message(ERROR_MESSAGE,
-			"gfx_edit_graphics_object.  Invalid argument(s)");
+		display_message(ERROR_MESSAGE, "gfx_edit_graphics_object.  Invalid argument(s)");
 		return_code = 0;
 	}
-	LEAVE;
 	return return_code;
 }
 
@@ -6332,7 +6336,7 @@ Invokes the graphical spectrum group editor.
 		/* initialize defaults */
 		spectrum = (struct cmzn_spectrum *)NULL;
 		option_table = CREATE(Option_table)();
-		Option_table_add_entry(option_table, (char *)NULL, &spectrum,
+		Option_table_add_entry(option_table, (const char *)NULL, &spectrum,
 			command_data->spectrum_manager, set_Spectrum);
 		if (0 != (return_code = Option_table_multi_parse(option_table, state)))
 		{
@@ -8586,6 +8590,93 @@ Executes a GFX LIST FIELD.
 	return (return_code);
 } /* gfx_list_Computed_field */
 
+/** list element contents by making EX file serialisation */
+static bool list_FE_element(cmzn_region_id region, cmzn_fieldmodule_id fieldmodule, cmzn_mesh_id mesh, cmzn_element_id element)
+{
+	bool result = true;
+	cmzn_fieldmodule_begin_change(fieldmodule);
+	cmzn_field_id field = cmzn_fieldmodule_create_field_group(fieldmodule);
+	cmzn_field_group_id group_field = cmzn_field_cast_group(field);
+	cmzn_field_element_group_id element_group_field = cmzn_field_group_create_field_element_group(group_field, mesh);
+	cmzn_mesh_group_id mesh_group = cmzn_field_element_group_get_mesh_group(element_group_field);
+	cmzn_streaminformation_id si = cmzn_region_create_streaminformation_region(region);
+	cmzn_streaminformation_region_id sir = cmzn_streaminformation_cast_region(si);
+	cmzn_streamresource_id sr = cmzn_streaminformation_create_streamresource_memory(si);
+	cmzn_streamresource_memory_id srm = cmzn_streamresource_cast_memory(sr);
+	char *group_name = cmzn_field_get_name(field);
+	if ((group_name) && (mesh_group) && (cmzn_streaminformation_region_set_resource_group_name(sir, sr, group_name)))
+	{
+		const int dimension = cmzn_mesh_get_dimension(mesh);
+		cmzn_field_domain_types domainTypes =
+			(dimension == 3) ? CMZN_FIELD_DOMAIN_TYPE_MESH3D :
+			(dimension == 2) ? CMZN_FIELD_DOMAIN_TYPE_MESH2D : CMZN_FIELD_DOMAIN_TYPE_MESH1D;
+		cmzn_streaminformation_region_set_resource_domain_types(sir, sr, domainTypes);
+		cmzn_mesh_group_add_element(mesh_group, element);
+		char *buffer;
+		unsigned int buffer_size;
+		if ((CMZN_OK == cmzn_region_write(region, sir))
+			&& (CMZN_OK == cmzn_streamresource_memory_get_buffer(srm, (void **)&buffer, &buffer_size))
+			&& (buffer_size > 0))
+		{
+			const char *block = buffer;
+			unsigned int charCount = 0;
+			int lineNumber = 1;
+			while (block)
+			{
+				const char *blockEnd = block;
+				const char *nextBlock = 0;
+				while (charCount < buffer_size)
+				{
+					if ((*blockEnd == '\n') || (*blockEnd == '\r'))
+					{
+						nextBlock = blockEnd + 1;
+						++charCount;
+						while ((charCount < buffer_size) && ((*nextBlock == '\n') || (*nextBlock == '\r')))
+						{
+							++nextBlock;
+							++charCount;
+						}
+						if (charCount == buffer_size)
+							nextBlock = 0;
+						break;
+					}
+					++blockEnd;
+					++charCount;
+				}
+				// skip first 3 lines which of EX header information
+				if (lineNumber > 3)
+				{
+					int blockLen = static_cast<int>(blockEnd - block);
+					display_message(INFORMATION_MESSAGE, "%.*s\n", blockLen, block);
+				}
+				++lineNumber;
+				block = nextBlock;
+			}
+		}
+		else
+		{
+			display_message(ERROR_MESSAGE, "list_FE_element.  Failed to write element to memory stream");
+			result = false;
+		}
+	}
+	else
+	{
+		display_message(ERROR_MESSAGE, "list_FE_element.  Failed to set up temporary group");
+		result = false;
+	}
+	DEALLOCATE(group_name);
+	cmzn_streamresource_memory_destroy(&srm);
+	cmzn_streamresource_destroy(&sr);
+	cmzn_streaminformation_region_destroy(&sir);
+	cmzn_streaminformation_destroy(&si);
+	cmzn_mesh_group_destroy(&mesh_group);
+	cmzn_field_element_group_destroy(&element_group_field);
+	cmzn_field_group_destroy(&group_field);
+	cmzn_field_destroy(&field);
+	cmzn_fieldmodule_end_change(fieldmodule);
+	return result;
+}
+
 static int gfx_list_FE_element(struct Parse_state *state,
 	void *dimension_void,void *command_data_void)
 /*******************************************************************************
@@ -8624,7 +8715,7 @@ Executes a GFX LIST ELEMENT.
 		Option_table_add_entry(option_table, "verbose", &verbose_flag,
 			NULL, set_char_flag);
 		/* default option: element number ranges */
-		Option_table_add_entry(option_table, (char *)NULL, (void *)element_ranges,
+		Option_table_add_entry(option_table, (const char *)NULL, (void *)element_ranges,
 			NULL, set_Multi_range);
 		return_code = Option_table_multi_parse(option_table, state);
 		DESTROY(Option_table)(&option_table);
@@ -8698,7 +8789,8 @@ Executes a GFX LIST ELEMENT.
 					}
 					if (verbose_flag)
 					{
-						list_FE_element(element);
+						if (!list_FE_element(region, field_module, master_mesh, element))
+							break;
 					}
 					else
 					{
@@ -8800,7 +8892,7 @@ use node_manager and node_selection.
 		Option_table_add_entry(option_table, "verbose", &verbose_flag,
 			NULL, set_char_flag);
 		/* default option: node number ranges */
-		Option_table_add_entry(option_table, (char *)NULL, (void *)node_ranges,
+		Option_table_add_entry(option_table, (const char *)NULL, (void *)node_ranges,
 			NULL, set_Multi_range);
 		return_code = Option_table_multi_parse(option_table, state);
 		DESTROY(Option_table)(&option_table);
@@ -9554,7 +9646,7 @@ Executes a GFX LIST SPECTRUM.
 		Option_table_add_entry(option_table, "commands", &commands_flag,
 			NULL, set_char_flag);
 		/* default option: spectrum name */
-		Option_table_add_entry(option_table, (char *)NULL, &spectrum,
+		Option_table_add_entry(option_table, (const char *)NULL, &spectrum,
 			spectrum_manager_void, set_Spectrum);
 		if (0 != (return_code = Option_table_multi_parse(option_table, state)))
 		{
@@ -10029,9 +10121,6 @@ Executes a GFX LIST command.
 			Option_table_add_entry(option_table, "cad", NULL,
 				(void *)command_data->root_region, gfx_list_cad_entity);
 #endif /* defined (USE_OPENCASCADE) */
-			/* curve */
-			Option_table_add_entry(option_table, "curve", NULL,
-				command_data->curve_manager, gfx_list_Curve);
 			/* data */
 			Option_table_add_entry(option_table, "data", /*use_data*/(void *)1,
 				command_data_void, gfx_list_FE_node);
@@ -10189,7 +10278,7 @@ static int gfx_modify_element_group(struct Parse_state *state,
 			/* selected */
 			Option_table_add_char_flag_entry(option_table, "selected", &selected_flag);
 			/* default option: element number ranges */
-			Option_table_add_entry(option_table, (char *)NULL, (void *)element_ranges,
+			Option_table_add_entry(option_table, (const char *)NULL, (void *)element_ranges,
 				NULL, set_Multi_range);
 			return_code = Option_table_multi_parse(option_table, state);
 			DESTROY(Option_table)(&option_table);
@@ -10670,7 +10759,7 @@ static int gfx_modify_node_group(struct Parse_state *state,
 			/* selected */
 			Option_table_add_char_flag_entry(option_table, "selected", &selected_flag);
 			/* default option: node number ranges */
-			Option_table_add_entry(option_table, (char *)NULL, (void *)node_ranges,
+			Option_table_add_entry(option_table, (const char *)NULL, (void *)node_ranges,
 				NULL, set_Multi_range);
 			return_code = Option_table_multi_parse(option_table, state);
 			DESTROY(Option_table)(&option_table);
@@ -10990,7 +11079,7 @@ static int gfx_modify_nodes(struct Parse_state *state,
 		/* versions */
 		Option_table_add_int_positive_entry(option_table, "versions", &number_of_versions);
 		/* default option: node number ranges */
-		Option_table_add_entry(option_table, (char *)NULL, (void *)node_ranges,
+		Option_table_add_entry(option_table, (const char *)NULL, (void *)node_ranges,
 			NULL, set_Multi_range);
 		return_code = Option_table_multi_parse(option_table, state);
 		DESTROY(Option_table)(&option_table);
@@ -11525,88 +11614,27 @@ Executes a GFX PRINT command.
 } /* execute_command_gfx_print */
 #endif
 
-static int gfx_read_Curve(struct Parse_state *state,
-	void *dummy_to_be_modified,void *command_data_void)
-/*******************************************************************************
-LAST MODIFIED : 7 January 2002
-
-DESCRIPTION :
-Reads a curve from 3 files: ~.curve.com, ~.curve.exnode, ~.curve.exelem, where
-~ is the name of the curve/file specified here.
-Works by executing the .curve.com file, which should have a gfx define curve
-instruction to read in the mesh.
-==============================================================================*/
+/** Explains migration for removed command 'gfx read curve' */
+int gfx_read_Curve(struct Parse_state *state,
+	void *dummy_to_be_modified, void *command_data_void)
 {
-	char *file_name;
-	int return_code;
-	struct cmzn_command_data *command_data;
-	struct Option_table *option_table;
-
-	ENTER(gfx_read_Curve);
 	USE_PARAMETER(dummy_to_be_modified);
-	if (state)
-	{
-		if (NULL != (command_data = (struct cmzn_command_data *)command_data_void))
-		{
-			file_name = (char *)NULL;
-			option_table = CREATE(Option_table)();
-			/* example */
-			Option_table_add_entry(option_table, CMGUI_EXAMPLE_DIRECTORY_SYMBOL,
-				&file_name, &(command_data->example_directory),
-				set_file_name);
-			/* default */
-			Option_table_add_entry(option_table, NULL, &file_name,
-				NULL, set_file_name);
-			return_code = Option_table_multi_parse(option_table, state);
-			DESTROY(Option_table)(&option_table);
-			if (return_code)
-			{
-				if (!file_name)
-				{
-					if (!(file_name = confirmation_get_read_filename(".curve.com",
-									 command_data->user_interface
-#if defined (WX_USER_INTERFACE)
-									 , command_data->execute_command
-#endif /*defined (WX_USER_INTERFACE)*/
-																													 )))
-					{
-						return_code = 0;
-					}
-				}
-#if defined (WX_USER_INTERFACE) && defined (WIN32_SYSTEM)
-			if (file_name)
-			{
-				 CMZN_set_directory_and_filename_WIN32(&file_name, command_data);
-			}
-#endif /* defined (WIN32_SYSTEM)*/
-				if (return_code)
-				{
-					/* open the file */
-					if (0 != (return_code = check_suffix(&file_name, ".curve.com")))
-					{
-						return_code=execute_comfile(file_name, command_data->io_stream_package,
-							 command_data->execute_command);
-					}
-				}
-			}
-			DEALLOCATE(file_name);
-		}
-		else
-		{
-			display_message(ERROR_MESSAGE,
-				"gfx_read_Curve.  Missing command_data");
-			return_code=0;
-		}
-	}
-	else
-	{
-		display_message(ERROR_MESSAGE,"gfx_read_Curve.  Missing state");
-		return_code=0;
-	}
-	LEAVE;
-
-	return (return_code);
-} /* gfx_read_Curve */
+	USE_PARAMETER(command_data_void);
+	struct Option_table *option_table = CREATE(Option_table)();
+	display_message(Parse_state_help_mode(state) ? INFORMATION_MESSAGE : ERROR_MESSAGE,
+		"The 'gfx read curve' command has been removed. You can replace a curve with a\n"
+		"1-D mesh defining a non-decreasing scalar 'parameter' field, plus a 'value' field\n"
+		"to look up for a given parameter value. 'gfx read curve' merely executed a command file\n"
+		"with the extension .curve.com, which contained a single 'gfx define curve' command to load\n"
+		"the curve from EX files. You can now directly load the exnode/exelem or single exregion\n"
+		"file(s) which are defined in the right way. Use a 'find_mesh_location' field and an\n"
+		"embedded field to achieve the effect of the former 'curve_lookup' field type. These\n"
+		"currently only work in the same region; talk to the Cmgui developers if you have\n"
+		"migration issues.\n");
+	if (Parse_state_help_mode(state))
+		return 1;
+	return 0;
+}
 
 int offset_region_identifier(cmzn_region_id region, char element_flag, int element_offset,
 	char face_flag, int face_offset, char line_flag, int line_offset, char node_flag, int node_offset, int use_data)
@@ -12544,7 +12572,7 @@ static int execute_command_gfx_select(struct Parse_state *state,
 			Option_table_add_char_flag_entry(option_table,"verbose",
 				&verbose_flag);
 			/* default option: multi range */
-			Option_table_add_entry(option_table, (char *)NULL, (void *)multi_range,
+			Option_table_add_entry(option_table, (const char *)NULL, (void *)multi_range,
 				NULL, set_Multi_range);
 			cmzn_fieldmodule_id fieldmodule = 0;
 			if (0 != (return_code = Option_table_multi_parse(option_table, state)))
@@ -12712,140 +12740,6 @@ static int execute_command_gfx_select(struct Parse_state *state,
 	}
 	return (return_code);
 }
-
-int gfx_set_FE_nodal_value(struct Parse_state *state,void *dummy_to_be_modified,
-	void *command_data_void)
-/*******************************************************************************
-LAST MODIFIED : 6 March 2003
-
-DESCRIPTION :
-Sets nodal field values from a command.
-???DB.  Should it be here ?
-==============================================================================*/
-{
-	const char *current_token;
-	enum FE_nodal_value_type fe_nodal_d_ds1,fe_nodal_d_ds2,fe_nodal_d_ds3,
-		fe_nodal_d2_ds1ds2,fe_nodal_d2_ds1ds3,fe_nodal_d2_ds2ds3,
-		fe_nodal_d3_ds1ds2ds3,fe_nodal_value,value_type;
-	FE_value value;
-	int return_code;
-	static struct Modifier_entry option_table[]=
-	{
-		{"value",NULL,NULL,set_enum},
-		{"d/ds1",NULL,NULL,set_enum},
-		{"d/ds2",NULL,NULL,set_enum},
-		{"d/ds3",NULL,NULL,set_enum},
-		{"d2/ds1ds2",NULL,NULL,set_enum},
-		{"d2/ds1ds3",NULL,NULL,set_enum},
-		{"d2/ds2ds3",NULL,NULL,set_enum},
-		{"d3/ds1ds2ds3",NULL,NULL,set_enum},
-		{NULL,NULL,NULL,NULL}
-	};
-	struct cmzn_command_data *command_data;
-	struct FE_field_component component;
-	struct FE_node *node;
-	struct FE_region *fe_region;
-
-	ENTER(gfx_set_FE_nodal_value);
-	USE_PARAMETER(dummy_to_be_modified);
-	if (state && (command_data = (struct cmzn_command_data *)command_data_void))
-	{
-		fe_region = cmzn_region_get_FE_region(command_data->root_region);
-		FE_nodeset *fe_nodeset = FE_region_find_FE_nodeset_by_field_domain_type(fe_region, CMZN_FIELD_DOMAIN_TYPE_NODES);
-		node = (struct FE_node *)NULL;
-		if (0 != (return_code = set_FE_node_FE_nodeset(state,(void *)&node,
-			(void *)fe_nodeset)))
-		{
-			component.field = (struct FE_field *)NULL;
-			component.number = 0;
-			if (0 != (return_code = set_FE_field_component_FE_region(state,
-				(void *)&component, (void *)fe_region)))
-			{
-				value_type=FE_NODAL_UNKNOWN;
-				option_table[0].to_be_modified= &value_type;
-				fe_nodal_value=FE_NODAL_VALUE;
-				option_table[0].user_data= &fe_nodal_value;
-				option_table[1].to_be_modified= &value_type;
-				fe_nodal_d_ds1=FE_NODAL_D_DS1;
-				option_table[1].user_data= &fe_nodal_d_ds1;
-				option_table[2].to_be_modified= &value_type;
-				fe_nodal_d_ds2=FE_NODAL_D_DS2;
-				option_table[2].user_data= &fe_nodal_d_ds2;
-				option_table[3].to_be_modified= &value_type;
-				fe_nodal_d_ds3=FE_NODAL_D_DS3;
-				option_table[3].user_data= &fe_nodal_d_ds3;
-				option_table[4].to_be_modified= &value_type;
-				fe_nodal_d2_ds1ds2=FE_NODAL_D2_DS1DS2;
-				option_table[4].user_data= &fe_nodal_d2_ds1ds2;
-				option_table[5].to_be_modified= &value_type;
-				fe_nodal_d2_ds1ds3=FE_NODAL_D2_DS1DS3;
-				option_table[5].user_data= &fe_nodal_d2_ds1ds3;
-				option_table[6].to_be_modified= &value_type;
-				fe_nodal_d2_ds2ds3=FE_NODAL_D2_DS2DS3;
-				option_table[6].user_data= &fe_nodal_d2_ds2ds3;
-				option_table[7].to_be_modified= &value_type;
-				fe_nodal_d3_ds1ds2ds3=FE_NODAL_D3_DS1DS2DS3;
-				option_table[7].user_data= &fe_nodal_d3_ds1ds2ds3;
-				if (0 != (return_code = process_option(state,option_table)))
-				{
-					if (NULL != (current_token = state->current_token))
-					{
-						if (1 == sscanf(current_token, FE_VALUE_INPUT_STRING, &value))
-						{
-							if (!(set_FE_nodal_FE_value_value(node,
-								component.field, component.number,
-								/*version*/0, value_type, /*time*/0,value)))
-							{
-								return_code = 0;
-							}
-							if (!return_code)
-							{
-								display_message(ERROR_MESSAGE,
-									"gfx_set_FE_nodal_value.  Failed");
-								return_code = 0;
-							}
-						}
-						else
-						{
-							display_message(ERROR_MESSAGE,"Invalid nodal value %s",
-								current_token);
-							display_parse_state_location(state);
-							return_code=0;
-						}
-					}
-					else
-					{
-						display_message(WARNING_MESSAGE,"Missing value for node");
-						display_parse_state_location(state);
-						return_code=1;
-					}
-				}
-				else
-				{
-					if ((current_token=state->current_token)&&
-						!(strcmp(PARSER_HELP_STRING,current_token)&&
-						strcmp(PARSER_RECURSIVE_HELP_STRING,current_token)))
-					{
-						display_message(INFORMATION_MESSAGE," #\n");
-						return_code=1;
-					}
-				}
-			}
-		}
-		if (node)
-		{
-			cmzn_node_destroy(&node);
-		}
-	}
-	else
-	{
-		display_message(ERROR_MESSAGE,"gfx_set_FE_nodal_value.  Missing state");
-		return_code=0;
-	}
-	LEAVE;
-
-	return (return_code);
-} /* gfx_set_FE_nodal_value */
 
 /***************************************************************************//**
  * Sets the order of regions in the region hierarchy.
@@ -13328,8 +13222,6 @@ Executes a GFX SET command.
 		{
 			double point_size = 0.0;
 			option_table=CREATE(Option_table)();
-			Option_table_add_entry(option_table, "node_value", NULL,
-				command_data_void, gfx_set_FE_nodal_value);
 			Option_table_add_entry(option_table, "order", NULL,
 				(void *)command_data->root_region, gfx_set_region_order);
 			Option_table_add_positive_double_entry(option_table, "point_size",
@@ -14113,139 +14005,6 @@ Can also write individual groups with the <group> option.
 	 return (return_code);
 } /* gfx_write_all */
 
-#if defined (NEW_CODE)
-static int gfx_write_Com(struct Parse_state *state,
-	void *dummy_to_be_modified,void *command_data_void)
-/*******************************************************************************
-LAST MODIFIED : 25 November 1999
-
-DESCRIPTION :
-Writes a com file
-==============================================================================*/
-{
-	char write_all_curves_flag;
-	int return_code;
-	struct cmzn_command_data *command_data;
-	struct Modifier_entry option_table[]=
-	{
-		{"all",NULL,NULL,set_char_flag},
-		{NULL,NULL,NULL,set_Curve}
-	};
-	struct Curve *curve;
-
-	ENTER(gfx_write_Curve);
-	USE_PARAMETER(dummy_to_be_modified);
-	if (state&&(command_data=(struct cmzn_command_data *)command_data_void))
-	{
-		return_code=1;
-		write_all_curves_flag=0;
-		curve=(struct Curve *)NULL;
-		(option_table[0]).to_be_modified= &write_all_curves_flag;
-		(option_table[1]).to_be_modified= &curve;
-		(option_table[1]).user_data=command_data->curve_manager;
-		if (0 != (return_code = process_multiple_options(state,option_table)))
-		{
-			if (write_all_curves_flag&&!curve)
-			{
-				return_code=FOR_EACH_OBJECT_IN_MANAGER(Curve)(
-					write_Curve,(void *)NULL,
-					command_data->curve_manager);
-			}
-			else if (curve&&!write_all_curves_flag)
-			{
-				return_code=write_Curve(curve,(void *)NULL);
-			}
-			else
-			{
-				display_message(ERROR_MESSAGE,
-					"gfx_write_Curve.  Specify either a curve name or 'all'");
-				return_code=0;
-			}
-		}
-		if (curve)
-		{
-			DEACCESS(Curve)(&curve);
-		}
-	}
-	else
-	{
-		display_message(ERROR_MESSAGE,
-			"gfx_write_Curve.  Invalid argument(s)");
-		return_code=0;
-	}
-	LEAVE;
-
-	return (return_code);
-} /* gfx_write_Curve */
-
-
-#endif /* defined (NEW_CODE) */
-
-static int gfx_write_Curve(struct Parse_state *state,
-	void *dummy_to_be_modified,void *command_data_void)
-/*******************************************************************************
-LAST MODIFIED : 25 November 1999
-
-DESCRIPTION :
-Writes an individual curve or all curves to filename(s) stemming from the name
-of the curve, eg. "name" -> name.curve.com name.curve.exnode name.curve.exelem
-==============================================================================*/
-{
-	char write_all_curves_flag;
-	int return_code;
-	struct cmzn_command_data *command_data;
-	struct Modifier_entry option_table[]=
-	{
-		{"all",NULL,NULL,set_char_flag},
-		{NULL,NULL,NULL,set_Curve}
-	};
-	struct Curve *curve;
-
-	ENTER(gfx_write_Curve);
-	USE_PARAMETER(dummy_to_be_modified);
-	if (state&&(command_data=(struct cmzn_command_data *)command_data_void))
-	{
-		return_code=1;
-		write_all_curves_flag=0;
-		curve=(struct Curve *)NULL;
-		(option_table[0]).to_be_modified= &write_all_curves_flag;
-		(option_table[1]).to_be_modified= &curve;
-		(option_table[1]).user_data=command_data->curve_manager;
-		if (0 != (return_code = process_multiple_options(state,option_table)))
-		{
-			if (write_all_curves_flag&&!curve)
-			{
-				return_code=FOR_EACH_OBJECT_IN_MANAGER(Curve)(
-					write_Curve,(void *)NULL,
-					command_data->curve_manager);
-			}
-			else if (curve&&!write_all_curves_flag)
-			{
-				return_code=write_Curve(curve,(void *)NULL);
-			}
-			else
-			{
-				display_message(ERROR_MESSAGE,
-					"gfx_write_Curve.  Specify either a curve name or 'all'");
-				return_code=0;
-			}
-		}
-		if (curve)
-		{
-			DEACCESS(Curve)(&curve);
-		}
-	}
-	else
-	{
-		display_message(ERROR_MESSAGE,
-			"gfx_write_Curve.  Invalid argument(s)");
-		return_code=0;
-	}
-	LEAVE;
-
-	return (return_code);
-} /* gfx_write_Curve */
-
 static int gfx_write_elements(struct Parse_state *state,
 	void *dummy_to_be_modified,void *command_data_void)
 /*******************************************************************************
@@ -14954,13 +14713,9 @@ Executes a GFX WRITE command.
 	{
 		if (state->current_token)
 		{
-			 //#if defined (NEW_CODE)
 			option_table = CREATE(Option_table)();
 			Option_table_add_entry(option_table, "all", NULL,
 				command_data_void, gfx_write_all);
-			//#endif /* defined NEW_CODE) */
-			Option_table_add_entry(option_table, "curve", NULL,
-				command_data_void, gfx_write_Curve);
 			Option_table_add_entry(option_table, "data", /*use_data*/(void *)1,
 				command_data_void, gfx_write_nodes);
 			Option_table_add_entry(option_table, "elements", NULL,
@@ -15267,7 +15022,7 @@ Opens an example.
 	{
 		if (NULL != (command_data = (struct cmzn_command_data *)command_data_void))
 		{
-		   example = (char *)NULL;
+			example = (char *)NULL;
 			execute_flag = 0;
 			option_table = CREATE(Option_table)();
 			/* example */
@@ -16387,7 +16142,7 @@ Parses command line options from <state>.
 			&(command_line_options->visual_id_number),
 			(void *)" NUMBER", set_int_with_description);
 		/* [default option == command_file_name] */
-		Option_table_add_entry(option_table, (char *)NULL,
+		Option_table_add_entry(option_table, (const char *)NULL,
 			&(command_line_options->command_file_name),
 			(void *)"COMMAND_FILE_NAME", set_string_no_command_line_option);
 		return_code = Option_table_multi_parse(option_table, state);
@@ -16495,7 +16250,6 @@ Initialise all the subcomponents of cmgui and create the cmzn_command_data
 		command_data->set_command = CREATE(Execute_command)();
 		command_data->event_dispatcher = (struct Event_dispatcher *)NULL;
 		command_data->user_interface= (struct User_interface *)NULL;
-		command_data->emoter_slider_dialog=(struct Emoter_dialog *)NULL;
 		command_data->logger = 0;
 		command_data->loggerNotifier = 0;
 #if defined (WX_USER_INTERFACE)
@@ -16527,7 +16281,6 @@ Initialise all the subcomponents of cmgui and create the cmzn_command_data
 		command_data->graphics_window_manager=(struct MANAGER(Graphics_window) *)NULL;
 #endif /* defined (USE_CMGUI_GRAPHICS_WINDOW) */
 		command_data->root_region = (struct cmzn_region *)NULL;
-		command_data->curve_manager=(struct MANAGER(Curve) *)NULL;
 		command_data->basis_manager=(struct MANAGER(FE_basis) *)NULL;
 		command_data->streampoint_list=(struct Streampoint *)NULL;
 #if defined (SELECT_DESCRIPTORS)
@@ -16861,8 +16614,6 @@ Initialise all the subcomponents of cmgui and create the cmzn_command_data
 		/*???DB.  To be done */
 		command_data->element_shape_list=CREATE(LIST(FE_element_shape))();
 
-		command_data->curve_manager=cmzn_context_get_default_curve_manager(cmzn_context_app_get_core_context(context));
-
 		command_data->basis_manager=CREATE(MANAGER(FE_basis))();
 
 		command_data->root_region = cmzn_context_get_default_region(cmzn_context_app_get_core_context(context));
@@ -16917,12 +16668,6 @@ Initialise all the subcomponents of cmgui and create the cmzn_command_data
 				command_data->computed_field_package);
 			Computed_field_register_types_conditional(
 				command_data->computed_field_package);
-			if (command_data->curve_manager)
-			{
-				Computed_field_register_types_curve(
-					command_data->computed_field_package,
-					command_data->curve_manager);
-			}
 #if defined (ZINC_USE_ITK)
 			Computed_field_register_types_derivatives(
 				command_data->computed_field_package);
@@ -17238,10 +16983,6 @@ NOTE: Do not call this directly: call cmzn_command_data_destroy() to deaccess.
 				"Call to DESTROY(cmzn_command_data) while still in use");
 			return 0;
 		}
-		if (command_data->emoter_slider_dialog)
-		{
-			DESTROY(Emoter_dialog)(&command_data->emoter_slider_dialog);
-		}
 #if defined (WX_USER_INTERFACE)
 		/* viewers */
 		if (command_data->data_viewer)
@@ -17293,7 +17034,6 @@ NOTE: Do not call this directly: call cmzn_command_data_destroy() to deaccess.
 
 		/* some fields register for changes with the following managers,
 			 hence must destroy after regions and their fields */
-		command_data->curve_manager = NULL;
 		DEACCESS(cmzn_spectrum)(&(command_data->default_spectrum));
 		command_data->spectrum_manager=NULL;
 		cmzn_scenefiltermodule_destroy(&command_data->filter_module);

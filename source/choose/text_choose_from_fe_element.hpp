@@ -20,6 +20,8 @@ Calls the client-specified callback routine if a different object is chosen.
 #include "wx/wx.h"
 #include "opencmiss/zinc/element.h"
 #include "opencmiss/zinc/fieldmodule.h"
+#include "opencmiss/zinc/mesh.h"
+#include "opencmiss/zinc/region.h"
 #include "computed_field/field_module.hpp"
 #include "general/callback_class.hpp"
 #include "general/debug.h"

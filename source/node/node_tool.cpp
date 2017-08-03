@@ -17,13 +17,18 @@ Scene input.
 
 #include <math.h>
 #include "opencmiss/zinc/element.h"
+#include "opencmiss/zinc/elementbasis.h"
+#include "opencmiss/zinc/elementtemplate.h"
 #include "opencmiss/zinc/fieldcache.h"
 #include "opencmiss/zinc/fieldfiniteelement.h"
 #include "opencmiss/zinc/fieldgroup.h"
 #include "opencmiss/zinc/glyph.h"
 #include "opencmiss/zinc/graphics.h"
 #include "opencmiss/zinc/material.h"
+#include "opencmiss/zinc/mesh.h"
 #include "opencmiss/zinc/node.h"
+#include "opencmiss/zinc/nodeset.h"
+#include "opencmiss/zinc/nodetemplate.h"
 #include "opencmiss/zinc/scene.h"
 #include "opencmiss/zinc/scenefilter.h"
 #include "opencmiss/zinc/scenepicker.h"

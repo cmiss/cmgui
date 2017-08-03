@@ -6,6 +6,8 @@
 
 #include "opencmiss/zinc/glyph.h"
 #include "opencmiss/zinc/material.h"
+#include "opencmiss/zinc/mesh.h"
+#include "opencmiss/zinc/nodeset.h"
 #include "opencmiss/zinc/status.h"
 #include "opencmiss/zinc/stream.h"
 #include "opencmiss/zinc/streamscene.h"

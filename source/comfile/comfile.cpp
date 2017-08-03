@@ -89,7 +89,7 @@ specified on the command line, a file selection box is presented to the user.
 			Option_table_add_entry(option_table, "name",
 				&filename, (void *)1, set_name);
 			/* default */
-			Option_table_add_entry(option_table, (char *)NULL,
+			Option_table_add_entry(option_table, (const char *)NULL,
 				&filename, NULL, set_name);
 			return_code=Option_table_multi_parse(option_table,state);
 			DESTROY(Option_table)(&option_table);
@@ -144,52 +144,29 @@ specified on the command line, a file selection box is presented to the user.
 #if defined (WX_USER_INTERFACE)
 #if defined (WIN32_SYSTEM)
 					char *drive_name = NULL;
-					char *first = NULL;
-					char *last = NULL;
-					char *temp_directory_name,*directory_name;
-					int lastlength;
-					first = strchr(filename, '\\');
-					last = strrchr(filename, '\\');
-					lastlength = last - filename +1;
-					length = first - filename +1;
-					if ((length>0))
+					char *first = strchr(filename, '\\');
+					char *last = strrchr(filename, '\\');
+					int lastlength = (last) ? (last - filename + 1) : 0;
+					length = (first) ? (first - filename + 1) : 0;
+					if (length > 1)
 					{
-						if (ALLOCATE(drive_name,char,length))
+						if (ALLOCATE(temp_string, char, length + 9))
 						{
-							strncpy(drive_name,filename,length);
-							drive_name[length-1]='\0';
-							if (ALLOCATE(temp_string,char,length+9))
-							{
-								strcpy(temp_string, "set dir ");
-								strcat(temp_string, drive_name);
-								temp_string[length+8]='\0';
-								Execute_command_execute_string(open_comfile_data->execute_command,temp_string);
-								DEALLOCATE(temp_string);
-							}
-							DEALLOCATE(drive_name);
+							strcpy(temp_string, "set dir ");
+							strncat(temp_string, filename, length - 1);
+							Execute_command_execute_string(open_comfile_data->execute_command, temp_string);
+							DEALLOCATE(temp_string);
 						}
 					}
-					if (lastlength>length)
+					if (lastlength > length)
 					{
-						if (ALLOCATE(temp_directory_name,char,lastlength+1))
+						if (ALLOCATE(temp_string, char, lastlength - length + 12))
 						{
-							strncpy(temp_directory_name,filename,lastlength);
-							temp_directory_name[lastlength]='\0';
-							if (ALLOCATE(directory_name,char,lastlength-length+2))
-							{
-								directory_name = &temp_directory_name[length-1];
-								directory_name[lastlength-length+1]='\0';
-								if (ALLOCATE(temp_string,char,lastlength-length+10))
-								{
-									strcpy(temp_string, "set dir ");
-									strcat(temp_string, directory_name);
-									temp_string[lastlength-length+9]='\0';
-									Execute_command_execute_string(open_comfile_data->execute_command,temp_string);
-									DEALLOCATE(temp_string);
-								}
-								DEALLOCATE(directory_name);
-							}
-							DEALLOCATE(temp_directory_name);
+							strcpy(temp_string, "set dir '\\");
+							strncat(temp_string, filename + length, lastlength - length - 1);
+							strcat(temp_string, "'");
+							Execute_command_execute_string(open_comfile_data->execute_command, temp_string);
+							DEALLOCATE(temp_string);
 						}
 					}
 #else /* defined (WIN32_SYSTEM)*/
@@ -241,22 +218,11 @@ specified on the command line, a file selection box is presented to the user.
 #endif /*defined (WX_USER_INTERFACE) */
 				}
 #if defined (WX_USER_INTERFACE)  && defined (WIN32_SYSTEM)
-				int lastlength;
-				char *temp_name;
-				char *first = NULL;
-				char *last = NULL;
-				first = strchr(filename, '\\');
-				last = strrchr(filename, '\\');
-				lastlength = last - filename +1;
-				if (lastlength>0)
+				const char *last = strrchr(filename, '\\');
+				if (last)
 				{
-					 temp_name = &filename[lastlength];
+					memmove(filename, last + 1, strlen(last));
 				}
-				else
-				{
-					 temp_name = filename;
-				}
-				filename=temp_name;
 #endif /* defined (WX_USER_INTERFACE)  && (WIN32_SYSTEM)*/
 						 /* open the file */
 				return_code = check_suffix(&filename,

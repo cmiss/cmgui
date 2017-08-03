@@ -10,6 +10,7 @@
 #include "general/message.h"
 #include "command/parser.h"
 #include "graphics/element_point_ranges.h"
+#include "finite_element/finite_element_app.h"
 #include "finite_element/finite_element_mesh.hpp"
 #include "finite_element/finite_element_region.h"
 #include "finite_element/finite_element_discretization.h"
@@ -139,7 +140,7 @@ returned in this location, for the calling function to use or destroy.
 								{
 									if (!FE_element_is_top_level_parent_of_element(
 										element_point_ranges_identifier.top_level_element,
-										(void *)element_point_ranges_identifier.element))
+										element_point_ranges_identifier.element))
 									{
 										display_message(ERROR_MESSAGE, "Invalid top_level_element: %d", identifier);
 										return_code=0;
@@ -168,11 +169,9 @@ returned in this location, for the calling function to use or destroy.
 					else
 					{
 						if (!(element_point_ranges_identifier.top_level_element =
-							FE_region_get_first_FE_element_that(fe_region,
-								FE_element_is_top_level_parent_of_element,
-								(void *)element_point_ranges_identifier.element)))
+							cmzn_element_get_first_top_level_ancestor(element_point_ranges_identifier.element)))
 						{
-							display_message(ERROR_MESSAGE,"No top_level_element");
+							display_message(ERROR_MESSAGE, "No top_level_element");
 							return_code=0;
 						}
 					}
