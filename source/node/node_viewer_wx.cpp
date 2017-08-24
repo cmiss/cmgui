@@ -28,6 +28,7 @@
 #include "opencmiss/zinc/timenotifier.h"
 #include "opencmiss/zinc/timekeeper.h"
 #include "opencmiss/zinc/timesequence.h"
+#include "finite_element/finite_element.h"
 #include "general/debug.h"
 #include "general/mystring.h"
 #include "node/node_viewer_wx.h"
@@ -932,23 +933,6 @@ void gridSizer_updateStaticText(wxWindow *parentWin, wxGridSizer *gridSizer, int
 static int node_viewer_setup_components(struct Node_viewer *node_viewer,
 	wxWindow *parentWin, cmzn_node_id node, cmzn_field_id field, bool &time_varying_field, bool& refit)
 {
-	struct cmzn_node_value_label_label
-	{
-		enum cmzn_node_value_label type;
-		const char *label;
-	};
-	const cmzn_node_value_label_label all_node_value_labels[] =
-	{
-		{ CMZN_NODE_VALUE_LABEL_VALUE, "value" },
-		{ CMZN_NODE_VALUE_LABEL_D_DS1, "d/ds1" },
-		{ CMZN_NODE_VALUE_LABEL_D_DS2, "d/ds2" },
-		{ CMZN_NODE_VALUE_LABEL_D_DS3, "d/ds3" },
-		{ CMZN_NODE_VALUE_LABEL_D2_DS1DS2, "d2/ds1ds2" },
-		{ CMZN_NODE_VALUE_LABEL_D2_DS1DS3, "d2/ds1ds3" },
-		{ CMZN_NODE_VALUE_LABEL_D2_DS2DS3, "d2/ds2ds3" },
-		{ CMZN_NODE_VALUE_LABEL_D3_DS1DS2DS3, "d3/ds1ds2ds3" }
-	};
-	const int all_node_value_labels_count = sizeof(all_node_value_labels) / sizeof(cmzn_node_value_label_label);
 	int return_code = 0;
 	wxString tmp_string;
 	if (node_viewer && node && field)
@@ -957,9 +941,7 @@ static int node_viewer_setup_components(struct Node_viewer *node_viewer,
 		const int componentCount = cmzn_field_get_number_of_components(field);
 		cmzn_field_finite_element_id feField = cmzn_field_cast_finite_element(field);
 		cmzn_nodetemplate_id nodeTemplate = 0;
-		enum cmzn_node_value_label node_value_labels[8];
-		const char *nodal_value_labels[8];
-		int number_of_node_value_labels = 0;
+		std::vector<cmzn_node_value_label> nodeValueLabels;
 		if (feField)
 		{
 			cmzn_fieldmodule_id field_module = cmzn_region_get_fieldmodule(node_viewer->region);
@@ -969,17 +951,15 @@ static int node_viewer_setup_components(struct Node_viewer *node_viewer,
 			cmzn_nodetemplate_define_field_from_node(nodeTemplate, field, node);
 			cmzn_nodeset_destroy(&nodeset);
 			cmzn_fieldmodule_destroy(&field_module);
-			for (int i = 0; i < all_node_value_labels_count; ++i)
+			for (int d = CMZN_NODE_VALUE_LABEL_VALUE; d <= CMZN_NODE_VALUE_LABEL_D3_DS1DS2DS3; ++d)
 			{
-				enum cmzn_node_value_label node_value_label = all_node_value_labels[i].type;
+				const cmzn_node_value_label nodeValueLabel = static_cast<cmzn_node_value_label>(d);
 				// check if any components have parameters for value label
 				for (int comp_no = 1; comp_no <= componentCount; ++comp_no)
 				{
-					if (0 < cmzn_nodetemplate_get_value_number_of_versions(nodeTemplate, field, comp_no, node_value_label))
+					if (0 < cmzn_nodetemplate_get_value_number_of_versions(nodeTemplate, field, comp_no, nodeValueLabel))
 					{
-						node_value_labels[number_of_node_value_labels] = node_value_label;
-						nodal_value_labels[number_of_node_value_labels] = all_node_value_labels[i].label;
-						++number_of_node_value_labels;
+						nodeValueLabels.push_back(nodeValueLabel);
 						break;
 					}
 				}
@@ -987,15 +967,14 @@ static int node_viewer_setup_components(struct Node_viewer *node_viewer,
 		}
 		else
 		{
-			node_value_labels[0] = CMZN_NODE_VALUE_LABEL_VALUE;
-			nodal_value_labels[0] = "value";
-			number_of_node_value_labels = 1;
+			nodeValueLabels.push_back(CMZN_NODE_VALUE_LABEL_VALUE);
 		}
+		const int nodeValueLabelsCount = static_cast<int>(nodeValueLabels.size());
 		wxGridSizer *gridSizer = dynamic_cast<wxGridSizer *>(parentWin->GetSizer());
 		if (gridSizer)
 		{
 			if ((gridSizer->GetRows() != (componentCount + 1)) ||
-				(gridSizer->GetCols() != number_of_node_value_labels + 1))
+				(gridSizer->GetCols() != nodeValueLabelsCount + 1))
 			{
 				parentWin->DestroyChildren();
 				gridSizer = 0;
@@ -1003,13 +982,18 @@ static int node_viewer_setup_components(struct Node_viewer *node_viewer,
 			}
 		}
 		if (!gridSizer)
-			gridSizer = new wxGridSizer(componentCount + 1, number_of_node_value_labels + 1, 1, 1);
+		{
+			gridSizer = new wxGridSizer(componentCount + 1, nodeValueLabelsCount + 1, 1, 1);
+		}
 		int index = 0;
 		// first row is blank cell followed by nodal value type labels
 		gridSizer_updateStaticText(parentWin, gridSizer, index++, "", wxEXPAND|wxADJUST_MINSIZE, refit);
-		for (int nodal_value_no = 0; nodal_value_no < number_of_node_value_labels; ++nodal_value_no)
-			gridSizer_updateStaticText(parentWin, gridSizer, index++, nodal_value_labels[nodal_value_no],
+		for (int d = 0; d < nodeValueLabelsCount; ++d)
+		{
+			gridSizer_updateStaticText(parentWin, gridSizer, index++,
+				ENUMERATOR_STRING(cmzn_node_value_label)(nodeValueLabels[d]),
 				wxALIGN_CENTER_VERTICAL|wxALIGN_CENTER_HORIZONTAL|wxADJUST_MINSIZE, refit);
+		}
 		for (int comp_no = 1; comp_no <= componentCount; ++comp_no)
 		{
 			// first column is component label */
@@ -1018,13 +1002,12 @@ static int node_viewer_setup_components(struct Node_viewer *node_viewer,
 				wxALIGN_CENTER_VERTICAL|wxALIGN_CENTER_HORIZONTAL|wxADJUST_MINSIZE, refit);
 			cmzn_deallocate(name);
 
-			for (int nodal_value_no = 0; nodal_value_no < number_of_node_value_labels; ++nodal_value_no)
+			for (int d = 0; d < nodeValueLabelsCount; ++d)
 			{
-				 cmzn_node_value_label valueLabel = node_value_labels[nodal_value_no];
 				if ((!feField) || (0 < cmzn_nodetemplate_get_value_number_of_versions(
-					nodeTemplate, field, comp_no, valueLabel)))
+					nodeTemplate, field, comp_no, nodeValueLabels[d])))
 				{
-					Node_viewer_updateTextCtrl(node_viewer, parentWin, gridSizer, index++, field, comp_no, valueLabel, 1, refit);
+					Node_viewer_updateTextCtrl(node_viewer, parentWin, gridSizer, index++, field, comp_no, nodeValueLabels[d], 1, refit);
 				}
 				else
 				{
