@@ -291,56 +291,39 @@ int Node_tool_destroy_selected_nodes(struct Node_tool *node_tool)
 	return return_code;
 }
 
-static int FE_node_define_and_set_element_xi(struct FE_node *node,
-		struct Computed_field *element_xi_field,
-		struct FE_element *element, FE_value *xi)
-/*******************************************************************************
-LAST MODIFIED : 19 February 2008
-
-DESCRIPTION :
-Defines element_xi_field at node if not already defined. Sets value.
-==============================================================================*/
+/** Define element_xi_field at node if not already defined, and set value. */
+static int cmzn_node_define_and_set_element_xi(cmzn_node *node,
+	cmzn_field *element_xi_field, cmzn_element *element, FE_value *xi)
 {
-	int return_code;
-	struct FE_field *fe_field;
-	struct FE_node_field_creator *node_field_creator;
-
-	ENTER(FE_node_define_and_set_element_xi);
-	return_code = 0;
-	if (node && element_xi_field && element && xi)
+	if (!(node && element_xi_field && element && xi))
 	{
-		fe_field = (struct FE_field *)NULL;
-		if (Computed_field_get_type_finite_element(element_xi_field, &fe_field))
-		{
-			if (!FE_field_is_defined_at_node(fe_field,node))
-			{
-				node_field_creator =
-					CREATE(FE_node_field_creator)(/*number_of_components*/1);
-				if (node_field_creator != 0)
-				{
-					define_FE_field_at_node(node, fe_field,
-						(struct FE_time_sequence *)NULL, node_field_creator);
-					DESTROY(FE_node_field_creator)(&node_field_creator);
-				}
-			}
-			return_code = set_FE_nodal_element_xi_value(node,fe_field,/*component_number*/0,
-				/*version*/0,FE_NODAL_VALUE,element,xi);
-		}
-		if (!return_code)
-		{
-			display_message(ERROR_MESSAGE,
-				"FE_node_define_and_set_element_xi.  Failed");
-		}
+		display_message(ERROR_MESSAGE, "cmzn_node_define_and_set_element_xi.  Invalid argument(s)");
+		return 0;
 	}
-	else
+	cmzn_fieldmodule *fieldmodule = cmzn_field_get_fieldmodule(element_xi_field);
+	cmzn_fieldmodule_begin_change(fieldmodule);
+	cmzn_fieldcache *fieldcache = cmzn_fieldmodule_create_fieldcache(fieldmodule);
+	cmzn_fieldcache_set_node(fieldcache, node);
+	if (!cmzn_field_is_defined_at_location(element_xi_field, fieldcache))
 	{
-		display_message(ERROR_MESSAGE,
-			"FE_node_define_and_set_element_xi.  Invalid argument(s)");
+		cmzn_nodeset *nodeset = cmzn_node_get_nodeset(node);
+		cmzn_nodetemplate *nodetemplate = cmzn_nodeset_create_nodetemplate(nodeset);
+		cmzn_nodetemplate_define_field(nodetemplate, element_xi_field);
+		cmzn_node_merge(node, nodetemplate);
+		cmzn_nodetemplate_destroy(&nodetemplate);
+		cmzn_nodeset_destroy(&nodeset);
 	}
-	LEAVE;
-
-	return (return_code);
-} /* FE_node_define_and_set_element_xi */
+	const int result = cmzn_field_assign_mesh_location(element_xi_field, fieldcache, element, element->getDimension(), xi);
+	cmzn_fieldcache_destroy(&fieldcache);
+	cmzn_fieldmodule_end_change(fieldmodule);
+	cmzn_fieldmodule_destroy(&fieldmodule);
+	if (result != CMZN_OK)
+	{
+		display_message(ERROR_MESSAGE, "cmzn_node_define_and_set_element_xi.  Failed");
+		return 0;
+	}
+	return 1;
+}
 
 static int model_to_world_coordinates(FE_value coordinates[3],
 	double *transformation_matrix)
@@ -586,7 +569,7 @@ static int FE_node_calculate_delta_position(struct FE_node *node,
 				if (return_code && edit_info->nearest_element &&
 					constraint_data.found_element && edit_info->element_xi_field)
 				{
-					return_code = FE_node_define_and_set_element_xi(node,
+					return_code = cmzn_node_define_and_set_element_xi(node,
 						edit_info->element_xi_field, constraint_data.found_element,
 						constraint_data.xi);
 				}
