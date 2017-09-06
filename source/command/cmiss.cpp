@@ -5061,8 +5061,14 @@ static int gfx_define_faces(struct Parse_state *state,
 					cmzn_element_id element = 0;
 					while ((0 != (element = cmzn_elementiterator_next_non_access(iter))) && return_code)
 					{
-						if (!fe_mesh->defineElementFaces(get_FE_element_index(element)))
+						const int result = fe_mesh->defineElementFaces(element->getIndex());
+						if (result != CMZN_OK)
 						{
+							if (result == CMZN_ERROR_NOT_FOUND)
+							{
+								// no nodes defined, so no faces can be found
+								continue;
+							}
 							return_code = 0;
 						}
 						if (face_mesh_group)
@@ -7775,7 +7781,7 @@ void create_triangle_mesh(struct cmzn_region *region, Triangle_mesh *trimesh)
 			cmzn_elementtemplate_set_node(elementtemplate, i + 1,
 				cmzn_nodeset_find_node_by_identifier(nodeset, initial_identifier + vertex[i]->get_identifier()));
 		cmzn_element_id element = cmzn_mesh_create_element(mesh, /*identifier*/-1, elementtemplate);
-		fe_mesh->defineElementFaces(get_FE_element_index(element));
+		fe_mesh->defineElementFaces(element->getIndex());
 		cmzn_element_destroy(&element);
 	}
 	cmzn_elementbasis_destroy(&elementbasis);
