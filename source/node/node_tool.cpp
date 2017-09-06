@@ -2824,7 +2824,7 @@ void Node_tool::addCreateElementNode(cmzn_node_id node)
 		FE_region_begin_define_faces(cmzn_region_get_FE_region(this->region));
 		cmzn_element_id element = cmzn_mesh_create_element(mesh, -1, this->elementtemplate);
 		if (fe_mesh)
-			fe_mesh->defineElementFaces(get_FE_element_index(element));
+			fe_mesh->defineElementFaces(element->getIndex());
 		// future:
 		//cmzn_element_define_faces(element);
 		FE_region_end_define_faces(cmzn_region_get_FE_region(this->region));
