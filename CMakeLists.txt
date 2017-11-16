@@ -194,8 +194,8 @@ SET( CMGUI_VERSION_HDR ${CMAKE_CURRENT_BINARY_DIR}/source/configure/version.h )
 
 # To get the internal headers we derive a header search path from the build header source path.
 # Obviously this will not work if you configure with Zinc's install tree.
-LIST( GET ZINC_INCLUDE_DIRS 0 ZINC_PRIVATE_INCLUDE_DIRS )
-SET( ZINC_PRIVATE_INCLUDE_DIRS "${ZINC_PRIVATE_INCLUDE_DIRS}/.." )
+#LIST( GET ZINC_INCLUDE_DIRS 0 ZINC_PRIVATE_INCLUDE_DIRS )
+#SET( ZINC_PRIVATE_INCLUDE_DIRS "${ZINC_PRIVATE_INCLUDE_DIRS}/.." )
 
 INCLUDE_DIRECTORIES( ${CMAKE_CURRENT_BINARY_DIR}/source ${CMAKE_CURRENT_SOURCE_DIR}/source
 	${ZINC_INCLUDE_DIRS} ${ZINC_PRIVATE_INCLUDE_DIRS}
