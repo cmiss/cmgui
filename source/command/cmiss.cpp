@@ -6203,8 +6203,9 @@ Executes a GFX EDIT GRAPHICS_OBJECT command.
 						for (int i = 0; (i < 2) && return_code; ++i)
 						{
 							cmzn_nodeset_id nodeset = cmzn_fieldmodule_find_nodeset_by_field_domain_type(fieldmodule, domainTypes[i]);
-							if (!cmzn_nodeset_assign_field_from_source(nodeset, rc_coordinate_field,
-								transformed_rc_coordinate_field, /*conditional_field*/0, time))
+							const int result = cmzn_nodeset_assign_field_from_source(nodeset, rc_coordinate_field,
+								transformed_rc_coordinate_field, /*conditional_field*/0, time);
+							if ((CMZN_RESULT_OK != result) && (CMZN_RESULT_WARNING_PART_DONE != result))
 							{
 								display_message(ERROR_MESSAGE, "gfx edit graphics_object:  Failed to apply transformation");
 								return_code = 0;
@@ -8181,8 +8182,12 @@ int gfx_evaluate(struct Parse_state *state, void *dummy_to_be_modified,
 							}
 							if (nodeset)
 							{
-								return_code = cmzn_nodeset_assign_field_from_source(nodeset, destination_field, source_field,
+								const int result = cmzn_nodeset_assign_field_from_source(nodeset, destination_field, source_field,
 									/*conditional_field*/selection_field, time);
+								if ((CMZN_RESULT_OK != result) && (CMZN_RESULT_WARNING_PART_DONE != result))
+								{
+									return_code = 0;
+								}
 								cmzn_nodeset_destroy(&nodeset);
 							}
 						}
