@@ -89,6 +89,7 @@ ENDIF( WIN32_USER_INTERFACE AND WIN32 )
 # Find our friendly Zinc CMake config file.
 # We can only use the static version of the library for the Cmgui application
 SET( ZINC_USE_STATIC TRUE )
+SET( REQUIRE_INTERNAL_ZINC_INCLUDE_DIR TRUE )
 FIND_PACKAGE( Zinc REQUIRED )
 
 IF( MSVC )
