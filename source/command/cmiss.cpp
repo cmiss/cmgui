@@ -6156,9 +6156,17 @@ Executes a GFX EDIT GRAPHICS_OBJECT command.
 						coordinate_field_name = cmzn_field_get_name(coordinate_field);
 					}
 				}
-				cmzn_field *rc_coordinate_field = cmzn_fieldmodule_create_field_coordinate_transformation(fieldmodule, coordinate_field);
-				cmzn_field_set_coordinate_system_type(rc_coordinate_field, CMZN_FIELD_COORDINATE_SYSTEM_TYPE_RECTANGULAR_CARTESIAN);
-				cmzn_field *transformed_rc_coordinate_field = 0;
+				cmzn_field *rc_coordinate_field = 0;
+				const cmzn_field_coordinate_system_type coordinate_system_type = cmzn_field_get_coordinate_system_type(coordinate_field);
+				if (coordinate_system_type == CMZN_FIELD_COORDINATE_SYSTEM_TYPE_RECTANGULAR_CARTESIAN)
+				{
+					rc_coordinate_field = cmzn_field_access(coordinate_field);
+				}
+				else
+				{
+					rc_coordinate_field = cmzn_fieldmodule_create_field_coordinate_transformation(fieldmodule, coordinate_field);
+					cmzn_field_set_coordinate_system_type(rc_coordinate_field, CMZN_FIELD_COORDINATE_SYSTEM_TYPE_RECTANGULAR_CARTESIAN);
+				}
 				double mat[16];
 				if (!coordinate_field)
 				{
@@ -6188,23 +6196,33 @@ Executes a GFX EDIT GRAPHICS_OBJECT command.
 				else
 				{
 					cmzn_field *trans_field = cmzn_fieldmodule_create_field_constant(fieldmodule, 16, mat);
-					transformed_rc_coordinate_field = cmzn_fieldmodule_create_field_projection(fieldmodule, rc_coordinate_field, trans_field);
+					cmzn_field *transformed_rc_coordinate_field =  cmzn_fieldmodule_create_field_projection(fieldmodule, rc_coordinate_field, trans_field);
 					cmzn_field_destroy(&trans_field);
-					if (!transformed_rc_coordinate_field)
+					cmzn_field *transformed_coordinate_field = 0;
+					if (coordinate_system_type == CMZN_FIELD_COORDINATE_SYSTEM_TYPE_RECTANGULAR_CARTESIAN)
 					{
-						display_message(ERROR_MESSAGE, "gfx edit graphics_object:  Failed to create transformed RC coordinate field");
+						transformed_coordinate_field = cmzn_field_access(transformed_rc_coordinate_field);
+					}
+					else
+					{
+						transformed_coordinate_field = cmzn_fieldmodule_create_field_coordinate_transformation(fieldmodule, transformed_rc_coordinate_field);
+						cmzn_field_set_coordinate_system_type(transformed_coordinate_field, coordinate_system_type);
+					}
+					if (!transformed_coordinate_field)
+					{
+						display_message(ERROR_MESSAGE, "gfx edit graphics_object:  Failed to create transformed coordinate field");
 						return_code = 0;
 					}
 					else
 					{
-						/* Not very general, doesn't rotate derivatives */
 						cmzn_field_domain_type domainTypes[] = { CMZN_FIELD_DOMAIN_TYPE_NODES, CMZN_FIELD_DOMAIN_TYPE_DATAPOINTS };
 						const FE_value time = command_data->default_time_keeper_app->getTimeKeeper()->getTime();
 						for (int i = 0; (i < 2) && return_code; ++i)
 						{
 							cmzn_nodeset_id nodeset = cmzn_fieldmodule_find_nodeset_by_field_domain_type(fieldmodule, domainTypes[i]);
-							const int result = cmzn_nodeset_assign_field_from_source(nodeset, rc_coordinate_field,
-								transformed_rc_coordinate_field, /*conditional_field*/0, time);
+							// Note following will transform value versions and derivatives iff coordinate field is finite element type
+							const int result = cmzn_nodeset_assign_field_from_source(nodeset, coordinate_field,
+								transformed_coordinate_field, /*conditional_field*/0, time);
 							if ((CMZN_RESULT_OK != result) && (CMZN_RESULT_WARNING_PART_DONE != result))
 							{
 								display_message(ERROR_MESSAGE, "gfx edit graphics_object:  Failed to apply transformation");
@@ -6215,9 +6233,10 @@ Executes a GFX EDIT GRAPHICS_OBJECT command.
 						if (return_code)
 							cmzn_scene_clear_transformation(scene);
 					}
+					cmzn_field_destroy(&transformed_coordinate_field);
+					cmzn_field_destroy(&transformed_rc_coordinate_field);
 				}
 				cmzn_scene_destroy(&scene);
-				cmzn_field_destroy(&transformed_rc_coordinate_field);
 				cmzn_field_destroy(&rc_coordinate_field);
 				cmzn_field_destroy(&coordinate_field);
 				cmzn_fieldmodule_end_change(fieldmodule);
