@@ -6196,7 +6196,7 @@ Executes a GFX EDIT GRAPHICS_OBJECT command.
 				else
 				{
 					cmzn_field *trans_field = cmzn_fieldmodule_create_field_constant(fieldmodule, 16, mat);
-					cmzn_field *transformed_rc_coordinate_field =  cmzn_fieldmodule_create_field_projection(fieldmodule, rc_coordinate_field, trans_field);
+					cmzn_field *transformed_rc_coordinate_field = cmzn_fieldmodule_create_field_projection(fieldmodule, rc_coordinate_field, trans_field);
 					cmzn_field_destroy(&trans_field);
 					cmzn_field *transformed_coordinate_field = 0;
 					if (coordinate_system_type == CMZN_FIELD_COORDINATE_SYSTEM_TYPE_RECTANGULAR_CARTESIAN)
