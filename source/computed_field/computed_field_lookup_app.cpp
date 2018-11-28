@@ -4,7 +4,9 @@
 * License, v. 2.0. If a copy of the MPL was not distributed with this
 * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#include <opencmiss/zinc/fieldfiniteelement.h>
+#include "opencmiss/zinc/fieldfiniteelement.h"
+#include "opencmiss/zinc/node.h"
+#include "opencmiss/zinc/nodeset.h"
 #include "general/mystring.h"
 #include "general/debug.h"
 #include "general/message.h"

@@ -61,7 +61,6 @@ struct User_interface_module *User_interface_module_create(
 #endif /* defined (USE_CMGUI_GRAPHICS_WINDOW) */
 		UI_module->default_time_keeper_app = NULL;
 		UI_module->user_interface = NULL;
-		UI_module->emoter_slider_dialog = NULL;
 #if defined (WX_USER_INTERFACE)
 		UI_module->comfile_window_manager = NULL;
 		UI_module->data_viewer = NULL;

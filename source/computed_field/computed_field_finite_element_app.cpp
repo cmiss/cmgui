@@ -6,6 +6,7 @@
 
 #include <stdio.h>
 
+#include "opencmiss/zinc/mesh.h"
 #include "opencmiss/zinc/fieldfiniteelement.h"
 #include "general/mystring.h"
 #include "general/debug.h"
@@ -19,6 +20,7 @@
 #include "computed_field/computed_field_finite_element.h"
 #include "computed_field/field_module.hpp"
 #include "finite_element/finite_element_region.h"
+#include "mesh/cmiss_element_private.hpp"
 #include "mesh/cmiss_element_private_app.hpp"
 #include "finite_element/finite_element_app.h"
 
@@ -43,13 +45,6 @@ const char computed_field_finite_element_type_string[] = "finite_element";
 const char computed_field_is_exterior_type_string[] = "is_exterior";
 const char computed_field_is_on_face_type_string[] = "is_on_face";
 
-int Computed_field_get_type_finite_element(struct Computed_field *field,
-	struct FE_field **fe_field);
-
-int Computed_field_get_type_node_value(struct Computed_field *field,
-	cmzn_field_id *finite_element_field_address, enum FE_nodal_value_type *nodal_value_type,
-	int *version_number);
-
 int Computed_field_get_type_embedded(struct Computed_field *field,
 	struct Computed_field **source_field_address,
 	struct Computed_field **embedded_location_field_address);
@@ -59,11 +54,6 @@ struct Computed_field *Computed_field_create_finite_element_internal(
 
 struct Computed_field *Computed_field_create_access_count(
 	struct cmzn_fieldmodule *field_module);
-
-struct Computed_field *Computed_field_create_node_value(
-	struct cmzn_fieldmodule *field_module,
-	cmzn_field_id finite_element_field, enum FE_nodal_value_type nodal_value_type,
-	int version_number);
 
 cmzn_field_id cmzn_fieldmodule_create_field_basis_derivative(
 	cmzn_fieldmodule_id field_module, cmzn_field_id finite_element_field,
@@ -111,6 +101,7 @@ FE_field being made and/or modified.
 		}
 		if (return_code)
 		{
+			cmzn_mesh_id host_mesh = 0;
 			if (existing_fe_field)
 			{
 				number_of_components=
@@ -154,6 +145,15 @@ FE_field being made and/or modified.
 				return_code = 0;
 			}
 			original_number_of_components = number_of_components;
+			const char *help_text =
+				"Define a finite element field with parameters storable at nodes and, "
+				"if of value type real, able to be interpolated on elements. Option "
+				"'number_of_components' must be specified first if not 1. Special type "
+				"'element_xi' is used to store embedded locations: the 'host_mesh' "
+				"should be specified in this case e.g. mesh1d|mesh2d|mesh3d, and if not "
+				"a warning is issued that it may or may not be discovered automatically "
+				"by later commands. Specify field type 'coordinate' if real-valued with "
+				"1-3 components to enable automatic use as a coordinate field.";
 			/* try to handle help first */
 			if (return_code && (current_token = state->current_token))
 			{
@@ -161,6 +161,7 @@ FE_field being made and/or modified.
 					strcmp(PARSER_RECURSIVE_HELP_STRING, current_token)))
 				{
 					option_table = CREATE(Option_table)();
+					Option_table_add_help(option_table, help_text);
 					/* cm_field_type */
 					valid_strings = ENUMERATOR_GET_VALID_STRINGS(CM_field_type)(
 						&number_of_valid_strings,
@@ -178,6 +179,8 @@ FE_field being made and/or modified.
 					Option_table_add_enumerator(option_table,number_of_valid_strings,
 						valid_strings,&value_type_string);
 					DEALLOCATE(valid_strings);
+					// host_mesh
+					Option_table_add_mesh_entry(option_table, "host_mesh", field_modify->get_region(), &host_mesh);
 					/* number_of_components */
 					Option_table_add_entry(option_table,"number_of_components",
 						&number_of_components,NULL,set_int_positive);
@@ -235,6 +238,7 @@ FE_field being made and/or modified.
 			if (return_code && state->current_token)
 			{
 				option_table = CREATE(Option_table)();
+				Option_table_add_help(option_table, help_text);
 				/* cm_field_type */
 				valid_strings = ENUMERATOR_GET_VALID_STRINGS(CM_field_type)(
 					&number_of_valid_strings,
@@ -252,6 +256,8 @@ FE_field being made and/or modified.
 				Option_table_add_enumerator(option_table, number_of_valid_strings,
 					valid_strings, &value_type_string);
 				DEALLOCATE(valid_strings);
+				// host_mesh
+				Option_table_add_mesh_entry(option_table, "host_mesh", field_modify->get_region(), &host_mesh);
 				return_code = Option_table_multi_parse(option_table,state);
 				DESTROY(Option_table)(&option_table);
 			}
@@ -266,29 +272,50 @@ FE_field being made and/or modified.
 				FE_field *fe_field = FE_region_get_FE_field_with_general_properties(
 					cmzn_region_get_FE_region(cmzn_fieldmodule_get_region_internal(field_module)),
 					field_name, value_type, number_of_components);
-				Coordinate_system coordinate_system = cmzn_fieldmodule_get_coordinate_system(field_module);
-				if (fe_field &&
-					set_FE_field_CM_field_type(fe_field, cm_field_type) &&
-					set_FE_field_coordinate_system(fe_field, &coordinate_system))
+				if ((fe_field) && (value_type == ELEMENT_XI_VALUE))
 				{
-					if (component_names)
+					if (host_mesh)
 					{
-						for (i=0;i<number_of_components;i++)
+						FE_mesh *fe_mesh = cmzn_mesh_get_FE_mesh_internal(host_mesh);
+						const int result = FE_field_set_element_xi_host_mesh(fe_field, fe_mesh);
+						if (result != CMZN_OK)
 						{
-							if (component_names[i])
-							{
-								set_FE_field_component_name(fe_field, i, component_names[i]);
-							}
+							return_code = 0;
 						}
 					}
-					return_code = field_modify->update_field_and_deaccess(
-						Computed_field_create_finite_element_internal(field_module, fe_field));
+					else
+					{
+						display_message(WARNING_MESSAGE, "gfx define field %s finite_element element_xi: "
+							"It is recommended that the host_mesh be specified for element_xi field value type "
+							"as automatic discovery is not guaranteed to work in future", field_name);
+					}
 				}
-				else
+				if (return_code)
 				{
-					display_message(ERROR_MESSAGE,
-						"gfx define field finite_element.  Cannot change value type or number of components of existing field");
-					return_code = 0;
+					Coordinate_system coordinate_system = cmzn_fieldmodule_get_coordinate_system(field_module);
+					if (fe_field &&
+						set_FE_field_CM_field_type(fe_field, cm_field_type) &&
+						set_FE_field_coordinate_system(fe_field, &coordinate_system))
+					{
+						if (component_names)
+						{
+							for (i = 0; i<number_of_components; i++)
+							{
+								if (component_names[i])
+								{
+									set_FE_field_component_name(fe_field, i, component_names[i]);
+								}
+							}
+						}
+						return_code = field_modify->update_field_and_deaccess(
+							Computed_field_create_finite_element_internal(field_module, fe_field));
+					}
+					else
+					{
+						display_message(ERROR_MESSAGE,
+							"gfx define field finite_element.  Cannot change value type or number of components of existing field");
+						return_code = 0;
+					}
 				}
 				DEALLOCATE(field_name);
 				cmzn_fieldmodule_end_change(field_module);
@@ -305,6 +332,7 @@ FE_field being made and/or modified.
 				}
 				DEALLOCATE(component_names);
 			}
+			cmzn_mesh_destroy(&host_mesh);
 		}
 	}
 	else
@@ -411,206 +439,81 @@ Converts <field> into type COMPUTED_FIELD_ACCESS_COUNT.
 
 #endif
 
+/**
+ * Convert field into type NODE_VALUE, if not already, and edit definition.
+ */
 int define_Computed_field_type_node_value(struct Parse_state *state,
-	void *field_modify_void,void *computed_field_finite_element_package_void)
-/*******************************************************************************
-LAST MODIFIED : 24 August 2006
-
-DESCRIPTION :
-Converts <field> into type COMPUTED_FIELD_NODE_VALUE (if it is not already)
-and allows its contents to be modified.
-==============================================================================*/
+	void *field_modify_void, void *computed_field_finite_element_package_void)
 {
-	const char *current_token;
-	const char *nodal_value_type_string;
-	enum FE_nodal_value_type nodal_value_type;
-	int return_code,version_number;
-	static const char *nodal_value_type_strings[] =
-	{
-	  "value",
-	  "d/ds1",
-	  "d/ds2",
-	  "d/ds3",
-	  "d2/ds1ds2",
-	  "d2/ds1ds3",
-	  "d2/ds2ds3",
-	  "d3/ds1ds2ds3"
-	};
-	Computed_field_modify_data *field_modify;
-	struct Option_table *option_table;
-
-	ENTER(define_Computed_field_type_node_value);
+	Computed_field_modify_data *field_modify = static_cast<Computed_field_modify_data *>(field_modify_void);
 	USE_PARAMETER(computed_field_finite_element_package_void);
-	if (state&&(field_modify=(Computed_field_modify_data *)field_modify_void))
+	int return_code;
+	if (state && field_modify)
 	{
-		return_code=1;
+		return_code = 1;
 		cmzn_field_id finite_element_field = 0;
-		nodal_value_type=FE_NODAL_UNKNOWN;
-		/* user enters version number starting at 1; field stores it as 0 */
-		version_number=1;
+		cmzn_node_value_label nodeValueLabel = CMZN_NODE_VALUE_LABEL_VALUE;
+		int versionNumber = 1;
 		if ((NULL != field_modify->get_field()) &&
 			(computed_field_node_value_type_string ==
 				Computed_field_get_type_string(field_modify->get_field())))
 		{
-			return_code=Computed_field_get_type_node_value(field_modify->get_field(),&finite_element_field,
-				&nodal_value_type,&version_number);
-			version_number++;
+			// note this is ACCESSed:
+			finite_element_field = cmzn_field_get_source_field(field_modify->get_field(), 1);
+			nodeValueLabel = cmzn_field_node_value_get_value_label(field_modify->get_field());
+			versionNumber = cmzn_field_node_value_get_version_number(field_modify->get_field());
+		}
+		struct Option_table *option_table = CREATE(Option_table)();
+		struct Set_Computed_field_conditional_data set_fe_field_data;
+		set_fe_field_data.computed_field_manager = field_modify->get_field_manager();
+		set_fe_field_data.conditional_function = Computed_field_is_type_finite_element_iterator;
+		set_fe_field_data.conditional_function_user_data = (void *)NULL;
+		/* fe_field */
+		Option_table_add_Computed_field_conditional_entry(option_table, "fe_field",
+			&finite_element_field, &set_fe_field_data);
+		/* value|d/ds1|d/ds2|d2/ds1ds2|d/ds3|d2/ds1ds3|d2/ds2ds3|d3/ds1ds2ds3 */
+		const char *nodeValueLabelName = ENUMERATOR_STRING(cmzn_node_value_label)(nodeValueLabel);
+		int number_of_valid_strings;
+		const char **valid_strings = ENUMERATOR_GET_VALID_STRINGS(cmzn_node_value_label)(
+			&number_of_valid_strings, (ENUMERATOR_CONDITIONAL_FUNCTION(cmzn_node_value_label) *)0, (void *)0);
+		Option_table_add_enumerator(option_table, number_of_valid_strings,
+			valid_strings, &nodeValueLabelName);
+		DEALLOCATE(valid_strings);
+		/* version_number */
+		Option_table_add_entry(option_table, "version", &versionNumber,
+			NULL, set_int_positive);
+		return_code = Option_table_multi_parse(option_table, state);
+		DESTROY(Option_table)(&option_table);
+		if (return_code)
+		{
+			if (!finite_element_field)
+			{
+				display_message(ERROR_MESSAGE, "Missing or invalid fe_field");
+				display_parse_state_location(state);
+				return_code = 0;
+			}
 		}
 		if (return_code)
 		{
-			/* have ACCESS/DEACCESS because set_FE_field does */
-			if (finite_element_field)
-			{
-				cmzn_field_access(finite_element_field);
-			}
-			struct Set_Computed_field_conditional_data set_fe_field_data;
-			set_fe_field_data.computed_field_manager = field_modify->get_field_manager();
-			set_fe_field_data.conditional_function = Computed_field_is_type_finite_element_iterator;
-			set_fe_field_data.conditional_function_user_data = (void *)NULL;
-			/* try to handle help first */
-			current_token=state->current_token;
-			if (current_token)
-			{
-				if (!(strcmp(PARSER_HELP_STRING,current_token)&&
-					strcmp(PARSER_RECURSIVE_HELP_STRING,current_token)))
-				{
-					option_table=CREATE(Option_table)();
-					/* fe_field */
-					Option_table_add_Computed_field_conditional_entry(option_table, "fe_field",
-						&finite_element_field, &set_fe_field_data);
-					/* nodal_value_type */
-					nodal_value_type_string=nodal_value_type_strings[0];
-					Option_table_add_enumerator(option_table,
-					  sizeof(nodal_value_type_strings)/sizeof(char *),
-					  nodal_value_type_strings,&nodal_value_type_string);
-					/* version_number */
-					Option_table_add_entry(option_table,"version", &version_number,
-					  NULL, set_int_positive);
-					return_code=Option_table_multi_parse(option_table,state);
-					DESTROY(Option_table)(&option_table);
-				}
-			}
-			/* parse the fe_field if the "fe_field" token is next */
-			if (return_code)
-			{
-				current_token=state->current_token;
-				if (current_token && fuzzy_string_compare(current_token,"fe_field"))
-				{
-					option_table=CREATE(Option_table)();
-					/* fe_field */
-					Option_table_add_Computed_field_conditional_entry(option_table, "fe_field",
-						&finite_element_field, &set_fe_field_data);
-					return_code=Option_table_parse(option_table,state);
-					if (return_code)
-					{
-						if (!finite_element_field)
-						{
-							display_parse_state_location(state);
-							display_message(ERROR_MESSAGE,"Missing or invalid fe_field");
-							return_code=0;
-						}
-					}
-					DESTROY(Option_table)(&option_table);
-				}
-				else
-				{
-					display_parse_state_location(state);
-					display_message(ERROR_MESSAGE,
-						"Must specify fe_field before other options");
-					return_code=0;
-				}
-			}
-			/* parse the value_type/version number */
-			if (return_code&&state->current_token)
-			{
-			  option_table=CREATE(Option_table)();
-			  /* nodal_value_type */
-			  nodal_value_type_string=nodal_value_type_strings[0];
-			  Option_table_add_enumerator(option_table,
-				 sizeof(nodal_value_type_strings)/sizeof(char *),
-				 nodal_value_type_strings,&nodal_value_type_string);
-			  /* version_number */
-			  Option_table_add_entry(option_table,"version", &version_number,
-				 NULL, set_int_positive);
-			  return_code=Option_table_multi_parse(option_table,state);
-			  DESTROY(Option_table)(&option_table);
-			}
-			if (return_code)
-			{
-				if (nodal_value_type_string == nodal_value_type_strings[0])
-				{
-					nodal_value_type = FE_NODAL_VALUE;
-				}
-				else if (nodal_value_type_string == nodal_value_type_strings[1])
-				{
-					nodal_value_type = FE_NODAL_D_DS1;
-				}
-				else if (nodal_value_type_string == nodal_value_type_strings[2])
-				{
-					nodal_value_type = FE_NODAL_D_DS2;
-				}
-				else if (nodal_value_type_string == nodal_value_type_strings[3])
-				{
-					nodal_value_type = FE_NODAL_D_DS3;
-				}
-				else if (nodal_value_type_string == nodal_value_type_strings[4])
-				{
-					nodal_value_type = FE_NODAL_D2_DS1DS2;
-				}
-				else if (nodal_value_type_string == nodal_value_type_strings[5])
-				{
-					nodal_value_type = FE_NODAL_D2_DS1DS3;
-				}
-				else if (nodal_value_type_string == nodal_value_type_strings[6])
-				{
-					nodal_value_type = FE_NODAL_D2_DS2DS3;
-				}
-				else if (nodal_value_type_string == nodal_value_type_strings[7])
-				{
-					nodal_value_type = FE_NODAL_D3_DS1DS2DS3;
-				}
-				else
-				{
-					display_message(ERROR_MESSAGE,
-						"define_Computed_field_type_node_value.  "
-						"Unknown nodal value string.");
-					return_code = 0;
-				}
-			}
-			if (return_code)
-			{
-				/* user enters version number starting at 1; field stores it as 0 */
-				return_code = field_modify->update_field_and_deaccess(
-					Computed_field_create_node_value(field_modify->get_field_module(),
-						finite_element_field, nodal_value_type, version_number-1));
-			}
+			STRING_TO_ENUMERATOR(cmzn_node_value_label)(nodeValueLabelName, &nodeValueLabel);
+			cmzn_field_id field = cmzn_fieldmodule_create_field_node_value(field_modify->get_field_module(),
+				finite_element_field, nodeValueLabel, versionNumber);
+			return_code = field_modify->update_field_and_deaccess(field);
 			if (!return_code)
 			{
-				if ((!state->current_token)||
-					(strcmp(PARSER_HELP_STRING,state->current_token)&&
-					strcmp(PARSER_RECURSIVE_HELP_STRING,state->current_token)))
-				{
-					/* error */
-					display_message(ERROR_MESSAGE,
-						"define_Computed_field_type_node_value.  Failed");
-				}
-			}
-			if (finite_element_field)
-			{
-				cmzn_field_destroy(&finite_element_field);
+				display_message(ERROR_MESSAGE, "gfx define field node_value.  Failed");
 			}
 		}
+		cmzn_field_destroy(&finite_element_field);
 	}
 	else
 	{
 		display_message(ERROR_MESSAGE,
 			"define_Computed_field_type_node_value.  Invalid argument(s)");
-		return_code=0;
+		return_code = 0;
 	}
-	LEAVE;
-
 	return (return_code);
-} /* define_Computed_field_type_node_value */
+}
 
 /**
  * Converts field to type EDGE_DISCONTINUITY (if it is not already)

@@ -14,7 +14,6 @@
 #include "command/cmiss.h"
 #include "context/context.h"
 #include "context/context_app.h"
-#include "curve/curve.h"
 #include "general/debug.h"
 #include "general/mystring.h"
 #include "general/object.h"

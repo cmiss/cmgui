@@ -1529,8 +1529,8 @@ entered.
 	{
 		/* Write out the help */
 		if (option_table->help && state && state->current_token &&
-			(!strcmp(PARSER_HELP_STRING,state->current_token)||
-			!strcmp(PARSER_RECURSIVE_HELP_STRING,state->current_token)))
+			(0 == strcmp(PARSER_HELP_STRING,state->current_token) ||
+			(0 == strcmp(PARSER_RECURSIVE_HELP_STRING,state->current_token))))
 		{
 			char *space_offset;
 			int index = 0, output, length = strlen(option_table->help), local_indent,

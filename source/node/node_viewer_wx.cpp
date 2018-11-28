@@ -20,12 +20,15 @@
 #include "opencmiss/zinc/fieldmodule.h"
 #include "opencmiss/zinc/fieldsubobjectgroup.h"
 #include "opencmiss/zinc/node.h"
+#include "opencmiss/zinc/nodeset.h"
+#include "opencmiss/zinc/nodetemplate.h"
 #include "opencmiss/zinc/region.h"
 #include "opencmiss/zinc/scene.h"
 #include "opencmiss/zinc/status.h"
 #include "opencmiss/zinc/timenotifier.h"
 #include "opencmiss/zinc/timekeeper.h"
 #include "opencmiss/zinc/timesequence.h"
+#include "finite_element/finite_element.h"
 #include "general/debug.h"
 #include "general/mystring.h"
 #include "node/node_viewer_wx.h"
@@ -38,6 +41,7 @@
 #include "region/cmiss_region_chooser_wx.hpp"
 #include "choose/text_FE_choose_class.hpp"
 #include "icon/cmiss_icon.xpm"
+#include <vector>
 #endif /*defined (WX_USER_INTERFACE)*/
 
 /*
@@ -284,28 +288,30 @@ after a collapsible pane is opened/closed.
 				{
 				case CMZN_FIELD_VALUE_TYPE_REAL:
 					{
-						cmzn_field_id assignField = 0;
-						if ((node_value_label != CMZN_NODE_VALUE_LABEL_VALUE) || (version != 1))
+						double value;
+						sscanf(value_string, FE_VALUE_INPUT_STRING, &value);
+						const int componentCount = cmzn_field_get_number_of_components(field);
+						cmzn_field_finite_element *feField = cmzn_field_cast_finite_element(field);
+						int result;
+						if (feField)
 						{
-							assignField = cmzn_fieldmodule_create_field_node_value(field_module, field, node_value_label, version);
+							result = cmzn_field_finite_element_set_node_parameters(feField, field_cache, component_number, node_value_label, /*version*/1, 1, &value);
 						}
 						else
 						{
-							assignField = cmzn_field_access(field);
+							std::vector<double> values(componentCount);
+							result = cmzn_field_evaluate_real(field, field_cache, componentCount, values.data());
+							if (result == CMZN_OK)
+							{
+								values[component_number - 1] = value;
+								result = cmzn_field_assign_real(field, field_cache, componentCount, values.data());
+							}
 						}
-						const int numberOfComponents = cmzn_field_get_number_of_components(field);
-						double *values = new double[numberOfComponents];
-						if (CMZN_OK == cmzn_field_evaluate_real(assignField, field_cache, numberOfComponents, values))
-						{
-							sscanf(value_string, FE_VALUE_INPUT_STRING, &values[component_number - 1]);
-							result = (CMZN_OK == cmzn_field_assign_real(assignField, field_cache, numberOfComponents, values));
-						}
-						delete[] values;
-						cmzn_field_destroy(&assignField);
+						cmzn_field_finite_element_destroy(&feField);
 					} break;
 				case CMZN_FIELD_VALUE_TYPE_STRING:
 					{
-						result = (CMZN_OK == cmzn_field_assign_string(field, field_cache, value_string));
+						result = cmzn_field_assign_string(field, field_cache, value_string);
 					} break;
 				default:
 					{
@@ -391,6 +397,7 @@ static int node_viewer_add_collpane(Node_viewer *node_viewer,
 	cmzn_fieldcache_id field_cache, cmzn_field_id field, bool &time_varying_field, bool& refit)
 {
 	char *field_name = cmzn_field_get_name(field);
+	cmzn_field_finite_element *feField = cmzn_field_cast_finite_element(field);
 	wxScrolledWindow *panel = node_viewer->collpane;
 
 	// identifier is the name of the panel in the collapsible pane
@@ -417,7 +424,9 @@ static int node_viewer_add_collpane(Node_viewer *node_viewer,
 				++insertIndex;
 		}
 	}
-	if (node_viewer->current_node && cmzn_field_is_defined_at_location(field, field_cache))
+	if (node_viewer->current_node &&
+		(((feField) && cmzn_field_finite_element_has_parameters_at_location(feField, field_cache))
+		|| (!(feField) && cmzn_field_is_defined_at_location(field, field_cache))))
 	{
 		if (0 == wind)
 		{
@@ -438,6 +447,7 @@ static int node_viewer_add_collpane(Node_viewer *node_viewer,
 		wind->DestroyChildren();
 		refit = true;
 	}
+	cmzn_field_finite_element_destroy(&feField);
 	cmzn_deallocate(field_name);
 	return 1;
 }
@@ -792,44 +802,43 @@ char *node_viewer_get_component_value_string(Node_viewer *node_viewer, cmzn_fiel
 	char *new_value_string = 0;
 	if (node_viewer && field && node_viewer->current_node)
 	{
-		const int numberOfComponents = cmzn_field_get_number_of_components(field);
+		const int componentCount = cmzn_field_get_number_of_components(field);
 		cmzn_fieldmodule_id field_module = cmzn_field_get_fieldmodule(field);
 		cmzn_fieldcache_id field_cache = cmzn_fieldmodule_create_fieldcache(field_module);
 		double time = cmzn_timenotifier_get_time(node_viewer->timenotifier);
 		cmzn_fieldcache_set_time(field_cache, time);
 		cmzn_fieldcache_set_node(field_cache, node_viewer->current_node);
-		if (1 == numberOfComponents)
+		if (1 == componentCount)
 		{
 			new_value_string = cmzn_field_evaluate_string(field, field_cache);
 		}
 		else
 		{
-			// must be numeric
-			cmzn_fieldmodule_begin_change(field_module);
-			cmzn_field_id useField = 0;
-			if ((node_value_label != CMZN_NODE_VALUE_LABEL_VALUE) || (version != 1))
+			// multicomponent must be numeric
+			cmzn_field_finite_element *feField = cmzn_field_cast_finite_element(field);
+			double value;
+			int result;
+			if (feField)
 			{
-				useField = cmzn_fieldmodule_create_field_node_value(field_module, field, node_value_label, version);
+				result = cmzn_field_finite_element_get_node_parameters(feField, field_cache, component_number, node_value_label, /*version*/1, 1, &value);
 			}
 			else
 			{
-				useField = cmzn_field_access(field);
+				std::vector<double> values(componentCount);
+				result = cmzn_field_evaluate_real(field, field_cache, componentCount, values.data());
+				value = values[component_number - 1];
 			}
-			const int numberOfComponents = cmzn_field_get_number_of_components(field);
-			double *values = new double[numberOfComponents];
-			if (CMZN_OK == cmzn_field_evaluate_real(useField, field_cache, numberOfComponents, values))
+			if (CMZN_OK == result)
 			{
 				char temp_string[VALUE_STRING_SIZE];
-				sprintf(temp_string, FE_VALUE_INPUT_STRING, values[component_number-1]);
+				sprintf(temp_string, FE_VALUE_INPUT_STRING, value);
 				new_value_string = duplicate_string(temp_string);
 			}
 			else
 			{
-				new_value_string = duplicate_string("nan");
+				new_value_string = duplicate_string("???");
 			}
-			delete[] values;
-			cmzn_field_destroy(&useField);
-			cmzn_fieldmodule_end_change(field_module);
+			cmzn_field_finite_element_destroy(&feField);
 		}
 		cmzn_fieldcache_destroy(&field_cache);
 		cmzn_fieldmodule_destroy(&field_module);
@@ -924,36 +933,15 @@ void gridSizer_updateStaticText(wxWindow *parentWin, wxGridSizer *gridSizer, int
 static int node_viewer_setup_components(struct Node_viewer *node_viewer,
 	wxWindow *parentWin, cmzn_node_id node, cmzn_field_id field, bool &time_varying_field, bool& refit)
 {
-	struct cmzn_node_value_label_label
-	{
-		enum cmzn_node_value_label type;
-		const char *label;
-	};
-	const cmzn_node_value_label_label all_node_value_labels[] =
-	{
-		{ CMZN_NODE_VALUE_LABEL_VALUE, "value" },
-		{ CMZN_NODE_VALUE_LABEL_D_DS1, "d/ds1" },
-		{ CMZN_NODE_VALUE_LABEL_D_DS2, "d/ds2" },
-		{ CMZN_NODE_VALUE_LABEL_D_DS3, "d/ds3" },
-		{ CMZN_NODE_VALUE_LABEL_D2_DS1DS2, "d2/ds1ds2" },
-		{ CMZN_NODE_VALUE_LABEL_D2_DS1DS3, "d2/ds1ds3" },
-		{ CMZN_NODE_VALUE_LABEL_D2_DS2DS3, "d2/ds2ds3" },
-		{ CMZN_NODE_VALUE_LABEL_D3_DS1DS2DS3, "d3/ds1ds2ds3" }
-	};
-	const int all_node_value_labels_count = sizeof(all_node_value_labels) / sizeof(cmzn_node_value_label_label);
 	int return_code = 0;
 	wxString tmp_string;
 	if (node_viewer && node && field)
 	{
 		return_code = 1;
-		const int number_of_components = cmzn_field_get_number_of_components(field);
+		const int componentCount = cmzn_field_get_number_of_components(field);
 		cmzn_field_finite_element_id feField = cmzn_field_cast_finite_element(field);
 		cmzn_nodetemplate_id nodeTemplate = 0;
-		enum cmzn_node_value_label node_value_labels[8];
-		const char *nodal_value_labels[8];
-		node_value_labels[0] = CMZN_NODE_VALUE_LABEL_VALUE;
-		nodal_value_labels[0] = "value";
-		int number_of_node_value_labels = 1;
+		std::vector<cmzn_node_value_label> nodeValueLabels;
 		if (feField)
 		{
 			cmzn_fieldmodule_id field_module = cmzn_region_get_fieldmodule(node_viewer->region);
@@ -963,23 +951,30 @@ static int node_viewer_setup_components(struct Node_viewer *node_viewer,
 			cmzn_nodetemplate_define_field_from_node(nodeTemplate, field, node);
 			cmzn_nodeset_destroy(&nodeset);
 			cmzn_fieldmodule_destroy(&field_module);
-			for (int i = 1; i < all_node_value_labels_count; ++i)
+			for (int d = CMZN_NODE_VALUE_LABEL_VALUE; d <= CMZN_NODE_VALUE_LABEL_D3_DS1DS2DS3; ++d)
 			{
-				enum cmzn_node_value_label node_value_label = all_node_value_labels[i].type;
-				if (0 < cmzn_nodetemplate_get_value_number_of_versions(nodeTemplate,
-					field, /*component_number*/-1, node_value_label))
+				const cmzn_node_value_label nodeValueLabel = static_cast<cmzn_node_value_label>(d);
+				// check if any components have parameters for value label
+				for (int comp_no = 1; comp_no <= componentCount; ++comp_no)
 				{
-					node_value_labels[number_of_node_value_labels] = node_value_label;
-					nodal_value_labels[number_of_node_value_labels] = all_node_value_labels[i].label;
-					++number_of_node_value_labels;
+					if (0 < cmzn_nodetemplate_get_value_number_of_versions(nodeTemplate, field, comp_no, nodeValueLabel))
+					{
+						nodeValueLabels.push_back(nodeValueLabel);
+						break;
+					}
 				}
 			}
 		}
+		else
+		{
+			nodeValueLabels.push_back(CMZN_NODE_VALUE_LABEL_VALUE);
+		}
+		const int nodeValueLabelsCount = static_cast<int>(nodeValueLabels.size());
 		wxGridSizer *gridSizer = dynamic_cast<wxGridSizer *>(parentWin->GetSizer());
 		if (gridSizer)
 		{
-			if ((gridSizer->GetRows() != (number_of_components + 1)) ||
-				(gridSizer->GetCols() != number_of_node_value_labels + 1))
+			if ((gridSizer->GetRows() != (componentCount + 1)) ||
+				(gridSizer->GetCols() != nodeValueLabelsCount + 1))
 			{
 				parentWin->DestroyChildren();
 				gridSizer = 0;
@@ -987,14 +982,19 @@ static int node_viewer_setup_components(struct Node_viewer *node_viewer,
 			}
 		}
 		if (!gridSizer)
-			gridSizer = new wxGridSizer(number_of_components + 1, number_of_node_value_labels + 1, 1, 1);
+		{
+			gridSizer = new wxGridSizer(componentCount + 1, nodeValueLabelsCount + 1, 1, 1);
+		}
 		int index = 0;
 		// first row is blank cell followed by nodal value type labels
 		gridSizer_updateStaticText(parentWin, gridSizer, index++, "", wxEXPAND|wxADJUST_MINSIZE, refit);
-		for (int nodal_value_no = 0; nodal_value_no < number_of_node_value_labels; ++nodal_value_no)
-			gridSizer_updateStaticText(parentWin, gridSizer, index++, nodal_value_labels[nodal_value_no],
+		for (int d = 0; d < nodeValueLabelsCount; ++d)
+		{
+			gridSizer_updateStaticText(parentWin, gridSizer, index++,
+				ENUMERATOR_STRING(cmzn_node_value_label)(nodeValueLabels[d]),
 				wxALIGN_CENTER_VERTICAL|wxALIGN_CENTER_HORIZONTAL|wxADJUST_MINSIZE, refit);
-		for (int comp_no = 1; comp_no <= number_of_components; ++comp_no)
+		}
+		for (int comp_no = 1; comp_no <= componentCount; ++comp_no)
 		{
 			// first column is component label */
 			char *name = cmzn_field_get_component_name(field, comp_no);
@@ -1002,17 +1002,18 @@ static int node_viewer_setup_components(struct Node_viewer *node_viewer,
 				wxALIGN_CENTER_VERTICAL|wxALIGN_CENTER_HORIZONTAL|wxADJUST_MINSIZE, refit);
 			cmzn_deallocate(name);
 
-			for (int nodal_value_no = 0; nodal_value_no < number_of_node_value_labels; ++nodal_value_no)
+			for (int d = 0; d < nodeValueLabelsCount; ++d)
 			{
-				enum cmzn_node_value_label node_value_label = node_value_labels[nodal_value_no];
-				if (!feField || (0 < cmzn_nodetemplate_get_value_number_of_versions(
-					nodeTemplate, field, comp_no, node_value_label)))
+				if ((!feField) || (0 < cmzn_nodetemplate_get_value_number_of_versions(
+					nodeTemplate, field, comp_no, nodeValueLabels[d])))
 				{
-					Node_viewer_updateTextCtrl(node_viewer, parentWin, gridSizer, index++, field, comp_no, node_value_label, 1, refit);
+					Node_viewer_updateTextCtrl(node_viewer, parentWin, gridSizer, index++, field, comp_no, nodeValueLabels[d], 1, refit);
 				}
 				else
+				{
 					gridSizer_updateStaticText(parentWin, gridSizer, index++, "",
 						wxEXPAND|wxALIGN_CENTER_VERTICAL|	wxALIGN_CENTER_HORIZONTAL|wxADJUST_MINSIZE, refit);
+				}
 			}
 		}
 		cmzn_timesequence_id timeSequence = cmzn_nodetemplate_get_timesequence(nodeTemplate, field);

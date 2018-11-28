@@ -18,6 +18,7 @@ Interactive tool for selecting elements with mouse and other devices.
 #include "opencmiss/zinc/glyph.h"
 #include "opencmiss/zinc/graphics.h"
 #include "opencmiss/zinc/material.h"
+#include "opencmiss/zinc/mesh.h"
 #include "opencmiss/zinc/scene.h"
 #include "opencmiss/zinc/sceneviewer.h"
 #include "opencmiss/zinc/scenefilter.h"

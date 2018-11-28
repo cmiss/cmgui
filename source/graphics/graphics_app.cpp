@@ -12,6 +12,7 @@
 #include "opencmiss/zinc/graphics.h"
 #include "opencmiss/zinc/material.h"
 #include "opencmiss/zinc/font.h"
+#include "opencmiss/zinc/nodeset.h"
 #include "opencmiss/zinc/region.h"
 #include "opencmiss/zinc/spectrum.h"
 #include "opencmiss/zinc/tessellation.h"

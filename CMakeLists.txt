@@ -11,18 +11,15 @@ CMAKE_MINIMUM_REQUIRED( VERSION 2.8.1 )
 PROJECT(CmguiApplication)
 
 # Check bare minimum configuration
-set(CMGUI_CMAKE_MODULE_PATH "" CACHE STRING "Location of OpenCMISS CMake modules.")
-if (DEFINED OPENCMISS_CMAKE_MODULE_PATH)
-    set(CMGUI_CMAKE_MODULE_PATH "${OPENCMISS_CMAKE_MODULE_PATH}" CACHE STRING "Location of OpenCMISS CMake modules." FORCE)
-endif ()
-if (NOT EXISTS "${CMGUI_CMAKE_MODULE_PATH}/Modules/OpenCMISS/OCMiscFunctions.cmake")
-    message(FATAL_ERROR "'${CMGUI_CMAKE_MODULE_PATH}/Modules/OpenCMISS/OCMiscFunctions.cmake' does not exists.  The OpenCMISS CMake modules may not be installed/available.")
+set(CMGUI_CMAKE_MODULE_PATH "${CMGUI_CMAKE_MODULE_PATH}" CACHE STRING "Location of OpenCMISS CMake modules.")
+if (NOT EXISTS "${CMGUI_CMAKE_MODULE_PATH}/OpenCMISS/OCMiscFunctions.cmake")
+    message(FATAL_ERROR "'${CMGUI_CMAKE_MODULE_PATH}/OpenCMISS/OCMiscFunctions.cmake' does not exists.  The OpenCMISS CMake modules may not be installed/available.")
 endif ()
 
 list(INSERT CMAKE_MODULE_PATH 0 "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 list(APPEND CMAKE_MODULE_PATH "${CMGUI_CMAKE_MODULE_PATH}/FindModuleWrappers")
-list(APPEND CMAKE_MODULE_PATH "${CMGUI_CMAKE_MODULE_PATH}/Modules")
-list(APPEND CMAKE_MODULE_PATH "${CMGUI_CMAKE_MODULE_PATH}/Modules/OpenCMISS")
+list(APPEND CMAKE_MODULE_PATH "${CMGUI_CMAKE_MODULE_PATH}")
+list(APPEND CMAKE_MODULE_PATH "${CMGUI_CMAKE_MODULE_PATH}/OpenCMISS")
 
 INCLUDE( FunctionDefinitions )
 
@@ -74,8 +71,8 @@ IF(APPLE)
 ENDIF()
 
 IF( WX_USER_INTERFACE )
-	list(INSERT CMAKE_PREFIX_PATH 0 ${WXWIDGETS_INSTALL_PREFIX} )
-	FIND_PACKAGE( wxWidgets QUIET COMPONENTS xrc adv html gl xml core base )
+	SET( CMAKE_PREFIX_PATH ${WXWIDGETS_INSTALL_PREFIX} )
+	FIND_PACKAGE( wxWidgets REQUIRED COMPONENTS xrc adv html gl xml core base )
 	SET( CAN_USE_USER_INTERFACE ${wxWidgets_FOUND} )
 ENDIF( WX_USER_INTERFACE )
 IF( GTK_USER_INTERFACE )
@@ -90,6 +87,7 @@ ENDIF( WIN32_USER_INTERFACE AND WIN32 )
 # Find our friendly Zinc CMake config file.
 # We can only use the static version of the library for the Cmgui application
 SET( ZINC_USE_STATIC TRUE )
+SET( REQUIRE_INTERNAL_ZINC_INCLUDE_DIR TRUE )
 FIND_PACKAGE( Zinc REQUIRED )
 
 IF( MSVC )

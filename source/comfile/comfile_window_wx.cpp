@@ -123,7 +123,7 @@ public:
 		this->SetIcon(cmiss_icon_xpm);
 		comfile_listbox = XRCCTRL(*this, "ComfileListBox", wxListBox);
 		this_frame = XRCCTRL(*this, "CmguiComfileWindow", wxFrame);
-		char **command,*line, *temp_string, *command_string;
+		char **command, *temp_string, *command_string;
 		struct IO_stream *comfile;
 		int i,number_of_commands;
 		wxString blank = wxT("");
@@ -133,11 +133,11 @@ public:
 		{
 			number_of_commands=0;
 			while ((EOF!=IO_stream_scan(comfile," "))&&!IO_stream_end_of_stream(comfile)&&
-				IO_stream_read_string(comfile,"[^\n]",&line))
+				IO_stream_read_string(comfile,"[^\n]",&command_string))
 			{
-				command_string=trim_string(line);
 				if (command_string != NULL)
 				{
+					trim_string_in_place(command_string);
 					number = comfile_listbox->GetCount();
 					if (number == 0)
 						comfile_listbox->InsertItems(1, &blank,number);
@@ -147,7 +147,6 @@ public:
 					number_of_commands++;
 					DEALLOCATE(command_string);
 				}
-				DEALLOCATE(line);
 			}
 			if (!IO_stream_end_of_stream(comfile))
 			{

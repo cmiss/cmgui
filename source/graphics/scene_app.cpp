@@ -6,6 +6,8 @@
 
 #include "opencmiss/zinc/glyph.h"
 #include "opencmiss/zinc/material.h"
+#include "opencmiss/zinc/mesh.h"
+#include "opencmiss/zinc/nodeset.h"
 #include "opencmiss/zinc/status.h"
 #include "opencmiss/zinc/stream.h"
 #include "opencmiss/zinc/streamscene.h"
@@ -722,20 +724,28 @@ static cmzn_scene_id cmzn_scene_get_parent_scene_internal(cmzn_scene_id scene)
 cmzn_field_group_id cmzn_scene_get_selection_group(cmzn_scene_id scene)
 {
 	if (!scene)
+	{
 		return 0;
+	}
 	cmzn_field_group_id selection_group = scene->selection_group;
 	if (selection_group)
+	{
 		cmzn_field_access(cmzn_field_group_base_cast(selection_group));
+	}
 	return selection_group;
 }
 
 cmzn_field_group_id cmzn_scene_get_or_create_selection_group(cmzn_scene_id scene)
 {
 	if (!scene)
+	{
 		return 0;
+	}
 	cmzn_field_group_id selection_group = scene->selection_group;
 	if (selection_group)
+	{
 		cmzn_field_access(cmzn_field_group_base_cast(selection_group));
+	}
 	else
 	{
 		cmzn_scene_id parent_scene = cmzn_scene_get_parent_scene_internal(scene);
@@ -744,15 +754,18 @@ cmzn_field_group_id cmzn_scene_get_or_create_selection_group(cmzn_scene_id scene
 			cmzn_field_group_id parent_selection_group = cmzn_scene_get_or_create_selection_group(parent_scene);
 			selection_group = cmzn_field_group_get_subregion_field_group(parent_selection_group, scene->region);
 			if (!selection_group)
+			{
 				selection_group = cmzn_field_group_create_subregion_field_group(parent_selection_group, scene->region);
+			}
 			cmzn_field_group_destroy(&parent_selection_group);
 		}
 		else
 		{
 			// find by name or create
 			const char *default_selection_group_name = "cmiss_selection";
-			cmzn_fieldmodule_id field_module = cmzn_region_get_fieldmodule(scene->region);
-			cmzn_field_id field = cmzn_fieldmodule_find_field_by_name(field_module, default_selection_group_name);
+			cmzn_fieldmodule_id fieldmodule = cmzn_region_get_fieldmodule(scene->region);
+			cmzn_fieldmodule_begin_change(fieldmodule);
+			cmzn_field_id field = cmzn_fieldmodule_find_field_by_name(fieldmodule, default_selection_group_name);
 			if (field)
 			{
 				selection_group = cmzn_field_cast_group(field);
@@ -760,16 +773,19 @@ cmzn_field_group_id cmzn_scene_get_or_create_selection_group(cmzn_scene_id scene
 			}
 			if (!selection_group)
 			{
-				field = cmzn_fieldmodule_create_field_group(field_module);
+				field = cmzn_fieldmodule_create_field_group(fieldmodule);
 				cmzn_field_set_name(field, default_selection_group_name);
 				selection_group = cmzn_field_cast_group(field);
-				cmzn_field_group_set_subelement_handling_mode(selection_group, CMZN_FIELD_GROUP_SUBELEMENT_HANDLING_MODE_FULL);
 				cmzn_field_destroy(&field);
 			}
-			cmzn_fieldmodule_destroy(&field_module);
+			cmzn_field_group_set_subelement_handling_mode(selection_group, CMZN_FIELD_GROUP_SUBELEMENT_HANDLING_MODE_FULL);
+			cmzn_fieldmodule_end_change(fieldmodule);
+			cmzn_fieldmodule_destroy(&fieldmodule);
 		}
 		if (selection_group)
+		{
 			cmzn_scene_set_selection_field(scene, cmzn_field_group_base_cast(selection_group));
+		}
 	}
 	return selection_group;
 }

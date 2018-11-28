@@ -48,7 +48,6 @@ SET(APP_HDRS
     source/computed_field/computed_field_function_app.h
     source/computed_field/computed_field_fibres_app.h
     source/computed_field/computed_field_derivatives_app.h
-    source/computed_field/computed_field_curve_app.h
     source/computed_field/computed_field_conditional_app.h
     source/computed_field/computed_field_composite_app.h
     source/computed_field/computed_field_compose_app.h
@@ -66,7 +65,6 @@ SET(APP_HDRS
     source/graphics/tessellation_app.hpp
     source/graphics/tessellation_app.hpp
     source/computed_field/computed_field_app.h
-    source/curve/curve_app.h
     source/graphics/render_to_finite_elements_app.h
     source/graphics/render_to_finite_elements_app.h
     source/graphics/auxiliary_graphics_types_app.h
@@ -101,7 +99,6 @@ SET(APP_HDRS
     source/element/element_point_tool.h
     source/element/element_tool.h
     source/element/element_point_viewer_wx.h
-    source/emoter/emoter_dialog.h
     source/graphics/graphics_window.h
     source/graphics/graphics_window_private.hpp
     source/graphics/texturemap.h

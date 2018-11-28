@@ -4,15 +4,6 @@
 * License, v. 2.0. If a copy of the MPL was not distributed with this
 * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-int set_FE_field_component_FE_region(struct Parse_state *state,
-	void *fe_field_component_address_void, void *fe_region_void);
-/*******************************************************************************
-LAST MODIFIED : 6 March 2003
-
-DESCRIPTION :
-FE_region wrapper for set_FE_field_component.
-==============================================================================*/
-
 
 int set_FE_field_conditional_FE_region(struct Parse_state *state,
 	void *fe_field_address_void, void *parse_field_data_void);
