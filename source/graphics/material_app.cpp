@@ -19,6 +19,7 @@
 #include "graphics/render_gl.h"
 #include "graphics/material.h"
 #include "graphics/material_app.h"
+#include "graphics/shader_program.hpp"
 
 
 //struct Material_program_uniform *CREATE(Material_program_uniform)(char *name)
@@ -613,8 +614,9 @@ DESCRIPTION :
 							}
 							per_pixel_mode_flag = 1;
 						}
+						enum cmzn_shaderprogram_type shaderprogram_type = cmzn_shaderprogram_get_type(material_to_be_modified_copy->program);
 						if ((!material_to_be_modified_copy->program ||
-							(0 != material_to_be_modified_copy->program->type))
+							(0 != shaderprogram_type))
 							&& ((fragment_program_string && !vertex_program_string) ||
 							(vertex_program_string && !fragment_program_string)))
 						{
@@ -664,8 +666,7 @@ DESCRIPTION :
 						}
 						else if (material_to_be_modified_copy->spectrum &&
 							(!(material_to_be_modified_copy->program) ||
-							!(material_to_be_modified_copy->program->type &
-								MATERIAL_PROGRAM_CLASS_DEPENDENT_TEXTURE_INPUTS)))
+							!(shaderprogram_type & SHADER_PROGRAM_CLASS_DEPENDENT_TEXTURE_INPUTS)))
 						{
 							display_message(ERROR_MESSAGE,
 								"If you specify a colour_lookup_spectrum you must also specify the input colours. (1 to 3 of colour_lookup_alpha, colour_lookup_blue, colour_lookup_green_flag and colour_lookup_red_flag)");
@@ -711,9 +712,10 @@ DESCRIPTION :
 							return_code = 0;
 #endif /* defined (GL_VERSION_1_3) */
 						}
+						cmzn_shadermodule_id shadermodule = static_cast<cmzn_shadermodule_id>(app_module->shadermodule);
 						if (normal_mode_flag)
 						{
-							material_deaccess_material_program(material_to_be_modified_copy);
+							material_deaccess_shader_program(material_to_be_modified_copy);
 						}
 						else if (per_pixel_mode_flag || material_to_be_modified_copy->program)
 						{
@@ -736,18 +738,18 @@ DESCRIPTION :
 							{
 								if (vertex_program_string && fragment_program_string)
 								{
-									return_code = Material_set_material_program_strings(
+									return_code = Material_set_shader_program_strings(shadermodule,
 										material_to_be_modified_copy, vertex_program_string,
 										fragment_program_string, geometry_program_string);
 								}
 								else if (material_to_be_modified_copy->program &&
-										(0 == material_to_be_modified_copy->program->type))
+										(0 == shaderprogram_type))
 								{
 									/* Do nothing as we just keep the existing program */
 								}
 								else
 								{
-									return_code = set_material_program_type(material_to_be_modified_copy,
+									return_code = set_shader_program_type(shadermodule, material_to_be_modified_copy,
 										bump_mapping_flag, colour_lookup_red_flag,colour_lookup_green_flag,
 										colour_lookup_blue_flag, colour_lookup_alpha_flag,
 										lit_volume_intensity_normal_texture_flag, lit_volume_finite_difference_normal_flag,
@@ -771,27 +773,23 @@ DESCRIPTION :
 						}
 						if (uniform_name && number_of_uniform_values && uniform_values)
 						{
-							Material_program_uniform *uniform;
-							if (!material_to_be_modified_copy->program_uniforms)
+							cmzn_shaderuniforms_id shaderuniforms = cmzn_material_get_shaderuniforms(material_to_be_modified_copy);
+							const bool newShaderuniforms = (!shaderuniforms);
+							if (newShaderuniforms)
 							{
-								material_to_be_modified_copy->program_uniforms = CREATE(LIST(Material_program_uniform))();
+								shaderuniforms = cmzn_shadermodule_create_shaderuniforms(shadermodule);
+								cmzn_shaderuniforms_set_name(shaderuniforms, material_to_be_modified_copy->name);  // set material name to help identify
 							}
-							if (!(uniform = FIND_BY_IDENTIFIER_IN_LIST(Material_program_uniform,name)
-								(uniform_name, material_to_be_modified_copy->program_uniforms)))
+							else
 							{
-								uniform = CREATE(Material_program_uniform)(uniform_name);
-								ADD_OBJECT_TO_LIST(Material_program_uniform)(uniform,
-									material_to_be_modified_copy->program_uniforms);
+								cmzn_shaderuniforms_remove_uniform(shaderuniforms, uniform_name);
 							}
-							if (uniform)
+							cmzn_shaderuniforms_add_uniform_real(shaderuniforms, uniform_name, number_of_uniform_values, uniform_values);
+							if (newShaderuniforms)
 							{
-								Material_program_uniform_set_float_vector(uniform,
-									number_of_uniform_values, uniform_values);
+								cmzn_material_set_shaderuniforms(material_to_be_modified_copy, shaderuniforms);
 							}
-						}
-						if (uniform_values)
-						{
-							DEALLOCATE(uniform_values);
+							cmzn_shaderuniforms_destroy(&shaderuniforms);
 						}
 						if (return_code)
 						{
@@ -832,6 +830,10 @@ DESCRIPTION :
 					if (uniform_name)
 					{
 						DEALLOCATE(uniform_name);
+					}
+					if (uniform_values)
+					{
+						DEALLOCATE(uniform_values);
 					}
 					DESTROY(Option_table)(&option_table);
 				}

@@ -869,14 +869,16 @@ void OnMaterialEditorAdvancedSettingsChanged(wxCommandEvent& event)
 			bump_mapping_flag = material_editor->material_editor_bump_mapping_checkbox->GetValue();
 			cmzn_field_destroy(&field);
 		}
-		return_code = set_material_program_type(material_editor->edit_material,
-		/*bump_mapping_flag */bump_mapping_flag, 0, 0, 0, 0, 0, 0, 0, 1);
+		cmzn_shadermodule_id shadermodule = cmzn_graphics_module_get_shadermodule(material_editor->graphics_module);
+		return_code = set_shader_program_type(shadermodule, material_editor->edit_material,
+			/*bump_mapping_flag */bump_mapping_flag, 0, 0, 0, 0, 0, 0, 0, 1);
+		cmzn_shadermodule_destroy(&shadermodule);
 	}
 	else
 	{
 		material_editor->material_editor_bump_mapping_checkbox->SetValue(false);
 		material_editor->material_editor_bump_mapping_checkbox->Enable(false);
-		return_code = material_deaccess_material_program(
+		return_code = material_deaccess_shader_program(
 			material_editor->edit_material);
 	}
 	if (return_code)
