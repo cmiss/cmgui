@@ -6,15 +6,18 @@
 #if !defined (MATERIAL_APP_H)
 #define MATERIAL_APP_H
 
+#include "opencmiss/zinc/types/materialid.h"
 #include "opencmiss/zinc/field.h"
 /*???DB.  Make consistent with finite_element.h ? */
 //#define MATERIAL_PRECISION float
 #define MATERIAL_PRECISION_STRING "lf"
 
 struct Material_module_app
+/** Note none of these objects are accessed */
 {
 	void *module;
 	void *region;
+	void *shadermodule;
 };
 
 int gfx_create_material(struct Parse_state *state,
@@ -33,21 +36,6 @@ int modify_Graphical_material(struct Parse_state *parse_state,void *material,
 LAST MODIFIED : 5 September 1996
 
 DESCRIPTION :
-==============================================================================*/
-struct cmzn_material;
-int set_material_program_type(cmzn_material *material_to_be_modified,
-	int bump_mapping_flag, int colour_lookup_red_flag, int colour_lookup_green_flag,
-	int colour_lookup_blue_flag,  int colour_lookup_alpha_flag,
-	int lit_volume_intensity_normal_texture_flag, int lit_volume_finite_difference_normal_flag,
-	int lit_volume_scale_alpha_flag, int return_code);
-/******************************************************************************
-from the modify_graphical_material.
-******************************************************************************/
-
-int compile_Graphical_material_for_order_independent_transparency(
-	cmzn_material *material,
-	void *material_order_independent_data_void);
-/*will work with order_independent_transparency.
 ==============================================================================*/
 
 int set_Graphical_material(struct Parse_state *state,

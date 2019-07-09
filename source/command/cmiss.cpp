@@ -4934,6 +4934,9 @@ Executes a GFX CREATE command.
 				struct Material_module_app materialmodule;
 				materialmodule.module = (void *)command_data->materialmodule;
 				materialmodule.region = (void *)command_data->root_region;
+				cmzn_shadermodule_id shadermodule = cmzn_graphics_module_get_shadermodule(command_data->graphics_module);
+				materialmodule.shadermodule = (void *)shadermodule;  // can't be accessed
+				cmzn_shadermodule_destroy(&shadermodule);
 				Option_table_add_entry(option_table,"material",NULL,
 					(void *)(&materialmodule),gfx_create_material);
 				Option_table_add_entry(option_table, "more_flow_particles",
@@ -8642,10 +8645,10 @@ static bool list_FE_element(cmzn_region_id region, cmzn_fieldmodule_id fieldmodu
 			(dimension == 2) ? CMZN_FIELD_DOMAIN_TYPE_MESH2D : CMZN_FIELD_DOMAIN_TYPE_MESH1D;
 		cmzn_streaminformation_region_set_resource_domain_types(sir, sr, domainTypes);
 		cmzn_mesh_group_add_element(mesh_group, element);
-		char *buffer;
+		const char *buffer;
 		unsigned int buffer_size;
 		if ((CMZN_OK == cmzn_region_write(region, sir))
-			&& (CMZN_OK == cmzn_streamresource_memory_get_buffer(srm, (void **)&buffer, &buffer_size))
+			&& (CMZN_OK == cmzn_streamresource_memory_get_buffer(srm, (const void **)&buffer, &buffer_size))
 			&& (buffer_size > 0))
 		{
 			const char *block = buffer;

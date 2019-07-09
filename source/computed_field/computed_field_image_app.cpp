@@ -26,8 +26,6 @@ int Computed_field_get_type_image(struct Computed_field *field,
 	struct Texture **texture,
 	double *minimum, double *maximum);
 
-int cmzn_field_image_set_number_of_bytes_per_component(cmzn_field_image_id image_field, int number_of_bytes_per_component);
-
 int cmzn_field_image_set_output_range(cmzn_field_image_id image_field, double minimum, double maximum);
 
 int define_Computed_field_type_sample_texture(struct Parse_state *state,
@@ -175,7 +173,7 @@ Maintains legacy version that is set with a texture.
 						}
 					}
 					cmzn_field_image_set_output_range(field_image, minimum, maximum);
-					cmzn_field_image_set_number_of_bytes_per_component(field_image, number_of_bytes_per_component);
+					cmzn_field_image_set_number_of_bits_per_component(field_image, number_of_bytes_per_component*8);
 					if (original_sizes[0] > 0.0)
 					{
 						cmzn_field_image_set_texture_coordinate_width(field_image, original_sizes[0]);
