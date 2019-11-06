@@ -75,7 +75,7 @@ already) and allows its contents to be modified.
 			if (return_code)
 			{
 				return_code = field_modify->update_field_and_deaccess(
-					Computed_field_create_format_output(field_modify->get_field_module(),
+					cmzn_fieldmodule_create_field_format_output(field_modify->get_field_module(),
 						source_field, format_string));
 			}
 			if (!return_code)

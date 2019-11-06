@@ -13,6 +13,7 @@
 #include "computed_field/computed_field_set.h"
 #include "computed_field/computed_field_set_app.h"
 #include "computed_field/computed_field_arithmetic_operators.h"
+#include "opencmiss/zinc/fieldarithmeticoperators.h"
 
 class Computed_field_arithmetic_operators_package : public Computed_field_type_package
 {
@@ -57,35 +58,35 @@ int Computed_field_get_type_sqrt(struct Computed_field *field,
 int Computed_field_get_type_log(struct Computed_field *field,
 	struct Computed_field **source_field);
 
-Computed_field *Computed_field_create_edit_mask(cmzn_fieldmodule *field_module,
-	struct Computed_field *source_field, double *edit_mask);
+cmzn_field *cmzn_fieldmodule_create_field_edit_mask(cmzn_fieldmodule *field_module,
+	cmzn_field *source_field, double *edit_mask);
 
 int Computed_field_get_type_edit_mask(struct Computed_field *field,
 	struct Computed_field **source_field, double **edit_mask);
 
-Computed_field *Computed_field_create_offset(cmzn_fieldmodule *field_module,
-	struct Computed_field *source_field, double *offsets);
+cmzn_field *cmzn_fieldmodule_create_field_offset(cmzn_fieldmodule *fieldmodule,
+	cmzn_field *source_field, double *offsets);
 
 int Computed_field_get_type_offset(struct Computed_field *field,
 	struct Computed_field **source_field, double **offsets);
 
-Computed_field *Computed_field_create_clamp_minimum(cmzn_fieldmodule *field_module,
-	struct Computed_field *source_field, double *minimums);
+cmzn_field *cmzn_fieldmodule_create_field_clamp_maximum(cmzn_fieldmodule *fieldmodule,
+	cmzn_field *source_field, double *maximums);
 
 int Computed_field_get_type_clamp_minimum(struct Computed_field *field,
 	struct Computed_field **source_field, double **minimums);
 
-Computed_field *Computed_field_create_clamp_maximum(cmzn_fieldmodule *field_module,
-	struct Computed_field *source_field, double *maximums);
+cmzn_field *cmzn_fieldmodule_create_field_clamp_minimum(cmzn_fieldmodule *fieldmodule,
+	cmzn_field *source_field, double *minimums);
 
 int Computed_field_get_type_clamp_maximum(struct Computed_field *field,
 	struct Computed_field **source_field, double **maximums);
 
-Computed_field *Computed_field_create_scale(cmzn_fieldmodule *field_module,
-	struct Computed_field *source_field, double *scale_factors);
+cmzn_field *cmzn_fieldmodule_create_field_scale(cmzn_fieldmodule *field_module,
+	cmzn_field *source_field, double *scale_factors);
 
-int Computed_field_get_type_scale(struct Computed_field *field,
-	struct Computed_field **source_field, double **scale_factors);
+int Computed_field_get_type_scale(cmzn_field *field,
+	cmzn_field **source_field, double **scale_factors);
 
 int Computed_field_get_type_power(struct Computed_field *field,
 	struct Computed_field **source_field_one,
@@ -99,9 +100,13 @@ int Computed_field_get_type_divide_components(struct Computed_field *field,
 	struct Computed_field **source_field_one,
 	struct Computed_field **source_field_two);
 
-int Computed_field_get_type_add(struct Computed_field *field,
-	struct Computed_field **source_field_one, FE_value *scale_factor1,
-	struct Computed_field **source_field_two, FE_value *scale_factor2);
+cmzn_field *cmzn_fieldmodule_create_field_weighted_add(cmzn_fieldmodule *fieldmodule,
+	cmzn_field *source_field_one, double scale_factor1,
+	cmzn_field *source_field_two, double scale_factor2);
+
+int Computed_field_get_type_weighted_add(cmzn_field *field,
+	cmzn_field **source_field_one, FE_value *scale_factor1,
+	cmzn_field **source_field_two, FE_value *scale_factor2);
 
 int define_Computed_field_type_power(struct Parse_state *state,
 	void *field_modify_void,void *computed_field_arithmetic_operators_package_void)
@@ -166,7 +171,7 @@ already) and allows its contents to be modified.
 				if (return_code)
 				{
 					return_code = field_modify->update_field_and_deaccess(
-						Computed_field_create_power(field_modify->get_field_module(),
+						cmzn_fieldmodule_create_field_power(field_modify->get_field_module(),
 							source_fields[0], source_fields[1]));
 				}
 				if (!return_code)
@@ -273,7 +278,7 @@ already) and allows its contents to be modified.
 				if (return_code)
 				{
 					return_code = field_modify->update_field_and_deaccess(
-						Computed_field_create_multiply(field_modify->get_field_module(),
+						cmzn_fieldmodule_create_field_multiply(field_modify->get_field_module(),
 							source_fields[0], source_fields[1]));
 				}
 				if (!return_code)
@@ -380,7 +385,7 @@ already) and allows its contents to be modified.
 				if (return_code)
 				{
 					return_code = field_modify->update_field_and_deaccess(
-						Computed_field_create_divide(field_modify->get_field_module(),
+						cmzn_fieldmodule_create_field_divide(field_modify->get_field_module(),
 							source_fields[0], source_fields[1]));
 				}
 				if (!return_code)
@@ -462,7 +467,7 @@ already) and allows its contents to be modified.
 				(computed_field_add_type_string ==
 					Computed_field_get_type_string(field_modify->get_field())))
 			{
-				return_code=Computed_field_get_type_add(field_modify->get_field(),
+				return_code=Computed_field_get_type_weighted_add(field_modify->get_field(),
 					source_fields, scale_factors,
 					source_fields + 1, scale_factors + 1);
 			}
@@ -496,7 +501,7 @@ already) and allows its contents to be modified.
 				if (return_code)
 				{
 					return_code = field_modify->update_field_and_deaccess(
-						Computed_field_create_weighted_add(field_modify->get_field_module(),
+						cmzn_fieldmodule_create_field_weighted_add(field_modify->get_field_module(),
 							source_fields[0], scale_factors[0],
 							source_fields[1], scale_factors[1]));
 				}
@@ -669,7 +674,7 @@ already) and allows its contents to be modified.
 			if (return_code)
 			{
 				return_code = field_modify->update_field_and_deaccess(
-					Computed_field_create_scale(field_modify->get_field_module(),
+					cmzn_fieldmodule_create_field_scale(field_modify->get_field_module(),
 						source_field, scale_factors));
 			}
 			if (!return_code)
@@ -824,7 +829,7 @@ already) and allows its contents to be modified.
 			if (return_code)
 			{
 				return_code = field_modify->update_field_and_deaccess(
-					Computed_field_create_clamp_maximum(field_modify->get_field_module(),
+					cmzn_fieldmodule_create_field_clamp_maximum(field_modify->get_field_module(),
 						source_field, maximums));
 			}
 			if (!return_code)
@@ -977,7 +982,7 @@ already) and allows its contents to be modified.
 			if (return_code)
 			{
 				return_code = field_modify->update_field_and_deaccess(
-					Computed_field_create_clamp_minimum(field_modify->get_field_module(),
+					cmzn_fieldmodule_create_field_clamp_minimum(field_modify->get_field_module(),
 						source_field, minimums));
 			}
 			if (!return_code)
@@ -1133,7 +1138,7 @@ already) and allows its contents to be modified.
 			if (return_code)
 			{
 				return_code = field_modify->update_field_and_deaccess(
-					Computed_field_create_offset(field_modify->get_field_module(),
+					cmzn_fieldmodule_create_field_offset(field_modify->get_field_module(),
 						source_field, offsets));
 			}
 			if (!return_code)
@@ -1285,7 +1290,7 @@ already) and allows its contents to be modified.
 			if (return_code)
 			{
 				return_code = field_modify->update_field_and_deaccess(
-					Computed_field_create_edit_mask(field_modify->get_field_module(),
+					cmzn_fieldmodule_create_field_edit_mask(field_modify->get_field_module(),
 						source_field, edit_mask));
 			}
 			if (!return_code)
@@ -1377,7 +1382,7 @@ already) and allows its contents to be modified.
 				if (return_code)
 				{
 					return_code = field_modify->update_field_and_deaccess(
-						Computed_field_create_log(field_modify->get_field_module(),
+						cmzn_fieldmodule_create_field_log(field_modify->get_field_module(),
 							source_fields[0]));
 				}
 				if (!return_code)
@@ -1476,7 +1481,7 @@ already) and allows its contents to be modified.
 				if (return_code)
 				{
 					return_code = field_modify->update_field_and_deaccess(
-						Computed_field_create_sqrt(field_modify->get_field_module(),
+						cmzn_fieldmodule_create_field_sqrt(field_modify->get_field_module(),
 							source_fields[0]));
 				}
 				if (!return_code)
@@ -1575,7 +1580,7 @@ already) and allows its contents to be modified.
 				if (return_code)
 				{
 					return_code = field_modify->update_field_and_deaccess(
-						Computed_field_create_exp(field_modify->get_field_module(),
+						cmzn_fieldmodule_create_field_exp(field_modify->get_field_module(),
 							source_fields[0]));
 				}
 				if (!return_code)
@@ -1673,7 +1678,7 @@ already) and allows its contents to be modified.
 				if (return_code)
 				{
 					return_code = field_modify->update_field_and_deaccess(
-						Computed_field_create_abs(field_modify->get_field_module(),
+						cmzn_fieldmodule_create_field_abs(field_modify->get_field_module(),
 							source_fields[0]));
 				}
 				if (!return_code)

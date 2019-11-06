@@ -49,11 +49,11 @@ int Computed_field_get_type_embedded(struct Computed_field *field,
 	struct Computed_field **source_field_address,
 	struct Computed_field **embedded_location_field_address);
 
-struct Computed_field *Computed_field_create_finite_element_internal(
+cmzn_field *cmzn_fieldmodule_create_field_finite_element_internal(
 	struct cmzn_fieldmodule *field_module, struct FE_field *fe_field);
 
-struct Computed_field *Computed_field_create_access_count(
-	struct cmzn_fieldmodule *field_module);
+cmzn_field *cmzn_fieldmodule_create_field_access_count(
+	cmzn_fieldmodule *fieldmodule);
 
 cmzn_field_id cmzn_fieldmodule_create_field_basis_derivative(
 	cmzn_fieldmodule_id field_module, cmzn_field_id finite_element_field,
@@ -308,7 +308,7 @@ FE_field being made and/or modified.
 							}
 						}
 						return_code = field_modify->update_field_and_deaccess(
-							Computed_field_create_finite_element_internal(field_module, fe_field));
+							cmzn_fieldmodule_create_field_finite_element_internal(field_module, fe_field));
 					}
 					else
 					{
@@ -366,7 +366,7 @@ Converts <field> into type COMPUTED_FIELD_CMZN_NUMBER.
 		if (!state->current_token)
 		{
 			return_code = field_modify->update_field_and_deaccess(
-				Computed_field_create_cmiss_number(field_modify->get_field_module()));
+				cmzn_fieldmodule_create_field_cmiss_number(field_modify->get_field_module()));
 		}
 		else
 		{
@@ -412,7 +412,7 @@ Converts <field> into type COMPUTED_FIELD_ACCESS_COUNT.
 		if (!state->current_token)
 		{
 			return_code = field_modify->update_field_and_deaccess(
-				Computed_field_create_access_count(field_modify->get_field_module()));
+				cmzn_fieldmodule_create_field_access_count(field_modify->get_field_module()));
 		}
 		else
 		{
@@ -860,7 +860,7 @@ Converts <field> into type COMPUTED_FIELD_XI_COORDINATES.
 		if (!state->current_token)
 		{
 			return_code = field_modify->update_field_and_deaccess(
-				Computed_field_create_xi_coordinates(field_modify->get_field_module()));
+				cmzn_fieldmodule_create_field_xi_coordinates(field_modify->get_field_module()));
 		}
 		else
 		{

@@ -44,8 +44,8 @@ int Computed_field_get_type_magnitude(struct Computed_field *field,
 int Computed_field_get_type_cubic_texture_coordinates(struct Computed_field *field,
 	struct Computed_field **source_field);
 
-struct Computed_field *Computed_field_create_cubic_texture_coordinates(
-	struct cmzn_fieldmodule *field_module,
+cmzn_field *cmzn_fieldmodule_create_field_cubic_texture_coordinates(
+	struct cmzn_fieldmodule *fieldmodule,
 	struct Computed_field *source_field);
 
 int define_Computed_field_type_normalise(struct Parse_state *state,
@@ -707,7 +707,7 @@ already) and allows its contents to be modified.
 			if (return_code)
 			{
 				return_code = field_modify->update_field_and_deaccess(
-					Computed_field_create_cubic_texture_coordinates(
+					cmzn_fieldmodule_create_field_cubic_texture_coordinates(
 						field_modify->get_field_module(), source_field));
 			}
 			if (!return_code)

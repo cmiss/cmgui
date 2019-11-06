@@ -54,7 +54,7 @@ int Computed_field_get_type_scene_viewer_projection(struct Computed_field *field
 	enum cmzn_scenecoordinatesystem *to_coordinate_system);
 
 /* For gfx command */
-struct Computed_field *Computed_field_create_scene_viewer_projection_with_window_name(
+cmzn_field *cmzn_fieldmodule_create_field_scene_viewer_projection_with_window_name(
 	struct cmzn_fieldmodule *field_module, struct Scene_viewer *scene_viewer,
 	const char *graphics_window_name, int pane_number,
 	enum cmzn_scenecoordinatesystem from_coordinate_system,
@@ -70,7 +70,7 @@ struct Computed_field *Computed_field_create_scene_viewer_projection_with_window
 	else
 	{
 		display_message(ERROR_MESSAGE,
-			"Computed_field_create_scene_viewer_projection.  Invalid argument(s)");
+			"cmzn_fieldmodule_create_field_scene_viewer_projection_with_window_name.  Invalid argument(s)");
 	}
 
 	return (field);
@@ -212,7 +212,7 @@ already) and allows its contents to be modified.
 			{
 				GET_NAME(Graphics_window)(graphics_window, &graphics_window_name);
 				return_code = field_modify->update_field_and_deaccess(
-					Computed_field_create_scene_viewer_projection_with_window_name(
+					cmzn_fieldmodule_create_field_scene_viewer_projection_with_window_name(
 						field_modify->get_field_module(),
 						scene_viewer->core_scene_viewer, graphics_window_name, pane_number - 1,
 						from_coordinate_system, to_coordinate_system));

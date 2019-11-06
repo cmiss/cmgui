@@ -118,7 +118,7 @@ already) and allows its contents to be modified.
 			if (return_code)
 			{
 				return_code = field_modify->update_field_and_deaccess(
-					Computed_field_create_function(field_modify->get_field_module(),
+					cmzn_fieldmodule_create_field_function(field_modify->get_field_module(),
 						source_field, result_field, reference_field));
 			}
 			if (!return_code)
