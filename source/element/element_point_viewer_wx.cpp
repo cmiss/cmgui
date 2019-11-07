@@ -778,7 +778,7 @@ static char *element_point_viewer_get_field_string(struct Element_point_viewer *
 	FE_value time, *xi;
 	struct FE_element *element,*top_level_element;
 
-	int number_of_components = Computed_field_get_number_of_components(field);
+	int number_of_components = cmzn_field_get_number_of_components(field);
 	if (element_point_viewer &&
 		(element = element_point_viewer->element_point_identifier.element) &&
 		(top_level_element = element_point_viewer->element_point_identifier.top_level_element) &&
@@ -2272,7 +2272,7 @@ pass unmanaged elements in the element_point_identifier to this widget.
 // 				(!(element_point_viewer->element_point_identifier.element))||
 // 				(field != element_point_viewer->current_field)||
 // 				(field&&((element_point_viewer->number_of_components !=
-// 							Computed_field_get_number_of_components(field))||
+// 							cmzn_field_get_number_of_components(field))||
 // 					 (new_editable != old_editable))))
 // 		 {
 				setup_components=1;
@@ -2391,7 +2391,7 @@ Creates the array of cells containing field component names and values.
 				editable = element_point_field_is_editable(
 					 &(element_point_viewer->element_point_identifier),
 					 field,number_in_xi);
-				number_of_components=Computed_field_get_number_of_components(field);
+				number_of_components=cmzn_field_get_number_of_components(field);
 				element_point_viewer->number_of_components=number_of_components;
 				for (comp_no=0;(comp_no<number_of_components)&&return_code;comp_no++)
 				{

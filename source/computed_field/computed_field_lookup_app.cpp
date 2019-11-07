@@ -224,7 +224,7 @@ contents to be modified.
 			if (node)
 			{
 				return_code = field_modify->update_field_and_deaccess(
-					Computed_field_create_quaternion_SLERP(field_modify->get_field_module(),
+					cmzn_fieldmodule_create_field_quaternion_SLERP(field_modify->get_field_module(),
 						source_field, node));
 			}
 			else

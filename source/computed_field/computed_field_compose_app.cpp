@@ -19,10 +19,10 @@
 // insert app headers here
 #include "mesh/cmiss_element_private_app.hpp"
 
-Computed_field *Computed_field_create_compose(cmzn_fieldmodule *field_module,
-	struct Computed_field *texture_coordinate_field,
-	struct Computed_field *find_element_xi_field,
-	struct Computed_field *calculate_values_field,
+cmzn_field *cmzn_fieldmodule_create_field_compose(cmzn_fieldmodule *fieldmodule,
+	cmzn_field *texture_coordinate_field,
+	cmzn_field *find_element_xi_field,
+	cmzn_field *calculate_values_field,
 	cmzn_mesh_id search_mesh,
 	int find_nearest, int use_point_five_when_out_of_bounds);
 
@@ -219,7 +219,7 @@ already) and allows its contents to be modified.
 			if (return_code)
 			{
 				return_code = field_modify->update_field_and_deaccess(
-					Computed_field_create_compose(field_modify->get_field_module(),
+					cmzn_fieldmodule_create_field_compose(field_modify->get_field_module(),
 						texture_coordinates_field, find_element_xi_field,
 						calculate_values_field, mesh,
 						find_nearest, use_point_five_when_out_of_bounds));

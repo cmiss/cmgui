@@ -62,17 +62,11 @@ int Computed_field_get_type_eigenvectors(struct Computed_field *field,
 int Computed_field_get_type_eigenvalues(struct Computed_field *field,
 	struct Computed_field **source_field);
 
-Computed_field *Computed_field_create_quaternion_to_matrix(
-	struct cmzn_fieldmodule *field_module,
-	struct Computed_field *source_field);
+cmzn_field *cmzn_fieldmodule_create_field_matrix_to_quaternion(
+	cmzn_fieldmodule *fieldmodule, cmzn_field *source_field);
 
-Computed_field *Computed_field_create_quaternion_to_matrix(
-	struct cmzn_fieldmodule *field_module,
-	struct Computed_field *source_field);
-
-Computed_field *Computed_field_create_matrix_to_quaternion(
-	struct cmzn_fieldmodule *field_module,
-	struct Computed_field *source_field);
+cmzn_field *cmzn_fieldmodule_create_field_quaternion_to_matrix(
+	cmzn_fieldmodule *fieldmodule, cmzn_field *source_field);
 
 int Computed_field_is_type_eigenvalues_conditional(struct Computed_field *field,
 	void *dummy_void);
@@ -755,7 +749,7 @@ Converts a "quaternion" to a transformation matrix.
 					if (return_code)
 					{
 						return_code = field_modify->update_field_and_deaccess(
-							Computed_field_create_quaternion_to_matrix(
+							cmzn_fieldmodule_create_field_quaternion_to_matrix(
 								field_modify->get_field_module(), source_fields[0]));
 					}
 					else
@@ -854,7 +848,7 @@ Converts a transformation matrix to  a "quaternion".
 					if (return_code)
 					{
 						return_code = field_modify->update_field_and_deaccess(
-							Computed_field_create_matrix_to_quaternion(
+							cmzn_fieldmodule_create_field_matrix_to_quaternion(
 								field_modify->get_field_module(), source_fields[0]));
 					}
 					else

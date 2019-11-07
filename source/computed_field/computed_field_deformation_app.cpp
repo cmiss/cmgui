@@ -20,16 +20,16 @@ class Computed_field_deformation_package : public Computed_field_type_package
 
 char computed_field_2d_strain_type_string[] = "2d_strain";
 
+cmzn_field *cmzn_fieldmodule_create_field_2d_strain(
+	cmzn_fieldmodule *fieldmodule,
+	cmzn_field *deformed_coordinate_field,
+	cmzn_field *undeformed_coordinate_field,
+	cmzn_field *fibre_angle_field);
+
 int Computed_field_get_type_2d_strain(struct Computed_field *field,
 	struct Computed_field **deformed_coordinate_field,
 	struct Computed_field **undeformed_coordinate_field,
 	struct Computed_field **fibre_angle_field);
-
-struct Computed_field *Computed_field_create_2d_strain(
-	struct cmzn_fieldmodule *field_module,
-	struct Computed_field *deformed_coordinate_field,
-	struct Computed_field *undeformed_coordinate_field,
-	struct Computed_field *fibre_angle_field);
 
 int define_Computed_field_type_2d_strain(struct Parse_state *state,
 	void *field_modify_void,void *computed_field_deformation_package_void)
@@ -114,7 +114,7 @@ already) and allows its contents to be modified.
 			if (return_code)
 			{
 				return_code = field_modify->update_field_and_deaccess(
-					Computed_field_create_2d_strain(
+					cmzn_fieldmodule_create_field_2d_strain(
 						field_modify->get_field_module(),
 						deformed_coordinate_field, undeformed_coordinate_field,
 						fibre_angle_field));

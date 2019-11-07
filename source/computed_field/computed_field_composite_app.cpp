@@ -312,7 +312,7 @@ already) and allows its contents to be modified.
 			if (return_code)
 			{
 				return_code = field_modify->update_field_and_deaccess(
-					Computed_field_create_composite(field_modify->get_field_module(),
+					cmzn_fieldmodule_create_field_composite(field_modify->get_field_module(),
 						source_data.number_of_components,
 						source_data.number_of_source_fields, source_data.source_fields,
 						source_data.number_of_source_values, source_data.source_values,
@@ -458,7 +458,7 @@ and allows its contents to be modified.
 				if (return_code)
 				{
 					return_code = field_modify->update_field_and_deaccess(
-						Computed_field_create_constant(field_modify->get_field_module(),
+						cmzn_fieldmodule_create_field_constant(field_modify->get_field_module(),
 							number_of_values, values));
 				}
 				DESTROY(Option_table)(&option_table);

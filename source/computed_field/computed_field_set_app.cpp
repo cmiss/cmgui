@@ -98,7 +98,7 @@ wrapper for field and add it to the manager.
 							Computed_field_manager_get_region(set_field_data->computed_field_manager);
 						cmzn_fieldmodule *temp_field_module = cmzn_region_get_fieldmodule(region);
 						cmzn_fieldmodule_set_field_name(temp_field_module, "constants");
-						selected_field = Computed_field_create_constant(temp_field_module,
+						selected_field = cmzn_fieldmodule_create_field_constant(temp_field_module,
 							number_of_values, values);
 						cmzn_fieldmodule_destroy(&temp_field_module);
 

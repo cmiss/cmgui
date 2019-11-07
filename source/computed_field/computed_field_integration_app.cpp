@@ -86,7 +86,7 @@ and allows its contents to be modified.
 			// use temporary field module to supply different defaults
 			cmzn_fieldmodule *temp_field_module = cmzn_region_get_fieldmodule(region);
 			cmzn_fieldmodule_set_field_name(temp_field_module, "constant_1.0");
-			integrand = Computed_field_create_constant(temp_field_module,
+			integrand = cmzn_fieldmodule_create_field_constant(temp_field_module,
 				/*number_of_components*/1, &value);
 			if (NULL == integrand)
 			{
@@ -183,7 +183,7 @@ and allows its contents to be modified.
 			else
 			{
 				return_code = field_modify->update_field_and_deaccess(
-					Computed_field_create_integration(field_modify->get_field_module(),
+					cmzn_fieldmodule_create_field_integration(field_modify->get_field_module(),
 						mesh, seed_element, integrand, magnitude_coordinates_flag, coordinate_field));
 			}
 		}
@@ -292,7 +292,7 @@ and allows its contents to be modified.
 		double value = 1.0;
 		cmzn_fieldmodule *temp_field_module = cmzn_region_get_fieldmodule(region);
 		cmzn_fieldmodule_set_field_name(temp_field_module, "constant_1.0");
-		Computed_field *integrand = Computed_field_create_constant(temp_field_module,
+		Computed_field *integrand = cmzn_fieldmodule_create_field_constant(temp_field_module,
 			/*number_of_components*/1, &value);
 		cmzn_fieldmodule_destroy(&temp_field_module);
 		if (NULL == integrand)
@@ -304,7 +304,7 @@ and allows its contents to be modified.
 		if (return_code)
 		{
 			return_code = field_modify->update_field_and_deaccess(
-				Computed_field_create_integration(field_modify->get_field_module(),
+				cmzn_fieldmodule_create_field_integration(field_modify->get_field_module(),
 					mesh, seed_element, integrand, /*magnitude_coordinates*/0, coordinate_field));
 		}
 		if (group_name)

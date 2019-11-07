@@ -113,7 +113,7 @@ already) and allows its contents to be modified.
 				if (return_code)
 				{
 					return_code = field_modify->update_field_and_deaccess(
-						Computed_field_create_sin(field_modify->get_field_module(),
+						cmzn_fieldmodule_create_field_sin(field_modify->get_field_module(),
 							source_fields[0]));
 				}
 				if (!return_code)
@@ -212,7 +212,7 @@ already) and allows its contents to be modified.
 				if (return_code)
 				{
 					return_code = field_modify->update_field_and_deaccess(
-						Computed_field_create_cos(field_modify->get_field_module(),
+						cmzn_fieldmodule_create_field_cos(field_modify->get_field_module(),
 							source_fields[0]));
 				}
 				if (!return_code)
@@ -311,7 +311,7 @@ already) and allows its contents to be modified.
 				if (return_code)
 				{
 					return_code = field_modify->update_field_and_deaccess(
-						Computed_field_create_tan(field_modify->get_field_module(),
+						cmzn_fieldmodule_create_field_tan(field_modify->get_field_module(),
 							source_fields[0]));
 				}
 				if (!return_code)
@@ -410,7 +410,7 @@ already) and allows its contents to be modified.
 				if (return_code)
 				{
 					return_code = field_modify->update_field_and_deaccess(
-						Computed_field_create_asin(field_modify->get_field_module(),
+						cmzn_fieldmodule_create_field_asin(field_modify->get_field_module(),
 							source_fields[0]));
 				}
 				if (!return_code)
@@ -509,7 +509,7 @@ already) and allows its contents to be modified.
 				if (return_code)
 				{
 					return_code = field_modify->update_field_and_deaccess(
-						Computed_field_create_acos(field_modify->get_field_module(),
+						cmzn_fieldmodule_create_field_acos(field_modify->get_field_module(),
 							source_fields[0]));
 				}
 				if (!return_code)
@@ -608,7 +608,7 @@ already) and allows its contents to be modified.
 				if (return_code)
 				{
 					return_code = field_modify->update_field_and_deaccess(
-						Computed_field_create_atan(field_modify->get_field_module(),
+						cmzn_fieldmodule_create_field_atan(field_modify->get_field_module(),
 							source_fields[0]));
 				}
 				if (!return_code)
@@ -713,7 +713,7 @@ already) and allows its contents to be modified.
 				if (return_code)
 				{
 					return_code = field_modify->update_field_and_deaccess(
-						Computed_field_create_atan2(field_modify->get_field_module(),
+						cmzn_fieldmodule_create_field_atan2(field_modify->get_field_module(),
 							source_fields[0], source_fields[1]));
 				}
 				if (!return_code)

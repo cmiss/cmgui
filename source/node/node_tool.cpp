@@ -471,7 +471,7 @@ static int FE_node_calculate_delta_position(struct FE_node *node,
 
 	ENTER(FE_node_calculate_delta_position);
 	if (node && edit_info && edit_info->nodeset && edit_info->rc_coordinate_field &&
-		(3 >= Computed_field_get_number_of_components(edit_info->rc_coordinate_field)))
+		(3 >= cmzn_field_get_number_of_components(edit_info->rc_coordinate_field)))
 	{
 		return_code=1;
 		/* clear coordinates in case less than 3 dimensions */
@@ -608,7 +608,7 @@ static int FE_node_edit_position(struct FE_node *node,
 
 	ENTER(FE_node_edit_position);
 	if (node && edit_info && edit_info->nodeset && edit_info->rc_coordinate_field &&
-		(3 >= Computed_field_get_number_of_components(edit_info->rc_coordinate_field)))
+		(3 >= cmzn_field_get_number_of_components(edit_info->rc_coordinate_field)))
 	{
 		return_code=1;
 		/* the last_picked_node was edited in FE_node_calculate_delta_position.
@@ -674,11 +674,11 @@ NOTE: currently does not tolerate having a variable_scale_field.
 	ENTER(FE_node_calculate_delta_vector);
 	if (node&&(edit_info=(struct FE_node_edit_information *)edit_info_void)&&
 		edit_info->nodeset && edit_info->rc_coordinate_field &&
-		(3>=Computed_field_get_number_of_components(
+		(3>=cmzn_field_get_number_of_components(
 			edit_info->rc_coordinate_field))&&
 		edit_info->wrapper_orientation_scale_field&&
 		(0<(number_of_orientation_scale_components=
-			Computed_field_get_number_of_components(
+			cmzn_field_get_number_of_components(
 				edit_info->wrapper_orientation_scale_field)))&&
 		(9>=number_of_orientation_scale_components)&&
 		(0.0 == edit_info->glyph_centre[0])&&
@@ -790,7 +790,7 @@ NOTE: currently does not tolerate having a variable_scale_field.
 						number_of_orientation_scale_components, orientation_scale))
 					{
 						number_of_orientation_scale_components=
-							Computed_field_get_number_of_components(
+							cmzn_field_get_number_of_components(
 								edit_info->orientation_scale_field);
 						switch (number_of_orientation_scale_components)
 						{
@@ -887,7 +887,7 @@ static int FE_node_edit_vector(struct FE_node *node,
 	ENTER(FE_node_edit_vector);
 	if (node && edit_info && edit_info->nodeset && edit_info->orientation_scale_field &&
 		(0<(number_of_orientation_scale_components=
-			Computed_field_get_number_of_components(
+			cmzn_field_get_number_of_components(
 				edit_info->orientation_scale_field)))&&
 		(9>=number_of_orientation_scale_components))
 	{

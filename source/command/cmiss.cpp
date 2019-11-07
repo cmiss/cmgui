@@ -2614,7 +2614,7 @@ Currently limited to 1 byte per component.
 
 		if (texture_coordinate_field &&
 			(3 >= (tex_number_of_components =
-			Computed_field_get_number_of_components(texture_coordinate_field))))
+			cmzn_field_get_number_of_components(texture_coordinate_field))))
 		{
 			return_code = 1;
 		}
