@@ -214,7 +214,7 @@ is selected.
 }
 
 void wxRegionChooser::RegionChange(struct cmzn_region *root_region,
-	struct cmzn_region_changes *region_changes, void *region_chooser_void)
+	cmzn_region_changes *region_changes, void *region_chooser_void)
 /*******************************************************************************
 LAST MODIFIED : 22 February 2007
 

@@ -17,6 +17,7 @@ DESCRIPTION :
 #include "general/callback_class.hpp"
 
 struct cmzn_region;
+class cmzn_region_changes;
 
 class wxRegionChooser : public wxChoice
 {
@@ -92,6 +93,6 @@ private:
 		const char *current_path, const char *initial_path);
 
 	static void RegionChange(struct cmzn_region *root_region,
-		struct cmzn_region_changes *region_changes, void *region_chooser_void);
+		cmzn_region_changes *region_changes, void *region_chooser_void);
 };
 #endif /* !defined (CMZN_REGION_CHOOSER_H) */
