@@ -7,6 +7,7 @@
 #include <stdio.h>
 
 #include "opencmiss/zinc/mesh.h"
+#include "opencmiss/zinc/fieldderivatives.h"
 #include "opencmiss/zinc/fieldfiniteelement.h"
 #include "general/mystring.h"
 #include "general/debug.h"
@@ -54,10 +55,6 @@ cmzn_field *cmzn_fieldmodule_create_field_finite_element_internal(
 
 cmzn_field *cmzn_fieldmodule_create_field_access_count(
 	cmzn_fieldmodule *fieldmodule);
-
-cmzn_field_id cmzn_fieldmodule_create_field_basis_derivative(
-	cmzn_fieldmodule_id field_module, cmzn_field_id finite_element_field,
-	int order, int *xi_indices);
 
 class Computed_field_finite_element_package : public Computed_field_type_package
 {
@@ -898,25 +895,21 @@ FE_field being made and/or modified.
 ==============================================================================*/
 {
 	char basis_derivative_help[] =
-		"The basis_derivative calculates a monomial derivative on element based fields.  It is not defined for nodes.  It allows you to calculate an arbitrary derivative by specifying an <order> and a list of <xi_indices> of length order.  This derivative then becomes the \"value\" for the field.";
+		"Creates a field giving derivative of arbitrary <order> w.r.t. element "
+		"<xi_indices> of length order. This derivative then becomes the value "
+		"for the field. Higher order derivatives are formed as derivatives of "
+		"derivatives. Deprecated: use derivative field directly now.";
 	int return_code = 1;
 	Computed_field_modify_data *field_modify;
 	struct Option_table *option_table;
 
-	ENTER(define_Computed_field_type_finite_element);
 	USE_PARAMETER(computed_field_finite_element_package_void);
 	if (state&&(field_modify=(Computed_field_modify_data *)field_modify_void))
 	{
 		int order = 1;
 		int *xi_indices = (int *)NULL;
-		cmzn_field_id finite_element_field = 0;
+		cmzn_field_id source_field = 0;
 		cmzn_field_id field = field_modify->get_field();
-		if ( field &&
-			(computed_field_basis_derivative_type_string ==
-				Computed_field_get_type_string(field)))
-		{
-			finite_element_field = cmzn_field_get_source_field(field, 1);
-		}
 
 		/* Assign default values for xi_indices */
 		ALLOCATE(xi_indices, int, order);
@@ -927,7 +920,7 @@ FE_field being made and/or modified.
 
 		struct Set_Computed_field_conditional_data set_fe_field_data;
 		set_fe_field_data.computed_field_manager = field_modify->get_field_manager();
-		set_fe_field_data.conditional_function = Computed_field_is_type_finite_element_iterator;
+		set_fe_field_data.conditional_function = Computed_field_has_numerical_components;
 		set_fe_field_data.conditional_function_user_data = (void *)NULL;
 
 		/* try to handle help first */
@@ -937,7 +930,7 @@ FE_field being made and/or modified.
 			Option_table_add_help(option_table, basis_derivative_help);
 			/* fe_field */
 			Option_table_add_Computed_field_conditional_entry(option_table, "fe_field",
-				&finite_element_field, &set_fe_field_data);
+				&source_field, &set_fe_field_data);
 			Option_table_add_int_positive_entry(option_table,
 				"order", &order);
 			Option_table_add_int_vector_entry(option_table,
@@ -980,7 +973,7 @@ FE_field being made and/or modified.
 			option_table=CREATE(Option_table)();
 			/* fe_field */
 			Option_table_add_Computed_field_conditional_entry(option_table, "fe_field",
-				&finite_element_field, &set_fe_field_data);
+				&source_field, &set_fe_field_data);
 			Option_table_add_int_positive_entry(option_table,
 				"order", &order);
 			Option_table_add_int_vector_entry(option_table,
@@ -990,14 +983,21 @@ FE_field being made and/or modified.
 		}
 		if (return_code)
 		{
-			/* decrement each xi index so that the first index is 0 rather than 1*/
-			for (int i = 0 ; i < order ; i++)
+			cmzn_fieldmodule *fieldmodule = field_modify->get_field_module();
+			cmzn_fieldmodule_begin_change(fieldmodule);
+			// need a temporary fieldmodule for intermediate fields otherwise they take name of final field from fieldmodule
+			cmzn_fieldmodule *tmp_fieldmodule = cmzn_region_get_fieldmodule(field_modify->get_region());
+			cmzn_field *derivative_field = cmzn_field_access(source_field);
+			for (int i = 0; i < order; i++)
 			{
-				xi_indices[i]--;
+				cmzn_field *tmp_field = derivative_field;
+				derivative_field = cmzn_fieldmodule_create_field_derivative(
+					(i < (order - 1)) ? tmp_fieldmodule : fieldmodule, derivative_field, xi_indices[i]);
+				cmzn_field_destroy(&tmp_field);
 			}
-			return_code = field_modify->update_field_and_deaccess(
-				cmzn_fieldmodule_create_field_basis_derivative(field_modify->get_field_module(),
-					finite_element_field, order, xi_indices));
+			return_code = field_modify->update_field_and_deaccess(derivative_field);
+			cmzn_fieldmodule_destroy(&tmp_fieldmodule);
+			cmzn_fieldmodule_end_change(fieldmodule);
 		}
 		if (!return_code)
 		{
@@ -1012,7 +1012,7 @@ FE_field being made and/or modified.
 		}
 
 		DEALLOCATE(xi_indices);
-		cmzn_field_destroy(&finite_element_field);
+		cmzn_field_destroy(&source_field);
 	}
 	else
 	{
@@ -1020,10 +1020,9 @@ FE_field being made and/or modified.
 			"define_Computed_field_type_basis_derivative.  Invalid argument(s)");
 		return_code=0;
 	}
-	LEAVE;
 
 	return (return_code);
-} /* define_Computed_field_type_basis_derivative */
+}
 
 int define_Computed_field_type_is_exterior(struct Parse_state *state,
 	void *field_modify_void, void *dummy_void)

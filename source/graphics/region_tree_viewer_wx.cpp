@@ -110,7 +110,7 @@ public:
 	}
 
 	static void propagate_region_change(
-		struct cmzn_region *region,struct cmzn_region_changes *region_changes, void *data_void);
+		struct cmzn_region *region, cmzn_region_changes *region_changes, void *data_void);
 };
 
 class wxCmguiHierachicalTree : public wxTreeCtrl
@@ -210,7 +210,7 @@ public:
 	}
 
 	void region_change(struct cmzn_region *region,
-		struct cmzn_region_changes *region_changes, wxCmguiHierachicalTreeItemData *data)
+		cmzn_region_changes *region_changes, wxCmguiHierachicalTreeItemData *data)
 	{
 		ENTER(region_change);
 
@@ -286,7 +286,7 @@ private:
 IMPLEMENT_DYNAMIC_CLASS(wxCmguiHierachicalTree, wxFrame)
 
 void wxCmguiHierachicalTreeItemData::propagate_region_change(
-	struct cmzn_region *region,struct cmzn_region_changes *region_changes, void *data_void)
+	struct cmzn_region *region, cmzn_region_changes *region_changes, void *data_void)
 {
 	wxCmguiHierachicalTreeItemData *data =
 		static_cast<wxCmguiHierachicalTreeItemData *>(data_void);
