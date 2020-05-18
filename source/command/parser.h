@@ -33,7 +33,7 @@ Global types
 struct Parse_state;
 
 typedef int (*modifier_function)(struct Parse_state *state,void *to_be_modified,
-		void *user_data);
+        void *user_data);
 
 /*
 Global constants
@@ -55,11 +55,11 @@ DESCRIPTION :
 ???DB.  Need an access_count ?
 ==============================================================================*/
 {
-	char **tokens;
-	int number_of_tokens;
-	int current_index;
-	const char *current_token;
-	char *command_string;
+    char **tokens;
+    int number_of_tokens;
+    int current_index;
+    const char *current_token;
+    char *command_string;
 }; /* struct Parse_state */
 
 struct Modifier_entry
@@ -75,10 +75,10 @@ NULL <state> and a NULL variable <to_be_modified> it should write a description
 of the values it expects to the command window.
 ==============================================================================*/
 {
-	const char *option;
-	void *to_be_modified;
-	void *user_data;
-	modifier_function modifier;
+    const char *option;
+    void *to_be_modified;
+    void *user_data;
+    modifier_function modifier;
 }; /* struct Modifier_entry */
 
 struct Set_vector_with_help_data
@@ -91,12 +91,12 @@ of double values to be parsed, with custom help text to be printed out as well.
 ???RC  Could be used with other types: float, int etc.
 ==============================================================================*/
 {
-	/* number of values to be read in */
-	int num_values;
-	/* text to print in help mode */
-	const char *help_text;
-	/* Should initially be cleared to 0, set to 1 if values read in */
-	char set;
+    /* number of values to be read in */
+    int num_values;
+    /* text to print in help mode */
+    const char *help_text;
+    /* Should initially be cleared to 0, set to 1 if values read in */
+    char set;
 };
 
 /*
@@ -130,7 +130,7 @@ same length.
 ==============================================================================*/
 
 int process_option(struct Parse_state *state,
-	struct Modifier_entry *modifier_table);
+    struct Modifier_entry *modifier_table);
 /*******************************************************************************
 LAST MODIFIED : 18 June 1996
 
@@ -148,7 +148,7 @@ function.
 ==============================================================================*/
 
 int process_multiple_options(struct Parse_state *state,
-	struct Modifier_entry *modifier_table);
+    struct Modifier_entry *modifier_table);
 /*******************************************************************************
 LAST MODIFIED : 27 September 1996
 
@@ -171,7 +171,7 @@ DESCRIPTION :
 ==============================================================================*/
 
 int Option_table_add_help(struct Option_table *option_table,
-	const char *help_string);
+    const char *help_string);
 /*******************************************************************************
 LAST MODIFIED : 2 May 2007
 
@@ -180,7 +180,7 @@ Adds the given help to the option table.
 ==============================================================================*/
 
 int Option_table_add_entry(struct Option_table *option_table,const char *token,
-	void *to_be_modified,void *user_data,modifier_function modifier);
+    void *to_be_modified,void *user_data,modifier_function modifier);
 /*******************************************************************************
 LAST MODIFIED : 15 December 1999
 
@@ -191,7 +191,7 @@ no further errors will be reported on subsequent calls.
 ==============================================================================*/
 
 int Option_table_add_suboption_table(struct Option_table *option_table,
-	struct Option_table *suboption_table);
+    struct Option_table *suboption_table);
 /*******************************************************************************
 LAST MODIFIED : 18 December 1999
 
@@ -209,8 +209,8 @@ of option_table!
 ==============================================================================*/
 
 int Option_table_add_enumerator(struct Option_table *option_table,
-	int number_of_valid_strings,const char **valid_strings,
-	const char **enumerator_string_address);
+    int number_of_valid_strings,const char **valid_strings,
+    const char **enumerator_string_address);
 /*******************************************************************************
 LAST MODIFIED : 20 December 1999
 
@@ -226,7 +226,7 @@ no further errors will be reported on subsequent calls.
 ==============================================================================*/
 
 int Option_table_add_switch(struct Option_table *option_table,
-	const char *on_string,const char *off_string,int *value_address);
+    const char *on_string,const char *off_string,int *value_address);
 /*******************************************************************************
 LAST MODIFIED : 12 May 2000
 
@@ -252,7 +252,7 @@ DESCRIPTION :
 ==============================================================================*/
 
 int Option_table_parse(struct Option_table *option_table,
-	struct Parse_state *state);
+    struct Parse_state *state);
 /*******************************************************************************
 LAST MODIFIED : 15 December 1999
 
@@ -262,7 +262,7 @@ entered.
 ==============================================================================*/
 
 int Option_table_multi_parse(struct Option_table *option_table,
-	struct Parse_state *state);
+    struct Parse_state *state);
 /*******************************************************************************
 LAST MODIFIED : 15 December 1999
 
@@ -281,12 +281,12 @@ Creates a Parse_state structure which contains
 - the <command_string> split into tokens
 NB
 1 ! and # indicate that the rest of the command string is a comment (not split
-	into tokens
+    into tokens
 2 Variables are converted into values
 ==============================================================================*/
 
 struct Parse_state *create_Parse_state_from_tokens(
-	int number_of_tokens, char **tokens);
+    int number_of_tokens, char **tokens);
 /*******************************************************************************
 LAST MODIFIED : 31 July 2002
 
@@ -327,7 +327,7 @@ Shows the current location in the parse <state>.
 ==============================================================================*/
 
 int Parse_state_append_to_command_string(struct Parse_state *state,
-	char *addition);
+    char *addition);
 /*******************************************************************************
 LAST MODIFIED : 29 October 1999
 
@@ -347,7 +347,7 @@ over-writing.
 ==============================================================================*/
 
 int execute_variable_command(struct Parse_state *parse_state,
-	void *dummy_to_be_modified,void *user_data);
+    void *dummy_to_be_modified,void *user_data);
 /*******************************************************************************
 LAST MODIFIED : 18 June 1996
 
@@ -356,7 +356,7 @@ Executes a VARIABLE command.
 ==============================================================================*/
 
 int execute_assign_variable(struct Parse_state *state,
-	void *dummy_to_be_modified,void *dummy_user_data);
+    void *dummy_to_be_modified,void *dummy_user_data);
 /*******************************************************************************
 LAST MODIFIED : 10 March 2000
 
@@ -374,7 +374,7 @@ Clean up the global assign_variable_list.
 ==============================================================================*/
 
 int set_name(struct Parse_state *state,void *name_address_void,
-	void *prefix_space);
+    void *prefix_space);
 /*******************************************************************************
 LAST MODIFIED : 27 May 1997
 
@@ -383,7 +383,7 @@ Allocates memory for a name, then copies the passed string into it.
 ==============================================================================*/
 
 int set_names(struct Parse_state *state,void *names_void,
-	void *number_of_names_address_void);
+    void *number_of_names_address_void);
 /*******************************************************************************
 LAST MODIFIED : 10 May 2000
 
@@ -396,7 +396,7 @@ or pointing to allocated strings.
 ==============================================================================*/
 
 int set_string(struct Parse_state *state,void *string_address_void,
-	void *string_description_void);
+    void *string_description_void);
 /*******************************************************************************
 LAST MODIFIED : 1 August 2002
 
@@ -406,7 +406,7 @@ Parses a string from the parse <state> into <*string_address>. Outputs the
 ==============================================================================*/
 
 int set_int(struct Parse_state *state,void *value_address_void,
-	void *dummy_user_data);
+    void *dummy_user_data);
 /*******************************************************************************
 LAST MODIFIED : 18 June 1996
 
@@ -415,7 +415,7 @@ A modifier function for setting a int.
 ==============================================================================*/
 
 int set_int_with_description(struct Parse_state *state,void *value_address_void,
-	void *description_string_void);
+    void *description_string_void);
 /*******************************************************************************
 LAST MODIFIED : 1 August 2002
 
@@ -425,7 +425,7 @@ In help mode writes the <description_string>.
 ==============================================================================*/
 
 int set_int_optional(struct Parse_state *state,void *value_address_void,
-	void *dummy_user_data);
+    void *dummy_user_data);
 /*******************************************************************************
 LAST MODIFIED : 25 February 1997
 
@@ -435,7 +435,7 @@ int is set to 1.
 ==============================================================================*/
 
 int set_int_non_negative(struct Parse_state *state,void *value_address_void,
-	void *dummy_user_data);
+    void *dummy_user_data);
 /*******************************************************************************
 LAST MODIFIED : 27 February 1997
 
@@ -444,7 +444,7 @@ A modifier function for setting a int to a non-negative value.
 ==============================================================================*/
 
 int set_int_positive(struct Parse_state *state,void *value_address_void,
-	void *dummy_user_data);
+    void *dummy_user_data);
 /*******************************************************************************
 LAST MODIFIED : 18 June 1996
 
@@ -453,7 +453,7 @@ A modifier function for setting a int to a positive value.
 ==============================================================================*/
 
 int set_int_and_char_flag(struct Parse_state *state,void *value_address_void,
-	void *flag_address_void);
+    void *flag_address_void);
 /*******************************************************************************
 LAST MODIFIED : 22 December 2000
 
@@ -463,7 +463,7 @@ indicate that the int has been set.
 ==============================================================================*/
 
 int set_int_vector(struct Parse_state *state,void *values_address_void,
-	void *number_of_components_address_void);
+    void *number_of_components_address_void);
 /*******************************************************************************
 LAST MODIFIED : 27 March 2000
 
@@ -476,7 +476,7 @@ Now prints current contents of the vector with help.
 ==============================================================================*/
 
 int set_float(struct Parse_state *state,void *value_address_void,
-	void *dummy_user_data);
+    void *dummy_user_data);
 /*******************************************************************************
 LAST MODIFIED : 18 June 1996
 
@@ -485,7 +485,7 @@ A modifier function for setting a float.
 ==============================================================================*/
 
 int set_float_and_char_flag(struct Parse_state *state,void *value_address_void,
-	void *flag_address_void);
+    void *flag_address_void);
 /*******************************************************************************
 LAST MODIFIED : 9 September 1999
 
@@ -495,7 +495,7 @@ indicate that the float has been set.
 ==============================================================================*/
 
 int set_float_positive(struct Parse_state *state,void *value_address_void,
-	void *dummy_user_data);
+    void *dummy_user_data);
 /*******************************************************************************
 LAST MODIFIED : 18 June 1996
 
@@ -504,7 +504,7 @@ A modifier function for setting a float to a positive value.
 ==============================================================================*/
 
 int set_FE_value_positive(struct Parse_state *state,void *value_address_void,
-	void *dummy_user_data);
+    void *dummy_user_data);
 /*******************************************************************************
 LAST MODIFIED : 18 June 1996
 
@@ -513,7 +513,7 @@ A modifier function for setting a FE_value to a positive value.
 ==============================================================================*/
 
 int set_float_non_negative(struct Parse_state *state,void *value_address_void,
-	void *dummy_user_data);
+    void *dummy_user_data);
 /*******************************************************************************
 LAST MODIFIED : 18 June 1996
 
@@ -522,7 +522,7 @@ A modifier function for setting a float to a non-negative value.
 ==============================================================================*/
 
 int set_float_0_to_1_inclusive(struct Parse_state *state,
-	void *value_address_void,void *user_data);
+    void *value_address_void,void *user_data);
 /*******************************************************************************
 LAST MODIFIED : 18 June 1996
 
@@ -531,10 +531,10 @@ A modifier function for setting a float to a value in [0,1].
 ==============================================================================*/
 
 int set_double_non_negative(struct Parse_state *state,void *value_address_void,
-	void *dummy_user_data);
+    void *dummy_user_data);
 
 int set_double(struct Parse_state *state,void *value_address_void,
-	void *dummy_user_data);
+    void *dummy_user_data);
 /*******************************************************************************
 LAST MODIFIED : 21 July 1996
 
@@ -543,7 +543,7 @@ A modifier function for setting a double.
 ==============================================================================*/
 
 int set_double_and_char_flag(struct Parse_state *state,void *value_address_void,
-	void *flag_address_void);
+    void *flag_address_void);
 /*******************************************************************************
 LAST MODIFIED : 19 October 1998
 
@@ -551,7 +551,7 @@ DESCRIPTION :
 A modifier function for setting a double, and a char flag in the user data to
 indicate that the double has been set.
 ???SAB  The user_data could be used to supply many more helpful things such as
-	limits on the double or a string used in the help.
+    limits on the double or a string used in the help.
 ==============================================================================*/
 
 /**
@@ -563,10 +563,10 @@ indicate that the double has been set.
  * '1.2**3.0' returns 1.2*1.2*3.0, '*2' gives 0.0*2.0*2.0.
  */
 int set_double_product(struct Parse_state *state, void *values_void,
-	void *valuesCount_void);
+    void *valuesCount_void);
 
 int set_float_vector(struct Parse_state *state,void *values_address_void,
-	void *number_of_components_address_void);
+    void *number_of_components_address_void);
 /*******************************************************************************
 LAST MODIFIED : 12 September 1997
 
@@ -578,7 +578,7 @@ number_of_components floats.
 ==============================================================================*/
 
 int set_FE_value(struct Parse_state *state,void *value_address_void,
-	void *dummy_user_data);
+    void *dummy_user_data);
 /*******************************************************************************
 LAST MODIFIED : 21 November 2001
 
@@ -587,7 +587,7 @@ A modifier function for setting a FE_value.
 ==============================================================================*/
 
 int set_FE_value_array(struct Parse_state *state, void *values_void,
-	void *number_of_components_address_void);
+    void *number_of_components_address_void);
 /*******************************************************************************
 LAST MODIFIED : 6 November 2001
 
@@ -602,7 +602,7 @@ Now prints current contents of the vector with help.
 ==============================================================================*/
 
 int set_double_vector(struct Parse_state *state,void *values_address_void,
-	void *number_of_components_address_void);
+    void *number_of_components_address_void);
 /*******************************************************************************
 LAST MODIFIED : 14 January 1998
 
@@ -614,7 +614,7 @@ number_of_components doubles.
 ==============================================================================*/
 
 int set_double_vector_with_help(struct Parse_state *state,
-	void *vector_void,void *set_vector_with_help_data_void);
+    void *vector_void,void *set_vector_with_help_data_void);
 /*******************************************************************************
 LAST MODIFIED : 7 October 1998
 
@@ -633,10 +633,10 @@ help text.
  * @return 1 if state not null, 0 otherwise.
  */
 int ignore_entry(struct Parse_state *state,void *dummy_to_be_modified,
-				 void *dummy_user_data_void);
+                 void *dummy_user_data_void);
 
 int set_char_flag(struct Parse_state *state,void *to_be_modified,
-	void *user_data);
+    void *user_data);
 /*******************************************************************************
 LAST MODIFIED : 18 June 1996
 
@@ -645,7 +645,7 @@ A modifier function for setting a character flag to 1.
 ==============================================================================*/
 
 int unset_char_flag(struct Parse_state *state,void *value_address_void,
-	void *dummy_user_data);
+    void *dummy_user_data);
 /*******************************************************************************
 LAST MODIFIED : 5 November 1997
 
@@ -654,7 +654,7 @@ A modifier function for setting a character flag to 0.
 ==============================================================================*/
 
 int set_int_switch(struct Parse_state *state,void *value_address_void,
-	void *token_void);
+    void *token_void);
 /*******************************************************************************
 LAST MODIFIED : 12 May 2000
 
@@ -666,7 +666,7 @@ If the option's <token> is supplied and its value is currently set, it
 ==============================================================================*/
 
 int unset_int_switch(struct Parse_state *state,void *value_address_void,
-	void *token_void);
+    void *token_void);
 /*******************************************************************************
 LAST MODIFIED : 12 May 2000
 
@@ -678,7 +678,7 @@ If the option's <token> is supplied and its value is currently set, it
 ==============================================================================*/
 
 int unset_int_switch(struct Parse_state *state,void *value_address_void,
-	void *dummy_user_data);
+    void *dummy_user_data);
 /*******************************************************************************
 LAST MODIFIED : 12 May 2000
 
@@ -687,7 +687,7 @@ A modifier function for setting an integer switch to 0.
 ==============================================================================*/
 
 int set_file_name(struct Parse_state *state,void *name_address_void,
-	void *directory_name_address_void);
+    void *directory_name_address_void);
 /*******************************************************************************
 LAST MODIFIED : 23 September 1996
 
@@ -697,7 +697,7 @@ memory for the file name string.
 ==============================================================================*/
 
 int set_integer_range(struct Parse_state *state,
-	void *integer_range_address_void,void *dummy_user_data);
+    void *integer_range_address_void,void *dummy_user_data);
 /*******************************************************************************
 LAST MODIFIED : 29 September 1997
 
@@ -714,7 +714,7 @@ of two forms - # or #..#
 ==============================================================================*/
 
 int set_enum(struct Parse_state *state,void *set_value_address_void,
-	void *enum_value_address_void);
+    void *enum_value_address_void);
 /*******************************************************************************
 LAST MODIFIED : 19 November 1998
 
@@ -726,7 +726,7 @@ NB.  *enum_value_address_void is put in *set_value_address_void
 ==============================================================================*/
 
 int Option_table_add_char_flag_entry(struct Option_table *option_table,
-	const char *token, char *flag);
+    const char *token, char *flag);
 /*******************************************************************************
 LAST MODIFIED : 8 October 2003
 
@@ -736,14 +736,14 @@ then the <flag> will be set.
 ==============================================================================*/
 
 int Option_table_add_unset_char_flag_entry(struct Option_table *option_table,
-	const char *token, char *flag);
+    const char *token, char *flag);
 /*******************************************************************************
 Adds the given <token> to the <option_table>.  If the <token> is specified
 then the <flag> will be unset (cleared).
 ==============================================================================*/
 
 int Option_table_add_int_positive_entry(struct Option_table *option_table,
-	const char *token, int *value);
+    const char *token, int *value);
 /*******************************************************************************
 LAST MODIFIED : 4 December 2003
 
@@ -753,7 +753,7 @@ the token following is assigned to <value>.
 ==============================================================================*/
 
 int Option_table_add_int_non_negative_entry(struct Option_table *option_table,
-	const char *token, int *value);
+    const char *token, int *value);
 /*******************************************************************************
 LAST MODIFIED : 4 December 2003
 
@@ -763,7 +763,7 @@ the token following is assigned to <value>.
 ==============================================================================*/
 
 int Option_table_add_int_vector_entry(struct Option_table *option_table,
-	const char *token, int *vector, int *number_of_components);
+    const char *token, int *vector, int *number_of_components);
 /*******************************************************************************
 LAST MODIFIED : 4 December 2003
 
@@ -773,7 +773,7 @@ Adds the given <token> to the <option_table>.  The <vector> is filled in with th
 ==============================================================================*/
 
 int Option_table_add_float_entry(struct Option_table *option_table,
-	const char *token, float *value);
+    const char *token, float *value);
 /*******************************************************************************
 LAST MODIFIED : 28 June 2006
 
@@ -783,7 +783,7 @@ the token following is assigned to <value>.
 ==============================================================================*/
 
 int Option_table_add_float_vector_entry(struct Option_table *option_table,
-	const char *token, float *vector, int *number_of_components);
+    const char *token, float *vector, int *number_of_components);
 /*******************************************************************************
 LAST MODIFIED : 16 July 2007
 
@@ -793,7 +793,7 @@ Adds the given <token> to the <option_table>.  The <vector> is filled in with th
 ==============================================================================*/
 
 int Option_table_add_FE_value_vector_entry(struct Option_table *option_table,
-	const char *token, FE_value *vector, int *number_of_components);
+    const char *token, FE_value *vector, int *number_of_components);
 /*******************************************************************************
 LAST MODIFIED : 4 December 2003
 
@@ -807,24 +807,24 @@ Adds the given <token> to the <option_table>.  The <vector> is filled in with th
  * then the token following is assigned to double <value>.
  */
 int Option_table_add_double_entry(struct Option_table *option_table,
-	const char *token, double *value);
+    const char *token, double *value);
 
 /**
  * Adds the given <token> to the <option_table>.  If the <token> is specified
  * then the token following is assigned to <value>. Value must be non negative.
  */
 int Option_table_add_non_negative_double_entry(struct Option_table *option_table,
-	const char *token, double *value);
+    const char *token, double *value);
 
 /**
  * Adds the given <token> to the <option_table>.  If the <token> is specified
  * then the token following is assigned to <value>. Value must be positive.
  */
 int Option_table_add_positive_double_entry(struct Option_table *option_table,
-	const char *token, double *value);
+    const char *token, double *value);
 
 int Option_table_add_double_vector_entry(struct Option_table *option_table,
-	const char *token, double *vector, int *number_of_components);
+    const char *token, double *vector, int *number_of_components);
 /*******************************************************************************
 LAST MODIFIED : 8 October 2003
 
@@ -834,8 +834,8 @@ Adds the given <token> to the <option_table>.  The <vector> is filled in with th
 ==============================================================================*/
 
 int Option_table_add_variable_length_double_vector_entry(
-	struct Option_table *option_table, const char *token, int *number_of_components,
-	double **vector);
+    struct Option_table *option_table, const char *token, int *number_of_components,
+    double **vector);
 /*******************************************************************************
 LAST MODIFIED : 18 February 2005
 
@@ -845,8 +845,8 @@ Adds the given <token> to the <option_table>.  The <vector> is filled in with th
 ==============================================================================*/
 
 int Option_table_add_double_vector_with_help_entry(
-	struct Option_table *option_table, const char *token, double *vector,
-	struct Set_vector_with_help_data *data);
+    struct Option_table *option_table, const char *token, double *vector,
+    struct Set_vector_with_help_data *data);
 /*******************************************************************************
 LAST MODIFIED : 8 October 2003
 
@@ -856,7 +856,7 @@ number of values specified in the <data>.
 ==============================================================================*/
 
 int Option_table_add_name_entry(struct Option_table *option_table,
-	const char *token, char **name);
+    const char *token, char **name);
 /*******************************************************************************
 LAST MODIFIED : 25 March 2004
 
@@ -874,7 +874,7 @@ the token following is assigned to <value>.
  * '1.2**3.0' returns 1.2*1.2*3.0, '*2' gives 0.0*2.0*2.0.
  */
 int Option_table_add_double_product_entry(struct Option_table *option_table,
-	const char *token, size_t valuesCount, double *values);
+    const char *token, size_t valuesCount, double *values);
 
 struct Set_names_from_list_token
 /*******************************************************************************
@@ -885,8 +885,8 @@ An individual token for the Option_table_add_set_names_from_list_entry option
 table entry.
 ==============================================================================*/
 {
-	char *string;
-	int index;
+    char *string;
+    int index;
 };
 
 
@@ -898,8 +898,8 @@ DESCRIPTION :
 Data for the Option_table_add_set_names_from_list_entry option table entry.
 ==============================================================================*/
 {
-	int number_of_tokens;
-	struct Set_names_from_list_token *tokens;
+    int number_of_tokens;
+    struct Set_names_from_list_token *tokens;
 };
 
 int Option_table_add_set_names_from_list_entry(struct Option_table *option_table,
@@ -918,7 +918,7 @@ are not repeated.
 ==============================================================================*/
 
 int Option_table_add_ignore_token_entry(struct Option_table *option_table,
-	const char *token, int *expected_parameters);
+    const char *token, int *expected_parameters);
 /*******************************************************************************
 LAST MODIFIED : 21 September 2006
 
@@ -949,7 +949,7 @@ that do not match other options.  This option must be added last.
  * @return  1 on success, 0 on failure.
  */
 int Option_table_add_string_entry(struct Option_table *option_table,
-	const char *token, char **string_address, const char *string_description);
+    const char *token, char **string_address, const char *string_description);
 
 /***************************************************************************//**
  * Adds a "default" entry to the option_table which will reads the token into
@@ -964,7 +964,7 @@ int Option_table_add_string_entry(struct Option_table *option_table,
  * @return  1 on success, 0 on failure.
  */
 int Option_table_add_default_string_entry(struct Option_table *option_table,
-	char **string_address, const char *string_description);
+    char **string_address, const char *string_description);
 
 /*
  * Structure to pass to Option_table_add_multiple_strings_entry.
@@ -972,23 +972,23 @@ int Option_table_add_default_string_entry(struct Option_table *option_table,
  */
 struct Multiple_strings
 {
-	int number_of_strings;
-	char **strings;
+    int number_of_strings;
+    char **strings;
 
-	Multiple_strings() :
-		number_of_strings(0),
-		strings(0)
-	{
-	}
+    Multiple_strings() :
+        number_of_strings(0),
+        strings(0)
+    {
+    }
 
-	~Multiple_strings();
+    ~Multiple_strings();
 
-	const char *operator[](int index) const
-	{
-		if (this->strings && (0 <= index) && index < this->number_of_strings)
-			return this->strings[index];
-		return 0;
-	}
+    const char *operator[](int index) const
+    {
+        if (this->strings && (0 <= index) && index < this->number_of_strings)
+            return this->strings[index];
+        return 0;
+    }
 };
 
 /***************************************************************************//**
@@ -1003,79 +1003,83 @@ struct Multiple_strings
  * @return  1 on success, 0 on failure.
  */
 int Option_table_add_multiple_strings_entry(struct Option_table *option_table,
-	const char *token, struct Multiple_strings *multiple_strings_address,
-	const char *strings_description);
+    const char *token, struct Multiple_strings *multiple_strings_address,
+    const char *strings_description);
 
 // enumToString must implement method:
 // const char *toString(enumType enumValue)
 template <typename enumType, int firstEnum, typename enumToString>
 int setEnum(struct Parse_state *state, void *enumValueAddressVoid,
-	void *displayTypenameVoid)
+    void *displayTypenameVoid)
 {
-	int return_code = 1;
-	enumType *enumValueAddress = static_cast<enumType*>(enumValueAddressVoid);
-	const char *displayTypename = static_cast<const char *>(const_cast<const void *>(displayTypenameVoid));
-	if (state && enumValueAddress && displayTypename)
-	{
-		const char *currentToken = state->current_token;
-		if (currentToken)
-		{
-			int value = firstEnum;
-			const char *enumValueString;
-			if (!Parse_state_help_mode(state))
-			{
-				do
-				{
-					enumValueString = enumToString::toString(static_cast<enumType>(value));
-					if (0 == enumValueString)
-					{
-						display_message(ERROR_MESSAGE, "Invalid %s %s", displayTypename, currentToken);
-						display_parse_state_location(state);
-						return_code = 0;
-						break;
-					}
-					if (fuzzy_string_compare_same_length(currentToken, enumValueString))
-					{
-						*enumValueAddress = static_cast<enumType>(value);
-						shift_Parse_state(state,1);
-						break;
-					}
-				} while (++value);
-			}
-			else
-			{
-				display_message(INFORMATION_MESSAGE, " <");
-				bool first = true;
-				while (enumValueString = enumToString::toString(static_cast<enumType>(value)))
-				{
-					if (first)
-					{
-						display_message(INFORMATION_MESSAGE, "%s", enumValueString);
-						first = false;
-					}
-					else
-						display_message(INFORMATION_MESSAGE, "|%s", enumValueString);
-					++value;
-				}
-				display_message(INFORMATION_MESSAGE, ">");
-			}
-		}
-		else
-		{
-			display_message(ERROR_MESSAGE, "Missing %s", displayTypename);
-			display_parse_state_location(state);
-			return_code = 0;
-		}
-	}
-	else
-	{
-		display_message(ERROR_MESSAGE, "set %s.  Invalid argument(s)", displayTypename);
-		return_code = 0;
-	}
-	return (return_code);
+    int return_code = 1;
+    enumType *enumValueAddress = static_cast<enumType*>(enumValueAddressVoid);
+    const char *displayTypename = static_cast<const char *>(const_cast<const void *>(displayTypenameVoid));
+    if (state && enumValueAddress && displayTypename)
+    {
+        const char *currentToken = state->current_token;
+        if (currentToken)
+        {
+            int value = firstEnum;
+            const char *enumValueString;
+            if (!Parse_state_help_mode(state))
+            {
+                do
+                {
+                    enumValueString = enumToString::toString(static_cast<enumType>(value));
+                    if (0 == enumValueString)
+                    {
+                        display_message(ERROR_MESSAGE, "Invalid %s %s", displayTypename, currentToken);
+                        display_parse_state_location(state);
+                        return_code = 0;
+                        break;
+                    }
+                    if (fuzzy_string_compare_same_length(currentToken, enumValueString))
+                    {
+                        *enumValueAddress = static_cast<enumType>(value);
+                        shift_Parse_state(state,1);
+                        break;
+                    }
+                } while (++value);
+            }
+            else
+            {
+                display_message(INFORMATION_MESSAGE, " <");
+                bool first = true;
+                enumValueString = enumToString::toString(static_cast<enumType>(value));
+                while (enumValueString != nullptr)
+                {
+                    if (first)
+                    {
+                        display_message(INFORMATION_MESSAGE, "%s", enumValueString);
+                        first = false;
+                    }
+                    else
+                    {
+                        display_message(INFORMATION_MESSAGE, "|%s", enumValueString);
+                    }
+                    ++value;
+                    enumValueString = enumToString::toString(static_cast<enumType>(value));
+                }
+                display_message(INFORMATION_MESSAGE, ">");
+            }
+        }
+        else
+        {
+            display_message(ERROR_MESSAGE, "Missing %s", displayTypename);
+            display_parse_state_location(state);
+            return_code = 0;
+        }
+    }
+    else
+    {
+        display_message(ERROR_MESSAGE, "set %s.  Invalid argument(s)", displayTypename);
+        return_code = 0;
+    }
+    return (return_code);
 }
 
 void export_object_name_parser(const char *path_name, const char **scene_name,
-	const char **graphics_name);
+    const char **graphics_name);
 
 #endif /* !defined (PARSER_H) */
