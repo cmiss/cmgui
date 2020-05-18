@@ -6,7 +6,7 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 
-CMAKE_MINIMUM_REQUIRED( VERSION 2.8.1 )
+CMAKE_MINIMUM_REQUIRED( VERSION 3.10 )
 
 PROJECT(CmguiApplication)
 
@@ -51,10 +51,9 @@ SET( CMAKE_BUILD_TYPE ${CMGUI_BUILD_TYPE} CACHE INTERNAL "Internalise CMAKE_BUIL
 
 SET( WXWIDGETS_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}" CACHE PATH "Location of the Cmgui's wxWidgets libraries." )
 
+find_package(cmiss_perl_interpreter QUIET)
 
-FIND_PACKAGE( cmiss_perl_interpreter QUIET )
-
-OPTION( USE_PERL_INTERPRETER "Do you want to use the perl interpreter?" FALSE )
+OPTION( USE_PERL_INTERPRETER "Do you want to use the perl interpreter?" ${CMISS_PERL_INTERPRETER_FOUND} )
 OPTION( WX_USER_INTERFACE "use wx for interface." )
 OPTION( GTK_USER_INTERFACE "use gtk for interface." )
 OPTION( WIN32_USER_INTERFACE "use win32 for interface." )
@@ -69,9 +68,16 @@ IF(APPLE)
 	SET( CMAKE_OSX_ARCHITECTURES i386 )
 ENDIF()
 
+# Find our friendly Zinc CMake config file.
+# We can only use the static version of the library for the Cmgui application
+SET( ZINC_USE_STATIC TRUE )
+SET( REQUIRE_INTERNAL_ZINC_INCLUDE_DIR TRUE )
+FIND_PACKAGE( Zinc REQUIRED )
+
 IF( WX_USER_INTERFACE )
-	SET( CMAKE_PREFIX_PATH ${WXWIDGETS_INSTALL_PREFIX} )
-	FIND_PACKAGE( wxWidgets REQUIRED COMPONENTS xrc adv html gl xml core base )
+#	SET( CMAKE_PREFIX_PATH ${WXWIDGETS_INSTALL_PREFIX} )
+        find_package(wxWidgets REQUIRED CONFIG PATH_SUFFIXES share/wxwidgets)
+#	FIND_PACKAGE( wxWidgets REQUIRED COMPONENTS xrc adv html gl xml core base )
 	SET( CAN_USE_USER_INTERFACE ${wxWidgets_FOUND} )
 ENDIF( WX_USER_INTERFACE )
 IF( GTK_USER_INTERFACE )
@@ -82,12 +88,6 @@ ENDIF( GTK_USER_INTERFACE )
 IF( WIN32_USER_INTERFACE AND WIN32 )
 	SET( CAN_USE_USER_INTERFACE TRUE )
 ENDIF( WIN32_USER_INTERFACE AND WIN32 )
-
-# Find our friendly Zinc CMake config file.
-# We can only use the static version of the library for the Cmgui application
-SET( ZINC_USE_STATIC TRUE )
-SET( REQUIRE_INTERNAL_ZINC_INCLUDE_DIR TRUE )
-FIND_PACKAGE( Zinc REQUIRED )
 
 IF( MSVC )
 	SET( EXTRA_COMPILER_DEFINITIONS _CRT_SECURE_NO_WARNINGS )
@@ -114,37 +114,36 @@ IF( WX_USER_INTERFACE )
 	IF( WIN32 AND NOT CYGWIN AND NOT MSYS )
 		# Do nothing, have config file
 	ELSE( WIN32 AND NOT CYGWIN AND NOT MSYS )
-		IF( UNIX OR MSYS )
-			IF( ${CMAKE_BUILD_TYPE} MATCHES "[Dd]ebug" )
-				SET( wxWidgets_USE_DEBUG TRUE )
-			ELSE( ${CMAKE_BUILD_TYPE} MATCHES "[Dd]ebug" )
-				SET( wxWidgets_USE_DEBUG FALSE )
-			ENDIF( ${CMAKE_BUILD_TYPE} MATCHES "[Dd]ebug" )
-			SET( wxWidgets_USE_UNICODE FALSE )
-			SET( wxWidgets_USE_UNIVERSAL FALSE )
-			SET( wxWidgets_USE_STATIC TRUE )
-			FIND_PACKAGE( wxWidgets COMPONENTS xrc adv html
-				gl xml core base )
-		ENDIF( UNIX OR MSYS )
+#		IF( UNIX OR MSYS )
+#			IF( ${CMAKE_BUILD_TYPE} MATCHES "[Dd]ebug" )
+#				SET( wxWidgets_USE_DEBUG TRUE )
+#			ELSE( ${CMAKE_BUILD_TYPE} MATCHES "[Dd]ebug" )
+#				SET( wxWidgets_USE_DEBUG FALSE )
+#			ENDIF( ${CMAKE_BUILD_TYPE} MATCHES "[Dd]ebug" )
+#			SET( wxWidgets_USE_UNICODE FALSE )
+#			SET( wxWidgets_USE_UNIVERSAL FALSE )
+#			SET( wxWidgets_USE_STATIC TRUE )
+#			FIND_PACKAGE( wxWidgets COMPONENTS xrc adv html
+#				gl xml core base )
+#		ENDIF( UNIX OR MSYS )
 	ENDIF( WIN32 AND NOT CYGWIN AND NOT MSYS )
 	IF( wxWidgets_FOUND )
-		# Order of components here is important when linking static libraries
 		SET( USE_WXWIDGETS TRUE )
 		MARK_AS_ADVANCED( wxWidgets_DIR )
-		DBG_MSG( "C FLAGS: ${wxWidgets_CXX_FLAGS}" )
-		DBG_MSG( "LIBS: ${wxWidgets_LIBRARIES}" )
-		SET( WXWIDGETS_LIBRARIES ${wxWidgets_LIBRARIES} )
-		DBG_MSG( "DEFS: ${wxWidgets_DEFINITIONS}" )
-		DBG_MSG( "INC_DIRS: ${wxWidgets_INCLUDE_DIRS}" )
-		SET( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${wxWidgets_CXX_FLAGS}" )
-		SET( DEPENDENT_DEFINITIONS ${DEPENDENT_DEFINITIONS} ${wxWidgets_DEFINITIONS} )
-		SET( DEPENDENT_CONFIGS "${DEPENDENT_CONFIGS}\nSET( wxWidgets_wxrc_EXECUTABLE ${wxWidgets_wxrc_EXECUTABLE} )" )
-		IF( MSVC )
-			SET( EXTRA_COMPILER_DEFINITIONS ${EXTRA_COMPILER_DEFINITIONS} wxUSE_NO_MANIFEST=1 )
-			SET( DEPENDENT_DEFINITIONS ${DEPENDENT_DEFINITIONS} wxUSE_NO_MANIFEST=1 )
-		ENDIF( MSVC )
+#		DBG_MSG( "C FLAGS: ${wxWidgets_CXX_FLAGS}" )
+#		DBG_MSG( "LIBS: ${wxWidgets_LIBRARIES}" )
+#		SET( WXWIDGETS_LIBRARIES ${wxWidgets_LIBRARIES} )
+#		DBG_MSG( "DEFS: ${wxWidgets_DEFINITIONS}" )
+#		DBG_MSG( "INC_DIRS: ${wxWidgets_INCLUDE_DIRS}" )
+#		SET( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${wxWidgets_CXX_FLAGS}" )
+#		SET( DEPENDENT_DEFINITIONS ${DEPENDENT_DEFINITIONS} ${wxWidgets_DEFINITIONS} )
+#		SET( DEPENDENT_CONFIGS "${DEPENDENT_CONFIGS}\nSET( wxWidgets_wxrc_EXECUTABLE ${wxWidgets_wxrc_EXECUTABLE} )" )
+#		IF( MSVC )
+#			SET( EXTRA_COMPILER_DEFINITIONS ${EXTRA_COMPILER_DEFINITIONS} wxUSE_NO_MANIFEST=1 )
+#			SET( DEPENDENT_DEFINITIONS ${DEPENDENT_DEFINITIONS} wxUSE_NO_MANIFEST=1 )
+#		ENDIF( MSVC )
 		INCLUDE( source/cmake/xrc_source_files.cmake )
-		DBG_MSG( "XRC SRCS: ${XRC_SRCS}" )
+#		DBG_MSG( "XRC SRCS: ${XRC_SRCS}" )
 		WXWIDGETS_HDRS( "${XRC_SRCS}" wxWidgets_GENERATED_HDRS )
 	ELSE( wxWidgets_FOUND )
 		MESSAGE( FATAL_ERROR "wxWidgets was requested but not found." )
@@ -197,10 +196,10 @@ SET( CMGUI_VERSION_HDR ${CMAKE_CURRENT_BINARY_DIR}/source/configure/version.h )
 #LIST( GET ZINC_INCLUDE_DIRS 0 ZINC_PRIVATE_INCLUDE_DIRS )
 #SET( ZINC_PRIVATE_INCLUDE_DIRS "${ZINC_PRIVATE_INCLUDE_DIRS}/.." )
 
-INCLUDE_DIRECTORIES( ${CMAKE_CURRENT_BINARY_DIR}/source ${CMAKE_CURRENT_SOURCE_DIR}/source
-	${ZINC_INCLUDE_DIRS} ${ZINC_PRIVATE_INCLUDE_DIRS}
-	${wxWidgets_INCLUDE_DIRS} ${FIELDML_INCLUDE_DIRS}
-	${ITK_INCLUDE_DIRS} ${CMISS_PERL_INTERPRETER_INCLUDE_DIRS} )
+#INCLUDE_DIRECTORIES( ${CMAKE_CURRENT_BINARY_DIR}/source ${CMAKE_CURRENT_SOURCE_DIR}/source
+#	${ZINC_INCLUDE_DIRS} ${ZINC_PRIVATE_INCLUDE_DIRS}
+#	${wxWidgets_INCLUDE_DIRS} ${FIELDML_INCLUDE_DIRS}
+#	${ITK_INCLUDE_DIRS} ${CMISS_PERL_INTERPRETER_INCLUDE_DIRS} )
 
 FOREACH( DEF ${EXTRA_COMPILER_DEFINITIONS} ${DEPENDENT_DEFINITIONS} )
 	ADD_DEFINITIONS( -D${DEF} )
@@ -225,8 +224,8 @@ IF(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" AND (CMAKE_COMPILER_IS_GNUCC OR CMAKE_C
 		LINK_FLAGS -Wl,-no-export-dynamic )
 ENDIF()
 
-
-TARGET_LINK_LIBRARIES( ${CMGUI_TARGET} zinc-static ${CMISS_PERL_INTERPRETER_LIBRARIES} ${WXWIDGETS_LIBRARIES} )
+target_include_directories(${CMGUI_TARGET} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/source ${CMAKE_CURRENT_BINARY_DIR}/source)
+target_link_libraries(${CMGUI_TARGET} zinc-static cmiss_perl_interpreter wxWidgets::aui wxWidgets::adv wxWidgets::gl)
 
 # On Apple platforms we need to do two extra tasks 1. Create a symbolic link for the
 # application bundle to cmgui for buildbot testing and 2. Remove old Cmgui application
