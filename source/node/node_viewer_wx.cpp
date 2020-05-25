@@ -888,7 +888,7 @@ void Node_viewer_updateTextCtrl(Node_viewer *node_viewer, wxWindow *parentWin,
 			window->Destroy();
 		}
 		else
-			gridSizer->Insert(index, textCtrl, 1, wxALIGN_CENTER_VERTICAL|wxALIGN_CENTER_HORIZONTAL|wxADJUST_MINSIZE, 0);
+            gridSizer->Insert(index, textCtrl, 1, wxALIGN_CENTER_VERTICAL|wxALIGN_CENTER_HORIZONTAL|wxFIXED_MINSIZE, 0);
 	}
 	DEALLOCATE(valueString);
 }
@@ -987,19 +987,19 @@ static int node_viewer_setup_components(struct Node_viewer *node_viewer,
 		}
 		int index = 0;
 		// first row is blank cell followed by nodal value type labels
-		gridSizer_updateStaticText(parentWin, gridSizer, index++, "", wxEXPAND|wxADJUST_MINSIZE, refit);
+        gridSizer_updateStaticText(parentWin, gridSizer, index++, "", wxEXPAND|wxFIXED_MINSIZE, refit);
 		for (int d = 0; d < nodeValueLabelsCount; ++d)
 		{
 			gridSizer_updateStaticText(parentWin, gridSizer, index++,
 				ENUMERATOR_STRING(cmzn_node_value_label)(nodeValueLabels[d]),
-				wxALIGN_CENTER_VERTICAL|wxALIGN_CENTER_HORIZONTAL|wxADJUST_MINSIZE, refit);
+                wxALIGN_CENTER_VERTICAL|wxALIGN_CENTER_HORIZONTAL|wxFIXED_MINSIZE, refit);
 		}
 		for (int comp_no = 1; comp_no <= componentCount; ++comp_no)
 		{
 			// first column is component label */
 			char *name = cmzn_field_get_component_name(field, comp_no);
 			gridSizer_updateStaticText(parentWin, gridSizer, index++, name,
-				wxALIGN_CENTER_VERTICAL|wxALIGN_CENTER_HORIZONTAL|wxADJUST_MINSIZE, refit);
+                wxALIGN_CENTER_VERTICAL|wxALIGN_CENTER_HORIZONTAL|wxFIXED_MINSIZE, refit);
 			cmzn_deallocate(name);
 
 			for (int d = 0; d < nodeValueLabelsCount; ++d)
@@ -1012,7 +1012,7 @@ static int node_viewer_setup_components(struct Node_viewer *node_viewer,
 				else
 				{
 					gridSizer_updateStaticText(parentWin, gridSizer, index++, "",
-						wxEXPAND|wxALIGN_CENTER_VERTICAL|	wxALIGN_CENTER_HORIZONTAL|wxADJUST_MINSIZE, refit);
+                        wxEXPAND|wxALIGN_CENTER_VERTICAL|	wxALIGN_CENTER_HORIZONTAL|wxFIXED_MINSIZE, refit);
 				}
 			}
 		}

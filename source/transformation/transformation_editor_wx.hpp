@@ -13,7 +13,7 @@ Create a cpp class that act as a transformation editor for the wx widgets.
 * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #if !defined (TRANSFORMATION_EDITOR_WX_HPP)
-#define TRANSFROMATION_EDITOR_WX_HPP
+#define TRANSFORMATION_EDITOR_WX_HPP
 
 #include "wx/wx.h"
 #include "wx/image.h"

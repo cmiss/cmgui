@@ -1834,7 +1834,7 @@ Add textctrl box onto the viewer.
 				 wxCommandEventHandler(wxElementPointViewerTextCtrl::OnElementPointViewerTextCtrlEntered));
 	 }
 	 element_point_viewer->element_point_grid_field->Add(element_point_viewer_text, 0,
-			wxALIGN_CENTER_VERTICAL|wxALIGN_CENTER_HORIZONTAL|wxADJUST_MINSIZE, 0);
+            wxALIGN_CENTER_VERTICAL|wxALIGN_CENTER_HORIZONTAL|wxFIXED_MINSIZE, 0);
 	 return (1);
 }
 
@@ -2412,7 +2412,7 @@ Creates the array of cells containing field component names and values.
 							   version, so manually setting up the position*/
 							wxPoint(0,comp_no*35 + 5),wxDefaultSize),1,
 							wxALIGN_CENTER_VERTICAL|
-							wxALIGN_CENTER_HORIZONTAL|wxADJUST_MINSIZE, 0);
+                            wxALIGN_CENTER_HORIZONTAL|wxFIXED_MINSIZE, 0);
 						element_point_viewer_add_textctrl(editable,element_point_viewer, field, comp_no);
 						DEALLOCATE(component_name);
 					}

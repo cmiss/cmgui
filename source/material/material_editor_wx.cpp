@@ -192,7 +192,7 @@ Uses gl to draw a sphere with a lighting source.
 		if (material_editor->background==0)
 		{
 			/* no material on the RGB background */
-			renderer->Material_execute((cmzn_material *)NULL);
+            renderer->Material_execute(nullptr);
 			glDisable(GL_LIGHTING);
 			glBegin(GL_TRIANGLES);
 			/* red */
@@ -220,7 +220,7 @@ Uses gl to draw a sphere with a lighting source.
 		/* draw the sphere */
 		glEnable(GL_LIGHTING);
 		texture=Graphical_material_get_texture(material_editor->edit_material);
-		if (texture != NULL)
+        if (texture != nullptr)
 		{
 			Texture_get_physical_size(texture,&texture_width, &texture_height,
 				&texture_depth);
@@ -270,7 +270,7 @@ Uses gl to draw a sphere with a lighting source.
 		}
 
 		/* Reset the material */
-		renderer->Material_execute((cmzn_material *)NULL);
+        renderer->Material_execute(nullptr);
 		delete renderer;
 #endif /* defined (OPENGL_API) */
 	}

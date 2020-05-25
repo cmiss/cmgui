@@ -16458,7 +16458,7 @@ Initialise all the subcomponents of cmgui and create the cmzn_command_data
 			Option_table_parse(option_table, state);
 			DESTROY(Option_table)(&option_table);
 			destroy_Parse_state(&state);
-			delete double_question_mark;
+            delete[] double_question_mark;
 		}
 
 		command_data->io_stream_package = cmzn_context_get_default_IO_stream_package(cmzn_context_app_get_core_context(context));

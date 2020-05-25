@@ -6,10 +6,11 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 
-CMAKE_MINIMUM_REQUIRED( VERSION 3.10 )
+cmake_minimum_required( VERSION 3.10 )
 
-PROJECT(CmguiApplication)
+project(CmguiApplication)
 
+set(CMAKE_CXX_STANDARD 11)
 # Check bare minimum configuration
 set(CMGUI_CMAKE_MODULE_PATH "${CMGUI_CMAKE_MODULE_PATH}" CACHE STRING "Location of OpenCMISS CMake modules.")
 if (NOT EXISTS "${CMGUI_CMAKE_MODULE_PATH}/OpenCMISS/OCMiscFunctions.cmake")
@@ -29,7 +30,16 @@ SET( CMGUI_MINOR_VERSION "0" )
 SET( CMGUI_PATCH_VERSION "2" )
 SET( CMGUI_VERSION ${CMGUI_MAJOR_VERSION}.${CMGUI_MINOR_VERSION}.${CMGUI_PATCH_VERSION} )
 
-SVN_GET_REVISION( ${CMAKE_CURRENT_SOURCE_DIR} CMGUI_REVISION )
+find_package(Git)
+if (GIT_FOUND)
+    git_get_revision(CMGUI_REVISION_LONG)
+    string(SUBSTRING ${CMGUI_REVISION_LONG} 0 6 CMGUI_REVISION)
+    git_is_dirty(_IS_DIRTY)
+    if (_IS_DIRTY)
+        set(CMGUI_REVISION "${CMGUI_REVISION}*")
+    endif ()
+endif()
+
 IF( NOT CMGUI_RELEASE )
 	SET( CMGUI_DEVELOPER_VERSION ".r${CMGUI_REVISION}" )
 ENDIF()
@@ -165,7 +175,7 @@ ENDIF()
 
 GET_CMGUI_SYSTEM_NAME( CMGUI_SYSTEM_NAME )
 SET( CMGUI_VERSION_STRING "\"${CMGUI_VERSION}\"" )
-SET( CMGUI_SVN_REVISION_STRING "\"${CMGUI_REVISION}\"" )
+SET( CMGUI_REVISION_STRING "\"${CMGUI_REVISION}\"" )
 SET( CMGUI_BUILD_STRING "${CMGUI_SYSTEM_NAME}" )
 IF( WX_USER_INTERFACE )
 	SET( CMGUI_BUILD_STRING "${CMGUI_BUILD_STRING} wxWidgets")
@@ -182,9 +192,6 @@ ENDIF( )
 SET( CMGUI_BUILD_STRING "\"${CMGUI_BUILD_STRING}\"" )
 SET( CMGUI_CONFIGURE_HDR ${PROJECT_BINARY_DIR}/source/configure/cmgui_configure.h )
 CONFIGURE_FILE( ${PROJECT_SOURCE_DIR}/source/configure/cmgui_configure.h.cmake ${CMGUI_CONFIGURE_HDR} )
-
-# We want the version header to be configured at compile time and not just configure time.
-SET( CMGUI_VERSION_HDR ${CMAKE_CURRENT_BINARY_DIR}/source/configure/version.h )
 
 # To get the internal headers we derive a header search path from the build header source path.
 # Obviously this will not work if you configure with Zinc's install tree.
@@ -209,16 +216,21 @@ ENDFOREACH( DEF ${EXTRA_COMPILER_DEFINITIONS} ${DEPENDENT_DEFINITIONS} )
 SET( CMGUI_TARGET cmgui )
 ADD_EXECUTABLE( ${CMGUI_TARGET} WIN32 MACOSX_BUNDLE ${APP_SRCS} ${APP_HDRS} ${CMGUI_CONFIGURE_HDR} ${CMGUI_VERSION_HDR} ${wxWidgets_GENERATED_HDRS} ${OSX_ICON} )
 
-ADD_CUSTOM_TARGET( version_hdr ALL DEPENDS "version header" )
-ADD_CUSTOM_COMMAND( OUTPUT "version header"
-	COMMAND ${CMAKE_COMMAND}
-		-DSOURCE_DIR=${CMAKE_CURRENT_SOURCE_DIR} -DVERSION_HDR=${CMGUI_VERSION_HDR}
-		-DCMGUI_VERSION_STRING=${CMGUI_VERSION_STRING}
-		-DCMGUI_SVN_REVISION_STRING=${CMGUI_SVN_REVISION_STRING}
-		-DCMGUI_BUILD_STRING="${CMGUI_BUILD_STRING}"
-		-P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/ConfigureVersion.cmake )
-SET_SOURCE_FILES_PROPERTIES( ${CMGUI_VERSION_HDR} PROPERTIES GENERATED TRUE )
-ADD_DEPENDENCIES( ${CMGUI_TARGET} version_hdr )
+
+# We want the version header to be configured at compile time and not just configure time.
+set( CMGUI_VERSION_HDR ${CMAKE_CURRENT_BINARY_DIR}/source/configure/version.h )
+add_custom_target(generate_version_hdr
+  BYPRODUCTS ${CMGUI_VERSION_HDR}
+  COMMENT "Generating the version header."
+  COMMAND ${CMAKE_COMMAND}
+          -DSOURCE_DIR=${CMAKE_CURRENT_SOURCE_DIR} -DVERSION_HDR=${CMGUI_VERSION_HDR}
+          -DCMGUI_VERSION_STRING=${CMGUI_VERSION_STRING}
+          -DCMGUI_REVISION_STRING=${CMGUI_REVISION_STRING}
+          -DCMGUI_BUILD_STRING="${CMGUI_BUILD_STRING}"
+          -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/ConfigureVersion.cmake)
+set_source_files_properties(${CMGUI_VERSION_HDR} PROPERTIES GENERATED TRUE)
+add_dependencies( ${CMGUI_TARGET} generate_version_hdr )
+
 SET_TARGET_PROPERTIES( ${CMGUI_TARGET} PROPERTIES DEBUG_POSTFIX "d" )
 IF(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" AND (CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX))
 	SET_TARGET_PROPERTIES( ${CMGUI_TARGET} PROPERTIES
@@ -226,7 +238,7 @@ IF(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" AND (CMAKE_COMPILER_IS_GNUCC OR CMAKE_C
 ENDIF()
 
 target_include_directories(${CMGUI_TARGET} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/source ${CMAKE_CURRENT_BINARY_DIR}/source)
-target_link_libraries(${CMGUI_TARGET} zinc-static cmiss_perl_interpreter wxWidgets::aui wxWidgets::adv wxWidgets::gl)
+target_link_libraries(${CMGUI_TARGET} zinc-static cmiss_perl_interpreter wxWidgets::aui wxWidgets::xrc wxWidgets::gl)
 
 # On Apple platforms we need to do two extra tasks 1. Create a symbolic link for the
 # application bundle to cmgui for buildbot testing and 2. Remove old Cmgui application

@@ -13,7 +13,7 @@ Widgets for editing scene, esp. changing visibility of members.
 ==============================================================================*/
 
 #if !defined (REGION_TREE_VIEWER_WX_H)
-#define REGION_TREE_VIEWER_WX_H_WX_H
+#define REGION_TREE_VIEWER_WX_H
 
 #include "user_interface/user_interface.h"
 
