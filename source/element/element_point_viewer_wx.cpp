@@ -1611,7 +1611,7 @@ data, and then changes the correct value in the array structure.
 							FE_mesh_field_data *meshFieldData;
 							FE_mesh_field_template *mft;
 							FE_element_field_template *eft;
-							if ((meshFieldData = FE_field_getMeshFieldData(fe_field, element->getMesh()))
+							if ((meshFieldData = fe_field->getMeshFieldData(element->getMesh()))
 								&& (mft = meshFieldData->getComponentMeshfieldtemplate(component_number))
 								&& (eft = mft->getElementfieldtemplate(element->getIndex())))
 							{
@@ -1862,9 +1862,8 @@ static int element_point_viewer_add_collpane(struct Computed_field *current_fiel
 	 {
 			wxScrolledWindow *panel = element_point_viewer->collpane;
 			char *identifier;
-			int length;
 			identifier = (char *)NULL;
-			length = 	strlen(field_name);
+			const size_t length = strlen(field_name);
 			COPY(Element_point_ranges_identifier)(
 				 &temp_element_point_identifier,
 				 &(element_point_viewer->element_point_identifier));

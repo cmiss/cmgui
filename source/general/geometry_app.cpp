@@ -27,15 +27,15 @@ spheroidal).
 		rectangular_cartesian_flag;
 	int return_code;
 	struct Option_table *focus_option_table, *option_table;
-	struct Coordinate_system *coordinate_system,coordinate_system_copy;
 
 	ENTER(set_Coordinate_system);
 	USE_PARAMETER(dummy_void);
 	if (state)
 	{
-		if ((coordinate_system=(struct Coordinate_system *)coordinate_system_void)&&
-			COPY(Coordinate_system)(&coordinate_system_copy,coordinate_system))
+		Coordinate_system *coordinate_system = static_cast<Coordinate_system *>(coordinate_system_void);
+		if (coordinate_system)
 		{
+			Coordinate_system coordinate_system_copy = *coordinate_system;
 			cylindrical_polar_flag=0;
 			fibre_flag=0;
 			not_applicable_flag=0;
@@ -118,8 +118,8 @@ spheroidal).
 				}
 				if (return_code)
 				{
-					return_code=COPY(Coordinate_system)(coordinate_system,
-						&coordinate_system_copy);
+					*coordinate_system = coordinate_system_copy;
+					return_code = 1;
 				}
 			}
 		}

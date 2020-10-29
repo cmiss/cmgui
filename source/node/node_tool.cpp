@@ -1241,8 +1241,7 @@ Resets current edit. Called on button release or when tool deactivated.
 	ENTER(Node_tool_reset);
 	if (node_tool != 0)
 	{
-		REACCESS(FE_node)(&(node_tool->last_picked_node),
-			(struct FE_node *)NULL);
+		FE_node::reaccess(node_tool->last_picked_node, nullptr);
 		REACCESS(Interaction_volume)(
 			&(node_tool->last_interaction_volume),
 			(struct Interaction_volume *)NULL);
@@ -1484,7 +1483,7 @@ release.
 								node_tool->picked_node_was_unselected=0;
 							}
 						}
-						REACCESS(FE_node)(&(node_tool->last_picked_node),picked_node);
+						FE_node::reaccess(node_tool->last_picked_node, picked_node);
 						/*
 						 * NOTE: make selection the last step so node_tool is in good state before
 						 * receiving code gets to run: consider it capable of changing the current tool!
@@ -1580,8 +1579,7 @@ release.
 									if (picked_node != 0)
 									{
 										Node_tool_set_picked_node(node_tool, picked_node);
-										REACCESS(FE_node)(&(node_tool->last_picked_node),
-											picked_node);
+										FE_node::reaccess(node_tool->last_picked_node, picked_node);
 									}
 								}
 							}
