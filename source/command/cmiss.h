@@ -24,7 +24,7 @@ This should only be included in cmgui.c and command/cmiss.c
 #endif /* defined (BUILD_WITH_CMAKE) */
 #include "general/io_stream.h"
 #include "general/manager.h"
-#include "region/cmiss_region.h"
+#include "region/cmiss_region.hpp"
 #if defined (WIN32_USER_INTERFACE)
 //#define WINDOWS_LEAN_AND_MEAN
 #if !defined (NOMINMAX)

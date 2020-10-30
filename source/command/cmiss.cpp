@@ -178,7 +178,7 @@
 #if defined (WX_USER_INTERFACE)
 #include "node/node_viewer_wx.h"
 #endif /* defined (WX_USER_INTERFACE) */
-#include "region/cmiss_region.h"
+#include "region/cmiss_region.hpp"
 #include "region/cmiss_region_app.h"
 #include "three_d_drawing/graphics_buffer.h"
 #include "graphics/font.h"

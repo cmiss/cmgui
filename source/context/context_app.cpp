@@ -19,7 +19,7 @@
 #include "general/object.h"
 #include "graphics/graphics_module.h"
 #include "graphics/scene.h"
-#include "region/cmiss_region.h"
+#include "region/cmiss_region.hpp"
 /* following is temporary until circular references are removed for cmzn_region  */
 #include "region/cmiss_region_private.h"
 #include <set>

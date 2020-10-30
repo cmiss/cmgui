@@ -14,7 +14,7 @@ DESCRIPTION :
 #include "region/cmiss_region_chooser_wx.hpp"
 #include "general/debug.h"
 #include "general/mystring.h"
-#include "region/cmiss_region.h"
+#include "region/cmiss_region.hpp"
 #include "general/message.h"
 
 wxRegionChooser::wxRegionChooser(wxWindow *parent,

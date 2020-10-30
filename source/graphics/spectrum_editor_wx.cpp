@@ -36,7 +36,7 @@ Provides the wxWidgets interface to manipulate spectrum settings.
 #include "graphics/spectrum_component_app.h"
 #include "graphics/spectrum_editor_wx.h"
 #include "graphics/spectrum_editor_dialog_wx.h"
-#include "region/cmiss_region.h"
+#include "region/cmiss_region.hpp"
 #include "three_d_drawing/graphics_buffer.h"
 #include "general/message.h"
 #include "user_interface/user_interface.h"

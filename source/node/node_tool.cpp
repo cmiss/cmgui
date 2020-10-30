@@ -63,7 +63,7 @@ Scene input.
 #include "graphics/scene.h"
 #include "graphics/scene_picker.hpp"
 #include "graphics/scene_viewer.h"
-#include "region/cmiss_region.h"
+#include "region/cmiss_region.hpp"
 #include "general/message.h"
 #include "command/parser.h"
 #include "region/cmiss_region_app.h"
