@@ -3553,7 +3553,7 @@ void TreeControlSelectionChanged(wxTreeEvent &event)
 					region_tree_viewer->sceneediting->Show();
 				}
 			}
-			DEACCESS(cmzn_scene)(&scene);
+			cmzn_scene::deaccess(scene);
 		}
 		wxPanel *rightpanel=XRCCTRL(*this,"RightPanel", wxPanel);
 		rightpanel->Layout();
@@ -3641,7 +3641,7 @@ void SetVisibilityOfTreeId(wxTreeItemId current_item_id, bool flag)
 		{
 			cmzn_scene_set_visibility_flag(scene, flag);
 			SetTreeItemImage(current_item_id, !flag);
-			DEACCESS(cmzn_scene)(&scene);
+			cmzn_scene::deaccess(scene);
 			if (region_tree_viewer->edit_scene)
 			{
 				cmzn_scene_set_visibility_flag(
@@ -3801,8 +3801,8 @@ int Region_tree_viewer_revert_changes(Region_tree_viewer *region_tree_viewer)
 			region_tree_viewer->graphicslistbox->Clear();
 			for_each_graphics_in_cmzn_scene(region_tree_viewer->scene,
 				Region_tree_viewer_add_graphics_item, (void *)region_tree_viewer);
-			DEACCESS(cmzn_scene)(&region_tree_viewer->edit_scene);
-			region_tree_viewer->edit_scene = create_editor_copy_cmzn_scene(region_tree_viewer->scene);
+			cmzn_scene::deaccess(region_tree_viewer->edit_scene);
+			region_tree_viewer->edit_scene = cmzn_scene::createCopy(*region_tree_viewer->scene);
 			int num = 	region_tree_viewer->graphicslistbox->GetCount();
 			if (selection >= num)
 			{
@@ -3903,12 +3903,11 @@ void Region_tree_viewer_set_active_scene(
 		{
 			previous_selection = 0;
 		}
-		REACCESS(cmzn_scene)(&region_tree_viewer->scene, scene);
+		cmzn_scene::reaccess(region_tree_viewer->scene, scene);
 		cmzn_scene *edit_scene;
 		if (region_tree_viewer->scene)
 		{
-			edit_scene = create_editor_copy_cmzn_scene(
-				region_tree_viewer->scene);
+			edit_scene = cmzn_scene::createCopy(*region_tree_viewer->scene);
 			if (!edit_scene)
 			{
 				display_message(ERROR_MESSAGE, "Rendition_editor_set_scene.  "
@@ -3919,9 +3918,8 @@ void Region_tree_viewer_set_active_scene(
 		{
 			edit_scene = (struct cmzn_scene *) NULL;
 		}
-		REACCESS(cmzn_scene)(&(region_tree_viewer->edit_scene),
-			edit_scene);
-		DEACCESS(cmzn_scene)(&edit_scene);
+		cmzn_scene::reaccess(region_tree_viewer->edit_scene, edit_scene);
+		cmzn_scene::deaccess(edit_scene);
 		if (previous_selection == 0)
 		{
 			previous_selection = 1;
@@ -4001,8 +3999,8 @@ void Region_tree_viewer_set_active_scene(
 	}
 	else if (region_tree_viewer)
 	{
-		REACCESS(cmzn_scene)(&region_tree_viewer->scene, NULL);
-		REACCESS(cmzn_scene)(&region_tree_viewer->edit_scene, NULL);
+		cmzn_scene::deaccess(region_tree_viewer->scene);
+		cmzn_scene::deaccess(region_tree_viewer->edit_scene);
 		REACCESS(cmzn_graphics)(&region_tree_viewer->current_graphics, NULL);
 		region_tree_viewer->field_manager = NULL;
 		region_tree_viewer->wx_region_tree_viewer->Region_tree_viewer_wx_set_manager_in_choosers(region_tree_viewer);
@@ -4107,9 +4105,8 @@ void Region_tree_viewer_setup_region_tree(Region_tree_viewer *region_tree_viewer
 			current, region_tree_viewer->root_region);
 		region_tree_viewer->testing_tree_ctrl->add_all_child_regions_to_tree_item(current);
 		scene = cmzn_region_get_scene(region_tree_viewer->root_region);
-		REACCESS(cmzn_scene)(&region_tree_viewer->scene,
-			scene);
-		DEACCESS(cmzn_scene)(&scene);
+		cmzn_scene::reaccess(region_tree_viewer->scene, scene);
+		cmzn_scene::deaccess(scene);
 		DEALLOCATE(root_region_path);
 	}
 
@@ -4279,7 +4276,7 @@ DESCRIPTION :
 		if (region_tree_viewer->current_graphics)
 			DEACCESS(cmzn_graphics)(&region_tree_viewer->current_graphics);
 		if (region_tree_viewer->edit_scene)
-			DEACCESS(cmzn_scene)(&region_tree_viewer->edit_scene);
+			cmzn_scene::deaccess(region_tree_viewer->edit_scene);
 		if (region_tree_viewer->scene)
 		{
 			region_tree_viewer->transformation_editor->set_scene(NULL);
@@ -4299,7 +4296,7 @@ DESCRIPTION :
 			}
 		}
 		if (region_tree_viewer->scene)
-			DEACCESS(cmzn_scene)(&region_tree_viewer->scene);
+			cmzn_scene::deaccess(region_tree_viewer->scene);
 		cmzn_glyphmodule_destroy(&region_tree_viewer->glyphmodule);
 		delete region_tree_viewer->transformation_editor;
 		delete region_tree_viewer->wx_region_tree_viewer;

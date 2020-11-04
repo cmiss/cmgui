@@ -9919,7 +9919,7 @@ Executes a GFX LIST TRANSFORMATION.
 								{
 									return_code = list_cmzn_scene_transformation_commands(
 										scene,(void *)command_prefix);
-									DEACCESS(cmzn_scene)(&scene);
+									cmzn_scene::deaccess(scene);
 								}
 								DEALLOCATE(command_prefix);
 							}
@@ -13106,7 +13106,7 @@ static int gfx_set_transformation(struct Parse_state *state,
 									mat[col*4 + row] = transformation_matrix[col][row];
 							cmzn_scene_set_transformation_matrix(scene, mat);
 						}
-						DEACCESS(cmzn_scene)(&scene);
+						cmzn_scene::deaccess(scene);
 					}
 					return_code = 1;
 				}
@@ -16554,8 +16554,7 @@ Initialise all the subcomponents of cmgui and create the cmzn_command_data
 		/* comfile window manager */
 		command_data->comfile_window_manager = UI_module->comfile_window_manager;
 #endif /* defined (WX_USER_INTERFACE) */
-		command_data->graphics_module =
-			cmzn_context_get_graphics_module(cmzn_context_app_get_core_context(context));
+		command_data->graphics_module = cmzn_context_app_get_core_context(context)->getGraphicsmodule();
 		/* light manager */
 		command_data->lightmodule=
 			cmzn_graphics_module_get_lightmodule(command_data->graphics_module);
@@ -17050,7 +17049,6 @@ NOTE: Do not call this directly: call cmzn_command_data_destroy() to deaccess.
 		cmzn_logger_destroy(&command_data->logger);
 		DEACCESS(Scene)(&command_data->default_scene);
 		cmzn_glyphmodule_destroy(&command_data->glyphmodule);
-		cmzn_graphics_module_destroy(&command_data->graphics_module);
 		DEACCESS(Time_keeper_app)(&command_data->default_time_keeper_app);
 		if (command_data->computed_field_package)
 		{

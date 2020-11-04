@@ -76,10 +76,7 @@ struct cmzn_sceneviewermodule_app *CREATE(cmzn_sceneviewermodule_app)(
 		{
 			sceneviewermodule->access_count = 1;
 			sceneviewermodule->graphics_buffer_package = graphics_buffer_package;
-			cmzn_graphics_module* graphics_module = cmzn_scene_get_graphics_module(scene);
-			sceneviewermodule->core_sceneviewermodule =
-				cmzn_graphics_module_get_sceneviewermodule(graphics_module);
-			cmzn_graphics_module_destroy(&graphics_module);
+			sceneviewermodule->core_sceneviewermodule = cmzn_scene_get_sceneviewermodule(scene);
 			sceneviewermodule->user_interface = user_interface;
 			sceneviewermodule->scene_viewer_app_list = CREATE(LIST(Scene_viewer_app))();
 			sceneviewermodule->destroy_callback_list=

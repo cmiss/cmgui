@@ -54,7 +54,7 @@ struct User_interface_module *User_interface_module_create(
 	if (context && ALLOCATE(UI_module, struct User_interface_module, 1))
 	{
 		root_region = cmzn_context_get_default_region(cmzn_context_app_get_core_context(context));
-		graphics_module = cmzn_context_get_graphics_module(cmzn_context_app_get_core_context(context));
+		graphics_module = cmzn_context_app_get_core_context(context)->getGraphicsmodule();
 		UI_module->event_dispatcher = NULL;
 #if defined (USE_CMGUI_GRAPHICS_WINDOW)
 		UI_module->graphics_window_manager = NULL;
@@ -253,7 +253,6 @@ struct User_interface_module *User_interface_module_create(
 		}
 #endif /* defined (USE_CMGUI_GRAPHICS_WINDOW) */
 		cmzn_region_destroy(&root_region);
-		cmzn_graphics_module_destroy(&graphics_module);
 	}
 	else
 	{

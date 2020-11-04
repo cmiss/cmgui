@@ -1213,8 +1213,7 @@ try to enforce that the node is created on that element.
 			cmzn_scene_destroy(&scene);
 			cmzn_graphics_destroy(&graphics);
 		}
-		REACCESS(cmzn_scene)(&(node_tool->scene),
-			scene);
+		cmzn_scene::reaccess(node_tool->scene, scene);
 		REACCESS(cmzn_graphics)(&(node_tool->graphics),
 			graphics);
 	}
@@ -1245,8 +1244,7 @@ Resets current edit. Called on button release or when tool deactivated.
 		REACCESS(Interaction_volume)(
 			&(node_tool->last_interaction_volume),
 			(struct Interaction_volume *)NULL);
-		REACCESS(cmzn_scene)(&(node_tool->scene),
-			(struct cmzn_scene *)NULL);
+		cmzn_scene::deaccess(node_tool->scene);
 		REACCESS(cmzn_graphics)(&(node_tool->graphics),
 			(struct cmzn_graphics *)NULL);
 	}
@@ -1429,8 +1427,7 @@ release.
 								}
 								cmzn_field_group_destroy(&selection_group);
 							}
-							REACCESS(cmzn_scene)(&(node_tool->scene),
-								scene);
+							cmzn_scene::reaccess(node_tool->scene, scene);
 							REACCESS(cmzn_graphics)(&(node_tool->graphics),nearest_node_graphics);
 							if (node_tool->define_enabled)
 							{
