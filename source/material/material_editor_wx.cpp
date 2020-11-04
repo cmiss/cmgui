@@ -18,8 +18,8 @@ Widgets for editing a graphical material.
 #if 1
 #include "configure/cmgui_configure.h"
 #endif /* defined (1) */
-#include "graphics/graphics_module.h"
-#include "graphics/scene.h"
+#include "graphics/graphics_module.hpp"
+#include "graphics/scene.hpp"
 #include "opencmiss/zinc/material.h"
 #include "three_d_drawing/graphics_buffer.h"
 #include "command/parser.h"

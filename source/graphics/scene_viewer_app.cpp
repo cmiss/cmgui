@@ -6,7 +6,7 @@
 
 #include "general/debug.h"
 #include "general/message.h"
-#include "graphics/graphics_module.h"
+#include "graphics/graphics_module.hpp"
 #include "graphics/scene_viewer.h"
 #include "graphics/scene_viewer_app.h"
 #include "three_d_drawing/graphics_buffer.h"

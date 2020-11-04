@@ -50,7 +50,6 @@ interest and set scene_viewer values directly.
 #include "graphics/graphics_window.xrch"
 #endif /* defined (WX_USER_INTERFACE)*/
 #include "graphics/light.hpp"
-#include "graphics/scene.h"
 #include "graphics/scene.hpp"
 #include "graphics/scenefilter.hpp"
 #include "graphics/scenefilter_app.hpp"

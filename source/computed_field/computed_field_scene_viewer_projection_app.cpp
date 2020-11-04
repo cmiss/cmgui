@@ -25,7 +25,7 @@ equivalent to the scene_viewer assigned to it.
 #include "general/matrix_vector.h"
 #include "general/mystring.h"
 #include "graphics/graphics_window.h"
-#include "graphics/scene.h"
+#include "graphics/scene.hpp"
 #include "graphics/scene_coordinate_system.hpp"
 #include "graphics/scene_viewer.h"
 #include "general/message.h"

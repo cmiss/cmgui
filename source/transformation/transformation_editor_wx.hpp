@@ -23,7 +23,7 @@ Create a cpp class that act as a transformation editor for the wx widgets.
 
 #include "general/debug.h"
 #include "graphics/auxiliary_graphics_types.h"
-#include "graphics/scene.h"
+#include "graphics/scene.hpp"
 #include "io_devices/matrix.h"
 #include "graphics/graphics_library.h"
 #include "graphics/quaternion.hpp"

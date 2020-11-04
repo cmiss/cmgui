@@ -15,7 +15,7 @@
 #include "command/parser.h"
 #include "general/message.h"
 #include "opencmiss/zinc/region.h"
-#include "graphics/scene.h"
+#include "graphics/scene.hpp"
 #include "graphics/glyph.hpp"
 #include "graphics/glyph_app.h"
 

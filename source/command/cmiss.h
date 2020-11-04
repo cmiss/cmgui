@@ -17,7 +17,7 @@ This should only be included in cmgui.c and command/cmiss.c
 #define COMMAND_CMZN_H
 
 #include "command/command.h"
-#include "context/context.h"
+#include "context/context.hpp"
 #include "context/user_interface_module.h"
 #if defined (BUILD_WITH_CMAKE)
 #include "configure/cmgui_configure.h"
