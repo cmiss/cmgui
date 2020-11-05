@@ -171,54 +171,40 @@ Colour_editor::Colour_editor(wxPanel* parent, const char *panel_name, enum Colou
 	do_layout();
 }
 
+/** Set up sizers to automatically resize widgets in colour editor. */
 void Colour_editor::do_layout()
-/*******************************************************************************
-LAST MODIFIED : 29 November 2007
-
-DESCRIPTION :
-Set up the widgets.
-==============================================================================*/
 {
 	// begin wxGlade: MyFrame::do_layout
-	wxBoxSizer* sizer_1 = new wxBoxSizer(wxVERTICAL);
-	wxBoxSizer* sizer_2 = new wxBoxSizer(wxVERTICAL);
-	wxBoxSizer* sizer_3 = new wxBoxSizer(wxHORIZONTAL);
-	wxBoxSizer* sizer_5 = new wxBoxSizer(wxVERTICAL);
-	wxBoxSizer* sizer_9 = new wxBoxSizer(wxHORIZONTAL);
-	wxBoxSizer* sizer_8 = new wxBoxSizer(wxHORIZONTAL);
-	wxBoxSizer* sizer_7 = new wxBoxSizer(wxHORIZONTAL);
-	wxBoxSizer* sizer_6 = new wxBoxSizer(wxHORIZONTAL);
-	wxBoxSizer* sizer_4 = new wxBoxSizer(wxVERTICAL);
-	wxStaticBoxSizer* sizer_10 = new wxStaticBoxSizer(colour_editor_staticbox, wxHORIZONTAL);
-    sizer_2->Add(title, 0, wxALIGN_CENTER_HORIZONTAL|wxFIXED_MINSIZE, 0);
-    sizer_4->Add(colour_mode_choice, 0, wxALIGN_CENTER_HORIZONTAL|wxFIXED_MINSIZE, 0);
-	sizer_10->Add(colour_palette_panel, 1, wxEXPAND, 0);
-	sizer_4->Add(sizer_10, 1, wxEXPAND, 0);
-	sizer_3->Add(sizer_4, 1, wxEXPAND, 0);
-    sizer_6->Add(colour_editor_colour_text_1, 1, wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL|wxFIXED_MINSIZE, 0);
-    sizer_6->Add(colour_editor_text_ctrl_1, 0, wxRIGHT|wxALIGN_RIGHT|wxALIGN_CENTER_VERTICAL|wxFIXED_MINSIZE, 0);
-	sizer_5->Add(sizer_6, 1, wxEXPAND, 0);
-    sizer_7->Add(colour_editor_slider_1, 1, wxEXPAND|wxFIXED_MINSIZE, 0);
-	sizer_5->Add(sizer_7, 1, wxEXPAND, 0);
-    sizer_8->Add(colour_editor_colour_text_2, 1, wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL|wxFIXED_MINSIZE, 0);
-    sizer_8->Add(colour_editor_text_ctrl_2, 0, wxRIGHT|wxALIGN_RIGHT|wxALIGN_CENTER_VERTICAL|wxFIXED_MINSIZE, 0);
-	sizer_5->Add(sizer_8, 1, wxEXPAND, 0);
-    sizer_5->Add(colour_editor_slider_2, 1, wxEXPAND|wxFIXED_MINSIZE, 0);
-    sizer_9->Add(colour_editor_colour_text_3, 1, wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL|wxFIXED_MINSIZE, 0);
-    sizer_9->Add(colour_editor_text_ctrl_3, 0, wxRIGHT|wxALIGN_RIGHT|wxALIGN_CENTER_VERTICAL|wxFIXED_MINSIZE, 0);
-	sizer_5->Add(sizer_9, 1, wxEXPAND, 0);
-    sizer_5->Add(colour_editor_slider_3, 1, wxEXPAND|wxFIXED_MINSIZE, 0);
-	sizer_3->Add(sizer_5, 1, wxEXPAND, 0);
-	sizer_2->Add(sizer_3, 1, wxEXPAND, 0);
+	wxBoxSizer* topVSizer = new wxBoxSizer(wxVERTICAL);
+	wxBoxSizer* mainHSizer = new wxBoxSizer(wxHORIZONTAL);
+	wxBoxSizer* leftVSizer = new wxBoxSizer(wxVERTICAL);
+	wxBoxSizer* rightVSizer = new wxBoxSizer(wxVERTICAL);
+	wxBoxSizer* comp1Sizer = new wxBoxSizer(wxHORIZONTAL);
+	wxBoxSizer* comp2Sizer = new wxBoxSizer(wxHORIZONTAL);
+	wxBoxSizer* comp3Sizer = new wxBoxSizer(wxHORIZONTAL);
+	wxStaticBoxSizer* colourboxSizer = new wxStaticBoxSizer(colour_editor_staticbox, wxHORIZONTAL);
+	topVSizer->Add(title, 0, wxALIGN_CENTER_HORIZONTAL|wxFIXED_MINSIZE, 0);
+	leftVSizer->Add(colour_mode_choice, 0, wxALIGN_CENTER_HORIZONTAL|wxFIXED_MINSIZE, 0);
+	colourboxSizer->Add(colour_palette_panel, 1, wxEXPAND, 0);
+	leftVSizer->Add(colourboxSizer, 1, wxEXPAND, 0);
+	mainHSizer->Add(leftVSizer, 1, wxEXPAND, 0);
+	comp1Sizer->Add(colour_editor_colour_text_1, 1, wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL|wxFIXED_MINSIZE, 0);
+	comp1Sizer->Add(colour_editor_text_ctrl_1, 0, wxRIGHT|wxALIGN_RIGHT|wxALIGN_CENTER_VERTICAL|wxFIXED_MINSIZE, 0);
+	rightVSizer->Add(comp1Sizer, 1, wxEXPAND, 0);
+	rightVSizer->Add(colour_editor_slider_1, 1, wxEXPAND|wxFIXED_MINSIZE, 0);
+	comp2Sizer->Add(colour_editor_colour_text_2, 1, wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL|wxFIXED_MINSIZE, 0);
+	comp2Sizer->Add(colour_editor_text_ctrl_2, 0, wxRIGHT|wxALIGN_RIGHT|wxALIGN_CENTER_VERTICAL|wxFIXED_MINSIZE, 0);
+	rightVSizer->Add(comp2Sizer, 1, wxEXPAND, 0);
+	rightVSizer->Add(colour_editor_slider_2, 1, wxEXPAND|wxFIXED_MINSIZE, 0);
+	comp3Sizer->Add(colour_editor_colour_text_3, 1, wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL|wxFIXED_MINSIZE, 0);
+	comp3Sizer->Add(colour_editor_text_ctrl_3, 0, wxRIGHT|wxALIGN_RIGHT|wxALIGN_CENTER_VERTICAL|wxFIXED_MINSIZE, 0);
+	rightVSizer->Add(comp3Sizer, 1, wxEXPAND, 0);
+	rightVSizer->Add(colour_editor_slider_3, 1, wxEXPAND|wxFIXED_MINSIZE, 0);
+	mainHSizer->Add(rightVSizer, 1, wxEXPAND, 0);
+	topVSizer->Add(mainHSizer, 1, wxEXPAND, 0);
 	colour_editor_panel->SetAutoLayout(true);
-	colour_editor_panel->SetSizer(sizer_2);
-	sizer_2->Fit(colour_editor_panel);
-	sizer_2->SetSizeHints(colour_editor_panel);
-	sizer_1->Add(colour_editor_panel, 1, wxEXPAND, 0);
+	colour_editor_panel->SetSizerAndFit(topVSizer);
 	colour_editor_panel->SetAutoLayout(true);
-	colour_editor_panel->SetSizer(sizer_1);
-	sizer_1->Fit(colour_editor_panel);
-	sizer_1->SetSizeHints(colour_editor_panel);
 	colour_editor_panel->Layout();
 }
 
