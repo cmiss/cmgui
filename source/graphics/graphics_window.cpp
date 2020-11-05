@@ -867,6 +867,7 @@ the changes are to be applied to all panes.
 					undistort_on=0;
 					max_pixels_per_polygon=0.0;
 				}
+				float background_colour_alpha = static_cast<float>(background_colour.alpha);
 				undistort_flag=0;
 				no_undistort_flag=0;
 				all_panes_flag=0;
@@ -874,6 +875,9 @@ the changes are to be applied to all panes.
 				/* all_panes */
 				Option_table_add_char_flag_entry(option_table, "all_panes",
 					&all_panes_flag);
+				/* alpha */
+				Option_table_add_entry(option_table, "alpha",
+					&background_colour_alpha, NULL, set_float_0_to_1_inclusive);
 				/* colour */
 				Option_table_add_entry(option_table, "colour",
 					&background_colour, NULL, set_Colour);
@@ -894,6 +898,7 @@ the changes are to be applied to all panes.
 					&no_undistort_flag);
 				Option_table_add_suboption_table(option_table, undistort_option_table);
 				return_code=Option_table_multi_parse(option_table, state);
+				background_colour.alpha = static_cast<double>(background_colour_alpha);
 				if (return_code)
 				{
 					if (scene_viewer)
@@ -6759,10 +6764,10 @@ and establishing the views in it to the command window to a com file.
 			/* background */
 			process_message->process_command(INFORMATION_MESSAGE,
 				"gfx modify window %s background",window->name);
-			double rgb[3];
-			cmzn_sceneviewer_get_background_colour_rgb(sceneviewer, rgb);
+			double rgba[4];
+			cmzn_sceneviewer_get_background_colour_rgba(sceneviewer, rgba);
 			process_message->process_command(INFORMATION_MESSAGE,
-				" colour %g %g %g", rgb[0], rgb[1], rgb[2]);
+				" alpha %g colour %g %g %g", rgba[3], rgba[0], rgba[1], rgba[2]);
 			cmzn_field_image_id image_field=
 				Scene_viewer_get_background_image_field(sceneviewer);
 			texture = cmzn_field_image_get_texture(image_field);
