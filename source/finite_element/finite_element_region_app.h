@@ -24,23 +24,6 @@ DESCRIPTION :
 FE_region wrapper for set_FE_fields.
 ==============================================================================*/
 
-int Option_table_add_set_FE_field_from_FE_region(
-	struct Option_table *option_table, const char *entry_string,
-	struct FE_field **fe_field_address, struct FE_region *fe_region);
-/*******************************************************************************
-LAST MODIFIED : 11 March 2003
-
-DESCRIPTION :
-Adds an entry for selecting an FE_field.
-==============================================================================*/
-
-/**
- * Command modifier to translate a node identifier into an accessed node
- * object from fe_nodeset.
- */
-int set_FE_node_FE_nodeset(struct Parse_state *state, void *node_address_void,
-	void *fe_nodeset_void);
-
 int set_FE_element_top_level_FE_region(struct Parse_state *state,
 	void *element_address_void, void *fe_region_void);
 /*******************************************************************************

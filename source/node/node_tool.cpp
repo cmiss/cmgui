@@ -46,7 +46,7 @@ Scene input.
 #include "general/mystring.h"
 #include "graphics/glyph.hpp"
 #include "graphics/graphics_object.h"
-#include "graphics/graphics_module.h"
+#include "graphics/graphics_module.hpp"
 #include "graphics/scene_app.h"
 #include "interaction/interaction_graphics.h"
 #include "interaction/interaction_volume.h"
@@ -58,12 +58,12 @@ Scene input.
 #include "finite_element/finite_element_mesh.hpp"
 #include "finite_element/finite_element_nodeset.hpp"
 #include "finite_element/finite_element_region.h"
-#include "graphics/scene.h"
+#include "graphics/scene.hpp"
 #include "graphics/graphics.h"
-#include "graphics/scene.h"
+#include "graphics/scene.hpp"
 #include "graphics/scene_picker.hpp"
 #include "graphics/scene_viewer.h"
-#include "region/cmiss_region.h"
+#include "region/cmiss_region.hpp"
 #include "general/message.h"
 #include "command/parser.h"
 #include "region/cmiss_region_app.h"
@@ -1213,8 +1213,7 @@ try to enforce that the node is created on that element.
 			cmzn_scene_destroy(&scene);
 			cmzn_graphics_destroy(&graphics);
 		}
-		REACCESS(cmzn_scene)(&(node_tool->scene),
-			scene);
+		cmzn_scene::reaccess(node_tool->scene, scene);
 		REACCESS(cmzn_graphics)(&(node_tool->graphics),
 			graphics);
 	}
@@ -1241,13 +1240,11 @@ Resets current edit. Called on button release or when tool deactivated.
 	ENTER(Node_tool_reset);
 	if (node_tool != 0)
 	{
-		REACCESS(FE_node)(&(node_tool->last_picked_node),
-			(struct FE_node *)NULL);
+		FE_node::reaccess(node_tool->last_picked_node, nullptr);
 		REACCESS(Interaction_volume)(
 			&(node_tool->last_interaction_volume),
 			(struct Interaction_volume *)NULL);
-		REACCESS(cmzn_scene)(&(node_tool->scene),
-			(struct cmzn_scene *)NULL);
+		cmzn_scene::deaccess(node_tool->scene);
 		REACCESS(cmzn_graphics)(&(node_tool->graphics),
 			(struct cmzn_graphics *)NULL);
 	}
@@ -1430,8 +1427,7 @@ release.
 								}
 								cmzn_field_group_destroy(&selection_group);
 							}
-							REACCESS(cmzn_scene)(&(node_tool->scene),
-								scene);
+							cmzn_scene::reaccess(node_tool->scene, scene);
 							REACCESS(cmzn_graphics)(&(node_tool->graphics),nearest_node_graphics);
 							if (node_tool->define_enabled)
 							{
@@ -1484,7 +1480,7 @@ release.
 								node_tool->picked_node_was_unselected=0;
 							}
 						}
-						REACCESS(FE_node)(&(node_tool->last_picked_node),picked_node);
+						FE_node::reaccess(node_tool->last_picked_node, picked_node);
 						/*
 						 * NOTE: make selection the last step so node_tool is in good state before
 						 * receiving code gets to run: consider it capable of changing the current tool!
@@ -1580,8 +1576,7 @@ release.
 									if (picked_node != 0)
 									{
 										Node_tool_set_picked_node(node_tool, picked_node);
-										REACCESS(FE_node)(&(node_tool->last_picked_node),
-											picked_node);
+										FE_node::reaccess(node_tool->last_picked_node, picked_node);
 									}
 								}
 							}

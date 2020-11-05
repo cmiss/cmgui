@@ -23,7 +23,7 @@ Interactive tool for selecting element/grid points with mouse and other devices.
 #include "element/element_point_tool.h"
 #include "finite_element/finite_element_discretization.h"
 #include "general/debug.h"
-#include "graphics/scene.h"
+#include "graphics/scene.hpp"
 #include "graphics/scene_picker.hpp"
 #include "interaction/interaction_graphics.h"
 #include "interaction/interaction_volume.h"

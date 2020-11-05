@@ -12,16 +12,14 @@
 #include "time/time_keeper_app.hpp"
 #include "opencmiss/zinc/fieldgroup.h"
 #include "command/cmiss.h"
-#include "context/context.h"
+#include "context/context.hpp"
 #include "context/context_app.h"
 #include "general/debug.h"
 #include "general/mystring.h"
 #include "general/object.h"
-#include "graphics/graphics_module.h"
-#include "graphics/scene.h"
-#include "region/cmiss_region.h"
-/* following is temporary until circular references are removed for cmzn_region  */
-#include "region/cmiss_region_private.h"
+#include "graphics/graphics_module.hpp"
+#include "graphics/scene.hpp"
+#include "region/cmiss_region.hpp"
 #include <set>
 
 struct cmzn_context_app *cmzn_context_app_access(cmzn_context_app *context);

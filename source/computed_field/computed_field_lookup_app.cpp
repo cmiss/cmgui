@@ -71,7 +71,7 @@ already) and allows its contents to be modified.
 			}
 			if (lookup_node)
 			{
-				node_identifier = get_FE_node_identifier(lookup_node);
+				node_identifier = cmzn_node_get_identifier(lookup_node);
 				FE_nodeset *fe_nodeset = FE_node_get_FE_nodeset(lookup_node);
 				if (fe_nodeset->getFieldDomainType() == CMZN_FIELD_DOMAIN_TYPE_DATAPOINTS)
 				{
@@ -180,7 +180,7 @@ contents to be modified.
 			}
 			if (lookup_node)
 			{
-				node_identifier = get_FE_node_identifier(lookup_node);
+				node_identifier = cmzn_node_get_identifier(lookup_node);
 				FE_nodeset *fe_nodeset = FE_node_get_FE_nodeset(lookup_node);
 				if (fe_nodeset->getFieldDomainType() == CMZN_FIELD_DOMAIN_TYPE_DATAPOINTS)
 				{

@@ -17,8 +17,8 @@
 #include "general/message.h"
 #include "command/parser.h"
 #include "graphics/glyph.hpp"
-#include "graphics/graphics_module.h"
-#include "graphics/scene.h"
+#include "graphics/graphics_module.hpp"
+#include "graphics/scene.hpp"
 #include "graphics/render_gl.h"
 #include "graphics/auxiliary_graphics_types_app.h"
 #include "computed_field/computed_field_set.h"
@@ -32,7 +32,6 @@
 #include "graphics/graphics_app.h"
 #include "general/enumerator_private.hpp"
 #include "graphics/scene_app.h"
-#include "region/cmiss_region_private.h"
 #include "region/cmiss_region_app.h"
 #include "user_interface/user_interface.h"
 
@@ -705,22 +704,6 @@ int define_Scene(struct Parse_state *state, void *dummy_to_be_modified,
 	return 1;
 }
 
-static cmzn_scene_id cmzn_scene_get_parent_scene_internal(cmzn_scene_id scene)
-{
-	cmzn_scene_id parent_scene = 0;
-	if (scene)
-	{
-		cmzn_region_id parent_region = cmzn_region_get_parent_internal(scene->region);
-		if (parent_region)
-		{
-			parent_scene = FIRST_OBJECT_IN_LIST_THAT(ANY_OBJECT(cmzn_scene))(
-				(ANY_OBJECT_CONDITIONAL_FUNCTION(cmzn_scene) *)NULL, (void *)NULL,
-				cmzn_region_private_get_any_object_list(parent_region));
-		}
-	}
-	return parent_scene;
-}
-
 cmzn_field_group_id cmzn_scene_get_selection_group(cmzn_scene_id scene)
 {
 	if (!scene)
@@ -748,7 +731,7 @@ cmzn_field_group_id cmzn_scene_get_or_create_selection_group(cmzn_scene_id scene
 	}
 	else
 	{
-		cmzn_scene_id parent_scene = cmzn_scene_get_parent_scene_internal(scene);
+		cmzn_scene_id parent_scene = scene->getParent();
 		if (parent_scene)
 		{
 			cmzn_field_group_id parent_selection_group = cmzn_scene_get_or_create_selection_group(parent_scene);

@@ -26,8 +26,8 @@ INCLUDE( FunctionDefinitions )
 
 SET( CMGUI_RELEASE FALSE )
 SET( CMGUI_MAJOR_VERSION "3" )
-SET( CMGUI_MINOR_VERSION "0" )
-SET( CMGUI_PATCH_VERSION "2" )
+SET( CMGUI_MINOR_VERSION "2" )
+SET( CMGUI_PATCH_VERSION "0" )
 SET( CMGUI_VERSION ${CMGUI_MAJOR_VERSION}.${CMGUI_MINOR_VERSION}.${CMGUI_PATCH_VERSION} )
 
 find_package(Git)
@@ -76,8 +76,8 @@ FIND_PACKAGE( Zinc REQUIRED )
 
 IF( WX_USER_INTERFACE )
 #	SET( CMAKE_PREFIX_PATH ${WXWIDGETS_INSTALL_PREFIX} )
-        find_package(wxWidgets REQUIRED CONFIG PATH_SUFFIXES share/wxwidgets)
-#	FIND_PACKAGE( wxWidgets REQUIRED COMPONENTS xrc adv html gl xml core base )
+#	find_package(wxWidgets REQUIRED CONFIG PATH_SUFFIXES share/wxwidgets)
+	FIND_PACKAGE( wxWidgets REQUIRED COMPONENTS xrc adv html gl xml core base )
 	SET( CAN_USE_USER_INTERFACE ${wxWidgets_FOUND} )
 ENDIF( WX_USER_INTERFACE )
 #IF( GTK_USER_INTERFACE )
@@ -238,7 +238,10 @@ IF(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" AND (CMAKE_COMPILER_IS_GNUCC OR CMAKE_C
 ENDIF()
 
 target_include_directories(${CMGUI_TARGET} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/source ${CMAKE_CURRENT_BINARY_DIR}/source)
-target_link_libraries(${CMGUI_TARGET} zinc-static cmiss_perl_interpreter wxWidgets::aui wxWidgets::xrc wxWidgets::gl)
+target_link_libraries(${CMGUI_TARGET} zinc-static wxWidgets::aui wxWidgets::xrc wxWidgets::gl)
+if(USE_PERL_INTERPRETER)
+	target_link_libraries(${CMGUI_TARGET} cmiss_perl_interpreter)
+endif()
 
 # On Apple platforms we need to do two extra tasks 1. Create a symbolic link for the
 # application bundle to cmgui for buildbot testing and 2. Remove old Cmgui application

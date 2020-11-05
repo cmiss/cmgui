@@ -7,9 +7,11 @@
 #include <stdio.h>
 
 #include "opencmiss/zinc/element.h"
+#include "opencmiss/zinc/node.h"
 #include "general/debug.h"
 #include "general/message.h"
 #include "command/parser.h"
+#include "finite_element/finite_element_mesh.hpp"
 #include "finite_element/finite_element_nodeset.hpp"
 #include "finite_element/finite_element_region.h"
 // insert app headers here
@@ -83,94 +85,6 @@ FE_region wrapper for set_FE_fields.
 	return (return_code);
 } /* set_FE_fields_FE_region */
 
-int Option_table_add_set_FE_field_from_FE_region(
-	struct Option_table *option_table, const char *entry_string,
-	struct FE_field **fe_field_address, struct FE_region *fe_region)
-/*******************************************************************************
-LAST MODIFIED : 11 March 2003
-
-DESCRIPTION :
-Adds an entry for selecting an FE_field.
-==============================================================================*/
-{
-	int return_code = 0;
-
-	ENTER(Option_table_add_set_FE_field_from_FE_region);
-	if (option_table && entry_string && fe_field_address && fe_region)
-	{
-		Option_table_add_entry(option_table, entry_string,
-			(void *)fe_field_address, FE_region_get_FE_field_list(fe_region),
-			set_FE_field);
-		return_code = 1;
-	}
-	else
-	{
-		display_message(ERROR_MESSAGE,
-			"Option_table_add_set_FE_field_from_FE_region.  Invalid argument(s)");
-	}
-	LEAVE;
-
-	return (return_code);
-} /* Option_table_add_set_FE_field_from_FE_region */
-
-int set_FE_node_FE_nodeset(struct Parse_state *state, void *node_address_void,
-	void *fe_nodeset_void)
-{
-	const char *current_token;
-	int identifier, return_code;
-	struct FE_node *node;
-
-	struct FE_node **node_address = reinterpret_cast<struct FE_node **>(node_address_void);
-	FE_nodeset *fe_nodeset = reinterpret_cast<FE_nodeset*>(fe_nodeset_void);
-	if ((state) && (node_address) && (fe_nodeset))
-	{
-		current_token=state->current_token;
-		if (current_token)
-		{
-			if (strcmp(PARSER_HELP_STRING,current_token)&&
-				strcmp(PARSER_RECURSIVE_HELP_STRING,current_token))
-			{
-				if ((1 == sscanf(current_token, "%d", &identifier)) &&
-					(node = fe_nodeset->findNodeByIdentifier(identifier)))
-				{
-					REACCESS(FE_node)(node_address, node);
-					return_code = shift_Parse_state(state,1);
-				}
-				else
-				{
-					display_message(WARNING_MESSAGE, "Unknown node: %s", current_token);
-					display_parse_state_location(state);
-					return_code = 0;
-				}
-			}
-			else
-			{
-				display_message(INFORMATION_MESSAGE, " NODE_NUMBER");
-				node= *node_address;
-				if (node)
-				{
-					display_message(INFORMATION_MESSAGE, "[%d]",
-						get_FE_node_identifier(node));
-				}
-				return_code = 1;
-			}
-		}
-		else
-		{
-			display_message(WARNING_MESSAGE, "Missing number for node");
-			display_parse_state_location(state);
-			return_code = 1;
-		}
-	}
-	else
-	{
-		display_message(ERROR_MESSAGE,
-			"set_FE_node_FE_nodeset.  Invalid argument(s)");
-		return_code = 0;
-	}
-	return (return_code);
-}
-
 int set_FE_element_top_level_FE_region(struct Parse_state *state,
 	void *element_address_void, void *fe_region_void)
 /*******************************************************************************
@@ -203,7 +117,7 @@ set the seed element for a xi_texture_coordinate computed_field.
 					element = FE_region_get_top_level_FE_element_from_identifier(fe_region, element_number);
 					if (element)
 					{
-						REACCESS(FE_element)(element_address, element);
+						cmzn_element::reaccess(*element_address, element);
 						return_code = 1;
 					}
 				}

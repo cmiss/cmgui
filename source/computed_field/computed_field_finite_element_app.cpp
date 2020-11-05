@@ -50,9 +50,6 @@ int Computed_field_get_type_embedded(struct Computed_field *field,
 	struct Computed_field **source_field_address,
 	struct Computed_field **embedded_location_field_address);
 
-cmzn_field *cmzn_fieldmodule_create_field_finite_element_internal(
-	struct cmzn_fieldmodule *field_module, struct FE_field *fe_field);
-
 cmzn_field *cmzn_fieldmodule_create_field_access_count(
 	cmzn_fieldmodule *fieldmodule);
 
@@ -274,7 +271,7 @@ FE_field being made and/or modified.
 					if (host_mesh)
 					{
 						FE_mesh *fe_mesh = cmzn_mesh_get_FE_mesh_internal(host_mesh);
-						const int result = FE_field_set_element_xi_host_mesh(fe_field, fe_mesh);
+						const int result = fe_field->setElementXiHostMesh(fe_mesh);
 						if (result != CMZN_OK)
 						{
 							return_code = 0;
@@ -305,7 +302,7 @@ FE_field being made and/or modified.
 							}
 						}
 						return_code = field_modify->update_field_and_deaccess(
-							cmzn_fieldmodule_create_field_finite_element_internal(field_module, fe_field));
+							cmzn_fieldmodule_create_field_finite_element_wrapper(field_module, fe_field));
 					}
 					else
 					{
@@ -315,6 +312,7 @@ FE_field being made and/or modified.
 					}
 				}
 				DEALLOCATE(field_name);
+				DEACCESS(FE_field)(&fe_field);
 				cmzn_fieldmodule_end_change(field_module);
 			}
 			/* clean up the component_names array */

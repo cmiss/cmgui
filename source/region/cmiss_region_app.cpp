@@ -11,7 +11,7 @@
 #include "general/debug.h"
 #include "general/object.h"
 #include "command/parser.h"
-#include "region/cmiss_region.h"
+#include "region/cmiss_region.hpp"
 #include "region/cmiss_region_app.h"
 #include "stream/region_stream.hpp"
 

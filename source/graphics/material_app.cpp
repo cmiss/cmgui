@@ -15,7 +15,7 @@
 #include "three_d_drawing/graphics_buffer.h"
 #include "general/message.h"
 #include "computed_field/computed_field_image.h"
-#include "graphics/graphics_module.h"
+#include "graphics/graphics_module.hpp"
 #include "graphics/render_gl.h"
 #include "graphics/material.h"
 #include "graphics/material_app.h"
@@ -1004,5 +1004,5 @@ the <materialmodule> by name.
 	return (return_code);
 } /* Option_table_add_double_vector_with_help_entry */
 
-#include "graphics/graphics_module.h"
+#include "graphics/graphics_module.hpp"
 #include "general/manager_private.h"

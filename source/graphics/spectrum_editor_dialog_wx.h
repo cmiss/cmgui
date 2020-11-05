@@ -16,7 +16,7 @@ Header description for spectrum_editor_dialog widget.
 
 #include "general/manager.h"
 #include "user_interface/user_interface.h"
-#include "graphics/scene.h"
+#include "graphics/scene.hpp"
 
 /*
 Global Types

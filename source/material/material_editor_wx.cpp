@@ -18,8 +18,8 @@ Widgets for editing a graphical material.
 #if 1
 #include "configure/cmgui_configure.h"
 #endif /* defined (1) */
-#include "graphics/graphics_module.h"
-#include "graphics/scene.h"
+#include "graphics/graphics_module.hpp"
+#include "graphics/scene.hpp"
 #include "opencmiss/zinc/material.h"
 #include "three_d_drawing/graphics_buffer.h"
 #include "command/parser.h"
@@ -79,8 +79,8 @@ deaccess it.
 		*specular_colour_editor;
 	void *material_manager_callback_id;
 	cmzn_materialmodule *materialmodule;
-	cmzn_graphics_module *graphics_module;
-  cmzn_region *root_region;
+	cmzn_shadermodule* shadermodule;
+	cmzn_region *root_region;
 }; /* Material_editor */
 
 /*
@@ -359,7 +359,7 @@ Destroys the <*material_editor_address> and sets
 	{
 		Material_editor_remove_widgets(material_editor);
 		cmzn_materialmodule_destroy(&material_editor->materialmodule);
-		cmzn_graphics_module_destroy(&material_editor->graphics_module);
+		cmzn_shadermodule_destroy(&material_editor->shadermodule);
 		cmzn_region_destroy(&material_editor->root_region);
 		DEALLOCATE(*material_editor_address);
 		*material_editor_address = (struct Material_editor *)NULL;
@@ -869,10 +869,8 @@ void OnMaterialEditorAdvancedSettingsChanged(wxCommandEvent& event)
 			bump_mapping_flag = material_editor->material_editor_bump_mapping_checkbox->GetValue();
 			cmzn_field_destroy(&field);
 		}
-		cmzn_shadermodule_id shadermodule = cmzn_graphics_module_get_shadermodule(material_editor->graphics_module);
-		return_code = set_shader_program_type(shadermodule, material_editor->edit_material,
+		return_code = set_shader_program_type(material_editor->shadermodule, material_editor->edit_material,
 			/*bump_mapping_flag */bump_mapping_flag, 0, 0, 0, 0, 0, 0, 0, 1);
-		cmzn_shadermodule_destroy(&shadermodule);
 	}
 	else
 	{
@@ -1177,7 +1175,7 @@ Creates a Material_editor.
 				material_editor->materialmodule = cmzn_graphics_module_get_materialmodule(graphics_module);
 				material_editor->graphical_material_manager =
 					cmzn_materialmodule_get_manager(material_editor->materialmodule);
-				material_editor->graphics_module = cmzn_graphics_module_access(graphics_module);
+				material_editor->shadermodule = cmzn_graphics_module_get_shadermodule(graphics_module);
 				material_editor->root_region = cmzn_region_access(root_region);
 				material_editor->graphics_buffer = (struct Graphics_buffer_app *)NULL;
 				material_editor->current_material=(cmzn_material *)NULL;
