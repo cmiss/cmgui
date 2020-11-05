@@ -4299,7 +4299,9 @@ DESCRIPTION :
 			cmzn_scene::deaccess(region_tree_viewer->scene);
 		cmzn_glyphmodule_destroy(&region_tree_viewer->glyphmodule);
 		delete region_tree_viewer->transformation_editor;
-		delete region_tree_viewer->wx_region_tree_viewer;
+		// Must call wxWindow Destroy method to destroy safely. May defer cleanup of Frames and Dialogs
+		// to idle time else outstanding window events could be sent to non-existent windows
+		region_tree_viewer->wx_region_tree_viewer->Destroy();
 		cmzn_tessellationmodule_destroy(&region_tree_viewer->tessellationmodule);
 		DEALLOCATE(*region_tree_viewer_address);
 		*region_tree_viewer_address = NULL;

@@ -732,7 +732,8 @@ int Node_viewer_destroy(struct Node_viewer **node_viewer_address)
 	{
 		cmzn_fieldmodulenotifier_destroy(&node_viewer->fieldmodulenotifier);
 		if (node_viewer->wx_node_viewer)
-			 delete node_viewer->wx_node_viewer;
+			// Use Destroy method not C++ delete for safety:
+			node_viewer->wx_node_viewer->Destroy();
 		cmzn_timenotifier_destroy(&(node_viewer->timenotifier));
 		cmzn_timekeeper_destroy(&(node_viewer->timekeeper));
 		DEALLOCATE(*node_viewer_address);
