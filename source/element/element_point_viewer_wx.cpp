@@ -2130,7 +2130,8 @@ Destroys the Element_point_viewer. See also Element_point_viewer_close_CB.
 			element_point_viewer->element_point_ranges_selection,
 			Element_point_viewer_element_point_ranges_selection_change,
 			(void *)element_point_viewer);
-		delete element_point_viewer->wx_element_point_viewer;
+		// Use Destroy method not C++ delete for safety:
+		element_point_viewer->wx_element_point_viewer->Destroy();
 		DEALLOCATE(*element_point_viewer_address);
 		element_point_viewer_address = 0;
 		return_code=1;

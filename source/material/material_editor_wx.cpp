@@ -1124,7 +1124,9 @@ int Material_editor_remove_widgets(struct Material_editor *material_editor)
 		}
 		if (material_editor->wx_material_editor)
 		{
-			delete material_editor->wx_material_editor;
+			// Must call wxWindow Destroy method to destroy safely. May defer cleanup of Frames and Dialogs
+			// to idle time else outstanding window events could be sent to non-existent windows
+			material_editor->wx_material_editor->Destroy();
 			material_editor->wx_material_editor = NULL;
 		}
 		if (material_editor->edit_material)

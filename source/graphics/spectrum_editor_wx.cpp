@@ -1819,12 +1819,11 @@ void OnSpectrumEditorRenameSpectrum(wxCommandEvent& event)
 
 void CloseSpectrumEditor(wxCloseEvent &event)
 {
-	 ENTER(CloseSpectrumEditor);
+	ENTER(CloseSpectrumEditor);
 	USE_PARAMETER(event);
-	 spectrum_editor_wx_set_spectrum(spectrum_editor,
-			spectrum_editor->current_spectrum);
-	 DESTROY(Spectrum_editor_dialog)(spectrum_editor->spectrum_editor_dialog_address);
-	 LEAVE;
+	spectrum_editor_wx_set_spectrum(spectrum_editor, spectrum_editor->current_spectrum);
+	DESTROY(Spectrum_editor_dialog)(spectrum_editor->spectrum_editor_dialog_address);
+	LEAVE;
 }
 
 DECLARE_EVENT_TABLE();
@@ -2337,7 +2336,8 @@ Destroys the <*spectrum_editor_address> and sets
 		(spectrum_editor = *spectrum_editor_address))
 	{
 		return_code = 1;
-		delete spectrum_editor->wx_spectrum_editor;
+		// Use Destroy method not C++ delete for safety:
+		spectrum_editor->wx_spectrum_editor->Destroy();
 		cmzn_material_destroy(&spectrum_editor->editorMaterial);
 		cmzn_material_destroy(&spectrum_editor->labelMaterial);
 		cmzn_glyph_colour_bar_destroy(&spectrum_editor->colourBar);
