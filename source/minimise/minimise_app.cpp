@@ -31,30 +31,34 @@ int gfx_minimise(struct Parse_state *state, void *dummy_to_be_modified,
 		int showReport = 1; // output solution report by default
 		const char *optimisation_method_string = 0;
 		Multiple_strings conditionalFieldNames;
-		Multiple_strings independentFieldNames;
+		Multiple_strings dependentFieldNames;
 		Multiple_strings objectiveFieldNames;
 		cmzn_region_id region = cmzn_region_access(root_region);
 
 		Option_table *option_table = CREATE(Option_table)();
 		Option_table_add_help(option_table,
-			"Optimise the parameters of the independent_fields (actually dependent "
-			"fields as far as the optimisation is concerned) to give the minimum "
+			"Optimise the parameters of the dependent_fields (independent_fields "
+			"was incorrect; maintained for compatibility) to give the minimum "
 			"values of the objective_fields' components, equally weighted if more than "
-			"one. The conditional_fields control which parameters of the independent "
+			"one. The conditional_fields control which parameters of the dependent "
 			"fields to use and must be listed in the same order. Parameters are used "
 			"only at nodes where the conditional is non-zero; if the conditional "
-			"field has an equal number of components as the corresponding independent "
+			"field has an equal number of components as the corresponding dependent "
 			"field, the condition is applied per-component. "
 			"Field types 'nodeset_sum_squares' and 'mesh_integral_squares' have "
 			"special behaviour with the LEAST_SQUARES_QUASI_NEWTON solution method, "
 			"supplying individual terms for the least squares solution, useful for "
-			"least squares fitting problems.");
+			"least squares fitting problems. NEWTON method only works with a finite "
+			"element dependent field and no conditional fields.");
 		/* conditional_fields */
 		Option_table_add_multiple_strings_entry(option_table, "conditional_fields",
 			&conditionalFieldNames, "FIELD_NAME|none [& FIELD_NAME|none [& ...]]");
+		/* dependent field(s) */
+		Option_table_add_multiple_strings_entry(option_table, "dependent_fields",
+			&dependentFieldNames, "FIELD_NAME [& FIELD_NAME [& ...]]");
 		/* independent field(s) */
 		Option_table_add_multiple_strings_entry(option_table, "independent_fields",
-			&independentFieldNames, "FIELD_NAME [& FIELD_NAME [& ...]]");
+			&dependentFieldNames, "FIELD_NAME [& FIELD_NAME [& ...]] (DEPRECATED: use dependent_fields)");
 		/* limit the number of iterations (really the number of objective
 		   function evaluations) */
 		Option_table_add_entry(option_table, "maximum_iterations", &maxIters,
@@ -90,11 +94,11 @@ int gfx_minimise(struct Parse_state *state, void *dummy_to_be_modified,
 				display_message(ERROR_MESSAGE, "gfx minimise:  Invalid optimisation method");
 				return_code = 0;
 			}
-			for (int i = 0; i < independentFieldNames.number_of_strings; i++)
+			for (int i = 0; i < dependentFieldNames.number_of_strings; i++)
 			{
-				cmzn_field_id independentField = cmzn_fieldmodule_find_field_by_name(
-					fieldModule, independentFieldNames.strings[i]);
-				if (CMZN_OK == cmzn_optimisation_add_independent_field(optimisation, independentField))
+				cmzn_field_id dependentField = cmzn_fieldmodule_find_field_by_name(
+					fieldModule, dependentFieldNames.strings[i]);
+				if (CMZN_OK == cmzn_optimisation_add_dependent_field(optimisation, dependentField))
 				{
 					const char *conditionalFieldName = conditionalFieldNames[i];
 					if (conditionalFieldName)
@@ -102,11 +106,11 @@ int gfx_minimise(struct Parse_state *state, void *dummy_to_be_modified,
 						cmzn_field_id conditionalField = cmzn_fieldmodule_find_field_by_name(fieldModule, conditionalFieldName);
 						if (conditionalField)
 						{
-							if (CMZN_OK != cmzn_optimisation_set_conditional_field(optimisation, independentField, conditionalField))
+							if (CMZN_OK != cmzn_optimisation_set_conditional_field(optimisation, dependentField, conditionalField))
 							{
 								display_message(ERROR_MESSAGE, "gfx minimise:  "
-									"Conditional field '%s' is not valid for use with independent field '%s'",
-									conditionalFieldName, independentFieldNames.strings[i]);
+									"Conditional field '%s' is not valid for use with dependent field '%s'",
+									conditionalFieldName, dependentFieldNames.strings[i]);
 								return_code = 0;
 							}
 						}
@@ -120,11 +124,11 @@ int gfx_minimise(struct Parse_state *state, void *dummy_to_be_modified,
 				}
 				else
 				{
-					display_message(ERROR_MESSAGE, "gfx minimise:  Invalid or unrecognised independent field '%s'",
-						independentFieldNames.strings[i]);
+					display_message(ERROR_MESSAGE, "gfx minimise:  Invalid or repeated dependent field '%s'",
+						dependentFieldNames.strings[i]);
 					return_code = 0;
 				}
-				cmzn_field_destroy(&independentField);
+				cmzn_field_destroy(&dependentField);
 			}
 			for (int i = 0; i < objectiveFieldNames.number_of_strings; i++)
 			{
