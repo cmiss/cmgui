@@ -21,7 +21,6 @@ SET( CMGUI_MAJOR_VERSION "${PROJECT_VERSION_MAJOR}" )
 SET( CMGUI_MINOR_VERSION "${PROJECT_VERSION_MINOR}" )
 SET( CMGUI_PATCH_VERSION "${PROJECT_VERSION_PATCH}" )
 SET( CMGUI_VERSION ${CMGUI_MAJOR_VERSION}.${CMGUI_MINOR_VERSION}.${CMGUI_PATCH_VERSION} )
-message(STATUS "CMGUI_VERSION: ${CMGUI_VERSION}")
 
 # Find our friendly Zinc CMake config file.
 # We can only use the static version of the library for the Cmgui application.
