@@ -728,6 +728,7 @@ int define_Computed_field_type_find_mesh_location(struct Parse_state *state,
 		return_code = 1;
 		cmzn_mesh_id mesh = 0;
 		cmzn_field_id mesh_field = 0;
+		cmzn_mesh_id search_mesh = 0;
 		cmzn_field_id source_field = 0;
 		int find_nearest_flag = 0;
 		if (NULL != field_modify->get_field())
@@ -741,6 +742,7 @@ int define_Computed_field_type_find_mesh_location(struct Parse_state *state,
 				mesh_field = cmzn_field_get_source_field(field_modify->get_field(), 2);
 				find_nearest_flag = (CMZN_FIELD_FIND_MESH_LOCATION_SEARCH_MODE_EXACT !=
 					cmzn_field_find_mesh_location_get_search_mode(find_mesh_location_field));
+				search_mesh = cmzn_field_find_mesh_location_get_search_mesh(find_mesh_location_field);
 				cmzn_field_find_mesh_location_destroy(&find_mesh_location_field);
 			}
 		}
@@ -753,7 +755,9 @@ int define_Computed_field_type_find_mesh_location(struct Parse_state *state,
 				"and returns the location in the mesh where the mesh_field has the "
 				"same value. Use an embedded field to evaluate other fields on the "
 				"mesh at the found location. Option find_nearest returns the location "
-				"with the nearest value of the mesh_field if no exact match is found.");
+				"with the nearest value of the mesh_field if no exact match is found. "
+				"The optional search_mesh is used to limit the search to a subset e.g. "
+				"face mesh, but values are stored on the main mesh.");
 			// find_nearest|find_exact
 			Option_table_add_switch(option_table,
 				"find_nearest", "find_exact", &find_nearest_flag);
@@ -767,6 +771,8 @@ int define_Computed_field_type_find_mesh_location(struct Parse_state *state,
 				field_modify->get_field_manager();
 			Option_table_add_entry(option_table, "mesh_field", &mesh_field,
 				&set_mesh_field_data, set_Computed_field_conditional);
+			// search_mesh_field
+			Option_table_add_mesh_entry(option_table, "search_mesh", field_modify->get_region(), &search_mesh);
 			// source_field
 			set_source_field_data.conditional_function =
 				Computed_field_has_numerical_components;
@@ -794,9 +800,18 @@ int define_Computed_field_type_find_mesh_location(struct Parse_state *state,
 						cmzn_field_find_mesh_location_set_search_mode(find_mesh_location_field,
 							(find_nearest_flag ? CMZN_FIELD_FIND_MESH_LOCATION_SEARCH_MODE_NEAREST
 							: CMZN_FIELD_FIND_MESH_LOCATION_SEARCH_MODE_EXACT));
+						if ((search_mesh) && (CMZN_OK != cmzn_field_find_mesh_location_set_search_mesh(find_mesh_location_field, search_mesh)))
+						{
+							display_message(ERROR_MESSAGE, "gfx define field find_mesh_location.  Invalid search mesh.");
+							cmzn_field_destroy(&field);
+							return_code = 0;
+						}
+						else
+						{
+							return_code = field_modify->update_field_and_deaccess(field);
+							field = 0;
+						}
 						cmzn_field_find_mesh_location_destroy(&find_mesh_location_field);
-						return_code = field_modify->update_field_and_deaccess(field);
-						field = 0;
 					}
 					else
 					{
@@ -804,8 +819,8 @@ int define_Computed_field_type_find_mesh_location(struct Parse_state *state,
 							(cmzn_field_get_number_of_components(source_field) !=
 								cmzn_field_get_number_of_components(mesh_field)))
 						{
-							display_message(ERROR_MESSAGE, "define_Computed_field_type_find_mesh_location.  "
-								"Failed due to source_field and mesh_field unspecified, or number of components different or lower than mesh dimension.");
+							display_message(ERROR_MESSAGE, "gfx define field find_mesh_location.  "
+								"Failed due to source_field or mesh_field unspecified, or number of components different or lower than mesh dimension.");
 							return_code = 0;
 						}
 					}
@@ -813,17 +828,13 @@ int define_Computed_field_type_find_mesh_location(struct Parse_state *state,
 			}
 		}
 		if (mesh)
-		{
 			cmzn_mesh_destroy(&mesh);
-		}
 		if (mesh_field)
-		{
 			cmzn_field_destroy(&mesh_field);
-		}
+		if (search_mesh)
+			cmzn_mesh_destroy(&search_mesh);
 		if (source_field)
-		{
 			cmzn_field_destroy(&source_field);
-		}
 	}
 	else
 	{
