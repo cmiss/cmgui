@@ -22,7 +22,7 @@
 #endif /* defined (_MSC_VER) */
 //#define WINDOWS_LEAN_AND_MEAN
 #define NOMINMAX
-#include <windows.h>
+//#include <windows.h>
 #include "general/debug.h"
 
 int cmgui_gettimeofday_win32(struct timeval *time, void *timezone)

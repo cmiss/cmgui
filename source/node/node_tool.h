@@ -15,9 +15,9 @@ based on input from devices.
 #if !defined (NODE_TOOL_H)
 #define NODE_TOOL_H
 
+#include "opencmiss/zinc/types/materialid.h"
 #include "command/command.h"
 #include "finite_element/finite_element.h"
-#include "graphics/material.h"
 #include "interaction/interactive_tool.h"
 #include "user_interface/user_interface.h"
 

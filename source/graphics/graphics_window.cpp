@@ -6296,7 +6296,7 @@ Rotations are returned in radians. Note the results are non-unique.
 These rotations are used in the MAYA viewing model.
 ==============================================================================*/
 {
-  int return_code;
+	int return_code;
 	double c, m[9], norm_right[3], norm_view[3], ry[9], rz[9], s, x_view[3];
 
 	ENTER(view_and_up_vectors_to_xyz_rotations);
@@ -6306,9 +6306,13 @@ These rotations are used in the MAYA viewing model.
 		norm_view[1] = view[1];
 		norm_view[2] = view[2];
 		/* establish right vector at view x up and normalise it and view */
-		if ((0.0 != normalize3(norm_view)) &&
-			cross_product3(norm_view, up, norm_right) &&
-			(0.0 != normalize3(norm_right)))
+		bool validView = 0.0 != normalize3(norm_view);
+		if (validView)
+		{
+			cross_product3(norm_view, up, norm_right);
+			validView = 0.0 != normalize3(norm_right);
+		}
+		if (validView)
 		{
 			/* Calculate the z and y rotations */
 			rotations[2] = atan2(norm_right[1], norm_right[0]);

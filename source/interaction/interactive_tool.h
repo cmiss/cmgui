@@ -19,6 +19,7 @@ content of the global selections and objects with text input.
 #if !defined (INTERACTIVE_TOOL_H)
 #define INTERACTIVE_TOOL_H
 
+#include "opencmiss/zinc/types/sceneviewerid.h"
 #include "general/image_utilities.h"
 #include "general/list.h"
 #include "general/manager.h"

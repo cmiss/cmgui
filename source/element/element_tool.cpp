@@ -41,7 +41,6 @@ Interactive tool for selecting elements with mouse and other devices.
 #include "graphics/scene_app.h"
 #include "graphics/scene_viewer.h"
 #include "graphics/graphics.h"
-#include "graphics/material.h"
 #include "graphics/scene_picker.hpp"
 #include "region/cmiss_region.hpp"
 #include "time/time_keeper_app.hpp"
