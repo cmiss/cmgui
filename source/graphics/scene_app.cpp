@@ -589,7 +589,7 @@ int cmzn_scene_add_glyph(struct cmzn_scene *scene,
 cmzn_graphics* cmzn_scene_create_graphics_app(cmzn_scene *scene,
 	cmzn_graphics_type graphics_type, cmzn_graphics *graphics_to_copy)
 {
-	cmzn_graphics *graphics = CREATE(cmzn_graphics)(graphics_type);
+	cmzn_graphics *graphics = cmzn_graphics::create(graphics_type);
 	if (graphics_to_copy &&
 		(graphics_type == cmzn_graphics_get_type(graphics_to_copy)))
 	{

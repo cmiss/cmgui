@@ -9,7 +9,7 @@
 #include "general/debug.h"
 #include "general/message.h"
 #include "command/parser.h"
-#include "graphics/graphics.h"
+#include "graphics/graphics.hpp"
 #include "graphics/scenefilter.hpp"
 #include "graphics/scenefilter_app.hpp"
 

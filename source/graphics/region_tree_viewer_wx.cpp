@@ -59,7 +59,7 @@ codes used to build scene editor with wxWidgets.
 #include "graphics/region_tree_viewer_wx.h"
 #include "graphics/font.h"
 #include "graphics/scene.hpp"
-#include "graphics/graphics.h"
+#include "graphics/graphics.hpp"
 #include "graphics/graphics_module.hpp"
 #include "graphics/scene_coordinate_system.hpp"
 #include "graphics/tessellation.hpp"
@@ -512,7 +512,7 @@ class wxRegionTreeViewer : public wxFrame
 	wxSplitterWindow *lowersplitter, *verticalsplitter;
 	wxCheckListBox *scenechecklist,*graphicalitemschecklist;
 	wxListBox *scenelistbox,*graphicalitemslistbox;
-	wxStaticText *currentsceneobjecttext,
+	wxStaticText *boundary_mode_text, *currentsceneobjecttext,
 		*isoscalartext, *glyphtext, *offsettext, *baseglyphsizetext, *select_mode_text,
 		*glyphscalefactorstext, *domaintypetext, *sampling_mode_text,
 		*tessellationtext, *glyph_repeat_mode_text, *labeloffsettext,
@@ -522,7 +522,7 @@ class wxRegionTreeViewer : public wxFrame
 		*point_size_text, *render_polygon_mode_text,
 		*staticlabeltext, *fonttext;
 	wxButton *sceneupbutton, scenedownbutton, *applybutton, *revertbutton, *tessellationbutton;
-	wxCheckBox *autocheckbox, *exteriorcheckbox, *seedelementcheckbox;
+	wxCheckBox *autocheckbox, *seedelementcheckbox;
 	wxRadioButton *isovaluelistradiobutton, *isovaluesequenceradiobutton;
 	wxPanel *isovalueoptionspane;
 	wxTextCtrl *nametextfield, *linescalefactorstextctrl, *isoscalartextctrl, *offsettextctrl,
@@ -531,7 +531,7 @@ class wxRegionTreeViewer : public wxFrame
 		*line_width_text_ctrl,*isovaluesequencenumbertextctrl, *isovaluesequencefirsttextctrl,
 		*isovaluesequencelasttextctrl, *labeloffsettextctrl,
 		*point_size_text_ctrl, *staticlabeltextctrl[3];
-	wxPanel	*coordinate_field_chooser_panel, *coordinate_system_chooser_panel, *data_chooser_panel,
+	wxPanel *boundary_mode_chooser_panel, *coordinate_field_chooser_panel, *coordinate_system_chooser_panel, *data_chooser_panel,
 		*line_orientation_scale_field_chooser_panel, *isoscalar_chooser_panel, *glyph_chooser_panel,
 		*glyph_repeat_mode_chooser_panel,
 		*orientation_scale_field_chooser_panel, *variable_scale_field_chooser_panel,
@@ -618,6 +618,9 @@ class wxRegionTreeViewer : public wxFrame
 	DEFINE_ENUMERATOR_TYPE_CLASS(cmzn_graphics_render_polygon_mode);
 	Enumerator_chooser<ENUMERATOR_TYPE_CLASS(cmzn_graphics_render_polygon_mode)>
 	*render_polygon_mode_chooser;
+	DEFINE_ENUMERATOR_TYPE_CLASS(cmzn_graphics_boundary_mode);
+	Enumerator_chooser<ENUMERATOR_TYPE_CLASS(cmzn_graphics_boundary_mode)>
+		*boundary_mode_chooser;
 	DEFINE_ENUMERATOR_TYPE_CLASS(cmzn_graphics_streamlines_track_direction);
 	Enumerator_chooser<ENUMERATOR_TYPE_CLASS(cmzn_graphics_streamlines_track_direction)>
 		*streamlines_track_direction_chooser;
@@ -753,6 +756,7 @@ public:
 	streamlines_colour_data_type_chooser = NULL;
 	texture_coord_field_chooser = NULL;
 	render_polygon_mode_chooser = NULL;
+	boundary_mode_chooser = NULL;
 	seed_element_chooser = NULL;
 	streamlines_track_direction_chooser = 0;
 	graphicalitemschecklist = NULL;
@@ -855,6 +859,7 @@ public:
 		delete streamlines_colour_data_type_chooser;
 		delete texture_coord_field_chooser;
 		delete render_polygon_mode_chooser;
+		delete boundary_mode_chooser;
 		delete seed_element_chooser;
 		delete coordinate_system_chooser;
 		delete streamlines_track_direction_chooser;
@@ -1208,22 +1213,19 @@ int domain_type_callback(enum cmzn_field_domain_type domain_type)
 		domain_type_chooser->set_value(cmzn_graphics_get_field_domain_type(region_tree_viewer->current_graphics));
 		return 1;
 	}
-
-	exteriorcheckbox=XRCCTRL(*this,"ExteriorCheckBox",wxCheckBox);
 	facechoice=XRCCTRL(*this, "FaceChoice",wxChoice);
 	if ((CMZN_FIELD_DOMAIN_TYPE_MESH1D == domain_type) ||
 		(CMZN_FIELD_DOMAIN_TYPE_MESH2D == domain_type))
 	{
-		exteriorcheckbox->Enable();
-		cmzn_graphics_set_exterior(region_tree_viewer->current_graphics,
-			exteriorcheckbox->IsChecked());
+		this->boundary_mode_chooser->set_value(cmzn_graphics_get_boundary_mode(region_tree_viewer->current_graphics));
+		this->boundary_mode_chooser_panel->Enable();
 		facechoice->Enable();
 		cmzn_element_face_type faceType = static_cast<cmzn_element_face_type>(facechoice->GetSelection() + CMZN_ELEMENT_FACE_TYPE_ALL);
 		cmzn_graphics_set_element_face_type(region_tree_viewer->current_graphics, faceType);
 	}
 	else
 	{
-		exteriorcheckbox->Disable();
+		this->boundary_mode_chooser_panel->Disable();
 		facechoice->Disable();
 	}
 	show_sampling_widgets();
@@ -2511,16 +2513,17 @@ void EnterPointSize(wxCommandEvent &event)
 	point_size_text_ctrl->SetValue(wxString::FromAscii(temp_string));
 }
 
-void ExteriorChecked(wxCommandEvent &event)
+
+/** Callback from wxChooser<Render Type> when choice is made. */
+int boundary_mode_callback(enum cmzn_graphics_boundary_mode boundary_mode)
 {
-	USE_PARAMETER(event);
-	exteriorcheckbox=XRCCTRL(*this,"ExteriorCheckBox",wxCheckBox);
-	cmzn_graphics_set_exterior(region_tree_viewer->current_graphics,
-		exteriorcheckbox->IsChecked());
-		/* inform the client of the change */
+	cmzn_graphics_set_boundary_mode(
+		region_tree_viewer->current_graphics, boundary_mode);
+	/* inform the client of the change */
 	Region_tree_viewer_autoapply(region_tree_viewer->scene,
 		region_tree_viewer->edit_scene);
 	//Region_tree_viewer_renew_label_on_list(region_tree_viewer->current_graphics);
+	return 1;
 }
 
 void FaceChosen(wxCommandEvent &event)
@@ -2548,7 +2551,6 @@ void SetGraphics(cmzn_graphics *graphics)
 {
 	int error;
 	char temp_string[100], *vector_temp_string;
-	enum cmzn_graphics_render_polygon_mode render_polygon_mode;
 	struct FE_element *seed_element;
 
 	const cmzn_graphics_type graphics_type = cmzn_graphics_get_type(graphics);
@@ -3447,7 +3449,7 @@ void SetGraphics(cmzn_graphics *graphics)
 		render_polygon_mode_chooser_panel=XRCCTRL(*this,"RenderPolygonModeChooserPanel",wxPanel);
 		render_polygon_mode_text->Show();
 		render_polygon_mode_chooser_panel->Show();
-		render_polygon_mode=cmzn_graphics_get_render_polygon_mode(graphics);
+		cmzn_graphics_render_polygon_mode render_polygon_mode = cmzn_graphics_get_render_polygon_mode(graphics);
 		if (render_polygon_mode_chooser == NULL)
 		{
 			render_polygon_mode_chooser =
@@ -3464,23 +3466,42 @@ void SetGraphics(cmzn_graphics *graphics)
 		}
 		render_polygon_mode_chooser->set_value(render_polygon_mode);
 
-		exteriorcheckbox=XRCCTRL(*this,"ExteriorCheckBox",wxCheckBox);
+		/* boundary_mode */
+		boundary_mode_text = XRCCTRL(*this, "BoundaryModeText", wxStaticText);
+		boundary_mode_chooser_panel = XRCCTRL(*this, "BoundaryModeChooserPanel", wxPanel);
+		boundary_mode_text->Show();
+		boundary_mode_chooser_panel->Show();
+		cmzn_graphics_boundary_mode boundary_mode = cmzn_graphics_get_boundary_mode(graphics);
+		if (boundary_mode_chooser == NULL)
+		{
+			boundary_mode_chooser =
+				new Enumerator_chooser<ENUMERATOR_TYPE_CLASS(cmzn_graphics_boundary_mode)>
+				(boundary_mode_chooser_panel, boundary_mode,
+				(ENUMERATOR_CONDITIONAL_FUNCTION(cmzn_graphics_boundary_mode) *)NULL,
+					(void *)NULL, region_tree_viewer->user_interface);
+			boundary_mode_chooser_panel->Fit();
+			Callback_base< enum cmzn_graphics_boundary_mode > *boundary_mode_callback =
+				new Callback_member_callback< enum cmzn_graphics_boundary_mode,
+				wxRegionTreeViewer, int (wxRegionTreeViewer::*)(enum cmzn_graphics_boundary_mode) >
+				(this, &wxRegionTreeViewer::boundary_mode_callback);
+			boundary_mode_chooser->set_callback(boundary_mode_callback);
+		}
+		boundary_mode_chooser->set_value(boundary_mode);
+
 		facechoice=XRCCTRL(*this, "FaceChoice",wxChoice);
 		cmzn_field_domain_type domain_type = cmzn_graphics_get_field_domain_type(graphics);
-		exteriorcheckbox->Show();
 		facechoice->Show();
 		if ((CMZN_FIELD_DOMAIN_TYPE_MESH1D == domain_type) ||
 			(CMZN_FIELD_DOMAIN_TYPE_MESH2D == domain_type))
 		{
-			exteriorcheckbox->Enable();
+			boundary_mode_chooser_panel->Enable();
 			facechoice->Enable();
 		}
 		else
 		{
-			exteriorcheckbox->Disable();
+			boundary_mode_chooser_panel->Disable();
 			facechoice->Disable();
 		}
-		exteriorcheckbox->SetValue(cmzn_graphics_is_exterior(graphics));
 		cmzn_element_face_type faceType = cmzn_graphics_get_element_face_type(graphics);
 		facechoice->SetSelection(static_cast<int>(faceType) - CMZN_ELEMENT_FACE_TYPE_ALL);
 		cmzn_graphics_contours_destroy(&contours);
@@ -3767,7 +3788,6 @@ BEGIN_EVENT_TABLE(wxRegionTreeViewer, wxFrame)
 	EVT_TEXT_ENTER(XRCID("LineScaleFactorsTextCtrl"), wxRegionTreeViewer::EnterLineScaleFactors)
 	EVT_TEXT_ENTER(XRCID("LineWidthTextCtrl"),wxRegionTreeViewer::EnterLineWidth)
 	EVT_TEXT_ENTER(XRCID("PointSizeTextCtrl"),wxRegionTreeViewer::EnterPointSize)
-	EVT_CHECKBOX(XRCID("ExteriorCheckBox"),wxRegionTreeViewer::ExteriorChecked)
 	EVT_CHOICE(XRCID("FaceChoice"),wxRegionTreeViewer::FaceChosen)
 	EVT_TREE_SEL_CHANGED(wxID_ANY, wxRegionTreeViewer::TreeControlSelectionChanged)
 	EVT_CUSTOM(wxEVT_TREE_IMAGE_CLICK_EVENT, wxID_ANY, wxRegionTreeViewer::TreeControlImageClicked)
