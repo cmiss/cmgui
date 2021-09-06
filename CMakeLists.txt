@@ -8,30 +8,32 @@
 
 cmake_minimum_required( VERSION 3.10 )
 
-project(CmguiApplication)
+project(CmguiApplication VERSION 3.2.0 LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 11)
-# Check bare minimum configuration
-set(CMGUI_CMAKE_MODULE_PATH "${CMGUI_CMAKE_MODULE_PATH}" CACHE STRING "Location of OpenCMISS CMake modules.")
-if (NOT EXISTS "${CMGUI_CMAKE_MODULE_PATH}/OpenCMISS/OCMiscFunctions.cmake")
-    message(FATAL_ERROR "'${CMGUI_CMAKE_MODULE_PATH}/OpenCMISS/OCMiscFunctions.cmake' does not exists.  The OpenCMISS CMake modules may not be installed/available.")
-endif ()
 
 list(INSERT CMAKE_MODULE_PATH 0 "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
-list(APPEND CMAKE_MODULE_PATH "${CMGUI_CMAKE_MODULE_PATH}/FindModuleWrappers")
-list(APPEND CMAKE_MODULE_PATH "${CMGUI_CMAKE_MODULE_PATH}")
-list(APPEND CMAKE_MODULE_PATH "${CMGUI_CMAKE_MODULE_PATH}/OpenCMISS")
 
 INCLUDE( FunctionDefinitions )
 
 SET( CMGUI_RELEASE FALSE )
-SET( CMGUI_MAJOR_VERSION "3" )
-SET( CMGUI_MINOR_VERSION "2" )
-SET( CMGUI_PATCH_VERSION "0" )
+SET( CMGUI_MAJOR_VERSION "${PROJECT_VERSION_MAJOR}" )
+SET( CMGUI_MINOR_VERSION "${PROJECT_VERSION_MINOR}" )
+SET( CMGUI_PATCH_VERSION "${PROJECT_VERSION_PATCH}" )
 SET( CMGUI_VERSION ${CMGUI_MAJOR_VERSION}.${CMGUI_MINOR_VERSION}.${CMGUI_PATCH_VERSION} )
+
+# Find our friendly Zinc CMake config file.
+# We can only use the static version of the library for the Cmgui application.
+SET( ZINC_USE_STATIC TRUE )
+SET( REQUIRE_INTERNAL_ZINC_INCLUDE_DIR TRUE )
+find_package( Zinc REQUIRED )
+
+find_package(cmiss_perl_interpreter QUIET)
 
 find_package(Git)
 if (GIT_FOUND)
+    # The git_get_revision function is in the CMake modules for Zinc.
+    # This means we have to find Zinc before we can use this function.
     git_get_revision(CMGUI_REVISION_LONG)
     string(SUBSTRING ${CMGUI_REVISION_LONG} 0 6 CMGUI_REVISION)
     git_is_dirty(_IS_DIRTY)
@@ -61,34 +63,15 @@ SET( CMAKE_BUILD_TYPE ${CMGUI_BUILD_TYPE} CACHE INTERNAL "Internalise CMAKE_BUIL
 
 SET( WXWIDGETS_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}" CACHE PATH "Location of the Cmgui's wxWidgets libraries." )
 
-find_package(cmiss_perl_interpreter QUIET)
+set(USE_PERL_INTERPRETER ${CMISS_PERL_INTERPRETER_FOUND} CACHE BOOL "Do you want to use the perl interpreter?")
+set(WX_USER_INTERFACE TRUE)
+set(GTK_USER_INTERFACE FALSE)
+set(WIN32_USER_INTERFACE FALSE)
 
-OPTION( USE_PERL_INTERPRETER "Do you want to use the perl interpreter?" ${CMISS_PERL_INTERPRETER_FOUND} )
-OPTION( WX_USER_INTERFACE "use wx for interface." )
-OPTION( GTK_USER_INTERFACE "use gtk for interface." )
-OPTION( WIN32_USER_INTERFACE "use win32 for interface." )
-
-# Find our friendly Zinc CMake config file.
-# We can only use the static version of the library for the Cmgui application
-SET( ZINC_USE_STATIC TRUE )
-SET( REQUIRE_INTERNAL_ZINC_INCLUDE_DIR TRUE )
-FIND_PACKAGE( Zinc REQUIRED )
-
-IF( WX_USER_INTERFACE )
-#	SET( CMAKE_PREFIX_PATH ${WXWIDGETS_INSTALL_PREFIX} )
-#	find_package(wxWidgets REQUIRED CONFIG PATH_SUFFIXES share/wxwidgets)
-	FIND_PACKAGE( wxWidgets REQUIRED COMPONENTS xrc adv html gl xml core base )
-	SET( CAN_USE_USER_INTERFACE ${wxWidgets_FOUND} )
-ENDIF( WX_USER_INTERFACE )
-#IF( GTK_USER_INTERFACE )
-#	FIND_PACKAGE( GTK2 REQUIRED gtk)
-#	FIND_PACKAGE( GTKGLext REQUIRED )
-#	SET( CAN_USE_USER_INTERFACE ${GTK2_FOUND} )
-#ENDIF( GTK_USER_INTERFACE )
-#IF( WIN32_USER_INTERFACE AND WIN32 )
-#	SET( CAN_USE_USER_INTERFACE TRUE )
-#ENDIF( WIN32_USER_INTERFACE AND WIN32 )
-
+if( WX_USER_INTERFACE )
+    find_package( wxWidgets REQUIRED COMPONENTS xrc adv html gl xml core base CONFIG)
+    set( CAN_USE_USER_INTERFACE ${wxWidgets_FOUND} )
+endif( WX_USER_INTERFACE )
 
 IF(WIN32)
         SET( WIN32_SYSTEM TRUE )
