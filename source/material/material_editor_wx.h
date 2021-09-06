@@ -14,7 +14,6 @@ Widgets for editing a graphical material.
 #if !defined (MATERIAL_EDITOR_WX_H)
 #define MATERIAL_EDITOR_WX_H
 
-#include "graphics/material.h"
 #include "graphics/material_app.h"
 #include "user_interface/user_interface.h"
 

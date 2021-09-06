@@ -359,7 +359,7 @@ name the <file_operation> is performed on the file with the <arguments>.
 					 drive_name[length-1]='\0';
 					 if (ALLOCATE(temp_string,char,length+13))
 					 {
-							strcpy(temp_string, "set dir \/d ");
+							strcpy(temp_string, "set dir /d ");
 							strcat(temp_string, drive_name);
 							strcat(temp_string, "\\");
 							temp_string[length+12]='\0';
@@ -641,7 +641,7 @@ specified file.
 					 drive_name[length-1]='\0';
 					 if (ALLOCATE(temp_string,char,length+13))
 					 {
-							strcpy(temp_string, "set dir \/d ");
+							strcpy(temp_string, "set dir /d ");
 							strcat(temp_string, drive_name);
 							strcat(temp_string, "\\");
 							temp_string[length+12]='\0';

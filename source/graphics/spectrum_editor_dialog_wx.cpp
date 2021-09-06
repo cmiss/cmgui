@@ -19,7 +19,6 @@ This module creates a spectrum_editor_dialog.
 #include "general/manager.h"
 #include "general/object.h"
 #include "graphics/light.hpp"
-#include "graphics/material.h"
 #include "graphics/spectrum.h"
 #include "graphics/spectrum_editor_wx.h"
 #include "graphics/spectrum_editor_dialog_wx.h"

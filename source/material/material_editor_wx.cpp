@@ -18,17 +18,17 @@ Widgets for editing a graphical material.
 #if 1
 #include "configure/cmgui_configure.h"
 #endif /* defined (1) */
-#include "graphics/graphics_module.hpp"
-#include "graphics/scene.hpp"
 #include "opencmiss/zinc/material.h"
 #include "three_d_drawing/graphics_buffer.h"
 #include "command/parser.h"
 #include "computed_field/computed_field.h"
 #include "computed_field/computed_field_image.h"
 #include "general/debug.h"
-#include "graphics/graphics_library.h"
-#include "graphics/material.h"
 #include "graphics/font.h"
+#include "graphics/graphics_library.h"
+#include "graphics/graphics_module.hpp"
+#include "graphics/material.hpp"
+#include "graphics/scene.hpp"
 #include "graphics/texture.h"
 #include "material/material_editor_wx.h"
 #include "general/message.h"
@@ -1176,7 +1176,7 @@ Creates a Material_editor.
 				material_editor->background=0; /* tri-colour */
 				material_editor->materialmodule = cmzn_graphics_module_get_materialmodule(graphics_module);
 				material_editor->graphical_material_manager =
-					cmzn_materialmodule_get_manager(material_editor->materialmodule);
+					material_editor->materialmodule->getManager();
 				material_editor->shadermodule = cmzn_graphics_module_get_shadermodule(graphics_module);
 				material_editor->root_region = cmzn_region_access(root_region);
 				material_editor->graphics_buffer = (struct Graphics_buffer_app *)NULL;

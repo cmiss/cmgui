@@ -17,7 +17,7 @@
 #include "computed_field/computed_field_image.h"
 #include "graphics/graphics_module.hpp"
 #include "graphics/render_gl.h"
-#include "graphics/material.h"
+#include "graphics/material.hpp"
 #include "graphics/material_app.h"
 #include "graphics/shader_program.hpp"
 
@@ -94,7 +94,7 @@ If the material already exists, then behaves like gfx modify material.
 						{
 							cmzn_material_set_managed(material, true);
 							ADD_OBJECT_TO_MANAGER(cmzn_material)(material,
-								cmzn_materialmodule_get_manager(materialmodule));
+								materialmodule->getManager());
 						}
 						cmzn_material_destroy(&material);
 					}
@@ -326,7 +326,7 @@ DESCRIPTION :
 				if (material_to_be_modified)
 				{
 					if (IS_MANAGED(cmzn_material)(material_to_be_modified,
-						cmzn_materialmodule_get_manager(materialmodule)))
+						materialmodule->getManager()))
 					{
 						material_to_be_modified_copy = cmzn_material_create_private();
 						cmzn_material_set_name(material_to_be_modified_copy, "copy");
@@ -356,7 +356,7 @@ DESCRIPTION :
 						strcmp(PARSER_RECURSIVE_HELP_STRING,current_token))
 					{
 						material_to_be_modified=FIND_BY_IDENTIFIER_IN_MANAGER(cmzn_material,name)(current_token,
-							cmzn_materialmodule_get_manager(materialmodule));
+							materialmodule->getManager());
 						if (material_to_be_modified)
 						{
 							return_code=shift_Parse_state(state,1);
@@ -532,7 +532,7 @@ DESCRIPTION :
 						"colour_lookup_red", &colour_lookup_red_flag);
 					Option_table_add_entry(option_table, "colour_lookup_spectrum",
 						&(material_to_be_modified_copy->spectrum),
-						cmzn_materialmodule_get_spectrum_manager(materialmodule),
+						materialmodule->getSpectrumManager(),
 						set_Spectrum);
 					Option_table_add_entry(option_table, "diffuse",
 						&(material_to_be_modified_copy->diffuse), NULL,
@@ -797,7 +797,7 @@ DESCRIPTION :
 							{
 								MANAGER_MODIFY_NOT_IDENTIFIER(cmzn_material,name)(
 									material_to_be_modified,material_to_be_modified_copy,
-									cmzn_materialmodule_get_manager(materialmodule));
+									materialmodule->getManager());
 								material_copy_bump_mapping_and_per_pixel_lighting_flag(
 									 material_to_be_modified_copy, material_to_be_modified);
 								cmzn_material_destroy(&material_to_be_modified_copy);
@@ -991,7 +991,7 @@ the <materialmodule> by name.
 	if (option_table && token)
 	{
 		return_code = Option_table_add_entry(option_table, token, (void *)material,
-			(void *)cmzn_materialmodule_get_manager(materialmodule), set_Graphical_material);
+			(void *)materialmodule->getManager(), set_Graphical_material);
 	}
 	else
 	{

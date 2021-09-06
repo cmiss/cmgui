@@ -14,7 +14,7 @@ Interactive tool for selecting element/grid points with mouse and other devices.
 #if !defined (ELEMENT_POINT_TOOL_H)
 #define ELEMENT_POINT_TOOL_H
 
-#include "graphics/material.h"
+#include "opencmiss/zinc/types/materialid.h"
 #include "interaction/interactive_tool.h"
 #include "selection/element_point_ranges_selection.h"
 #include "time/time_keeper_app.hpp"

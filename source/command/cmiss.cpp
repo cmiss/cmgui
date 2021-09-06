@@ -117,7 +117,7 @@
 #include "graphics/graphics_window.h"
 #include "graphics/iso_field_calculation.h"
 #include "graphics/light.hpp"
-#include "graphics/material.h"
+#include "graphics/material.hpp"
 #include "graphics/glyph.hpp"
 #include "graphics/glyph_colour_bar.hpp"
 #include "graphics/graphics.h"
@@ -5961,7 +5961,7 @@ Executes a GFX DESTROY command.
 					command_data_void, gfx_destroy_elements);
 				/* material */
 				Option_table_add_entry(option_table, "material", NULL,
-					cmzn_materialmodule_get_manager(command_data->materialmodule), gfx_destroy_material);
+					command_data->materialmodule->getManager(), gfx_destroy_material);
 				/* ngroup */
 				Option_table_add_entry(option_table, "ngroup", NULL,
 					command_data->root_region, gfx_destroy_group);
@@ -6313,7 +6313,7 @@ Executes a GFX EDIT_SCENE command.  Brings up the Region_tree_viewer.
 					(!CREATE(Region_tree_viewer)(	&(command_data->region_tree_viewer),
 						command_data->graphics_module,
 						command_data->root_region,
-						cmzn_materialmodule_get_manager(command_data->materialmodule),
+						command_data->materialmodule->getManager(),
 						defaultMaterial,
 						command_data->default_font,
 						command_data->glyphmodule,
@@ -8324,7 +8324,7 @@ Executes a GFX LIST ALL_COMMANDS.
 				}
 				/* Command of graphical_material */
 				if (NULL != (graphical_material_manager =
-					cmzn_materialmodule_get_manager(command_data->materialmodule)))
+					command_data->materialmodule->getManager()))
 				{
 					command_prefix="gfx create material ";
 					return_code=FOR_EACH_OBJECT_IN_MANAGER(cmzn_material)(
@@ -10195,7 +10195,7 @@ Executes a GFX LIST command.
 				NULL, gfx_list_light_model);
 			/* material */
 			Option_table_add_entry(option_table, "material", NULL,
-				cmzn_materialmodule_get_manager(command_data->materialmodule), gfx_list_graphical_material);
+				command_data->materialmodule->getManager(), gfx_list_graphical_material);
 #if defined (SGI_MOVIE_FILE)
 			/* movie */
 			Option_table_add_entry(option_table, "movie", NULL,
@@ -11334,7 +11334,7 @@ Executes a GFX MODIFY command.
 #endif
 				/* environment_map */
 				modify_environment_map_data.graphical_material_manager=
-					cmzn_materialmodule_get_manager(command_data->materialmodule);
+					command_data->materialmodule->getManager();
 				modify_environment_map_data.environment_map_manager=
 					command_data->environment_map_manager;
 				Option_table_add_entry(option_table,"environment_map",NULL,
@@ -13971,7 +13971,7 @@ Can also write individual groups with the <group> option.
 										 for_each_spectrum_list_or_write_commands, (void *)"true", command_data->spectrum_manager);
 							 }
 							 if (NULL != (graphical_material_manager =
-									cmzn_materialmodule_get_manager(command_data->materialmodule)))
+									command_data->materialmodule->getManager()))
 							 {
 									command_prefix="gfx create material ";
 									return_code=FOR_EACH_OBJECT_IN_MANAGER(cmzn_material)(
