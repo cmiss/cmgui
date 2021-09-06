@@ -59,7 +59,7 @@ Scene input.
 #include "finite_element/finite_element_nodeset.hpp"
 #include "finite_element/finite_element_region.h"
 #include "graphics/scene.hpp"
-#include "graphics/graphics.h"
+#include "graphics/graphics.hpp"
 #include "graphics/scene.hpp"
 #include "graphics/scene_picker.hpp"
 #include "graphics/scene_viewer.h"

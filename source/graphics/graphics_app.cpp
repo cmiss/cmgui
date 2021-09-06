@@ -23,7 +23,7 @@
 #include "general/message.h"
 #include "command/parser.h"
 #include "graphics/glyph.hpp"
-#include "graphics/graphics.h"
+#include "graphics/graphics.hpp"
 #include "graphics/graphics_app.h"
 #include "graphics/graphics_module.hpp"
 #include "graphics/scene.hpp"
@@ -49,6 +49,15 @@ enum Legacy_graphics_type
 	LEGACY_GRAPHIC_ELEMENT_POINTS,
 	LEGACY_GRAPHIC_CYLINDERS,
 	LEGACY_GRAPHIC_ISO_SURFACES
+};
+
+// for passing to setEnum modifier function template
+struct cmzn_graphics_boundary_mode_to_string
+{
+	static inline const char *toString(cmzn_graphics_boundary_mode boundaryMode)
+	{
+		return ENUMERATOR_STRING(cmzn_graphics_boundary_mode)(boundaryMode);
+	}
 };
 
 int gfx_modify_scene_graphics(struct Parse_state *state,
@@ -172,6 +181,16 @@ int gfx_modify_scene_graphics(struct Parse_state *state,
 	char *name = cmzn_graphics_get_name(graphics);
 	Option_table_add_entry(option_table,"as", &name,
 		(void *)1,set_name);
+
+	/* boundary_mode {all|boundary|interior|subgroup_boundary|subgroup_interior} - generalises exterior flag */
+	enum cmzn_graphics_boundary_mode boundary_mode = cmzn_graphics_get_boundary_mode(graphics);
+	if ((legacy_graphics_type != LEGACY_GRAPHIC_POINT) &&
+		(legacy_graphics_type != LEGACY_GRAPHIC_NODE_POINTS) &&
+		(legacy_graphics_type != LEGACY_GRAPHIC_DATA_POINTS))
+	{
+		Option_table_add_entry(option_table, "boundary_mode", &boundary_mode, const_cast<char *>("boundary/interior mode"),
+			setEnum<cmzn_graphics_boundary_mode, /*firstEnum*/CMZN_GRAPHICS_BOUNDARY_MODE_ALL, cmzn_graphics_boundary_mode_to_string>);
+	}
 
 	/* element points sample mode: cell_centres/cell_corners/cell_density/set_location */
 	const char *sampling_mode_string = 0;
@@ -341,14 +360,13 @@ int gfx_modify_scene_graphics(struct Parse_state *state,
 		Option_table_add_enumerator(option_table, 3, streamline_type_strings, &streamline_type_string);
 	}
 
-	/* exterior */
+	/* deprecated exterior - replaced with boundary_mode enum */
 	char exterior_flag = static_cast<char>(cmzn_graphics_is_exterior(graphics));
 	if ((legacy_graphics_type != LEGACY_GRAPHIC_POINT) &&
 		(legacy_graphics_type != LEGACY_GRAPHIC_NODE_POINTS) &&
 		(legacy_graphics_type != LEGACY_GRAPHIC_DATA_POINTS))
 	{
-		Option_table_add_entry(option_table, "exterior", &exterior_flag,
-			NULL, set_char_flag);
+		Option_table_add_char_flag_entry(option_table, "exterior", &exterior_flag);
 	}
 
 	/* face {all|any_face|no_face|xi1_0|xi1_1|xi2_0|...} */
@@ -836,7 +854,11 @@ int gfx_modify_scene_graphics(struct Parse_state *state,
 		cmzn_graphics_set_coordinate_field(graphics, coordinate_field);
 		cmzn_graphics_set_data_field(graphics, data_field);
 		bool use_spectrum = (0 != data_field);
-		cmzn_graphics_set_exterior(graphics, (0 != exterior_flag));
+		// if set, use deprecated exterior flag instead of boundary mode
+		if (exterior_flag)
+			cmzn_graphics_set_exterior(graphics, true);
+		else
+			cmzn_graphics_set_boundary_mode(graphics, boundary_mode);
 		cmzn_graphics_set_element_face_type(graphics, face_type);
 		cmzn_graphics_set_tessellation(graphics, tessellation);
 		cmzn_graphics_set_tessellation_field(graphics, tessellation_field);

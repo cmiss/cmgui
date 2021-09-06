@@ -25,7 +25,7 @@ Provides the wxWidgets interface to manipulate spectrum settings.
 #include "command/parser.h"
 #include "general/debug.h"
 #include "graphics/glyph_colour_bar.hpp"
-#include "graphics/graphics.h"
+#include "graphics/graphics.hpp"
 #include "graphics/graphics_module.hpp"
 #include "graphics/scene.hpp"
 #include "graphics/scene_app.h"

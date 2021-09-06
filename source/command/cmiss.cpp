@@ -120,7 +120,7 @@
 #include "graphics/material.hpp"
 #include "graphics/glyph.hpp"
 #include "graphics/glyph_colour_bar.hpp"
-#include "graphics/graphics.h"
+#include "graphics/graphics.hpp"
 #include "graphics/graphics_module.hpp"
 #include "graphics/render_to_finite_elements.h"
 #include "graphics/render_stl.h"

@@ -228,8 +228,13 @@
 													<orient>wxHORIZONTAL</orient>
 													<object class="sizeritem">
 														<flag>wxALIGN_CENTRE_VERTICAL</flag>
-														<object class	="wxCheckBox" name="ExteriorCheckBox"> 
-															<label>Exterior</label>				  			
+														<object class	="wxStaticText" name="BoundaryModeText"> 
+															<label>Boundary mode:</label>
+	 													</object>
+													</object>
+													<object class="sizeritem">
+														<object class	="wxPanel" name="BoundaryModeChooserPanel">
+															<size>160,30</size>
 	 													</object>
 													</object>
 													<object class="sizeritem">
@@ -241,7 +246,7 @@
 													<object class="sizeritem">
 														<flag>wxALIGN_CENTRE_VERTICAL</flag>
 														<object class	="wxChoice" name="FaceChoice">
-															<size>100,30</size>
+															<size>80,30</size>
 															<selection>0</selection>
 															<content>
 																<item>all</item>
