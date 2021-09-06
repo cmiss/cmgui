@@ -6306,13 +6306,10 @@ These rotations are used in the MAYA viewing model.
 		norm_view[1] = view[1];
 		norm_view[2] = view[2];
 		/* establish right vector at view x up and normalise it and view */
-		bool validView = 0.0 != normalize3(norm_view);
-		if (validView)
-		{
-			cross_product3(norm_view, up, norm_right);
-			validView = 0.0 != normalize3(norm_right);
-		}
-		if (validView)
+		normalize3(norm_view);
+		cross_product3(norm_view, up, norm_right);
+		normalize3(norm_right);
+		if (norm3(norm_right) > 0.9)  // it should be ~1.0; will be ~0.0 if invalid
 		{
 			/* Calculate the z and y rotations */
 			rotations[2] = atan2(norm_right[1], norm_right[0]);
