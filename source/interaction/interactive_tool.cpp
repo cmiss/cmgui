@@ -21,6 +21,7 @@ content of the global selections and objects with text input.
 #include "general/list_private.h"
 #include "general/manager_private.h"
 #include "general/mystring.h"
+#include "graphics/scene_viewer.h"
 #include "graphics/transform_tool.h"
 #include "interaction/interactive_tool.h"
 #include "interaction/interactive_tool_private.h"
