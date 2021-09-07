@@ -312,14 +312,14 @@ name the <file_operation> is performed on the file with the <arguments>.
 					strcat(allocated_shell_title," file");
 					shell_title=allocated_shell_title;
 				}
-				const char *wildcard_extension = wxT("All files (*.*)|*.*|");
+				const char *wildcard_extension = (const char *)wxT("All files (*.*)|*.*|");
 				if (ALLOCATE(extension,char,
 						strlen(file_open_data->filter_extension)*2+strlen(wildcard_extension)+4))
 				{
 					strcpy(extension,wildcard_extension);
-					strcat(extension,wxT("*"));
+					strcat(extension,(const char *)wxT("*"));
 					strcat(extension,file_open_data->filter_extension);
-					strcat(extension,wxT("|*"));
+					strcat(extension,(const char *)wxT("|*"));
 					strcat(extension,file_open_data->filter_extension);
 				}
 			}
