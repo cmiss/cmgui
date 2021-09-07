@@ -5925,7 +5925,7 @@ with commands for setting these.
 		else
 		{
 			/*???RC width_factor should be read in from defaults file */
-			const int width_factor = 1.05;
+			const double width_factor = 1.05;
 			/* enlarge radius to keep image within edge of window */
 			radius *= width_factor;
 		}
