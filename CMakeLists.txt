@@ -176,14 +176,11 @@ SET( CMGUI_BUILD_STRING "\"${CMGUI_BUILD_STRING}\"" )
 SET( CMGUI_CONFIGURE_HDR ${PROJECT_BINARY_DIR}/source/configure/cmgui_configure.h )
 CONFIGURE_FILE( ${PROJECT_SOURCE_DIR}/source/configure/cmgui_configure.h.cmake ${CMGUI_CONFIGURE_HDR} )
 
-# To get the internal headers we derive a header search path from the build header source path.
-# Obviously this will not work if you configure with Zinc's install tree.
-#LIST( GET ZINC_INCLUDE_DIRS 0 ZINC_PRIVATE_INCLUDE_DIRS )
-#SET( ZINC_PRIVATE_INCLUDE_DIRS "${ZINC_PRIVATE_INCLUDE_DIRS}/.." )
-#SET( ZINC_PRIVATE_INCLUDE_DIRS /home/alan/cmiss_setup/opencmiss/src/zinc/core/source )
+# Zinc's CMake configuration file has added the location of Zinc's internal include directory to
+# its list of include directories, so now retrieve it as ZINC_PRIVATE_INCLUDE_DIRS
 
-#set(ZINC_PRIVATE_INCLUDE_DIRS "" CACHE STRING "Location of private Zinc include directory.")
-LIST( GET ZINC_INCLUDE_DIRS 0 ZINC_PRIVATE_INTERNAL_DIRS )
+get_property(ZINC_STATIC_INCLUDE_DIRS TARGET zinc-static PROPERTY INTERFACE_INCLUDE_DIRECTORIES)
+list(GET ZINC_STATIC_INCLUDE_DIRS -1 ZINC_PRIVATE_INTERNAL_DIRS)
 set(ZINC_PRIVATE_INCLUDE_DIRS "${ZINC_PRIVATE_INTERNAL_DIRS}" CACHE STRING "Location of private Zinc include directory.")
 
 #INCLUDE_DIRECTORIES( ${CMAKE_CURRENT_BINARY_DIR}/source ${CMAKE_CURRENT_SOURCE_DIR}/source
