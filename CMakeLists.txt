@@ -176,13 +176,6 @@ SET( CMGUI_BUILD_STRING "\"${CMGUI_BUILD_STRING}\"" )
 SET( CMGUI_CONFIGURE_HDR ${PROJECT_BINARY_DIR}/source/configure/cmgui_configure.h )
 CONFIGURE_FILE( ${PROJECT_SOURCE_DIR}/source/configure/cmgui_configure.h.cmake ${CMGUI_CONFIGURE_HDR} )
 
-# Zinc's CMake configuration file has added the location of Zinc's internal include directory to
-# its list of include directories, so now retrieve it as ZINC_PRIVATE_INCLUDE_DIRS
-
-get_property(ZINC_STATIC_INCLUDE_DIRS TARGET zinc-static PROPERTY INTERFACE_INCLUDE_DIRECTORIES)
-list(GET ZINC_STATIC_INCLUDE_DIRS -1 ZINC_PRIVATE_INTERNAL_DIRS)
-set(ZINC_PRIVATE_INCLUDE_DIRS "${ZINC_PRIVATE_INTERNAL_DIRS}" CACHE STRING "Location of private Zinc include directory.")
-
 
 FOREACH( DEF ${EXTRA_COMPILER_DEFINITIONS} ${DEPENDENT_DEFINITIONS} )
 	ADD_DEFINITIONS( -D${DEF} )
