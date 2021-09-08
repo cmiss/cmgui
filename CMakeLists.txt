@@ -71,13 +71,8 @@ set(WIN32_USER_INTERFACE FALSE)
 if( WX_USER_INTERFACE )
     find_package( wxWidgets REQUIRED COMPONENTS xrc adv html gl xml core base )
     set( CAN_USE_USER_INTERFACE ${wxWidgets_FOUND} )
-
-    # Note: we should use `include(${wxWidgets_USE_FILE})` below except that
-    # the `FindwxWidgets.cmake` bundled with `opencmiss` incorrectly adds an
-    # extension of `cmake` to the file name (compare it with
-    # https://github.com/Kitware/CMake/blob/master/Modules/FindwxWidgets.cmake)
-
-    include(UsewxWidgets)
+    include_directories(${wxWidgets_INCLUDE_DIRS})
+    add_compile_definitions(${wxWidgets_DEFINITIONS})
 endif( WX_USER_INTERFACE )
 
 IF(WIN32)
