@@ -69,8 +69,10 @@ set(GTK_USER_INTERFACE FALSE)
 set(WIN32_USER_INTERFACE FALSE)
 
 if( WX_USER_INTERFACE )
-    find_package( wxWidgets REQUIRED COMPONENTS xrc adv html gl xml core base CONFIG)
+    find_package( wxWidgets REQUIRED COMPONENTS xrc adv html gl xml core base )
     set( CAN_USE_USER_INTERFACE ${wxWidgets_FOUND} )
+    include_directories(${wxWidgets_INCLUDE_DIRS})
+	add_compile_definitions(${wxWidgets_DEFINITIONS})
 endif( WX_USER_INTERFACE )
 
 IF(WIN32)
@@ -221,7 +223,7 @@ IF(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" AND (CMAKE_COMPILER_IS_GNUCC OR CMAKE_C
 ENDIF()
 
 target_include_directories(${CMGUI_TARGET} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/source ${CMAKE_CURRENT_BINARY_DIR}/source)
-target_link_libraries(${CMGUI_TARGET} zinc-static wxWidgets::aui wxWidgets::xrc wxWidgets::gl)
+target_link_libraries(${CMGUI_TARGET} zinc-static ${wxWidgets_LIBRARIES})
 if(USE_PERL_INTERPRETER)
 	target_link_libraries(${CMGUI_TARGET} cmiss_perl_interpreter)
 endif()
