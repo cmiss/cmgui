@@ -575,7 +575,10 @@ public:
 			{
 				region = material_editor->root_region;
 			}
-			const char *path = cmzn_region_get_path(region);
+			char *path = cmzn_region_get_path(region);
+			// start with /
+			int error = 0;
+			append_string(&path, CMZN_REGION_PATH_SEPARATOR_STRING, &error, /*prefix*/true);
 			if (region_chooser->set_path(path))
 			{
 				MANAGER(Computed_field) *field_manager =

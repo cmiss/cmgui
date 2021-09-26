@@ -44,7 +44,7 @@ SET(APP_SRCS
     source/computed_field/computed_field_arithmetic_operators_app.cpp
     source/graphics/environment_map_app.cpp
     source/minimise/minimise_app.cpp
-    source/computed_field/computed_field_alias_app.cpp
+    source/computed_field/computed_field_apply_app.cpp
     source/computed_field/computed_field_coordinate_app.cpp
     source/graphics/element_point_ranges_app.cpp
     source/finite_element/export_finite_element_app.cpp

@@ -8,7 +8,7 @@ SET(APP_HDRS
     source/mesh/cmiss_element_private_app.hpp
     source/computed_field/computed_field_image_app.h
     source/computed_field/computed_field_integration_app.h
-    source/computed_field/computed_field_alias_app.h
+    source/computed_field/computed_field_apply_app.h
     source/computed_field/computed_field_coordinate_app.h
     source/computed_field/computed_field_scene_viewer_projection_app.h
     source/finite_element/finite_element_app.h

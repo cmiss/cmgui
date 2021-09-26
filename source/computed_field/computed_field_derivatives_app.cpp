@@ -14,15 +14,12 @@
 #include "general/message.h"
 #include "command/parser.h"
 #include "computed_field/computed_field.h"
+#include "computed_field/computed_field_app.h"
 #include "computed_field/computed_field_private.hpp"
 #include "computed_field/computed_field_private_app.hpp"
 #include "computed_field/computed_field_set.h"
 #include "computed_field/computed_field_set_app.h"
 #include "computed_field/computed_field_derivatives.h"
-
-class Computed_field_derivatives_package : public Computed_field_type_package
-{
-};
 
 const char computed_field_derivative_type_string[] = "derivative";
 
@@ -45,7 +42,7 @@ int Computed_field_get_type_gradient(struct Computed_field *field,
 	struct Computed_field **source_field,struct Computed_field **coordinate_field);
 
 int define_Computed_field_type_derivative(struct Parse_state *state,
-	void *field_modify_void,void *computed_field_derivatives_package_void)
+	void *field_modify_void, void *)
 /*******************************************************************************
 LAST MODIFIED : 24 August 2006
 
@@ -56,13 +53,12 @@ already) and allows its contents to be modified.
 {
 	int return_code, xi_index;
 	struct Computed_field *source_field;
-	Computed_field_modify_data *field_modify;
+	Computed_field_modify_data *field_modify = static_cast<Computed_field_modify_data *>(field_modify_void);
 	struct Option_table *option_table;
 	struct Set_Computed_field_conditional_data set_source_field_data;
 
 	ENTER(define_Computed_field_type_derivative);
-	USE_PARAMETER(computed_field_derivatives_package_void);
-	if (state&&(field_modify=(Computed_field_modify_data *)field_modify_void))
+	if ((state) && (field_modify))
 	{
 		return_code=1;
 		/* get valid parameters for projection field */
@@ -115,7 +111,7 @@ already) and allows its contents to be modified.
 			/* no errors,not asking for help */
 			if (return_code)
 			{
-				return_code = field_modify->update_field_and_deaccess(
+				return_code = field_modify->define_field(
 					cmzn_fieldmodule_create_field_derivative(field_modify->get_field_module(),
 						source_field, xi_index));
 			}
@@ -149,7 +145,7 @@ already) and allows its contents to be modified.
 
 
 int define_Computed_field_type_curl(struct Parse_state *state,
-	void *field_modify_void,void *computed_field_derivatives_package_void)
+	void *field_modify_void, void *)
 /*******************************************************************************
 LAST MODIFIED : 24 August 2006
 
@@ -160,14 +156,13 @@ already) and allows its contents to be modified.
 {
 	int return_code;
 	struct Computed_field *coordinate_field,*vector_field;
-	Computed_field_modify_data *field_modify;
+	Computed_field_modify_data *field_modify = static_cast<Computed_field_modify_data *>(field_modify_void);
 	struct Option_table *option_table;
 	struct Set_Computed_field_conditional_data set_coordinate_field_data,
 		set_vector_field_data;
 
 	ENTER(define_Computed_field_type_curl);
-	USE_PARAMETER(computed_field_derivatives_package_void);
-	if (state&&(field_modify=(Computed_field_modify_data *)field_modify_void))
+	if ((state) && (field_modify))
 	{
 		return_code=1;
 		/* get valid parameters for projection field */
@@ -214,7 +209,7 @@ already) and allows its contents to be modified.
 			/* no errors,not asking for help */
 			if (return_code)
 			{
-				return_code = field_modify->update_field_and_deaccess(
+				return_code = field_modify->define_field(
 					cmzn_fieldmodule_create_field_curl(field_modify->get_field_module(),
 						vector_field, coordinate_field));
 			}
@@ -252,7 +247,7 @@ already) and allows its contents to be modified.
 
 
 int define_Computed_field_type_divergence(struct Parse_state *state,
-	void *field_modify_void,void *computed_field_derivatives_package_void)
+	void *field_modify_void, void *)
 /*******************************************************************************
 LAST MODIFIED : 24 August 2006
 
@@ -263,14 +258,13 @@ already) and allows its contents to be modified.
 {
 	int return_code;
 	struct Computed_field *coordinate_field,*vector_field;
-	Computed_field_modify_data *field_modify;
+	Computed_field_modify_data *field_modify = static_cast<Computed_field_modify_data *>(field_modify_void);
 	struct Option_table *option_table;
 	struct Set_Computed_field_conditional_data set_coordinate_field_data,
 		set_vector_field_data;
 
 	ENTER(define_Computed_field_type_divergence);
-	USE_PARAMETER(computed_field_derivatives_package_void);
-	if (state&&(field_modify=(Computed_field_modify_data *)field_modify_void))
+	if ((state) && (field_modify))
 	{
 		return_code=1;
 		/* get valid parameters for projection field */
@@ -317,7 +311,7 @@ already) and allows its contents to be modified.
 			/* no errors,not asking for help */
 			if (return_code)
 			{
-				return_code = field_modify->update_field_and_deaccess(
+				return_code = field_modify->define_field(
 					cmzn_fieldmodule_create_field_divergence(field_modify->get_field_module(),
 						vector_field, coordinate_field));
 			}
@@ -356,7 +350,7 @@ already) and allows its contents to be modified.
 
 
 int define_Computed_field_type_gradient(struct Parse_state *state,
-	void *field_modify_void,void *computed_field_derivatives_package_void)
+	void *field_modify_void, void *)
 /*******************************************************************************
 LAST MODIFIED : 24 August 2006
 
@@ -367,14 +361,13 @@ to be modified.
 {
 	int return_code;
 	struct Computed_field *coordinate_field,*source_field;
-	Computed_field_modify_data *field_modify;
+	Computed_field_modify_data *field_modify = static_cast<Computed_field_modify_data *>(field_modify_void);
 	struct Option_table *option_table;
 	struct Set_Computed_field_conditional_data set_coordinate_field_data,
 		set_source_field_data;
 
 	ENTER(define_Computed_field_type_gradient);
-	USE_PARAMETER(computed_field_derivatives_package_void);
-	if (state&&(field_modify=(Computed_field_modify_data *)field_modify_void))
+	if ((state) && (field_modify))
 	{
 		return_code=1;
 		/* get valid parameters for projection field */
@@ -434,7 +427,7 @@ to be modified.
 			/* no errors,not asking for help */
 			if (return_code)
 			{
-				return_code = field_modify->update_field_and_deaccess(
+				return_code = field_modify->define_field(
 					cmzn_fieldmodule_create_field_gradient(field_modify->get_field_module(),
 						source_field, coordinate_field));
 			}
@@ -479,9 +472,6 @@ DESCRIPTION :
 ==============================================================================*/
 {
 	int return_code;
-	Computed_field_derivatives_package
-		*computed_field_derivatives_package =
-		new Computed_field_derivatives_package;
 
 	ENTER(Computed_field_register_type_derivative);
 	if (computed_field_package)
@@ -489,19 +479,19 @@ DESCRIPTION :
 		return_code = Computed_field_package_add_type(computed_field_package,
 			computed_field_derivative_type_string,
 			define_Computed_field_type_derivative,
-			computed_field_derivatives_package);
+			Computed_field_package_get_simple_package(computed_field_package));
 		return_code = Computed_field_package_add_type(computed_field_package,
 			computed_field_curl_type_string,
 			define_Computed_field_type_curl,
-			computed_field_derivatives_package);
+			Computed_field_package_get_simple_package(computed_field_package));
 		return_code = Computed_field_package_add_type(computed_field_package,
 			computed_field_divergence_type_string,
 			define_Computed_field_type_divergence,
-			computed_field_derivatives_package);
+			Computed_field_package_get_simple_package(computed_field_package));
 		return_code = Computed_field_package_add_type(computed_field_package,
 			computed_field_gradient_type_string,
 			define_Computed_field_type_gradient,
-			computed_field_derivatives_package);
+			Computed_field_package_get_simple_package(computed_field_package));
 	}
 	else
 	{

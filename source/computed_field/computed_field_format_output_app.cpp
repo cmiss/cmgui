@@ -8,6 +8,7 @@
 #include "general/message.h"
 #include "command/parser.h"
 #include "computed_field/computed_field.h"
+#include "computed_field/computed_field_app.h"
 #include "computed_field/computed_field_private.hpp"
 #include "computed_field/computed_field_private_app.hpp"
 #include "computed_field/computed_field_set.h"
@@ -21,7 +22,7 @@ int Computed_field_get_type_format_output(struct Computed_field *field,
 
 
 int define_Computed_field_type_format_output(struct Parse_state *state,
-	void *field_modify_void,void *computed_field_arithmetic_operators_package_void)
+	void *field_modify_void, void *)
 /*******************************************************************************
 LAST MODIFIED : 15 May 2008
 
@@ -33,13 +34,12 @@ already) and allows its contents to be modified.
 	int return_code;
 	char *format_string;
 	struct Computed_field *source_field;
-	Computed_field_modify_data *field_modify;
+	Computed_field_modify_data *field_modify = static_cast<Computed_field_modify_data *>(field_modify_void);
 	struct Option_table *option_table;
 	struct Set_Computed_field_conditional_data set_source_field_data;
 
 	ENTER(define_Computed_field_type_format_output);
-	USE_PARAMETER(computed_field_arithmetic_operators_package_void);
-	if (state&&(field_modify=(Computed_field_modify_data *)field_modify_void))
+	if ((state) && (field_modify))
 	{
 		return_code=1;
 		source_field = (struct Computed_field *)NULL;
@@ -74,7 +74,7 @@ already) and allows its contents to be modified.
 			/* no errors,not asking for help */
 			if (return_code)
 			{
-				return_code = field_modify->update_field_and_deaccess(
+				return_code = field_modify->define_field(
 					cmzn_fieldmodule_create_field_format_output(field_modify->get_field_module(),
 						source_field, format_string));
 			}

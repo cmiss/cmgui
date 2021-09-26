@@ -8,8 +8,122 @@
 #if !defined (COMPUTED_FIELD_APP_H_)
 #define COMPUTED_FIELD_APP_H_
 
+#include "opencmiss/zinc/region.h"
 #include "command/parser.h"
+#include "computed_field/computed_field.h"
+#include "computed_field/field_module.hpp"
 #include "general/message.h"
+#include "region/cmiss_region.hpp"
+
+/**
+ * Argument to field modifier functions supplying field module, name etc.
+ * Only to be used for defining one field.
+ */
+class Computed_field_modify_data
+{
+private:
+	cmzn_fieldmodule *field_module;  // fieldmodule field is being defined in, accessed
+	char *field_name;  // name of field being defined
+	cmzn_field *field;  // existing field to modify, replaced with new field if none
+
+public:
+
+	/** Set modify data for field in field module with the given name.
+	 * If there is an existing field of that name, store it to redefine in
+	 * define_field, otherwise store the name to set in define_field.
+	 */
+	Computed_field_modify_data(cmzn_fieldmodule *field_module_in, const char *field_name_in);
+
+	~Computed_field_modify_data();
+
+	cmzn_fieldmodule *get_field_module() const
+	{
+		return this->field_module;
+	}
+
+	const char *get_field_name() const
+	{
+		return this->field_name;
+	}
+
+	/** Redefine the existing field, or define the new field.
+	 * If existing field, copy definition from new field and deaccess new field.
+	 * If new field, give it the new field name and take over reference.
+	 * Sets MANAGED attribute so it is not destroyed.
+	 *
+	 * @param new_field  Field to take ownership of.
+	 * @return  1 if field supplied, 0 if not.
+	 */
+	int define_field(cmzn_field *new_field);
+
+	/**
+	 * Get the existing field being modified, or nullptr then the field just created
+	 * @return  Non-accessed field.
+	 */
+	cmzn_field *get_field() const
+	{
+		return this->field;
+	}
+
+	cmzn_region *get_region() const
+	{
+		return cmzn_fieldmodule_get_region_internal(this->field_module);
+	}
+
+	MANAGER(cmzn_field) *get_field_manager() const
+	{
+		return this->get_region()->getFieldManager();
+	}
+};
+
+/**
+ * The base class for each computed field classes own package.
+ * Provides reference counting.
+ */
+class Computed_field_type_package
+{
+private:
+	unsigned int access_count;
+
+public:
+
+	Computed_field_type_package() :
+		access_count(0)
+	{
+	}
+
+	void addref()
+	{
+		access_count++;
+	}
+
+	void removeref()
+	{
+		if (access_count > 1)
+		{
+			access_count--;
+		}
+		else
+		{
+			delete this;
+		}
+	}
+
+protected:
+
+	virtual ~Computed_field_type_package()
+	{
+	}
+};
+
+/**
+ * Minimum set of type-specific data for gfx define field commands.
+ * Contains nothing now that field manager is extracted from region, which is
+ * passed around as part of Computed_field_modify_data in to_be_modified argument.
+ */
+class Computed_field_simple_package : public Computed_field_type_package
+{
+};
 
 struct Computed_field_package;
 
@@ -114,5 +228,15 @@ Extracts the computed_field_manager from the computed_field_package. Note that
 the rest of the program should use this sparingly - it is really only here to
 allow interfacing to the choose_object widgets.
 ==============================================================================*/
+
+/**
+ * Returns a pointer to a sharable simple type package which just contains a
+ * function to access the Computed_field_package.
+ */
+Computed_field_simple_package *Computed_field_package_get_simple_package(
+	struct Computed_field_package *computed_field_package);
+
+/** Set name of field to the stem name supplied or append with _# to make unique. */
+void cmzn_field_set_name_unique(cmzn_field *field, const char *stemName);
 
 #endif

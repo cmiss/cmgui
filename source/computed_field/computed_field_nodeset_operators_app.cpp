@@ -10,16 +10,13 @@
 #include "general/message.h"
 #include "command/parser.h"
 #include "computed_field/computed_field.h"
+#include "computed_field/computed_field_app.h"
 #include "computed_field/computed_field_private.hpp"
 #include "computed_field/computed_field_private_app.hpp"
 #include "computed_field/computed_field_set.h"
 #include "computed_field/computed_field_set_app.h"
 #include "computed_field/computed_field_nodeset_operators.hpp"
 #include "mesh/cmiss_node_private.hpp"
-
-class Computed_field_nodeset_operators_package : public Computed_field_type_package
-{
-};
 
 const char computed_field_nodeset_mean_squares_type_string[] = "nodeset_mean_squares";
 const char computed_field_nodeset_sum_squares_type_string[] = "nodeset_sum_squares";
@@ -108,7 +105,7 @@ int define_Computed_field_type_nodeset_operator(struct Parse_state *state,
 				cmzn_field_nodeset_operator_set_element_map_field(nodeset_operator_field, element_map_field);
 				cmzn_field_nodeset_operator_destroy(&nodeset_operator_field);
 			}
-			return_code = field_modify->update_field_and_deaccess(field);
+			return_code = field_modify->define_field(field);
 		}
 	}
 	if (nodeset_name)
@@ -127,9 +124,8 @@ int define_Computed_field_type_nodeset_operator(struct Parse_state *state,
  * contents to be modified.
  */
 int define_Computed_field_type_nodeset_sum(struct Parse_state *state,
-	void *field_modify_void, void *computed_field_nodeset_operators_package_void)
+	void *field_modify_void, void *)
 {
-	USE_PARAMETER(computed_field_nodeset_operators_package_void);
 	Computed_field_modify_data * field_modify =
 		static_cast<Computed_field_modify_data *>(field_modify_void);
 	return define_Computed_field_type_nodeset_operator(state, field_modify, "nodeset_sum",
@@ -143,10 +139,9 @@ int define_Computed_field_type_nodeset_sum(struct Parse_state *state,
  * contents to be modified.
  */
 int define_Computed_field_type_nodeset_mean(struct Parse_state *state,
-	void *field_modify_void, void *computed_field_nodeset_operators_package_void)
+	void *field_modify_void, void *)
 {
 	int return_code = 0;
-	USE_PARAMETER(computed_field_nodeset_operators_package_void);
 	Computed_field_modify_data * field_modify =
 		reinterpret_cast<Computed_field_modify_data *>(field_modify_void);
 	return define_Computed_field_type_nodeset_operator(state, field_modify, "nodeset_mean",
@@ -160,10 +155,9 @@ int define_Computed_field_type_nodeset_mean(struct Parse_state *state,
  * allows its contents to be modified.
  */
 int define_Computed_field_type_nodeset_sum_squares(struct Parse_state *state,
-	void *field_modify_void, void *computed_field_nodeset_operators_package_void)
+	void *field_modify_void, void *)
 {
 	int return_code = 0;
-	USE_PARAMETER(computed_field_nodeset_operators_package_void);
 	Computed_field_modify_data * field_modify =
 		reinterpret_cast<Computed_field_modify_data *>(field_modify_void);
 	return define_Computed_field_type_nodeset_operator(state, field_modify, "nodeset_sum_squares",
@@ -180,10 +174,9 @@ int define_Computed_field_type_nodeset_sum_squares(struct Parse_state *state,
  * allows its contents to be modified.
  */
 int define_Computed_field_type_nodeset_mean_squares(struct Parse_state *state,
-	void *field_modify_void, void *computed_field_nodeset_operators_package_void)
+	void *field_modify_void, void *)
 {
 	int return_code = 0;
-	USE_PARAMETER(computed_field_nodeset_operators_package_void);
 	Computed_field_modify_data * field_modify =
 		reinterpret_cast<Computed_field_modify_data *>(field_modify_void);
 	return define_Computed_field_type_nodeset_operator(state, field_modify, "nodeset_mean_squares",
@@ -198,10 +191,9 @@ int define_Computed_field_type_nodeset_mean_squares(struct Parse_state *state,
  * allows its contents to be modified.
  */
 int define_Computed_field_type_nodeset_maximum(struct Parse_state *state,
-	void *field_modify_void, void *computed_field_nodeset_operators_package_void)
+	void *field_modify_void, void *)
 {
 	int return_code = 0;
-	USE_PARAMETER(computed_field_nodeset_operators_package_void);
 	Computed_field_modify_data * field_modify =
 		reinterpret_cast<Computed_field_modify_data *>(field_modify_void);
 	return define_Computed_field_type_nodeset_operator(state, field_modify, "nodeset_maximum",
@@ -214,10 +206,9 @@ int define_Computed_field_type_nodeset_maximum(struct Parse_state *state,
  * allows its contents to be modified.
  */
 int define_Computed_field_type_nodeset_minimum(struct Parse_state *state,
-	void *field_modify_void, void *computed_field_nodeset_operators_package_void)
+	void *field_modify_void, void *)
 {
 	int return_code = 0;
-	USE_PARAMETER(computed_field_nodeset_operators_package_void);
 	Computed_field_modify_data * field_modify =
 		reinterpret_cast<Computed_field_modify_data *>(field_modify_void);
 	return define_Computed_field_type_nodeset_operator(state, field_modify, "nodeset_minimum",
@@ -235,9 +226,6 @@ Registering the region operations.
 ==============================================================================*/
 {
 	int return_code;
-	Computed_field_nodeset_operators_package
-		*computed_field_nodeset_operators_package =
-		new Computed_field_nodeset_operators_package;
 
 	ENTER(Computed_field_register_types_nodeset_operators);
 	if (computed_field_package)
@@ -245,27 +233,27 @@ Registering the region operations.
 		return_code = Computed_field_package_add_type(computed_field_package,
 			computed_field_nodeset_sum_type_string,
 			define_Computed_field_type_nodeset_sum,
-			computed_field_nodeset_operators_package);
+			Computed_field_package_get_simple_package(computed_field_package));
 		return_code = Computed_field_package_add_type(computed_field_package,
 			computed_field_nodeset_mean_type_string,
 			define_Computed_field_type_nodeset_mean,
-			computed_field_nodeset_operators_package);
+			Computed_field_package_get_simple_package(computed_field_package));
 		return_code = Computed_field_package_add_type(computed_field_package,
 			computed_field_nodeset_sum_squares_type_string,
 			define_Computed_field_type_nodeset_sum_squares,
-			computed_field_nodeset_operators_package);
+			Computed_field_package_get_simple_package(computed_field_package));
 		return_code = Computed_field_package_add_type(computed_field_package,
 			computed_field_nodeset_mean_squares_type_string,
 			define_Computed_field_type_nodeset_mean_squares,
-			computed_field_nodeset_operators_package);
+			Computed_field_package_get_simple_package(computed_field_package));
 		return_code = Computed_field_package_add_type(computed_field_package,
 			computed_field_nodeset_maximum_type_string,
 			define_Computed_field_type_nodeset_maximum,
-			computed_field_nodeset_operators_package);
+			Computed_field_package_get_simple_package(computed_field_package));
 		return_code = Computed_field_package_add_type(computed_field_package,
 			computed_field_nodeset_minimum_type_string,
 			define_Computed_field_type_nodeset_minimum,
-			computed_field_nodeset_operators_package);
+			Computed_field_package_get_simple_package(computed_field_package));
 	}
 	else
 	{

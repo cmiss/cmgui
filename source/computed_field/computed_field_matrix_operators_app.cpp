@@ -9,15 +9,12 @@
 #include "general/message.h"
 #include "command/parser.h"
 #include "computed_field/computed_field.h"
+#include "computed_field/computed_field_app.h"
 #include "computed_field/computed_field_private.hpp"
 #include "computed_field/computed_field_private_app.hpp"
 #include "computed_field/computed_field_set.h"
 #include "computed_field/computed_field_set_app.h"
 #include "computed_field/computed_field_matrix_operators.hpp"
-
-class Computed_field_matrix_operators_package : public Computed_field_type_package
-{
-};
 
 const char computed_field_determinant_type_string[] = "determinant";
 
@@ -79,15 +76,13 @@ int Computed_field_is_square_matrix(struct Computed_field *field,
  * (if it is not already) and allows its contents to be modified.
  */
 int define_Computed_field_type_determinant(struct Parse_state *state,
-	void *field_modify_void, void *computed_field_matrix_operators_package_void)
+	void *field_modify_void, void *)
 {
 	int return_code;
 
 	ENTER(define_Computed_field_type_determinant);
-	USE_PARAMETER(computed_field_matrix_operators_package_void);
-	Computed_field_modify_data *field_modify =
-		reinterpret_cast<Computed_field_modify_data*>(field_modify_void);
-	if (state && field_modify)
+	Computed_field_modify_data *field_modify = static_cast<Computed_field_modify_data *>(field_modify_void);
+	if ((state) && (field_modify))
 	{
 		return_code = 1;
 		cmzn_field_id source_field = 0;
@@ -112,7 +107,7 @@ int define_Computed_field_type_determinant(struct Parse_state *state,
 		return_code = Option_table_multi_parse(option_table, state);
 		if (return_code)
 		{
-			return_code = field_modify->update_field_and_deaccess(
+			return_code = field_modify->define_field(
 				cmzn_fieldmodule_create_field_determinant(field_modify->get_field_module(),
 					source_field));
 		}
@@ -135,7 +130,7 @@ int define_Computed_field_type_determinant(struct Parse_state *state,
 
 
 int define_Computed_field_type_eigenvalues(struct Parse_state *state,
-	void *field_modify_void, void *computed_field_matrix_operators_package_void)
+	void *field_modify_void, void *)
 /*******************************************************************************
 LAST MODIFIED : 25 August 2006
 
@@ -146,13 +141,12 @@ contents to be modified.
 {
 	int return_code;
 	struct Computed_field *source_field;
-	Computed_field_modify_data *field_modify;
+	Computed_field_modify_data *field_modify = static_cast<Computed_field_modify_data *>(field_modify_void);
 	struct Option_table *option_table;
 	struct Set_Computed_field_conditional_data set_source_field_data;
 
 	ENTER(define_Computed_field_type_eigenvalues);
-	USE_PARAMETER(computed_field_matrix_operators_package_void);
-	if (state&&(field_modify=(Computed_field_modify_data *)field_modify_void))
+	if ((state) && (field_modify))
 	{
 		return_code=1;
 		source_field = (struct Computed_field *)NULL;
@@ -181,7 +175,7 @@ contents to be modified.
 			return_code = Option_table_multi_parse(option_table, state);
 			if (return_code)
 			{
-				return_code = field_modify->update_field_and_deaccess(
+				return_code = field_modify->define_field(
 					cmzn_fieldmodule_create_field_eigenvalues(field_modify->get_field_module(),
 						source_field));
 			}
@@ -205,7 +199,7 @@ contents to be modified.
 
 
 int define_Computed_field_type_eigenvectors(struct Parse_state *state,
-	void *field_modify_void,void *computed_field_matrix_operators_package_void)
+	void *field_modify_void, void *)
 /*******************************************************************************
 LAST MODIFIED : 25 August 2006
 
@@ -216,13 +210,12 @@ its contents to be modified.
 {
 	int return_code;
 	struct Computed_field *source_field;
-	Computed_field_modify_data *field_modify;
+	Computed_field_modify_data *field_modify = static_cast<Computed_field_modify_data *>(field_modify_void);
 	struct Option_table *option_table;
 	struct Set_Computed_field_conditional_data set_source_field_data;
 
 	ENTER(define_Computed_field_type_eigenvectors);
-	USE_PARAMETER(computed_field_matrix_operators_package_void);
-	if (state&&(field_modify=(Computed_field_modify_data *)field_modify_void))
+	if ((state) && (field_modify))
 	{
 		return_code=1;
 		/* get valid parameters for projection field */
@@ -254,7 +247,7 @@ its contents to be modified.
 			return_code = Option_table_multi_parse(option_table, state);
 			if (return_code)
 			{
-				return_code = field_modify->update_field_and_deaccess(
+				return_code = field_modify->define_field(
 					cmzn_fieldmodule_create_field_eigenvectors(field_modify->get_field_module(),
 						source_field));
 			}
@@ -276,11 +269,8 @@ its contents to be modified.
 	return (return_code);
 } /* define_Computed_field_type_eigenvectors */
 
-
-
-
 int define_Computed_field_type_matrix_invert(struct Parse_state *state,
-	void *field_modify_void, void *computed_field_matrix_operators_package_void)
+	void *field_modify_void, void *)
 /*******************************************************************************
 LAST MODIFIED : 25 August 2006
 
@@ -291,13 +281,12 @@ contents to be modified.
 {
 	int return_code;
 	struct Computed_field *source_field;
-	Computed_field_modify_data *field_modify;
+	Computed_field_modify_data *field_modify = static_cast<Computed_field_modify_data *>(field_modify_void);
 	struct Option_table *option_table;
 	struct Set_Computed_field_conditional_data set_source_field_data;
 
 	ENTER(define_Computed_field_type_matrix_invert);
-	USE_PARAMETER(computed_field_matrix_operators_package_void);
-	if (state&&(field_modify=(Computed_field_modify_data *)field_modify_void))
+	if ((state) && (field_modify))
 	{
 		return_code = 1;
 		source_field = (struct Computed_field *)NULL;
@@ -326,7 +315,7 @@ contents to be modified.
 			return_code = Option_table_multi_parse(option_table, state);
 			if (return_code)
 			{
-				return_code = field_modify->update_field_and_deaccess(
+				return_code = field_modify->define_field(
 					cmzn_fieldmodule_create_field_matrix_invert(field_modify->get_field_module(),
 						source_field));
 			}
@@ -350,7 +339,7 @@ contents to be modified.
 
 
 int define_Computed_field_type_matrix_multiply(struct Parse_state *state,
-	void *field_modify_void,void *computed_field_matrix_operators_package_void)
+	void *field_modify_void, void *)
 /*******************************************************************************
 LAST MODIFIED : 25 August 2006
 
@@ -362,14 +351,13 @@ already) and allows its contents to be modified.
 	const char *current_token;
 	int i, number_of_rows, return_code;
 	struct Computed_field **source_fields;
-	Computed_field_modify_data *field_modify;
+	Computed_field_modify_data *field_modify = static_cast<Computed_field_modify_data *>(field_modify_void);
 	struct Option_table *option_table;
 	struct Set_Computed_field_array_data set_field_array_data;
 	struct Set_Computed_field_conditional_data set_field_data;
 
 	ENTER(define_Computed_field_type_matrix_multiply);
-	USE_PARAMETER(computed_field_matrix_operators_package_void);
-	if (state&&(field_modify=(Computed_field_modify_data *)field_modify_void))
+	if ((state) && (field_modify))
 	{
 		return_code=1;
 		if (ALLOCATE(source_fields,struct Computed_field *,2))
@@ -446,7 +434,7 @@ already) and allows its contents to be modified.
 							return_code = Option_table_multi_parse(option_table, state);
 							if (return_code)
 							{
-								return_code = field_modify->update_field_and_deaccess(
+								return_code = field_modify->define_field(
 									cmzn_fieldmodule_create_field_matrix_multiply(field_modify->get_field_module(),
 										number_of_rows, source_fields[0], source_fields[1]));
 							}
@@ -499,15 +487,13 @@ already) and allows its contents to be modified.
  * and allows its contents to be modified.
  */
 int define_Computed_field_type_projection(struct Parse_state *state,
-	void *field_modify_void,void *computed_field_matrix_operators_package_void)
+	void *field_modify_void, void *)
 {
 	int return_code;
 
 	ENTER(define_Computed_field_type_projection);
-	USE_PARAMETER(computed_field_matrix_operators_package_void);
-	Computed_field_modify_data *field_modify =
-		reinterpret_cast<Computed_field_modify_data *>(field_modify_void);
-	if (state && field_modify)
+	Computed_field_modify_data *field_modify = static_cast<Computed_field_modify_data *>(field_modify_void);
+	if ((state) && (field_modify))
 	{
 		return_code = 1;
 		cmzn_field_id source_field = 0;
@@ -554,7 +540,7 @@ int define_Computed_field_type_projection(struct Parse_state *state,
 		DESTROY(Option_table)(&option_table);
 		if (return_code)
 		{
-			return_code = field_modify->update_field_and_deaccess(
+			return_code = field_modify->define_field(
 				cmzn_fieldmodule_create_field_projection(field_modify->get_field_module(),
 					source_field, projection_matrix_field));
 		}
@@ -580,7 +566,7 @@ int define_Computed_field_type_projection(struct Parse_state *state,
 
 
 int define_Computed_field_type_transpose(struct Parse_state *state,
-	void *field_modify_void,void *computed_field_matrix_operators_package_void)
+	void *field_modify_void, void *)
 /*******************************************************************************
 LAST MODIFIED : 25 August 2006
 
@@ -592,13 +578,12 @@ already) and allows its contents to be modified.
 	const char *current_token;
 	int source_number_of_rows, return_code;
 	struct Computed_field *source_field;
-	Computed_field_modify_data *field_modify;
+	Computed_field_modify_data *field_modify = static_cast<Computed_field_modify_data *>(field_modify_void);
 	struct Option_table *option_table;
 	struct Set_Computed_field_conditional_data set_source_field_data;
 
 	ENTER(define_Computed_field_type_transpose);
-	USE_PARAMETER(computed_field_matrix_operators_package_void);
-	if (state&&(field_modify=(Computed_field_modify_data *)field_modify_void))
+	if ((state) && (field_modify))
 	{
 		return_code=1;
 		/* get valid parameters for transpose field */
@@ -660,7 +645,7 @@ already) and allows its contents to be modified.
 						return_code = Option_table_multi_parse(option_table, state);
 						if (return_code)
 						{
-							return_code = field_modify->update_field_and_deaccess(
+							return_code = field_modify->define_field(
 								cmzn_fieldmodule_create_field_transpose(field_modify->get_field_module(),
 									source_number_of_rows, source_field));
 						}
@@ -699,7 +684,7 @@ already) and allows its contents to be modified.
 
 
 int define_Computed_field_type_quaternion_to_matrix(struct Parse_state *state,
-	void *field_modify_void, void *computed_field_matrix_operators_package_void)
+	void *field_modify_void, void *)
 /*******************************************************************************
 LAST MODIFIED : 18 Jun 2008
 
@@ -709,13 +694,12 @@ Converts a "quaternion" to a transformation matrix.
 {
 	int return_code;
 	struct Computed_field **source_fields;
-	Computed_field_modify_data *field_modify;
+	Computed_field_modify_data *field_modify = static_cast<Computed_field_modify_data *>(field_modify_void);
 	struct Option_table *option_table;
 	struct Set_Computed_field_conditional_data set_source_field_data;
 
 	ENTER(define_Computed_field_type_quaternion_to_matrix);
-	USE_PARAMETER(computed_field_matrix_operators_package_void);
-	if (state&&(field_modify=(Computed_field_modify_data *)field_modify_void))
+	if ((state) && (field_modify))
 	{
 		return_code=1;
 		source_fields = (struct Computed_field **)NULL;
@@ -748,7 +732,7 @@ Converts a "quaternion" to a transformation matrix.
 					return_code = Option_table_multi_parse(option_table, state);
 					if (return_code)
 					{
-						return_code = field_modify->update_field_and_deaccess(
+						return_code = field_modify->define_field(
 							cmzn_fieldmodule_create_field_quaternion_to_matrix(
 								field_modify->get_field_module(), source_fields[0]));
 					}
@@ -792,7 +776,7 @@ Converts a "quaternion" to a transformation matrix.
 
 
 int define_Computed_field_type_matrix_to_quaternion(struct Parse_state *state,
-	void *field_modify_void, void *computed_field_matrix_operators_package_void)
+	void *field_modify_void, void *)
 /*******************************************************************************
 LAST MODIFIED : 18 Jun 2008
 
@@ -802,13 +786,12 @@ Converts a transformation matrix to  a "quaternion".
 {
 	int return_code;
 	struct Computed_field **source_fields;
-	Computed_field_modify_data *field_modify;
+	Computed_field_modify_data *field_modify = static_cast<Computed_field_modify_data *>(field_modify_void);
 	struct Option_table *option_table;
 	struct Set_Computed_field_conditional_data set_source_field_data;
 
 	ENTER(define_Computed_field_type_matrix_to_quaternion);
-	USE_PARAMETER(computed_field_matrix_operators_package_void);
-	if (state&&(field_modify=(Computed_field_modify_data *)field_modify_void))
+	if ((state) && (field_modify))
 	{
 		return_code=1;
 		source_fields = (struct Computed_field **)NULL;
@@ -847,7 +830,7 @@ Converts a transformation matrix to  a "quaternion".
 					return_code = Option_table_multi_parse(option_table, state);
 					if (return_code)
 					{
-						return_code = field_modify->update_field_and_deaccess(
+						return_code = field_modify->define_field(
 							cmzn_fieldmodule_create_field_matrix_to_quaternion(
 								field_modify->get_field_module(), source_fields[0]));
 					}
@@ -898,9 +881,6 @@ DESCRIPTION :
 ==============================================================================*/
 {
 	int return_code;
-	Computed_field_matrix_operators_package
-		*computed_field_matrix_operators_package =
-		new Computed_field_matrix_operators_package;
 
 	ENTER(Computed_field_register_types_matrix_operators);
 	if (computed_field_package)
@@ -909,47 +889,47 @@ DESCRIPTION :
 			Computed_field_package_add_type(computed_field_package,
 				computed_field_determinant_type_string,
 				define_Computed_field_type_determinant,
-				computed_field_matrix_operators_package);
+				Computed_field_package_get_simple_package(computed_field_package));
 		return_code =
 			Computed_field_package_add_type(computed_field_package,
 				computed_field_eigenvalues_type_string,
 				define_Computed_field_type_eigenvalues,
-				computed_field_matrix_operators_package);
+				Computed_field_package_get_simple_package(computed_field_package));
 		return_code =
 			Computed_field_package_add_type(computed_field_package,
 				computed_field_eigenvectors_type_string,
 				define_Computed_field_type_eigenvectors,
-				computed_field_matrix_operators_package);
+				Computed_field_package_get_simple_package(computed_field_package));
 		return_code =
 			Computed_field_package_add_type(computed_field_package,
 				computed_field_matrix_invert_type_string,
 				define_Computed_field_type_matrix_invert,
-				computed_field_matrix_operators_package);
+				Computed_field_package_get_simple_package(computed_field_package));
 		return_code =
 			Computed_field_package_add_type(computed_field_package,
 				computed_field_matrix_multiply_type_string,
 				define_Computed_field_type_matrix_multiply,
-				computed_field_matrix_operators_package);
+				Computed_field_package_get_simple_package(computed_field_package));
 		return_code =
 			Computed_field_package_add_type(computed_field_package,
 				computed_field_projection_type_string,
 				define_Computed_field_type_projection,
-				computed_field_matrix_operators_package);
+				Computed_field_package_get_simple_package(computed_field_package));
 		return_code =
 			Computed_field_package_add_type(computed_field_package,
 				computed_field_transpose_type_string,
 				define_Computed_field_type_transpose,
-				computed_field_matrix_operators_package);
+				Computed_field_package_get_simple_package(computed_field_package));
 		return_code =
 			Computed_field_package_add_type(computed_field_package,
 			computed_field_quaternion_to_matrix_type_string,
 			define_Computed_field_type_quaternion_to_matrix,
-			computed_field_matrix_operators_package);
+			Computed_field_package_get_simple_package(computed_field_package));
 		return_code =
 			Computed_field_package_add_type(computed_field_package,
 			computed_field_matrix_to_quaternion_type_string,
 			define_Computed_field_type_matrix_to_quaternion,
-			computed_field_matrix_operators_package);
+			Computed_field_package_get_simple_package(computed_field_package));
 	}
 	else
 	{

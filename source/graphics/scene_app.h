@@ -136,4 +136,16 @@ PROTOTYPE_OPTION_TABLE_ADD_ENUMERATOR_FUNCTION( cmzn_streaminformation_scene_io_
 int cmzn_scene_set_graphics_defaults_gfx_modify(struct cmzn_scene *scene,
 	struct cmzn_graphics *graphics);
 
+/**
+ * Write the transformation in effect for <scene> in an easy-to-interpret
+ * matrix multiplication form.
+ */
+int cmzn_scene_list_transformation(struct cmzn_scene *scene);
+
+/**
+ * Write the last part of the command to reproduce the transformation in
+ * effect for scene.
+ */
+int cmzn_scene_list_transformation_command(struct cmzn_scene *scene);
+
 #endif

@@ -8,15 +8,12 @@
 #include "general/message.h"
 #include "command/parser.h"
 #include "computed_field/computed_field.h"
+#include "computed_field/computed_field_app.h"
 #include "computed_field/computed_field_private.hpp"
 #include "computed_field/computed_field_private_app.hpp"
 #include "computed_field/computed_field_set.h"
 #include "computed_field/computed_field_set_app.h"
 #include "computed_field/computed_field_logical_operators.h"
-
-class Computed_field_logical_operators_package : public Computed_field_type_package
-{
-};
 
 const char computed_field_not_type_string[] = "not";
 
@@ -62,7 +59,7 @@ int Computed_field_get_type_or(struct Computed_field *field,
 	struct Computed_field **source_field_two);
 
 int define_Computed_field_type_or(struct Parse_state *state,
-	void *field_modify_void,void *computed_field_logical_operators_package_void)
+	void *field_modify_void, void *)
 /*******************************************************************************
 LAST MODIFIED : 25 August 2006
 
@@ -73,14 +70,13 @@ already) and allows its contents to be modified.
 {
 	int return_code;
 	struct Computed_field **source_fields;
-	Computed_field_modify_data *field_modify;
+	Computed_field_modify_data *field_modify = static_cast<Computed_field_modify_data *>(field_modify_void);
 	struct Option_table *option_table;
 	struct Set_Computed_field_array_data set_source_field_array_data;
 	struct Set_Computed_field_conditional_data set_source_field_data;
 
 	ENTER(define_Computed_field_type_or);
-	USE_PARAMETER(computed_field_logical_operators_package_void);
-	if (state&&(field_modify=(Computed_field_modify_data *)field_modify_void))
+	if ((state) && (field_modify))
 	{
 		return_code=1;
 		/* get valid parameters for projection field */
@@ -121,7 +117,7 @@ already) and allows its contents to be modified.
 				/* no errors,not asking for help */
 				if (return_code)
 				{
-					return_code = field_modify->update_field_and_deaccess(
+					return_code = field_modify->define_field(
 						cmzn_fieldmodule_create_field_or(field_modify->get_field_module(),
 							source_fields[0], source_fields[1]));
 				}
@@ -168,7 +164,7 @@ already) and allows its contents to be modified.
 
 
 int define_Computed_field_type_and(struct Parse_state *state,
-	void *field_modify_void,void *computed_field_logical_operators_package_void)
+	void *field_modify_void, void *)
 /*******************************************************************************
 LAST MODIFIED : 25 August 2006
 
@@ -179,14 +175,13 @@ already) and allows its contents to be modified.
 {
 	int return_code;
 	struct Computed_field **source_fields;
-	Computed_field_modify_data *field_modify;
+	Computed_field_modify_data *field_modify = static_cast<Computed_field_modify_data *>(field_modify_void);
 	struct Option_table *option_table;
 	struct Set_Computed_field_array_data set_source_field_array_data;
 	struct Set_Computed_field_conditional_data set_source_field_data;
 
 	ENTER(define_Computed_field_type_and);
-	USE_PARAMETER(computed_field_logical_operators_package_void);
-	if (state&&(field_modify=(Computed_field_modify_data *)field_modify_void))
+	if ((state) && (field_modify))
 	{
 		return_code=1;
 		/* get valid parameters for projection field */
@@ -227,7 +222,7 @@ already) and allows its contents to be modified.
 				/* no errands,not asking for help */
 				if (return_code)
 				{
-					return_code = field_modify->update_field_and_deaccess(
+					return_code = field_modify->define_field(
 						cmzn_fieldmodule_create_field_and(field_modify->get_field_module(),
 							source_fields[0], source_fields[1]));
 				}
@@ -274,7 +269,7 @@ already) and allows its contents to be modified.
 
 
 int define_Computed_field_type_xor(struct Parse_state *state,
-	void *field_modify_void,void *computed_field_logical_operators_package_void)
+	void *field_modify_void, void *)
 /*******************************************************************************
 LAST MODIFIED : 25 August 2006
 
@@ -285,14 +280,13 @@ already) and allows its contents to be modified.
 {
 	int return_code;
 	struct Computed_field **source_fields;
-	Computed_field_modify_data *field_modify;
+	Computed_field_modify_data *field_modify = static_cast<Computed_field_modify_data *>(field_modify_void);
 	struct Option_table *option_table;
 	struct Set_Computed_field_array_data set_source_field_array_data;
 	struct Set_Computed_field_conditional_data set_source_field_data;
 
 	ENTER(define_Computed_field_type_xor);
-	USE_PARAMETER(computed_field_logical_operators_package_void);
-	if (state&&(field_modify=(Computed_field_modify_data *)field_modify_void))
+	if ((state) && (field_modify))
 	{
 		return_code=1;
 		/* get valid parameters for projection field */
@@ -333,7 +327,7 @@ already) and allows its contents to be modified.
 				/* no errxors,not asking for help */
 				if (return_code)
 				{
-					return_code = field_modify->update_field_and_deaccess(
+					return_code = field_modify->define_field(
 						cmzn_fieldmodule_create_field_xor(field_modify->get_field_module(),
 							source_fields[0], source_fields[1]));
 				}
@@ -380,7 +374,7 @@ already) and allows its contents to be modified.
 
 
 int define_Computed_field_type_equal_to(struct Parse_state *state,
-	void *field_modify_void,void *computed_field_logical_operators_package_void)
+	void *field_modify_void, void *)
 /*******************************************************************************
 LAST MODIFIED : 25 August 2006
 
@@ -391,14 +385,13 @@ already) and allows its contents to be modified.
 {
 	int return_code;
 	struct Computed_field **source_fields;
-	Computed_field_modify_data *field_modify;
+	Computed_field_modify_data *field_modify = static_cast<Computed_field_modify_data *>(field_modify_void);
 	struct Option_table *option_table;
 	struct Set_Computed_field_array_data set_source_field_array_data;
 	struct Set_Computed_field_conditional_data set_source_field_data;
 
 	ENTER(define_Computed_field_type_equal_to);
-	USE_PARAMETER(computed_field_logical_operators_package_void);
-	if (state&&(field_modify=(Computed_field_modify_data *)field_modify_void))
+	if ((state) && (field_modify))
 	{
 		return_code=1;
 		/* get valid parameters for projection field */
@@ -440,7 +433,7 @@ already) and allows its contents to be modified.
 				/* no errequal_tos,not asking for help */
 				if (return_code)
 				{
-					return_code = field_modify->update_field_and_deaccess(
+					return_code = field_modify->define_field(
 						cmzn_fieldmodule_create_field_equal_to(field_modify->get_field_module(),
 							source_fields[0], source_fields[1]));
 				}
@@ -487,7 +480,7 @@ already) and allows its contents to be modified.
 
 
 int define_Computed_field_type_less_than(struct Parse_state *state,
-	void *field_modify_void,void *computed_field_logical_operators_package_void)
+	void *field_modify_void, void *)
 /*******************************************************************************
 LAST MODIFIED : 25 August 2006
 
@@ -498,14 +491,13 @@ already) and allows its contents to be modified.
 {
 	int return_code;
 	struct Computed_field **source_fields;
-	Computed_field_modify_data *field_modify;
+	Computed_field_modify_data *field_modify = static_cast<Computed_field_modify_data *>(field_modify_void);
 	struct Option_table *option_table;
 	struct Set_Computed_field_array_data set_source_field_array_data;
 	struct Set_Computed_field_conditional_data set_source_field_data;
 
 	ENTER(define_Computed_field_type_less_than);
-	USE_PARAMETER(computed_field_logical_operators_package_void);
-	if (state&&(field_modify=(Computed_field_modify_data *)field_modify_void))
+	if ((state) && (field_modify))
 	{
 		return_code=1;
 		/* get valid parameters for projection field */
@@ -546,7 +538,7 @@ already) and allows its contents to be modified.
 				/* no errless_thans,not asking for help */
 				if (return_code)
 				{
-					return_code = field_modify->update_field_and_deaccess(
+					return_code = field_modify->define_field(
 						cmzn_fieldmodule_create_field_less_than(field_modify->get_field_module(),
 							source_fields[0], source_fields[1]));
 				}
@@ -593,7 +585,7 @@ already) and allows its contents to be modified.
 
 
 int define_Computed_field_type_greater_than(struct Parse_state *state,
-	void *field_modify_void,void *computed_field_logical_operators_package_void)
+	void *field_modify_void, void *)
 /*******************************************************************************
 LAST MODIFIED : 25 August 2006
 
@@ -604,14 +596,13 @@ already) and allows its contents to be modified.
 {
 	int return_code;
 	struct Computed_field **source_fields;
-	Computed_field_modify_data *field_modify;
+	Computed_field_modify_data *field_modify = static_cast<Computed_field_modify_data *>(field_modify_void);
 	struct Option_table *option_table;
 	struct Set_Computed_field_array_data set_source_field_array_data;
 	struct Set_Computed_field_conditional_data set_source_field_data;
 
 	ENTER(define_Computed_field_type_greater_than);
-	USE_PARAMETER(computed_field_logical_operators_package_void);
-	if (state&&(field_modify=(Computed_field_modify_data *)field_modify_void))
+	if ((state) && (field_modify))
 	{
 		return_code=1;
 		/* get valid parameters for projection field */
@@ -652,7 +643,7 @@ already) and allows its contents to be modified.
 				/* no errgreater_thans,not asking for help */
 				if (return_code)
 				{
-					return_code = field_modify->update_field_and_deaccess(
+					return_code = field_modify->define_field(
 						cmzn_fieldmodule_create_field_greater_than(field_modify->get_field_module(),
 							source_fields[0], source_fields[1]));
 				}
@@ -699,7 +690,7 @@ already) and allows its contents to be modified.
 
 
 int define_Computed_field_type_is_defined(struct Parse_state *state,
-	void *field_modify_void,void *computed_field_logical_operators_package_void)
+	void *field_modify_void, void *)
 /*******************************************************************************
 LAST MODIFIED : 25 August 2006
 
@@ -710,12 +701,11 @@ already) and allows its contents to be modified.
 {
 	int return_code;
 	struct Computed_field *source_field;
-	Computed_field_modify_data *field_modify;
+	Computed_field_modify_data *field_modify = static_cast<Computed_field_modify_data *>(field_modify_void);
 	struct Option_table *option_table;
 
 	ENTER(define_Computed_field_type_is_defined);
-	USE_PARAMETER(computed_field_logical_operators_package_void);
-	if (state&&(field_modify=(Computed_field_modify_data *)field_modify_void))
+	if ((state) && (field_modify))
 	{
 		return_code=1;
 		source_field = (struct Computed_field *)NULL;
@@ -743,7 +733,7 @@ already) and allows its contents to be modified.
 			/* no errors, not asking for help */
 			if (return_code)
 			{
-				return_code = field_modify->update_field_and_deaccess(
+				return_code = field_modify->define_field(
 					cmzn_fieldmodule_create_field_is_defined(field_modify->get_field_module(),
 						source_field));
 			}
@@ -783,12 +773,11 @@ already) and allows its contents to be modified.
  * Computed_field_not.
  */
 int define_Computed_field_type_not(struct Parse_state *state,
-	void *field_modify_void, void *computed_field_logical_operators_package_void)
+	void *field_modify_void, void *)
 {
 	int return_code = 1;
-	USE_PARAMETER(computed_field_logical_operators_package_void);
-	Computed_field_modify_data *field_modify = reinterpret_cast<Computed_field_modify_data *>(field_modify_void);
-	if (state && field_modify)
+	Computed_field_modify_data *field_modify = static_cast<Computed_field_modify_data *>(field_modify_void);
+	if ((state) && (field_modify))
 	{
 		cmzn_field_id source_field = 0;
 		if ((NULL != field_modify->get_field()) &&
@@ -811,7 +800,7 @@ int define_Computed_field_type_not(struct Parse_state *state,
 
 		if (return_code)
 		{
-			return_code = field_modify->update_field_and_deaccess(
+			return_code = field_modify->define_field(
 				cmzn_fieldmodule_create_field_not(field_modify->get_field_module(), source_field));
 		}
 		cmzn_field_destroy(&source_field);
@@ -834,9 +823,6 @@ DESCRIPTION :
 ==============================================================================*/
 {
 	int return_code;
-	Computed_field_logical_operators_package
-		*computed_field_logical_operators_package =
-		new Computed_field_logical_operators_package;
 
 	ENTER(Computed_field_register_types_logical_operators);
 	if (computed_field_package)
@@ -844,35 +830,35 @@ DESCRIPTION :
 		return_code = Computed_field_package_add_type(computed_field_package,
 			computed_field_or_type_string,
 			define_Computed_field_type_or,
-			computed_field_logical_operators_package);
+			Computed_field_package_get_simple_package(computed_field_package));
 		return_code = Computed_field_package_add_type(computed_field_package,
 			computed_field_and_type_string,
 			define_Computed_field_type_and,
-			computed_field_logical_operators_package);
+			Computed_field_package_get_simple_package(computed_field_package));
 		return_code = Computed_field_package_add_type(computed_field_package,
 			computed_field_xor_type_string,
 			define_Computed_field_type_xor,
-			computed_field_logical_operators_package);
+			Computed_field_package_get_simple_package(computed_field_package));
 		return_code = Computed_field_package_add_type(computed_field_package,
 			computed_field_equal_to_type_string,
 			define_Computed_field_type_equal_to,
-			computed_field_logical_operators_package);
+			Computed_field_package_get_simple_package(computed_field_package));
 		return_code = Computed_field_package_add_type(computed_field_package,
 			computed_field_less_than_type_string,
 			define_Computed_field_type_less_than,
-			computed_field_logical_operators_package);
+			Computed_field_package_get_simple_package(computed_field_package));
 		return_code = Computed_field_package_add_type(computed_field_package,
 			computed_field_greater_than_type_string,
 			define_Computed_field_type_greater_than,
-			computed_field_logical_operators_package);
+			Computed_field_package_get_simple_package(computed_field_package));
 		return_code = Computed_field_package_add_type(computed_field_package,
 			computed_field_is_defined_type_string,
 			define_Computed_field_type_is_defined,
-			computed_field_logical_operators_package);
+			Computed_field_package_get_simple_package(computed_field_package));
 		return_code = Computed_field_package_add_type(computed_field_package,
 			computed_field_not_type_string,
 			define_Computed_field_type_not,
-			computed_field_logical_operators_package);
+			Computed_field_package_get_simple_package(computed_field_package));
 	}
 	else
 	{

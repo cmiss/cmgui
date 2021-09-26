@@ -14,6 +14,7 @@
 #include "general/message.h"
 #include "command/parser.h"
 #include "computed_field/computed_field.h"
+#include "computed_field/computed_field_app.h"
 #include "computed_field/computed_field_private.hpp"
 #include "computed_field/computed_field_private_app.hpp"
 #include "computed_field/computed_field_set.h"
@@ -53,14 +54,8 @@ int Computed_field_get_type_embedded(struct Computed_field *field,
 cmzn_field *cmzn_fieldmodule_create_field_access_count(
 	cmzn_fieldmodule *fieldmodule);
 
-class Computed_field_finite_element_package : public Computed_field_type_package
-{
-
-};
-
-
 int define_Computed_field_type_finite_element(struct Parse_state *state,
-	void *field_modify_void,void *computed_field_finite_element_package_void)
+	void *field_modify_void, void *)
 /*******************************************************************************
 LAST MODIFIED : 24 August 2006
 
@@ -78,12 +73,11 @@ FE_field being made and/or modified.
 	enum Value_type value_type;
 	int i,number_of_components,number_of_valid_strings,
 		original_number_of_components,return_code;
-	Computed_field_modify_data *field_modify;
+	Computed_field_modify_data *field_modify = static_cast<Computed_field_modify_data *>(field_modify_void);
 	struct Option_table *option_table;
 
 	ENTER(define_Computed_field_type_finite_element);
-	USE_PARAMETER(computed_field_finite_element_package_void);
-	if (state&&(field_modify=(Computed_field_modify_data *)field_modify_void))
+	if ((state) && (field_modify))
 	{
 		return_code = 1;
 		cmzn_field_id existing_field = field_modify->get_field();
@@ -98,9 +92,8 @@ FE_field being made and/or modified.
 			cmzn_mesh_id host_mesh = 0;
 			if (existing_fe_field)
 			{
-				number_of_components=
-					get_FE_field_number_of_components(existing_fe_field);
-				cm_field_type = get_FE_field_CM_field_type(existing_fe_field);
+				number_of_components = existing_field->getNumberOfComponents();
+				cm_field_type = existing_fe_field->get_CM_field_type();
 				value_type = get_FE_field_value_type(existing_fe_field);
 			}
 			else
@@ -262,7 +255,7 @@ FE_field being made and/or modified.
 				cmzn_fieldmodule *field_module = field_modify->get_field_module();
 				// cache changes to ensure FE_field not automatically wrapped already
 				cmzn_fieldmodule_begin_change(field_module);
-				char *field_name = cmzn_fieldmodule_get_field_name(field_modify->get_field_module());
+				const char *field_name = field_modify->get_field_name();
 				FE_field *fe_field = FE_region_get_FE_field_with_general_properties(
 					cmzn_region_get_FE_region(cmzn_fieldmodule_get_region_internal(field_module)),
 					field_name, value_type, number_of_components);
@@ -286,11 +279,9 @@ FE_field being made and/or modified.
 				}
 				if (return_code)
 				{
-					Coordinate_system coordinate_system = cmzn_fieldmodule_get_coordinate_system(field_module);
-					if (fe_field &&
-						set_FE_field_CM_field_type(fe_field, cm_field_type) &&
-						set_FE_field_coordinate_system(fe_field, &coordinate_system))
+					if (fe_field)
 					{
+						fe_field->set_CM_field_type(cm_field_type);
 						if (component_names)
 						{
 							for (i = 0; i<number_of_components; i++)
@@ -301,8 +292,8 @@ FE_field being made and/or modified.
 								}
 							}
 						}
-						return_code = field_modify->update_field_and_deaccess(
-							cmzn_fieldmodule_create_field_finite_element_wrapper(field_module, fe_field));
+						return_code = field_modify->define_field(
+							cmzn_fieldmodule_create_field_finite_element_wrapper(field_module, fe_field, field_name));
 					}
 					else
 					{
@@ -343,7 +334,7 @@ FE_field being made and/or modified.
 
 
 int define_Computed_field_type_cmiss_number(struct Parse_state *state,
-	void *field_modify_void,void *dummy_void)
+	void *field_modify_void, void *)
 /*******************************************************************************
 LAST MODIFIED : 24 August 2006
 
@@ -351,16 +342,15 @@ DESCRIPTION :
 Converts <field> into type COMPUTED_FIELD_CMZN_NUMBER.
 ==============================================================================*/
 {
-	Computed_field_modify_data *field_modify;
+	Computed_field_modify_data *field_modify = static_cast<Computed_field_modify_data *>(field_modify_void);
 	int return_code;
 
 	ENTER(define_Computed_field_type_cmiss_number);
-	USE_PARAMETER(dummy_void);
 	if (state && (field_modify = (Computed_field_modify_data *)field_modify_void))
 	{
 		if (!state->current_token)
 		{
-			return_code = field_modify->update_field_and_deaccess(
+			return_code = field_modify->define_field(
 				cmzn_fieldmodule_create_field_cmiss_number(field_modify->get_field_module()));
 		}
 		else
@@ -389,7 +379,7 @@ Converts <field> into type COMPUTED_FIELD_CMZN_NUMBER.
 #if defined (COMPUTED_FIELD_ACCESS_COUNT)
 
 int define_Computed_field_type_access_count(struct Parse_state *state,
-	void *field_modify_void,void *dummy_void)
+	void *field_modify_void, void *)
 /*******************************************************************************
 LAST MODIFIED : 24 August 2006
 
@@ -398,15 +388,14 @@ Converts <field> into type COMPUTED_FIELD_ACCESS_COUNT.
 ==============================================================================*/
 {
 	int return_code;
-	Computed_field_modify_data *field_modify;
+	Computed_field_modify_data *field_modify = static_cast<Computed_field_modify_data *>(field_modify_void);
 
 	ENTER(define_Computed_field_type_access_count);
-	USE_PARAMETER(dummy_void);
-	if (state&&(field_modify=(Computed_field_modify_data *)field_modify_void))
+	if ((state) && (field_modify))
 	{
 		if (!state->current_token)
 		{
-			return_code = field_modify->update_field_and_deaccess(
+			return_code = field_modify->define_field(
 				cmzn_fieldmodule_create_field_access_count(field_modify->get_field_module()));
 		}
 		else
@@ -438,12 +427,11 @@ Converts <field> into type COMPUTED_FIELD_ACCESS_COUNT.
  * Convert field into type NODE_VALUE, if not already, and edit definition.
  */
 int define_Computed_field_type_node_value(struct Parse_state *state,
-	void *field_modify_void, void *computed_field_finite_element_package_void)
+	void *field_modify_void, void *)
 {
 	Computed_field_modify_data *field_modify = static_cast<Computed_field_modify_data *>(field_modify_void);
-	USE_PARAMETER(computed_field_finite_element_package_void);
 	int return_code;
-	if (state && field_modify)
+	if ((state) && (field_modify))
 	{
 		return_code = 1;
 		cmzn_field_id finite_element_field = 0;
@@ -493,7 +481,7 @@ int define_Computed_field_type_node_value(struct Parse_state *state,
 			STRING_TO_ENUMERATOR(cmzn_node_value_label)(nodeValueLabelName, &nodeValueLabel);
 			cmzn_field_id field = cmzn_fieldmodule_create_field_node_value(field_modify->get_field_module(),
 				finite_element_field, nodeValueLabel, versionNumber);
-			return_code = field_modify->update_field_and_deaccess(field);
+			return_code = field_modify->define_field(field);
 			if (!return_code)
 			{
 				display_message(ERROR_MESSAGE, "gfx define field node_value.  Failed");
@@ -515,12 +503,11 @@ int define_Computed_field_type_node_value(struct Parse_state *state,
  * and allows its contents to be modified.
  */
 int define_Computed_field_type_edge_discontinuity(struct Parse_state *state,
-	void *field_modify_void, void *computed_field_finite_element_package_void)
+	void *field_modify_void, void *)
 {
 	int return_code = 1;
-	Computed_field_modify_data *field_modify = (Computed_field_modify_data *)field_modify_void;
-	USE_PARAMETER(computed_field_finite_element_package_void);
-	if (state && field_modify)
+	Computed_field_modify_data *field_modify = static_cast<Computed_field_modify_data *>(field_modify_void);
+	if ((state) && (field_modify))
 	{
 		return_code = 1;
 		cmzn_field_id source_field = 0;
@@ -606,7 +593,7 @@ int define_Computed_field_type_edge_discontinuity(struct Parse_state *state,
 			}
 			if (return_code)
 			{
-				return_code = field_modify->update_field_and_deaccess(field);
+				return_code = field_modify->define_field(field);
 				field = 0;
 			}
 			else
@@ -625,7 +612,7 @@ int define_Computed_field_type_edge_discontinuity(struct Parse_state *state,
 }
 
 int define_Computed_field_type_embedded(struct Parse_state *state,
-	void *field_modify_void, void *computed_field_finite_element_package_void)
+	void *field_modify_void, void *)
 /*******************************************************************************
 LAST MODIFIED : 24 August 2006
 
@@ -637,9 +624,8 @@ and allows its contents to be modified.
 	int return_code;
 
 	ENTER(define_Computed_field_type_embedded);
-	Computed_field_modify_data *field_modify = (Computed_field_modify_data *)field_modify_void;
-	USE_PARAMETER(computed_field_finite_element_package_void);
-	if (state && field_modify)
+	Computed_field_modify_data *field_modify = static_cast<Computed_field_modify_data *>(field_modify_void);
+	if ((state) && (field_modify))
 	{
 		return_code = 1;
 		cmzn_field_id source_field = 0;
@@ -678,7 +664,7 @@ and allows its contents to be modified.
 		{
 			if (embedded_location_field && source_field)
 			{
-				return_code = field_modify->update_field_and_deaccess(
+				return_code = field_modify->define_field(
 					cmzn_fieldmodule_create_field_embedded(field_modify->get_field_module(),
 						source_field, embedded_location_field));
 			}
@@ -716,14 +702,13 @@ and allows its contents to be modified.
  * (if it is not already) and allows its contents to be modified.
  */
 int define_Computed_field_type_find_mesh_location(struct Parse_state *state,
-	void *field_modify_void, void *computed_field_finite_element_package_void)
+	void *field_modify_void, void *)
 {
 	int return_code;
 
 	ENTER(define_Computed_field_type_find_mesh_location);
-	USE_PARAMETER(computed_field_finite_element_package_void);
 	Computed_field_modify_data * field_modify = (Computed_field_modify_data *)field_modify_void;
-	if (state && field_modify)
+	if ((state) && (field_modify))
 	{
 		return_code = 1;
 		cmzn_mesh_id mesh = 0;
@@ -808,7 +793,7 @@ int define_Computed_field_type_find_mesh_location(struct Parse_state *state,
 						}
 						else
 						{
-							return_code = field_modify->update_field_and_deaccess(field);
+							return_code = field_modify->define_field(field);
 							field = 0;
 						}
 						cmzn_field_find_mesh_location_destroy(&find_mesh_location_field);
@@ -848,7 +833,7 @@ int define_Computed_field_type_find_mesh_location(struct Parse_state *state,
 }
 
 int define_Computed_field_type_xi_coordinates(struct Parse_state *state,
-	void *field_modify_void,void *dummy_void)
+	void *field_modify_void, void *)
 /*******************************************************************************
 LAST MODIFIED : 24 August 2006
 
@@ -857,15 +842,14 @@ Converts <field> into type COMPUTED_FIELD_XI_COORDINATES.
 ==============================================================================*/
 {
 	int return_code;
-	Computed_field_modify_data *field_modify;
+	Computed_field_modify_data *field_modify = static_cast<Computed_field_modify_data *>(field_modify_void);
 
 	ENTER(define_Computed_field_type_xi_coordinates);
-	USE_PARAMETER(dummy_void);
-	if (state&&(field_modify=(Computed_field_modify_data *)field_modify_void))
+	if ((state) && (field_modify))
 	{
 		if (!state->current_token)
 		{
-			return_code = field_modify->update_field_and_deaccess(
+			return_code = field_modify->define_field(
 				cmzn_fieldmodule_create_field_xi_coordinates(field_modify->get_field_module()));
 		}
 		else
@@ -892,7 +876,7 @@ Converts <field> into type COMPUTED_FIELD_XI_COORDINATES.
 } /* define_Computed_field_type_xi_coordinates */
 
 int define_Computed_field_type_basis_derivative(struct Parse_state *state,
-	void *field_modify_void,void *computed_field_finite_element_package_void)
+	void *field_modify_void, void *)
 /*******************************************************************************
 LAST MODIFIED : 24 August 2006
 
@@ -909,11 +893,10 @@ FE_field being made and/or modified.
 		"for the field. Higher order derivatives are formed as derivatives of "
 		"derivatives. Deprecated: use derivative field directly now.";
 	int return_code = 1;
-	Computed_field_modify_data *field_modify;
+	Computed_field_modify_data *field_modify = static_cast<Computed_field_modify_data *>(field_modify_void);
 	struct Option_table *option_table;
 
-	USE_PARAMETER(computed_field_finite_element_package_void);
-	if (state&&(field_modify=(Computed_field_modify_data *)field_modify_void))
+	if ((state) && (field_modify))
 	{
 		int order = 1;
 		int *xi_indices = (int *)NULL;
@@ -1004,7 +987,7 @@ FE_field being made and/or modified.
 					(i < (order - 1)) ? tmp_fieldmodule : fieldmodule, derivative_field, xi_indices[i]);
 				cmzn_field_destroy(&tmp_field);
 			}
-			return_code = field_modify->update_field_and_deaccess(derivative_field);
+			return_code = field_modify->define_field(derivative_field);
 			cmzn_fieldmodule_destroy(&tmp_fieldmodule);
 			cmzn_fieldmodule_end_change(fieldmodule);
 		}
@@ -1034,13 +1017,11 @@ FE_field being made and/or modified.
 }
 
 int define_Computed_field_type_is_exterior(struct Parse_state *state,
-	void *field_modify_void, void *dummy_void)
+	void *field_modify_void, void *)
 {
-	USE_PARAMETER(dummy_void);
 	int return_code = 0;
-	Computed_field_modify_data *field_modify =
-		static_cast<Computed_field_modify_data *>(field_modify_void);
-	if (state && field_modify)
+	Computed_field_modify_data *field_modify = static_cast<Computed_field_modify_data *>(field_modify_void);
+	if ((state) && (field_modify))
 	{
 		Option_table *option_table = CREATE(Option_table)();
 		Option_table_add_help(option_table,
@@ -1050,7 +1031,7 @@ int define_Computed_field_type_is_exterior(struct Parse_state *state,
 		DESTROY(Option_table)(&option_table);
 		if (return_code)
 		{
-			return_code = field_modify->update_field_and_deaccess(
+			return_code = field_modify->define_field(
 				cmzn_fieldmodule_create_field_is_exterior(field_modify->get_field_module()));
 		}
 	}
@@ -1063,13 +1044,11 @@ int define_Computed_field_type_is_exterior(struct Parse_state *state,
 }
 
 int define_Computed_field_type_is_on_face(struct Parse_state *state,
-	void *field_modify_void, void *dummy_void)
+	void *field_modify_void, void *)
 {
-	USE_PARAMETER(dummy_void);
 	int return_code = 0;
-	Computed_field_modify_data *field_modify =
-		static_cast<Computed_field_modify_data *>(field_modify_void);
-	if (state && field_modify)
+	Computed_field_modify_data *field_modify = static_cast<Computed_field_modify_data *>(field_modify_void);
+	if ((state) && (field_modify))
 	{
 		Option_table *option_table = CREATE(Option_table)();
 		Option_table_add_help(option_table,
@@ -1091,7 +1070,7 @@ int define_Computed_field_type_is_on_face(struct Parse_state *state,
 			}
 			if (return_code)
 			{
-				return_code = field_modify->update_field_and_deaccess(
+				return_code = field_modify->define_field(
 					cmzn_fieldmodule_create_field_is_on_face(field_modify->get_field_module(), face));
 			}
 		}
@@ -1114,9 +1093,6 @@ This function registers the finite_element related types of Computed_fields.
 ==============================================================================*/
 {
 	int return_code;
-	Computed_field_finite_element_package
-		*computed_field_finite_element_package =
-		new Computed_field_finite_element_package;
 
 	ENTER(Computed_field_register_types_finite_element);
 	if (computed_field_package)
@@ -1124,49 +1100,49 @@ This function registers the finite_element related types of Computed_fields.
 		return_code = Computed_field_package_add_type(computed_field_package,
 			computed_field_finite_element_type_string,
 			define_Computed_field_type_finite_element,
-			computed_field_finite_element_package);
+			Computed_field_package_get_simple_package(computed_field_package));
 		return_code = Computed_field_package_add_type(computed_field_package,
 			computed_field_cmiss_number_type_string,
 			define_Computed_field_type_cmiss_number,
-			computed_field_finite_element_package);
+			Computed_field_package_get_simple_package(computed_field_package));
 #if defined (COMPUTED_FIELD_ACCESS_COUNT)
 		return_code = Computed_field_package_add_type(computed_field_package,
 			computed_field_access_count_type_string,
 			define_Computed_field_type_access_count,
-			computed_field_finite_element_package);
+			Computed_field_package_get_simple_package(computed_field_package));
 #endif /* defined (COMPUTED_FIELD_ACCESS_COUNT) */
 		return_code = Computed_field_package_add_type(computed_field_package,
 			computed_field_xi_coordinates_type_string,
 			define_Computed_field_type_xi_coordinates,
-			computed_field_finite_element_package);
+			Computed_field_package_get_simple_package(computed_field_package));
 		return_code = Computed_field_package_add_type(computed_field_package,
 			computed_field_node_value_type_string,
 			define_Computed_field_type_node_value,
-			computed_field_finite_element_package);
+			Computed_field_package_get_simple_package(computed_field_package));
 		return_code = Computed_field_package_add_type(computed_field_package,
 			computed_field_find_mesh_location_type_string,
 			define_Computed_field_type_find_mesh_location,
-			computed_field_finite_element_package);
+			Computed_field_package_get_simple_package(computed_field_package));
 		return_code = Computed_field_package_add_type(computed_field_package,
 			computed_field_edge_discontinuity_type_string,
 			define_Computed_field_type_edge_discontinuity,
-			computed_field_finite_element_package);
+			Computed_field_package_get_simple_package(computed_field_package));
 		return_code = Computed_field_package_add_type(computed_field_package,
 			computed_field_embedded_type_string,
 			define_Computed_field_type_embedded,
-			computed_field_finite_element_package);
+			Computed_field_package_get_simple_package(computed_field_package));
 		return_code = Computed_field_package_add_type(computed_field_package,
 			computed_field_basis_derivative_type_string,
 			define_Computed_field_type_basis_derivative,
-			computed_field_finite_element_package);
+			Computed_field_package_get_simple_package(computed_field_package));
 		return_code = Computed_field_package_add_type(computed_field_package,
 			computed_field_is_exterior_type_string,
 			define_Computed_field_type_is_exterior,
-			computed_field_finite_element_package);
+			Computed_field_package_get_simple_package(computed_field_package));
 		return_code = Computed_field_package_add_type(computed_field_package,
 			computed_field_is_on_face_type_string,
 			define_Computed_field_type_is_on_face,
-			computed_field_finite_element_package);
+			Computed_field_package_get_simple_package(computed_field_package));
 	}
 	else
 	{

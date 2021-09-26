@@ -98,19 +98,10 @@ int wxRegionChooser::set_region(struct cmzn_region *region)
 	char *path = NULL;
 	if (region)
 	{
-		char *temp_path = cmzn_region_get_path(region);
-		int string_length = strlen(temp_path);
-		if (strcmp(temp_path, "/") && (string_length > 1))
-		{
-			ALLOCATE(path, char, string_length);
-			strncpy(path, temp_path, string_length);
-			path[string_length - 1] = '\0';
-			DEALLOCATE(temp_path);
-		}
-		else
-		{
-			path = temp_path;
-		}
+		path = cmzn_region_get_path(region);
+		// start with /
+		int error = 0;
+		append_string(&path, CMZN_REGION_PATH_SEPARATOR_STRING, &error, /*prefix*/true);
 	}
 	else
 		path = duplicate_string("/");

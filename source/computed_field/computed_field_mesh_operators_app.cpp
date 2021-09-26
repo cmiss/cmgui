@@ -10,6 +10,7 @@
 #include "general/message.h"
 #include "command/parser.h"
 #include "computed_field/computed_field.h"
+#include "computed_field/computed_field_app.h"
 #include "computed_field/computed_field_private.hpp"
 #include "computed_field/computed_field_private_app.hpp"
 #include "computed_field/computed_field_set.h"
@@ -19,10 +20,6 @@
 #include "finite_element/finite_element.h"
 #include "graphics/tessellation_app.hpp"
 #include "mesh/cmiss_element_private.hpp"
-
-class Computed_field_mesh_operators_package : public Computed_field_type_package
-{
-};
 
 /**
  * Command modifier function for getting the arguments common to several
@@ -132,10 +129,9 @@ int define_Computed_field_type_mesh_operator(struct Parse_state *state,
  * contents to be modified.
  */
 int define_Computed_field_type_mesh_integral(struct Parse_state *state,
-	void *field_modify_void, void *computed_field_mesh_operators_package_void)
+	void *field_modify_void, void *)
 {
 	int return_code = 0;
-	USE_PARAMETER(computed_field_mesh_operators_package_void);
 	Computed_field_modify_data * field_modify =
 		reinterpret_cast<Computed_field_modify_data *>(field_modify_void);
 	cmzn_field_id integrand_field = 0;
@@ -177,7 +173,7 @@ int define_Computed_field_type_mesh_integral(struct Parse_state *state,
 		cmzn_field_mesh_integral_set_numbers_of_points(mesh_integral_field,
 			numbers_of_points_size, numbers_of_points);
 		cmzn_field_mesh_integral_destroy(&mesh_integral_field);
-		return_code = field_modify->update_field_and_deaccess(field);
+		return_code = field_modify->define_field(field);
 	}
 	cmzn_field_destroy(&integrand_field);
 	cmzn_field_destroy(&coordinate_field);
@@ -191,10 +187,9 @@ int define_Computed_field_type_mesh_integral(struct Parse_state *state,
  * contents to be modified.
  */
 int define_Computed_field_type_mesh_integral_squares(struct Parse_state *state,
-	void *field_modify_void, void *computed_field_mesh_operators_package_void)
+	void *field_modify_void, void *)
 {
 	int return_code = 0;
-	USE_PARAMETER(computed_field_mesh_operators_package_void);
 	Computed_field_modify_data * field_modify =
 		reinterpret_cast<Computed_field_modify_data *>(field_modify_void);
 	cmzn_field_id integrand_field = 0;
@@ -222,7 +217,7 @@ int define_Computed_field_type_mesh_integral_squares(struct Parse_state *state,
 		cmzn_field_mesh_integral_set_numbers_of_points(mesh_integral_field,
 			numbers_of_points_size, numbers_of_points);
 		cmzn_field_mesh_integral_destroy(&mesh_integral_field);
-		return_code = field_modify->update_field_and_deaccess(field);
+		return_code = field_modify->define_field(field);
 	}
 	cmzn_field_destroy(&integrand_field);
 	cmzn_field_destroy(&coordinate_field);
@@ -235,19 +230,16 @@ int Computed_field_register_types_mesh_operators(
 	struct Computed_field_package *computed_field_package)
 {
 	int return_code;
-	Computed_field_mesh_operators_package
-		*computed_field_mesh_operators_package =
-		new Computed_field_mesh_operators_package;
 
 	ENTER(Computed_field_register_types_mesh_operators);
 	if (computed_field_package)
 	{
 		return_code = Computed_field_package_add_type(computed_field_package,
 			"mesh_integral", define_Computed_field_type_mesh_integral,
-			computed_field_mesh_operators_package);
+			Computed_field_package_get_simple_package(computed_field_package));
 		return_code = Computed_field_package_add_type(computed_field_package,
 			"mesh_integral_squares", define_Computed_field_type_mesh_integral_squares,
-			computed_field_mesh_operators_package);
+			Computed_field_package_get_simple_package(computed_field_package));
 	}
 	else
 	{

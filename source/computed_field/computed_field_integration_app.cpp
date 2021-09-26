@@ -11,6 +11,7 @@
 #include "general/message.h"
 #include "command/parser.h"
 #include "computed_field/computed_field.h"
+#include "computed_field/computed_field_app.h"
 #include "computed_field/computed_field_private.hpp"
 #include "computed_field/computed_field_private_app.hpp"
 #include "computed_field/computed_field_set.h"
@@ -22,12 +23,6 @@
 #include "finite_element/finite_element_region.h"
 #include "computed_field/computed_field_finite_element.h"
 
-class Computed_field_integration_package : public Computed_field_type_package
-{
-public:
-	cmzn_region *root_region;
-};
-
 const char computed_field_xi_texture_coordinates_type_string[] = "xi_texture_coordinates";
 const char computed_field_integration_type_string[] = "integration";
 
@@ -37,7 +32,7 @@ int Computed_field_get_type_integration(Computed_field *field,
 	Computed_field **coordinate_field);
 
 int define_Computed_field_type_integration(Parse_state *state,
-	void *field_modify_void,void *computed_field_integration_package_void)
+	void *field_modify_void, void *)
 /*******************************************************************************
 LAST MODIFIED : 24 August 2006
 
@@ -48,9 +43,8 @@ and allows its contents to be modified.
 {
 	int return_code = 1;
 	ENTER(define_Computed_field_type_integration);
-	Computed_field_modify_data *field_modify = reinterpret_cast<Computed_field_modify_data *>(field_modify_void);
-	USE_PARAMETER(computed_field_integration_package_void);
-	if (state && field_modify)
+	Computed_field_modify_data *field_modify = static_cast<Computed_field_modify_data *>(field_modify_void);
+	if ((state) && (field_modify))
 	{
 		cmzn_region_id region = field_modify->get_region();
 		cmzn_mesh_id mesh = 0;
@@ -73,32 +67,19 @@ and allows its contents to be modified.
 		}
 		if (coordinate_field)
 		{
-			ACCESS(Computed_field)(coordinate_field);
+			cmzn_field_access(coordinate_field);
 		}
 		if (integrand)
 		{
-			ACCESS(Computed_field)(integrand);
-		}
-		else
-		{
-			/* Make a default integrand of one */
-			double value = 1.0;
-			// use temporary field module to supply different defaults
-			cmzn_fieldmodule *temp_field_module = cmzn_region_get_fieldmodule(region);
-			cmzn_fieldmodule_set_field_name(temp_field_module, "constant_1.0");
-			integrand = cmzn_fieldmodule_create_field_constant(temp_field_module,
-				/*number_of_components*/1, &value);
-			if (NULL == integrand)
-			{
-				display_message(ERROR_MESSAGE,
-					"define_Computed_field_type_integration.  Unable to create constant integrand");
-				return_code = 0;
-			}
-			cmzn_fieldmodule_destroy(&temp_field_module);
+			cmzn_field_access(integrand);
 		}
 		char *group_name = 0;
 
 		Option_table *option_table = CREATE(Option_table)();
+		Option_table_add_help(option_table,
+			"Create a field computing the definite integral of integrand over coordinates "
+			"of the mesh from the origin of the seed_element xi coordinates to the current location. "
+			"Note if integrand field is not specified, constant 1.0 is used.");
 		/* coordinate */
 		Set_Computed_field_conditional_data set_coordinate_field_data;
 		set_coordinate_field_data.computed_field_manager = field_modify->get_field_manager();
@@ -157,8 +138,9 @@ and allows its contents to be modified.
 		}
 		if (return_code && !integrand)
 		{
-			display_message(ERROR_MESSAGE, "You must specify an integrand field.");
-			return_code = 0;
+			const double one = 1.0;
+			integrand = cmzn_fieldmodule_create_field_constant(field_modify->get_field_module(), 1, &one);
+			cmzn_field_set_name_unique(integrand, "constant_1.0");
 		}
 		cmzn_element_id seed_element = 0;
 		if (return_code)
@@ -182,7 +164,7 @@ and allows its contents to be modified.
 			}
 			else
 			{
-				return_code = field_modify->update_field_and_deaccess(
+				return_code = field_modify->define_field(
 					cmzn_fieldmodule_create_field_integration(field_modify->get_field_module(),
 						mesh, seed_element, integrand, magnitude_coordinates_flag, coordinate_field));
 			}
@@ -208,7 +190,7 @@ and allows its contents to be modified.
 }
 
 int define_Computed_field_type_xi_texture_coordinates(Parse_state *state,
-	void *field_modify_void,void *computed_field_integration_package_void)
+	void *field_modify_void, void *)
 /*******************************************************************************
 LAST MODIFIED : 24 August 2006
 
@@ -219,9 +201,8 @@ and allows its contents to be modified.
 {
 	int return_code = 1;
 	ENTER(define_Computed_field_type_xi_texture_coordinates);
-	Computed_field_modify_data *field_modify = reinterpret_cast<Computed_field_modify_data *>(field_modify_void);
-	USE_PARAMETER(computed_field_integration_package_void);
-	if (state && field_modify)
+	Computed_field_modify_data *field_modify = static_cast<Computed_field_modify_data *>(field_modify_void);
+	if ((state) && (field_modify))
 	{
 		cmzn_region_id region = field_modify->get_region();
 		cmzn_mesh_id mesh = 0;
@@ -270,13 +251,12 @@ and allows its contents to be modified.
 				return_code = 0;
 			}
 		}
-		// use temporary field module to supply different defaults
 		cmzn_field_id coordinate_field = FIRST_OBJECT_IN_MANAGER_THAT(Computed_field)(
 			Computed_field_is_type_xi_coordinates, (void *)NULL,
 			field_modify->get_field_manager());
 		if (coordinate_field)
 		{
-			ACCESS(Computed_field)(coordinate_field);
+			cmzn_field_access(coordinate_field);
 		}
 		else
 		{
@@ -289,23 +269,15 @@ and allows its contents to be modified.
 			}
 			return_code = 0;
 		}
-		double value = 1.0;
-		cmzn_fieldmodule *temp_field_module = cmzn_region_get_fieldmodule(region);
-		cmzn_fieldmodule_set_field_name(temp_field_module, "constant_1.0");
-		Computed_field *integrand = cmzn_fieldmodule_create_field_constant(temp_field_module,
-			/*number_of_components*/1, &value);
-		cmzn_fieldmodule_destroy(&temp_field_module);
-		if (NULL == integrand)
-		{
-			display_message(ERROR_MESSAGE,
-				"define_Computed_field_type_xi_texture_coordinates.  Unable to create constant field");
-			return_code = 0;
-		}
 		if (return_code)
 		{
-			return_code = field_modify->update_field_and_deaccess(
+			const double one = 1.0;
+			cmzn_field *integrand = cmzn_fieldmodule_create_field_constant(field_modify->get_field_module(), 1, &one);
+			cmzn_field_set_name_unique(integrand, "constant_1.0");
+			return_code = field_modify->define_field(
 				cmzn_fieldmodule_create_field_integration(field_modify->get_field_module(),
 					mesh, seed_element, integrand, /*magnitude_coordinates*/0, coordinate_field));
+			cmzn_field_destroy(&integrand);
 		}
 		if (group_name)
 		{
@@ -314,7 +286,6 @@ and allows its contents to be modified.
 		cmzn_element_destroy(&seed_element);
 		cmzn_mesh_destroy(&mesh);
 		cmzn_field_destroy(&coordinate_field);
-		cmzn_field_destroy(&integrand);
 	}
 	else
 	{
@@ -328,31 +299,19 @@ and allows its contents to be modified.
 }
 
 int Computed_field_register_types_integration(
-	Computed_field_package *computed_field_package,
-	cmzn_region *root_region)
-/*******************************************************************************
-LAST MODIFIED : 24 August 2006
-
-DESCRIPTION :
-==============================================================================*/
+	Computed_field_package *computed_field_package)
 {
 	int return_code;
-	Computed_field_integration_package
-		*computed_field_integration_package =
-		new Computed_field_integration_package;
-
-	ENTER(Computed_field_register_type_integration);
 	if (computed_field_package)
 	{
-		computed_field_integration_package->root_region = root_region;
 		return_code = Computed_field_package_add_type(computed_field_package,
 			computed_field_integration_type_string,
 			define_Computed_field_type_integration,
-			computed_field_integration_package);
+			Computed_field_package_get_simple_package(computed_field_package));
 		return_code = Computed_field_package_add_type(computed_field_package,
 			computed_field_xi_texture_coordinates_type_string,
 			define_Computed_field_type_xi_texture_coordinates,
-			computed_field_integration_package);
+			Computed_field_package_get_simple_package(computed_field_package));
 	}
 	else
 	{
@@ -360,7 +319,5 @@ DESCRIPTION :
 			"Computed_field_register_type_integration.  Invalid argument(s)");
 		return_code=0;
 	}
-	LEAVE;
-
 	return (return_code);
-} /* Computed_field_register_type_integration */
+}

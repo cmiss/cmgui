@@ -4,8 +4,8 @@
 * License, v. 2.0. If a copy of the MPL was not distributed with this
 * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#if !defined (COMPUTED_FIELD_CURVATUREANISOTROPICDIFFUSIONIMAGEFILTER_H)
-#define COMPUTED_FIELD_CURVATUREANISOTROPICDIFFUSIONIMAGEFILTER_H
+#if !defined (COMPUTED_FIELD_CURVATUREANISOTROPICDIFFUSIONIMAGEFILTER_APP_H)
+#define COMPUTED_FIELD_CURVATUREANISOTROPICDIFFUSIONIMAGEFILTER_APP_H
 
 int Computed_field_register_types_curvature_anisotropic_diffusion_image_filter(
 	struct Computed_field_package *computed_field_package);
@@ -16,4 +16,4 @@ DESCRIPTION :
 ==============================================================================*/
 
 
-#endif /* !defined (COMPUTED_FIELD_CURVATUREANISOTROPICDIFFUSIONIMAGEFILTER_H) */
+#endif /* !defined (COMPUTED_FIELD_CURVATUREANISOTROPICDIFFUSIONIMAGEFILTER_APP_H) */

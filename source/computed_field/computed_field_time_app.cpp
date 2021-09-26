@@ -9,6 +9,7 @@
 #include "general/message.h"
 #include "command/parser.h"
 #include "computed_field/computed_field.h"
+#include "computed_field/computed_field_app.h"
 #include "computed_field/computed_field_private.hpp"
 #include "computed_field/computed_field_private_app.hpp"
 #include "computed_field/computed_field_set.h"
@@ -28,7 +29,7 @@ int Computed_field_get_type_time_lookup(struct Computed_field *field,
 	struct Computed_field **source_field, struct Computed_field **time_field);
 
 int define_Computed_field_type_time_lookup(struct Parse_state *state,
-	void *field_modify_void,void *computed_field_time_package_void)
+	void *field_modify_void, void *)
 /*******************************************************************************
 LAST MODIFIED : 25 August 2006
 
@@ -39,14 +40,13 @@ already) and allows its contents to be modified.
 {
 	int return_code;
 	struct Computed_field **source_fields;
-	Computed_field_modify_data *field_modify;
+	Computed_field_modify_data *field_modify = static_cast<Computed_field_modify_data *>(field_modify_void);
 	struct Option_table *option_table;
 	struct Set_Computed_field_conditional_data set_source_field_data,
 		set_time_field_data;
 
 	ENTER(define_Computed_field_type_time_lookup);
-	USE_PARAMETER(computed_field_time_package_void);
-	if (state&&(field_modify=(Computed_field_modify_data *)field_modify_void))
+	if ((state) && (field_modify))
 	{
 		return_code=1;
 		/* get valid parameters for projection field */
@@ -92,7 +92,7 @@ already) and allows its contents to be modified.
 				/* no errors,not asking for help */
 				if (return_code)
 				{
-					return_code = field_modify->update_field_and_deaccess(
+					return_code = field_modify->define_field(
 						cmzn_fieldmodule_create_field_time_lookup(field_modify->get_field_module(),
 							source_fields[0], source_fields[1]));
 				}
@@ -148,7 +148,7 @@ There are no fields to fetch from a time value field.
 ==============================================================================*/
 
 int define_Computed_field_type_time_value(struct Parse_state *state,
-	void *field_modify_void,void *computed_field_time_package_void)
+	void *field_modify_void, void *computed_field_time_package_void)
 /*******************************************************************************
 LAST MODIFIED : 25 August 2006
 
@@ -158,20 +158,18 @@ already) and allows its contents to be modified.
 ==============================================================================*/
 {
 	int return_code = 0;
-	Computed_field_time_package *computed_field_time_package;
-	Computed_field_modify_data *field_modify;
+	Computed_field_time_package *computed_field_time_package =
+		static_cast<Computed_field_time_package *>(computed_field_time_package_void);
+	Computed_field_modify_data *field_modify = static_cast<Computed_field_modify_data *>(field_modify_void);
 
 	ENTER(define_Computed_field_type_time_value);
-	if (state&&(field_modify=(Computed_field_modify_data *)field_modify_void)&&
-		(computed_field_time_package=
-		(Computed_field_time_package *)
-		computed_field_time_package_void))
+	if ((state) && (field_modify) && (computed_field_time_package))
 	{
-	if ((!(state->current_token)) ||
-		(strcmp(PARSER_HELP_STRING,state->current_token)&&
-		strcmp(PARSER_RECURSIVE_HELP_STRING,state->current_token)))
+		if ((!(state->current_token)) ||
+			(strcmp(PARSER_HELP_STRING,state->current_token)&&
+			strcmp(PARSER_RECURSIVE_HELP_STRING,state->current_token)))
 		{
-			return_code = field_modify->update_field_and_deaccess(
+			return_code = field_modify->define_field(
 				cmzn_fieldmodule_create_field_time_value(field_modify->get_field_module(),
 					computed_field_time_package->time_keeper));
 		}

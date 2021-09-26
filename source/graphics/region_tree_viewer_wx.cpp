@@ -504,6 +504,7 @@ const char *Add_graphics_type_string(Add_graphics_type add_graphics_type)
 class wxRegionTreeViewer : public wxFrame
 {
 	Region_tree_viewer *region_tree_viewer;
+	cmzn_context *context;  // hold on to zinc context to release after deferred clean-up.
 #if defined (__WXMSW__)
 	Region_tree_viewer_size region_tree_viewer_size;
 #endif /* defined (__WXMSW__) */
@@ -628,7 +629,8 @@ class wxRegionTreeViewer : public wxFrame
 public:
 
   wxRegionTreeViewer(Region_tree_viewer *region_tree_viewer) :
-	region_tree_viewer(region_tree_viewer)
+	region_tree_viewer(region_tree_viewer),
+	context(cmzn_region_get_context(region_tree_viewer->root_region))
   {
 		wxXmlInit_region_tree_viewer_wx();
 		region_tree_viewer->wx_region_tree_viewer = (wxRegionTreeViewer *)NULL;
@@ -863,7 +865,8 @@ public:
 		delete seed_element_chooser;
 		delete coordinate_system_chooser;
 		delete streamlines_track_direction_chooser;
-	}
+		cmzn_context_destroy(&this->context);
+  }
 
 /***************************************************************************//**
 * Set manager in different field manager object choosers.

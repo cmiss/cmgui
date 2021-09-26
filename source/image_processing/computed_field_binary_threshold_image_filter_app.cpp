@@ -8,6 +8,7 @@
 #include "general/message.h"
 #include "command/parser.h"
 #include "computed_field/computed_field.h"
+#include "computed_field/computed_field_app.h"
 #include "computed_field/computed_field_private.hpp"
 #include "computed_field/computed_field_private_app.hpp"
 #include "computed_field/computed_field_set.h"
@@ -30,18 +31,17 @@ int cmzn_field_get_type_binary_threshold_image_filter(struct Computed_field *fie
  * @return Return code indicating succes (1) or failure (0)
 */
 int define_Computed_field_type_binary_threshold_image_filter(struct Parse_state *state,
-	void *field_modify_void, void *computed_field_simple_package_void)
+	void *field_modify_void, void *)
 {
 	double lower_threshold, upper_threshold;
 	int return_code;
 	struct Computed_field *source_field;
-	Computed_field_modify_data *field_modify;
+	Computed_field_modify_data *field_modify = static_cast<Computed_field_modify_data *>(field_modify_void);
 	struct Option_table *option_table;
 	struct Set_Computed_field_conditional_data set_source_field_data;
 
 	ENTER(define_Computed_field_type_binary_threshold_image_filter);
-	USE_PARAMETER(computed_field_simple_package_void);
-	if (state && (field_modify=(Computed_field_modify_data *)field_modify_void))
+	if ((state) && (field_modify))
 	{
 		return_code = 1;
 		/* get valid parameters for projection field */
@@ -107,7 +107,7 @@ int define_Computed_field_type_binary_threshold_image_filter(struct Parse_state 
 				cmzn_field_imagefilter_binary_threshold_set_upper_threshold(imagefilter,
 					upper_threshold);
 				cmzn_field_imagefilter_binary_threshold_destroy(&imagefilter);
-				return_code = field_modify->update_field_and_deaccess(filter_field);
+				return_code = field_modify->define_field(filter_field);
 			}
 
 			if (!return_code)

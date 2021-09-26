@@ -5,8 +5,8 @@
 * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 
-#if !defined (COMPUTED_FIELD_MEANIMAGEFILTER_H)
-#define COMPUTED_FIELD_MEANIMAGEFILTER_H
+#if !defined (COMPUTED_FIELD_MEANIMAGEFILTER_APP_H)
+#define COMPUTED_FIELD_MEANIMAGEFILTER_APP_H
 
 int Computed_field_register_types_mean_image_filter(
 	struct Computed_field_package *computed_field_package);
@@ -17,4 +17,4 @@ DESCRIPTION :
 ==============================================================================*/
 
 
-#endif /* !defined (COMPUTED_FIELD_MEANIMAGEFILTER_H) */
+#endif /* !defined (COMPUTED_FIELD_MEANIMAGEFILTER_APP_H) */

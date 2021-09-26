@@ -8,6 +8,9 @@
 #if !defined (COMPUTED_FIELD_PRIVATE_APP_H_)
 #define COMPUTED_FIELD_PRIVATE_APP_H_
 
+struct Computed_field_package;
+class Computed_field_type_package;
+
 /* Used by the register_type_function, Computed_field_type_data and
 	Computed_field_add_type_to_option_table*/
 typedef int (*Define_Computed_field_type_function)(

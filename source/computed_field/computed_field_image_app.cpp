@@ -8,15 +8,12 @@
 #include "general/message.h"
 #include "command/parser.h"
 #include "computed_field/computed_field.h"
+#include "computed_field/computed_field_app.h"
 #include "computed_field/computed_field_private.hpp"
 #include "computed_field/computed_field_private_app.hpp"
 #include "computed_field/computed_field_set.h"
 #include "computed_field/computed_field_set_app.h"
 #include "computed_field/computed_field_image.h"
-
-class Computed_field_image_package : public Computed_field_type_package
-{
-};
 
 char computed_field_image_type_string[] = "image";
 
@@ -29,7 +26,7 @@ int Computed_field_get_type_image(struct Computed_field *field,
 int cmzn_field_image_set_output_range(cmzn_field_image_id image_field, double minimum, double maximum);
 
 int define_Computed_field_type_sample_texture(struct Parse_state *state,
-	void *field_modify_void,void *computed_field_image_package_void)
+	void *field_modify_void, void *)
 /*******************************************************************************
 LAST MODIFIED : 25 August 2006
 
@@ -43,19 +40,14 @@ Maintains legacy version that is set with a texture.
 	int return_code, dimension;
 	double original_sizes[3];
 	struct Computed_field *source_field,*texture_coordinate_field;
-	Computed_field_image_package
-		*computed_field_image_package;
-	Computed_field_modify_data *field_modify;
+	Computed_field_modify_data *field_modify = static_cast<Computed_field_modify_data *>(field_modify_void);
 	struct Texture *texture;
 	struct Option_table *option_table;
 	struct Set_Computed_field_conditional_data set_source_field_data;
 	int number_of_bytes_per_component;
 
 	ENTER(define_Computed_field_type_image);
-	if (state && (field_modify=(Computed_field_modify_data *)field_modify_void) &&
-		(computed_field_image_package=
-		(Computed_field_image_package *)
-		computed_field_image_package_void))
+	if ((state) && (field_modify))
 	{
 		return_code=1;
 		/* get valid parameters for projection field */
@@ -182,7 +174,7 @@ Maintains legacy version that is set with a texture.
 					}
 					cmzn_field_image_destroy(&field_image);
 				}
-				return_code = field_modify->update_field_and_deaccess(field);
+				return_code = field_modify->define_field(field);
 			}
 			if (!return_code)
 			{
@@ -225,9 +217,6 @@ DESCRIPTION :
 ==============================================================================*/
 {
 	int return_code;
-	Computed_field_image_package
-		*computed_field_image_package =
-		new Computed_field_image_package;
 
 	ENTER(Computed_field_register_type_image);
 	if (computed_field_package)
@@ -235,11 +224,11 @@ DESCRIPTION :
 		return_code = Computed_field_package_add_type(computed_field_package,
 			computed_field_image_type_string,
 			define_Computed_field_type_sample_texture,
-			computed_field_image_package);
+			Computed_field_package_get_simple_package(computed_field_package));
 		return_code = Computed_field_package_add_type(computed_field_package,
 			"sample_texture",
 			define_Computed_field_type_sample_texture,
-			computed_field_image_package);
+			Computed_field_package_get_simple_package(computed_field_package));
 	}
 	else
 	{

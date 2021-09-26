@@ -11,6 +11,7 @@
 #include "general/message.h"
 #include "command/parser.h"
 #include "computed_field/computed_field.h"
+#include "computed_field/computed_field_app.h"
 #include "computed_field/computed_field_private.hpp"
 #include "computed_field/computed_field_private_app.hpp"
 #include "computed_field/computed_field_set.h"
@@ -27,7 +28,7 @@ cmzn_field *cmzn_fieldmodule_create_field_compose(cmzn_fieldmodule *fieldmodule,
 	int find_nearest, int use_point_five_when_out_of_bounds);
 
 int define_Computed_field_type_compose(struct Parse_state *state,
-	void *field_modify_void, void *computed_field_compose_package_void)
+	void *field_modify_void, void *)
 /*******************************************************************************
 LAST MODIFIED : 24 August 2006
 
@@ -37,18 +38,14 @@ already) and allows its contents to be modified.
 ==============================================================================*/
 {
 	int return_code;
-	Computed_field_compose_package *computed_field_compose_package;
-	Computed_field_modify_data *field_modify;
+	Computed_field_modify_data *field_modify = static_cast<Computed_field_modify_data *>(field_modify_void);
 	struct Option_table *find_option_table, *option_table,
 		*out_of_bounds_option_table;
 	struct Set_Computed_field_conditional_data set_calculate_values_field_data,
 		set_find_element_xi_field_data, set_texture_coordinates_field_data;
 
 	ENTER(define_Computed_field_type_compose);
-	if (state && (field_modify=(Computed_field_modify_data *)field_modify_void) &&
-		(computed_field_compose_package =
-			(Computed_field_compose_package *)
-			computed_field_compose_package_void))
+	if ((state) && (field_modify))
 	{
 		return_code = 1;
 		cmzn_mesh_id mesh = 0;
@@ -218,7 +215,7 @@ already) and allows its contents to be modified.
 			}
 			if (return_code)
 			{
-				return_code = field_modify->update_field_and_deaccess(
+				return_code = field_modify->define_field(
 					cmzn_fieldmodule_create_field_compose(field_modify->get_field_module(),
 						texture_coordinates_field, find_element_xi_field,
 						calculate_values_field, mesh,
@@ -267,27 +264,15 @@ already) and allows its contents to be modified.
 } /* define_Computed_field_type_compose */
 
 int Computed_field_register_types_compose(
-	struct Computed_field_package *computed_field_package,
-	struct cmzn_region *root_region)
-/*******************************************************************************
-LAST MODIFIED : 24 August 2006
-
-DESCRIPTION :
-==============================================================================*/
+	struct Computed_field_package *computed_field_package)
 {
 	int return_code;
-	Computed_field_compose_package
-		*computed_field_compose_package =
-		new Computed_field_compose_package;
-
-	ENTER(Computed_field_register_types_compose);
-	if (computed_field_package && root_region)
+	if (computed_field_package)
 	{
-		computed_field_compose_package->root_region = root_region;
 		return_code = Computed_field_package_add_type(computed_field_package,
 			computed_field_compose_type_string,
 			define_Computed_field_type_compose,
-			computed_field_compose_package);
+			Computed_field_package_get_simple_package(computed_field_package));
 	}
 	else
 	{
@@ -295,7 +280,5 @@ DESCRIPTION :
 			"Computed_field_register_types_compose.  Invalid argument(s)");
 		return_code = 0;
 	}
-	LEAVE;
-
 	return (return_code);
-} /* Computed_field_register_types_compose */
+}

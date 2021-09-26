@@ -19,6 +19,53 @@
 #include "general/geometry_app.h"
 #include "computed_field/computed_field_app.h"
 
+
+Computed_field_modify_data::Computed_field_modify_data(cmzn_fieldmodule *field_module_in, const char *field_name_in) :
+	field_module(cmzn_fieldmodule_access(field_module_in)),
+	field_name(duplicate_string(field_name_in)),
+	field(cmzn_fieldmodule_find_field_by_name(field_module_in, field_name))
+{
+	cmzn_fieldmodule_begin_change(this->field_module);
+}
+
+Computed_field_modify_data::~Computed_field_modify_data()
+{
+	if (this->field_name)
+	{
+		DEALLOCATE(this->field_name);
+	}
+	cmzn_field_destroy(&this->field);
+	cmzn_fieldmodule_end_change(this->field_module);
+	cmzn_fieldmodule_destroy(&field_module);
+}
+
+int Computed_field_modify_data::define_field(cmzn_field *new_field)
+{
+	int return_code = 1;
+	if (new_field)
+	{
+		if (this->field)
+		{
+			if (CMZN_OK != this->field->copyDefinition(*new_field))
+			{
+				return_code = 0;
+			}
+			cmzn_field_destroy(&new_field);
+		}
+		else
+		{
+			cmzn_field_set_name(new_field, this->field_name);
+			this->field = new_field;  // take over reference
+		}
+		if (return_code)
+		{
+			cmzn_field_set_managed(this->field, true);
+		}
+	}
+	return return_code;
+}
+
+
 struct Computed_field_type_data
 /*******************************************************************************
 LAST MODIFIED : 14 August 2006
@@ -321,7 +368,7 @@ Adds <type> to the <option_table> so it is available to the commands.
 } /* Computed_field_add_type_to_option_table */
 
 static int define_Computed_field_type(struct Parse_state *state,
-	void *field_modify_void,void *computed_field_package_void)
+	void *field_modify_void, void *computed_field_package_void)
 /*******************************************************************************
 LAST MODIFIED : 21 July 2008
 
@@ -380,7 +427,7 @@ and its parameter fields and values.
 } /* define_Computed_field_type */
 
 int define_Computed_field_coordinate_system(struct Parse_state *state,
-	void *field_modify_void,void *computed_field_package_void)
+	void *field_modify_void, void *computed_field_package_void)
 /*******************************************************************************
 LAST MODIFIED : 21 July 2008
 
@@ -395,54 +442,61 @@ Function assumes that <field> is not currently managed, as it would be illegal
 to modify it if it was.
 ==============================================================================*/
 {
-	const char *current_token;
-	struct Coordinate_system coordinate_system;
-	int return_code;
-	Computed_field_modify_data *field_modify;
-	struct Option_table *option_table;
+	int return_code = 1;
+	Computed_field_modify_data *field_modify = static_cast<Computed_field_modify_data *>(field_modify_void);
 
-	ENTER(define_Computed_field_coordinate_system);
-	if (state && (field_modify=(Computed_field_modify_data *)field_modify_void))
+	if ((state) && (field_modify) && (computed_field_package_void))
 	{
-		if (NULL != (current_token=state->current_token))
+		const char *current_token = state->current_token;
+		if (current_token)
 		{
 			cmzn_fieldmodule *field_module = field_modify->get_field_module();
-			coordinate_system = cmzn_fieldmodule_get_coordinate_system(field_module);
 			/* read the optional cooordinate_system NAME [focus #] parameter */
 			if (strcmp(PARSER_HELP_STRING,current_token)&&
 				strcmp(PARSER_RECURSIVE_HELP_STRING,current_token))
 			{
-				if (fuzzy_string_compare(current_token,"coordinate_system"))
+				if (fuzzy_string_compare(current_token, "coordinate_system"))
 				{
-					option_table = CREATE(Option_table)();
+					Coordinate_system coordinate_system(RECTANGULAR_CARTESIAN);
+					if (field_modify->get_field())
+					{
+						coordinate_system = field_modify->get_field()->getCoordinateSystem();
+					}
+					Option_table *option_table = CREATE(Option_table)();
 					Option_table_add_entry(option_table,"coordinate_system",
 						&coordinate_system, NULL, set_Coordinate_system);
 					return_code=Option_table_parse(option_table,state);
 					DESTROY(Option_table)(&option_table);
 					if (return_code)
 					{
-						cmzn_fieldmodule_set_coordinate_system(field_module, coordinate_system);
 						return_code = define_Computed_field_type(state, field_modify_void,
 							computed_field_package_void);
+						if (return_code)
+						{
+							if (field_modify->get_field())
+							{
+								field_modify->get_field()->setCoordinateSystem(coordinate_system);
+							}
+						}
 					}
 				}
 				else
 				{
 					/* Default coordinate system should be set when type is defined */
-					return_code=define_Computed_field_type(state,field_modify_void,
+					return_code = define_Computed_field_type(state, field_modify_void,
 						computed_field_package_void);
 				}
 			}
 			else
 			{
 				/* Write out the help */
-				option_table = CREATE(Option_table)();
+				Option_table *option_table = CREATE(Option_table)();
 				Option_table_add_entry(option_table,"[coordinate_system NAME]",
 					field_modify_void, computed_field_package_void,
 					define_Computed_field_type);
-				return_code=Option_table_parse(option_table,state);
+				return_code = Option_table_parse(option_table,state);
 				DESTROY(Option_table)(&option_table);
-				return_code=1;
+				return_code = 1;
 			}
 		}
 		else
@@ -456,12 +510,10 @@ to modify it if it was.
 	{
 		display_message(ERROR_MESSAGE,
 			"define_Computed_field_coordinate_system.  Invalid argument(s)");
-		return_code=0;
+		return_code = 0;
 	}
-	LEAVE;
-
 	return (return_code);
-} /* define_Computed_field_coordinate_system */
+}
 
 int define_Computed_field(struct Parse_state *state, void *root_region_void,
 	void *computed_field_package_void)
@@ -497,125 +549,89 @@ computed field so it makes sense that they are set before splitting up into the
 options for the various types.
 ==============================================================================*/
 {
-	const char *current_token;
-	int return_code;
-	struct Option_table *help_option_table;
-	struct cmzn_region *region, *root_region;
-
-	ENTER(define_Computed_field);
-	if (state && (root_region = (struct cmzn_region *)root_region_void))
+	int return_code = 1;
+	cmzn_region *root_region = static_cast<cmzn_region *>(root_region_void);
+	if ((state) && (root_region) && (computed_field_package_void))
 	{
-		if (computed_field_package_void)
+		const char *current_token = state->current_token;
+		if (current_token)
 		{
-			return_code=1;
-			if (NULL != (current_token=state->current_token))
+			if (strcmp(PARSER_HELP_STRING,current_token)&&
+				strcmp(PARSER_RECURSIVE_HELP_STRING,current_token))
 			{
-				if (strcmp(PARSER_HELP_STRING,current_token)&&
-					strcmp(PARSER_RECURSIVE_HELP_STRING,current_token))
+				char *field_name = nullptr;
+				cmzn_region *region = nullptr;
+				char *region_path = nullptr;
+				if (cmzn_region_get_partial_region_path(root_region,
+					current_token, &region, &region_path, &field_name))
 				{
-					char *field_name = NULL;
-					char *region_path = NULL;
-					if (cmzn_region_get_partial_region_path(root_region,
-						current_token, &region, &region_path, &field_name))
+					if (field_name && (strlen(field_name) > 0) &&
+						(strchr(field_name, CMZN_REGION_PATH_SEPARATOR_CHAR) == nullptr))
 					{
+						shift_Parse_state(state,1);
 						cmzn_fieldmodule *field_module = cmzn_region_get_fieldmodule(region);
-						if (field_name && (strlen(field_name) > 0) &&
-							(strchr(field_name, CMZN_REGION_PATH_SEPARATOR_CHAR)	== NULL))
-						{
-							shift_Parse_state(state,1);
-							cmzn_fieldmodule_set_field_name(field_module, field_name);
-							Computed_field *existing_field = cmzn_fieldmodule_find_field_by_name(field_module, field_name);
-							if (existing_field)
-							{
-								cmzn_fieldmodule_set_replace_field(field_module, existing_field);
-								cmzn_fieldmodule_set_coordinate_system(field_module, existing_field->coordinate_system);
-							}
-							Computed_field_modify_data field_modify(field_module);
-							return_code = define_Computed_field_coordinate_system(state,
-								(void *)&field_modify,computed_field_package_void);
-							// set coordinate system if only it has changed
-							if (existing_field)
-							{
-								if (cmzn_fieldmodule_coordinate_system_is_set(field_module))
-								{
-									struct Coordinate_system new_coordinate_system = cmzn_fieldmodule_get_coordinate_system(field_module);
-									if (!Coordinate_systems_match(&(existing_field->coordinate_system), &new_coordinate_system))
-									{
-										Computed_field_set_coordinate_system(existing_field, &new_coordinate_system);
-										Computed_field_changed(existing_field);
-									}
-								}
-								cmzn_field_destroy(&existing_field);
-							}
-							cmzn_fieldmodule_destroy(&field_module);
-						}
-						else
-						{
-							if (field_name)
-							{
-								display_message(ERROR_MESSAGE,
-									"gfx define field:  Invalid region path or field name '%s'", field_name);
-							}
-							else
-							{
-								display_message(ERROR_MESSAGE,
-									"gfx define field:  Missing field name or name matches child region '%s'", current_token);
-							}
-							display_parse_state_location(state);
-							return_code = 0;
-						}
-						DEALLOCATE(region_path);
-						DEALLOCATE(field_name);
+						Computed_field_modify_data field_modify(field_module, field_name);
+						return_code = define_Computed_field_coordinate_system(state,
+							(void *)&field_modify,computed_field_package_void);
+						cmzn_fieldmodule_destroy(&field_module);
 					}
 					else
 					{
-						display_message(ERROR_MESSAGE,
-							"gfx define field: Bad region_path/field_name '%s'", current_token);
+						if (field_name)
+						{
+							display_message(ERROR_MESSAGE,
+								"gfx define field:  Invalid region path or field name '%s'", field_name);
+						}
+						else
+						{
+							display_message(ERROR_MESSAGE,
+								"gfx define field:  Missing field name or name matches child region '%s'", current_token);
+						}
 						display_parse_state_location(state);
 						return_code = 0;
 					}
+					DEALLOCATE(region_path);
+					DEALLOCATE(field_name);
 				}
 				else
 				{
-					/* Write out the help */
-					cmzn_fieldmodule *field_module = cmzn_region_get_fieldmodule(root_region);
-					Computed_field_modify_data field_modify(field_module);
-					help_option_table = CREATE(Option_table)();
-					Option_table_add_entry(help_option_table,
-						"[REGION_PATH" CMZN_REGION_PATH_SEPARATOR_STRING "]FIELD_NAME",
-						(void *)&field_modify, computed_field_package_void,
-						define_Computed_field_coordinate_system);
-					return_code=Option_table_parse(help_option_table,state);
-					DESTROY(Option_table)(&help_option_table);
-					cmzn_fieldmodule_destroy(&field_module);
-					return_code = 1;
+					display_message(ERROR_MESSAGE,
+						"gfx define field: Bad region_path/field_name '%s'", current_token);
+					display_parse_state_location(state);
+					return_code = 0;
 				}
 			}
 			else
 			{
-				display_message(ERROR_MESSAGE,"Missing field name");
-				display_parse_state_location(state);
-				return_code=0;
+				/* Write out the help */
+				cmzn_fieldmodule *field_module = cmzn_region_get_fieldmodule(root_region);
+				Computed_field_modify_data field_modify(field_module, "");
+				Option_table *help_option_table = CREATE(Option_table)();
+				Option_table_add_entry(help_option_table,
+					"[REGION_PATH" CMZN_REGION_PATH_SEPARATOR_STRING "]FIELD_NAME",
+					(void *)&field_modify, computed_field_package_void,
+					define_Computed_field_coordinate_system);
+				return_code=Option_table_parse(help_option_table,state);
+				DESTROY(Option_table)(&help_option_table);
+				cmzn_fieldmodule_destroy(&field_module);
+				return_code = 1;
 			}
 		}
 		else
 		{
-			display_message(ERROR_MESSAGE,
-				"define_Computed_field.  Missing computed_field_package_void");
-			return_code=0;
+			display_message(ERROR_MESSAGE,"Missing field name");
+			display_parse_state_location(state);
+			return_code = 0;
 		}
 	}
 	else
 	{
 		display_message(ERROR_MESSAGE,
 			"define_Computed_field.  Invalid argument(s)");
-		return_code=0;
+		return_code = 0;
 	}
-	LEAVE;
-
 	return (return_code);
-} /* define_Computed_field */
-
+}
 
 int process_list_or_write_Computed_field_commands(struct Computed_field *field,
 	 void *command_prefix_void, Process_list_or_write_command_class *process_message)
@@ -914,3 +930,37 @@ Unregisters each of the computed field types added.
 	return (return_code);
 } /* Computed_field_package_add_type */
 
+void cmzn_field_set_name_unique(cmzn_field *field, const char *stemName)
+{
+	if (!((field) && (stemName)))
+	{
+		display_message(ERROR_MESSAGE, "cmzn_field_set_name_unique.  Invalid argument(s)");
+		return;
+	}
+	cmzn_fieldmodule *fieldmodule = cmzn_field_get_fieldmodule(field);
+	const size_t length = strlen(stemName);
+	char *name = new char[length + 10];
+	sprintf(name, "%s", stemName);
+	int i = 0;
+	while (true)
+	{
+		if (i > 0)
+		{
+			sprintf(name + length, "_%d", i);
+		}
+		cmzn_field *existingField = cmzn_fieldmodule_find_field_by_name(fieldmodule, name);
+		if (existingField)
+		{
+			// not attempting to match existing field
+			cmzn_field_destroy(&existingField);
+		}
+		else
+		{
+			cmzn_field_set_name(field, name);
+			break;
+		}
+		++i;
+	}
+	delete[] name;
+	cmzn_fieldmodule_destroy(&fieldmodule);
+}

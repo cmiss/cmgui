@@ -12,6 +12,7 @@
 #include "general/message.h"
 #include "command/parser.h"
 #include "computed_field/computed_field.h"
+#include "computed_field/computed_field_app.h"
 #include "computed_field/computed_field_private.hpp"
 #include "computed_field/computed_field_private_app.hpp"
 #include "computed_field/computed_field_set.h"
@@ -19,12 +20,6 @@
 #include "computed_field/computed_field_lookup.h"
 #include "finite_element/finite_element_nodeset.hpp"
 #include "finite_element/finite_element_region.h"
-
-class Computed_field_lookup_package : public Computed_field_type_package
-{
-public:
-	struct cmzn_region *root_region;
-};
 
 const char computed_field_nodal_lookup_type_string[] = "nodal_lookup";
 
@@ -35,7 +30,7 @@ int Computed_field_get_type_quaternion_SLERP(struct Computed_field *field,
 	struct FE_node **lookup_node);
 
 int define_Computed_field_type_nodal_lookup(struct Parse_state *state,
-	void *field_modify_void, void *computed_field_lookup_package_void)
+	void *field_modify_void, void *)
 /*******************************************************************************
 LAST MODIFIED : 25 August 2006
 
@@ -45,13 +40,9 @@ already) and allows its contents to be modified.
 ==============================================================================*/
 {
 	int return_code;
-	Computed_field_lookup_package *computed_field_lookup_package;
-	Computed_field_modify_data *field_modify;
+	Computed_field_modify_data *field_modify = static_cast<Computed_field_modify_data *>(field_modify_void);
 
-	if (state&&(field_modify=(Computed_field_modify_data *)field_modify_void) &&
-		(computed_field_lookup_package=
-		(Computed_field_lookup_package *)
-		computed_field_lookup_package_void))
+	if ((state) && (field_modify))
 	{
 		return_code = 1;
 		cmzn_field_id source_field = 0;
@@ -105,7 +96,7 @@ already) and allows its contents to be modified.
 			cmzn_node_id node = cmzn_nodeset_find_node_by_identifier(nodeset, node_identifier);
 			if (node)
 			{
-				return_code = field_modify->update_field_and_deaccess(
+				return_code = field_modify->define_field(
 					cmzn_fieldmodule_create_field_node_lookup(field_modify->get_field_module(),
 						source_field, node));
 			}
@@ -140,10 +131,8 @@ already) and allows its contents to be modified.
 	return (return_code);
 }
 
-
-
 int define_Computed_field_type_quaternion_SLERP(struct Parse_state *state,
-	void *field_modify_void, void *computed_field_lookup_package_void)
+	void *field_modify_void, void *)
 /*******************************************************************************
 LAST MODIFIED : 25 August 2006
 
@@ -153,14 +142,11 @@ contents to be modified.
 ==============================================================================*/
 {
 	int return_code;
-	Computed_field_lookup_package *computed_field_lookup_package;
-	Computed_field_modify_data *field_modify;
+	Computed_field_modify_data *field_modify = static_cast<Computed_field_modify_data *>(field_modify_void);
 
 	ENTER(define_Computed_field_type_quaternion_SLERP);
-	if (state&&(field_modify=(Computed_field_modify_data *)field_modify_void) &&
-		 (computed_field_lookup_package=
-				(Computed_field_lookup_package *)
-				computed_field_lookup_package_void))
+	if ((state) && (field_modify))
+
 	{
 		return_code = 1;
 		cmzn_field_id source_field = 0;
@@ -223,7 +209,7 @@ contents to be modified.
 			cmzn_node_id node = cmzn_nodeset_find_node_by_identifier(nodeset, node_identifier);
 			if (node)
 			{
-				return_code = field_modify->update_field_and_deaccess(
+				return_code = field_modify->define_field(
 					cmzn_fieldmodule_create_field_quaternion_SLERP(field_modify->get_field_module(),
 						source_field, node));
 			}
@@ -261,31 +247,19 @@ contents to be modified.
 } /* define_Computed_field_type_quaternion_SLERP */
 
 int Computed_field_register_types_lookup(
-	struct Computed_field_package *computed_field_package,
-	struct cmzn_region *root_region)
-/*******************************************************************************
-LAST MODIFIED : 25 August 2006
-
-DESCRIPTION :
-==============================================================================*/
+	struct Computed_field_package *computed_field_package)
 {
 	int return_code;
-	Computed_field_lookup_package
-		*computed_field_lookup_package =
-		new Computed_field_lookup_package;
-
-	ENTER(Computed_field_register_types_lookup);
 	if (computed_field_package)
 	{
-		computed_field_lookup_package->root_region = root_region;
 		return_code = Computed_field_package_add_type(computed_field_package,
 			computed_field_nodal_lookup_type_string,
 			define_Computed_field_type_nodal_lookup,
-			computed_field_lookup_package);
+			Computed_field_package_get_simple_package(computed_field_package));
 		return_code = Computed_field_package_add_type(computed_field_package,
-			 computed_field_quaternion_SLERP_type_string,
-			 define_Computed_field_type_quaternion_SLERP,
-			 computed_field_lookup_package);
+			computed_field_quaternion_SLERP_type_string,
+			define_Computed_field_type_quaternion_SLERP,
+			Computed_field_package_get_simple_package(computed_field_package));
 	}
 	else
 	{
@@ -293,7 +267,5 @@ DESCRIPTION :
 			"Computed_field_register_types_nodal_lookup.  Invalid argument(s)");
 		return_code = 0;
 	}
-	LEAVE;
-
 	return (return_code);
-} /* Computed_field_register_types_lookup */
+}
