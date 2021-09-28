@@ -555,11 +555,6 @@ class wxRegionTreeViewer : public wxFrame
 	*graphical_material_chooser;
 	Managed_object_chooser<cmzn_material,MANAGER_CLASS(cmzn_material)>
 	*selected_material_chooser;
-	/*
-	DEFINE_ENUMERATOR_TYPE_CLASS(cmzn_graphics_type);
-	Enumerator_chooser<ENUMERATOR_TYPE_CLASS(cmzn_graphics_type)>
-	*graphics_type_chooser;
-	*/
 	DEFINE_ENUMERATOR_TYPE_CLASS(cmzn_graphics_select_mode);
 	Enumerator_chooser<ENUMERATOR_TYPE_CLASS(cmzn_graphics_select_mode)>
 	*select_mode_chooser;
@@ -828,18 +823,48 @@ public:
 	Show();
 };
 
-  wxRegionTreeViewer()
-  {
-  };
+	wxRegionTreeViewer() :
+		context(nullptr),
+		font_chooser(nullptr),
+		coordinate_field_chooser(nullptr),
+		graphical_material_chooser(nullptr),
+		selected_material_chooser(nullptr),
+		add_graphics_choice(nullptr),
+		select_mode_chooser(nullptr),
+		data_field_chooser(nullptr),
+		spectrum_chooser(nullptr),
+		line_orientation_scale_field_chooser(nullptr),
+		isoscalar_chooser(nullptr),
+		glyph_chooser(nullptr),
+		glyph_repeat_mode_chooser(nullptr),
+		orientation_scale_field_chooser(nullptr),
+		variable_scale_field_chooser(nullptr),
+		label_field_chooser(nullptr),
+		subgroup_field_chooser(nullptr),
+		domain_type_chooser(nullptr),
+		sampling_mode_chooser(nullptr),
+		tessellation_chooser(nullptr),
+		tessellation_field_chooser(nullptr),
+		sample_density_field_chooser(nullptr),
+		line_shape_chooser(nullptr),
+		stream_vector_chooser(nullptr),
+		streamlines_colour_data_type_chooser(nullptr),
+		texture_coord_field_chooser(nullptr),
+		render_polygon_mode_chooser(nullptr),
+		boundary_mode_chooser(nullptr),
+		seed_element_chooser(nullptr),
+		coordinate_system_chooser(nullptr),
+		streamlines_track_direction_chooser(nullptr)
+	{
+	}
 
-  ~wxRegionTreeViewer()
+	~wxRegionTreeViewer()
 	{
 		delete font_chooser;
 		delete coordinate_field_chooser;
 		delete graphical_material_chooser;
 		delete selected_material_chooser;
 		delete add_graphics_choice;
-		//delete graphics_type_chooser;
 		delete select_mode_chooser;
 		delete data_field_chooser;
 		delete spectrum_chooser;
@@ -3738,7 +3763,7 @@ void EditTessellation(wxCommandEvent &event)
 	wxWindow *window = FindWindowById(tessellationWindowID, this);
 	if (!window)
 	{
-		TessellationDialog *dlg = new TessellationDialog(
+		TessellationDialog *dlg = new TessellationDialog(this->context,
 			region_tree_viewer->tessellationmodule, this, wxID_ANY);
 		tessellationWindowID = dlg->GetId();
 		dlg->Show();

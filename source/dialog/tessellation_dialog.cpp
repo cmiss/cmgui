@@ -321,12 +321,14 @@ void TessellationManagerCallback(struct MANAGER_MESSAGE(cmzn_tessellation) *mess
 	dialog->manager_callback(message);
 }
 
-TessellationDialog::TessellationDialog(cmzn_tessellationmodule *tessellationmodule_in, wxWindow* parent,
-		int id, const wxPoint& pos, const wxSize& size):
+TessellationDialog::TessellationDialog(cmzn_context *contextIn, cmzn_tessellationmodule *tessellationmoduleIn, wxWindow* parent,
+		int id, const wxPoint& pos, const wxSize& size) :
+	context(cmzn_context_access(contextIn)),
+	tessellationmodule(tessellationmoduleIn),
+	tessellation_manager(cmzn_tessellationmodule_get_manager(this->tessellationmodule)),
+	tessellation_manager_callback_id(nullptr),
 	wxDialog(parent, id, wxString::FromAscii("Tessellation Editor"), pos, size, wxDEFAULT_FRAME_STYLE|wxDIALOG_NO_PARENT)
 {
-		tessellationmodule = tessellationmodule_in;
-		tessellation_manager = cmzn_tessellationmodule_get_manager(tessellationmodule);
 	sizer_1_staticbox = new wxStaticBox(this, -1, wxEmptyString);
 	label_1 = new wxStaticText(this, wxID_ANY, wxT("Tessellation\n"), wxDefaultPosition,
 		wxDefaultSize, wxALIGN_CENTRE);
@@ -346,9 +348,8 @@ TessellationDialog::TessellationDialog(cmzn_tessellationmodule *tessellationmodu
 	do_layout();
 	itemMap.clear();
 	create_managed_objects_table();
-	tessellation_manager_callback_id =
-	MANAGER_REGISTER(cmzn_tessellation)(TessellationManagerCallback,
-	(void *)this, tessellation_manager);
+	this->tessellation_manager_callback_id = MANAGER_REGISTER(cmzn_tessellation)(TessellationManagerCallback,
+		(void *)this, tessellation_manager);
 	addNewButton->Connect(wxEVT_COMMAND_BUTTON_CLICKED,
 	wxCommandEventHandler(TessellationDialog::OnTessellationDialogAddNewPressed),
 	NULL, this);

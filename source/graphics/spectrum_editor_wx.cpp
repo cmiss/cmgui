@@ -18,9 +18,11 @@ Provides the wxWidgets interface to manipulate spectrum settings.
 #include <stdio.h>
 #include <math.h>
 
+#include "opencmiss/zinc/context.h"
 #include "opencmiss/zinc/glyph.h"
 #include "opencmiss/zinc/scene.h"
 #include "opencmiss/zinc/material.h"
+#include "opencmiss/zinc/region.h"
 #include "opencmiss/zinc/scene.h"
 #include "command/parser.h"
 #include "general/debug.h"
@@ -36,7 +38,6 @@ Provides the wxWidgets interface to manipulate spectrum settings.
 #include "graphics/spectrum_component_app.h"
 #include "graphics/spectrum_editor_wx.h"
 #include "graphics/spectrum_editor_dialog_wx.h"
-#include "region/cmiss_region.hpp"
 #include "three_d_drawing/graphics_buffer.h"
 #include "general/message.h"
 #include "user_interface/user_interface.h"
@@ -906,101 +907,103 @@ Callback for when changes made in the settings editor.
 
 class wxSpectrumEditor : public wxFrame
 {
-	 Spectrum_editor *spectrum_editor;
-	 wxPanel *spectrum_region_chooser_panel;
-	 wxRegionChooser *spectrum_region_chooser;
-	 DEFINE_MANAGER_CLASS(cmzn_spectrum);
-	 Managed_object_listbox<cmzn_spectrum, MANAGER_CLASS(cmzn_spectrum)>
-	 *spectrum_object_listbox;
-	 DEFINE_MANAGER_CLASS(cmzn_scenefilter);
-	 Managed_object_chooser<cmzn_scenefilter,MANAGER_CLASS(cmzn_scenefilter)>
-	 *filter_chooser;
+	Spectrum_editor *spectrum_editor;
+	cmzn_context *context;  // hold on to zinc context to release after deferred clean-up.
+	wxPanel *spectrum_region_chooser_panel;
+	wxRegionChooser *spectrum_region_chooser;
+	DEFINE_MANAGER_CLASS(cmzn_spectrum);
+	Managed_object_listbox<cmzn_spectrum, MANAGER_CLASS(cmzn_spectrum)>
+	*spectrum_object_listbox;
+	DEFINE_MANAGER_CLASS(cmzn_scenefilter);
+	Managed_object_chooser<cmzn_scenefilter,MANAGER_CLASS(cmzn_scenefilter)>
+	*filter_chooser;
+
+	wxSpectrumEditor();  // not implemented
+
 public:
 
-	 wxSpectrumEditor(Spectrum_editor *spectrum_editor):
-			spectrum_editor(spectrum_editor)
-	 {
-			wxXmlInit_spectrum_editor_wx();
-			wxXmlResource::Get()->LoadFrame(this,
-				 (wxWindow *)NULL, _T("CmguiSpectrumEditor"));
-			this->SetIcon(cmiss_icon_xpm);
-			spectrum_editor->spectrum_listbox_panel =
-				 XRCCTRL(*this, "SpectrumListPanel", wxPanel);
-			spectrum_editor->spectrum_listbox_panel->SetSize(wxDefaultCoord,wxDefaultCoord,
-				400, 100);
-			spectrum_editor->spectrum_listbox_panel->SetMinSize(wxSize(-1,100));
-			spectrum_object_listbox =
-				 new Managed_object_listbox<cmzn_spectrum, MANAGER_CLASS(cmzn_spectrum)>
-				 (spectrum_editor->spectrum_listbox_panel, (struct cmzn_spectrum*)NULL, spectrum_editor->spectrum_manager,
-						(MANAGER_CONDITIONAL_FUNCTION(cmzn_spectrum) *)NULL, (void *)NULL, spectrum_editor->user_interface);
-			Callback_base<cmzn_spectrum* > *spectrum_editor_spectrum_list_callback =
-				 new Callback_member_callback< cmzn_spectrum*,
-				 wxSpectrumEditor, int (wxSpectrumEditor::*)(cmzn_spectrum *) >
-				 (this, &wxSpectrumEditor::spectrum_editor_spectrum_list_callback);
-			spectrum_object_listbox->set_callback(spectrum_editor_spectrum_list_callback);
-			wxPanel *spectrum_region_chooser_panel =
-				 XRCCTRL(*this, "wxSpectrumRegionChooserPanel", wxPanel);
-			char *initial_path;
-		   initial_path = cmzn_region_get_root_region_path();
-		   spectrum_region_chooser = new wxRegionChooser(spectrum_region_chooser_panel,
-				spectrum_editor->root_region, initial_path);
-			DEALLOCATE(initial_path);
-			Callback_base< cmzn_region* > *spectrum_region_chooser_callback =
-				new Callback_member_callback< cmzn_region*,
-				wxSpectrumEditor, int (wxSpectrumEditor::*)(cmzn_region *) >
-				(this, &wxSpectrumEditor::spectrum_region_chooser_callback);
-			spectrum_region_chooser->set_callback(spectrum_region_chooser_callback);
-			wxPanel *spectrum_filter_chooser_panel =
-				 XRCCTRL(*this, "wxSpectrumFilterChooserPanel", wxPanel);
-			cmzn_scenefilter_id filter =
-				cmzn_scenefiltermodule_get_default_scenefilter(spectrum_editor->filter_module);
-			filter_chooser =
-				 new Managed_object_chooser<cmzn_scenefilter, MANAGER_CLASS(cmzn_scenefilter)>
-				 (spectrum_filter_chooser_panel, filter,
-					 cmzn_scenefiltermodule_get_manager(spectrum_editor->filter_module),
-						(MANAGER_CONDITIONAL_FUNCTION(cmzn_scenefilter) *)NULL, (void *)NULL,
-						spectrum_editor->user_interface);
-			cmzn_scenefilter_destroy(&filter);
+	wxSpectrumEditor(Spectrum_editor *spectrum_editor):
+		spectrum_editor(spectrum_editor),
+		context(cmzn_region_get_context(spectrum_editor->root_region))
+	{
+		wxXmlInit_spectrum_editor_wx();
+		wxXmlResource::Get()->LoadFrame(this,
+			(wxWindow *)NULL, _T("CmguiSpectrumEditor"));
+		this->SetIcon(cmiss_icon_xpm);
+		spectrum_editor->spectrum_listbox_panel =
+			XRCCTRL(*this, "SpectrumListPanel", wxPanel);
+		spectrum_editor->spectrum_listbox_panel->SetSize(wxDefaultCoord,wxDefaultCoord,
+			400, 100);
+		spectrum_editor->spectrum_listbox_panel->SetMinSize(wxSize(-1,100));
+		spectrum_object_listbox =
+			new Managed_object_listbox<cmzn_spectrum, MANAGER_CLASS(cmzn_spectrum)>
+			(spectrum_editor->spectrum_listbox_panel, (struct cmzn_spectrum*)NULL, spectrum_editor->spectrum_manager,
+				(MANAGER_CONDITIONAL_FUNCTION(cmzn_spectrum) *)NULL, (void *)NULL, spectrum_editor->user_interface);
+		Callback_base<cmzn_spectrum* > *spectrum_editor_spectrum_list_callback =
+			new Callback_member_callback< cmzn_spectrum*,
+			wxSpectrumEditor, int (wxSpectrumEditor::*)(cmzn_spectrum *) >
+			(this, &wxSpectrumEditor::spectrum_editor_spectrum_list_callback);
+		spectrum_object_listbox->set_callback(spectrum_editor_spectrum_list_callback);
+		wxPanel *spectrum_region_chooser_panel =
+			XRCCTRL(*this, "wxSpectrumRegionChooserPanel", wxPanel);
+		char *initial_path;
+		initial_path = cmzn_region_get_root_region_path();
+		spectrum_region_chooser = new wxRegionChooser(spectrum_region_chooser_panel,
+			spectrum_editor->root_region, initial_path);
+		DEALLOCATE(initial_path);
+		Callback_base< cmzn_region* > *spectrum_region_chooser_callback =
+			new Callback_member_callback< cmzn_region*,
+			wxSpectrumEditor, int (wxSpectrumEditor::*)(cmzn_region *) >
+			(this, &wxSpectrumEditor::spectrum_region_chooser_callback);
+		spectrum_region_chooser->set_callback(spectrum_region_chooser_callback);
+		wxPanel *spectrum_filter_chooser_panel =
+			XRCCTRL(*this, "wxSpectrumFilterChooserPanel", wxPanel);
+		cmzn_scenefilter_id filter =
+			cmzn_scenefiltermodule_get_default_scenefilter(spectrum_editor->filter_module);
+		filter_chooser =
+			new Managed_object_chooser<cmzn_scenefilter, MANAGER_CLASS(cmzn_scenefilter)>
+			(spectrum_filter_chooser_panel, filter,
+				cmzn_scenefiltermodule_get_manager(spectrum_editor->filter_module),
+				(MANAGER_CONDITIONAL_FUNCTION(cmzn_scenefilter) *)NULL, (void *)NULL,
+				spectrum_editor->user_interface);
+		cmzn_scenefilter_destroy(&filter);
 
-			XRCCTRL(*this, "wxSpectrumRangeMinText", wxTextCtrl)->Connect(wxEVT_KILL_FOCUS,
-				 wxCommandEventHandler(wxSpectrumEditor::OnSpectrumSettingRangeValueEntered),
-				 NULL, this);
-			XRCCTRL(*this,"wxSpectrumRangeMaxText", wxTextCtrl)->Connect(wxEVT_KILL_FOCUS,
-				 wxCommandEventHandler(wxSpectrumEditor::OnSpectrumSettingRangeValueEntered),
-				 NULL, this);
-			XRCCTRL(*this,"wxSpectrumExaggerationTextCtrl", wxTextCtrl)->Connect(wxEVT_KILL_FOCUS,
-				 wxCommandEventHandler(wxSpectrumEditor::OnSpectrumExaggerationSettingsChanged),
-				 NULL, this);
-			XRCCTRL(*this,"wxSpectrumDataComponentText", wxTextCtrl)->Connect(wxEVT_KILL_FOCUS,
-				 wxCommandEventHandler(wxSpectrumEditor::OnSpectrumDataValueEntered),
-				 NULL, this);
-			XRCCTRL(*this,"wxSpectrumNumberOfBandsTextCtrl", wxTextCtrl)->Connect(wxEVT_KILL_FOCUS,
-				 wxCommandEventHandler(wxSpectrumEditor::OnSpectrumBandsValuesEntered),
-				 NULL, this);
-			XRCCTRL(*this,"wxSpectrumRatioOfBlackBandsTextCtrl", wxTextCtrl)->Connect(wxEVT_KILL_FOCUS,
-				 wxCommandEventHandler(wxSpectrumEditor::OnSpectrumBandsValuesEntered),
-				 NULL, this);
-			XRCCTRL(*this,"wxSpectrumStepValueTextCtrl", wxTextCtrl)->Connect(wxEVT_KILL_FOCUS,
-				 wxCommandEventHandler(wxSpectrumEditor::OnSpectrumStepValueEntered),
-				 NULL, this);
-			XRCCTRL(*this,"wxSpectrumNormalisedColourRangeMin", wxTextCtrl)->Connect(wxEVT_KILL_FOCUS,
-				 wxCommandEventHandler(wxSpectrumEditor::OnSpectrumNormalisedColourRangeValueEntered),
-				 NULL, this);
-			XRCCTRL(*this,"wxSpectrumNormalisedColourRangeMax", wxTextCtrl)->Connect(wxEVT_KILL_FOCUS,
-				 wxCommandEventHandler(wxSpectrumEditor::OnSpectrumNormalisedColourRangeValueEntered),
-				 NULL, this);
-	 };
+		XRCCTRL(*this, "wxSpectrumRangeMinText", wxTextCtrl)->Connect(wxEVT_KILL_FOCUS,
+			wxCommandEventHandler(wxSpectrumEditor::OnSpectrumSettingRangeValueEntered),
+			NULL, this);
+		XRCCTRL(*this,"wxSpectrumRangeMaxText", wxTextCtrl)->Connect(wxEVT_KILL_FOCUS,
+			wxCommandEventHandler(wxSpectrumEditor::OnSpectrumSettingRangeValueEntered),
+			NULL, this);
+		XRCCTRL(*this,"wxSpectrumExaggerationTextCtrl", wxTextCtrl)->Connect(wxEVT_KILL_FOCUS,
+			wxCommandEventHandler(wxSpectrumEditor::OnSpectrumExaggerationSettingsChanged),
+			NULL, this);
+		XRCCTRL(*this,"wxSpectrumDataComponentText", wxTextCtrl)->Connect(wxEVT_KILL_FOCUS,
+			wxCommandEventHandler(wxSpectrumEditor::OnSpectrumDataValueEntered),
+			NULL, this);
+		XRCCTRL(*this,"wxSpectrumNumberOfBandsTextCtrl", wxTextCtrl)->Connect(wxEVT_KILL_FOCUS,
+			wxCommandEventHandler(wxSpectrumEditor::OnSpectrumBandsValuesEntered),
+			NULL, this);
+		XRCCTRL(*this,"wxSpectrumRatioOfBlackBandsTextCtrl", wxTextCtrl)->Connect(wxEVT_KILL_FOCUS,
+			wxCommandEventHandler(wxSpectrumEditor::OnSpectrumBandsValuesEntered),
+			NULL, this);
+		XRCCTRL(*this,"wxSpectrumStepValueTextCtrl", wxTextCtrl)->Connect(wxEVT_KILL_FOCUS,
+			wxCommandEventHandler(wxSpectrumEditor::OnSpectrumStepValueEntered),
+			NULL, this);
+		XRCCTRL(*this,"wxSpectrumNormalisedColourRangeMin", wxTextCtrl)->Connect(wxEVT_KILL_FOCUS,
+			wxCommandEventHandler(wxSpectrumEditor::OnSpectrumNormalisedColourRangeValueEntered),
+			NULL, this);
+		XRCCTRL(*this,"wxSpectrumNormalisedColourRangeMax", wxTextCtrl)->Connect(wxEVT_KILL_FOCUS,
+			wxCommandEventHandler(wxSpectrumEditor::OnSpectrumNormalisedColourRangeValueEntered),
+			NULL, this);
+	};
 
-	 wxSpectrumEditor()
-	 {
-	 };
-
-	 ~wxSpectrumEditor()
-	 {
-			delete filter_chooser;
-			delete spectrum_object_listbox;
-			delete spectrum_region_chooser;
-	 };
+	~wxSpectrumEditor()
+	{
+		delete filter_chooser;
+		delete spectrum_object_listbox;
+		delete spectrum_region_chooser;
+		cmzn_context_destroy(&this->context);
+	};
 
  int spectrum_editor_spectrum_list_callback(cmzn_spectrum *spectrum)
 /*******************************************************************************

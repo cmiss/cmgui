@@ -12,6 +12,7 @@
 * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 #include "configure/cmgui_configure.h"
 
+#include "opencmiss/zinc/context.h"
 #include "opencmiss/zinc/core.h"
 #include "opencmiss/zinc/field.h"
 #include "opencmiss/zinc/fieldcache.h"
@@ -110,58 +111,65 @@ Module functions
 
 class wxNodeViewer : public wxFrame
 {
-	 Node_viewer *node_viewer;
-	 wxPanel *node_text_panel;
-	 wxScrolledWindow *variable_viewer_panel;
-	 FE_object_text_chooser< cmzn_node > *node_text_chooser;
-	 wxFrame *frame;
-	 wxRegionChooser *region_chooser;
+	Node_viewer *node_viewer;
+	cmzn_context *context;  // hold on to zinc context to release after deferred clean-up.
+	wxPanel *node_text_panel;
+	wxScrolledWindow *variable_viewer_panel;
+	FE_object_text_chooser< cmzn_node > *node_text_chooser;
+	wxFrame *frame;
+	wxRegionChooser *region_chooser;
+
 public:
 
-	 wxNodeViewer(Node_viewer *node_viewer):
-			node_viewer(node_viewer)
-	 {
-			wxXmlInit_node_viewer_wx();
-			node_viewer->wx_node_viewer = this;
-			wxXmlResource::Get()->LoadFrame(this,
-				(wxWindow *)NULL, _T("CmguiNodeViewer"));
-			this->SetIcon(cmiss_icon_xpm);
-			wxPanel *node_text_panel =
-				XRCCTRL(*this, "NodeTextPanel",wxPanel);
-			node_text_chooser = new FE_object_text_chooser< cmzn_node >(node_text_panel,
-				node_viewer->region, node_viewer->domain_type, node_viewer->current_node,
-				static_cast<FE_object_text_chooser<cmzn_node>::conditional_function_type *>(0), /*user_data*/0);
-			Callback_base< cmzn_node* > *node_text_callback =
-				(new Callback_member_callback< cmzn_node*,
-				wxNodeViewer, int (wxNodeViewer::*)(cmzn_node *) >
-				(this, &wxNodeViewer::node_text_callback));
-			node_text_chooser->set_callback(node_text_callback);
-			wxPanel *region_chooser_panel =
-				 XRCCTRL(*this, "RegionChooserPanel", wxPanel);
-			region_chooser = new wxRegionChooser(region_chooser_panel,
-				node_viewer->region, /*initial_path*/"/");
-			Callback_base<cmzn_region* > *Node_viewer_wx_region_callback =
-				new Callback_member_callback< cmzn_region*,
-				wxNodeViewer, int (wxNodeViewer::*)(cmzn_region *) >
-				(this, &wxNodeViewer::Node_viewer_wx_region_callback);
-			region_chooser->set_callback(Node_viewer_wx_region_callback);
-			Show();
-			frame = XRCCTRL(*this, "CmguiNodeViewer",wxFrame);
-			frame->GetSize(&(node_viewer->init_width), &(node_viewer->init_height));
-			frame->SetSize(node_viewer->frame_width,node_viewer->frame_height+100);
-			frame->GetSize(&(node_viewer->frame_width), &(node_viewer->frame_height));
-			frame->Layout();
-	 };
+	wxNodeViewer(Node_viewer *node_viewer):
+		node_viewer(node_viewer),
+		context(cmzn_region_get_context(node_viewer->region))
+	{
+		wxXmlInit_node_viewer_wx();
+		node_viewer->wx_node_viewer = this;
+		wxXmlResource::Get()->LoadFrame(this,
+			(wxWindow *)NULL, _T("CmguiNodeViewer"));
+		this->SetIcon(cmiss_icon_xpm);
+		wxPanel *node_text_panel =
+			XRCCTRL(*this, "NodeTextPanel",wxPanel);
+		node_text_chooser = new FE_object_text_chooser< cmzn_node >(node_text_panel,
+			node_viewer->region, node_viewer->domain_type, node_viewer->current_node,
+			static_cast<FE_object_text_chooser<cmzn_node>::conditional_function_type *>(0), /*user_data*/0);
+		Callback_base< cmzn_node* > *node_text_callback =
+			(new Callback_member_callback< cmzn_node*,
+			wxNodeViewer, int (wxNodeViewer::*)(cmzn_node *) >
+			(this, &wxNodeViewer::node_text_callback));
+		node_text_chooser->set_callback(node_text_callback);
+		wxPanel *region_chooser_panel =
+			XRCCTRL(*this, "RegionChooserPanel", wxPanel);
+		region_chooser = new wxRegionChooser(region_chooser_panel,
+			node_viewer->region, /*initial_path*/"/");
+		Callback_base<cmzn_region* > *Node_viewer_wx_region_callback =
+			new Callback_member_callback< cmzn_region*,
+			wxNodeViewer, int (wxNodeViewer::*)(cmzn_region *) >
+			(this, &wxNodeViewer::Node_viewer_wx_region_callback);
+		region_chooser->set_callback(Node_viewer_wx_region_callback);
+		Show();
+		frame = XRCCTRL(*this, "CmguiNodeViewer",wxFrame);
+		frame->GetSize(&(node_viewer->init_width), &(node_viewer->init_height));
+		frame->SetSize(node_viewer->frame_width,node_viewer->frame_height+100);
+		frame->GetSize(&(node_viewer->frame_width), &(node_viewer->frame_height));
+		frame->Layout();
+	};
 
-	 wxNodeViewer()
-	 {
-	 };
+	wxNodeViewer() :
+		context(nullptr),
+		node_text_chooser(nullptr),
+		region_chooser(nullptr)
+	{
+	}
 
-  ~wxNodeViewer()
-	 {
-			delete node_text_chooser;
-			delete region_chooser;
-	 }
+	~wxNodeViewer()
+	{
+		delete node_text_chooser;
+		delete region_chooser;
+		cmzn_context_destroy(&this->context);
+	}
 
 	int Node_viewer_wx_region_callback(cmzn_region *region)
 /*******************************************************************************

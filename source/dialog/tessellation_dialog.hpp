@@ -9,6 +9,8 @@
 * License, v. 2.0. If a copy of the MPL was not distributed with this
 * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+#include <opencmiss/zinc/context.h>
+#include <opencmiss/zinc/region.h>
 #include <graphics/tessellation.hpp>
 #include <wx/wx.h>
 #include <map>
@@ -42,23 +44,31 @@ protected:
 	wxButton *applyButton;
 };
 
-class TessellationDialog: public wxDialog {
+class TessellationDialog: public wxDialog
+{
+	TessellationDialog();  // not implemented
+
 public:
 
-    TessellationDialog(struct cmzn_tessellationmodule *tessellationmodule_in, wxWindow* parent, int id,
-    	const wxPoint& pos=wxDefaultPosition, const wxSize& size=wxDefaultSize);
-    int add_managed_object(cmzn_tessellation *tessellation);
-    void manager_callback(struct MANAGER_MESSAGE(cmzn_tessellation) *message);
-    virtual ~TessellationDialog() {
-    	if (tessellation_manager_callback_id)
-    	{
-    		MANAGER_DEREGISTER(cmzn_tessellation)(
-    			tessellation_manager_callback_id,	tessellation_manager);
-    	}
-    }
+	TessellationDialog(cmzn_context *contextIn, cmzn_tessellationmodule *tessellationmoduleIn, wxWindow* parent, int id,
+		const wxPoint& pos=wxDefaultPosition, const wxSize& size=wxDefaultSize);
+
+	int add_managed_object(cmzn_tessellation *tessellation);
+
+	void manager_callback(struct MANAGER_MESSAGE(cmzn_tessellation) *message);
+
+	virtual ~TessellationDialog()
+	{
+		if (tessellation_manager_callback_id)
+		{
+			MANAGER_DEREGISTER(cmzn_tessellation)(tessellation_manager_callback_id, tessellation_manager);
+		}
+		cmzn_context_destroy(&this->context);
+	}
 
 private:
-    struct cmzn_tessellationmodule *tessellationmodule;
+	cmzn_context *context;  // hold on to zinc context to release after deferred clean-up.
+	struct cmzn_tessellationmodule *tessellationmodule;
     MANAGER(cmzn_tessellation) *tessellation_manager;
     void *tessellation_manager_callback_id;
     void set_properties();

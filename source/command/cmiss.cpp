@@ -1645,8 +1645,8 @@ Executes a GFX CREATE DATA_VIEWER command.
 				}
 				else
 				{
-					if (NULL != (command_data->node_viewer = Node_viewer_create(
-						&(command_data->node_viewer),
+					if (NULL != (command_data->data_viewer = Node_viewer_create(
+						&(command_data->data_viewer),
 						"Data Viewer",
 						command_data->root_region, CMZN_FIELD_DOMAIN_TYPE_DATAPOINTS,
 						command_data->default_time_keeper_app->getTimeKeeper())))

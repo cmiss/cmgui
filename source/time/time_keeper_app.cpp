@@ -352,20 +352,22 @@ int Time_keeper_app::setMinimum(double minimum)
 
 int Time_keeper_app::requestNewTime(double new_time)
 {
-	int playing = 0;
-
-	if(timeout_callback_id)
+	if (new_time != time_keeper->getTime())
 	{
-		playing = 1;
-		stopPrivate();
+		bool playing = false;
+		if (timeout_callback_id)
+		{
+			playing = true;
+			stopPrivate();
+		}
+		time_keeper->setTime(new_time);
+		notifyClients(TIME_KEEPER_APP_NEW_TIME);
+		if (playing)
+		{
+			playPrivate();
+		}
+		return 1;
 	}
-	time_keeper->setTime(new_time);
-	notifyClients(TIME_KEEPER_APP_NEW_TIME);
-	if(playing)
-	{
-		playPrivate();
-	}
-
 	return 1;
 }
 

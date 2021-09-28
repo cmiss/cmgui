@@ -16,10 +16,12 @@ selected element point, or set it if entered in this dialog.
 #if 1
 #include "configure/cmgui_configure.h"
 #endif
+#include "opencmiss/zinc/context.h"
 #include "opencmiss/zinc/elementfieldtemplate.h"
 #include "opencmiss/zinc/fieldcache.h"
 #include "opencmiss/zinc/fieldmodule.h"
 #include "opencmiss/zinc/mesh.h"
+#include "opencmiss/zinc/region.h"
 #include "computed_field/computed_field.h"
 #include "computed_field/computed_field_app.h"
 #include "computed_field/computed_field_finite_element.h"
@@ -824,6 +826,7 @@ static char *element_point_viewer_get_field_string(struct Element_point_viewer *
 class wxElementPointViewer : public wxFrame
 {
 	 Element_point_viewer *element_point_viewer;
+	 cmzn_context *context;  // hold on to zinc context to release after deferred clean-up.
 	 wxPanel *node_text_panel, *element_text_panel, *top_element_text_panel,
 			*grid_field_chooser_panel;
 	 // 	 wxScrolledWindow *variable_viewer_panel;
@@ -839,9 +842,10 @@ class wxElementPointViewer : public wxFrame
 		*grid_field_chooser;
 public:
 
-	 wxElementPointViewer(Element_point_viewer *element_point_viewer):
-			element_point_viewer(element_point_viewer)
-	 {
+	wxElementPointViewer(Element_point_viewer *element_point_viewer):
+		element_point_viewer(element_point_viewer),
+		context(cmzn_region_get_context(element_point_viewer->region))
+	{
 			wxXmlInit_element_point_viewer_wx();
 			element_point_viewer->wx_element_point_viewer = (wxElementPointViewer *)NULL;
 			wxXmlResource::Get()->LoadFrame(this,
@@ -953,17 +957,19 @@ public:
 			frame->Layout();
 	 };
 
-	 wxElementPointViewer()
-	 {
-	 };
+	wxElementPointViewer() :
+		context(nullptr)
+	{
+	};
 
-  ~wxElementPointViewer()
-	 {
-			delete element_text_chooser;
-			delete top_level_element_text_chooser;
-			delete element_sample_mode_chooser;
-			delete grid_field_chooser;
-	 }
+	~wxElementPointViewer()
+	{
+		delete element_text_chooser;
+		delete top_level_element_text_chooser;
+		delete element_sample_mode_chooser;
+		delete grid_field_chooser;
+		cmzn_context_destroy(&this->context);
+	}
 
 int element_text_callback(FE_element *element)
 /*******************************************************************************
