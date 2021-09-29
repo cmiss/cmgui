@@ -62,6 +62,10 @@ int Computed_field_modify_data::define_field(cmzn_field *new_field)
 			cmzn_field_set_managed(this->field, true);
 		}
 	}
+	else
+	{
+		return_code = 0;
+	}
 	return return_code;
 }
 
@@ -367,33 +371,25 @@ Adds <type> to the <option_table> so it is available to the commands.
 	return (return_code);
 } /* Computed_field_add_type_to_option_table */
 
+/**
+ * Part of the group of define_Computed_field functions. Here, we already have
+ * the field to be modified and have determined the coordinate system, and must
+ * now determine the specific type of field operator and its arguments.
+ */
 static int define_Computed_field_type(struct Parse_state *state,
 	void *field_modify_void, void *computed_field_package_void)
-/*******************************************************************************
-LAST MODIFIED : 21 July 2008
-
-DESCRIPTION :
-Part of the group of define_Computed_field functions. Here, we already have the
-<field> to be modified and have determined the number of components and
-coordinate system, and must now determine the type of computed field function
-and its parameter fields and values.
-==============================================================================*/
 {
-	int return_code;
-	struct Add_type_to_option_table_data data;
-	Computed_field_modify_data *field_modify;
-	struct Computed_field_package *computed_field_package;
-	struct Option_table *option_table;
+	int return_code = 1;
+	Computed_field_modify_data *field_modify = static_cast<Computed_field_modify_data *>(field_modify_void);
+	Computed_field_package *computed_field_package = static_cast<Computed_field_package *>(computed_field_package_void);
 
-	ENTER(define_Computed_field_type);
-	if (state && (field_modify=(Computed_field_modify_data *)field_modify_void) &&
-		(computed_field_package=(struct Computed_field_package *)
-			computed_field_package_void))
+	if ((state) && (field_modify) && (computed_field_package))
 	{
 		if (state->current_token)
 		{
-			option_table=CREATE(Option_table)();
+			Option_table *option_table = CREATE(Option_table)();
 			/* new_types */
+			struct Add_type_to_option_table_data data;
 			data.option_table = option_table;
 			data.field_modify = field_modify;
 			data.computed_field_package_void = computed_field_package_void;
@@ -401,7 +397,7 @@ and its parameter fields and values.
 				Computed_field_add_type_to_option_table, (void *)&data,
 				computed_field_package->computed_field_type_list);
 
-			return_code=Option_table_parse(option_table,state);
+			return_code = Option_table_parse(option_table,state);
 			DESTROY(Option_table)(&option_table);
 		}
 		else
@@ -421,26 +417,20 @@ and its parameter fields and values.
 		display_message(ERROR_MESSAGE,"define_Computed_field_type.  Missing state");
 		return_code=0;
 	}
-	LEAVE;
-
 	return (return_code);
-} /* define_Computed_field_type */
+}
 
+/**
+ * Modifier entry function acting as an optional prerequisite for setting the
+ * coordinate_system. That means that if the token "coordinate_system" or part
+ * thereof is found in the current token, then the coordinate system is read.
+ * In each case, assuming no error has occurred, control passes to the next
+ * parsing level, defining the type of computed field function.  Then, if the
+ * coordinate_system was not explictly stated, it is set in accordance with the
+ * type.
+ */
 int define_Computed_field_coordinate_system(struct Parse_state *state,
 	void *field_modify_void, void *computed_field_package_void)
-/*******************************************************************************
-LAST MODIFIED : 21 July 2008
-
-DESCRIPTION :
-Modifier entry function acting as an optional prerequisite for settings the
-coordinate_system. That means that if the token "coordinate_system" or part
-thereof is found in the current token, then the coordinate system is read. In
-each case, assuming no error has occurred, control passes to the next parsing
-level, defining the type of computed field function.  Then, if the
-coordinate_system was not explictly stated, it is set in accordance with the type.
-Function assumes that <field> is not currently managed, as it would be illegal
-to modify it if it was.
-==============================================================================*/
 {
 	int return_code = 1;
 	Computed_field_modify_data *field_modify = static_cast<Computed_field_modify_data *>(field_modify_void);

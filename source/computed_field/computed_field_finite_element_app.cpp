@@ -76,12 +76,11 @@ FE_field being made and/or modified.
 	Computed_field_modify_data *field_modify = static_cast<Computed_field_modify_data *>(field_modify_void);
 	struct Option_table *option_table;
 
-	ENTER(define_Computed_field_type_finite_element);
 	if ((state) && (field_modify))
 	{
 		return_code = 1;
-		cmzn_field_id existing_field = field_modify->get_field();
-		struct FE_field *existing_fe_field = (struct FE_field *)NULL;
+		cmzn_field *existing_field = field_modify->get_field();
+		FE_field *existing_fe_field = nullptr;
 		if (existing_field && Computed_field_is_type_finite_element(existing_field))
 		{
 			return_code =
@@ -293,16 +292,22 @@ FE_field being made and/or modified.
 							}
 						}
 						return_code = field_modify->define_field(
-							cmzn_fieldmodule_create_field_finite_element_wrapper(field_module, fe_field, field_name));
+							cmzn_fieldmodule_create_field_finite_element_wrapper(field_module, fe_field,
+								(existing_field) ? nullptr : field_name));
+						if (!return_code)
+						{
+							display_message(ERROR_MESSAGE, "gfx define field finite_element.  Failed");
+							display_parse_state_location(state);
+						}
 					}
 					else
 					{
 						display_message(ERROR_MESSAGE,
 							"gfx define field finite_element.  Cannot change value type or number of components of existing field");
+						display_parse_state_location(state);
 						return_code = 0;
 					}
 				}
-				DEALLOCATE(field_name);
 				DEACCESS(FE_field)(&fe_field);
 				cmzn_fieldmodule_end_change(field_module);
 			}
@@ -327,10 +332,8 @@ FE_field being made and/or modified.
 			"define_Computed_field_type_finite_element.  Invalid argument(s)");
 		return_code=0;
 	}
-	LEAVE;
-
 	return (return_code);
-} /* define_Computed_field_type_finite_element */
+}
 
 
 int define_Computed_field_type_cmiss_number(struct Parse_state *state,
@@ -345,8 +348,7 @@ Converts <field> into type COMPUTED_FIELD_CMZN_NUMBER.
 	Computed_field_modify_data *field_modify = static_cast<Computed_field_modify_data *>(field_modify_void);
 	int return_code;
 
-	ENTER(define_Computed_field_type_cmiss_number);
-	if (state && (field_modify = (Computed_field_modify_data *)field_modify_void))
+	if ((state) && (field_modify))
 	{
 		if (!state->current_token)
 		{
@@ -371,10 +373,8 @@ Converts <field> into type COMPUTED_FIELD_CMZN_NUMBER.
 			"define_Computed_field_type_cmiss_number.  Invalid argument(s)");
 		return_code=0;
 	}
-	LEAVE;
-
 	return (return_code);
-} /* define_Computed_field_type_cmiss_number */
+}
 
 #if defined (COMPUTED_FIELD_ACCESS_COUNT)
 
@@ -705,9 +705,8 @@ int define_Computed_field_type_find_mesh_location(struct Parse_state *state,
 	void *field_modify_void, void *)
 {
 	int return_code;
+	Computed_field_modify_data *field_modify = static_cast<Computed_field_modify_data *>(field_modify_void);
 
-	ENTER(define_Computed_field_type_find_mesh_location);
-	Computed_field_modify_data * field_modify = (Computed_field_modify_data *)field_modify_void;
 	if ((state) && (field_modify))
 	{
 		return_code = 1;
@@ -827,8 +826,6 @@ int define_Computed_field_type_find_mesh_location(struct Parse_state *state,
 			"define_Computed_field_type_find_mesh_location.  Invalid argument(s)");
 		return_code = 0;
 	}
-	LEAVE;
-
 	return (return_code);
 }
 
