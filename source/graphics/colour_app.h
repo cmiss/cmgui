@@ -5,11 +5,9 @@
 * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "command/parser.h"
+#include "configure/cmgui_configure.h"
 
-
-
-#define COLOUR_PRECISION float
-#define COLOUR_PRECISION_STRING "f"
+#define COLOUR_PRECISION_STRING "lf"
 #define COLOUR_NUM_FORMAT "%6.4" COLOUR_PRECISION_STRING
 
 int set_Colour(struct Parse_state *state,void *colour_void,

@@ -22,13 +22,14 @@
 #else /* !defined (WIN32_SYSTEM) */
 #  include <unistd.h>
 #endif /* !defined (WIN32_SYSTEM) */
-#include <math.h>
-#include <time.h>
+#include <cmath>
+#include <ctime>
 #include "opencmiss/zinc/context.h"
 #include "opencmiss/zinc/element.h"
 #include "opencmiss/zinc/elementbasis.h"
 #include "opencmiss/zinc/elementtemplate.h"
 #include "opencmiss/zinc/field.h"
+#include "opencmiss/zinc/fieldcoordinatetransformation.h"
 #include "opencmiss/zinc/fieldfiniteelement.h"
 #include "opencmiss/zinc/fieldmatrixoperators.h"
 #include "opencmiss/zinc/fieldmodule.h"
@@ -37,6 +38,7 @@
 #include "opencmiss/zinc/glyph.h"
 #include "opencmiss/zinc/light.h"
 #include "opencmiss/zinc/material.h"
+#include "opencmiss/zinc/mesh.h"
 #include "opencmiss/zinc/node.h"
 #include "opencmiss/zinc/nodeset.h"
 #include "opencmiss/zinc/nodetemplate.h"
@@ -55,34 +57,9 @@
 #include "command/example_path.h"
 #include "command/parser.h"
 #include "computed_field/computed_field.h"
-#include "computed_field/computed_field_alias.h"
-#include "computed_field/computed_field_arithmetic_operators.h"
-#include "computed_field/computed_field_compose.h"
-#include "computed_field/computed_field_composite.h"
-#include "computed_field/computed_field_conditional.h"
-#include "computed_field/computed_field_coordinate.h"
-#include "computed_field/computed_field_deformation.h"
-#include "computed_field/computed_field_derivatives.h"
-#include "computed_field/computed_field_find_xi.h"
-#include "computed_field/computed_field_find_xi_graphics.h"
-#include "computed_field/computed_field_finite_element.h"
-#include "computed_field/computed_field_function.h"
-#include "computed_field/computed_field_group.hpp"
 #include "computed_field/computed_field_image.h"
-#include "computed_field/computed_field_integration.h"
-#include "computed_field/computed_field_logical_operators.h"
-#include "computed_field/computed_field_lookup.h"
-#include "computed_field/computed_field_matrix_operators.hpp"
-#include "computed_field/computed_field_mesh_operators.hpp"
-#include "computed_field/computed_field_nodeset_operators.hpp"
-#include "computed_field/computed_field_subobject_group.hpp"
-#include "computed_field/computed_field_vector_operators.hpp"
 #include "computed_field/computed_field_set.h"
-#include "computed_field/computed_field_string_constant.h"
-#include "computed_field/computed_field_time.h"
-#include "computed_field/computed_field_trigonometry.h"
 #include "computed_field/computed_field_update.h"
-#include "computed_field/computed_field_wrappers.h"
 #include "context/context.hpp"
 #include "element/element_operations.h"
 #include "element/element_point_tool.h"
@@ -97,12 +74,7 @@
 #include "finite_element/export_finite_element.h"
 #include "finite_element/finite_element.h"
 #include "finite_element/finite_element_conversion.h"
-#include "finite_element/finite_element_mesh.hpp"
-#include "finite_element/finite_element_region.h"
-#include "finite_element/finite_element_to_graphics_object.h"
 #include "finite_element/finite_element_to_iges.h"
-#include "finite_element/finite_element_to_iso_lines.h"
-#include "finite_element/finite_element_to_streamlines.h"
 #include "finite_element/import_finite_element.h"
 #include "finite_element/snake.h"
 #include "general/debug.h"
@@ -117,7 +89,6 @@
 #include "graphics/graphics_window.h"
 #include "graphics/iso_field_calculation.h"
 #include "graphics/light.hpp"
-#include "graphics/material.hpp"
 #include "graphics/glyph.hpp"
 #include "graphics/glyph_colour_bar.hpp"
 #include "graphics/graphics.hpp"
@@ -144,28 +115,9 @@
 #include "graphics/spectrum_component.h"
 #include "graphics/texture.h"
 #include "graphics/transform_tool.h"
-#include "graphics/volume_texture.h"
 #if defined (GTK_USER_INTERFACE)
 #include "gtk/gtk_cmiss_scene_viewer.h"
 #endif /* defined (GTK_USER_INTERFACE) */
-#include "image_processing/computed_field_image_resample.h"
-#if defined (ZINC_USE_ITK)
-#include "image_processing/computed_field_threshold_image_filter.h"
-#include "image_processing/computed_field_binary_threshold_image_filter.h"
-#include "image_processing/computed_field_canny_edge_detection_filter.h"
-#include "image_processing/computed_field_mean_image_filter.h"
-#include "image_processing/computed_field_sigmoid_image_filter.h"
-#include "image_processing/computed_field_discrete_gaussian_image_filter.h"
-#include "image_processing/computed_field_curvature_anisotropic_diffusion_image_filter.h"
-#include "image_processing/computed_field_derivative_image_filter.h"
-#include "image_processing/computed_field_rescale_intensity_image_filter.h"
-#include "image_processing/computed_field_connected_threshold_image_filter.h"
-#include "image_processing/computed_field_gradient_magnitude_recursive_gaussian_image_filter.h"
-#include "image_processing/computed_field_histogram_image_filter.h"
-#include "image_processing/computed_field_fast_marching_image_filter.h"
-#include "image_processing/computed_field_binary_dilate_image_filter.h"
-#include "image_processing/computed_field_binary_erode_image_filter.h"
-#endif /* defined (ZINC_USE_ITK) */
 #if defined (SELECT_DESCRIPTORS)
 #include "io_devices/io_device.h"
 #endif /* !defined (SELECT_DESCRIPTORS) */
@@ -178,10 +130,8 @@
 #if defined (WX_USER_INTERFACE)
 #include "node/node_viewer_wx.h"
 #endif /* defined (WX_USER_INTERFACE) */
-#include "region/cmiss_region.hpp"
 #include "region/cmiss_region_app.h"
 #include "three_d_drawing/graphics_buffer.h"
-#include "graphics/font.h"
 #include "time/time_keeper_app.hpp"
 #include "user_interface/filedir.h"
 #include "user_interface/confirmation.h"
@@ -210,7 +160,8 @@
 // insert app headers here
 #include "computed_field/computed_field_image_app.h"
 #include "computed_field/computed_field_integration_app.h"
-#include "computed_field/computed_field_alias_app.h"
+#include "computed_field/computed_field_apply_app.h"
+#include "computed_field/computed_field_arithmetic_operators_app.h"
 #include "computed_field/computed_field_coordinate_app.h"
 #include "image_processing/computed_field_sigmoid_image_filter_app.h"
 #include "image_processing/computed_field_mean_image_filter_app.h"
@@ -247,7 +198,6 @@
 #include "computed_field/computed_field_compose_app.h"
 #include "computed_field/computed_field_format_output_app.h"
 #include "computed_field/computed_field_trigonometry_app.h"
-#include "computed_field/computed_field_arithmetic_operators_app.h"
 #include "computed_field/computed_field_scene_viewer_projection_app.h"
 #include "minimise/minimise_app.h"
 #include "finite_element/export_finite_element_app.h"
@@ -1695,8 +1645,8 @@ Executes a GFX CREATE DATA_VIEWER command.
 				}
 				else
 				{
-					if (NULL != (command_data->node_viewer = Node_viewer_create(
-						&(command_data->node_viewer),
+					if (NULL != (command_data->data_viewer = Node_viewer_create(
+						&(command_data->data_viewer),
 						"Data Viewer",
 						command_data->root_region, CMZN_FIELD_DOMAIN_TYPE_DATAPOINTS,
 						command_data->default_time_keeper_app->getTimeKeeper())))
@@ -9147,6 +9097,9 @@ static int gfx_list_group(struct Parse_state *state, void *dummy_to_be_modified,
 			cmzn_fielditerator_id field_iter = cmzn_fieldmodule_create_fielditerator(field_module);
 			cmzn_field_id field = 0;
 			char *region_path = cmzn_region_get_path(region);
+			// start with /
+			int error = 0;
+			append_string(&region_path, CMZN_REGION_PATH_SEPARATOR_STRING, &error, /*prefix*/true);
 			display_message(INFORMATION_MESSAGE, "Groups in region %s:\n", region_path);
 			DEALLOCATE(region_path);
 			while (0 != (field = cmzn_fielditerator_next_non_access(field_iter)))
@@ -9244,6 +9197,9 @@ int cmzn_region_list_scene(cmzn_region_id region, int commands_flag, int recursi
 		return 0;
 	int return_code = 1;
 	char *region_path = cmzn_region_get_path(region);
+	// start with /
+	int error = 0;
+	append_string(&region_path, CMZN_REGION_PATH_SEPARATOR_STRING, &error, /*prefix*/true);
 	cmzn_scene_id scene = cmzn_region_get_scene(region);
 	if (commands_flag)
 	{
@@ -9900,37 +9856,26 @@ Executes a GFX LIST TRANSFORMATION.
 				else
 				{
 					region = ACCESS(cmzn_region)(command_data->root_region);
-					region_name = cmzn_region_get_path(region);
 				}
 				if (region)
 				{
 					cmzn_scene *scene = cmzn_region_get_scene(region);
 					if (scene)
 					{
+						// start with /
+						int error = 0;
+						append_string(&region_name, CMZN_REGION_PATH_SEPARATOR_STRING, &error, /*prefix*/true);
+						/* quote scene name if it contains special characters */
+						make_valid_token(&region_name);
 						if (commands_flag)
 						{
-							/* quote scene name if it contains special characters */
-							make_valid_token(&region_name);
-							char *command_prefix;
-							if (ALLOCATE(command_prefix, char, 40 + strlen(region_name)))
-							{
-								sprintf(command_prefix, "gfx set transformation name ");
-								if (scene)
-								{
-									return_code = list_cmzn_scene_transformation_commands(
-										scene,(void *)command_prefix);
-									cmzn_scene::deaccess(scene);
-								}
-								DEALLOCATE(command_prefix);
-							}
-							else
-							{
-								return_code=0;
-							}
+							display_message(INFORMATION_MESSAGE, "gfx set transformation name %s", region_name);
+							return_code = cmzn_scene_list_transformation_command(scene);
 						}
 						else
 						{
-							return_code = list_cmzn_scene_transformation(scene);
+							display_message(INFORMATION_MESSAGE, "%s transformation:\n", region_name);
+							return_code = cmzn_scene_list_transformation(scene);
 						}
 						cmzn_scene_destroy(&scene);
 					}
@@ -16678,24 +16623,16 @@ Initialise all the subcomponents of cmgui and create the cmzn_command_data
 		{
 			Computed_field_register_types_coordinate(
 				command_data->computed_field_package);
-			if (command_data->root_region)
-			{
-				Computed_field_register_type_alias(
-					command_data->computed_field_package,
-					command_data->root_region);
-			}
+			Computed_field_register_types_apply(
+				command_data->computed_field_package);
 			Computed_field_register_types_arithmetic_operators(
 				command_data->computed_field_package);
 			Computed_field_register_types_trigonometry(
 				command_data->computed_field_package);
 			Computed_field_register_types_format_output(
 				command_data->computed_field_package);
-			if (command_data->root_region)
-			{
-				Computed_field_register_types_compose(
-					command_data->computed_field_package,
-					command_data->root_region);
-			}
+			Computed_field_register_types_compose(
+				command_data->computed_field_package);
 			Computed_field_register_types_composite(
 				command_data->computed_field_package);
 			Computed_field_register_types_conditional(
@@ -16710,12 +16647,8 @@ Initialise all the subcomponents of cmgui and create the cmzn_command_data
 					command_data->computed_field_package);
 			Computed_field_register_types_logical_operators(
 				command_data->computed_field_package);
-			if (command_data->root_region)
-			{
-				Computed_field_register_types_lookup(
-					command_data->computed_field_package,
-					command_data->root_region);
-			}
+			Computed_field_register_types_lookup(
+				command_data->computed_field_package);
 			Computed_field_register_types_matrix_operators(
 				command_data->computed_field_package);
 			Computed_field_register_types_mesh_operators(
@@ -16734,19 +16667,14 @@ Initialise all the subcomponents of cmgui and create the cmzn_command_data
 #endif /* defined (USE_CMGUI_GRAPHICS_WINDOW) */
 			Computed_field_register_types_image(
 				command_data->computed_field_package);
-			if (command_data->root_region)
-			{
-				Computed_field_register_types_integration(
-					command_data->computed_field_package,
-					command_data->root_region);
-			}
+			Computed_field_register_types_integration(
+				command_data->computed_field_package);
 			Computed_field_register_types_finite_element(
 				command_data->computed_field_package);
 			Computed_field_register_types_deformation(
 				command_data->computed_field_package);
 			Computed_field_register_types_string_constant(
 				command_data->computed_field_package);
-
 			Computed_field_register_types_image_resample(
 				command_data->computed_field_package);
 #if defined (ZINC_USE_ITK)

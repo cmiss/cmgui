@@ -549,13 +549,12 @@ int cmzn_scene_execute_command(cmzn_scene_id scene, const char *command_string)
 	else
 	{
 		display_message(ERROR_MESSAGE,
-			"list_cmzn_scene_transformation_commands.  Invalid argument(s)");
+			"cmzn_scene_execute_command.  Invalid argument(s)");
 		return_code=0;
 	}
 	return return_code;
 }
 
-// GRC needed?
 int cmzn_scene_add_glyph(struct cmzn_scene *scene,
 	cmzn_glyph *glyph, const char *graphics_name)
 {
@@ -673,6 +672,9 @@ Modifier function to set the scene from a command.
 				{
 					struct cmzn_region *region = cmzn_scene_get_region_internal(*scene_address);
 					char *path = cmzn_region_get_path(region);
+					// start with /
+					int error = 0;
+					append_string(&path, CMZN_REGION_PATH_SEPARATOR_STRING, &error, /*prefix*/true);
 					display_message(INFORMATION_MESSAGE, "[%s]", path);
 					DEALLOCATE(path);
 				}
@@ -971,4 +973,63 @@ int cmzn_scene_set_graphics_defaults_gfx_modify(struct cmzn_scene *scene,
 		return_code = 0;
 	}
 	return return_code;
+}
+
+int cmzn_scene_list_transformation(struct cmzn_scene *scene)
+{
+	if (scene)
+	{
+		double transformationMatrix[16];
+		if (CMZN_OK == scene->getTransformationMatrixRowMajor(transformationMatrix))
+		{
+			const char *coordinate_symbol = "xyzh";
+			for (int i = 0; i < 4; ++i)
+			{
+				display_message(INFORMATION_MESSAGE,
+					"  |%c.out| = | %13.6e %13.6e %13.6e %13.6e | . |%c.in|\n",
+					coordinate_symbol[i],
+					transformationMatrix[i*4],
+					transformationMatrix[i*4 + 1],
+					transformationMatrix[i*4 + 2],
+					transformationMatrix[i*4 + 3],
+					coordinate_symbol[i]);
+			}
+			return 1;
+		}
+	}
+	else
+	{
+		display_message(ERROR_MESSAGE, "cmzn_scene_list_transformation.  Invalid argument(s)");
+	}
+	return 0;
+}
+
+int cmzn_scene_list_transformation_command(struct cmzn_scene *scene)
+{
+	if (scene)
+	{
+		if (scene->transformationField)
+		{
+			char *fieldName = cmzn_field_get_name(scene->transformationField);
+			make_valid_token(&fieldName);
+			display_message(INFORMATION_MESSAGE, " field %s", fieldName);
+			DEALLOCATE(fieldName);
+		}
+		else if (scene->isTransformationActive())
+		{
+			for (int i = 0; i < 16; ++i)
+				display_message(INFORMATION_MESSAGE, " %g", (scene->transformationMatrix)[i]);
+		}
+		else
+		{
+			display_message(INFORMATION_MESSAGE, " off");
+		}
+		display_message(INFORMATION_MESSAGE, ";\n");
+		return 1;
+	}
+	else
+	{
+		display_message(ERROR_MESSAGE, "cmzn_scene_list_transformation_command.  Invalid argument(s)");
+	}
+	return 0;
 }

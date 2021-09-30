@@ -11,15 +11,12 @@
 #include "general/message.h"
 #include "command/parser.h"
 #include "computed_field/computed_field.h"
+#include "computed_field/computed_field_app.h"
 #include "computed_field/computed_field_private.hpp"
 #include "computed_field/computed_field_private_app.hpp"
 #include "computed_field/computed_field_set.h"
 #include "computed_field/computed_field_set_app.h"
 #include "computed_field/computed_field_composite.h"
-
-class Computed_field_composite_package : public Computed_field_type_package
-{
-};
 
 const char computed_field_composite_type_string[] = "composite";
 
@@ -248,7 +245,7 @@ ACCESSed in the initial source_data.
 } /* set_Computed_field_composite_source_data */
 
 int define_Computed_field_type_composite(struct Parse_state *state,
-	void *field_modify_void,void *computed_field_composite_package_void)
+	void *field_modify_void, void *)
 /*******************************************************************************
 LAST MODIFIED : 24 August 2006
 
@@ -258,13 +255,12 @@ already) and allows its contents to be modified.
 ==============================================================================*/
 {
 	int return_code;
-	Computed_field_modify_data *field_modify;
+	Computed_field_modify_data *field_modify = static_cast<Computed_field_modify_data *>(field_modify_void);
 	struct Computed_field_composite_source_data source_data;
 	struct Option_table *option_table;
 
 	ENTER(define_Computed_field_type_composite);
-	USE_PARAMETER(computed_field_composite_package_void);
-	if (state && (field_modify=(Computed_field_modify_data *)field_modify_void))
+	if ((state) && (field_modify))
 	{
 		return_code=1;
 		/* get valid parameters for projection field */
@@ -311,7 +307,7 @@ already) and allows its contents to be modified.
 			/* no errors,not asking for help */
 			if (return_code)
 			{
-				return_code = field_modify->update_field_and_deaccess(
+				return_code = field_modify->define_field(
 					cmzn_fieldmodule_create_field_composite(field_modify->get_field_module(),
 						source_data.number_of_components,
 						source_data.number_of_source_fields, source_data.source_fields,
@@ -352,7 +348,7 @@ already) and allows its contents to be modified.
 
 
 int define_Computed_field_type_constant(struct Parse_state *state,
-	void *field_modify_void, void *computed_field_composite_package_void)
+	void *field_modify_void, void *)
 /*******************************************************************************
 LAST MODIFIED : 24 August 2006
 
@@ -364,12 +360,11 @@ and allows its contents to be modified.
 	const char *current_token;
 	double *values, *temp_values;
 	int i, number_of_values, previous_number_of_values, return_code;
-	Computed_field_modify_data *field_modify;
+	Computed_field_modify_data *field_modify = static_cast<Computed_field_modify_data *>(field_modify_void);
 	struct Option_table *option_table;
 
 	ENTER(define_Computed_field_type_constant);
-	USE_PARAMETER(computed_field_composite_package_void);
-	if (state && (field_modify=(Computed_field_modify_data *)field_modify_void))
+	if ((state) && (field_modify))
 	{
 		return_code = 1;
 		previous_number_of_values = 0;
@@ -457,7 +452,7 @@ and allows its contents to be modified.
 				return_code = Option_table_multi_parse(option_table, state);
 				if (return_code)
 				{
-					return_code = field_modify->update_field_and_deaccess(
+					return_code = field_modify->define_field(
 						cmzn_fieldmodule_create_field_constant(field_modify->get_field_module(),
 							number_of_values, values));
 				}
@@ -501,9 +496,6 @@ DESCRIPTION :
 ==============================================================================*/
 {
 	int return_code;
-	Computed_field_composite_package
-		*computed_field_composite_package =
-		new Computed_field_composite_package;
 
 	ENTER(Computed_field_register_types_composite);
 	if (computed_field_package)
@@ -511,15 +503,15 @@ DESCRIPTION :
 		return_code = Computed_field_package_add_type(computed_field_package,
 			computed_field_composite_type_string,
 			define_Computed_field_type_composite,
-			computed_field_composite_package);
+			Computed_field_package_get_simple_package(computed_field_package));
 		/* "constant" = alias for composite included for backward compatibility */
 		return_code = Computed_field_package_add_type(computed_field_package,
 			"constant", define_Computed_field_type_constant,
-			computed_field_composite_package);
+			Computed_field_package_get_simple_package(computed_field_package));
 		/* "component" = alias for composite included for backward compatibility */
 		return_code = Computed_field_package_add_type(computed_field_package,
 			"component", define_Computed_field_type_composite,
-			computed_field_composite_package);
+			Computed_field_package_get_simple_package(computed_field_package));
 
 	}
 	else

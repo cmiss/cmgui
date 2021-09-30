@@ -18,7 +18,9 @@ Widgets for editing a graphical material.
 #if 1
 #include "configure/cmgui_configure.h"
 #endif /* defined (1) */
+#include "opencmiss/zinc/context.h"
 #include "opencmiss/zinc/material.h"
+#include "opencmiss/zinc/region.h"
 #include "three_d_drawing/graphics_buffer.h"
 #include "command/parser.h"
 #include "computed_field/computed_field.h"
@@ -468,85 +470,86 @@ void material_editor_wx_update_image_field(Material_editor *material_editor,
 
 class wxMaterialEditor : public wxFrame
 {
-	 Material_editor *material_editor;
-	 DEFINE_MANAGER_CLASS(cmzn_material);
-	 Managed_object_listbox<cmzn_material, MANAGER_CLASS(cmzn_material)>
-	 *graphical_material_object_listbox;
-	 wxRegionChooser *region_chooser;
-	 DEFINE_MANAGER_CLASS(Computed_field);
-	 Managed_object_chooser<Computed_field, MANAGER_CLASS(Computed_field)>
-	 *image_field_chooser;
+	Material_editor *material_editor;
+	cmzn_context *context;  // hold on to zinc context to release after deferred clean-up.
+	DEFINE_MANAGER_CLASS(cmzn_material);
+	Managed_object_listbox<cmzn_material, MANAGER_CLASS(cmzn_material)>
+	*graphical_material_object_listbox;
+	wxRegionChooser *region_chooser;
+	DEFINE_MANAGER_CLASS(Computed_field);
+	Managed_object_chooser<Computed_field, MANAGER_CLASS(Computed_field)>
+	*image_field_chooser;
+
+	wxMaterialEditor();  // not implemented
 
 public:
 
-	 wxMaterialEditor(Material_editor *material_editor):
-			material_editor(material_editor)
-	 {
-			wxXmlInit_material_editor_wx();
-			wxXmlResource::Get()->LoadFrame(this,
-				 (wxWindow *)NULL, _T("CmguiMaterialEditor"));
-			this->SetIcon(cmiss_icon_xpm);
+	wxMaterialEditor(Material_editor *material_editor):
+		material_editor(material_editor),
+		context(cmzn_region_get_context(material_editor->root_region))
+	{
+		wxXmlInit_material_editor_wx();
+		wxXmlResource::Get()->LoadFrame(this,
+			(wxWindow *)NULL, _T("CmguiMaterialEditor"));
+		this->SetIcon(cmiss_icon_xpm);
 
-			material_editor->material_list_panel = XRCCTRL(*this, "MaterialListPanel", wxPanel);
-			material_editor->material_list_panel->SetSize(wxDefaultCoord,wxDefaultCoord,
-				 400, 200);
-			material_editor->material_list_panel->SetMinSize(wxSize(-1,100));
+		material_editor->material_list_panel = XRCCTRL(*this, "MaterialListPanel", wxPanel);
+		material_editor->material_list_panel->SetSize(wxDefaultCoord,wxDefaultCoord,
+			400, 200);
+		material_editor->material_list_panel->SetMinSize(wxSize(-1,100));
 
-			graphical_material_object_listbox =
-				 new Managed_object_listbox<cmzn_material, MANAGER_CLASS(cmzn_material)>
-				 (material_editor->material_list_panel, (cmzn_material*)NULL, material_editor->graphical_material_manager,
-						(MANAGER_CONDITIONAL_FUNCTION(cmzn_material) *)NULL, (void *)NULL, material_editor->user_interface);
-			Callback_base<cmzn_material* > *material_editor_graphical_material_list_callback =
-				 new Callback_member_callback< cmzn_material*,
-				 wxMaterialEditor, int (wxMaterialEditor::*)(cmzn_material *) >
-				 (this, &wxMaterialEditor::material_editor_graphical_material_list_callback);
-			graphical_material_object_listbox->set_callback(material_editor_graphical_material_list_callback);
+		graphical_material_object_listbox =
+			new Managed_object_listbox<cmzn_material, MANAGER_CLASS(cmzn_material)>
+			(material_editor->material_list_panel, (cmzn_material*)NULL, material_editor->graphical_material_manager,
+				(MANAGER_CONDITIONAL_FUNCTION(cmzn_material) *)NULL, (void *)NULL, material_editor->user_interface);
+		Callback_base<cmzn_material* > *material_editor_graphical_material_list_callback =
+			new Callback_member_callback< cmzn_material*,
+			wxMaterialEditor, int (wxMaterialEditor::*)(cmzn_material *) >
+			(this, &wxMaterialEditor::material_editor_graphical_material_list_callback);
+		graphical_material_object_listbox->set_callback(material_editor_graphical_material_list_callback);
 
-			XRCCTRL(*this, "MaterialEditorAlphaTextCtrl", wxTextCtrl)->Connect(wxEVT_KILL_FOCUS,
-				 wxCommandEventHandler(wxMaterialEditor::OnMaterialEditorAlphaTextEntered),
-				 NULL, this);
-			XRCCTRL(*this, "MaterialEditorShininessTextCtrl", wxTextCtrl)->Connect(wxEVT_KILL_FOCUS,
-				 wxCommandEventHandler(wxMaterialEditor::OnMaterialEditorShininessTextEntered),
-				 NULL, this);
+		XRCCTRL(*this, "MaterialEditorAlphaTextCtrl", wxTextCtrl)->Connect(wxEVT_KILL_FOCUS,
+			wxCommandEventHandler(wxMaterialEditor::OnMaterialEditorAlphaTextEntered),
+			NULL, this);
+		XRCCTRL(*this, "MaterialEditorShininessTextCtrl", wxTextCtrl)->Connect(wxEVT_KILL_FOCUS,
+			wxCommandEventHandler(wxMaterialEditor::OnMaterialEditorShininessTextEntered),
+			NULL, this);
 
-		  wxPanel *region_chooser_panel =
-			 XRCCTRL(*this, "MaterialEditorRegionChooserPanel", wxPanel);
-		  char *initial_path;
-		  initial_path = cmzn_region_get_root_region_path();
-		  region_chooser = new wxRegionChooser(region_chooser_panel,
-			  material_editor->root_region, initial_path);
-		  DEALLOCATE(initial_path);
-		  Callback_base<cmzn_region* > *Material_editor_wx_region_callback =
-			  new Callback_member_callback< cmzn_region*,
-			  wxMaterialEditor, int (wxMaterialEditor::*)(cmzn_region *) >
-			  (this, &wxMaterialEditor::Material_editor_wx_region_callback);
-		  region_chooser->set_callback(Material_editor_wx_region_callback);
+		wxPanel *region_chooser_panel =
+			XRCCTRL(*this, "MaterialEditorRegionChooserPanel", wxPanel);
+		char *initial_path;
+		initial_path = cmzn_region_get_root_region_path();
+		region_chooser = new wxRegionChooser(region_chooser_panel,
+			material_editor->root_region, initial_path);
+		DEALLOCATE(initial_path);
+		Callback_base<cmzn_region* > *Material_editor_wx_region_callback =
+			new Callback_member_callback< cmzn_region*,
+			wxMaterialEditor, int (wxMaterialEditor::*)(cmzn_region *) >
+			(this, &wxMaterialEditor::Material_editor_wx_region_callback);
+		region_chooser->set_callback(Material_editor_wx_region_callback);
 
-		  struct MANAGER(Computed_field) *field_manager =
-			cmzn_region_get_Computed_field_manager(material_editor->root_region);
-		  wxPanel *image_field_chooser_panel = XRCCTRL(*this, "ImageFieldChooserPanel", wxPanel);
-			image_field_chooser =
-				new Managed_object_chooser<Computed_field,MANAGER_CLASS(Computed_field)>
-				(image_field_chooser_panel, NULL, field_manager,
-				Computed_field_is_image_type, (void *)NULL, NULL);
-			Callback_base< Computed_field* > *image_field_callback =
-				new Callback_member_callback< Computed_field*,
-				wxMaterialEditor, int (wxMaterialEditor::*)(Computed_field *) >
-				(this, &wxMaterialEditor::image_field_callback);
-			image_field_chooser->set_callback(image_field_callback);
-			image_field_chooser->include_null_item(true);
-	 };
+		struct MANAGER(Computed_field) *field_manager =
+		cmzn_region_get_Computed_field_manager(material_editor->root_region);
+		wxPanel *image_field_chooser_panel = XRCCTRL(*this, "ImageFieldChooserPanel", wxPanel);
+		image_field_chooser =
+			new Managed_object_chooser<Computed_field,MANAGER_CLASS(Computed_field)>
+			(image_field_chooser_panel, NULL, field_manager,
+			Computed_field_is_image_type, (void *)NULL, NULL);
+		Callback_base< Computed_field* > *image_field_callback =
+			new Callback_member_callback< Computed_field*,
+			wxMaterialEditor, int (wxMaterialEditor::*)(Computed_field *) >
+			(this, &wxMaterialEditor::image_field_callback);
+		image_field_chooser->set_callback(image_field_callback);
+		image_field_chooser->include_null_item(true);
+	};
 
-	 wxMaterialEditor()
-	 {
-	 };
-
-	 ~wxMaterialEditor()
-	 {
-			delete graphical_material_object_listbox;
-			delete region_chooser;
-			delete image_field_chooser;
-	 };
+	~wxMaterialEditor()
+	{
+		delete graphical_material_object_listbox;
+		delete region_chooser;
+		delete image_field_chooser;
+		cmzn_context_destroy(&this->context);
+	};
 
 		int Material_editor_wx_region_callback(cmzn_region *region)
 		{
@@ -575,7 +578,10 @@ public:
 			{
 				region = material_editor->root_region;
 			}
-			const char *path = cmzn_region_get_path(region);
+			char *path = cmzn_region_get_path(region);
+			// start with /
+			int error = 0;
+			append_string(&path, CMZN_REGION_PATH_SEPARATOR_STRING, &error, /*prefix*/true);
 			if (region_chooser->set_path(path))
 			{
 				MANAGER(Computed_field) *field_manager =

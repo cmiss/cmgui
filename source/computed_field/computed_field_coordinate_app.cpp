@@ -9,6 +9,7 @@
 #include "general/message.h"
 #include "command/parser.h"
 #include "computed_field/computed_field.h"
+#include "computed_field/computed_field_app.h"
 #include "computed_field/computed_field_conditional.h"
 #include "computed_field/computed_field_set.h"
 #include "computed_field/computed_field_set_app.h"
@@ -26,12 +27,8 @@ int Computed_field_get_type_vector_coordinate_transformation(struct Computed_fie
 	struct Computed_field **vector_field,
 	struct Computed_field **coordinate_field);
 
-class Computed_field_coordinate_package : public Computed_field_type_package
-{
-};
-
 int define_Computed_field_type_coordinate_transformation(struct Parse_state *state,
-	void *field_modify_void,void *computed_field_coordinate_package_void)
+	void *field_modify_void, void *)
 /*******************************************************************************
 LAST MODIFIED : 24 August 2006
 
@@ -42,13 +39,12 @@ already) and allows its contents to be modified.
 {
 	int return_code;
 	struct Computed_field *source_field;
-	Computed_field_modify_data *field_modify;
+	Computed_field_modify_data *field_modify = static_cast<Computed_field_modify_data *>(field_modify_void);
 	struct Option_table *option_table;
 	struct Set_Computed_field_conditional_data set_source_field_data;
 
 	ENTER(define_Computed_field_type_coordinate_transformation);
-	USE_PARAMETER(computed_field_coordinate_package_void);
-	if (state&&(field_modify=(Computed_field_modify_data *)field_modify_void))
+	if ((state) && (field_modify))
 	{
 		return_code = 1;
 		/* get valid parameters for projection field */
@@ -80,7 +76,7 @@ already) and allows its contents to be modified.
 			/* no errors,not asking for help */
 			if (return_code)
 			{
-				return_code = field_modify->update_field_and_deaccess(
+				return_code = field_modify->define_field(
 					cmzn_fieldmodule_create_field_coordinate_transformation(
 						field_modify->get_field_module(), source_field));
 			}
@@ -115,7 +111,7 @@ already) and allows its contents to be modified.
 
 
 int define_Computed_field_type_vector_coordinate_transformation(struct Parse_state *state,
-	void *field_modify_void,void *computed_field_coordinate_package_void)
+	void *field_modify_void, void *)
 /*******************************************************************************
 LAST MODIFIED : 24 August 2006
 
@@ -126,14 +122,13 @@ already) and allows its contents to be modified.
 {
 	int return_code;
 	struct Computed_field *coordinate_field,*vector_field;
-	Computed_field_modify_data *field_modify;
+	Computed_field_modify_data *field_modify = static_cast<Computed_field_modify_data *>(field_modify_void);
 	struct Option_table *option_table;
 	struct Set_Computed_field_conditional_data set_coordinate_field_data,
 		set_vector_field_data;
 
 	ENTER(define_Computed_field_type_vector_coordinate_transformation);
-	USE_PARAMETER(computed_field_coordinate_package_void);
-	if (state&&(field_modify=(Computed_field_modify_data *)field_modify_void))
+	if ((state) && (field_modify))
 	{
 		return_code=1;
 		/* get valid parameters for projection field */
@@ -177,7 +172,7 @@ already) and allows its contents to be modified.
 			/* no errors,not asking for help */
 			if (return_code)
 			{
-				return_code = field_modify->update_field_and_deaccess(
+				return_code = field_modify->define_field(
 					cmzn_fieldmodule_create_field_vector_coordinate_transformation(
 						field_modify->get_field_module(), vector_field, coordinate_field));
 			}
@@ -223,9 +218,6 @@ DESCRIPTION :
 ==============================================================================*/
 {
 	int return_code;
-	Computed_field_coordinate_package
-		*computed_field_coordinate_package =
-		new Computed_field_coordinate_package;
 
 	ENTER(Computed_field_register_types_coordinate);
 	if (computed_field_package)
@@ -233,11 +225,11 @@ DESCRIPTION :
 		return_code = Computed_field_package_add_type(computed_field_package,
 			computed_field_coordinate_transformation_type_string,
 			define_Computed_field_type_coordinate_transformation,
-			computed_field_coordinate_package);
+			Computed_field_package_get_simple_package(computed_field_package));
 		return_code = Computed_field_package_add_type(computed_field_package,
 			computed_field_vector_coordinate_transformation_type_string,
 			define_Computed_field_type_vector_coordinate_transformation,
-			computed_field_coordinate_package);
+			Computed_field_package_get_simple_package(computed_field_package));
 	}
 	else
 	{

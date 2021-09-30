@@ -8,15 +8,12 @@
 #include "general/message.h"
 #include "command/parser.h"
 #include "computed_field/computed_field.h"
+#include "computed_field/computed_field_app.h"
 #include "computed_field/computed_field_private.hpp"
 #include "computed_field/computed_field_private_app.hpp"
 #include "computed_field/computed_field_set.h"
 #include "computed_field/computed_field_set_app.h"
 #include "computed_field/computed_field_deformation.h"
-
-class Computed_field_deformation_package : public Computed_field_type_package
-{
-};
 
 char computed_field_2d_strain_type_string[] = "2d_strain";
 
@@ -32,7 +29,7 @@ int Computed_field_get_type_2d_strain(struct Computed_field *field,
 	struct Computed_field **fibre_angle_field);
 
 int define_Computed_field_type_2d_strain(struct Parse_state *state,
-	void *field_modify_void,void *computed_field_deformation_package_void)
+	void *field_modify_void, void *)
 /*******************************************************************************
 LAST MODIFIED : 24 August 2006
 
@@ -44,14 +41,13 @@ already) and allows its contents to be modified.
 	int return_code;
 	struct Computed_field *deformed_coordinate_field, *fibre_angle_field,
 		*undeformed_coordinate_field;
-	Computed_field_modify_data *field_modify;
+	Computed_field_modify_data *field_modify = static_cast<Computed_field_modify_data *>(field_modify_void);
 	struct Option_table *option_table;
 	struct Set_Computed_field_conditional_data set_deformed_coordinate_field_data,
 		set_fibre_angle_field_data,set_undeformed_coordinate_field_data;
 
 	ENTER(define_Computed_field_type_2d_strain);
-	USE_PARAMETER(computed_field_deformation_package_void);
-	if (state&&(field_modify=(Computed_field_modify_data *)field_modify_void))
+	if ((state) && (field_modify))
 	{
 		return_code=1;
 		deformed_coordinate_field=(struct Computed_field *)NULL;
@@ -113,7 +109,7 @@ already) and allows its contents to be modified.
 			return_code = Option_table_multi_parse(option_table,state);
 			if (return_code)
 			{
-				return_code = field_modify->update_field_and_deaccess(
+				return_code = field_modify->define_field(
 					cmzn_fieldmodule_create_field_2d_strain(
 						field_modify->get_field_module(),
 						deformed_coordinate_field, undeformed_coordinate_field,
@@ -154,9 +150,6 @@ DESCRIPTION :
 ==============================================================================*/
 {
 	int return_code;
-	Computed_field_deformation_package
-		*computed_field_deformation_package =
-		new Computed_field_deformation_package;
 
 	ENTER(Computed_field_register_types_deformation);
 	if (computed_field_package)
@@ -164,7 +157,7 @@ DESCRIPTION :
 		return_code = Computed_field_package_add_type(computed_field_package,
 			computed_field_2d_strain_type_string,
 			define_Computed_field_type_2d_strain,
-			computed_field_deformation_package);
+			Computed_field_package_get_simple_package(computed_field_package));
 	}
 	else
 	{

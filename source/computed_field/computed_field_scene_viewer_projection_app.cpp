@@ -18,6 +18,7 @@ equivalent to the scene_viewer assigned to it.
 #include "opencmiss/zinc/fieldmodule.h"
 #include "opencmiss/zinc/fieldsceneviewerprojection.h"
 #include "computed_field/computed_field.h"
+#include "computed_field/computed_field_app.h"
 #include "computed_field/computed_field_private.hpp"
 #include "computed_field/computed_field_image.h"
 #include "computed_field/computed_field_set.h"
@@ -77,7 +78,7 @@ cmzn_field *cmzn_fieldmodule_create_field_scene_viewer_projection_with_window_na
 }
 
 int define_Computed_field_type_scene_viewer_projection(struct Parse_state *state,
-	void *field_modify_void,void *computed_field_scene_viewer_projection_package_void)
+	void *field_modify_void, void *computed_field_scene_viewer_projection_package_void)
 /*******************************************************************************
 LAST MODIFIED : 25 August 2006
 
@@ -88,18 +89,15 @@ already) and allows its contents to be modified.
 {
 	char *graphics_window_name;
 	int pane_number, return_code;
-	Computed_field_scene_viewer_projection_package
-		*computed_field_scene_viewer_projection_package;
-	Computed_field_modify_data *field_modify;
+	Computed_field_scene_viewer_projection_package *computed_field_scene_viewer_projection_package =
+		static_cast<Computed_field_scene_viewer_projection_package *>(computed_field_scene_viewer_projection_package_void);
+	Computed_field_modify_data *field_modify = static_cast<Computed_field_modify_data *>(field_modify_void);
 	struct Graphics_window *graphics_window;
 	struct Option_table *option_table;
 	struct Scene_viewer_app *scene_viewer = 0;
 
 	ENTER(define_Computed_field_type_scene_viewer_projection);
-	if (state&&(field_modify=(Computed_field_modify_data *)field_modify_void) &&
-		(computed_field_scene_viewer_projection_package=
-		(Computed_field_scene_viewer_projection_package *)
-		computed_field_scene_viewer_projection_package_void))
+	if ((state) && (field_modify) && (computed_field_scene_viewer_projection_package))
 	{
 		return_code=1;
 		/* get valid parameters for projection field */
@@ -211,7 +209,7 @@ already) and allows its contents to be modified.
 			if (return_code)
 			{
 				GET_NAME(Graphics_window)(graphics_window, &graphics_window_name);
-				return_code = field_modify->update_field_and_deaccess(
+				return_code = field_modify->define_field(
 					cmzn_fieldmodule_create_field_scene_viewer_projection_with_window_name(
 						field_modify->get_field_module(),
 						scene_viewer->core_scene_viewer, graphics_window_name, pane_number - 1,

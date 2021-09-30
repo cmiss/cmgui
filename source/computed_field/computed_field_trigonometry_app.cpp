@@ -9,15 +9,12 @@
 #include "general/message.h"
 #include "command/parser.h"
 #include "computed_field/computed_field.h"
+#include "computed_field/computed_field_app.h"
 #include "computed_field/computed_field_private.hpp"
 #include "computed_field/computed_field_private_app.hpp"
 #include "computed_field/computed_field_set.h"
 #include "computed_field/computed_field_set_app.h"
 #include "computed_field/computed_field_trigonometry.h"
-
-class Computed_field_trigonometry_package : public Computed_field_type_package
-{
-};
 
 const char computed_field_sin_type_string[] = "sin";
 
@@ -56,7 +53,7 @@ int Computed_field_get_type_tan(struct Computed_field *field,
 	struct Computed_field **source_field);
 
 int define_Computed_field_type_sin(struct Parse_state *state,
-	void *field_modify_void,void *computed_field_trigonometry_package_void)
+	void *field_modify_void, void *)
 /*******************************************************************************
 LAST MODIFIED : 24 August 2006
 
@@ -67,14 +64,13 @@ already) and allows its contents to be modified.
 {
 	int return_code;
 	struct Computed_field **source_fields;
-	Computed_field_modify_data *field_modify;
+	Computed_field_modify_data *field_modify = static_cast<Computed_field_modify_data *>(field_modify_void);
 	struct Option_table *option_table;
 	struct Set_Computed_field_array_data set_source_field_array_data;
 	struct Set_Computed_field_conditional_data set_source_field_data;
 
 	ENTER(define_Computed_field_type_sin);
-	USE_PARAMETER(computed_field_trigonometry_package_void);
-	if (state&&(field_modify=(Computed_field_modify_data *)field_modify_void))
+	if ((state) && (field_modify))
 	{
 		return_code=1;
 		/* get valid parameters for projection field */
@@ -112,7 +108,7 @@ already) and allows its contents to be modified.
 				/* no errors,not asking for help */
 				if (return_code)
 				{
-					return_code = field_modify->update_field_and_deaccess(
+					return_code = field_modify->define_field(
 						cmzn_fieldmodule_create_field_sin(field_modify->get_field_module(),
 							source_fields[0]));
 				}
@@ -155,7 +151,7 @@ already) and allows its contents to be modified.
 
 
 int define_Computed_field_type_cos(struct Parse_state *state,
-	void *field_modify_void,void *computed_field_trigonometry_package_void)
+	void *field_modify_void, void *)
 /*******************************************************************************
 LAST MODIFIED : 24 August 2006
 
@@ -166,14 +162,13 @@ already) and allows its contents to be modified.
 {
 	int return_code;
 	struct Computed_field **source_fields;
-	Computed_field_modify_data *field_modify;
+	Computed_field_modify_data *field_modify = static_cast<Computed_field_modify_data *>(field_modify_void);
 	struct Option_table *option_table;
 	struct Set_Computed_field_array_data set_source_field_array_data;
 	struct Set_Computed_field_conditional_data set_source_field_data;
 
 	ENTER(define_Computed_field_type_cos);
-	USE_PARAMETER(computed_field_trigonometry_package_void);
-	if (state&&(field_modify=(Computed_field_modify_data *)field_modify_void))
+	if ((state) && (field_modify))
 	{
 		return_code=1;
 		/* get valid parameters for projection field */
@@ -211,7 +206,7 @@ already) and allows its contents to be modified.
 				/* no errors,not asking for help */
 				if (return_code)
 				{
-					return_code = field_modify->update_field_and_deaccess(
+					return_code = field_modify->define_field(
 						cmzn_fieldmodule_create_field_cos(field_modify->get_field_module(),
 							source_fields[0]));
 				}
@@ -254,7 +249,7 @@ already) and allows its contents to be modified.
 
 
 int define_Computed_field_type_tan(struct Parse_state *state,
-	void *field_modify_void,void *computed_field_trigonometry_package_void)
+	void *field_modify_void, void *)
 /*******************************************************************************
 LAST MODIFIED : 24 August 2006
 
@@ -265,14 +260,13 @@ already) and allows its contents to be modified.
 {
 	int return_code;
 	struct Computed_field **source_fields;
-	Computed_field_modify_data *field_modify;
+	Computed_field_modify_data *field_modify = static_cast<Computed_field_modify_data *>(field_modify_void);
 	struct Option_table *option_table;
 	struct Set_Computed_field_array_data set_source_field_array_data;
 	struct Set_Computed_field_conditional_data set_source_field_data;
 
 	ENTER(define_Computed_field_type_tan);
-	USE_PARAMETER(computed_field_trigonometry_package_void);
-	if (state&&(field_modify=(Computed_field_modify_data *)field_modify_void))
+	if ((state) && (field_modify))
 	{
 		return_code=1;
 		/* get valid parameters for projection field */
@@ -310,7 +304,7 @@ already) and allows its contents to be modified.
 				/* no errors,not asking for help */
 				if (return_code)
 				{
-					return_code = field_modify->update_field_and_deaccess(
+					return_code = field_modify->define_field(
 						cmzn_fieldmodule_create_field_tan(field_modify->get_field_module(),
 							source_fields[0]));
 				}
@@ -353,7 +347,7 @@ already) and allows its contents to be modified.
 
 
 int define_Computed_field_type_asin(struct Parse_state *state,
-	void *field_modify_void,void *computed_field_trigonometry_package_void)
+	void *field_modify_void, void *)
 /*******************************************************************************
 LAST MODIFIED : 24 August 2006
 
@@ -364,14 +358,13 @@ already) and allows its contents to be modified.
 {
 	int return_code;
 	struct Computed_field **source_fields;
-	Computed_field_modify_data *field_modify;
+	Computed_field_modify_data *field_modify = static_cast<Computed_field_modify_data *>(field_modify_void);
 	struct Option_table *option_table;
 	struct Set_Computed_field_array_data set_source_field_array_data;
 	struct Set_Computed_field_conditional_data set_source_field_data;
 
 	ENTER(define_Computed_field_type_asin);
-	USE_PARAMETER(computed_field_trigonometry_package_void);
-	if (state&&(field_modify=(Computed_field_modify_data *)field_modify_void))
+	if ((state) && (field_modify))
 	{
 		return_code=1;
 		/* get valid parameters for projection field */
@@ -409,7 +402,7 @@ already) and allows its contents to be modified.
 				/* no errors,not asking for help */
 				if (return_code)
 				{
-					return_code = field_modify->update_field_and_deaccess(
+					return_code = field_modify->define_field(
 						cmzn_fieldmodule_create_field_asin(field_modify->get_field_module(),
 							source_fields[0]));
 				}
@@ -452,7 +445,7 @@ already) and allows its contents to be modified.
 
 
 int define_Computed_field_type_acos(struct Parse_state *state,
-	void *field_modify_void,void *computed_field_trigonometry_package_void)
+	void *field_modify_void, void *)
 /*******************************************************************************
 LAST MODIFIED : 24 August 2006
 
@@ -463,14 +456,13 @@ already) and allows its contents to be modified.
 {
 	int return_code;
 	struct Computed_field **source_fields;
-	Computed_field_modify_data *field_modify;
+	Computed_field_modify_data *field_modify = static_cast<Computed_field_modify_data *>(field_modify_void);
 	struct Option_table *option_table;
 	struct Set_Computed_field_array_data set_source_field_array_data;
 	struct Set_Computed_field_conditional_data set_source_field_data;
 
 	ENTER(define_Computed_field_type_acos);
-	USE_PARAMETER(computed_field_trigonometry_package_void);
-	if (state&&(field_modify=(Computed_field_modify_data *)field_modify_void))
+	if ((state) && (field_modify))
 	{
 		return_code=1;
 		/* get valid parameters for projection field */
@@ -508,7 +500,7 @@ already) and allows its contents to be modified.
 				/* no errors,not asking for help */
 				if (return_code)
 				{
-					return_code = field_modify->update_field_and_deaccess(
+					return_code = field_modify->define_field(
 						cmzn_fieldmodule_create_field_acos(field_modify->get_field_module(),
 							source_fields[0]));
 				}
@@ -551,7 +543,7 @@ already) and allows its contents to be modified.
 
 
 int define_Computed_field_type_atan(struct Parse_state *state,
-	void *field_modify_void,void *computed_field_trigonometry_package_void)
+	void *field_modify_void, void *)
 /*******************************************************************************
 LAST MODIFIED : 24 August 2006
 
@@ -562,14 +554,13 @@ already) and allows its contents to be modified.
 {
 	int return_code;
 	struct Computed_field **source_fields;
-	Computed_field_modify_data *field_modify;
+	Computed_field_modify_data *field_modify = static_cast<Computed_field_modify_data *>(field_modify_void);
 	struct Option_table *option_table;
 	struct Set_Computed_field_array_data set_source_field_array_data;
 	struct Set_Computed_field_conditional_data set_source_field_data;
 
 	ENTER(define_Computed_field_type_atan);
-	USE_PARAMETER(computed_field_trigonometry_package_void);
-	if (state&&(field_modify=(Computed_field_modify_data *)field_modify_void))
+	if ((state) && (field_modify))
 	{
 		return_code=1;
 		/* get valid parameters for projection field */
@@ -607,7 +598,7 @@ already) and allows its contents to be modified.
 				/* no errors,not asking for help */
 				if (return_code)
 				{
-					return_code = field_modify->update_field_and_deaccess(
+					return_code = field_modify->define_field(
 						cmzn_fieldmodule_create_field_atan(field_modify->get_field_module(),
 							source_fields[0]));
 				}
@@ -651,7 +642,7 @@ already) and allows its contents to be modified.
 
 
 int define_Computed_field_type_atan2(struct Parse_state *state,
-	void *field_modify_void,void *computed_field_trigonometry_package_void)
+	void *field_modify_void, void *)
 /*******************************************************************************
 LAST MODIFIED : 24 August 2006
 
@@ -662,14 +653,13 @@ already) and allows its contents to be modified.
 {
 	int return_code;
 	struct Computed_field **source_fields;
-	Computed_field_modify_data *field_modify;
+	Computed_field_modify_data *field_modify = static_cast<Computed_field_modify_data *>(field_modify_void);
 	struct Option_table *option_table;
 	struct Set_Computed_field_array_data set_source_field_array_data;
 	struct Set_Computed_field_conditional_data set_source_field_data;
 
 	ENTER(define_Computed_field_type_atan2);
-	USE_PARAMETER(computed_field_trigonometry_package_void);
-	if (state&&(field_modify=(Computed_field_modify_data *)field_modify_void))
+	if ((state) && (field_modify))
 	{
 		return_code=1;
 		/* get valid parameters for projection field */
@@ -712,7 +702,7 @@ already) and allows its contents to be modified.
 				/* no errors,not asking for help */
 				if (return_code)
 				{
-					return_code = field_modify->update_field_and_deaccess(
+					return_code = field_modify->define_field(
 						cmzn_fieldmodule_create_field_atan2(field_modify->get_field_module(),
 							source_fields[0], source_fields[1]));
 				}
@@ -766,9 +756,6 @@ DESCRIPTION :
 ==============================================================================*/
 {
 	int return_code;
-	Computed_field_trigonometry_package
-		*computed_field_trigonometry_package =
-		new Computed_field_trigonometry_package;
 
 	ENTER(Computed_field_register_types_component_operations);
 	if (computed_field_package)
@@ -776,31 +763,31 @@ DESCRIPTION :
 		return_code = Computed_field_package_add_type(computed_field_package,
 			computed_field_sin_type_string,
 			define_Computed_field_type_sin,
-			computed_field_trigonometry_package);
+			Computed_field_package_get_simple_package(computed_field_package));
 		return_code = Computed_field_package_add_type(computed_field_package,
 			computed_field_cos_type_string,
 			define_Computed_field_type_cos,
-			computed_field_trigonometry_package);
+			Computed_field_package_get_simple_package(computed_field_package));
 		return_code = Computed_field_package_add_type(computed_field_package,
 			computed_field_tan_type_string,
 			define_Computed_field_type_tan,
-			computed_field_trigonometry_package);
+			Computed_field_package_get_simple_package(computed_field_package));
 		return_code = Computed_field_package_add_type(computed_field_package,
 			computed_field_asin_type_string,
 			define_Computed_field_type_asin,
-			computed_field_trigonometry_package);
+			Computed_field_package_get_simple_package(computed_field_package));
 		return_code = Computed_field_package_add_type(computed_field_package,
 			computed_field_acos_type_string,
 			define_Computed_field_type_acos,
-			computed_field_trigonometry_package);
+			Computed_field_package_get_simple_package(computed_field_package));
 		return_code = Computed_field_package_add_type(computed_field_package,
 			computed_field_atan_type_string,
 			define_Computed_field_type_atan,
-			computed_field_trigonometry_package);
+			Computed_field_package_get_simple_package(computed_field_package));
 		return_code = Computed_field_package_add_type(computed_field_package,
 			computed_field_atan2_type_string,
 			define_Computed_field_type_atan2,
-			computed_field_trigonometry_package);
+			Computed_field_package_get_simple_package(computed_field_package));
 	}
 	else
 	{

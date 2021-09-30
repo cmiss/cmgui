@@ -51,6 +51,10 @@ int set_cmzn_region(struct Parse_state *state, void *region_address_void,
 				if (*region_address)
 				{
 					char *path = cmzn_region_get_path(*region_address);
+					// start with /
+					int error = 0;
+					append_string(&path, CMZN_REGION_PATH_SEPARATOR_STRING, &error, /*prefix*/true);
+					make_valid_token(&path);
 					display_message(INFORMATION_MESSAGE, "[%s]", path);
 					DEALLOCATE(path);
 				}

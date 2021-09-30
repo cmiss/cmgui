@@ -8,6 +8,7 @@
 #include "general/message.h"
 #include "general/mystring.h"
 #include "command/parser.h"
+#include "computed_field/computed_field_app.h"
 #include "computed_field/computed_field_set.h"
 #include "computed_field/computed_field_composite.h"
 #include "computed_field/computed_field_private.hpp"
@@ -97,9 +98,10 @@ wrapper for field and add it to the manager.
 						cmzn_region *region =
 							Computed_field_manager_get_region(set_field_data->computed_field_manager);
 						cmzn_fieldmodule *temp_field_module = cmzn_region_get_fieldmodule(region);
-						cmzn_fieldmodule_set_field_name(temp_field_module, "constants");
-						selected_field = cmzn_fieldmodule_create_field_constant(temp_field_module,
-							number_of_values, values);
+						cmzn_fieldmodule_begin_change(temp_field_module);
+						selected_field = cmzn_fieldmodule_create_field_constant(temp_field_module, number_of_values, values);
+						cmzn_field_set_name_unique(selected_field, "constants");
+						cmzn_fieldmodule_end_change(temp_field_module);
 						cmzn_fieldmodule_destroy(&temp_field_module);
 
 						DEALLOCATE(values);

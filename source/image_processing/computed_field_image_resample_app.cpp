@@ -8,6 +8,7 @@
 #include "general/message.h"
 #include "command/parser.h"
 #include "computed_field/computed_field.h"
+#include "computed_field/computed_field_app.h"
 #include "computed_field/computed_field_private.hpp"
 #include "computed_field/computed_field_private_app.hpp"
 #include "computed_field/computed_field_set.h"
@@ -20,7 +21,7 @@ int cmzn_field_get_type_image_resample(struct Computed_field *field,
 	struct Computed_field **source_field, int *dimension, int **sizes);
 
 int define_Computed_field_type_image_resample(struct Parse_state *state,
-	void *field_modify_void,void *computed_field_simple_package_void)
+	void *field_modify_void, void *)
 /*******************************************************************************
 LAST MODIFIED : 7 March 2007
 
@@ -31,7 +32,7 @@ already) and allows its contents to be modified.
 {
 	int dimension, return_code, original_dimension, *sizes, *original_sizes;
 	Computed_field *source_field, *texture_coordinate_field;
-	Computed_field_modify_data *field_modify;
+	Computed_field_modify_data *field_modify = static_cast<Computed_field_modify_data *>(field_modify_void);
 	double *original_input_coordinates_minimum = 0,
 		*original_input_coordinates_maximum = 0,
 		*original_lookup_coordinates_minimum = 0,
@@ -45,8 +46,7 @@ already) and allows its contents to be modified.
 	struct Set_Computed_field_conditional_data set_source_field_data;
 
 	ENTER(define_Computed_field_type_image_resample);
-	USE_PARAMETER(computed_field_simple_package_void);
-	if (state && (field_modify=(Computed_field_modify_data *)field_modify_void))
+	if ((state) && (field_modify))
 	{
 		return_code=1;
 		/* get valid parameters for projection field */
@@ -193,7 +193,7 @@ already) and allows its contents to be modified.
 						field_image_resample, dimension, lookup_coordinates_maximum);
 					cmzn_field_image_resample_destroy(&field_image_resample);
 				}
-				return_code = field_modify->update_field_and_deaccess(field);
+				return_code = field_modify->define_field(field);
 			}
 
 			if (!return_code)

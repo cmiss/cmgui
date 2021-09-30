@@ -8,15 +8,12 @@
 #include "general/message.h"
 #include "command/parser.h"
 #include "computed_field/computed_field.h"
+#include "computed_field/computed_field_app.h"
 #include "computed_field/computed_field_private.hpp"
 #include "computed_field/computed_field_private_app.hpp"
 #include "computed_field/computed_field_set.h"
 #include "computed_field/computed_field_set_app.h"
 #include "computed_field/computed_field_function.h"
-
-class Computed_field_function_package : public Computed_field_type_package
-{
-};
 
 const char computed_field_function_type_string[] = "function";
 
@@ -25,7 +22,7 @@ int Computed_field_get_type_function(Computed_field *field,
 	Computed_field **reference_field);
 
 int define_Computed_field_type_function(Parse_state *state,
-	void *field_modify_void, void *computed_field_function_package_void)
+	void *field_modify_void, void *)
 /*******************************************************************************
 LAST MODIFIED : 31 March 2008
 
@@ -37,20 +34,14 @@ already) and allows its contents to be modified.
 	int return_code;
 	Computed_field *source_field, *result_field,
 		*reference_field;
-	Computed_field_function_package *computed_field_function_package;
-	Computed_field_modify_data *field_modify;
+	Computed_field_modify_data *field_modify = static_cast<Computed_field_modify_data *>(field_modify_void);
 	Option_table *option_table;
 	Set_Computed_field_conditional_data set_source_field_data,
 		set_result_field_data, set_reference_field_data;
 
 	ENTER(define_Computed_field_type_function);
-	computed_field_function_package =
-	  (Computed_field_function_package *)
-	  computed_field_function_package_void;
-	if (state&&(field_modify=(Computed_field_modify_data *)field_modify_void) &&
-		(computed_field_function_package != NULL))
+	if ((state) && (field_modify))
 	{
-		USE_PARAMETER(computed_field_function_package);
 		return_code = 1;
 		source_field = (Computed_field *)NULL;
 		result_field = (Computed_field *)NULL;
@@ -117,7 +108,7 @@ already) and allows its contents to be modified.
 			/* no errors,not asking for help */
 			if (return_code)
 			{
-				return_code = field_modify->update_field_and_deaccess(
+				return_code = field_modify->define_field(
 					cmzn_fieldmodule_create_field_function(field_modify->get_field_module(),
 						source_field, result_field, reference_field));
 			}
@@ -167,9 +158,6 @@ DESCRIPTION :
 ==============================================================================*/
 {
 	int return_code;
-	Computed_field_function_package
-		*computed_field_function_package =
-		new Computed_field_function_package;
 
 	ENTER(Computed_field_register_types_function);
 	if (computed_field_package)
@@ -177,7 +165,7 @@ DESCRIPTION :
 		return_code = Computed_field_package_add_type(computed_field_package,
 			computed_field_function_type_string,
 			define_Computed_field_type_function,
-			computed_field_function_package);
+			Computed_field_package_get_simple_package(computed_field_package));
 	}
 	else
 	{

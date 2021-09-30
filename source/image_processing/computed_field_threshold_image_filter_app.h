@@ -5,8 +5,8 @@
 * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 
-#if !defined (COMPUTED_FIELD_THRESHOLD_IMAGE_FILTER_H_)
-#define COMPUTED_FIELD_THRESHOLD_IMAGE_FILTER_H_
+#if !defined (COMPUTED_FIELD_THRESHOLD_IMAGE_FILTER_APP_H_)
+#define COMPUTED_FIELD_THRESHOLD_IMAGE_FILTER_APP_H_
 
 #include "opencmiss/zinc/types/fieldimageprocessingid.h"
 #include "general/enumerator_app.h"

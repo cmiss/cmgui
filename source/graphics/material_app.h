@@ -7,8 +7,7 @@
 #define MATERIAL_APP_H
 
 #include "opencmiss/zinc/types/materialid.h"
-/*???DB.  Make consistent with finite_element.h ? */
-//#define MATERIAL_PRECISION float
+
 #define MATERIAL_PRECISION_STRING "lf"
 
 struct Material_module_app
