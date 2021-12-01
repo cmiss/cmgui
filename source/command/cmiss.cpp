@@ -11697,7 +11697,6 @@ user, otherwise the elements file is read.
 	int element_offset, face_offset, line_offset, node_offset,
 		return_code;
 	struct cmzn_command_data *command_data;
-	struct cmzn_region *region, *top_region;
 	struct IO_stream *input_file;
 	struct Option_table *option_table;
 
@@ -11716,6 +11715,8 @@ user, otherwise the elements file is read.
 		node_offset = 0;
 		file_name = (char *)NULL;
 		region_path = (char *)NULL;
+		double time = 0.0;
+		char time_set_flag = 0;
 		option_table = CREATE(Option_table)();
 		/* element_offset */
 		Option_table_add_entry(option_table, "element_offset", &element_offset,
@@ -11735,6 +11736,9 @@ user, otherwise the elements file is read.
 		/* region */
 		Option_table_add_entry(option_table,"region",
 			&region_path, (void *)1, set_name);
+		/* time */
+		Option_table_add_entry(option_table, "time",
+			&time, &time_set_flag, set_double_and_char_flag);
 		/* default */
 		Option_table_add_entry(option_table,NULL,&file_name,
 			NULL,set_file_name);
@@ -11744,11 +11748,11 @@ user, otherwise the elements file is read.
 			if (!file_name)
 			{
 				if (!(file_name = confirmation_get_read_filename(".exelem",
-								 command_data->user_interface
+					command_data->user_interface
 #if defined(WX_USER_INTERFACE)
-								 , command_data->execute_command
+					, command_data->execute_command
 #endif /*defined (WX_USER_INTERFACE) */
-		 )))
+					)))
 				{
 					return_code = 0;
 				}
@@ -11756,10 +11760,16 @@ user, otherwise the elements file is read.
 #if defined (WX_USER_INTERFACE) && defined (WIN32_SYSTEM)
 			if (file_name)
 			{
-				 CMZN_set_directory_and_filename_WIN32(&file_name, command_data);
+				CMZN_set_directory_and_filename_WIN32(&file_name, command_data);
 			}
 #endif /* defined (WIN32_SYSTEM)*/
 
+			FE_import_time_index *node_time_index = nullptr, node_time_index_data;
+			if (time_set_flag)
+			{
+				node_time_index_data.time = time;
+				node_time_index = &node_time_index_data;
+			}
 			if (return_code)
 			{
 				if (!check_suffix(&file_name,".exelem"))
@@ -11767,16 +11777,16 @@ user, otherwise the elements file is read.
 					return_code = 0;
 				}
 			}
-			top_region = (struct cmzn_region *)NULL;
+			cmzn_region *top_region = nullptr;
 			if (region_path)
 			{
 				top_region = cmzn_region_find_subregion_at_path(
 					command_data->root_region, region_path);
-				if (NULL == top_region)
+				if (!top_region)
 				{
 					top_region = cmzn_region_create_subregion(
 						command_data->root_region, region_path);
-					if (NULL == top_region)
+					if (!top_region)
 					{
 						display_message(ERROR_MESSAGE, "gfx_read_elements.  "
 							"Unable to find or create region '%s'.", region_path);
@@ -11786,7 +11796,7 @@ user, otherwise the elements file is read.
 			}
 			else
 			{
-				top_region = ACCESS(cmzn_region)(command_data->root_region);
+				top_region = cmzn_region_access(command_data->root_region);
 			}
 			if (return_code)
 			{
@@ -11794,20 +11804,19 @@ user, otherwise the elements file is read.
 				if ((input_file = CREATE(IO_stream)(command_data->io_stream_package))
 					&& (IO_stream_open_for_read(input_file, file_name)))
 				{
-					region = cmzn_region_create_region(top_region);
-					if (read_exregion_file(region, input_file,
-						(struct FE_import_time_index *)NULL))
+					cmzn_region *tmp_region = cmzn_region_create_region(top_region);
+					if (read_exregion_file(tmp_region, input_file, node_time_index))
 					{
 						if (element_flag || face_flag || line_flag || node_flag)
 						{
-							return_code = offset_region_identifier(region, element_flag, element_offset, face_flag,
+							return_code = offset_region_identifier(tmp_region, element_flag, element_offset, face_flag,
 								face_offset, line_flag, line_offset, node_flag, node_offset, /*use_data*/0);
 						}
 						if (return_code)
 						{
-							if (cmzn_region_can_merge(top_region, region))
+							if (cmzn_region_can_merge(top_region, tmp_region))
 							{
-								if (!cmzn_region_merge(top_region, region))
+								if (!cmzn_region_merge(top_region, tmp_region))
 								{
 									display_message(ERROR_MESSAGE,
 										"Error merging elements from file: %s", file_name);
@@ -11829,7 +11838,7 @@ user, otherwise the elements file is read.
 							"Error reading element file: %s", file_name);
 						return_code = 0;
 					}
-					DEACCESS(cmzn_region)(&region);
+					cmzn_region_destroy(&tmp_region);
 					IO_stream_close(input_file);
 					DESTROY(IO_stream)(&input_file);
 				}
@@ -11840,7 +11849,24 @@ user, otherwise the elements file is read.
 					return_code = 0;
 				}
 			}
-			DEACCESS(cmzn_region)(&top_region);
+			if (return_code)
+			{
+				// enlarge range of default time keeper to fit region time range
+				double minimumTime, maximumTime;
+				if (CMZN_OK == cmzn_region_get_hierarchical_time_range(top_region, &minimumTime, &maximumTime))
+				{
+					cmzn_timekeeper *timekeeper = command_data->default_time_keeper_app->getTimeKeeper();
+					if (minimumTime < timekeeper->getMinimum())
+					{
+						command_data->default_time_keeper_app->setMinimum(minimumTime);
+					}
+					if (maximumTime > timekeeper->getMaximum())
+					{
+						command_data->default_time_keeper_app->setMaximum(maximumTime);
+					}
+				}
+			}
+			cmzn_region_destroy(&top_region);
 		}
 		DESTROY(Option_table)(&option_table);
 #if defined (WX_USER_INTERFACE)
@@ -11877,13 +11903,9 @@ otherwise the nodes file is read.
 If the <use_data> flag is set, then read data, otherwise nodes.
 ==============================================================================*/
 {
-	char *file_name, node_offset_flag, *region_path, time_set_flag;
-	double maximum, minimum;
-	float time;
+	char *file_name, node_offset_flag, *region_path;
 	int node_offset, return_code;
 	struct cmzn_command_data *command_data;
-	struct cmzn_region *region, *top_region;
-	struct FE_import_time_index *node_time_index, node_time_index_data;
 	struct IO_stream *input_file;
 	struct Option_table *option_table;
 
@@ -11897,10 +11919,9 @@ If the <use_data> flag is set, then read data, otherwise nodes.
 			node_offset_flag = 0;
 			node_offset = 0;
 			region_path = (char *)NULL;
-			time = 0;
-			time_set_flag = 0;
-			node_time_index = (struct FE_import_time_index *)NULL;
-			option_table=CREATE(Option_table)();
+			double time = 0.0;
+			char time_set_flag = 0;
+			option_table = CREATE(Option_table)();
 			/* example */
 			Option_table_add_entry(option_table,CMGUI_EXAMPLE_DIRECTORY_SYMBOL,
 				&file_name, &(command_data->example_directory), set_file_name);
@@ -11920,7 +11941,7 @@ If the <use_data> flag is set, then read data, otherwise nodes.
 			Option_table_add_entry(option_table,"region", &region_path, (void *)1, set_name);
 			/* time */
 			Option_table_add_entry(option_table,"time",
-				&time, &time_set_flag, set_float_and_char_flag);
+				&time, &time_set_flag, set_double_and_char_flag);
 			/* default */
 			Option_table_add_entry(option_table, NULL, &file_name,
 				NULL, set_file_name);
@@ -11932,11 +11953,11 @@ If the <use_data> flag is set, then read data, otherwise nodes.
 					if (use_data)
 					{
 						if (!(file_name = confirmation_get_read_filename(".exdata",
-										 command_data->user_interface
+							command_data->user_interface
 #if defined(WX_USER_INTERFACE)
-								 , command_data->execute_command
+							 , command_data->execute_command
 #endif /*defined (WX_USER_INTERFACE) */
-																														 )))
+							)))
 						{
 							return_code = 0;
 						}
@@ -11946,14 +11967,15 @@ If the <use_data> flag is set, then read data, otherwise nodes.
 						if (!(file_name = confirmation_get_read_filename(".exnode",
 							command_data->user_interface
 #if defined(WX_USER_INTERFACE)
-								 , command_data->execute_command
+							, command_data->execute_command
 #endif /*defined (WX_USER_INTERFACE) */
-																														 )))
+							)))
 						{
 							return_code = 0;
 						}
 					}
 				}
+				FE_import_time_index *node_time_index = nullptr, node_time_index_data;
 				if (time_set_flag)
 				{
 					node_time_index_data.time = time;
@@ -11962,10 +11984,10 @@ If the <use_data> flag is set, then read data, otherwise nodes.
 				if (return_code)
 				{
 #if defined (WX_USER_INTERFACE) && defined (WIN32_SYSTEM)
-			if (file_name)
-			{
-				 CMZN_set_directory_and_filename_WIN32(&file_name, command_data);
-			}
+					if (file_name)
+					{
+						 CMZN_set_directory_and_filename_WIN32(&file_name, command_data);
+					}
 #endif /* defined (WIN32_SYSTEM)*/
 					/* open the file */
 					if (use_data)
@@ -11976,7 +11998,7 @@ If the <use_data> flag is set, then read data, otherwise nodes.
 					{
 						return_code = check_suffix(&file_name,".exnode");
 					}
-					top_region = (struct cmzn_region *)NULL;
+					cmzn_region *top_region = nullptr;
 					if (region_path)
 					{
 						top_region = cmzn_region_find_subregion_at_path(
@@ -11995,21 +12017,21 @@ If the <use_data> flag is set, then read data, otherwise nodes.
 					}
 					else
 					{
-						top_region = ACCESS(cmzn_region)(command_data->root_region);
+						top_region = cmzn_region_access(command_data->root_region);
 					}
 					if (return_code)
 					{
 						if ((input_file = CREATE(IO_stream)(command_data->io_stream_package))
 							&& (IO_stream_open_for_read(input_file, file_name)))
 						{
-							region = cmzn_region_create_region(top_region);
+							cmzn_region *tmp_region = cmzn_region_create_region(top_region);
 							if (use_data)
 							{
-								return_code = read_exdata_file(region, input_file, node_time_index);
+								return_code = read_exdata_file(tmp_region, input_file, node_time_index);
 							}
 							else
 							{
-								return_code = read_exregion_file(region, input_file, node_time_index);
+								return_code = read_exregion_file(tmp_region, input_file, node_time_index);
 							}
 							if (return_code)
 							{
@@ -12018,18 +12040,18 @@ If the <use_data> flag is set, then read data, otherwise nodes.
 									/* Offset these nodes before merging */
 									if (use_data)
 									{
-										return_code = offset_region_identifier(region, 0, 0, 0,
+										return_code = offset_region_identifier(tmp_region, 0, 0, 0,
 											0, 0, 0, node_offset_flag, node_offset, /*use_data*/1);
 									}
 									else
 									{
-										return_code = offset_region_identifier(region, 0, 0, 0,
+										return_code = offset_region_identifier(tmp_region, 0, 0, 0,
 											0, 0, 0, node_offset_flag, node_offset, /*use_data*/0);
 									}
 								}
-								if (cmzn_region_can_merge(top_region, region))
+								if (cmzn_region_can_merge(top_region, tmp_region))
 								{
-									if (!cmzn_region_merge(top_region, region))
+									if (!cmzn_region_merge(top_region, tmp_region))
 									{
 										if (use_data)
 										{
@@ -12058,7 +12080,7 @@ If the <use_data> flag is set, then read data, otherwise nodes.
 									"Error reading node file: %s", file_name);
 								return_code = 0;
 							}
-							DEACCESS(cmzn_region)(&region);
+							cmzn_region_destroy(&tmp_region);
 							IO_stream_close(input_file);
 							DESTROY(IO_stream)(&input_file);
 							input_file =NULL;
@@ -12070,24 +12092,24 @@ If the <use_data> flag is set, then read data, otherwise nodes.
 							return_code = 0;
 						}
 					}
-					DEACCESS(cmzn_region)(&top_region);
-					if (return_code && time_set_flag)
+					if (return_code)
 					{
-						/* Increase the range of the default time keepeer and set the
-						   minimum and maximum if we set anything */
-						maximum = command_data->default_time_keeper_app->getTimeKeeper()->getMaximum();
-						minimum = command_data->default_time_keeper_app->getTimeKeeper()->getMinimum();
-						if (time < minimum)
+						// enlarge range of default time keeper to fit region time range
+						double minimumTime, maximumTime;
+						if (CMZN_OK == cmzn_region_get_hierarchical_time_range(top_region, &minimumTime, &maximumTime))
 						{
-							command_data->default_time_keeper_app->setMinimum(time);
-							command_data->default_time_keeper_app->setMaximum(maximum);
-						}
-						if (time > maximum)
-						{
-							command_data->default_time_keeper_app->setMinimum(minimum);
-							command_data->default_time_keeper_app->setMaximum(time);
+							cmzn_timekeeper *timekeeper = command_data->default_time_keeper_app->getTimeKeeper();
+							if (minimumTime < timekeeper->getMinimum())
+							{
+								command_data->default_time_keeper_app->setMinimum(minimumTime);
+							}
+							if (maximumTime > timekeeper->getMaximum())
+							{
+								command_data->default_time_keeper_app->setMaximum(maximumTime);
+							}
 						}
 					}
+					cmzn_region_destroy(&top_region);
 				}
 			}
 			DESTROY(Option_table)(&option_table);
@@ -13658,7 +13680,6 @@ Can also write individual groups with the <group> option.
 	 struct LIST(Computed_field) *list_of_fields;
 	 struct List_Computed_field_commands_data list_commands_data;
 	 static const char	*command_prefix;
-	 FE_value time;
 #if defined (WX_USER_INTERFACE)
 #if defined (WIN32_SYSTEM)
 	 char temp_exfile[L_tmpnam];
@@ -13682,7 +13703,8 @@ Can also write individual groups with the <group> option.
 			char *region_or_group_path = 0;
 			exfile_name = (char *)NULL;
 			com_file_name = (char *)NULL;
-			time = 0.0;
+			char time_set_flag = 0;
+			double time = 0.0;
 			Multiple_strings field_names;
 			write_criterion = FE_WRITE_COMPLETE_GROUP;
 			write_recursion = FE_WRITE_RECURSIVE;
@@ -13703,7 +13725,7 @@ Can also write individual groups with the <group> option.
 				command_data->root_region, &root_region);
 			/* time */
 			Option_table_add_entry(option_table, "time",
-				&time, (void *)NULL, set_FE_value);
+				&time, &time_set_flag, set_double_and_char_flag);
 			/* default option: file name */
 			Option_table_add_default_string_entry(option_table, &file_name, "FILE_NAME");
 
@@ -13863,7 +13885,8 @@ Can also write individual groups with the <group> option.
 						 CMZN_FIELD_DOMAIN_TYPE_MESH3D|CMZN_FIELD_DOMAIN_TYPE_MESH_HIGHEST_DIMENSION,
 						 /*write_nodes*/1, /*write_data*/1,
 						 field_names.number_of_strings, field_names.strings,
-						 time, recursion_mode,/*isFieldML*/0)))
+						 time_set_flag, time,
+						 recursion_mode,/*isFieldML*/0)))
 					 {
 						 display_message(ERROR_MESSAGE,
 							 "gfx_write_all.  Could not create temporary data file");
@@ -14000,7 +14023,6 @@ Can also write individual element groups with the <group> option.
 	int return_code;
 	struct cmzn_command_data *command_data;
 	struct Option_table *option_table;
-	FE_value time;
 
 	ENTER(gfx_write_elements);
 	USE_PARAMETER(dummy_to_be_modified);
@@ -14014,7 +14036,8 @@ Can also write individual element groups with the <group> option.
 		char nodes_flag = 0, data_flag = 0;
 		write_criterion = FE_WRITE_COMPLETE_GROUP;
 		write_recursion = FE_WRITE_RECURSIVE;
-		time = 0.0;
+		char time_set_flag = 0;
+		double time = 0.0;
 		option_table = CREATE(Option_table)();
 		Option_table_add_help(option_table,
 			"Write elements and element fields in EX format to FILE_NAME. "
@@ -14049,7 +14072,8 @@ Can also write individual element groups with the <group> option.
 		Option_table_add_set_cmzn_region(option_table, "root",
 			command_data->root_region, &root_region);
 		/* time */
-		Option_table_add_entry(option_table, "time", &time, (void*)NULL, set_FE_value);
+		Option_table_add_entry(option_table, "time",
+			&time, &time_set_flag, set_double_and_char_flag);
 		/* default option: file name */
 		Option_table_add_default_string_entry(option_table, &file_name, "FILE_NAME");
 
@@ -14137,7 +14161,7 @@ Can also write individual element groups with the <group> option.
 						CMZN_FIELD_DOMAIN_TYPE_MESH3D|CMZN_FIELD_DOMAIN_TYPE_MESH_HIGHEST_DIMENSION,
 						(int)nodes_flag, /*write_data*/(int)data_flag,
 						field_names.number_of_strings, field_names.strings,
-						time, recursion_mode, /*isFieldML*/0);
+						time_set_flag, time, recursion_mode, /*isFieldML*/0);
 				}
 			}
 			if (group_name)
@@ -14236,7 +14260,7 @@ static int gfx_write_region(struct Parse_state *state,
 	}
 
 	return (return_code);
-} /* gfx_write_nodes */
+} /* gfx_write_region */
 
 static int gfx_write_nodes(struct Parse_state *state,
 	void *use_data, void *command_data_void)
@@ -14258,13 +14282,13 @@ If <use_data> is set, writing data, otherwise writing nodes.
 	int return_code;
 	struct cmzn_command_data *command_data;
 	struct Option_table *option_table;
-	FE_value time;
 
 	ENTER(gfx_write_nodes);
 	if (state && (command_data = (struct cmzn_command_data *)command_data_void))
 	{
 		return_code = 1;
-		time = 0.0;
+		char time_set_flag = 0;
+		double time = 0.0;
 		cmzn_region_id root_region = cmzn_region_access(command_data->root_region);
 		char *region_or_group_path = 0;
 		if (use_data)
@@ -14283,7 +14307,7 @@ If <use_data> is set, writing data, otherwise writing nodes.
 		option_table = CREATE(Option_table)();
 		if (use_data)
 		{
-			Option_table_add_help(option_table, "Write data nodes and data node fields");
+			Option_table_add_help(option_table, "Write data points and data point fields");
 		}
 		else
 		{
@@ -14317,7 +14341,8 @@ If <use_data> is set, writing data, otherwise writing nodes.
 		Option_table_add_set_cmzn_region(option_table, "root",
 			command_data->root_region, &root_region);
 		/* time */
-		Option_table_add_entry(option_table, "time", &time, (void*)NULL, set_FE_value);
+		Option_table_add_entry(option_table, "time",
+			&time, &time_set_flag, set_double_and_char_flag);
 		/* default option: file name */
 		Option_table_add_default_string_entry(option_table, &file_name, "FILE_NAME");
 
@@ -14400,7 +14425,7 @@ If <use_data> is set, writing data, otherwise writing nodes.
 				{
 					return_code = export_region_file_of_name(file_name, region, group_name, root_region,
 						/*write_elements*/0, /*write_nodes*/!use_data, /*write_data*/(0 != use_data),
-						field_names.number_of_strings, field_names.strings, time,
+						field_names.number_of_strings, field_names.strings, time_set_flag, time,
 						recursion_mode, /*isFieldML*/0);
 				}
 			}

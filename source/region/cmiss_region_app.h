@@ -113,10 +113,11 @@ int Option_table_add_region_or_group_entry(struct Option_table *option_table,
 	const char *token, cmzn_region_id *region_address,
 	cmzn_field_group_id *group_address);
 
+/** @param timeSet  Set to true to write at the given time, otherwise write no/all times */
 int export_region_file_of_name(const char *file_name,
 	struct cmzn_region *region, const char *group_name,
 	struct cmzn_region *root_region,
 	int write_elements, int write_nodes, int write_data,
-	int number_of_field_names, char **field_names, FE_value time,
+	int number_of_field_names, char **field_names, bool timeSet, FE_value time,
 	enum cmzn_streaminformation_region_recursion_mode recursion_mode,
 	int isFieldML);
