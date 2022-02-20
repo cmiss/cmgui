@@ -176,21 +176,6 @@ SET( CMGUI_BUILD_STRING "\"${CMGUI_BUILD_STRING}\"" )
 SET( CMGUI_CONFIGURE_HDR ${PROJECT_BINARY_DIR}/source/configure/cmgui_configure.h )
 CONFIGURE_FILE( ${PROJECT_SOURCE_DIR}/source/configure/cmgui_configure.h.cmake ${CMGUI_CONFIGURE_HDR} )
 
-# To get the internal headers we derive a header search path from the build header source path.
-# Obviously this will not work if you configure with Zinc's install tree.
-#LIST( GET ZINC_INCLUDE_DIRS 0 ZINC_PRIVATE_INCLUDE_DIRS )
-#SET( ZINC_PRIVATE_INCLUDE_DIRS "${ZINC_PRIVATE_INCLUDE_DIRS}/.." )
-#SET( ZINC_PRIVATE_INCLUDE_DIRS /home/alan/cmiss_setup/opencmiss/src/zinc/core/source )
-
-#set(ZINC_PRIVATE_INCLUDE_DIRS "" CACHE STRING "Location of private Zinc include directory.")
-LIST( GET ZINC_INCLUDE_DIRS 0 ZINC_PRIVATE_INTERNAL_DIRS )
-set(ZINC_PRIVATE_INCLUDE_DIRS "${ZINC_PRIVATE_INTERNAL_DIRS}" CACHE STRING "Location of private Zinc include directory.")
-
-#INCLUDE_DIRECTORIES( ${CMAKE_CURRENT_BINARY_DIR}/source ${CMAKE_CURRENT_SOURCE_DIR}/source
-#	${ZINC_INCLUDE_DIRS} ${ZINC_PRIVATE_INCLUDE_DIRS}
-#	${wxWidgets_INCLUDE_DIRS} ${FIELDML_INCLUDE_DIRS}
-#	${ITK_INCLUDE_DIRS} ${CMISS_PERL_INTERPRETER_INCLUDE_DIRS} )
-
 
 FOREACH( DEF ${EXTRA_COMPILER_DEFINITIONS} ${DEPENDENT_DEFINITIONS} )
 	ADD_DEFINITIONS( -D${DEF} )
