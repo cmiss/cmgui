@@ -410,7 +410,7 @@ int export_region_file_of_name(const char *file_name,
 	struct cmzn_region *region, const char *group_name,
 	struct cmzn_region *root_region,
 	int write_elements, int write_nodes, int write_data,
-	int number_of_field_names, char **field_names, FE_value time,
+	int number_of_field_names, char **field_names, bool timeSet, FE_value time,
 	enum cmzn_streaminformation_region_recursion_mode recursion_mode,
 	int isFieldML)
 {
@@ -457,9 +457,12 @@ int export_region_file_of_name(const char *file_name,
 		}
 		cmzn_streaminformation_region_set_resource_group_name(si_region,
 			sr, group_name);
-		cmzn_streaminformation_region_set_resource_attribute_real(
-			si_region, sr, CMZN_STREAMINFORMATION_REGION_ATTRIBUTE_TIME,
-			(double)time);
+		if (timeSet)
+		{
+			cmzn_streaminformation_region_set_resource_attribute_real(
+				si_region, sr, CMZN_STREAMINFORMATION_REGION_ATTRIBUTE_TIME,
+				(double)time);
+		}
 		return_code = cmzn_region_write(region, si_region);
 		cmzn_streamresource_destroy(&sr);
 		cmzn_streaminformation_region_destroy(&si_region);

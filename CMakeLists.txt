@@ -8,7 +8,7 @@
 
 cmake_minimum_required( VERSION 3.10 )
 
-project(CmguiApplication VERSION 3.5.0 LANGUAGES C CXX)
+project(CmguiApplication VERSION 3.6.0 LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 11)
 
