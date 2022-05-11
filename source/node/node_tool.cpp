@@ -2305,13 +2305,14 @@ Callback from wxChooser<Computed_field> when choice is made.
 		return 1;
 	}
 
-	int setCoordinateField(Computed_field *field)
-/*******************************************************************************
-LAST MODIFIED : 9 February 2007
+	/** Get the selected option in the Coordinate Field chooser. */
+	Computed_field *getCoordinateField() const
+	{
+		return computed_field_chooser->get_object();
+	}
 
-DESCRIPTION :
-Set the selected option in the Coordinate Field chooser.
-==============================================================================*/
+	/** Set the selected option in the Coordinate Field chooser. */
+	int setCoordinateField(Computed_field *field)
 	{
 		computed_field_chooser->set_object(field);
 		return 1;
@@ -2815,14 +2816,19 @@ void Node_tool::addCreateElementNode(cmzn_node_id node)
 		cmzn_fieldmodule_begin_change(fieldmodule);
 		cmzn_mesh_id mesh = cmzn_fieldmodule_find_mesh_by_dimension(fieldmodule, this->createElementDimension);
 		FE_mesh *fe_mesh = cmzn_mesh_get_FE_mesh_internal(mesh);
-
-		FE_region_begin_define_faces(cmzn_region_get_FE_region(this->region));
+		const bool defineFaces = (this->createElementDimension > 1) && (fe_mesh);
+		if (defineFaces)
+		{
+			FE_region_begin_define_faces(cmzn_region_get_FE_region(this->region));
+		}
 		cmzn_element_id element = cmzn_mesh_create_element(mesh, -1, this->elementtemplate);
-		if (fe_mesh)
+		if (defineFaces)
+		{
 			fe_mesh->defineElementFaces(element->getIndex());
-		// future:
-		//cmzn_element_define_faces(element);
-		FE_region_end_define_faces(cmzn_region_get_FE_region(this->region));
+			// future:
+			//cmzn_element_define_faces(element);
+			FE_region_end_define_faces(cmzn_region_get_FE_region(this->region));
+		}
 		if (element)
 		{
 			if (this->group_field)
@@ -2881,7 +2887,11 @@ in this region only.
 			node_tool->region = region;
 #if defined (WX_USER_INTERFACE)
 			if (node_tool->wx_node_tool)
+			{
 				node_tool->wx_node_tool->wx_Node_tool_set_field_chooser_manager();
+				cmzn_field *field = node_tool->wx_node_tool->getCoordinateField();
+				Node_tool_set_coordinate_field(node_tool, field);
+			}
 #endif
 		}
 		if (node_tool->group_field != group)
