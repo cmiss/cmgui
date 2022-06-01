@@ -150,7 +150,7 @@ Modifier function for entering a path to a cmzn_region, starting at
 							"set_cmzn_region_path.  Missing path_address");
 						return_code = 0;
 					}
-					DEACCESS(cmzn_region)(&region);
+					cmzn_region_destroy(&region);
 				}
 				else
 				{
@@ -257,7 +257,7 @@ static int set_region_path_and_or_field_name(struct Parse_state *state,
 		else if (cmzn_region_get_partial_region_path(root_region, current_token,
 			&name_data->region, &name_data->region_path, &name_data->name))
 		{
-			ACCESS(cmzn_region)(name_data->region);
+			cmzn_region_access(name_data->region);
 			if (!name_data->name || (NULL == strchr(name_data->name, CMZN_REGION_PATH_SEPARATOR_CHAR)))
 			{
 				return_code = shift_Parse_state(state, 1);

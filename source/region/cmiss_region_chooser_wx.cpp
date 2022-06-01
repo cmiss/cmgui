@@ -20,21 +20,16 @@ DESCRIPTION :
 wxRegionChooser::wxRegionChooser(wxWindow *parent,
 	cmzn_region *root_region, const char *initial_path) :
 	wxChoice(parent, /*id*/-1, wxPoint(0,0), wxSize(-1,-1)),
-	root_region(cmzn_region_access(root_region))
-/*******************************************************************************
-LAST MODIFIED : 22 February 2007
-
-DESCRIPTION :
-==============================================================================*/
+	root_region(cmzn_region_access(root_region)),
+	regionnotifier(cmzn_region_create_regionnotifier(root_region)),
+	callback(nullptr)
 {
-	callback = NULL;
-	build_main_menu(root_region, initial_path);
+	build_main_menu(initial_path);
 
 	Connect(wxEVT_COMMAND_CHOICE_SELECTED,
 		wxCommandEventHandler(wxRegionChooser::OnChoiceSelected));
 
-	cmzn_region_add_callback(root_region,
-		wxRegionChooser::RegionChange, this);
+	cmzn_regionnotifier_set_callback(this->regionnotifier, this->regionChange, this);
 
 	wxBoxSizer *sizer = new wxBoxSizer( wxHORIZONTAL );
 	sizer->Add(this,
@@ -42,21 +37,13 @@ DESCRIPTION :
 	parent->SetSizer(sizer);
 
 	Show();
-
 }
 
 wxRegionChooser::~wxRegionChooser()
-/*******************************************************************************
-LAST MODIFIED : 22 February 2007
-
-DESCRIPTION :
-==============================================================================*/
 {
-	cmzn_region_remove_callback(root_region,
-		wxRegionChooser::RegionChange, this);
+	cmzn_regionnotifier_destroy(&(this->regionnotifier));
 	cmzn_region_destroy(&root_region);
-	if (callback)
-		delete callback;
+	delete callback;
 }
 
 char *wxRegionChooser::get_path()
@@ -139,12 +126,6 @@ Sets <path> of chosen region in the <chooser>.
 
 int wxRegionChooser::append_children(cmzn_region *current_region,
 	const char *current_path, const char *initial_path)
-/*******************************************************************************
-LAST MODIFIED : 22 February 2007
-
-DESCRIPTION :
-Sets <path> of chosen region in the <chooser>.
-==============================================================================*/
 {
 	char *child_name, *child_path;
 
@@ -172,8 +153,7 @@ Sets <path> of chosen region in the <chooser>.
 	return 1;
 }
 
-int wxRegionChooser::build_main_menu(cmzn_region *root_region,
-	const char *initial_path)
+int wxRegionChooser::build_main_menu(const char *initial_path)
 /*******************************************************************************
 LAST MODIFIED : 22 February 2007
 
@@ -192,7 +172,7 @@ is selected.
 	{
 		SetSelection(GetCount() - 1);
 	}
-	append_children(root_region, "", initial_path);
+	append_children(this->root_region, "", initial_path);
 	DEALLOCATE(root_path);
 
 	if (wxNOT_FOUND == GetSelection())
@@ -204,24 +184,15 @@ is selected.
 	return 1;
 }
 
-void wxRegionChooser::RegionChange(struct cmzn_region *root_region,
-	cmzn_region_changes *region_changes, void *region_chooser_void)
-/*******************************************************************************
-LAST MODIFIED : 22 February 2007
-
-DESCRIPTION :
-Sets <path> of chosen region in the <chooser>.
-==============================================================================*/
+/** Region tree has changed: refresh list of regions */
+void wxRegionChooser::regionChange(cmzn_regionevent *regionevent, void *region_chooser_void)
 {
-	wxRegionChooser *region_chooser;
-
-	USE_PARAMETER(region_changes);
-	region_chooser = static_cast<wxRegionChooser *>(region_chooser_void);
-	if (region_chooser != NULL)
+	USE_PARAMETER(regionevent);
+	wxRegionChooser *region_chooser = static_cast<wxRegionChooser *>(region_chooser_void);
+	if (region_chooser)
 	{
-		 char *temp;
-		 temp = region_chooser->get_path();
-		region_chooser->build_main_menu(root_region, temp);
+		char *temp = region_chooser->get_path();
+		region_chooser->build_main_menu(temp);
 		DEALLOCATE(temp);
 	}
 }

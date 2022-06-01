@@ -7596,7 +7596,7 @@ static int execute_command_gfx_import(struct Parse_state *state,
 			}
 			else
 			{
-				top_region = ACCESS(cmzn_region)(command_data->root_region);
+				top_region = cmzn_region_access(command_data->root_region);
 			}
 
 			if (return_code)
@@ -7607,7 +7607,7 @@ static int execute_command_gfx_import(struct Parse_state *state,
 					//DEBUG_PRINT( "OCC load took %.2lf seconds\n", ( occEnd - occStart ) / double( CLOCKS_PER_SEC ) );
 				}
 			}
-			DEACCESS(cmzn_region)(&top_region);
+			cmzn_region_destroy(&top_region);
 		}
 		DESTROY(Option_table)(&option_table);
 		if (region_path)
@@ -8480,7 +8480,7 @@ Executes a GFX LIST FIELD.
 				}
 				else
 				{
-					region_path_and_name.region = ACCESS(cmzn_region)(root_region);
+					region_path_and_name.region = cmzn_region_access(root_region);
 				}
 				if (commands_flag)
 				{
@@ -8551,7 +8551,7 @@ Executes a GFX LIST FIELD.
 		DESTROY(Option_table)(&option_table);
 		if (region_path_and_name.region)
 		{
-			DEACCESS(cmzn_region)(&region_path_and_name.region);
+			cmzn_region_destroy(&region_path_and_name.region);
 		}
 		if (region_path_and_name.region_path)
 		{
@@ -9730,7 +9730,7 @@ Executes a GFX LIST TEXTURE.
 				}
 				else
 				{
-					region = ACCESS(cmzn_region)(root_region);
+					region = cmzn_region_access(root_region);
 					region_name = cmzn_region_get_path(region);
 				}
 				if (region)
@@ -9781,7 +9781,7 @@ Executes a GFX LIST TEXTURE.
 									list_image_field,(void *)NULL,field_manager);
 						}
 					}
-					DEACCESS(cmzn_region)(&region);
+					cmzn_region_destroy(&region);
 				}
 			}
 			DESTROY(Option_table)(&option_table);
@@ -9855,7 +9855,7 @@ Executes a GFX LIST TRANSFORMATION.
 				}
 				else
 				{
-					region = ACCESS(cmzn_region)(command_data->root_region);
+					region = cmzn_region_access(command_data->root_region);
 				}
 				if (region)
 				{
@@ -9885,7 +9885,7 @@ Executes a GFX LIST TRANSFORMATION.
 					return_code=0;
 				}
 			} /* parse error, help */
-			DEACCESS(cmzn_region)(&region);
+			cmzn_region_destroy(&region);
 			if (region_name)
 			{
 				DEALLOCATE(region_name);
@@ -11233,6 +11233,143 @@ static int gfx_modify_nodes(struct Parse_state *state,
 	return (return_code);
 }
 
+/**
+ * Renames a region.
+ */
+static int gfx_modify_region_rename(struct Parse_state *state,
+	void *region_void, void *command_data_void)
+{
+	int return_code = 1;
+	cmzn_region* region = static_cast<cmzn_region *>(region_void);
+	cmzn_command_data *command_data = (struct cmzn_command_data *)command_data_void;
+	if (state)
+	{
+		if (!state->current_token || (
+			strcmp(PARSER_HELP_STRING, state->current_token) &&
+			strcmp(PARSER_RECURSIVE_HELP_STRING, state->current_token)))
+		{
+			if (state->current_token)
+			{
+				if (region == command_data->root_region)
+				{
+					display_message(ERROR_MESSAGE, "Can't rename root region");
+					display_parse_state_location(state);
+					return_code = 0;
+				}
+				else
+				{
+					if (CMZN_OK != cmzn_region_set_name(region, state->current_token))
+					{
+						display_message(ERROR_MESSAGE, "Illegal region name, or name in use");
+						display_parse_state_location(state);
+						return_code = 0;
+					}
+				}
+			}
+			else
+			{
+				display_message(ERROR_MESSAGE, "Missing region name");
+				display_parse_state_location(state);
+				return_code = 0;
+			}
+		}
+		else
+		{
+			/* Help */
+			display_message(INFORMATION_MESSAGE, " NEW_REGION_NAME");
+		}
+	}
+	else
+	{
+		display_message(ERROR_MESSAGE,
+			"gfx_modify_region_rename.  Invalid argument(s)");
+	}
+	return (return_code);
+}
+
+/**
+ * Executes GFX MODIFY REGION subcommands.
+ */
+static int gfx_modify_region_subcommands(struct Parse_state *state,
+	void *region_void, void *command_data_void)
+{
+	int return_code = 1;
+	if (state)
+	{
+		Option_table *option_table = CREATE(Option_table)();
+		Option_table_add_entry(option_table, "rename",
+			region_void, command_data_void, gfx_modify_region_rename);
+		return_code = Option_table_parse(option_table, state);
+		DESTROY(Option_table)(&option_table);
+	}
+	else
+	{
+		display_message(ERROR_MESSAGE,
+			"gfx_modify_region_subcommands.  Invalid argument(s)");
+		return_code = 0;
+	}
+	return (return_code);
+}
+
+/**
+ * Executes a GFX MODIFY REGION command.
+ */
+static int gfx_modify_region(struct Parse_state *state,
+	void *dummy_to_be_modified, void *command_data_void)
+{
+	int return_code = 1;
+	USE_PARAMETER(dummy_to_be_modified);
+	cmzn_command_data *command_data = (struct cmzn_command_data *)command_data_void;
+	if (state && command_data)
+	{
+		const char *current_token = state->current_token;
+		if (current_token)
+		{
+			if (strcmp(PARSER_HELP_STRING, current_token)&&
+				strcmp(PARSER_RECURSIVE_HELP_STRING, current_token))
+			{
+				cmzn_region *region = cmzn_region_find_subregion_at_path(command_data->root_region, current_token);
+				if (region)
+				{
+					shift_Parse_state(state, 1);
+					return_code = gfx_modify_region_subcommands(state,
+						(void *)region, command_data_void);
+					cmzn_region_destroy(&region);
+				}
+				else
+				{
+					display_message(ERROR_MESSAGE,
+						"gfx modify region:  Invalid region path '%s'", current_token);
+					display_parse_state_location(state);
+					return_code = 0;
+				}
+			}
+			else
+			{
+				/* Write out the help */
+				Option_table *help_option_table = CREATE(Option_table)();
+				Option_table_add_entry(help_option_table,
+					"PATH/TO/REGION", (void *)NULL, (void *)command_data->root_region, gfx_modify_field_subcommands);
+				return_code = Option_table_parse(help_option_table, state);
+				DESTROY(Option_table)(&help_option_table);
+				return_code = 1;
+			}
+		}
+		else
+		{
+			display_message(ERROR_MESSAGE, "Missing region path");
+			display_parse_state_location(state);
+			return_code = 0;
+		}
+	}
+	else
+	{
+		display_message(ERROR_MESSAGE, "gfx_modify_region.  Invalid argument(s)");
+		return_code = 0;
+	}
+	return (return_code);
+}
+
 static int execute_command_gfx_modify(struct Parse_state *state,
 	void *dummy_to_be_modified,void *command_data_void)
 /*******************************************************************************
@@ -11319,6 +11456,9 @@ Executes a GFX MODIFY command.
 				/* nodes */
 				Option_table_add_entry(option_table, "nodes", /*use_data*/(void *)0,
 					(void *)command_data, gfx_modify_nodes);
+				/* region */
+				Option_table_add_entry(option_table, "region", NULL,
+					(void *)command_data, gfx_modify_region);
 				/* scene */
 				Define_scene_data define_scene_data;
 				define_scene_data.root_region = command_data->root_region;
@@ -11814,9 +11954,9 @@ user, otherwise the elements file is read.
 						}
 						if (return_code)
 						{
-							if (cmzn_region_can_merge(top_region, tmp_region))
+							if (top_region->canMerge(*tmp_region))
 							{
-								if (!cmzn_region_merge(top_region, tmp_region))
+								if (CMZN_OK != top_region->merge(*tmp_region))
 								{
 									display_message(ERROR_MESSAGE,
 										"Error merging elements from file: %s", file_name);
@@ -12049,9 +12189,9 @@ If the <use_data> flag is set, then read data, otherwise nodes.
 											0, 0, 0, node_offset_flag, node_offset, /*use_data*/0);
 									}
 								}
-								if (cmzn_region_can_merge(top_region, tmp_region))
+								if (top_region->canMerge(*tmp_region))
 								{
-									if (!cmzn_region_merge(top_region, tmp_region))
+									if (CMZN_OK != top_region->merge(*tmp_region))
 									{
 										if (use_data)
 										{
@@ -17012,7 +17152,7 @@ NOTE: Do not call this directly: call cmzn_command_data_destroy() to deaccess.
 		DESTROY(LIST(Io_device))(&command_data->device_list);
 #endif /* defined (SELECT_DESCRIPTORS) */
 
-		DEACCESS(cmzn_region)(&(command_data->root_region));
+		cmzn_region_destroy(&(command_data->root_region));
 		DESTROY(MANAGER(FE_basis))(&command_data->basis_manager);
 		DESTROY(LIST(FE_element_shape))(&command_data->element_shape_list);
 
@@ -17171,7 +17311,7 @@ Returns the root region from the <command_data>.
 	if (command_data)
 	{
 		/* API functions return accessed values */
-		root_region=ACCESS(cmzn_region)(command_data->root_region);
+		root_region=cmzn_region_access(command_data->root_region);
 	}
 	LEAVE;
 

@@ -14,6 +14,7 @@ DESCRIPTION :
 #define CMZN_REGION_CHOOSER_WX_HPP
 
 #include "wx/wx.h"
+#include "opencmiss/zinc/region.h"
 #include "general/callback_class.hpp"
 
 struct cmzn_region;
@@ -23,7 +24,8 @@ class wxRegionChooser : public wxChoice
 {
 private:
 	cmzn_region *root_region;
-	Callback_base<cmzn_region*> *callback;
+	cmzn_regionnotifier *regionnotifier;  // from root_region
+	Callback_base<cmzn_region*> *callback;  // to client
 
 public:
 	wxRegionChooser(wxWindow *parent, 
@@ -87,12 +89,11 @@ private:
 	
 	int notify_callback();
 
-	int build_main_menu(cmzn_region *root_region,
-		const char *initial_path);
+	int build_main_menu(const char *initial_path);
+
 	int append_children(cmzn_region *current_region,
 		const char *current_path, const char *initial_path);
 
-	static void RegionChange(struct cmzn_region *root_region,
-		cmzn_region_changes *region_changes, void *region_chooser_void);
+	static void regionChange(cmzn_regionevent *regionevent, void *region_chooser_void);
 };
 #endif /* !defined (CMZN_REGION_CHOOSER_H) */
