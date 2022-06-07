@@ -84,24 +84,24 @@ class wxCmguiHierachicalTree;
 
 class wxCmguiHierachicalTreeItemData :public wxTreeItemData
 {
-	struct cmzn_region *region;
+	cmzn_region *region;
+	cmzn_regionnotifier *regionnotifier;
 	wxCmguiHierachicalTree *treectrl;
 
 public:
 	wxCmguiHierachicalTreeItemData(struct cmzn_region *input_region,
-		wxCmguiHierachicalTree *input_treectrl) : treectrl(input_treectrl)
+			wxCmguiHierachicalTree *input_treectrl) :
+		region(cmzn_region_access(input_region)),
+		regionnotifier(cmzn_region_create_regionnotifier(input_region)),
+		treectrl(input_treectrl)
 	{
-		region = ACCESS(cmzn_region)(input_region);
-		treectrl = input_treectrl;
-		cmzn_region_add_callback(region,
-			propagate_region_change, (void *)this);
+		cmzn_regionnotifier_set_callback(this->regionnotifier, this->regionChange, this);
 	}
 
 	virtual ~wxCmguiHierachicalTreeItemData()
 	{
-		cmzn_region_remove_callback(region,
-			propagate_region_change, (void *)this);
-		DEACCESS(cmzn_region)(&region);
+		cmzn_regionnotifier_destroy(&(this->regionnotifier));
+		cmzn_region_destroy(&region);
 	}
 
 	cmzn_region *GetRegion()
@@ -109,8 +109,7 @@ public:
 		return region;
 	}
 
-	static void propagate_region_change(
-		struct cmzn_region *region, cmzn_region_changes *region_changes, void *data_void);
+	static void regionChange(cmzn_regionevent *regionevent, void *treeItemData_void);
 };
 
 class wxCmguiHierachicalTree : public wxTreeCtrl
@@ -188,6 +187,11 @@ public:
 					(GetItemData(child_id))->GetRegion();
 				if (current_region == child_region)
 				{
+					wxString currentName = GetItemText(child_id);
+					if (currentName != child_name)
+					{
+						SetItemText(child_id, wxString::FromAscii(child_name));
+					}
 					return_code = 1;
 				}
 				child_id = GetNextChild(parent_id, cookie);
@@ -209,16 +213,18 @@ public:
 		}
 	}
 
-	void region_change(struct cmzn_region *region,
-		cmzn_region_changes *region_changes, wxCmguiHierachicalTreeItemData *data)
+	void regionChange(cmzn_regionevent *regionevent, wxCmguiHierachicalTreeItemData *treeItemData)
 	{
-		ENTER(region_change);
-
-		if (region && region_changes && data)
+		USE_PARAMETER(regionevent);
+		if (treeItemData)
 		{
+			const wxTreeItemId parent_id = treeItemData->GetId();
+			this->remove_child_with_region(parent_id, nullptr);
+			this->update_current_tree_item(parent_id);
+#ifdef OLD_CODE
 			if (region_changes->children_changed)
 			{
-				const wxTreeItemId parent_id = data->GetId();
+				const wxTreeItemId parent_id = treeItemData->GetId();
 				struct cmzn_region *child_region = NULL;
 				if (region_changes->child_added)
 				{
@@ -242,13 +248,13 @@ public:
 					update_current_tree_item(parent_id);
 				}
 			}
+#endif
 		}
 		else
 		{
 			display_message(ERROR_MESSAGE,
-				"Scene_cmzn_region_change.  Invalid argument(s)");
+				"wxCmguiHierachicalTree::region_change.  Invalid argument(s)");
 		}
-		LEAVE;
 	}
 
 void add_all_child_regions_to_tree_item(wxTreeItemId parent_id)
@@ -285,13 +291,13 @@ private:
 
 IMPLEMENT_DYNAMIC_CLASS(wxCmguiHierachicalTree, wxFrame)
 
-void wxCmguiHierachicalTreeItemData::propagate_region_change(
-	struct cmzn_region *region, cmzn_region_changes *region_changes, void *data_void)
+void wxCmguiHierachicalTreeItemData::regionChange(
+	cmzn_regionevent *regionevent, void *treeItemData_void)
 {
-	wxCmguiHierachicalTreeItemData *data =
-		static_cast<wxCmguiHierachicalTreeItemData *>(data_void);
-	data->treectrl->region_change(region,
-		region_changes, data);
+	USE_PARAMETER(regionevent);
+	wxCmguiHierachicalTreeItemData *treeItemData =
+		static_cast<wxCmguiHierachicalTreeItemData *>(treeItemData_void);
+	treeItemData->treectrl->regionChange(regionevent, treeItemData);
 }
 
 struct Region_tree_viewer
