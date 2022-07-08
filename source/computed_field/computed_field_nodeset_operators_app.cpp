@@ -4,6 +4,7 @@
 * License, v. 2.0. If a copy of the MPL was not distributed with this
 * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+#include "opencmiss/zinc/fieldfiniteelement.h"
 #include "opencmiss/zinc/fieldnodesetoperators.h"
 #include "opencmiss/zinc/nodeset.h"
 #include "general/debug.h"
@@ -25,6 +26,20 @@ const char computed_field_nodeset_sum_type_string[] = "nodeset_sum";
 const char computed_field_nodeset_maximum_type_string[] = "nodeset_maximum";
 const char computed_field_nodeset_minimum_type_string[] = "nodeset_minimum";
 const char computed_field_nodeset_operator_type_string[] = "nodeset_operator";
+
+int cmzn_field_is_valid_nodeset_operator_element_map(cmzn_field_id field, void *)
+{
+	if (field)
+	{
+		cmzn_field_stored_mesh_location *stored_mesh_location = cmzn_field_cast_stored_mesh_location(field);
+		if (stored_mesh_location)
+		{
+			cmzn_field_stored_mesh_location_destroy(&stored_mesh_location);
+			return 1;
+		}
+	}
+	return 0;
+}
 
 /**
  * Command modifier function for getting the arguments common to all
