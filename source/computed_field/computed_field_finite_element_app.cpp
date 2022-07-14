@@ -437,14 +437,14 @@ int define_Computed_field_type_node_value(struct Parse_state *state,
 		cmzn_field_id finite_element_field = 0;
 		cmzn_node_value_label nodeValueLabel = CMZN_NODE_VALUE_LABEL_VALUE;
 		int versionNumber = 1;
-		if ((NULL != field_modify->get_field()) &&
-			(computed_field_node_value_type_string ==
-				Computed_field_get_type_string(field_modify->get_field())))
+		cmzn_field_node_value_id node_value_field = (nullptr != field_modify->get_field()) ?
+			cmzn_field_cast_node_value(field_modify->get_field()) : nullptr;
+		if (node_value_field)
 		{
-			// note this is ACCESSed:
-			finite_element_field = cmzn_field_get_source_field(field_modify->get_field(), 1);
-			nodeValueLabel = cmzn_field_node_value_get_value_label(field_modify->get_field());
-			versionNumber = cmzn_field_node_value_get_version_number(field_modify->get_field());
+			finite_element_field = cmzn_field_get_source_field(field_modify->get_field(), 1);  // accessed
+			nodeValueLabel = cmzn_field_node_value_get_node_value_label(node_value_field);
+			versionNumber = cmzn_field_node_value_get_version_number(node_value_field);
+			cmzn_field_node_value_destroy(&node_value_field);
 		}
 		struct Option_table *option_table = CREATE(Option_table)();
 		struct Set_Computed_field_conditional_data set_fe_field_data;
