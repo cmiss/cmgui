@@ -2600,7 +2600,7 @@ Currently limited to 1 byte per component.
 			Set_cmiss_field_value_to_texture(field, texture_coordinate_field,
 				texture, spectrum,	fail_material, image_width, image_height, image_depth,
 				bytes_per_pixel, number_of_bytes_per_component, use_pixel_location, texture_width, texture_height, texture_depth,
-				storage, propagate_field, Graphics_buffer_package_get_core_package(graphics_buffer_package), search_mesh);
+				storage, Graphics_buffer_package_get_core_package(graphics_buffer_package), search_mesh);
 		}
 		else
 		{

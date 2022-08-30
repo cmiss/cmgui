@@ -291,13 +291,22 @@ FE_field being made and/or modified.
 								}
 							}
 						}
-						return_code = field_modify->define_field(
-							cmzn_fieldmodule_create_field_finite_element_wrapper(field_module, fe_field,
-								(existing_field) ? nullptr : field_name));
-						if (!return_code)
+						FE_field *existing_fe_field = nullptr;
+						if (field_modify->get_field())
 						{
-							display_message(ERROR_MESSAGE, "gfx define field finite_element.  Failed");
-							display_parse_state_location(state);
+							Computed_field_get_type_finite_element(field_modify->get_field(), &existing_fe_field);
+						}
+						// nothing to do if same as existing FE_field
+						if (fe_field != existing_fe_field)
+						{
+							return_code = field_modify->define_field(
+								cmzn_fieldmodule_create_field_finite_element_wrapper(field_module, fe_field,
+								(existing_field) ? nullptr : field_name));
+							if (!return_code)
+							{
+								display_message(ERROR_MESSAGE, "gfx define field finite_element.  Failed");
+								display_parse_state_location(state);
+							}
 						}
 					}
 					else
