@@ -36,6 +36,8 @@ Scene input.
 #include "time/time_keeper_app.hpp"
 #include "computed_field/computed_field.h"
 #include "computed_field/computed_field_composite.h"
+#include "computed_field/computed_field_find_xi.h"
+#include "computed_field/computed_field_find_xi_private.hpp"
 #include "computed_field/computed_field_finite_element.h"
 #include "computed_field/computed_field_group.hpp"
 #include "computed_field/computed_field_set.h"
@@ -438,9 +440,13 @@ DESCRIPTION :
 	if (point && (data = (struct Node_tool_element_constraint_function_data *)void_data))
 	{
 		data->found_element = data->element;
+		Computed_field_find_element_xi_cache *findElementXiCache =
+			new Computed_field_find_element_xi_cache(data->coordinate_field);
 		return_code = Computed_field_find_element_xi(data->coordinate_field,
-			data->field_cache, point, /*number_of_values*/3, &(data->found_element),
-			data->xi, (cmzn_mesh_id)0, /*propagate_field*/0, /*find_nearest_location*/1);
+			data->field_cache, findElementXiCache, (const FeMeshFieldRanges *)nullptr,
+			point, /*number_of_values*/3, &(data->found_element),
+			data->xi, (cmzn_mesh_id)0, /*find_nearest_location*/1);
+		delete findElementXiCache;
 		cmzn_fieldcache_set_mesh_location(data->field_cache, data->found_element,
 			cmzn_element_get_dimension(data->found_element), data->xi);
 		cmzn_field_evaluate_real(data->coordinate_field, data->field_cache,
