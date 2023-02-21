@@ -40,15 +40,8 @@ int Computed_field_get_type_matrix_to_quaternion(struct Computed_field *field,
 int Computed_field_get_type_quaternion_to_matrix(struct Computed_field *field,
 	struct Computed_field **quaternion_to_matrix_field);
 
-int Computed_field_get_type_transpose(struct Computed_field *field,
-	int *source_number_of_rows, struct Computed_field **source_field);
-
 int Computed_field_get_type_projection(struct Computed_field *field,
 	struct Computed_field **source_field, struct Computed_field **projection_matrix_field);
-
-int Computed_field_get_type_matrix_multiply(struct Computed_field *field,
-	int *number_of_rows, struct Computed_field **source_field1,
-	struct Computed_field **source_field2);
 
 int Computed_field_get_type_matrix_invert(struct Computed_field *field,
 	struct Computed_field **source_field);
@@ -56,17 +49,11 @@ int Computed_field_get_type_matrix_invert(struct Computed_field *field,
 int Computed_field_get_type_eigenvectors(struct Computed_field *field,
 	struct Computed_field **eigenvalues_field);
 
-int Computed_field_get_type_eigenvalues(struct Computed_field *field,
-	struct Computed_field **source_field);
-
 cmzn_field *cmzn_fieldmodule_create_field_matrix_to_quaternion(
 	cmzn_fieldmodule *fieldmodule, cmzn_field *source_field);
 
 cmzn_field *cmzn_fieldmodule_create_field_quaternion_to_matrix(
 	cmzn_fieldmodule *fieldmodule, cmzn_field *source_field);
-
-int Computed_field_is_type_eigenvalues_conditional(struct Computed_field *field,
-	void *dummy_void);
 
 int Computed_field_is_square_matrix(struct Computed_field *field,
 	void *dummy_void);
@@ -140,50 +127,44 @@ contents to be modified.
 ==============================================================================*/
 {
 	int return_code;
-	struct Computed_field *source_field;
 	Computed_field_modify_data *field_modify = static_cast<Computed_field_modify_data *>(field_modify_void);
-	struct Option_table *option_table;
 	struct Set_Computed_field_conditional_data set_source_field_data;
 
 	ENTER(define_Computed_field_type_eigenvalues);
 	if ((state) && (field_modify))
 	{
-		return_code=1;
-		source_field = (struct Computed_field *)NULL;
-		if ((NULL != field_modify->get_field()) &&
-			(computed_field_eigenvalues_type_string ==
-				Computed_field_get_type_string(field_modify->get_field())))
+		return_code = 1;
+		cmzn_field_id source_field = nullptr;
+		if (NULL != field_modify->get_field())
 		{
-			return_code = Computed_field_get_type_eigenvalues(field_modify->get_field(), &source_field);
+			cmzn_field_eigenvalues_id eigenvalues_field =
+				cmzn_field_cast_eigenvalues(field_modify->get_field());
+			if (eigenvalues_field)
+			{
+				source_field = cmzn_field_get_source_field(field_modify->get_field(), 1);
+			}
 		}
+		Option_table *option_table = CREATE(Option_table)();
+		Option_table_add_help(option_table,
+			"An eigenvalues field returns the n eigenvalues of an (n * n) square matrix field.  Here, a 9 component source field is interpreted as a (3 * 3) matrix with the first 3 components being the first row, the next 3 components being the middle row, and so on.  The related eigenvectors field can extract the corresponding eigenvectors for the eigenvalues. See a/large_strain for an example of using the eigenvalues and eigenvectors fields.");
+		set_source_field_data.conditional_function =
+			Computed_field_is_square_matrix;
+		set_source_field_data.conditional_function_user_data = (void *)NULL;
+		set_source_field_data.computed_field_manager =
+			field_modify->get_field_manager();
+		Option_table_add_entry(option_table, "field", &source_field,
+			&set_source_field_data, set_Computed_field_conditional);
+		return_code = Option_table_multi_parse(option_table, state);
 		if (return_code)
 		{
-			if (source_field)
-			{
-				ACCESS(Computed_field)(source_field);
-			}
-			option_table = CREATE(Option_table)();
-			Option_table_add_help(option_table,
-			  "An eigenvalues field returns the n eigenvalues of an (n * n) square matrix field.  Here, a 9 component source field is interpreted as a (3 * 3) matrix with the first 3 components being the first row, the next 3 components being the middle row, and so on.  The related eigenvectors field can extract the corresponding eigenvectors for the eigenvalues. See a/large_strain for an example of using the eigenvalues and eigenvectors fields.");
-			set_source_field_data.conditional_function =
-				Computed_field_is_square_matrix;
-			set_source_field_data.conditional_function_user_data = (void *)NULL;
-			set_source_field_data.computed_field_manager =
-				field_modify->get_field_manager();
-			Option_table_add_entry(option_table, "field", &source_field,
-				&set_source_field_data, set_Computed_field_conditional);
-			return_code = Option_table_multi_parse(option_table, state);
-			if (return_code)
-			{
-				return_code = field_modify->define_field(
-					cmzn_fieldmodule_create_field_eigenvalues(field_modify->get_field_module(),
-						source_field));
-			}
-			DESTROY(Option_table)(&option_table);
-			if (source_field)
-			{
-				DEACCESS(Computed_field)(&source_field);
-			}
+			return_code = field_modify->define_field(
+				cmzn_fieldmodule_create_field_eigenvalues(field_modify->get_field_module(),
+					source_field));
+		}
+		DESTROY(Option_table)(&option_table);
+		if (source_field)
+		{
+			cmzn_field_destroy(&source_field);
 		}
 	}
 	else
@@ -197,6 +178,18 @@ contents to be modified.
 	return (return_code);
 } /* define_Computed_field_type_eigenvalues */
 
+int cmzn_field_is_type_eigenvalues_conditional(cmzn_field *field,
+	void *dummy_void)
+{
+	cmzn_field_eigenvalues_id eigenvalues_field =
+		cmzn_field_cast_eigenvalues(field);
+	if (eigenvalues_field)
+	{
+		cmzn_field_eigenvalues_destroy(&eigenvalues_field);
+		return 1;
+	}
+	return 0;
+}
 
 int define_Computed_field_type_eigenvectors(struct Parse_state *state,
 	void *field_modify_void, void *)
@@ -240,7 +233,7 @@ its contents to be modified.
 			set_source_field_data.computed_field_manager =
 				field_modify->get_field_manager();
 			set_source_field_data.conditional_function =
-				Computed_field_is_type_eigenvalues_conditional;
+				cmzn_field_is_type_eigenvalues_conditional;
 			set_source_field_data.conditional_function_user_data = (void *)NULL;
 			Option_table_add_entry(option_table, "eigenvalues", &source_field,
 				&set_source_field_data, set_Computed_field_conditional);
@@ -364,37 +357,58 @@ already) and allows its contents to be modified.
 		{
 			/* get valid parameters for matrix_multiply field */
 			number_of_rows = 1;
-			source_fields[0] = (struct Computed_field *)NULL;
-			source_fields[1] = (struct Computed_field *)NULL;
-			if ((NULL != field_modify->get_field()) &&
-				(computed_field_matrix_multiply_type_string ==
-					Computed_field_get_type_string(field_modify->get_field())))
+			source_fields[0] = nullptr;
+			source_fields[1] = nullptr;
+			if (NULL != field_modify->get_field())
 			{
-				return_code=Computed_field_get_type_matrix_multiply(field_modify->get_field(),
-					&number_of_rows,&(source_fields[0]),&(source_fields[1]));
-			}
-			if (return_code)
-			{
-				/* ACCESS the source fields for set_Computed_field_array */
-				for (i=0;i<2;i++)
+				cmzn_field_matrix_multiply_id matrix_multiply_field =
+					cmzn_field_cast_matrix_multiply(field_modify->get_field());
+				if (matrix_multiply_field)
 				{
-					if (source_fields[i])
-					{
-						ACCESS(Computed_field)(source_fields[i]);
-					}
+					source_fields[0] = cmzn_field_get_source_field(field_modify->get_field(), 1);
+					source_fields[1] = cmzn_field_get_source_field(field_modify->get_field(), 2);
+					number_of_rows = cmzn_field_matrix_multiply_get_number_of_rows(matrix_multiply_field);
 				}
-				/* try to handle help first */
-				current_token=state->current_token;
-				if (current_token != 0)
+			}
+			/* try to handle help first */
+			current_token=state->current_token;
+			if (current_token != 0)
+			{
+				if (!(strcmp(PARSER_HELP_STRING,current_token)&&
+					strcmp(PARSER_RECURSIVE_HELP_STRING,current_token)))
 				{
-					if (!(strcmp(PARSER_HELP_STRING,current_token)&&
-						strcmp(PARSER_RECURSIVE_HELP_STRING,current_token)))
+					option_table = CREATE(Option_table)();
+					Option_table_add_help(option_table,
+						"A matrix_mutliply field calculates the product of two matrices, giving a new m by n matrix.  The product is represented as a field with a list of (m * n) components.   The components of the matrix are listed row by row.  The <number_of_rows> m is used to infer the dimensions of the source matrices.  The two source <fields> are multiplied, with the components of the first interpreted as a matrix with dimensions m by s and the second as a matrix with dimensions s by n.  If the matrix dimensions are not consistent then an error is returned.  See a/curvature for an example of using the matrix_multiply field.");
+					Option_table_add_entry(option_table,"number_of_rows",
+						&number_of_rows,NULL,set_int_positive);
+					set_field_data.conditional_function=
+						Computed_field_has_numerical_components;
+					set_field_data.conditional_function_user_data=(void *)NULL;
+					set_field_data.computed_field_manager=
+						field_modify->get_field_manager();
+					set_field_array_data.number_of_fields=2;
+					set_field_array_data.conditional_data= &set_field_data;
+					Option_table_add_entry(option_table,"fields",source_fields,
+						&set_field_array_data,set_Computed_field_array);
+					return_code=Option_table_multi_parse(option_table,state);
+					DESTROY(Option_table)(&option_table);
+				}
+				else
+				{
+					/* if the "number_of_rows" token is next, read it */
+					if (fuzzy_string_compare(current_token,"number_of_rows"))
 					{
 						option_table = CREATE(Option_table)();
-						Option_table_add_help(option_table,
-						  "A matrix_mutliply field calculates the product of two matrices, giving a new m by n matrix.  The product is represented as a field with a list of (m * n) components.   The components of the matrix are listed row by row.  The <number_of_rows> m is used to infer the dimensions of the source matrices.  The two source <fields> are multiplied, with the components of the first interpreted as a matrix with dimensions m by s and the second as a matrix with dimensions s by n.  If the matrix dimensions are not consistent then an error is returned.  See a/curvature for an example of using the matrix_multiply field.");
+						/* number_of_rows */
 						Option_table_add_entry(option_table,"number_of_rows",
 							&number_of_rows,NULL,set_int_positive);
+						return_code = Option_table_parse(option_table,state);
+						DESTROY(Option_table)(&option_table);
+					}
+					if (return_code)
+					{
+						option_table = CREATE(Option_table)();
 						set_field_data.conditional_function=
 							Computed_field_has_numerical_components;
 						set_field_data.conditional_function_user_data=(void *)NULL;
@@ -404,61 +418,33 @@ already) and allows its contents to be modified.
 						set_field_array_data.conditional_data= &set_field_data;
 						Option_table_add_entry(option_table,"fields",source_fields,
 							&set_field_array_data,set_Computed_field_array);
-						return_code=Option_table_multi_parse(option_table,state);
-						DESTROY(Option_table)(&option_table);
-					}
-					else
-					{
-						/* if the "number_of_rows" token is next, read it */
-						if (fuzzy_string_compare(current_token,"number_of_rows"))
-						{
-							option_table = CREATE(Option_table)();
-							/* number_of_rows */
-							Option_table_add_entry(option_table,"number_of_rows",
-								&number_of_rows,NULL,set_int_positive);
-							return_code = Option_table_parse(option_table,state);
-							DESTROY(Option_table)(&option_table);
-						}
+						return_code = Option_table_multi_parse(option_table, state);
 						if (return_code)
 						{
-							option_table = CREATE(Option_table)();
-							set_field_data.conditional_function=
-								Computed_field_has_numerical_components;
-							set_field_data.conditional_function_user_data=(void *)NULL;
-							set_field_data.computed_field_manager=
-								field_modify->get_field_manager();
-							set_field_array_data.number_of_fields=2;
-							set_field_array_data.conditional_data= &set_field_data;
-							Option_table_add_entry(option_table,"fields",source_fields,
-								&set_field_array_data,set_Computed_field_array);
-							return_code = Option_table_multi_parse(option_table, state);
-							if (return_code)
-							{
-								return_code = field_modify->define_field(
-									cmzn_fieldmodule_create_field_matrix_multiply(field_modify->get_field_module(),
-										number_of_rows, source_fields[0], source_fields[1]));
-							}
-							DESTROY(Option_table)(&option_table);
+							return_code = field_modify->define_field(
+								cmzn_fieldmodule_create_field_matrix_multiply(field_modify->get_field_module(),
+									number_of_rows, source_fields[0], source_fields[1]));
 						}
-						if (!return_code)
-						{
-							/* error */
-							display_message(ERROR_MESSAGE,
-								"define_Computed_field_type_matrix_multiply.  Failed");
-						}
+						DESTROY(Option_table)(&option_table);
 					}
-				}
-				else
-				{
-					display_message(ERROR_MESSAGE, "Missing command options");
-					return_code = 0;
-				}
-				for (i=0;i<2;i++)
-				{
-					if (source_fields[i])
+					if (!return_code)
 					{
-						DEACCESS(Computed_field)(&(source_fields[i]));
+						/* error */
+						display_message(ERROR_MESSAGE,
+							"define_Computed_field_type_matrix_multiply.  Failed");
 					}
+				}
+			}
+			else
+			{
+				display_message(ERROR_MESSAGE, "Missing command options");
+				return_code = 0;
+			}
+			for (i = 0; i < 2; ++i)
+			{
+				if (source_fields[i])
+				{
+					cmzn_field_destroy(&(source_fields[i]));
 				}
 			}
 			DEALLOCATE(source_fields);
@@ -576,98 +562,90 @@ already) and allows its contents to be modified.
 ==============================================================================*/
 {
 	const char *current_token;
-	int source_number_of_rows, return_code;
-	struct Computed_field *source_field;
+	int return_code;
 	Computed_field_modify_data *field_modify = static_cast<Computed_field_modify_data *>(field_modify_void);
 	struct Option_table *option_table;
 	struct Set_Computed_field_conditional_data set_source_field_data;
 
-	ENTER(define_Computed_field_type_transpose);
 	if ((state) && (field_modify))
 	{
-		return_code=1;
-		/* get valid parameters for transpose field */
-		source_number_of_rows = 1;
-		source_field = (struct Computed_field *)NULL;
-		if ((NULL != field_modify->get_field()) &&
-			(computed_field_transpose_type_string ==
-				Computed_field_get_type_string(field_modify->get_field())))
+		return_code = 1;
+		cmzn_field_id source_field = nullptr;
+		int source_number_of_rows = 1;
+		if (NULL != field_modify->get_field())
 		{
-			return_code=Computed_field_get_type_transpose(field_modify->get_field(),
-				&source_number_of_rows,&source_field);
-		}
-		if (return_code)
-		{
-			/* ACCESS the source fields for set_Computed_field_conditional */
-			if (source_field)
+			cmzn_field_transpose_id transpose_field =
+				cmzn_field_cast_transpose(field_modify->get_field());
+			if (transpose_field)
 			{
-				ACCESS(Computed_field)(source_field);
+				source_field = cmzn_field_get_source_field(field_modify->get_field(), 1);
+				source_number_of_rows = cmzn_field_transpose_get_source_number_of_rows(transpose_field);
 			}
-			/* try to handle help first */
-			current_token = state->current_token;
-			if (current_token != 0)
+		}
+		/* try to handle help first */
+		current_token = state->current_token;
+		if (current_token != 0)
+		{
+			set_source_field_data.conditional_function =
+				Computed_field_has_numerical_components;
+			set_source_field_data.conditional_function_user_data = (void *)NULL;
+			set_source_field_data.computed_field_manager =
+				field_modify->get_field_manager();
+			if (!(strcmp(PARSER_HELP_STRING,current_token)&&
+				strcmp(PARSER_RECURSIVE_HELP_STRING,current_token)))
 			{
-				set_source_field_data.conditional_function =
-					Computed_field_has_numerical_components;
-				set_source_field_data.conditional_function_user_data = (void *)NULL;
-				set_source_field_data.computed_field_manager =
-					field_modify->get_field_manager();
-				if (!(strcmp(PARSER_HELP_STRING,current_token)&&
-					strcmp(PARSER_RECURSIVE_HELP_STRING,current_token)))
-				{
-					option_table = CREATE(Option_table)();
-					Option_table_add_help(option_table,
-					  "A transpose field returns the transpose of a source matrix field.  If the source <field> has (m * n) components where m is specified by <source_number_of_rows> (with the first n components being the first row), the result is its (n * m) transpose.  See a/current_density for an example of using the matrix_invert field.");
-					Option_table_add_entry(option_table,"source_number_of_rows",
-						&source_number_of_rows,NULL,set_int_positive);
-					Option_table_add_entry(option_table,"field",&source_field,
-						&set_source_field_data,set_Computed_field_conditional);
-					return_code=Option_table_multi_parse(option_table,state);
-					DESTROY(Option_table)(&option_table);
-				}
-				else
-				{
-					/* if the "source_number_of_rows" token is next, read it */
-					if (fuzzy_string_compare(current_token,"source_number_of_rows"))
-					{
-						option_table = CREATE(Option_table)();
-						/* source_number_of_rows */
-						Option_table_add_entry(option_table,"source_number_of_rows",
-							&source_number_of_rows,NULL,set_int_positive);
-						return_code = Option_table_parse(option_table,state);
-						DESTROY(Option_table)(&option_table);
-					}
-					if (return_code)
-					{
-						option_table = CREATE(Option_table)();
-						Option_table_add_entry(option_table,"field",&source_field,
-							&set_source_field_data,set_Computed_field_conditional);
-						return_code = Option_table_multi_parse(option_table, state);
-						if (return_code)
-						{
-							return_code = field_modify->define_field(
-								cmzn_fieldmodule_create_field_transpose(field_modify->get_field_module(),
-									source_number_of_rows, source_field));
-						}
-						DESTROY(Option_table)(&option_table);
-					}
-					if (!return_code)
-					{
-						/* error */
-						display_message(ERROR_MESSAGE,
-							"define_Computed_field_type_transpose.  Failed");
-					}
-				}
+				option_table = CREATE(Option_table)();
+				Option_table_add_help(option_table,
+					"A transpose field returns the transpose of a source matrix field.  If the source <field> has (m * n) components where m is specified by <source_number_of_rows> (with the first n components being the first row), the result is its (n * m) transpose.  See a/current_density for an example of using the matrix_invert field.");
+				Option_table_add_entry(option_table,"source_number_of_rows",
+					&source_number_of_rows,NULL,set_int_positive);
+				Option_table_add_entry(option_table,"field",&source_field,
+					&set_source_field_data,set_Computed_field_conditional);
+				return_code=Option_table_multi_parse(option_table,state);
+				DESTROY(Option_table)(&option_table);
 			}
 			else
 			{
-				display_message(ERROR_MESSAGE, "Missing command options");
-				return_code = 0;
+				/* if the "source_number_of_rows" token is next, read it */
+				if (fuzzy_string_compare(current_token,"source_number_of_rows"))
+				{
+					option_table = CREATE(Option_table)();
+					/* source_number_of_rows */
+					Option_table_add_entry(option_table,"source_number_of_rows",
+						&source_number_of_rows,NULL,set_int_positive);
+					return_code = Option_table_parse(option_table,state);
+					DESTROY(Option_table)(&option_table);
+				}
+				if (return_code)
+				{
+					option_table = CREATE(Option_table)();
+					Option_table_add_entry(option_table,"field",&source_field,
+						&set_source_field_data,set_Computed_field_conditional);
+					return_code = Option_table_multi_parse(option_table, state);
+					if (return_code)
+					{
+						return_code = field_modify->define_field(
+							cmzn_fieldmodule_create_field_transpose(field_modify->get_field_module(),
+								source_number_of_rows, source_field));
+					}
+					DESTROY(Option_table)(&option_table);
+				}
+				if (!return_code)
+				{
+					/* error */
+					display_message(ERROR_MESSAGE,
+						"define_Computed_field_type_transpose.  Failed");
+				}
 			}
-			if (source_field)
-			{
-				DEACCESS(Computed_field)(&source_field);
-			}
+		}
+		else
+		{
+			display_message(ERROR_MESSAGE, "Missing command options");
+			return_code = 0;
+		}
+		if (source_field)
+		{
+			cmzn_field_destroy(&source_field);
 		}
 	}
 	else
@@ -676,12 +654,8 @@ already) and allows its contents to be modified.
 			"define_Computed_field_type_transpose.  Invalid argument(s)");
 		return_code=0;
 	}
-	LEAVE;
-
 	return (return_code);
-} /* define_Computed_field_type_transpose */
-
-
+}
 
 int define_Computed_field_type_quaternion_to_matrix(struct Parse_state *state,
 	void *field_modify_void, void *)
